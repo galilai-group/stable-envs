@@ -158,7 +158,7 @@ BODY_FIELDS = (
 )
 #: Width of a ``body_row``: both bodies' fields, then the seven observation values.
 BODY_ROW = 2 * sum(width for _, width in BODY_FIELDS) + 7
-#: ``current`` State fields in export order.
+#: ``current`` state fields in export order.
 CURRENT_KEYS = (
     *(
         f"body/{name}/{key}"
@@ -491,7 +491,7 @@ def geometry_columns(owners, shapes=None):
 
 
 def capture(env, collector=None, episode=None):
-    """Return the ``current`` State fields of ``env`` in export order.
+    """Return the ``current`` state fields of ``env`` in export order.
 
     ``episode`` is a cached ``episode_fields(env)``; it is copied.
     """

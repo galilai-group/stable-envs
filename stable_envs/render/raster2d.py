@@ -149,11 +149,9 @@ _ACCEPT_MARGIN = 1.25
 
 
 def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
-    """Partition (B, 4) pixel boxes into row groups with smaller union windows.
+    """Partition ``(B, 4)`` pixel boxes into row groups with smaller union windows.
 
-    Return (row_indices, r0, r1, c0, c1) tuples. ``row_indices=None`` uses the whole
-    batch when estimated savings do not cover grouping overhead. The dispatch cost
-    model is calibrated for CPU operations.
+    Returns ``(row_indices, r0, r1, c0, c1)`` tuples; ``row_indices=None`` means the whole batch.
     """
     import numpy as np
 
@@ -199,12 +197,7 @@ def _output_shape(size: int | tuple[int, int]) -> tuple[int, int]:
 
 @torch.no_grad()
 def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1) -> torch.Tensor:
-    """Rasterize Scene2D into (B, H, W, 3) uint8 frames on the scene's device.
-
-    Evaluate only active primitive families inside conservative windows. A uint8
-    canvas suffices without supersampling; supersampling uses a float canvas and
-    averages before rounding and clamping.
-    """
+    """Rasterize a Scene2D into ``(B, H, W, 3)`` uint8 frames on the scene's device."""
     H, W = _output_shape(out_size)
     ss = int(supersample)
     Rh, Rw = H * ss, W * ss
@@ -645,11 +638,7 @@ TILE_WASTE_MAX = 0.125
 
 
 def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
-    """Choose a (height, width) tile within the lane and width budgets.
-
-    Favor wide power-of-two tiles for contiguous RGB stores, shrinking width when
-    masked lanes exceed TILE_WASTE_MAX.
-    """
+    """Choose a ``(height, width)`` tile within the ``lanes`` and ``max_width`` budgets."""
     bw = min(max_width, 1 << max(0, (W - 1).bit_length()))
     while bw > 1 and (bw * -(-W // bw) - W) > TILE_WASTE_MAX * W:
         bw //= 2
@@ -676,11 +665,10 @@ def render_triton(
     block: int | None = None,
     cull: bool | None = None,
 ) -> torch.Tensor:
-    """Rasterize a CUDA Scene2D into (B, H, W, 3) uint8 frames.
+    """Rasterize a CUDA Scene2D into ``(B, H, W, 3)`` uint8 frames.
 
-    ``block`` is the pixels per program without culling; None reads the ``raster2d_block`` tuning knob.
-    ``cull`` forces bounding-box culling on or off; None selects by primitive count.
-    ``out`` must be contiguous uint8 storage with exactly B*H*W*3 elements.
+    ``block`` defaults to the ``raster2d_block`` knob and ``cull`` to a choice by primitive count. ``out`` must be
+    contiguous uint8 storage with exactly ``B*H*W*3`` elements.
     """
     if not HAVE_TRITON:
         raise ImportError("triton unavailable; use render_torch")
@@ -743,11 +731,17 @@ def render(
     backend: str = "auto",
     out: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Render uint8 RGB frames using Torch or Triton on the scene's device.
+    """Render uint8 RGB frames with Torch or Triton on the scene's device.
 
-    ``auto`` selects Triton only when available and the scene is on CUDA. Explicit
-    Triton rendering rejects CPU scenes. Both paths require contiguous uint8 ``out``
-    storage; ``out_size`` is an integer or (height, width).
+    Args:
+        scene: The scene to draw.
+        out_size: Output size, an int or ``(height, width)``.
+        supersample: Subpixels per output pixel along each axis.
+        backend: ``"auto"`` (Triton for CUDA scenes when it's installed), ``"triton"`` or ``"torch"``.
+        out: A contiguous ``(B, H, W, 3)`` uint8 buffer to fill.
+
+    Returns:
+        ``(B, H, W, 3)`` uint8 frames.
     """
     if backend == "triton" and scene.kind.device.type != "cuda":
         raise ValueError(

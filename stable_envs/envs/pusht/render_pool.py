@@ -1,4 +1,4 @@
-"""Draw PushT State rows in worker processes."""
+"""Draw PushT state rows in worker processes."""
 
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def render_worker(conn, cpus):
 
 
 class PushTRenderPool(ProcessRequests):
-    """Draw State rows in spawned workers, each with its own projection.
+    """Draw state rows in spawned workers, each with its own projection.
 
     Each worker draws a contiguous slice of the rows into one shared frame block.
     A frame depends only on its row, so the split does not change the frames.

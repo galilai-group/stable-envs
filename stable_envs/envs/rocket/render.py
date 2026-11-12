@@ -3,7 +3,7 @@
 The camera and visible links have different update times in PyFlyt. TinyRenderer
 also forms projection*(view*model) with float32 reverse-order dot products; at
 large world coordinates an equivalent double-precision expression draws a
-different image. These are family-local rendering details, not simulator State.
+different image. These are family-local rendering details, not simulator state.
 """
 
 import math

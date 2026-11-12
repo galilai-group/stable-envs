@@ -10,8 +10,8 @@
  "frame_shape": [224, 224, 3],
  "physics": "native Numba on CPU, native Triton on CUDA",
  "renderers": {
-  "cpu": "pygame (source renderer)",
-  "cuda": "pygame on CPU, frames copied to CUDA"
+  "cpu": "Numba rasterizer (pygame bytes); pygame for step frames or without Numba",
+  "cuda": "Triton rasterizer (pygame bytes); pygame on CPU, frames copied to CUDA, without Triton"
  },
  "action": {
   "shape": [2],

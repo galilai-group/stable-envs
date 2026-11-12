@@ -1,4 +1,4 @@
-"""PCG64 generator state as fixed-width State columns."""
+"""PCG64 generator state as fixed-width state columns."""
 
 from __future__ import annotations
 

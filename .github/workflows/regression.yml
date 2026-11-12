@@ -1,11 +1,9 @@
 name: regression
 
-# Heterogeneous oracle: manual only. The 42-environment matrix needs
-# incompatible reference stacks (notably Fetch versus current DM Control), and
-# GPU renderers need CUDA/EGL plus locally compiled nvdiffrast. A single
-# all-extras environment would skip or corrupt real coverage.
-# Lightweight CPU regression (core profile) runs automatically on PR/main
-# from .github/workflows/testing.yml.
+# Manual only. The reference stacks are incompatible (notably Fetch versus
+# current DM Control), and GPU renderers need CUDA/EGL plus locally compiled
+# nvdiffrast. A single all-extras environment would skip or corrupt real coverage.
+# The CPU regression tests of each profile run automatically in ci.yml.
 on:
   workflow_dispatch:
     inputs:

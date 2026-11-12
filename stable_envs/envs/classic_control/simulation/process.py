@@ -21,7 +21,7 @@ def _lanes(domain, count, seed):
 
 
 class AcrobotProcessAdapter(ProcessAdapter):
-    """Run Acrobot CPU simulators in worker processes with shared State and task columns."""
+    """Run Acrobot CPU simulators in worker processes with shared state and task columns."""
 
     name = "Acrobot"
 

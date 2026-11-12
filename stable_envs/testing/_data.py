@@ -1,6 +1,6 @@
 """Private corpus utilities for certification and research tools.
 
-Stored rows are float32 render projections, not full simulator State. Store
+Stored rows are float32 render projections, not full simulator state. Store
 appearance alongside them when reproducing frames. Dataset indexing returns
 already assembled batches: use collate_batched with automatic DataLoader
 batching, and keep CUDA rendering in the main process (num_workers=0).

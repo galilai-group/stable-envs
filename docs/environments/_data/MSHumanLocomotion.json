@@ -46,5 +46,19 @@
    "dtype": "float32"
   }
  ],
- "variation": []
+ "variation": [],
+ "media": {
+  "device": "cpu",
+  "render_size": 128,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 128,
+   "height": 128,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 10132
+  },
+  "variation": null,
+  "variation_note": "no Variation leaves"
+ }
 }

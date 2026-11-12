@@ -1,4 +1,4 @@
-"""Single actions and known action chunks, with independent State and frame selection.
+"""Single actions and known action chunks, with independent state and frame selection.
 
 python examples/action_sequences.py
 """
@@ -12,7 +12,7 @@ def main():
     batch, horizon = 8, 8
     with snv.CartPole(num_envs=batch, device="cpu") as env:
         initial = env.reset(seed=17)
-        # [B,A]: the default selects one State and the final frame.
+        # [B,A]: the default selects one state and the final frame.
         one = env.step(torch.zeros(batch, 1, dtype=torch.int64))
         print("Single action, frames:", tuple(one["frames"].shape))
 
@@ -25,7 +25,7 @@ def main():
         print("Valid transitions:", sequence["valid"].sum().item())
         final_state = sequence["state"]
 
-        # Same actions from the same State, selecting the two histories separately.
+        # Same actions from the same state, selecting the two histories separately.
         env.set_state(initial)
         sparse = env.step(actions, states=slice(None, None, 4), frames=slice(3, None, 4))
         print("States at indices 0,4:", sparse["states"].batch_size)

@@ -387,7 +387,7 @@ class _GymReferencePort(Env):
         return np.asarray(cls.reference_sim_state(ref.unwrapped), np.float64)
 
     def _rows_and_style(self, state, owner: str):
-        """Convert State to float32 rows ``(n, state_dim)`` and resolve style for those rows."""
+        """Convert state to float32 rows ``(n, state_dim)`` and resolve style for those rows."""
         rows = (
             self._pack_render_state(state)
             if isinstance(state, TensorDict)
@@ -416,10 +416,10 @@ class _GymReferencePort(Env):
 
 
 class _HiddenTargetSemantics:
-    """Task outputs and full State for navigation environments with an invisible target.
+    """Task outputs and full state for navigation environments with an invisible target.
 
     The target is absent from the renderer projection but required for
-    observations, reward and termination, so it must survive State restoration.
+    observations, reward and termination, so it must survive state restoration.
     """
 
     execution_mode = "NATIVE_TORCH"
@@ -544,7 +544,7 @@ class _HiddenTargetSemantics:
         return self._outputs(self._full_state(self._render_state))
 
     def _numba_step(self, action, active):
-        """Advance the lanes and build State and task outputs in one Numba call."""
+        """Advance the lanes and build state and task outputs in one Numba call."""
         from . import navstep_cpu
 
         values = navstep_cpu.task_step(
@@ -587,7 +587,7 @@ class _TorchNavBase(_GymReferencePort):
 
     #: Physics implementations that ``simulation_backend`` accepts in addition to ``"auto"``.
     simulation_backends: tuple[str, ...] = ("torch", "numba")
-    #: Kernel selector and Variation columns of the Numba step.
+    #: Kernel selector and variation columns of the Numba step.
     _numba_kind = 0
     _numba_paths: tuple[str, ...] = ()
 
@@ -932,7 +932,7 @@ class _TwoRoomBase(_TorchNavBase):
         """Reject agent positions inside the band that the wall and the agent radius cover."""
         if path != "agent.position":
             return True
-        # A reset reads the installed Variation once, not once for each lane.
+        # A reset reads the installed variation once, not once for each lane.
         walls = self._reset_walls
         if not walls:
             walls = {p: self._style[p].detach().cpu().numpy().reshape(-1) for p in _WALL_RESET_PATHS}
@@ -999,7 +999,7 @@ class _TwoRoomBase(_TorchNavBase):
 class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     """Two rooms separated by a wall with doors; the reward target is invisible.
 
-    Full State includes the target even though the renderer reads only agent
+    Full state includes the target even though the renderer reads only agent
     position. A compact render row cannot restore the task.
     """
 
@@ -1193,7 +1193,7 @@ class _PiecewiseBase(_TorchNavBase):
         self._layered = any(bool((self._style[flag] > 0.5).any()) for flag in self.layer_flags)
 
     def _render_chunk(self, s, sty, lo: int, hi: int, out=None) -> torch.Tensor:
-        # The installed Variation's flags are cached on the host, so the default path never synchronizes.
+        # The installed variation's flags are cached on the host, so the default path never synchronizes.
         if sty is self._style:
             layered = self._layered
         else:
@@ -1270,7 +1270,7 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     """Open room with four invisible motion-bias zones and an invisible reward target."""
 
     name = "piecewise"
-    # Zone tint is a Variation leaf, not a PiecewiseEnv constructor argument.
+    # Zone tint is a variation leaf, not a PiecewiseEnv constructor argument.
     reference_kwargs: dict = {}
     reset_tree_factory = staticmethod(_piecewise_reset_tree)
     reset_value_paths = frozenset(
@@ -1302,7 +1302,7 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     _frame_targets = None
 
     def render(self, state=None, **kwargs) -> torch.Tensor:
-        """Render full State; the target, hidden from the compact rows, is drawn from it when enabled."""
+        """Render full state; the target, hidden from the compact rows, is drawn from it when enabled."""
         state = self.get_state() if state is None else state
         if isinstance(state, TensorDict):
             self._frame_targets = state["target", "position"]
@@ -1605,7 +1605,7 @@ class SimplePointMaze(_GymReferencePort):
         return self.get_state()
 
     def _regenerate_cached_goal(self):
-        """Rebuild the source-compatible ``info.goal`` image from State and Variation.
+        """Rebuild the source-compatible ``info.goal`` image from state and variation.
 
         Use Matplotlib Agg for this cached task image; stepping and normal
         rendering use the native implementation. Step outputs share the image,

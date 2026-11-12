@@ -86,7 +86,7 @@ class Camera:
         return r, u, f
 
     def rays(self, H: int, W: int, device, dtype=torch.float32) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return origin (3,) and unit directions (H*W, 3) through pixel centers, top row first."""
+        """Return origin ``(3,)`` and unit directions ``(H*W, 3)`` through pixel centers, top row first."""
         r, u, f = self.basis()
         half_h = 0.5 * (self.top - self.bottom)
         half_w = half_h * (W / H)
@@ -327,10 +327,10 @@ def _plane(o, d, pos, R, size):
 def intersect(
     kind: int, size: torch.Tensor, pos: torch.Tensor, R: torch.Tensor, o: torch.Tensor, d: torch.Tensor
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Return ray parameters and world-space normals, with t=INF on misses.
+    """Return ray parameters and world-space normals, with ``t=INF`` on misses.
 
-    Poses (..., 3) and rotations (..., 3, 3) broadcast against rays (..., 3).
-    Unsupported MuJoCo geometry kinds raise ValueError.
+    Poses ``(..., 3)`` and rotations ``(..., 3, 3)`` broadcast against rays ``(..., 3)``. Unsupported MuJoCo
+    geometry kinds raise ValueError.
     """
     return _intersect(kind, size, pos, R, o, d, normal=True)
 
@@ -427,11 +427,10 @@ def cast_nearest_torch(
     *,
     bounds: bool = True,
 ) -> Cast:
-    """Return nearest ray parameters (B, N), normals (B, N, 3), and indices (B, N).
+    """Return nearest ray parameters ``(B, N)``, normals ``(B, N, 3)`` and indices ``(B, N)``.
 
-    ``kinds`` is a host sequence of K codes. Sizes and positions are (B, K, 3),
-    rotations (B, K, 3, 3), and ray origins/directions (B, N, 3). Misses have t=INF.
-    With ``bounds=False``, every ray is tested against every primitive.
+    ``kinds`` holds ``K`` host codes; sizes and positions are ``(B, K, 3)``, rotations ``(B, K, 3, 3)`` and rays
+    ``(B, N, 3)``. Misses have ``t=INF``.
     """
     if not bounds:
         return _cast_nearest_torch_unbounded(kinds, sizes, pos, R, o, d)
@@ -504,10 +503,9 @@ def any_blocking_torch(
     *,
     bounds: bool = True,
 ) -> torch.Tensor:
-    """Return a (B, N) mask of hits with 0 < t < lim, excluding each ray's skip index.
+    """Return a ``(B, N)`` mask of hits with ``0 < t < lim``, excluding each ray's skip index.
 
-    Inputs follow ``cast_nearest_torch``; lim and skip have shape (B, N).
-    With ``bounds=False``, every ray is tested against every primitive.
+    Inputs follow ``cast_nearest_torch``; ``lim`` and ``skip`` are ``(B, N)``.
     """
     if not bounds:
         return _any_blocking_torch_unbounded(kinds, sizes, pos, R, o, d, lim, skip)
@@ -1053,7 +1051,7 @@ def any_blocking(
     skip: torch.Tensor | None = None,
     backend: str = "auto",
 ) -> torch.Tensor:
-    """Return a (B, N) mask of hits before lim, excluding each ray's optional skip index.
+    """Return a ``(B, N)`` mask of hits before lim, excluding each ray's optional skip index.
 
     Backend selection and errors follow ``cast_nearest``.
     """
@@ -1087,11 +1085,7 @@ def shade(
     tex: torch.Tensor,
     spec: torch.Tensor,
 ) -> torch.Tensor:
-    """Return RGB (..., 3) in [0, 1].
-
-    White specular is added to the material-lit color before texture modulation;
-    texturing only the diffuse term changes highlights on textured surfaces.
-    """
+    """Return RGB ``(..., 3)`` in [0, 1]; white specular is added before texture modulation."""
     amb = lamb.sum()
     prim = mat * amb
     highlight = torch.zeros(n.shape[:-1], device=n.device, dtype=n.dtype)
@@ -1108,11 +1102,7 @@ def shade(
 
 @torch.no_grad()
 def static_depth(cam: Camera, prims: Primitives, xpos, xmat, H: int, W: int, device) -> torch.Tensor:
-    """Return nearest static-surface ray parameters (H*W,), in radial units.
-
-    MuJoCo depth is perpendicular distance, t * dot(direction, forward).
-    Keeping radial t lets the mover composite compare hits without conversion.
-    """
+    """Return nearest static-surface ray parameters ``(H*W,)``, in radial units rather than MuJoCo depth."""
     o, d = cached_rays(cam, H, W, device)
     P = prims.to(device)
     best = torch.full((H * W,), INF, device=device)
@@ -1145,17 +1135,13 @@ def composite(
     shader=None,
     cast: Sequence[int] | None = None,
 ) -> torch.Tensor:
-    """Draw moving primitives over a static plate; return (B, H, W, 3) uint8.
+    """Draw moving primitives over a static plate and return ``(B, H, W, 3)`` uint8 frames.
 
-    ``plate`` is (H, W, 3) or per-environment (B, H, W, 3) uint8 and ``plate_t`` is
-    (H*W,) radial ray depth. Poses are (B, P, 3) positions and (B, P, 3, 3) rotations.
-    ``tile`` caps the conservative screen window; an oversized bound falls back to the
-    full frame. ``mat_rgb`` (B, P, 3) and ``size_scale`` (B,) override appearance per
-    environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights``
-    and returns covered-sample color in [0, 255].
-    A supplied ``out`` buffer is filled and returned as a (B, H, W, 3) view.
-    ``cast`` limits the cast to these primitive indices; hits keep their index in ``prims``.
-    The other primitives must not cover any sample that these can cover.
+    ``plate`` is ``(H, W, 3)`` or ``(B, H, W, 3)`` uint8 and ``plate_t`` its ``(H*W,)`` radial depth. Poses are
+    ``(B, P, 3)`` positions and ``(B, P, 3, 3)`` rotations; ``mat_rgb`` ``(B, P, 3)`` and ``size_scale`` ``(B,)``
+    override appearance per environment. ``shader(rows, hit, normal, view, prim, mat)`` replaces ``lights`` and
+    returns colors in [0, 255]. ``cast`` limits the cast to these primitive indices, and the others must not
+    cover any sample these can cover.
     """
     device = plate.device
     ids = None if cast is None else [int(j) for j in cast]
@@ -1305,10 +1291,9 @@ def screen_bounds(
 
 
 def screen_span(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: int, device, bound_scale: float = 1.0):
-    """Return (x0, y0, width, height) for projected primitive bounds, or None if unbounded.
+    """Return ``(x0, y0, width, height)`` for projected primitive bounds, or None if unbounded.
 
-    Origins are per-row device tensors; extents are host integers covering the batch.
-    Projects all eight bounding-box corners and synchronizes once.
+    Origins are per-row device tensors and extents are host integers that cover the batch.
     """
     bounds = screen_bounds(cam, prims, xpos, H, W, device, bound_scale)
     if bounds is None:

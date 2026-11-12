@@ -1,3 +1,8 @@
+"""PyFlyt rocket landing (family ``pyflyt``): land a falling rocket upright on a pad (``rocket`` extra).
+
+Import failures are reported under ``rocket_landing``, ``rocket_render`` and ``rocket_semantics``.
+"""
+
 from ...registry import _import_env_module
 
 # Isolate optional import failures and report each under its registry key.

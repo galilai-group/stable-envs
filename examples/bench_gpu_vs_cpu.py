@@ -1,7 +1,7 @@
-"""Time ``env.render(state)`` for the same States on CPU and on CUDA.
+"""Time ``env.render(state)`` for the same states on CPU and on CUDA.
 
-Each env is reset with ``--pool`` lanes; the State is tiled up to each batch size, since ``render``
-accepts a State of any batch. The table reports frames per second per device and the CUDA speedup.
+Each env is reset with ``--pool`` lanes; the state is tiled up to each batch size, since ``render``
+accepts a state of any batch. The table reports frames per second per device and the CUDA speedup.
 Envs that require CUDA have no CPU column. Without CUDA only the CPU column is measured.
 
     python examples/bench_gpu_vs_cpu.py

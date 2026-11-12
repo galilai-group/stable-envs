@@ -39,7 +39,7 @@ def rocket_worker(*args):
 
 
 class RocketProcessAdapter(ProcessAdapter):
-    """Run Rocket replay owners in worker processes with the whole State in shared buffers."""
+    """Run Rocket replay owners in worker processes with the whole state in shared buffers."""
 
     name = "Rocket"
     frame_mode = FRAME_FIELDS
@@ -70,7 +70,7 @@ class RocketProcessAdapter(ProcessAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration and Variation space describe the batch."""
+        """A lane whose configuration and variation space describe the batch."""
         self._check_open()
         return self._metadata.template
 

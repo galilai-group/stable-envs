@@ -250,7 +250,7 @@ def draws_fast(backend, device):
 def _supersample(state):
     try:
         return int(state["renderer", "supersample"].reshape(-1)[0])
-    except Exception:  # noqa: BLE001 - validation reports the malformed State
+    except Exception:  # noqa: BLE001 - validation reports the malformed state
         return None
 
 

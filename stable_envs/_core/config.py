@@ -33,10 +33,16 @@ _CONFIG: dict[str, Any] = _initial()
 
 
 def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is ``snv.set``
-    """Update global verbosity or default device and return a configuration copy.
+    """Update the log level or default device and return a copy of the settings.
 
-    Unknown keys and unrecognized verbosity levels raise an error. Environment
-    options such as image size belong on the environment constructor.
+    Args:
+        **kwargs: ``verbose``, the lowest level logged (``"TRACE"``, ``"DEBUG"``, ``"INFO"``,
+            ``"SUCCESS"``, ``"WARNING"``, ``"ERROR"``, ``"CRITICAL"`` or ``"SILENT"``), and
+            ``default_device``, used when a constructor gets ``device=None``.
+
+    Raises:
+        KeyError: If any other key is passed.
+        ValueError: If ``verbose`` is not a known level.
     """
     unknown = [k for k in kwargs if k not in _DEFAULTS]
     if unknown:
@@ -56,7 +62,7 @@ def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is
 
 
 def get_config() -> dict[str, Any]:
-    """Return a copy of the current global settings."""
+    """Return a copy of the global settings, ``verbose`` and ``default_device``."""
     return dict(_CONFIG)
 
 
@@ -68,6 +74,11 @@ def reset_config() -> dict[str, Any]:
 
 
 def log(level: str, message: str) -> None:
-    """Log ``message`` through the package logger when ``level`` meets the configured verbosity."""
+    """Log ``message`` through the package logger when ``level`` meets the configured verbosity.
+
+    Args:
+        level: A level name such as ``"DEBUG"`` or ``"WARNING"``.
+        message: The text to log.
+    """
     if _LEVELS[level.upper()] >= _LEVELS[_CONFIG["verbose"]]:
         logger.opt(depth=1).log(level.upper(), message)

@@ -203,7 +203,7 @@ def decode_state(state, num_envs, fields, num_tasks):
 
 
 class OGBMazeAdapter(SimulatorAdapter):
-    """Independent CPU locomotion-maze simulators with owned State snapshots.
+    """Independent CPU locomotion-maze simulators with owned state snapshots.
 
     ``device`` selects output placement. Each lane owns both its environment PCG64
     and its own copy of NumPy's legacy global RNG (``np.random`` MT19937), which
@@ -282,7 +282,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         return owned_columns((self._values(i, env) for i, env in enumerate(self.envs)), self.num_envs, self.device)
 
     def process_step_state(self):
-        """Return ``{key: (num_envs, width) array}`` for the State leaves a step changes."""
+        """Return ``{key: (num_envs, width) array}`` for the state leaves a step changes."""
         data = [env.data for env in self.envs]
         out = {}
         for fields, values in (

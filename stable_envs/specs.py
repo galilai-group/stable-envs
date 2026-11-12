@@ -1,4 +1,4 @@
-"""Per-lane tensor specs for State, actions, frames and Variation."""
+"""Per-environment tensor specs for state, actions, frames and variation."""
 
 from __future__ import annotations
 
@@ -19,9 +19,19 @@ def _as_np(v, shape: tuple[int, ...]) -> np.ndarray | None:
 
 @dataclass(frozen=True)
 class Spec:
-    """One lane's tensor shape, dtype, optional bounds and column names.
+    """One environment's tensor shape, dtype, optional bounds and column names.
 
-    ``shape`` excludes the batch axis. ``low`` and ``high`` broadcast to ``shape``.
+    Attributes:
+        shape: Shape without the batch axis, such as ``(2,)`` or ``(H, W, 3)``.
+        dtype: Torch dtype of the values.
+        low: Inclusive lower bound that broadcasts to ``shape`` (unbounded if None).
+        high: Inclusive upper bound, like ``low``.
+        device: Device the values live on.
+        names: One label per element of a one-dimensional spec.
+        discrete_n: Number of integer values, ``0`` to ``discrete_n - 1``, of a discrete spec.
+
+    Raises:
+        ValueError: If ``names`` is given and doesn't label each element of a one-dimensional spec.
     """
 
     shape: tuple[int, ...]
@@ -47,7 +57,7 @@ class Spec:
 
     @property
     def numel(self) -> int:
-        """Number of elements per lane."""
+        """Number of elements per environment."""
         n = 1
         for s in self.shape:
             n *= s
@@ -59,23 +69,42 @@ class Spec:
         return self.discrete_n is not None or (self.low is not None and self.high is not None)
 
     def batch_shape(self, num_envs: int) -> tuple[int, ...]:
-        """Return ``(num_envs, *shape)``."""
+        """Return ``(num_envs, *shape)``.
+
+        Args:
+            num_envs: Size of the batch axis.
+        """
         return (int(num_envs), *self.shape)
 
     def to(self, device) -> Spec:
+        """Return a copy of this spec on ``device``.
+
+        Args:
+            device: Target device.
+        """
         return replace(self, device=torch.device(device))
 
     def zeros(self, num_envs: int, device=None) -> torch.Tensor:
-        """Return a zero tensor of shape ``(num_envs, *shape)``."""
+        """Return zeros of shape ``(num_envs, *shape)``.
+
+        Args:
+            num_envs: Size of the batch axis.
+            device: Output device (the spec's device if None).
+        """
         return torch.zeros(
             self.batch_shape(num_envs), dtype=self.dtype, device=device if device is not None else self.device
         )
 
     def sample(self, num_envs: int, rng: np.random.Generator | None = None, device=None) -> torch.Tensor:
-        """Sample (num_envs, *shape) values with the supplied NumPy generator.
+        """Sample ``(num_envs, *shape)`` values uniformly from the bounds or the discrete values.
 
-        Discrete values use [0, discrete_n); bounded values use a uniform draw followed
-        by conversion to the declared dtype. Unbounded specs cannot be sampled.
+        Args:
+            num_envs: Size of the batch axis.
+            rng: NumPy generator (a fresh unseeded one if None).
+            device: Output device (the spec's device if None).
+
+        Raises:
+            ValueError: If the spec is neither discrete nor bounded on both sides.
         """
         rng = rng if rng is not None else np.random.default_rng()
         dev = device if device is not None else self.device
@@ -93,10 +122,17 @@ class Spec:
         return torch.as_tensor(np.asarray(v), dtype=self.dtype, device=dev)
 
     def validate(self, x, owner: str = "value") -> torch.Tensor:
-        """Check trailing shape, cast to the declared dtype, and validate bounds/finiteness.
+        """Check ``(N, *shape)`` input and return it cast to ``dtype`` on its own device.
 
-        Return the converted tensor on its original device. Batch size is unrestricted;
-        dtype conversion occurs before value checks.
+        Array input becomes a CPU tensor.
+
+        Args:
+            x: A tensor or array with a leading batch axis.
+            owner: Name of the value in error messages.
+
+        Raises:
+            ValueError: If the trailing shape is not ``shape``, a value is NaN or infinite, or a value
+                is outside the bounds or the discrete values.
         """
         t = x if torch.is_tensor(x) else torch.as_tensor(np.asarray(x))
         if tuple(t.shape[1:]) != self.shape:
@@ -124,7 +160,11 @@ class Spec:
         return t
 
     def contains(self, x) -> bool:
-        """Return whether :meth:`validate` accepts ``x``."""
+        """Return whether ``validate`` accepts ``x``.
+
+        Args:
+            x: The value to check.
+        """
         try:
             self.validate(x)
         except ValueError:
@@ -148,7 +188,10 @@ class Spec:
 class CompositeSpec:
     """Nested specs addressed by key paths, such as ``spec["agent", "position"]``.
 
-    Nested dicts passed as values become nested CompositeSpecs.
+    Args:
+        specs: ``{key: Spec, CompositeSpec or dict}``; dicts become nested composites.
+        device: Device of the composite.
+        **kw: More ``key=spec`` entries, merged over ``specs``.
     """
 
     specs: dict[str, Spec | CompositeSpec] = field(default_factory=dict)
@@ -184,13 +227,21 @@ class CompositeSpec:
         return len(self.specs)
 
     def keys(self, nested: bool = False):
-        """Return top-level keys, or leaf key paths when ``nested``."""
+        """Return the top-level keys, or the leaf key paths such as ``("agent", "position")``.
+
+        Args:
+            nested: Return leaf key paths instead of top-level keys.
+        """
         if not nested:
             return list(self.specs)
         return [k for k, _ in self.items(nested=True)]
 
     def items(self, nested: bool = False):
-        """Return top-level items, or ``(key path, Spec)`` leaf pairs when ``nested``."""
+        """Return the top-level items, or ``(key path, Spec)`` leaf pairs.
+
+        Args:
+            nested: Return leaf pairs instead of top-level items.
+        """
         if not nested:
             return list(self.specs.items())
         out: list[tuple[tuple[str, ...], Spec]] = []
@@ -202,15 +253,33 @@ class CompositeSpec:
         return out
 
     def to(self, device) -> CompositeSpec:
+        """Return a copy with every leaf on ``device``.
+
+        Args:
+            device: Target device.
+        """
         return CompositeSpec({k: v.to(device) for k, v in self.specs.items()}, device=device)
 
     def zeros(self, num_envs: int, device=None) -> TensorDict:
+        """Return a TensorDict of zeros with this structure and batch size ``(num_envs,)``.
+
+        Args:
+            num_envs: Size of the batch axis.
+            device: Output device (the spec's device if None).
+        """
         dev = device if device is not None else self.device
         return TensorDict(
             {k: v.zeros(num_envs, device=dev) for k, v in self.specs.items()}, batch_size=[int(num_envs)], device=dev
         )
 
     def sample(self, num_envs: int, rng: np.random.Generator | None = None, device=None) -> TensorDict:
+        """Sample every leaf with ``Spec.sample`` into a TensorDict with batch size ``(num_envs,)``.
+
+        Args:
+            num_envs: Size of the batch axis.
+            rng: NumPy generator (a fresh unseeded one if None).
+            device: Output device (the spec's device if None).
+        """
         dev = device if device is not None else self.device
         rng = rng if rng is not None else np.random.default_rng()
         return TensorDict(
@@ -220,9 +289,15 @@ class CompositeSpec:
         )
 
     def validate(self, x, owner: str = "value") -> TensorDict:
-        """Validate exact nested keys and each leaf, then return the original input.
+        """Check that ``x`` has exactly these keys and valid leaves, and return ``x`` unchanged.
 
-        Leaf conversion is used for checking only; this does not replace input values.
+        Args:
+            x: A TensorDict or mapping with a leading batch axis.
+            owner: Name of the value in error messages.
+
+        Raises:
+            TypeError: If ``x`` has no ``keys``.
+            ValueError: If keys are missing or unexpected, or a leaf is invalid.
         """
         if not hasattr(x, "keys"):
             raise TypeError(
@@ -242,7 +317,11 @@ class CompositeSpec:
         return x
 
     def contains(self, x) -> bool:
-        """Return whether :meth:`validate` accepts ``x``."""
+        """Return whether ``validate`` accepts ``x``.
+
+        Args:
+            x: The value to check.
+        """
         try:
             self.validate(x)
         except (TypeError, ValueError):

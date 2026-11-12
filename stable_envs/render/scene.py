@@ -21,9 +21,8 @@ KIND_SEGMENT = 3
 class Scene2D:
     """Batched 2-D primitives in draw order.
 
-    world=(x0, y0, x1, y1) maps native coordinates onto the image; flip_y handles
-    upward-positive world axes. KIND_NONE disables a primitive independently
-    per row. Floating arrays share device and dtype; kind remains int32.
+    ``world=(x0, y0, x1, y1)`` maps native coordinates onto the image and ``flip_y`` handles upward-positive
+    axes. ``KIND_NONE`` disables a primitive per row.
     """
 
     kind: torch.Tensor  # (B,N) int32
@@ -87,10 +86,8 @@ class Scene2D:
 class SceneBuilder:
     """Append primitives in draw order and build a batched Scene2D.
 
-    Arguments accept shared values or values per environment. Plural add methods
-    also accept a primitive axis. A width-sized vector is shared; use (B, 1) for
-    per-row scalar values. In plural methods, (B, width) is per environment;
-    use (1, n, width) for per-primitive values shared across environments.
+    A width-sized value is shared, ``(B, width)`` (``(B, 1)`` for scalars) is per environment, and plural add
+    methods also take ``(1, n, width)`` per-primitive values.
     """
 
     def __init__(
@@ -210,7 +207,16 @@ class SceneBuilder:
         inner_color: Batched | None = None,
         enabled: Batched | None = None,
     ) -> None:
-        """Add a filled disc with an optional concentric inner disc and independent color."""
+        """Add a filled disc with an optional concentric inner disc and independent color.
+
+        Args:
+            center: Center ``(x, y)`` in world units.
+            radius: Radius in world units.
+            color: RGB in 0 to 255.
+            inner_radius: Radius of the inner disc (none if 0).
+            inner_color: RGB of the inner disc.
+            enabled: Whether each row draws the disc (all rows if None).
+        """
         c = self._b(center, 2)
         r = self._b(radius, 1)
         ir = self._b(inner_radius, 1)
@@ -225,9 +231,16 @@ class SceneBuilder:
         outline_w: Batched = 0.0,
         enabled: Batched | None = None,
     ) -> None:
-        """Add a convex CCW polygon from (V, 2) or (B, V, 2) vertices.
+        """Add a convex CCW polygon from ``(V, 2)`` or ``(B, V, 2)`` vertices.
 
         Repeat the last vertex when padding; exceeding vertex capacity raises ValueError.
+
+        Args:
+            verts: Vertices in world units, counterclockwise.
+            color: Fill RGB in 0 to 255.
+            outline_color: Outline RGB (no outline if None).
+            outline_w: Outline width in world units.
+            enabled: Whether each row draws the polygon (all rows if None).
         """
         t = torch.as_tensor(verts, device=self.device, dtype=self.dtype)
         if t.ndim == 2:
@@ -242,7 +255,15 @@ class SceneBuilder:
     def add_segment(
         self, a: Batched, b: Batched, half_w: Batched, color: Batched, enabled: Batched | None = None
     ) -> None:
-        """Add a capsule from endpoints and a half-width in world units."""
+        """Add a capsule from endpoints and a half-width in world units.
+
+        Args:
+            a: First endpoint ``(x, y)``.
+            b: Second endpoint ``(x, y)``.
+            half_w: Half the capsule width.
+            color: RGB in 0 to 255.
+            enabled: Whether each row draws the capsule (all rows if None).
+        """
         geom = torch.cat([self._b(a, 2), self._b(b, 2), self._b(half_w, 1)], dim=1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled)
 
@@ -268,7 +289,17 @@ class SceneBuilder:
         outline_w: Batched = 0.0,
         enabled: Batched | None = None,
     ) -> None:
-        """Add a rectangle with full width/height and optional rotation in radians."""
+        """Add a rectangle with full width/height and optional rotation in radians.
+
+        Args:
+            center: Center ``(x, y)`` in world units.
+            size: Full ``(width, height)``.
+            color: Fill RGB in 0 to 255.
+            angle: Rotation in radians (none if None).
+            outline_color: Outline RGB (no outline if None).
+            outline_w: Outline width in world units.
+            enabled: Whether each row draws the rectangle (all rows if None).
+        """
         c = self._b(center, 2)
         s = self._b(size, 2) * 0.5
         base = self._corners(s)
@@ -343,11 +374,9 @@ class SceneBuilder:
         self.add_polys((base + c.unsqueeze(1)).reshape(self.B, n, 4, 2), color, outline_color, outline_w, enabled)
 
     def mark_static(self) -> SceneBuilder:
-        """Offer all primitives appended so far as a state-independent prefix for caching.
+        """Offer the primitives appended so far as a state-independent prefix for caching.
 
-        The rasterizer checks that prefix values are uniform across the batch before
-        baking. A supplied non-shared style declines the request early. Strides alone
-        cannot establish equal values.
+        The rasterizer bakes the prefix only if its values are uniform across the batch.
         """
         self._static = self._n
         return self
@@ -359,7 +388,13 @@ class SceneBuilder:
         return K if self._style.shared else 0
 
     def build(self, background: Batched, world: Sequence[float], flip_y: bool = False) -> Scene2D:
-        """Build a validated nonempty scene; world is (x0, y0, x1, y1) in native units."""
+        """Build a validated nonempty scene.
+
+        Args:
+            background: Background RGB in 0 to 255.
+            world: ``(x0, y0, x1, y1)``, the world rectangle the frame shows.
+            flip_y: Set when the world's +y points up, since the image's +y points down.
+        """
         if not self._kind:
             raise ValueError("scene has no primitives")
         cat = lambda xs: (xs[0] if len(xs) == 1 else torch.cat(xs, dim=1)).contiguous()  # noqa: E731

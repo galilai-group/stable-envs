@@ -1,6 +1,6 @@
-"""Per-lane MuJoCo model parameters driven by Variation leaves.
+"""Per-lane MuJoCo model parameters driven by variation leaves.
 
-Values travel in State under ``("physics", *leaf.split("."))``.
+Values travel in state under ``("physics", *leaf.split("."))``.
 """
 
 from __future__ import annotations
@@ -97,7 +97,7 @@ class PhysicsLayout:
 
 
 def state_key(leaf: str) -> tuple[str, ...]:
-    """Return the State key path that stores ``leaf``."""
+    """Return the state key path that stores ``leaf``."""
     return (PHYSICS_KEY, *leaf.split("."))
 
 
@@ -474,7 +474,7 @@ class PhysicsLanes:
         }
 
     def rows_from_state(self, state) -> np.ndarray:
-        """Read ``(num_envs, dim)`` physics rows from State; every physics field must be present."""
+        """Read ``(num_envs, dim)`` physics rows from state; every physics field must be present."""
         keys = set(state.keys(True, True))
         missing = [".".join(k) for k in self.state_fields() if k not in keys]
         if missing:

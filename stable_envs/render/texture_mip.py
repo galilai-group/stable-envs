@@ -130,11 +130,7 @@ def _neighbor(directions: torch.Tensor, axis: int) -> torch.Tensor:
 
 
 def sample_skybox_filtered(sky: torch.Tensor, face_w: int, directions: torch.Tensor) -> torch.Tensor:
-    """Filter a six-face vertical MuJoCo skybox for an H×W grid of world rays.
-
-    Each mip is built within its own face. Neighbor rays are projected onto the
-    current pixel's face to keep footprint estimates continuous across seams.
-    """
+    """Filter a six-face vertical MuJoCo skybox for an ``H x W`` grid of world rays."""
     if sky.shape[:2] != (6 * face_w, face_w) or directions.ndim != 3 or directions.shape[-1] != 3:
         raise ValueError("Expected a six-face skybox and an H×W×3 direction grid")
     cube = torch.stack((directions[..., 0], directions[..., 2], -directions[..., 1]), dim=-1)

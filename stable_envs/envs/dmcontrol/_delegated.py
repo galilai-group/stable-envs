@@ -13,7 +13,7 @@ from .simulation.physics import LEAVES
 class DelegatedSemantics:
     """Select native DMC or CUDA Warp physics; ``backend`` still selects rendering.
 
-    The physics Variation leaves of the simulator are reset-time leaves and travel in State."""
+    The physics variation leaves of the simulator are reset-time leaves and travel in state."""
 
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0
@@ -123,7 +123,7 @@ class DelegatedSemantics:
         return TensorDict(values, [len(rows)], device=self.device)
 
     def render(self, state=None, **kwargs):
-        """A State's own physics values draw the leaves that move pixels, unless the call names them."""
+        """A state's own physics values draw the leaves that move pixels, unless the call names them."""
         state = self.get_state() if state is None else state
         leaves = sorted(self.FRAME_PHYSICS)
         if leaves and "style" not in kwargs and isinstance(state, TensorDict):
@@ -135,7 +135,7 @@ class DelegatedSemantics:
                 values = values.to(device=self.device, dtype=torch.float32)
                 rows = self._style.values.shape[0]
                 current = torch.cat([self._style[p].reshape(rows, -1) for p in drawn], 1)
-                # The live style already draws a State this env produced; skip the per-call override.
+                # The live style already draws a state this env produced; skip the per-call override.
                 if values.shape != current.shape or not torch.equal(values, current):
                     variation.update({p: values[:, i : i + 1] for i, p in enumerate(drawn)})
             kwargs["variation"] = variation or None

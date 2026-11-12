@@ -1,91 +1,119 @@
 # Quickstart
 
-Install the core and construct an environment by class name. See [Install](install.md) for extras
-and pinned profiles.
+Take one environment from construction to close: its state, frames, steps, save and restore, and variation. Each code block continues from the one before it, and everything runs on CPU with the core install (`pip install stable-envs`).
 
-```bash
-pip install stable-envs
-```
+## Environment
+
+Every environment is a class on `snv`, and `num_envs` is how many copies run side by side, so think of it as the batch size:
 
 ```python
-import numpy as np
 import stable_envs as snv
 
-env = snv.CartPole(num_envs=2, device="cpu")
-state = env.reset(seed=17)
-pixels = env.render(state)
-action = np.array([[0], [1]], dtype=np.int64)
-out = env.step(action)
-assert env.set_state(state) is None
-assert (env.step(action) == out).all()
-env.close()
+env = snv.CartPole(num_envs=4, device="cpu")
+print(env.action_spec)  # Spec(shape=(1,), dtype=int64, n=2)
+print(env.frame_spec)   # Spec(shape=(400, 600, 3), dtype=uint8, bounds=[0, 255])
 ```
 
-`num_envs` is the number of environments that run together. You can think of it as the batch size.
-`reset`, `step` and `set_state` use this batch. For most classes, `render(state)` also accepts a State
-with a different batch. `PyFlytRocketLanding`, `OGBCube` and `OGBScene` refuse a State whose batch is
-not `num_envs`.
+Every tensor the environment returns lives on `device`. The [specs](terms.md#spec) describe one environment, without the batch axis. `snv.make("CartPole", num_envs=4)` builds the same thing from a string, and `snv.list_envs()` lists the classes that registered on your interpreter. [Env](api/env.md#construction) has the constructor arguments every class shares and the default device of each class.
 
-`env.close()` stops the simulator's worker processes and frees the environment's own buffers.
-Renderer contexts that other environments share stay cached. A second call has no effect. An
-environment is also a context manager: `with snv.CartPole(num_envs=2) as env:` closes it at the end
-of the block.
+## State
 
-## State and frames
-
-`get_state()` returns an independent TensorDict snapshot of the full State. `state` is an alias.
-Fields include physical, task, lifecycle and RNG state, as the family needs. `state_spec` describes
-those fields. `action_spec` describes actions. `frame_spec` describes uint8 `(H,W,3)` output without
-the batch axis.
-
-For the CartPole example above, with `num_envs=2`:
+`reset(seed=...)` starts every environment and returns the [state](terms.md#state), a `tensordict.TensorDict` with one row per environment:
 
 ```python
-state.batch_size                      # torch.Size([2])
-list(state.keys())
+state = env.reset(seed=0)
+print(state.batch_size)  # torch.Size([4])
+print(list(state.keys()))
 # ['x', 'x_dot', 'theta', 'theta_dot', 'lifecycle', 'task', 'rng', 'physics']
-state["x"].shape, state["x"].dtype    # (torch.Size([2, 1]), torch.float64)
-state["rng", "state"].shape           # torch.Size([2, 4])
-list(state["physics"].keys())         # ['gravity', 'masscart', 'masspole', 'length', 'force_mag', 'tau']
-
-env.action_spec                       # Spec(shape=(1,), dtype=int64, n=2)
-env.frame_spec                        # Spec(shape=(400, 600, 3), dtype=uint8, bounds=[0, 255])
-pixels.shape, pixels.dtype            # (torch.Size([2, 400, 600, 3]), torch.uint8)
+print(state["x"].shape)  # torch.Size([4, 1])
 ```
 
-CartPole renders only at the native 400x600 size of the Gymnasium renderer.
+The state also holds things an agent shouldn't see, like TwoRoom's invisible target, so don't feed it to a model as-is. Picking what a model sees is stable-worldmodel's job. The keys differ from family to family, and `env.state_spec` lists them.
 
-`render(state)` converts the State to the renderer's private input internally. `set_state` refuses
-compact renderer rows, because they can omit fields that simulation needs. See
-[State](concepts/state.md).
+## Render a frame
 
-`step` accepts `[B,A]` actions or `[B,T,A]` action sequences. It returns the final State, the task
-outputs, the State history and the final frame by default. Use `frames=None` to skip rendering.
-Renderer-only classes refuse simulator operations. See [Stepping](concepts/dynamics.md).
+`render` draws one [frame](terms.md#frame) for each row of the state you pass:
 
 ```python
-list(out.keys())
-# ['state', 'reward', 'terminated', 'truncated', 'observation', 'info_state',
-#  'valid', 'states', 'state_valid', 'frames', 'frame_valid']
-out["reward"].shape                   # torch.Size([2])
-out["states"].batch_size              # torch.Size([2, 1])
-out["frames"].shape                   # torch.Size([2, 1, 400, 600, 3])
+frame = env.render(state)
+print(frame.shape, frame.dtype)  # torch.Size([4, 400, 600, 3]) torch.uint8
 ```
 
-The task outputs differ by family. `states` and `frames` keep a time axis, even for one action.
+Rendering doesn't advance the simulation, so you can render a state you stored long ago. Classic control renders only at Gymnasium's native size (400 × 600 for CartPole), and most other families take a `size` argument when you construct them. To look at a frame, save it as an image:
 
-## Registration and Variation
+```python
+# needs Pillow
+from PIL import Image
 
-- `snv.make("CartPole", num_envs=2, device="cpu")` constructs by class name.
-- `snv.list_envs()` lists the classes registered in this interpreter.
-- `snv.import_errors()` explains missing families.
-- `snv.info("CartPole")` returns metadata without constructing the environment.
+Image.fromarray(frame[0].cpu().numpy()).save("cartpole.png")
+```
 
-Variation covers appearance, physics, reset and task configuration. Check what the family supports
-before you use `set_variation` or reset options. See [Variations](concepts/variation-spaces.md).
+## Step
 
-State is a replay checkpoint and may contain privileged fields. stable-worldmodel selects learner
-observations. See [Sibling projects](concepts/worldmodel.md).
+`step` takes one action per environment, shaped `(B, A)`, or a sequence of actions shaped `(B, T, A)`:
 
-Next: [Lifecycle](concepts/lifecycle.md), [Environments](environments.md), and
-[Adding a component](adding/index.md).
+```python
+import torch
+
+action = env.action_spec.sample(4, env.rng)
+out = env.step(action)
+print(out["reward"])        # tensor([1., 1., 1., 1.], dtype=torch.float64)
+print(out["frames"].shape)  # torch.Size([4, 1, 400, 600, 3])
+
+actions = torch.ones(4, 3, 1, dtype=torch.int64)  # three steps of "push right"
+out = env.step(actions, frames=None)
+print(out["states"].batch_size)  # torch.Size([4, 3])
+print("frames" in out.keys())    # False
+```
+
+The [step result](terms.md#step-result) holds the final `state`, the task outputs such as `reward` and `terminated`, and the states and frames you pick with the `states` and `frames` arguments. By default you get every state and only the last frame, `None` turns either one off, and both keep a time axis even for a single action. `env.action_spec.sample` draws with `env.rng`, the generator that `reset` seeds. [Step outputs](api/env.md#step-outputs) lists every key and what happens when an episode ends inside a sequence.
+
+## Save and restore state
+
+`get_state` returns an independent copy of the full state, and `set_state` puts it back exactly:
+
+```python
+saved = env.get_state()
+first = env.step(action)
+env.set_state(saved)
+again = env.step(action)
+print(bool((first["state"] == again["state"]).all()))  # True
+```
+
+Stepping from a restored state repeats the same trajectory, which is what the `True` checks. `set_state` needs a full state with exactly `num_envs` rows, while most classes' `render` takes any batch size.
+
+## Variation
+
+Pass a [variation](terms.md#variation) to `render` to change the look, or name its leaves in the reset options to sample them for each environment:
+
+```python
+red = env.render(state, variation={"pole.color": [220, 40, 40]})
+print(bool((red != frame).any()))  # True
+print(env.variation_dim)           # 22
+
+state = env.reset(seed=1, options={"variation": ["physics.gravity"]})
+print(state["physics", "gravity"].shape)  # torch.Size([4, 1]), one draw per environment
+```
+
+[Randomize appearance and physics](tutorials/variation.md) covers sampling, installing and storing variation.
+
+## Close
+
+```python
+env.close()
+print(env.closed)  # True
+```
+
+Close an environment when you're done, either with a `with` block or by calling `close()`. Calling it twice is harmless. Don't count on garbage collection, because worker processes and GPU buffers stay alive until you close. After that, `reset`, `step`, `get_state`, `set_state` and `render` raise `RuntimeError` instead of quietly starting over.
+
+On Linux, some families step large batches in worker processes, which start with `spawn`. In scripts, put environment construction and the main loop in a function that runs under `if __name__ == "__main__":`.
+
+## Next steps
+
+The tutorials continue from here, in this order:
+
+1. [Store states, render later](tutorials/store-and-render.md): collect states without frames, save them, and render them while you train.
+2. [Randomize appearance and physics](tutorials/variation.md): give every batch row its own look and its own physics.
+3. [Write your own environment](tutorials/custom-env.md): subclass `snv.Env`, register it, and check that save and restore are exact.
+
+[Environments](environments.md) shows every class, and [API](api/index.md) covers every function and method.

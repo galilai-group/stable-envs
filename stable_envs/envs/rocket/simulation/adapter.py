@@ -13,7 +13,7 @@ from .replay import RocketReplay, generator_state, install_generator, is_zero_vi
 
 
 def check_values(template, values, num_envs):
-    """Check one ``{path: value}`` per lane against the Variation space of engine ``template``."""
+    """Check one ``{path: value}`` per lane against the variation space of engine ``template``."""
     if len(values) != num_envs:
         raise ValueError("Expected one Rocket Variation row per lane")
     for row in values:
@@ -24,7 +24,7 @@ def check_values(template, values, num_envs):
 
 
 def state_columns(state, fields, template, batch):
-    """Check a ``[batch]`` State against ``fields`` and its rows with engine ``template``; return the host columns.
+    """Check a ``[batch]`` state against ``fields`` and its rows with engine ``template``; return the host columns.
 
     The lanes of one batch share one configuration, so one engine checks every row.
     """
@@ -54,7 +54,7 @@ def split_rows(columns):
 
 
 class RocketAdapter(SimulatorAdapter):
-    """Batch CPU Rocket owners with CPU/CUDA State storage.
+    """Batch CPU Rocket owners with CPU/CUDA state storage.
 
     Validate every action before stepping any lane. Reset and restoration replace
     the engines one lane at a time, so the batch holds at most one extra engine.
@@ -88,7 +88,7 @@ class RocketAdapter(SimulatorAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration and Variation space describe the batch."""
+        """A lane whose configuration and variation space describe the batch."""
         return self.envs[0]
 
     @property
@@ -256,7 +256,7 @@ class RocketAdapter(SimulatorAdapter):
         return draw_tiny(self._scene, body, links, colors, size, ss)
 
     def render_live(self):
-        """Draw every lane's running scene with TinyRenderer, as ``render`` draws its State."""
+        """Draw every lane's running scene with TinyRenderer, as ``render`` draws its state."""
         body, links, colors = (np.stack(column) for column in zip(*(env.render_fields() for env in self.envs)))
         return self.draw(body, links, colors, *self.frame)
 
@@ -276,7 +276,7 @@ class RocketAdapter(SimulatorAdapter):
             env.configure(row)
 
     def variation_rows(self, attribute, keys):
-        """Return each lane's Variation leaves ``keys`` as one flat row of ``attribute`` values."""
+        """Return each lane's variation leaves ``keys`` as one flat row of ``attribute`` values."""
         return np.stack(
             [
                 np.concatenate(

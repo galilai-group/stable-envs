@@ -6,8 +6,7 @@ import numpy as np
 def normalized_mse(ours, source) -> np.ndarray:
     """Return RGB MSE divided by 255 squared for each leading frame index.
 
-    Inputs must be equal-shaped uint8 HWC or (..., H, W, 3) arrays. Work one frame
-    at a time to bound temporary memory. Empty leading selections return no errors.
+    Inputs are equal-shaped uint8 ``(..., H, W, 3)`` arrays.
     """
     a, b = np.asarray(ours), np.asarray(source)
     if a.dtype != np.uint8 or b.dtype != np.uint8:
@@ -50,10 +49,9 @@ def summarize_errors(errors, *, ddof=0, threshold=None) -> dict:
 
 
 def leaf_difference(actual, expected) -> dict:
-    """Compare leaf shape, dtype, and values, reporting the first mismatch and maximum error.
+    """Compare leaf shape, dtype and values, reporting the first mismatch and the maximum error.
 
-    Integer differences use Python integers to preserve wide RNG words. NaN
-    pairs compare equal; unequal nonfinite values have infinite error.
+    NaN pairs compare equal, and unequal non-finite values have infinite error.
     """
 
     def host(value):

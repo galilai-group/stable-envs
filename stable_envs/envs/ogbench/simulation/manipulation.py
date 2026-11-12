@@ -84,7 +84,7 @@ _LATE_RANK = {"variation": 8, "model": 9}
 
 
 def _leaf_rank(key):
-    """Sort key that keeps the State leaf order of one combined capture; Python's sort is stable."""
+    """Sort key that keeps the state leaf order of one combined capture; Python's sort is stable."""
     group = key[0]
     if group == "task":
         return (_TASK_RANK[key[1]], 0)
@@ -146,7 +146,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return self.get_state()
 
     def _dynamic_values(self, env):
-        """The State leaves a step can change."""
+        """The state leaves a step can change."""
         values = {}
         for name, flag in FLAGS.items():
             size = mujoco.mj_stateSize(env.model, flag)
@@ -186,9 +186,9 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return values
 
     def _static_values(self, env):
-        """The State leaves only reset, restore and ``configure`` change, cached on the lane until then.
+        """The state leaves only reset, restore and ``configure`` change, cached on the lane until then.
 
-        The leaves are copies of the PCG64 generators, the task, the Variation and the compiled model values.
+        The leaves are copies of the PCG64 generators, the task, the variation and the compiled model values.
         """
         cached = getattr(env, "_snv_static", None)
         if cached is not None:
@@ -255,7 +255,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         )
 
     def render_columns(self):
-        """The State leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
+        """The state leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
         self._check_open()
         rows = [self._render_values(env) for env in self.envs]
         return {key: np.stack([row[key] for row in rows]) for key in rows[0]}

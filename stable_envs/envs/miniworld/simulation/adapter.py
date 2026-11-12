@@ -1,6 +1,6 @@
-"""MovingBlockWorld State and frames: the State schema, its checks, and the fork's own GL drawing of a State.
+"""MovingBlockWorld state and frames: the state schema, its checks, and the fork's own GL drawing of a state.
 
-A State row is drawn by rebuilding the world in a ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its
+A state row is drawn by rebuilding the world in a ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its
 ``flowm_release`` branch, the code frozen for the FloWM paper) as ``MiniWorldEnv.reset`` builds it after
 ``_gen_world``: one rectangular room, the agent first in the entity list, the blocks after it in placement order,
 then the default (non-randomized) parameters and the static display list. Render envs hold a GL context each and
@@ -22,7 +22,7 @@ from tensordict import TensorDict
 FORK_COMMIT = "bc7972050155b67e242c07bfdccfe1eeddbf9882"
 FORK_URL = "https://github.com/hlillemark/Miniworld"
 
-#: Texture names of the Miniworld package; State stores an index into this tuple (-1: untextured box).
+#: Texture names of the Miniworld package; state stores an index into this tuple (-1: untextured box).
 TEXTURES = (
     "airduct_grate",
     "asphalt",
@@ -57,7 +57,7 @@ TEXTURES = (
     "wood",
     "wood_planks",
 )
-#: ``miniworld.entity.COLOR_NAMES``; State stores an index into this tuple.
+#: ``miniworld.entity.COLOR_NAMES``; state stores an index into this tuple.
 COLORS = ("blue", "green", "grey", "purple", "red", "yellow")
 BOX, BALL = 0, 1
 #: Highest action id of the fork's ``MiniWorldEnv.Actions`` (``done``).
@@ -263,7 +263,7 @@ def frame(env) -> np.ndarray:
 
 
 def state_fields(num_blocks: int) -> dict[tuple[str, str], tuple[int, torch.dtype]]:
-    """The State schema: ``{(group, name): (width, dtype)}``."""
+    """The state schema: ``{(group, name): (width, dtype)}``."""
     f64, i64, m = torch.float64, torch.int64, int(num_blocks)
     return {
         ("agent", "pos"): (3, f64),
@@ -291,7 +291,7 @@ def _ball_colors() -> dict[int, str]:
 
 
 def read_lane(env, num_blocks: int) -> dict:
-    """One environment's State values, read from a source env; ``num_blocks`` is the padded width.
+    """One environment's state values, read from a source env; ``num_blocks`` is the padded width.
 
     A source env has no counter-based generator, so the ``rng`` fields are 0.
     """
@@ -342,7 +342,7 @@ def read_lane(env, num_blocks: int) -> dict:
 
 
 def _world(row: dict) -> tuple:
-    """The parts of a lane's State that fix its static world (room, block kinds and sizes)."""
+    """The parts of a lane's state that fix its static world (room, block kinds and sizes)."""
     return tuple(
         tuple(np.asarray(row[key]).reshape(-1).tolist())
         for key in (
@@ -357,7 +357,7 @@ def _world(row: dict) -> tuple:
 
 
 def build_world(env, row: dict) -> None:
-    """Rebuild ``env``'s room and entities from State, as ``MiniWorldEnv.reset`` builds them after ``_gen_world``.
+    """Rebuild ``env``'s room and entities from state, as ``MiniWorldEnv.reset`` builds them after ``_gen_world``.
 
     The room (geometry, textures, collision segments and lights) is rebuilt only when its textures differ:
     lanes of one configuration differ only in their blocks, which are drawn per frame. ``frame`` compiles
@@ -398,7 +398,7 @@ def build_world(env, row: dict) -> None:
 
 
 def write_lane(env, row: dict) -> None:
-    """Write validated State values into a source env, rebuilding the world only when it differs."""
+    """Write validated state values into a source env, rebuilding the world only when it differs."""
     if getattr(env, "_se_world", None) != _world(row):
         build_world(env, row)
     blocks = env.entities[1:]
@@ -470,12 +470,12 @@ def validate_state(state, fields: dict, count_range: tuple[int, int], *, batch: 
 
 
 def pack_rows(state: TensorDict, fields: dict) -> np.ndarray:
-    """A validated State as ``(n, D)`` float64 rows for the render workers; every integer field is exact."""
+    """A validated state as ``(n, D)`` float64 rows for the render workers; every integer field is exact."""
     return np.concatenate([state[key].detach().cpu().numpy().astype(np.float64) for key in fields], axis=1)
 
 
 def unpack_rows(rows: np.ndarray, fields: dict) -> list[dict]:
-    """Inverse of :func:`pack_rows`: one State value dict per row."""
+    """Inverse of :func:`pack_rows`: one state value dict per row."""
     lanes, offset = [{} for _ in range(len(rows))], 0
     for key, (width, dtype) in fields.items():
         part = rows[:, offset : offset + width]
@@ -490,7 +490,7 @@ def unpack_rows(rows: np.ndarray, fields: dict) -> list[dict]:
 
 
 def draw_rows(env, rows: list[dict], out: np.ndarray) -> None:
-    """Draw State value dicts into ``out`` with ``env``.
+    """Draw state value dicts into ``out`` with ``env``.
 
     Rows are drawn in order of their world, room first, so each room's display list is compiled once and
     each world's blocks are built once.

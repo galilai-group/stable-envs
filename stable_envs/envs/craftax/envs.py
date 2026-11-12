@@ -1,10 +1,10 @@
-"""Craftax and Craftax-Classic: every lane in one stacked JAX pytree, advanced by one jitted vmap.
+"""Craftax and Craftax-Classic: the whole batch in one stacked JAX pytree, advanced by one jitted vmap.
 
-Lane ``i`` follows stable-worldmodel's ``CraftaxWrapper`` built with ``seed + i``. State holds each
+Batch row ``i`` follows stable-worldmodel's ``CraftaxWrapper`` built with ``seed + i``. State holds each
 leaf of the upstream ``EnvState`` under ``engine`` and the wrapper's PRNG key under ``key``, one row
-per lane; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
+per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
 scaled to uint8 as stable-worldmodel renders it. The symbolic tasks render the same frames from their
-State with the pixel renderer of their game, and return the symbolic vector as ``observation``.
+state with the pixel renderer of their game, and return the symbolic vector as ``observation``.
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ class CraftaxEnv(Env):
         return self._snapshot(self._k.export(self._live("get_state"), self._keys))
 
     def set_state(self, state):
-        """Restore every lane from a State with ``num_envs`` lanes; the State is copied."""
+        """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
 
     def reset(self, seed=None):
@@ -145,7 +145,7 @@ class CraftaxEnv(Env):
         return build_tensordict(result, [self.B], self.device)
 
     def render(self, state=None):
-        """Draw ``(N, H, W, 3)`` uint8 frames from a State of any batch, or from the live lanes."""
+        """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
         if state is None:
             return self._k.render(self._live("render"))
         return self._k.render_state(self._checked(state, "render"), self.device)

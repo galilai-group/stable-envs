@@ -3,9 +3,9 @@
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
 See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
-Torch owns the live State. Steps exchange device buffers through DLPack and return
+Torch owns the live state. Steps exchange device buffers through DLPack and return
 new position arrays. Borrowed inputs are not retained between steps or donated to
-JAX, so public State snapshots keep independent storage. Packing position, action
+JAX, so public state snapshots keep independent storage. Packing position, action
 and style into one device buffer amortizes the DLPack stream handoff and handles
 strided or unaligned inputs. The first call compiles the physics kernel;
 masking, observations and task outputs remain in the shared navigation code.

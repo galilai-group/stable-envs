@@ -654,7 +654,7 @@ class PyFlytRocketLanding(Env):
         "Under sampled appearance, some lit colours differ by one level of rounding. " + DOCUMENTED_LIMITATIONS
     )
 
-    # The base packs observation geometry only; the semantic subclass owns complete simulator State.
+    # The base packs observation geometry only; the semantic subclass owns complete simulator state.
     state_layout = (
         (("rocket", "angular_velocity"), 3, 0),
         (("rocket", "orientation"), 4, 3),
@@ -754,7 +754,7 @@ class PyFlytRocketLanding(Env):
     ) -> torch.Tensor:
         """Render (..., 13) pose rows and per-row appearance to uint8 RGB.
 
-        Frames can differ from the source renderer; see ``visual_note``.
+        Frames can differ from the upstream renderer; see ``visual_note``.
         """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -797,7 +797,7 @@ class PyFlytRocketLanding(Env):
 
     @classmethod
     def reference_render(cls, env, states, style=None, return_flags: bool = False):
-        """Render lagged official frames; optionally return per-row exclusion flags.
+        """Render lagged upstream frames; optionally return per-row exclusion flags.
 
         Contact-band reconstruction failures return synchronized frames with True
         flags. The same flags are stored in last_reference_unreachable, which is

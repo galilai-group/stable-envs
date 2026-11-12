@@ -1,10 +1,10 @@
-"""Write PNG sheets for registered envs: reset frames, a short rollout, and sampled Variation.
+"""Write PNG sheets for registered envs: reset frames, a short rollout, and sampled variation.
 
 Per env, under ``--out/<env>/``:
 
   ``reset.png``       one frame per lane after ``reset``
   ``rollout.png``     lane 0 over ``--steps`` random actions, for envs with dynamics
-  ``variation.png``   lane 0's State under one sampled appearance per lane, for envs whose
+  ``variation.png``   lane 0's state under one sampled appearance per lane, for envs whose
                       ``render`` takes ``variation=``
 
     python examples/gallery.py --out media

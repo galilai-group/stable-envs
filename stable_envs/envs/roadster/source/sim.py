@@ -231,7 +231,7 @@ class RoadsterSim:
 
     # ------------------------------------------------------------------ visual effects
     def _refresh_fx_geoms(self):
-        """World poses of the effect geoms from the model values just written (what mj_kinematics would do)."""
+        """World poses of the effect geoms from the newly written model values (what mj_kinematics would do)."""
         m, d, g, b = self.model, self.data, self._fx_geoms, self._fx_bodies
         R = d.xmat[b].reshape(-1, 3, 3)
         d.geom_xpos[g] = d.xpos[b] + np.einsum("nij,nj->ni", R, m.geom_pos[g])

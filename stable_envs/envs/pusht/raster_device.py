@@ -1,4 +1,4 @@
-"""PushT primitive records built on the device from State tensors, equal to ``raster.primitives``."""
+"""PushT primitive records built on the device from state tensors, equal to ``raster.primitives``."""
 
 from __future__ import annotations
 
@@ -454,7 +454,7 @@ class StaticFrames:
 
 
 class DeviceRenderer:
-    """Render PushT State tensors on CUDA with Triton, with primitives built on the device.
+    """Render PushT state tensors on CUDA with Triton, with primitives built on the device.
 
     A call reads one small flag tensor back to the host; templates, clipped lines, static frames and
     host fallbacks that it reports take extra work only when they occur.

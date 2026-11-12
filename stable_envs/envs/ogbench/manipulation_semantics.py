@@ -12,7 +12,7 @@ from ...specs import CompositeSpec, Spec
 
 
 class _OwnStates:
-    """The simulator's step pipeline; each State it returns is recorded as the env's own."""
+    """The simulator's step pipeline; each state it returns is recorded as the env's own."""
 
     def __init__(self, env, pipeline):
         self._env, self._pipeline = env, pipeline
@@ -228,14 +228,14 @@ class ManipulationSemantics:
         from .simulation import render_state as pixels
 
         self._check_open("to_render_state")
-        # The live State comes from this env's own simulator, so only a supplied State is checked.
+        # The live state comes from this env's own simulator, so only a supplied state is checked.
         trusted = state is None
         size = self.size if size is None else size
         supersample = self.ss if supersample is None else supersample
         if trusted:
             state = self.get_state()
         elif state is not self.__dict__.get("_own_state"):
-            # A State this env's simulator returned needs only the RenderState checks below.
+            # A state this env's simulator returned needs only the RenderState checks below.
             self._simulator.validate(state)
         if host:
             state = state.select(*pixels.projected_keys(self.CELL)).cpu()
@@ -253,7 +253,7 @@ class ManipulationSemantics:
         self._check_open("render")
         if any(value is not None and type(value) is not int for value in (size, supersample)):
             raise ValueError("Render size and supersample must be integers")
-        # A projected State is validated once, by ``project``.
+        # A projected state is validated once, by ``project``.
         validated = checked or state is None or isinstance(state, TensorDict) and "physics" in state.keys()
         if validated and not checked:
             sampling = self.ss if supersample is None else supersample
@@ -325,7 +325,7 @@ class ManipulationSemantics:
         for name, (off, width) in style.layout.items():
             key = ("appearance", name)
             if key in schema:
-                # Shortest float32 decimals recover the float64 values the State path compiles,
+                # Shortest float32 decimals recover the float64 values the state path compiles,
                 # so both paths share one compiled model.
                 exact = np.array([float(str(v)) for v in host[:, off : off + width].ravel()], np.float64)
                 values[key] = torch.as_tensor(exact, device=device).reshape(b, *schema[key][0])
@@ -345,7 +345,7 @@ class ManipulationSemantics:
         norm = torch.linalg.vector_norm(quat, dim=-1, keepdim=True)
         identity = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64, device=rows.device)
         quat.copy_(torch.where(norm < 1e-15, identity, quat / norm.clamp_min(1e-15)))
-        # Rounding happens on the rows' device, so a host State holds the same bits.
+        # Rounding happens on the rows' device, so a host state holds the same bits.
         rows = torch.cat([qpos, rows[:, nq:]], dim=1).to(device)
         values["pose", "qpos"] = rows[:, :nq]
         values["pose", "mocap_pos"] = rows[:, nq : nq + 3]
@@ -447,7 +447,7 @@ def _opengl_fidelity(renderer):
 
 
 class OGBCube(ManipulationSemantics, _CubeRenderer):
-    """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
+    """Cube simulation with restorable state and MuJoCo OpenGL rendering on CPU and GPU.
 
     On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
     source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
@@ -459,7 +459,7 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
 
 
 class OGBScene(ManipulationSemantics, _SceneRenderer):
-    """Scene simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
+    """Scene simulation with restorable state and MuJoCo OpenGL rendering on CPU and GPU.
 
     On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
     source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures

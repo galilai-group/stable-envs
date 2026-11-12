@@ -55,7 +55,7 @@ def _require_fork() -> None:
 
 @register
 class MiniWorldMovingBlockWorld(Env):
-    """MovingBlockWorld environments stepped in one batch, with complete restorable State and Miniworld's own frames.
+    """MovingBlockWorld environments stepped in one batch, with complete restorable state and Miniworld's own frames.
 
     State: the agent pose and carried block, the room textures, each block's kind, color, texture, size,
     pose and velocity, the reset generator's seed and episode, and the step count.
@@ -143,7 +143,7 @@ class MiniWorldMovingBlockWorld(Env):
         return self._simulator.get_state()
 
     def set_state(self, state):
-        """Restore every environment from a State with ``num_envs`` rows; the State is copied."""
+        """Restore every environment from a state with ``num_envs`` rows; the state is copied."""
         self._check_open("set_state")
         self._simulator.set_state(state)
 
@@ -157,11 +157,11 @@ class MiniWorldMovingBlockWorld(Env):
         return self._simulator.step(actions, active=active)
 
     def render(self, state=None, *, size=None, supersample=None, variation=None, style=None, out=None):
-        """Draw ``(N, size, size, 3)`` uint8 frames from a State of any batch, or from the live environments.
+        """Draw ``(N, size, size, 3)`` uint8 frames from a state of any batch, or from the live environments.
 
         ``size`` defaults to the env's; ``out`` takes a contiguous uint8 buffer of the frames' shape. Miniworld
-        has no supersampling and no Variation, so ``supersample`` other than 1, ``variation`` and ``style``
-        raise. A State batch of at least ``render_worker_min_rows`` rows draws in render workers
+        has no supersampling and no variation, so ``supersample`` other than 1, ``variation`` and ``style``
+        raise. A state batch of at least ``render_worker_min_rows`` rows draws in render workers
         (``miniworld-render`` tuning path); the frames are the same as drawn in this process.
         """
         self._check_open("render")

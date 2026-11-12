@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stable-envs"
-description = "A batched research-environment library with explicit state, dynamics, variation spaces, and fast state-driven CPU/GPU rendering"
+description = "Fast and Reproducible Environments with Controllable Variations"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = "MIT"

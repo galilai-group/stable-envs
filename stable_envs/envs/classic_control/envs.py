@@ -144,7 +144,7 @@ class _Classic(Env):
         return self._sim_columns(drawn=True)
 
     def _state_td(self, sim: torch.Tensor) -> TensorDict:
-        """Copy (n, sim_dim) float64 into named State fields without reducing precision."""
+        """Copy (n, sim_dim) float64 into named state fields without reducing precision."""
         n = int(sim.shape[0])
         return TensorDict(
             {nm: sim[:, i : i + 1].clone() for i, nm in enumerate(self.sim_state_names)},
@@ -153,7 +153,7 @@ class _Classic(Env):
         )
 
     def _sim_from_state(self, state) -> torch.Tensor:
-        """Validate State and concatenate named fields into an (n, sim_dim) float64 tensor."""
+        """Validate state and concatenate named fields into an (n, sim_dim) float64 tensor."""
         names = self.sim_state_names
         self._validate_state(state)
         n = int(state.batch_size[0]) if state.batch_size else 1
@@ -291,7 +291,7 @@ class _Classic(Env):
     def _varied_geometry(self, sty, own: bool) -> np.ndarray | None:
         """Return host (n, k) float64 geometry-leaf values, or None when every lane draws the constant geometry.
 
-        The answer is cached per installed Variation, so rendering the env's own appearance reads
+        The answer is cached per installed variation, so rendering the env's own appearance reads
         nothing back from the device after the first frame.
         """
         if not self.geometry_leaves:

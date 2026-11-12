@@ -54,7 +54,7 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
         for value in values:
             self._metadata.envs[0].validate_options({"variation": [], "variation_values": value})
         self.call("configure", values)
-        # ``variation_values`` reads the shared State.
+        # ``variation_values`` reads the shared state.
         self._request("get_state")
 
     def make_variation_space(self):

@@ -124,7 +124,7 @@ def _stack_outputs(history, valid, shared=(), spares=None):
 
 
 def _stack_states(values):
-    """Stack owned State snapshots along a new time axis, leaf by leaf."""
+    """Stack owned state snapshots along a new time axis, leaf by leaf."""
     return stack_leaves(values)
 
 
@@ -213,7 +213,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     advance = getattr(env, "_advance_without_snapshot", env._step)
     outputs_owned = getattr(env, "_step_outputs_owned", False)
     shared = tuple(getattr(env, "_shared_outputs", ()))
-    # Draws the live lanes without rebuilding them from the State snapshot.
+    # Draws the live lanes without rebuilding them from the state snapshot.
     render_live = getattr(env, "_render_live", None)
     all_active = True
     result, live_state, live_frame = None, None, None
@@ -230,7 +230,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         active = flags[0].view(-1)
     else:
         active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
-    # Frames drawn from the live lanes, here or in pipeline workers, need no State snapshot.
+    # Frames drawn from the live lanes, here or in pipeline workers, need no state snapshot.
     pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
     draws_live = render_live is not None and (pipeline is None or pipeline_frames)
     # Families whose frames depend only on packed render rows keep the rows and draw every frame in one call.

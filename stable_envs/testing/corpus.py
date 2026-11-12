@@ -1,8 +1,6 @@
 """Sealed numeric trajectories for one registration.
 
-State arrays have shape [T+1, B, ...]; actions and task outputs use [T, B, ...].
-The manifest records source and producer identities. Loading verifies hashes
-and schema; registration acceptance requires separate comparisons and gates.
+State arrays are ``(T+1, B, ...)`` and actions and task outputs ``(T, B, ...)``. Loading verifies hashes and schema.
 """
 
 from __future__ import annotations
@@ -76,7 +74,7 @@ class Trajectory:
     arrays: dict[str, np.ndarray]
 
     def state(self, index, *, device="cpu"):
-        """Copy one time index into an owned batched State on the requested device."""
+        """Copy one time index into an owned batched state on the requested device."""
         if type(index) is not int or not 0 <= index <= self.metadata["steps"]:
             raise IndexError(index)
         result = TensorDict({}, batch_size=[self.metadata["batch"]], device=device)

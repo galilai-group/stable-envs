@@ -20,7 +20,7 @@ def variation_values(row, prefix):
 
 
 class PushTProjection:
-    """Render numeric State through a separate CPU Pygame scene per lane.
+    """Render numeric state through a separate CPU Pygame scene per lane.
 
     Geometry changes rebuild the scene; other frames install poses, colors and
     captured contact segments. Rendering never steps the physics owner or replays

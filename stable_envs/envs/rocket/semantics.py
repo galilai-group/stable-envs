@@ -19,7 +19,7 @@ from .simulation.execution import make_rocket_adapter
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
-    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering.
+    """Rocket CPU dynamics with replay-backed state and CPU/CUDA rendering.
 
     PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
     poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
@@ -251,7 +251,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self._render_state_of(state, size, supersample)
 
     def _render_state_of(self, state, size, supersample):
-        """The RenderState of a full State, without the checks of ``to_render_state``."""
+        """The RenderState of a full state, without the checks of ``to_render_state``."""
         style = self._style_of(state["render", "rgba"])
         result = TensorDict(
             {
@@ -282,11 +282,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device, dtype=torch.float32).reshape(-1, 13)
         # Appearance and all simulator leaves remain absent. This incomplete
-        # projection cannot be passed to set_state or impersonate full State.
+        # projection cannot be passed to set_state or impersonate full state.
         return TensorDict({("renderer", "pose"): rows.clone()}, [len(rows)], device=self.device)
 
     def default_style(self):
-        """The default Variation row with the pad color the source actually draws by default."""
+        """The default variation row with the pad color the source actually draws by default."""
         row = np.array(super().default_style(), np.float32)
         off, width = next((o, w) for p, o, w in self.variation_space.flat_layout() if p == "pad.color")
         row[off : off + width] = self.DRAWN_PAD_DEFAULT
@@ -298,7 +298,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return torch.as_tensor(np.asarray(value, np.float32), device=self.device)
 
     def _renderer_rows(self, rows):
-        """Variation-layout rows -> renderer style rows (flame off; ignition is State, not appearance)."""
+        """Variation-layout rows -> renderer style rows (flame off; ignition is state, not appearance)."""
         rows = self._as_rows(rows).reshape(-1, self.variation_dim)
         source = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
         out = torch.zeros((len(rows), frozen.style_dim()), dtype=torch.float32, device=self.device)
@@ -309,9 +309,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return out
 
     def resolve_style(self, style=None, variation=None, batch=None):
-        """Renderer appearance: an explicit style, else one set for rendering, else the State's.
+        """Renderer appearance: an explicit style, else one set for rendering, else the state's.
 
-        Supplied pose rows carry no ignition, so the State's appearance applies to them with the flame off.
+        Supplied pose rows carry no ignition, so the state's appearance applies to them with the flame off.
         """
         overrides, style = _split_appearance(variation, style)
         if isinstance(style, StyleTensor):
@@ -326,7 +326,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         elif self._render_style is not None:
             rows = self._render_style
         else:
-            # The live colors alone; exporting and validating the whole State is not needed for them.
+            # The live colors alone; exporting and validating the whole state is not needed for them.
             rows = self._style_of(self._simulator.rgba())
             rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:
@@ -345,7 +345,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return style if batch is None else style.for_batch(int(batch), owner=f"{type(self).__name__}.render")
 
     def set_style(self, style=None, **overrides):
-        """Set the appearance used when rendering supplied rows; None returns to the State's."""
+        """Set the appearance used when rendering supplied rows; None returns to the state's."""
         if style is None and not overrides:
             self._render_style = None
             return self.to_render_state()["renderer", "style"]
@@ -380,13 +380,13 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             return frames
         if full_state:
             full = self.get_state() if state is None else state
-            # The whole State is checked while the frames are drawn; no frame returns before it passes.
+            # The whole state is checked while the frames are drawn; no frame returns before it passes.
             check = functools.partial(self._simulator.validate, full)
             try:
                 state = self._render_state_of(full, size, supersample)
                 b, complete, resolution, ss = self._render_dimensions(state, size, supersample)
             except Exception:
-                # The State's own error comes first, as when ``to_render_state`` checks it.
+                # The state's own error comes first, as when ``to_render_state`` checks it.
                 check()
                 raise
         else:
@@ -417,7 +417,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return frames
 
     def _render_full_cpu(self, state, size, supersample):
-        """Draw full States with TinyRenderer; the State is checked while the frames are drawn."""
+        """Draw full states with TinyRenderer; the state is checked while the frames are drawn."""
         from . import render as rocket_render
 
         state = self.get_state() if state is None else state
@@ -427,7 +427,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             if not all(np.isfinite(value).all() for value in fields.values()):
                 raise ValueError("Invalid Rocket RenderState")
         except Exception:
-            # The State's own error comes first, as when ``to_render_state`` checks it.
+            # The state's own error comes first, as when ``to_render_state`` checks it.
             check()
             raise
         if (fields["rgba"] < 0).any() or (fields["rgba"] > 1).any():

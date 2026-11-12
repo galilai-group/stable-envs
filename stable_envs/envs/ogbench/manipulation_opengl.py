@@ -366,7 +366,7 @@ def frames(family, columns, device, fast=False):
 
 
 def prepare(family, state, device, chunk_size=None, validated=False):
-    """Validate a render State unless ``validated``; return its host copy, the torch device and the frame size."""
+    """Validate a render state unless ``validated``; return its host copy, the torch device and the frame size."""
     host = state.cpu()
     if any(value.requires_grad for value in host.values(True, True)):
         host = host.detach()

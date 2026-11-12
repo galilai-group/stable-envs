@@ -90,7 +90,7 @@ def header(family, b, size, supersample, device):
 
 
 def projected_keys(family):
-    """The State leaves ``project`` reads."""
+    """The state leaves ``project`` reads."""
     keys = [("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")]
     keys += [("model", "compiled", name) for name in (*STATIC, "agent.color", "floor.color")]
     keys.append(("variation", "current", "cube.color"))
@@ -100,7 +100,7 @@ def projected_keys(family):
 
 
 def state_columns(family, columns, size, supersample):
-    """NumPy RenderState columns from trusted stacked State leaves, as ``project`` would fill them."""
+    """NumPy RenderState columns from trusted stacked state leaves, as ``project`` would fill them."""
     b = len(columns["physics", "qpos"])
     values = {
         ("renderer", "size"): np.full((b, 1), size, np.int64),

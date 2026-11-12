@@ -44,7 +44,7 @@ _GRID_MASKS: dict = {}
 # (domain, task, size) -> grid slots with model-specific texture addresses.
 _GRID_SLOTS: dict = {}
 # (domain, task, size) -> env, model, data, pristine arrays, renderer, episode slots.
-# These reference renderers stay alive for the process lifetime.
+# These upstream renderers stay alive for the process lifetime.
 _ENV_CACHE: dict = {}
 # Captured GPU contexts are bounded and released on eviction.
 _TC_CACHE = _RES.BoundedCache(3, name="dmcontrol.tc", on_evict=MW.release_cached_ctx)

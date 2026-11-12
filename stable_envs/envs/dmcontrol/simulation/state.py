@@ -36,7 +36,7 @@ def core_fields(nq, nv, na=0):
 
 
 def new_columns(batch, fields):
-    """Empty host State columns for ``batch`` lanes."""
+    """Empty host state columns for ``batch`` lanes."""
     return {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
 
 
@@ -100,7 +100,7 @@ def export_state(envs, cumulative, fields, device, extra=None):
 
 
 def restore_lane(env, row, fields, cumulative, lane):
-    """Write one exported State row back into a lane, model entries before forward kinematics."""
+    """Write one exported state row back into a lane, model entries before forward kinematics."""
     physics, base = env.physics, env._env
     for key in fields:
         if key in MODEL_FIELDS:

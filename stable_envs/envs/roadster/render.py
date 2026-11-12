@@ -71,10 +71,10 @@ LOOKS = ("wm", "cinematic")
 class _Renderer:
     """A render-only copy of the world at one resolution and look.
 
-    ``wm``: the world-model camera (no MSAA, no shadows). ``cinematic``: the same camera and State on the
+    ``wm``: the world-model camera (no MSAA, no shadows). ``cinematic``: the same camera and state on the
     dark-space scene (grid floor fading to black, no decorative scenery, a sun that follows the car with real
     shadows, 8x MSAA) with post-processing (bloom, filmic grade, vignette; no grain and no motion blur, so a
-    State gives identical pixels). Both draw the same State; only appearance differs. ``postfx=False`` leaves
+    state gives identical pixels). Both draw the same state; only appearance differs. ``postfx=False`` leaves
     the cinematic frame raw.
     """
 

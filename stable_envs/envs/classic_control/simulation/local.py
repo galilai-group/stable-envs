@@ -1,4 +1,4 @@
-"""Gymnasium classic-control simulation with complete continuation State."""
+"""Gymnasium classic-control simulation with complete continuation state."""
 
 from __future__ import annotations
 
@@ -218,7 +218,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             raise RuntimeError("ClassicControlAdapter is closed")
 
     def configure(self, values: Mapping[str, np.ndarray]) -> None:
-        """Apply each lane's physics Variation values to its Gymnasium env."""
+        """Apply each lane's physics variation values to its Gymnasium env."""
         self._check_open()
         columns = {name: np.asarray(rows) for name, rows in values.items()}
         for i in range(self.num_envs):
@@ -347,7 +347,7 @@ class ClassicControlAdapter(SimulatorAdapter):
                 base.state = np.asarray(values, dtype=dtype)
 
             env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
-            # A State exists only after reset, so restore the wrapper's reset flag too.
+            # A state exists only after reset, so restore the wrapper's reset flag too.
             env.env._has_reset = True
             rng_state = {
                 "bit_generator": "PCG64",

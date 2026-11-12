@@ -1,7 +1,7 @@
 """Classic-control dynamics stepped for every lane at once, in NumPy or in Torch.
 
 Gymnasium environments still own resets, the PCG64 streams and the physics values, so seeded resets
-and State export match :class:`ClassicControlAdapter`. Steps repeat each source ``step`` in float64,
+and state export match :class:`ClassicControlAdapter`. Steps repeat each source ``step`` in float64,
 in the same operation order. Where the source computes in float32 (a float32 action, or the float32
 state of MountainCarContinuous), the kernel rounds through float32 after each such operation. Float64
 has more than twice the float32 precision, so each rounded result is the float32 result.
@@ -457,7 +457,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def set_state(self, state: TensorDict) -> None:
         super().set_state(state)
-        # Gymnasium stores the State in its own types, for example float32 MountainCarContinuous lanes.
+        # Gymnasium stores the state in its own types, for example float32 MountainCarContinuous lanes.
         self._load(ClassicControlAdapter.get_state(self))
 
     def get_state(self) -> TensorDict:

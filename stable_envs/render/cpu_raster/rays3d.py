@@ -1,8 +1,4 @@
-"""Numba twins of the ``raycast3d`` intersectors that test each ray packet against its overlapping primitives.
-
-Every intersection repeats the float32 operation order of the Torch intersectors, so a hit is the same
-float as there. Culling only skips primitives whose inflated bounding sphere cannot meet a packet's rays.
-"""
+"""Numba twins of the ``raycast3d`` intersectors that test each ray packet against its overlapping primitives."""
 
 from __future__ import annotations
 
@@ -352,7 +348,7 @@ def packets(env, size):
 
 @njit(cache=True, error_model="numpy")
 def tile_cones(dirs, H, W, tile):
-    """Direction cones (T, 4) of the camera-ray tiles of an H x W grid, row-major tiles."""
+    """Direction cones ``(T, 4)`` of the camera-ray tiles of an H x W grid, row-major tiles."""
     tx = (W + tile - 1) // tile
     ty = (H + tile - 1) // tile
     out = np.empty((tx * ty, 4))

@@ -33,7 +33,7 @@ class _ReacherSemantics(DelegatedSemantics):
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 4)
-        # This projection omits velocity, RNG, lifecycle, and target z; it is not restorable State.
+        # This projection omits velocity, RNG, lifecycle, and target z; it is not restorable state.
         return TensorDict(
             {"qpos": rows[:, :2].clone(), "target_xy": rows[:, 2:].clone()}, [len(rows)], device=self.device
         )

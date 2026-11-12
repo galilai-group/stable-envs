@@ -13,11 +13,11 @@ def _lanes(task, count, seed):
 
 
 class RoadsterProcessAdapter(ProcessAdapter):
-    """Run the lanes of one Roadster task in persistent spawned workers, with State in shared buffers.
+    """Run the lanes of one Roadster task in persistent spawned workers, with state in shared buffers.
 
     Each worker owns a local ``RoadsterAdapter``; lane ``i`` resets with ``seed + i`` as in one local batch.
-    Workers write only the State fields a step changes; the fields only resets and restores change stay
-    cached here. A step that needs a frame but no State hands the render-row fields to ``draw_fields``,
+    Workers write only the state fields a step changes; the fields only resets and restores change stay
+    cached here. A step that needs a frame but no state hands the render-row fields to ``draw_fields``,
     which the env installs, so no snapshot is built for it (``FRAME_FIELDS``).
     """
 
@@ -31,11 +31,11 @@ class RoadsterProcessAdapter(ProcessAdapter):
 
     @property
     def live_frames(self) -> bool:
-        """Step frames come from the shared State fields, so no worker frame buffer is needed."""
+        """Step frames come from the shared state fields, so no worker frame buffer is needed."""
         return bool(self._static) and self.draw_fields is not None
 
     def _frame_fields(self) -> dict:
-        """Copy just the render-row fields: the changing ones from the shared buffers, the rest from the cache."""
+        """Copy only the render-row fields: the changing ones from the shared buffers, the rest from the cache."""
         if self._static_cache is None:
             self._state_leaves()  # fills the cache of the fields a step leaves unchanged
         return {
@@ -49,7 +49,7 @@ class RoadsterProcessAdapter(ProcessAdapter):
         return self.draw_fields(fields)
 
     def validate(self, state, *, batch=None):
-        """The local adapter's checks on the whole State, before any worker sees it; any batch unless given."""
+        """The local adapter's checks on the whole state, before any worker sees it; any batch unless given."""
         self._check_open()
         RoadsterAdapter.validate(self, state, batch=batch)
 

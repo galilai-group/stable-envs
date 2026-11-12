@@ -1,8 +1,4 @@
-"""Numba twin of ``cpu3d``: one floor plane, analytic movers, MJWarp shading, one tile of one frame per task.
-
-Each pixel repeats the float32 operation order of the Torch renderer. Shadow and mirror rays of a tile
-test only the movers whose bounds reach the tile's rays.
-"""
+"""Numba twin of ``cpu3d``: one floor plane, analytic movers, MJWarp shading, one tile of one frame per task."""
 
 from __future__ import annotations
 
@@ -487,7 +483,7 @@ def render(
     quant_round,
     out,
 ):
-    """Draw (B, res*res, 3) uint8 frames. Mover poses ``P`` are relative to each row's camera ``cam``."""
+    """Draw ``(B, res*res, 3)`` uint8 frames. Mover poses ``P`` are relative to each row's camera ``cam``."""
     B = P.shape[0]
     K = len(kinds)
     tx = (res + tile - 1) // tile

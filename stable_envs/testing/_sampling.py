@@ -14,7 +14,7 @@ ROLLOUT_MAX_STEPS = 20
 
 
 def has_render_rows(env) -> bool:
-    """Whether ``env`` renders flat float rows; an env without them renders its full State.
+    """Whether ``env`` renders flat float rows; an env without them renders its full state.
 
     An object without ``render_state_dim``, such as a test stand-in, renders rows.
     """
@@ -39,12 +39,12 @@ def _rollout(env, n: int, rng: np.random.Generator, variation=None) -> TensorDic
 
 
 def rollout_states(env, n: int, rng: np.random.Generator, variation=None) -> TensorDict:
-    """Draw ``n`` full States with the public API: seeded ``reset``, random ``step``, ``get_state``.
+    """Draw ``n`` full states with the public API: seeded ``reset``, random ``step``, ``get_state``.
 
     Each chunk of ``num_envs`` lanes takes a reset seed from ``rng``. Every chunk takes the same number
-    of steps, so the chunks have the same history width and concatenate. ``env`` keeps its State.
+    of steps, so the chunks have the same history width and concatenate. ``env`` keeps its state.
     ``variation`` holds ``(n, variation_dim)`` rows installed for each chunk before its reset; those
-    States come from a new env of the same class, so ``env`` also keeps its Variation.
+    states come from a new env of the same class, so ``env`` also keeps its variation.
     """
     if variation is not None:
         with type(env)(num_envs=env.B, size=env.size, device=str(env.device)) as other:
@@ -57,16 +57,16 @@ def rollout_states(env, n: int, rng: np.random.Generator, variation=None) -> Ten
 
 
 def draw_states(env, n: int, rng: np.random.Generator):
-    """``n`` render rows from the env's sampler, or ``n`` full States when the env has no render rows."""
+    """``n`` render rows from the env's sampler, or ``n`` full states when the env has no render rows."""
     if has_render_rows(env):
         return env.sample_states(int(n), rng=rng)
     return rollout_states(env, n, rng)
 
 
 def render_any(env, states, **kw) -> torch.Tensor:
-    """Render render rows with ``env._render`` or full States with ``env.render``.
+    """Render render rows with ``env._render`` or full states with ``env.render``.
 
-    A full State carries its own Variation, so ``style`` and ``variation`` must be None for one.
+    A full state carries its own variation, so ``style`` and ``variation`` must be None for one.
     """
     if not isinstance(states, TensorDict):
         return env._render(states, **kw)
@@ -114,7 +114,7 @@ def digest(x) -> str:
 def sample_inputs(env, n: int):
     """Draw the fixed-seed inputs shared by the parent test and worker.
 
-    For an env without render rows the states are full States under the default Variation. The style
+    For an env without render rows the states are full states under the default variation. The style
     rows are drawn the same way for every env.
     """
     rng = np.random.default_rng(STATE_SEED)
@@ -131,5 +131,5 @@ def sample_inputs(env, n: int):
 
 
 def styled_inputs(env, n: int, style) -> TensorDict:
-    """The full States of :func:`sample_inputs`, drawn under the per-lane Variation rows ``style``."""
+    """The full states of :func:`sample_inputs`, drawn under the per-lane variation rows ``style``."""
     return rollout_states(env, n, np.random.default_rng(STATE_SEED), variation=style)

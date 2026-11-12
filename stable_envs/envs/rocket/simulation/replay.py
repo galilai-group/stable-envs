@@ -329,7 +329,7 @@ class RocketReplay:
         return body, np.concatenate([link[0], link[1]]), self.rgba()
 
     def recipe(self):
-        """The configuration entries of ``get_state``, which a restored State must match."""
+        """The configuration entries of ``get_state``, which a restored state must match."""
         e = self.env
         return {
             "recipe/version": np.array(1, np.int64),

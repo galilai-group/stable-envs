@@ -1,11 +1,11 @@
-"""The five Roadster planning tasks: CPU MuJoCo simulation with restorable State and the world-model camera.
+"""The five Roadster planning tasks: CPU MuJoCo simulation with restorable state and the world-model camera.
 
 Each class fixes one task of ``source.RoadsterPlanEnv`` (the simulator, autopilot, reward, success and
 horizon). The 4-D action ``[a_fwd, a_lat, a_up, yaw_rate]`` in [-1, 1] runs at
-10 Hz. Wind and rain are physics Variation leaves (``weather.wind`` in m/s, ``weather.rain`` in [0, 1]) that
-reach the source at reset, as it sets the weather per episode; State records them under ``physics.weather``.
+10 Hz. Wind and rain are physics variation leaves (``weather.wind`` in m/s, ``weather.rain`` in [0, 1]) that
+reach the source at reset, as it sets the weather per episode; state records them under ``physics.weather``.
 Frames come from the ``wm`` camera (follows the car with a fixed world orientation), 96 px by default, drawn
-by MuJoCo's OpenGL renderer on CPU; the exhaust smoke is drawn from the history in State.
+by MuJoCo's OpenGL renderer on CPU; the exhaust smoke is drawn from the history in state.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from . import render as roadster_render
 from .simulation.adapter import PHYSICS_LEAVES, RAIN_MAX, RENDER_FIELDS, TASKS, WIND_MAX
 from .simulation.execution import make_roadster_adapter
 
-#: The visual Variation leaf that picks the cinematic look for a frame.
+#: The visual variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
 #: State keys the render row carries, with the row column group each one fills.
 _RENDER_KEYS = {
@@ -40,7 +40,7 @@ class RoadsterBase(Env):
     """One Roadster planning task on ``num_envs`` lanes.
 
     Physics runs on CPU in the source env, in worker processes for batches large enough for the
-    ``roadster-sim`` tuning path; ``device`` selects where State and frames are stored.
+    ``roadster-sim`` tuning path; ``device`` selects where state and frames are stored.
     """
 
     family = "roadster"
@@ -58,7 +58,7 @@ class RoadsterBase(Env):
     def __init__(self, num_envs=1, size=None, supersample=None, device=None, backend="auto", seed=0):
         """Build ``num_envs`` lanes of the task.
 
-        Frames show the world-model camera; the ``rendering.cinematic`` Variation leaf draws the same camera
+        Frames show the world-model camera; the ``rendering.cinematic`` variation leaf draws the same camera
         on the dark-space scene with shadows and MSAA (use a larger ``size``, e.g. 512).
         """
         device = Env.resolve_device(device)
@@ -82,14 +82,14 @@ class RoadsterBase(Env):
             if self.backend not in ("auto", "opengl"):
                 raise ValueError("Roadster draws with MuJoCo's OpenGL renderer; backend must be 'auto' or 'opengl'")
             self._configure_physics()
-            if hasattr(self._simulator, "draw_fields"):  # process batches draw step frames from State fields
+            if hasattr(self._simulator, "draw_fields"):  # process batches draw step frames from state fields
                 self._simulator.draw_fields = self._draw_fields
             self.reset(seed=seed)
         except BaseException:
             self._simulator.close()
             raise
 
-    # ------------------------------------------------------------------ Variation
+    # ------------------------------------------------------------------ variation
     def make_variation_space(self):
         """The physics leaves ``weather.wind`` / ``weather.rain`` and the visual leaf ``rendering.cinematic``.
 
@@ -107,7 +107,7 @@ class RoadsterBase(Env):
             }
         )
 
-    # ------------------------------------------------------------------ State
+    # ------------------------------------------------------------------ state
     def _layout(self):
         return tuple(
             (key, width, self._row_layout[_RENDER_KEYS[key]][0] if key in _RENDER_KEYS else None)
@@ -143,7 +143,7 @@ class RoadsterBase(Env):
         return self._simulator.step(actions, active=active)
 
     def _advance_without_snapshot(self, actions, *, active=None):
-        """Advance without exporting State, for sequences that need only the final snapshot."""
+        """Advance without exporting state, for sequences that need only the final snapshot."""
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
 
@@ -152,7 +152,7 @@ class RoadsterBase(Env):
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         """Draw ``(..., state_dim)`` render rows to ``(..., size, size, 3)`` uint8 frames.
 
-        Each row's look comes from the ``rendering.cinematic`` leaf of the installed Variation (or of ``style``,
+        Each row's look comes from the ``rendering.cinematic`` leaf of the installed variation (or of ``style``,
         a compiled row). A ``variation`` mapping may override it and the drawn ``weather.rain`` /
         ``weather.wind`` (as a mean wind along +x).
         """
@@ -195,7 +195,7 @@ class RoadsterBase(Env):
     def _rows_from_fields(self, fields) -> torch.Tensor:
         """Pack ``{State key: (n, width) array}`` render-row fields into ``(n, state_dim)`` rows.
 
-        The rows equal what ``_pack_render_state`` packs from a State holding the same fields.
+        The rows equal what ``_pack_render_state`` packs from a state holding the same fields.
         """
         n = len(fields[RENDER_FIELDS[0]])
         rows = torch.zeros((n, self.state_dim), dtype=torch.float32)
@@ -208,7 +208,7 @@ class RoadsterBase(Env):
         return self._render(self._rows_from_fields(fields))
 
     def _render_live(self):
-        """Draw the running lanes from their render-row fields, without building a State snapshot."""
+        """Draw the running lanes from their render-row fields, without building a state snapshot."""
         if hasattr(self._simulator, "render_fields"):
             return self._draw_fields(self._simulator.render_fields())
         return self._render(self._pack_render_state(self.get_state()))

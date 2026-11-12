@@ -142,7 +142,7 @@ def _env_section(name, data, page_url):
     media = data.get("media") or {}
     clips = [_video(page_url, name, media["rollout"], "Random actions")] if media.get("rollout") else []
     if media.get("variation"):
-        clips.append(_video(page_url, name, media["variation"], "Sampled Variation (top left: default)"))
+        clips.append(_video(page_url, name, media["variation"], "Sampled variation (top left: default)"))
     if clips:
         out += ['<div class="env-media">', *clips, "</div>", ""]
     h, w, c = data["frame_shape"]
@@ -179,7 +179,7 @@ def _env_section(name, data, page_url):
     if data["variation"]:
         out += _variation_table(data["variation"])
     else:
-        out.append("This class has no Variation leaves.")
+        out.append("This class has no variation leaves.")
     out.append("")
     return "\n".join(out)
 

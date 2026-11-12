@@ -1,4 +1,4 @@
-"""The Roadster planning tasks as a batch of CPU simulators with complete continuation State.
+"""The Roadster planning tasks as a batch of CPU simulators with complete continuation state.
 
 Each lane is one ``source.RoadsterPlanEnv`` (MuJoCo, 10 Hz autopilot action). State is the env's own
 ``get_state`` snapshot laid out as typed columns: MuJoCo's integration state split into its
@@ -39,7 +39,7 @@ MAX_SEED = (1 << 2 * SEED_BITS) - 1
 #: Bounds of the ``weather.wind`` leaf (mean speed, m/s) and the ``weather.rain`` leaf (strength).
 WIND_MAX = 20.0
 RAIN_MAX = 1.0
-#: The physics Variation leaves, their row layout and the source's defaults (calm, dry).
+#: The physics variation leaves, their row layout and the source's defaults (calm, dry).
 PHYSICS_LEAVES = ("weather.wind", "weather.rain")
 PHYSICS_LAYOUT = PhysicsLayout(leaves=PHYSICS_LEAVES, widths=(1, 1), offsets=(0, 1), nominal=(0.0, 0.0))
 MAX_TARGETS = 4  # three rings and the pad: ("task", "target_idx") is the next one
@@ -125,7 +125,7 @@ def integration_layout(model) -> dict[str, tuple[int, int]]:
 
 
 def state_fields(model) -> dict[tuple[str, str], tuple[int, torch.dtype]]:
-    """The State schema for ``model``: ``{(group, name): (width, dtype)}``."""
+    """The state schema for ``model``: ``{(group, name): (width, dtype)}``."""
     nq = int(model.nq)
     f64, i64, b = torch.float64, torch.int64, torch.bool
     fields: dict = {("sim", name): (width, f64) for name, (_, width) in integration_layout(model).items()}
@@ -292,7 +292,7 @@ class RoadsterAdapter(SimulatorAdapter):
         self.envs = []
         self._closed = True
 
-    # ------------------------------------------------------------------ State
+    # ------------------------------------------------------------------ state
     def _row(self, env) -> dict:
         st = env.get_state()
         values: dict = {}
@@ -365,7 +365,7 @@ class RoadsterAdapter(SimulatorAdapter):
         return values
 
     def _columns(self, keys) -> dict:
-        """Host ``(num_envs, width)`` arrays of the State fields ``keys`` of the live lanes."""
+        """Host ``(num_envs, width)`` arrays of the state fields ``keys`` of the live lanes."""
         keys = tuple(keys)
         columns = {
             key: np.empty((self.num_envs, self.fields[key][0]), _NUMPY_DTYPES[self.fields[key][1]]) for key in keys
@@ -401,12 +401,12 @@ class RoadsterAdapter(SimulatorAdapter):
         return TensorDict({key: tensors[key] for key in self.fields}, [self.num_envs], device=self.device)
 
     def process_step_state(self) -> dict:
-        """Host arrays of the State fields a step can change (all but ``process_static_leaves``)."""
+        """Host arrays of the state fields a step can change (all but ``process_static_leaves``)."""
         self._check_open()
         return self._columns(key for key in self.fields if key not in STATIC_FIELDS)
 
     def render_fields(self) -> dict:
-        """Host arrays of the State fields a render row is packed from, for the live lanes; no snapshot."""
+        """Host arrays of the state fields a render row is packed from, for the live lanes; no snapshot."""
         self._check_open()
         return self._columns(RENDER_FIELDS)
 
@@ -542,7 +542,7 @@ class RoadsterAdapter(SimulatorAdapter):
         for i, env in enumerate(self.envs):
             self._restore(env, host[i])
         # The restored episode's physics leaves become the installed ones, as a restored classic-control
-        # State installs its physics; the next reset returns to the Variation defaults.
+        # State installs its physics; the next reset returns to the variation defaults.
         for j, leaf in enumerate(PHYSICS_LEAVES):
             self._physics[:, j] = host[state_key(leaf)].numpy().reshape(-1)
         self._episode = self._physics.copy()
@@ -567,7 +567,7 @@ class RoadsterAdapter(SimulatorAdapter):
     def step(self, actions, *, active=None, capture_state: bool = True) -> TensorDict:
         """Advance one action per lane; an inactive lane holds its state and reports zero outputs.
 
-        ``capture_state=False`` leaves the State snapshot out of the result.
+        ``capture_state=False`` leaves the state snapshot out of the result.
         """
         self._check_open()
         actions, active = self.check_step(actions, active)

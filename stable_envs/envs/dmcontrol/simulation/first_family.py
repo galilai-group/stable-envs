@@ -167,7 +167,7 @@ def _make_reacher(seed):
 
 
 class ReacherAdapter(DMCLanes):
-    """Reacher lanes; State includes the target, which an implicit reset redraws."""
+    """Reacher lanes; state includes the target, which an implicit reset redraws."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         super().__init__("reacher", num_envs, device, seed, _make_reacher, _REACHER_CORE)

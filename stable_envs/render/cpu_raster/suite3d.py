@@ -1,9 +1,4 @@
-"""Numba twin of the fixed-camera DM Control compositor: one tile of one frame per task.
-
-The static plate supplies each pixel's color. The kernel casts the movers, their shadows on the plate,
-their mirror images in the floor, and shades the covered pixels in the float32 operation order of
-``dmcontrol._shading._shade``.
-"""
+"""Numba twin of the fixed-camera DM Control compositor: one tile of one frame per task."""
 
 from __future__ import annotations
 
@@ -110,7 +105,7 @@ def _shade(px, py, pz, nx, ny, nz, vx, vy, vz, b, k, unlit, mat_rgb, spec, shin,
 
 @njit(cache=True)
 def tile_rays(index, res, tile):
-    """Group the pixels with ``index >= 0`` by camera-ray tile: run starts (T+1) and their pixels."""
+    """Group the pixels with ``index >= 0`` by camera-ray tile: run starts ``(T+1)`` and their pixels."""
     tx = (res + tile - 1) // tile
     T = tx * ((res + tile - 1) // tile)
     count = np.zeros(T + 1, np.int64)
@@ -175,7 +170,7 @@ def render(
     out,
     quantize,
 ):
-    """Draw frames: ``frame`` (B, N, 3) float32 before rounding, or ``out`` (B, N, 3) uint8 when ``quantize``."""
+    """Draw frames: ``frame`` ``(B, N, 3)`` float32 before rounding, or ``out`` ``(B, N, 3)`` uint8 when ``quantize``."""
     B = P.shape[0]
     K = len(kinds)
     tx = (res + tile - 1) // tile

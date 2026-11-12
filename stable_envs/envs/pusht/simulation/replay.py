@@ -51,7 +51,7 @@ def shallow_copy(obj):
 
 
 def copy_space(space, memo=None, generators=True):
-    """Return a Variation space copy that owns its values and generators, like ``copy.deepcopy``.
+    """Return a variation space copy that owns its values and generators, like ``copy.deepcopy``.
 
     Bounds, shapes and constraint functions are not changed after construction, so the copy shares them.
     With ``generators=False`` the copy shares the generators; the caller must replace them before a draw.
@@ -91,7 +91,7 @@ class PushTReplay:
     Each step stores an owned action with its original dtype. Export copies the
     finite prefix without imposing a horizon; restoration replays it in O(T) and
     checks all exported fields before returning the new engine. Fields that change
-    only at reset, restore or a Variation change are cached until ``changed``.
+    only at reset, restore or a variation change are cached until ``changed``.
     """
 
     def __init__(self, *, discrete=False, config=None, seed=0, options=None, initialize=True, engine=None):
@@ -157,7 +157,7 @@ class PushTReplay:
         )
         self.length = 0
         self.changed()
-        # Nothing has drawn from a generator or changed a Variation since the anchor was read.
+        # Nothing has drawn from a generator or changed a variation since the anchor was read.
         self._owned = metadata
         return output
 
@@ -165,7 +165,7 @@ class PushTReplay:
         # Reset rebinds the engine's scene, generators and episode fields, so a shallow copy
         # shares only objects that it does not change in place.
         engine = shallow_copy(self.env)
-        # An integer seed replaces every Variation generator before the first draw.
+        # An integer seed replaces every variation generator before the first draw.
         engine.variation_space = copy_space(self.env.variation_space, generators=not isinstance(seed, int))
         engine.action_space = shallow_copy(self.env.action_space)
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False, engine=engine)
@@ -202,7 +202,7 @@ class PushTReplay:
         return result
 
     def changed(self):
-        """Drop the cached reset, restore and Variation fields after any of them changes."""
+        """Drop the cached reset, restore and variation fields after any of them changes."""
         self._owned = self._episode = None
         self.version += 1
 
@@ -228,7 +228,7 @@ class PushTReplay:
         }
 
     def static_fields(self):
-        """Return every State field that only ``changed`` can change, uncopied."""
+        """Return every state field that only ``changed`` can change, uncopied."""
         result = self.recipe()
         result.update(("anchor/" + k, v) for k, v in self.anchor.items())
         result.update(("current/" + k, v) for k, v in self.episode().items())

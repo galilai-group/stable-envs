@@ -108,5 +108,26 @@
    "high": 20,
    "default": 0
   }
- ]
+ ],
+ "media": {
+  "device": "cpu",
+  "render_size": 160,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 160,
+   "height": 160,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 83758
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 94101
+  },
+  "variation_leaves": "all"
+ }
 }

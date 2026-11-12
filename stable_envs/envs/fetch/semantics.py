@@ -17,7 +17,7 @@ from .simulation.execution import make_fetch_adapter as FetchAdapter
 class FetchSemantics:
     """Compose Fetch CPU simulation with lazily constructed render backends.
 
-    Public State includes controller, lifecycle and RNG fields; the qpos/goal
+    Public state includes controller, lifecycle and RNG fields; the qpos/goal
     projection is for rendering only and cannot restore the simulator.
     """
 
@@ -81,7 +81,7 @@ class FetchSemantics:
         self._reset_keys.add("table.color")
         self._registered_mass = self._simulator.object_mass
         self._colors_detached = False
-        self.state_dim = self._nq + 3  # Private renderer width, not full State width.
+        self.state_dim = self._nq + 3  # Private renderer width, not full state width.
         from .envs import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
         self.state_names = (*ROBOT_JOINTS, *(OBJECT_JOINT if self._has_object else ()), *GOAL_NAMES)
@@ -194,7 +194,7 @@ class FetchSemantics:
         return state
 
     def _reset_appearance(self, values):
-        """Copy this episode's appearance into the installed Variation.
+        """Copy this episode's appearance into the installed variation.
 
         Any source visual leaf detaches the table, floor and object materials, revealing
         their geom colors (gray 0.5 instead of the material colors). ``background.color``
@@ -240,7 +240,7 @@ class FetchSemantics:
         return self._simulator.step(actions, active=active)
 
     def _advance_without_snapshot(self, actions, *, active=None):
-        """Advance without State capture for sequences needing only a final checkpoint."""
+        """Advance without state capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
 
     def _stack_states(self, values):

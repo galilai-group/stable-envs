@@ -24,7 +24,7 @@ FACTORIES: dict[str, Callable[..., DMCAdapter]] = {
     "reacher": ReacherAdapter,
     "humanoid": DMCHumanoidAdapter,
 }
-#: Full State fields per simulator key.
+#: Full state fields per simulator key.
 FIELDS = {
     **FIRST_FAMILY_FIELDS,
     **REACHER_FIELDS,

@@ -1,12 +1,7 @@
-"""Measurements for renderer parity, reproducibility, and reference simulation.
+"""Measurements for renderer parity, reproducibility and reference simulation.
 
-Checks return measurements; callers apply acceptance thresholds and handle skips.
-Most state helpers here use private render projections, not complete simulator
-State. Use the shared trajectory contracts for public get_state/set_state checks.
-
-Reference environments are cached by class and output size for the process
-lifetime. Borrowers must not close them. This retains GL contexts across tests
-and keeps classes sharing a source ID from sharing incompatible configuration.
+Checks return measurements, and callers apply acceptance thresholds. Reference environments are cached for
+the process, so borrowers must not close them.
 """
 
 from __future__ import annotations
@@ -38,7 +33,7 @@ def sample_render_rows(env, n: int, rng: np.random.Generator | None = None) -> n
     """Render rows for the checks: the env's own sampler, or rows packed from short rollouts.
 
     Envs that cannot sample render rows but simulate (``has_dynamics``) are reset with seeds from
-    ``rng`` and stepped with random actions; their State before the call is restored afterwards.
+    ``rng`` and stepped with random actions; their state before the call is restored afterwards.
     """
     try:
         return env.sample_states(int(n)) if rng is None else env.sample_states(int(n), rng=rng)
@@ -87,11 +82,9 @@ def check_reference_renderer_is_stable(cls, size: int, n: int = 4) -> dict:
 
 
 def interior_mask(frames: np.ndarray) -> np.ndarray:
-    """Return an (N, H-1, W-1) mask of locally flat regions in RGB frames.
+    """Return an ``(N, H-1, W-1)`` mask of locally flat regions in RGB frames.
 
-    Erode zero adjacent-pixel differences with a 3x3 minimum filter. This is
-    a flat-shading heuristic: quantized gradients can appear locally constant
-    while still lying on a rounding boundary.
+    It's a flat-shading heuristic, so a quantized gradient can look flat.
     """
     import scipy.ndimage as ndi
 
@@ -104,11 +97,9 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
 
 
 def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
-    """Measure maximum-channel uint8 error per pixel, with exact and within-8 fractions.
+    """Measure the max-channel uint8 error per pixel, with exact and within-8 fractions.
 
-    Interior metrics use the second argument as reference. They are None when
-    SciPy is unavailable or no interior pixels exist; raw counts distinguish
-    a few rounding differences from widespread error.
+    Interior metrics treat the second argument as the reference, and are None without SciPy or interior pixels.
     """
     d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1)
     res = {
@@ -152,8 +143,7 @@ def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
 def ssim(a: np.ndarray, b: np.ndarray, win: int = 7) -> float:
     """Return mean luminance SSIM using uniform filtering and 8-bit constants.
 
-    The filter spans every luminance-array axis, including a leading frame axis.
-    This perceptual measure does not establish pixel identity.
+    The filter spans every axis, including a leading frame axis.
     """
     import scipy.ndimage as ndi
 
@@ -224,7 +214,7 @@ def check_source_mse(env, n: int = 64, seed: int = 0) -> dict:
 def check_render_state_roundtrip(env, n: int = 64) -> dict:
     """Measure private render-row restoration using env.B rows; n is unused.
 
-    This does not test full simulator State restoration.
+    This does not test full simulator state restoration.
     """
     st = sample_render_rows(env, env.B)
     env._set_render_state(st)
@@ -233,7 +223,7 @@ def check_render_state_roundtrip(env, n: int = 64) -> dict:
 
 
 def check_state_roundtrip(env, n: int = 64) -> dict:
-    """Alias for the private render-row check; does not validate public simulator State."""
+    """Alias for the private render-row check; does not validate public simulator state."""
     return check_render_state_roundtrip(env, n=n)
 
 
@@ -250,10 +240,8 @@ def _objects_shown(env) -> dict | None:
 def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4) -> dict:
     """Probe whether each render-projection dimension changes pixels.
 
-    Try sampled donor values, then additive perturbations. Dead dimensions can
-    be excluded only when the scene signature validates a declared sphere-rotation
-    invariant. Report exclusions and refusals separately; this is not a requirement
-    that every full simulator State leaf be visible. Objects an env can hide are drawn.
+    Exclusions and refusals are reported separately. A dead dimension is excluded only under a validated
+    sphere-rotation invariance.
     """
     shown = _objects_shown(env)
     st = sample_render_rows(env, env.B)
@@ -556,9 +544,7 @@ _COLOR_APPLICABILITY_REQUIRED = (
 def color_exactness_applicability(env, probes=None) -> dict:
     """Read declared exceptions to literal RGB equality for specific appearance leaves.
 
-    Require named leaves, a shading ceiling strictly below one, an asserted source
-    failure, and evidence metadata. This validates declaration structure, not its
-    evidence files. Undeclared leaves remain subject to the literal-color bound.
+    It checks the declaration's structure, not its evidence files; undeclared leaves keep the literal-color bound.
     """
     cls = env if isinstance(env, type) else type(env)
     decl = getattr(cls, "color_exactness_applicability", None)
@@ -622,10 +608,9 @@ def color_exactness_applicability(env, probes=None) -> dict:
 
 
 def partition_colour_exactness(result: dict) -> dict:
-    """Partition measured failures into asserted and declared-inapplicable probes.
+    """Split measured failures into asserted and declared-inapplicable probes.
 
-    Keep inapplicable errors in the result. Missing or rejected declarations
-    leave every failure asserted.
+    Missing or rejected declarations leave every failure asserted.
     """
     failures = list(result.get("colors_not_applied") or [])
     app = result.get("applicability") or {}
@@ -684,11 +669,8 @@ PRESENCE_TOL = 8
 def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, reference=None) -> dict:
     """Measure visibility toggles on their changed-pixel footprint.
 
-    Alternate rows also test per-row style handling. When a source is available,
-    report error for the declared and flipped appearances on the same footprint.
-    The margin is 1 - declared_error/flipped_error; it is None when undefined.
-    A missing source or empty footprint cannot establish source agreement.
-    ``reference`` (``states -> frames``) replaces the class's own reference renderer.
+    With a source, the margin is ``1 - declared_error / flipped_error`` (None when undefined). ``reference``
+    (``states -> frames``) replaces the class's own upstream renderer.
     """
     paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
     if not paths:
@@ -834,11 +816,7 @@ def check_step_matches_reference(
 ) -> dict:
     """Compare fixed action sequences against the declared reference simulator hooks.
 
-    Report first-step, exact-equality, and grouped trajectory errors. Final-step
-    statistics select episodes whose declared gate group moved; if none moved,
-    all episodes are used and the zero count remains reported. Read state through
-    sim_state/set_sim_state when supplied, otherwise private render-row hooks.
-    This fallback cannot establish complete simulator State parity.
+    Without ``sim_state`` and ``set_sim_state`` it reads private render rows, which can't show full state parity.
     """
     from stable_envs._core.dynamics import has_dynamics
 
@@ -947,7 +925,7 @@ def uniform_style(env, n: int, groups: int = 2, seed: int = 0):
 
 
 def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probes: int = 4) -> dict:
-    """Compare selected rows (or full States) in the full batch and smaller contiguous batches."""
+    """Compare selected rows (or full states) in the full batch and smaller contiguous batches."""
     n = len(states)
     full = render_any(env, states, style=style).detach().cpu().numpy()
     idx = np.linspace(0, n - 1, min(int(probes), n)).astype(int)
@@ -1053,11 +1031,9 @@ _APPLICABILITY_OPS = {
 
 
 def resolution_consistency_applicability(env, states=None) -> dict:
-    """Resolve declared state bands to which the resolution-consistency bound applies.
+    """Resolve the declared state bands that the resolution-consistency bound applies to.
 
-    Return indices=None for all states or a list for a subset. Exclusions override
-    inclusions; unresolved conditions conservatively retain all states. Metadata
-    citations are reported but not verified by this helper.
+    Returns ``indices=None`` for all states or a list for a subset; exclusions override inclusions.
     """
     decl = getattr(type(env), "resolution_consistency_applicability", None)
     full = {
@@ -1161,8 +1137,7 @@ def resolution_consistency_applicability(env, states=None) -> dict:
 def check_resolution_consistency(env, states, style=None, factor: int = 2) -> dict:
     """Compare native-size frames with box-downsampled larger renders.
 
-    Returns measurements only; callers resolve declaration-based applicability
-    separately. Skip when the renderer does not produce the requested size ratio.
+    Skips when the renderer doesn't produce the requested size ratio.
     """
     S = int(env.size)
     a = render_any(env, states, size=S, style=style).detach().cpu().numpy()
@@ -1248,7 +1223,7 @@ def check_order_independence(env, states, style=None, seed: int = 0) -> dict:
 def check_render_is_pure(env, states, style=None) -> dict:
     """Check explicit rendering and repeated restore for changes to stored render rows/style.
 
-    This does not inspect full simulator State or hidden continuation fields.
+    This does not inspect full simulator state or hidden continuation fields.
     """
     env._set_render_state(
         np.asarray(states)[: env.B] if len(states) >= env.B else np.repeat(np.asarray(states)[:1], env.B, 0),

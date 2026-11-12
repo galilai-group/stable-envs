@@ -1,4 +1,4 @@
-"""The upstream Craftax simulator, vmapped over lanes and jitted, with State conversion to and from torch.
+"""The upstream Craftax simulator, vmapped over lanes and jitted, with state conversion to and from torch.
 
 Arrays move between JAX and torch through DLPack, so they stay on their device.
 """
@@ -44,7 +44,7 @@ def texture_lock(classic: bool):
 
 @dataclass(frozen=True)
 class Field:
-    """One upstream leaf: its State key, per-lane shape, and its columns in a packed block."""
+    """One upstream leaf: its state key, per-lane shape, and its columns in a packed block."""
 
     key: tuple[str, ...]
     shape: tuple[int, ...]
@@ -76,7 +76,7 @@ def _fields(leaves) -> tuple[tuple[Field, ...], tuple[torch.dtype, ...]]:
 
 
 def _strong(tree):
-    """Drop weak types, so a reset, stepped or restored State reuses one compiled step."""
+    """Drop weak types, so a reset, stepped or restored state reuses one compiled step."""
     return jax.tree.map(lambda x: jax.lax.convert_element_type(x, x.dtype), tree)
 
 
@@ -199,7 +199,7 @@ class Kernel:
         return {key: blocks[block].narrow(-1, start, width) for key, block, start, width in self._slices}
 
     def bases(self, td) -> list[torch.Tensor] | None:
-        """The ``(lanes, columns)`` blocks behind a State that ``views`` made, or None for any other State."""
+        """The ``(lanes, columns)`` blocks behind a state that ``views`` made, or None for any other state."""
         n = int(td.batch_size[0])
         out = []
         for (key, width), dtype in zip(self._leads, self.blocks, strict=True):
@@ -227,7 +227,7 @@ class Kernel:
         return self.views(self._pack(state, keys))
 
     def _blocks(self, td, device: torch.device):
-        """Copy a State TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
+        """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
         n = int(td.batch_size[0])
         columns = [[] for _ in self.blocks]
         for f in self.fields:
@@ -244,7 +244,7 @@ class Kernel:
         return tuple(jnp.from_dlpack(b) for b in blocks)
 
     def restore(self, td, device: torch.device):
-        """The stacked upstream state and wrapper keys held in a State TensorDict, in buffers of their own."""
+        """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
         return self._unpack(self._blocks(td, device))
 
     def render(self, state) -> torch.Tensor:

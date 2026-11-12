@@ -64,7 +64,7 @@ _EXECUTION_MODES = {"triton": "NATIVE_TRITON", "jax": "NATIVE_JAX", "numba": "NA
 
 
 class PushT(Env):
-    """Source-aligned continuous PushT with complete, replayable numeric State.
+    """Source-aligned continuous PushT with complete, replayable numeric state.
 
     Actions are relative controls in [-1, 1], not absolute pixel targets.
     Physics is a port of the source Pymunk contact solver: Triton (or JAX) on CUDA, Numba on CPU. They run
@@ -310,7 +310,7 @@ class PushT(Env):
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
-        """Return an owned, history-free copy of the State fields the CPU renderer reads."""
+        """Return an owned, history-free copy of the state fields the CPU renderer reads."""
         state = self.get_state() if state is None else state
         self._render_fields_of(state)
         return state.select(*(key for key, _, _ in self._render_fields)).clone()

@@ -22,11 +22,11 @@ REGISTRY: dict[str, type[Env]] = {}
 
 
 def check_fidelity_declaration(cls: type[Env]) -> None:
-    """Validate the declared comparison with the source.
+    """Validate the ``visual_fidelity`` and version declarations of ``cls``.
 
-    A ``visual_fidelity`` record must carry ``measured_at`` and a ``visual_note``. Its MSE values must be
-    finite and non-negative, with the mean and the 95th percentile at most the worst frame. Version fields
-    must be dicts of package names to exact versions. The source-comparison tests check the measurement.
+    Raises:
+        ValueError: If ``visual_fidelity`` lacks ``measured_at`` or a ``visual_note``, an MSE is
+            negative, non-finite or above ``mse_max``, or a version field isn't a dict of versions.
     """
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
     # Version metadata is optional, but malformed declarations cannot identify a reference.
@@ -67,10 +67,12 @@ def _check_mse_values(cls: type[Env], vf: dict) -> None:
 
 
 def register(cls: type[Env]) -> type[Env]:
-    """Validate ``cls`` and register it under its class name; usable as a class decorator.
+    """Validate ``cls``, register it under its class name and return it; usable as a decorator.
 
-    ``family`` must be set on the class. An unset ``domain`` defaults to ``DOMAIN`` or the family.
-    A different class with the same name raises ValueError.
+    An unset ``domain`` defaults to ``DOMAIN`` or the family.
+
+    Raises:
+        ValueError: If another class has the same name or ``family`` is unset.
     """
     key = cls.__name__
     if key in REGISTRY and REGISTRY[key] is not cls:
@@ -95,10 +97,7 @@ def register(cls: type[Env]) -> type[Env]:
 
 
 def registry_table() -> list[dict[str, Any]]:
-    """Return one metadata row per registered class, sorted by name.
-
-    ``render_state_dim`` is None when the width is only known on an instance.
-    """
+    """Return one metadata dict per registered class, sorted by name."""
     return [
         {
             "class_name": n,
@@ -114,7 +113,11 @@ def registry_table() -> list[dict[str, Any]]:
 
 
 def format_registry(width: int = 34) -> str:
-    """Return a text listing of registered classes with their reference IDs."""
+    """Return a text listing of registered classes with their reference IDs.
+
+    Args:
+        width: Width of the class-name column.
+    """
     rows = registry_table()
     out = [f"{len(rows)} environments"]
     for r in rows:
@@ -131,15 +134,29 @@ def _resolve(name: str) -> type[Env]:
 
 
 def make(name: str, **kwargs) -> Env:
-    """Construct an environment by canonical class name, forwarding constructor keywords."""
+    """Construct an environment by class name; ``stable_envs.make`` calls this.
+
+    Args:
+        name: Registered class name.
+        **kwargs: Forwarded to the constructor.
+    """
     return _resolve(name)(**kwargs)
 
 
 def info(name: str) -> dict[str, Any]:
     """Return class metadata for ``name`` without constructing an environment.
 
-    Dimensions that depend on the instance are None; full specs come from a constructed
-    environment. Unknown names raise KeyError.
+    Dimensions that depend on the instance are None.
+
+    Args:
+        name: Registered class name, such as ``"CartPole"``.
+
+    Returns:
+        A dict with keys such as ``class_name``, ``family``, ``domain``, ``reference_id``,
+        ``default_size``, ``action_dim``, ``has_dynamics`` and ``requires_cuda``.
+
+    Raises:
+        KeyError: If ``name`` is not registered.
     """
     cls = _resolve(name)
     dim = getattr(cls, "state_dim", None)
@@ -162,7 +179,14 @@ def info(name: str) -> dict[str, Any]:
 
 
 def list_envs(family: str | None = None, domain: str | None = None) -> list[str]:
-    """Return sorted canonical class names, optionally filtered by family or domain."""
+    """Return sorted registered class names, optionally filtered by family or domain.
+
+    A family whose module failed to import registers no classes; see ``import_errors``.
+
+    Args:
+        family: Keep only this family, such as ``"ogbench"``.
+        domain: Keep only this domain, such as ``"pointmaze"``.
+    """
     names = sorted(REGISTRY)
     if family is not None:
         names = [n for n in names if REGISTRY[n].family == family]
@@ -198,10 +222,15 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
 
 
 def discover(force: bool = False) -> dict[str, str]:
-    """Import every public module of ``stable_envs.envs`` and return the recorded import failures.
+    """Import every public module of ``stable_envs.envs`` and return the import failures.
 
-    A failed family leaves the others available. ``force`` repeats discovery without
-    clearing registered classes.
+    ``import stable_envs`` runs this once.
+
+    Args:
+        force: Import the modules again even if discovery already ran.
+
+    Returns:
+        ``{module name: "<ExceptionType>: <message>"}``, the same as ``import_errors``.
     """
     global _DISCOVERED
     if _DISCOVERED and not force:
@@ -219,7 +248,7 @@ def discover(force: bool = False) -> dict[str, str]:
 
 
 def import_errors() -> dict[str, str]:
-    """Return ``{module name: error}`` for the environment modules that did not import."""
+    """Return ``{module name: "<ExceptionType>: <message>"}`` for env modules that didn't import."""
     return dict(_IMPORT_ERRORS)
 
 

@@ -1124,7 +1124,7 @@ class OGBenchMaze(Env):
 
 
 class MazeSemantics:
-    """Compose full-State batched simulation of the source maze with state observations.
+    """Compose full-state batched simulation of the source maze with state observations.
 
     The renderer projection is qpos, followed by the goal when the scene draws it.
     """

@@ -165,9 +165,9 @@ class _SharedTree:
 class LanePool:
     """Compiled models, MJCF tree and IK solver shared by the lanes of one adapter.
 
-    Lanes whose MJCF compiles to the same XML share one MjModel; a Variation write
+    Lanes whose MJCF compiles to the same XML share one MjModel; a variation write
     to compiled arrays moves the lane to a copy keyed by the written values. Each
-    lane keeps its own LANE_FIELDS and MJCF Variation attributes, swapped in when
+    lane keeps its own LANE_FIELDS and MJCF variation attributes, swapped in when
     it next touches the shared object. Lanes of one pool must not run concurrently.
     """
 
@@ -227,7 +227,7 @@ class LanePool:
 
 
 class Compatibility:
-    """Registered reset, Variation and output rules over OGBench 1.2.1.
+    """Registered reset, variation and output rules over OGBench 1.2.1.
 
     Physics, task construction, controller, IK and reset remain upstream. OGBench
     draws the task from NumPy's global RNG; each lane keeps its own copy, seeded as
@@ -506,7 +506,7 @@ class Compatibility:
         """``step`` without the observation and info dictionaries; returns reward, terminated, truncated, success.
 
         The pre-step snapshot keeps the previous position and velocity and, for Scene, the button positions
-        that ``post_step`` reads. The physics, State and returned values are those of ``step``.
+        that ``post_step`` reads. The physics, state and returned values are those of ``step``.
         """
         if self._reset_next_step or self._success_timing not in ("pre", "post"):
             _, reward, terminated, truncated, info = self.step(action)

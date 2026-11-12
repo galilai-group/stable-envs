@@ -66,7 +66,7 @@ ARM_ALPHA = 0.3
 
 
 class _Cache(dict):
-    """Process-lifetime cache for shared models, reference renderers and state pools."""
+    """Process-lifetime cache for shared models, upstream renderers and state pools."""
 
     def get_or_build(self, key, build):
         hit = self.get(key)
@@ -377,7 +377,7 @@ def _build_bundle(scene: str) -> _Bundle:
 
 
 def _renderer(scene: str, res: int):
-    """Return the shared reference renderer for a scene and resolution.
+    """Return the shared upstream renderer for a scene and resolution.
 
     Keep its EGL context alive for the process; releasing it can invalidate
     other live renderers on supported drivers.
@@ -456,7 +456,7 @@ class FetchBase(Env):
     """Fetch renderer shared by Reach, Push, Slide and PickAndPlace.
 
     Rendering uses a private ``qpos + goal`` projection. Registered classes
-    combine this renderer with ``FetchSemantics`` for simulation and full-State
+    combine this renderer with ``FetchSemantics`` for simulation and full-state
     restoration. Reward and observation variants share the scene renderer.
     """
 

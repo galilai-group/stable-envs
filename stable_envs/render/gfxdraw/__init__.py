@@ -1,12 +1,6 @@
 """Batched SDL_gfx-style integer rasterization with Torch.
 
-Compute transformed geometry in float64 before truncating to integer vertices;
-float32 rounding near integer boundaries can move an entire pixel row. Scanline
-fills, circle spans, clipping, and packed-channel blending follow distinct SDL
-rules and must retain their integer operation order.
-
-Draw into a planar, y-down canvas, then flip and interleave once for RGB output.
-Populate Gfx caches before CUDA graph capture to avoid host-to-device copies.
+Compute geometry in float64 before truncating it, because float32 rounding can move a whole pixel row.
 """
 
 from __future__ import annotations
@@ -809,11 +803,7 @@ AACIRCLE_FRINGE: dict[int, tuple[tuple[int, int, int, int], ...]] = {
 
 
 def circle_hw(r: int) -> list[int]:
-    """Return filled-circle row half-widths indexed by absolute vertical offset.
-
-    The midpoint walk emits spans only when an octant coordinate changes. Preserve
-    those guards; taking the widest span from every iteration changes the end rows.
-    """
+    """Return filled-circle row half-widths indexed by absolute vertical offset."""
     hw = [-1] * (r + 1)
 
     def span(dy, half):
@@ -847,11 +837,9 @@ def _round16(v: torch.Tensor) -> torch.Tensor:
 
 
 def polygon_spans(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, W: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """Return the (B, len(ys)) inclusive scanline spans ``xa``, ``xb`` of convex integer polygons.
+    """Return the ``(B, len(ys))`` inclusive scanline spans ``xa``, ``xb`` of convex integer polygons.
 
-    ``vx`` and ``vy`` are already-truncated (B, n) int64 vertices and ``ys`` selects rows. A row
-    without a span has ``xa > xb``. Convexity permits min/max crossings instead of sorting; keep
-    unclamped vertex extrema when deciding the final scanline.
+    ``vx`` and ``vy`` are truncated ``(B, n)`` int64 vertices; a row without a span has ``xa > xb``.
     """
     ay, by = vy.roll(1, 1), vy
     ax, bx = vx.roll(1, 1), vx
@@ -876,7 +864,7 @@ def polygon_spans(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, W: int) 
 
 
 def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor, W: int) -> torch.Tensor:
-    """Return a (B, H, W) scanline mask for convex integer polygons; see :func:`polygon_spans`.
+    """Return a ``(B, H, W)`` scanline mask for convex integer polygons; see ``polygon_spans``.
 
     ``xs`` selects columns.
     """
@@ -902,15 +890,14 @@ def fill_circle_mask(
     """Return a (B, H, W) circle mask for integer (B,) centers and a cached span table."""
     dy = (ys.view(1, -1) - cy.view(-1, 1)).abs()  # (B,H)
     h = torch.where(dy <= r, hw_t[dy.clamp(0, r)], torch.full_like(dy, -1))
-    dx = (xs.view(1, 1, -1) - cx.view(-1, 1, 1)).abs()  # (B,1,W)
+    dx = (xs.view(1, 1, -1) - cx.view(-1, 1, 1)).abs()  # ``(B, 1, W)``
     return dx <= h.unsqueeze(-1)
 
 
 def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor, sh: torch.Tensor) -> torch.Tensor:
     """Apply SDL_gfx packed-channel alpha blending with unsigned 32-bit wrapping.
 
-    Broadcast source, destination, weights, and channel shifts. Weight 256 means an
-    opaque write; weight 255 still blends because effective alpha is (255*w)>>8.
+    Weight 256 is an opaque write; weight 255 still blends.
     """
     a = (255 * w) >> 8
     S = src << sh
@@ -937,11 +924,7 @@ def _clip_encode(x: torch.Tensor, y: torch.Tensor, W: int, H: int) -> torch.Tens
 def clip_line(
     x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int, iters: int = 6
 ) -> tuple[torch.Tensor, ...]:
-    """Clip batched Sint16 endpoints with a float32 slope, as SDL_gfx does.
-
-    Return (draw, x1, y1, x2, y2). Preserve endpoint swaps: the Wu walk paints its
-    first endpoint solid. A fixed iteration bound avoids host synchronization.
-    """
+    """Clip batched Sint16 endpoints as SDL_gfx does and return ``(draw, x1, y1, x2, y2)``."""
     draw = torch.zeros_like(x1, dtype=torch.bool)
     done = torch.zeros_like(draw)
     for _ in range(iters):
@@ -995,11 +978,7 @@ def select_(dst: torch.Tensor, mask: torch.Tensor, src: torch.Tensor) -> None:
 
 
 class Canvas:
-    """Planar (3, B, H, W) RGB canvas in y-down orientation.
-
-    A trailing, unread trash pixel absorbs invalid scatter writes without changing
-    tensor shapes. Convert to flipped, interleaved output with ``rgb``.
-    """
+    """Planar ``(3, B, H, W)`` RGB canvas in y-down orientation; ``rgb`` returns the output frames."""
 
     def __init__(self, B, H, W, device, sh, ys, xs, bg=(255, 255, 255), gfx=None):
         self.B, self.H, self.W = B, H, W
@@ -1090,11 +1069,7 @@ class Canvas:
         self.flat[:, flat] = blend(color_t, dst, w.reshape(1, -1), self.sh.view(3, 1)).to(torch.uint8)
 
     def rgb(self, out=None) -> torch.Tensor:
-        """Return (B, H, W, 3) uint8 frames with the reference's final vertical flip.
-
-        Convert one plane at a time to limit temporary memory. Write into ``out`` when
-        provided, otherwise allocate the output.
-        """
+        """Return ``(B, H, W, 3)`` uint8 frames with the reference's final vertical flip, into ``out`` if given."""
         if self.device.type == "cpu":
             # Interleaving first and flipping in a row copy is faster on CPU than flipping each plane.
             planes = self.buf.numpy()
@@ -1116,11 +1091,9 @@ def to_u8(color: torch.Tensor) -> torch.Tensor:
 
 
 class StyleCanvas(Canvas):
-    """Canvas with per-environment color, antialiasing, and visibility gates.
+    """Canvas with per-environment color, antialiasing and visibility gates.
 
-    ``use`` selects (B, 3) colors; ``gated`` restricts subsequent primitives.
-    Antialiasing and visibility masks redirect disabled writes to the trash pixel,
-    so all environments retain the same draw sequence.
+    ``use`` selects ``(B, 3)`` colors and ``gated`` restricts the primitives that follow.
     """
 
     def __init__(self, gfx: Gfx, B: int, bg):
@@ -1189,12 +1162,9 @@ class StyleCanvas(Canvas):
 def edge_geometry(
     x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int
 ) -> tuple[torch.Tensor, ...]:
-    """Clip a flat batch of edges and compute constants for their Wu walks.
+    """Clip a flat batch of edges and compute the constants of their Wu walks.
 
-    Return (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj,
-    major, E, lo). Endpoints include clipping swaps; xx0/yy0 include walk reversal.
-    Batch the setup, but apply edge writes in order: shared vertices can receive
-    multiple blends whose order changes the result.
+    Apply the edge writes in order, because shared vertices blend more than once.
     """
     draw, x1, y1, x2, y2 = clip_line(x1, y1, x2, y2, W, H)
     flip = y1 > y2
@@ -1227,8 +1197,7 @@ def edge_setup(
 def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
     """Emit the ordered scatters for one clipped antialiased edge.
 
-    ``kmax`` is a caller-supplied static step bound; deriving it from device values
-    would require a host synchronization.
+    ``kmax`` is a static step bound, so the walk needs no host synchronization.
     """
     draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = p
     B = xx0.shape[0]
@@ -1287,10 +1256,8 @@ def polygon(
 ) -> None:
     """Draw a convex polygon with an antialiased fringe and integer scanline fill.
 
-    ``verts`` should be float64 before truncation. By default the fill follows AA;
-    ``fill_first=True`` reverses them and changes edge blending. ``kmax`` bounds
-    steps per edge, either shared or supplied individually. ``window`` restricts
-    fill evaluation and must contain the polygon footprint; AA clips itself.
+    ``verts`` should be float64 and ``window`` must contain the polygon footprint. ``fill_first=True`` fills
+    before the fringe, which changes edge blending.
     """
     vi = torch.trunc(verts).to(torch.int64)
     vx, vy = vi[..., 0], vi[..., 1]
@@ -1321,9 +1288,8 @@ def circle(
 ) -> None:
     """Draw ordered antialiased fringe passes, then the filled circle.
 
-    Keep repeated fringe writes in separate passes. When ``disc`` is supplied,
-    scatter that filled-disc stencil; otherwise use ``hw_t`` and ``window``.
-    With ``lanes`` (and ``disc``), the centers belong to those environments only.
+    ``disc`` is a filled-disc stencil (``hw_t`` and ``window`` are used otherwise). With ``lanes``, the
+    centers belong to those environments only.
     """
     if aa and stencil is not None:
         B = cx.shape[0]
@@ -1354,11 +1320,7 @@ _VECTOR_EPSILON = 1e-6
 
 
 def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-    """Apply Vector2.rotate_rad arithmetic before the canvas's final vertical flip.
-
-    pygame wraps the angle into [0, 2 pi) and rotates angles within its epsilon of a multiple of
-    pi / 2 exactly, so float32 multiples of pi / 2 give axis-aligned vertices.
-    """
+    """Apply pygame's ``Vector2.rotate_rad`` arithmetic before the canvas's final vertical flip."""
     a = torch.fmod(a, 2 * math.pi)
     a = torch.where(a < 0, a + 2 * math.pi, a)
     quarter = torch.fmod(a + _VECTOR_EPSILON, math.pi / 2) < 2 * _VECTOR_EPSILON
@@ -1378,8 +1340,7 @@ def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
 class Gfx:
     """Cache drawing constants for one canvas size and device.
 
-    Populate lazy entries during warmup, before CUDA graph capture. Creating a
-    new host-backed vertex, color, or stencil tensor during capture is invalid.
+    Warm it up before CUDA graph capture, because creating its tensors during capture is invalid.
     """
 
     def __init__(self, H: int, W: int, device):
