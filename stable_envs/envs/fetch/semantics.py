@@ -71,6 +71,8 @@ class FetchSemantics:
                 num_envs, device, seed, self.SCENE, reward_type, simulation_backend=self.simulation_backend
             )
         self.execution_mode = self._simulator.execution_mode
+        # The batched backends return new output tensors on every step.
+        self._step_outputs_owned = self.simulation_backend != "source"
         self._has_object = self._simulator.has_object
         self._nq = self._simulator.fields["qpos"][0]
         self._reset_keys = set(type(self)._reset_keys)
@@ -240,6 +242,14 @@ class FetchSemantics:
     def _advance_without_snapshot(self, actions, *, active=None):
         """Advance without State capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
+
+    def _stack_states(self, values):
+        if len(values) == 1 and self.simulation_backend != "source":
+            # The batched backends' get_state returns new tensors, so one step needs no stacking copy.
+            return values[0].unsqueeze(1)
+        from ..._core.stepping import _stack_states
+
+        return _stack_states(values)
 
     def _step_pipeline(self) -> StepPipeline | None:
         # Process owners can advance independently of the parent's renderer.

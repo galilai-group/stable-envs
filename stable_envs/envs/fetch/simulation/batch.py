@@ -446,25 +446,27 @@ class FetchBatchAdapter(FetchLanes):
     def get_state(self) -> TensorDict:
         self._check_open()
         words = self._rng_words()
-        columns = {
-            "qpos": self._qpos,
-            "qvel": self._qvel,
-            "time": self._time[:, None],
-            ("task", "initial_gripper_xpos"): self._anchor,
-            "warmstart": self._qacc_warmstart,
-            ("controller", "position"): self._grip_pos,
-            ("controller", "quaternion"): self._grip_quat,
-            "goal": self._goal,
-            ("lifecycle", "elapsed_steps"): self._elapsed[:, None],
-            ("rng", "state_words"): words[:, 0:4],
-            ("rng", "increment_words"): words[:, 4:8],
-            ("rng", "has_uint32"): words[:, 8:9],
-            ("rng", "uinteger"): words[:, 9:10],
-        }
+        tensor = lambda value, dtype=torch.float64: torch.tensor(value, dtype=dtype)  # noqa: E731
         return TensorDict(
-            {key: torch.tensor(np.asarray(value), dtype=self.fields[key][1]) for key, value in columns.items()},
+            {
+                "qpos": tensor(self._qpos),
+                "qvel": tensor(self._qvel),
+                "time": tensor(self._time[:, None]),
+                "task": {"initial_gripper_xpos": tensor(self._anchor)},
+                "warmstart": tensor(self._qacc_warmstart),
+                "controller": {"position": tensor(self._grip_pos), "quaternion": tensor(self._grip_quat)},
+                "goal": tensor(self._goal),
+                "lifecycle": {"elapsed_steps": tensor(self._elapsed[:, None], torch.int64)},
+                "rng": {
+                    "state_words": tensor(words[:, 0:4], torch.int64),
+                    "increment_words": tensor(words[:, 4:8], torch.int64),
+                    "has_uint32": tensor(words[:, 8:9], torch.int64),
+                    "uinteger": tensor(words[:, 9:10], torch.int64),
+                },
+            },
             [self.num_envs],
-        ).to(self.device)
+            device=self.device,
+        )
 
     def set_state(self, state: TensorDict) -> None:
         self.validate(state)
@@ -522,10 +524,10 @@ class FetchBatchAdapter(FetchLanes):
             out["reward"][ids] = -(d > t.distance_threshold).astype(np.float32) if t.reward_type == "sparse" else -d
             self._elapsed[ids] += 1
             out["truncated"][ids] = self._elapsed[ids] >= self._limits[ids]
-        return TensorDict(
-            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()},
-            [self.num_envs],
-        ).to(self.device)
+        out = TensorDict(
+            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}, [self.num_envs]
+        )
+        return out if self.device.type == "cpu" else out.to(self.device)
 
     def close(self) -> None:
         if not self._closed:
