@@ -1,4 +1,4 @@
-"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch and CUDA lanes on MuJoCo Warp.
+"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch and CUDA lanes on MuJoCo Warp by default.
 
 Covers backend dispatch, float32 State at the API boundary, fidelity against single-MjData MuJoCo,
 State restore and replay, action clamping, and release of the batch's native threads.
@@ -20,8 +20,8 @@ pytest.importorskip("mujoco_warp")
 import mujoco
 
 import stable_envs as se
+from stable_envs._execution import mjbatch
 from stable_envs.envs.mshuman.assets import model
-from stable_envs.envs.mshuman.simulation import adapter as mshuman_adapter
 from stable_envs.envs.mshuman.simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -89,6 +89,16 @@ def _threads() -> int:
 def test_cpu_env_steps_on_the_native_batch():
     with _make() as env:
         assert type(env._simulator) is MSHumanBatchAdapter
+    with se.make("MSHumanLocomotion", num_envs=LANES, device="cpu") as env:
+        assert env.simulation_backend == "native"
+
+
+@pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
+def test_cuda_env_steps_on_mujoco_warp_by_default_at_every_batch_size(device):
+    for lanes in (1, LANES):
+        with se.make("MSHumanLocomotion", num_envs=lanes, device=device) as env:
+            assert env.simulation_backend == "mjwarp"
+            assert type(env._simulator) is MSHumanWarpAdapter
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
@@ -100,10 +110,10 @@ def test_small_cuda_env_steps_on_the_native_batch(device):
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
 def test_cuda_env_steps_on_mujoco_warp_from_the_cutoff(device):
-    with se.make("MSHumanLocomotion", num_envs=2, device=device, mjwarp_min_envs=2) as env:
+    with se.make("MSHumanLocomotion", num_envs=2, device=device, simulation_backend="auto", mjwarp_min_envs=2) as env:
         assert env.simulation_backend == "mjwarp"
         assert type(env._simulator) is MSHumanWarpAdapter
-        assert env._simulator._step_graph is not None
+        assert env._simulator.batch._step_graph is not None
     with se.make("MSHumanLocomotion", num_envs=1, device=device, simulation_backend="mjwarp") as env:
         assert type(env._simulator) is MSHumanWarpAdapter
 
@@ -166,7 +176,7 @@ def test_native_batch_results_do_not_depend_on_the_thread_count(monkeypatch):
     actions = np.random.default_rng(SEED).uniform(0, 1, (6, lanes, 100)).astype(np.float32)
     runs = []
     for affinity in ([0], list(range(lanes))):
-        monkeypatch.setattr(mshuman_adapter, "cpu_affinity", lambda affinity=affinity: affinity)
+        monkeypatch.setattr(mjbatch, "cpu_affinity", lambda affinity=affinity: affinity)
         with _make(lanes) as env:
             assert env._simulator.b.nthread == len(affinity)
             env.reset()
@@ -256,17 +266,17 @@ def test_close_is_idempotent_and_releases_the_batch():
 
 
 def test_native_batch_threads_respect_the_cpu_affinity(monkeypatch):
-    monkeypatch.setattr(mshuman_adapter, "cpu_affinity", lambda: [0, 1])
+    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: [0, 1])
     with _make(64) as env:
         assert env._simulator.b.nthread == 2
-    monkeypatch.setattr(mshuman_adapter, "cpu_affinity", lambda: list(range(16)))
+    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: list(range(16)))
     with _make(9) as env:
         assert env._simulator.b.nthread == 8
 
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="counts threads in /proc/self/task")
 def test_close_and_del_join_the_native_threads(monkeypatch):
-    monkeypatch.setattr(mshuman_adapter, "cpu_affinity", lambda: [0, 1, 2, 3])
+    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: [0, 1, 2, 3])
     with _make(8) as env:
         env.step(np.zeros((8, 100)), frames=None)
     gc.collect()

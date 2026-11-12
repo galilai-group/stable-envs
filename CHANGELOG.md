@@ -80,6 +80,9 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- MS-Human-700: `MSHumanLocomotion` steps on the shared batched MuJoCo backend. CUDA envs step on MuJoCo Warp at
+  every batch size by default (`simulation_backend="default"`); `"auto"` keeps `mujoco.batch` below
+  `mjwarp_min_envs` (256) CUDA environments. The MuJoCo Warp step does not synchronize the host.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

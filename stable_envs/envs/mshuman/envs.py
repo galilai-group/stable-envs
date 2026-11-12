@@ -1,4 +1,4 @@
-"""MS-Human-700 musculoskeletal locomotion: native ``mujoco.batch`` physics, MuJoCo Warp for large CUDA batches."""
+"""MS-Human-700 musculoskeletal locomotion: MuJoCo Warp physics on CUDA, native ``mujoco.batch`` on CPU."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.stepping import _stack_states
+from ..._execution.mjbatch import resolve_backend
 from ...env import Env, render_states_arg, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
@@ -19,7 +20,8 @@ from .assets import model as _model
 from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
-#: Smallest CUDA batch that steps on MuJoCo Warp; smaller CUDA batches step faster on mujoco.batch.
+#: With ``simulation_backend="auto"``, the smallest CUDA batch that steps on MuJoCo Warp; smaller CUDA batches
+#: step faster on mujoco.batch.
 MJWARP_MIN_ENVS = 256
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
@@ -51,28 +53,23 @@ class MSHumanLocomotion(Env):
         ("warmstart", _NV, None),
     )
 
-    def __init__(self, num_envs: int = 1, *, simulation_backend="auto", mjwarp_min_envs=MJWARP_MIN_ENVS, **kwargs):
+    def __init__(self, num_envs: int = 1, *, simulation_backend="default", mjwarp_min_envs=MJWARP_MIN_ENVS, **kwargs):
         """Select physics at construction.
 
-        ``simulation_backend="auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and
-        every other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp and CPU batches on native
+        ``mujoco.batch``. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and every
+        other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        if simulation_backend not in ("auto", "native", "mjwarp"):
-            raise ValueError("simulation_backend must be 'auto', 'native' or 'mjwarp'")
-        if isinstance(mjwarp_min_envs, bool) or not isinstance(mjwarp_min_envs, int) or mjwarp_min_envs < 1:
-            raise ValueError("mjwarp_min_envs must be an int >= 1")
+        resolve_backend(1, "cpu", "native", mjwarp_min_envs)
+        if simulation_backend not in (None, "default", "auto", "native", "mjwarp"):
+            raise ValueError("simulation_backend must be 'default', 'auto', 'native' or 'mjwarp'")
         super().__init__(num_envs, **kwargs)
-        cuda = self.device.type == "cuda"
-        if simulation_backend == "mjwarp" and not cuda:
-            raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
-        if simulation_backend == "auto":
-            simulation_backend = "mjwarp" if cuda and self.B >= mjwarp_min_envs else "native"
-        self.simulation_backend = simulation_backend
+        self.simulation_backend = resolve_backend(self.B, self.device, simulation_backend, mjwarp_min_envs)
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
-        adapter = MSHumanWarpAdapter if simulation_backend == "mjwarp" else MSHumanBatchAdapter
+        adapter = MSHumanWarpAdapter if self.simulation_backend == "mjwarp" else MSHumanBatchAdapter
         self._simulator = adapter(self.B, self.device, self._model)
 
     def make_variation_space(self) -> Dict:
@@ -96,7 +93,7 @@ class MSHumanLocomotion(Env):
         return self._simulator.step(actions)
 
     def _stack_states(self, values):
-        if self.simulation_backend == "mjwarp":
+        if self.device.type != "cpu":
             return _stack_states(values)
         # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.
         return values[0].apply(

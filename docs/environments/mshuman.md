@@ -4,11 +4,18 @@
 [MS-Human-700](https://github.com/LNSGroup/MS-Human-700)
 ([Zuo et al.](https://lnsgroup.cc/research/MS-Human/)), a whole-body musculoskeletal human whose 36 degrees
 of freedom are driven by 100 muscle actuators. Upstream ships only this MJCF model and no task code, so the
-reference dynamics are CPU MuJoCo (`float64`) stepping the pinned model. A CPU env steps every lane in one
-native `mujoco.batch` call. A CUDA env of 256 or more lanes steps on
-[MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp); a smaller CUDA env steps on `mujoco.batch`
-and returns its State on CUDA, because that is faster below 256 lanes. Set `simulation_backend` to
-`"native"` or `"mjwarp"` to select one, or `mjwarp_min_envs` to change the cutoff. The CPU path runs MuJoCo in `float64` but
+reference dynamics are CPU MuJoCo (`float64`) stepping the pinned model. Both backends use the shared
+batched MuJoCo backend of the MuJoCo families.
+
+| `simulation_backend` | CPU env | CUDA env |
+|---|---|---|
+| `"default"` (default) | `mujoco.batch` | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
+| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from 256 |
+| `"native"` | `mujoco.batch` | `mujoco.batch` |
+| `"mjwarp"` | not supported | MuJoCo Warp |
+
+`mujoco.batch` steps every environment in one native call. A CUDA env on `mujoco.batch` returns its State on
+CUDA. MuJoCo Warp steps every environment in one captured CUDA graph. The CPU path runs MuJoCo in `float64` but
 rounds the integration State to `float32` after every step, so it restores bit-for-bit and matches a
 per-lane `mj_step` loop with the same rounding exactly. Over the first 12 steps (24 ms) from the `init`
 keyframe under uniformly random activations, across 3,000 trajectories (150 for each of 20 seeds), its worst
