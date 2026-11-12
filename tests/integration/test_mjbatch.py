@@ -238,6 +238,39 @@ def test_mjwarp_set_physics_and_reset_write_only_the_given_envs():
         assert float(batch.data("time")[2]) == 0.0 and float(batch.data("time")[0]) > 0.0
 
 
+def test_native_step_advances_only_active_envs():
+    with (
+        NativeBatch(_model(), B, frame_skip=FRAME_SKIP, outputs=["xpos"]) as batch,
+        NativeBatch(_model(), B, frame_skip=FRAME_SKIP, outputs=["xpos"]) as full,
+    ):
+        for t in range(3):
+            batch.step(_ctrl(t))
+            full.step(_ctrl(t))
+        before = batch.get_physics()
+        mask = np.array([True, False, True, False, False, True])
+        batch.step(_ctrl(3), active=mask)
+        full.step(_ctrl(3))
+        after, want = batch.get_physics(), full.get_physics()
+        for name in before:
+            assert torch.equal(after[name][~mask], before[name][~mask]), name
+            assert torch.equal(after[name][mask], want[name][mask]), name
+        assert torch.equal(batch.data("xpos")[mask], full.data("xpos")[mask])
+
+
+@cuda
+def test_mjwarp_step_keeps_inactive_envs():
+    with WarpBatch(_model(), B, "cuda", frame_skip=FRAME_SKIP, outputs=["site_xpos"]) as batch:
+        for t in range(3):
+            batch.step(_ctrl(t))
+        before = batch.read([*batch.fields, "site_xpos"])
+        active = torch.tensor([True, False, True, False, False, True], device="cuda")
+        batch.step(_ctrl(3), active=active)
+        after = batch.read([*batch.fields, "site_xpos"])
+        for name in before:
+            assert torch.equal(after[name][~active], before[name][~active]), name
+        assert not torch.equal(after["qpos"][active], before["qpos"][active])
+
+
 @cuda
 def test_mjwarp_buffer_overflow_raises_a_clear_error():
     model = mujoco.MjModel.from_xml_string(XML.replace('pos="0.6 0.5 0.1"', 'pos="0.6 0.5 0.3"'))

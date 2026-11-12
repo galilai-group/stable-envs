@@ -6,9 +6,11 @@ frictions), and keeps its task logic (observations, reward, resets) in a thin ad
 
 Interface, shared by both backends:
 
-- ``step(ctrl=None, *, mocap_pos=None, mocap_quat=None)`` writes the inputs that are given and advances every
-  environment by ``frame_skip`` calls of ``mj_step``, then runs ``mj_rnePostConstraint`` when the backend
-  was built with ``rne_postconstraint=True``.
+- ``step(ctrl=None, *, mocap_pos=None, mocap_quat=None, active=None)`` writes the inputs that are given and
+  advances every environment, or the ``active`` ones (ids or a ``[B]`` bool mask), by ``frame_skip`` calls of
+  ``mj_step``, then runs ``mj_rnePostConstraint`` when the backend was built with ``rne_postconstraint=True``.
+  On MuJoCo Warp, inactive environments keep their :data:`PHYSICS_FIELDS` and ``outputs``; their other
+  derived fields are not meaningful after the step.
 - ``get_physics(env_ids=None)`` returns a snapshot ``{name: tensor}`` of :data:`PHYSICS_FIELDS` on the env
   device; ``set_physics(values, env_ids=None, forward=True)`` writes any of them for the given environments
   only, then forwards them. ``reset(env_ids=None)`` restores the initial state (model defaults or the
@@ -312,8 +314,10 @@ class NativeBatch(MjBatch):
         ids = _env_ids(env_ids, self.num_envs)
         self.b.forward(None if ids is None else np.unique(ids))
 
-    def step(self, ctrl=None, *, mocap_pos=None, mocap_quat=None) -> None:
+    def step(self, ctrl=None, *, mocap_pos=None, mocap_quat=None, active=None) -> None:
         self._check_open()
+        ids = _env_ids(active, self.num_envs)
+        ids = None if ids is None else np.unique(ids)
         for name, value in (("ctrl", ctrl), ("mocap_pos", mocap_pos), ("mocap_quat", mocap_quat)):
             if value is None:
                 continue
@@ -322,9 +326,9 @@ class NativeBatch(MjBatch):
                 # NumPy has no bfloat16.
                 value = (value.float() if value.dtype == torch.bfloat16 else value).detach().cpu().numpy()
             target[:] = np.asarray(value).reshape(target.shape)
-        self.b.step(None, self.frame_skip)
+        self.b.step(ids, self.frame_skip)
         if self._rne_post:
-            self._run_rne_post(None)
+            self._run_rne_post(ids)
 
     def _run_rne_post(self, ids) -> None:
         import mujoco
@@ -422,6 +426,7 @@ class WarpBatch(MjBatch):
         self.model = models[0]
         self._rne_post = bool(rne_postconstraint)
         self.fields = tuple(f for f in PHYSICS_FIELDS if not f.startswith("mocap") or self.model.nmocap)
+        self.outputs = tuple(name for name in outputs if name not in self.fields)
         template = mujoco.MjData(self.model)
         if keyframe is None:
             mujoco.mj_resetData(self.model, template)
@@ -596,14 +601,26 @@ class WarpBatch(MjBatch):
         self._check_open()
         self._launch(self._forward_graph)
 
-    def step(self, ctrl=None, *, mocap_pos=None, mocap_quat=None) -> None:
+    def step(self, ctrl=None, *, mocap_pos=None, mocap_quat=None, active=None) -> None:
         self._check_open()
         self._poll_overflow()
         for name, value in (("ctrl", ctrl), ("mocap_pos", mocap_pos), ("mocap_quat", mocap_quat)):
             if value is not None:
                 target = self.data(name)
                 target.copy_(torch.as_tensor(value).to(self.device, target.dtype).reshape(target.shape))
-        self._launch(self._step_graph)
+        if active is None:
+            self._launch(self._step_graph)
+        else:
+            # Every world steps in the graph; inactive worlds then get their state and outputs back.
+            active = torch.as_tensor(active, device=self.device)
+            if active.dtype != torch.bool:
+                active = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device).index_fill_(0, active, True)
+            names = (*self.fields, *self.outputs)
+            saved = [self.data(name).clone() for name in names]
+            self._launch(self._step_graph)
+            for name, old in zip(names, saved, strict=True):
+                new = self.data(name)
+                new.copy_(torch.where(active.reshape(-1, *([1] * (new.ndim - 1))), new, old))
         if not self._flag_pending:
             self._flag_host.copy_(self._flag_t, non_blocking=True)
             self._flag_event.record()
