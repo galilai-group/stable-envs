@@ -79,3 +79,47 @@ def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
     finally:
         cpu.close()
         gpu.close()
+
+
+#: Largest |qpos| difference after 4 steps between a lane and its restored copy (contact order differs by run).
+RESTORE_QPOS = 1e-3
+
+
+@pytest.mark.parametrize("loco", ["point", "ant", "humanoid"])
+def test_a_restored_state_resumes_to_rounding(loco):
+    lanes = 16
+    a, b = OGBMazeWarpAdapter(lanes, "cuda", seed=5, loco=loco), OGBMazeWarpAdapter(lanes, "cuda", seed=11, loco=loco)
+    try:
+        b.set_state(a.get_state())
+        actions = torch.as_tensor(
+            np.random.default_rng(6).uniform(-1, 1, (4, lanes, a.action_dim)), dtype=torch.float32, device="cuda"
+        )
+        for t in range(4):
+            sa, sb = a.step(actions[t])["state"], b.step(actions[t])["state"]
+        for key in sa.keys(True, True):
+            if key[0] in ("task", "rng") or key == ("simulator", "time"):
+                assert torch.equal(sa[key], sb[key]), key
+            elif key[-1] == "position" or key[-1] == "orientation":
+                assert (sa[key] - sb[key]).abs().max() <= RESTORE_QPOS, key
+    finally:
+        a.close()
+        b.close()
+
+
+def test_inactive_lanes_keep_their_state_and_last_outputs():
+    lanes = 4
+    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=2, loco="ant", maze="medium")
+    try:
+        actions = torch.as_tensor(
+            np.random.default_rng(1).uniform(-1, 1, (2, lanes, gpu.action_dim)), dtype=torch.float32, device="cuda"
+        )
+        first = gpu.step(actions[0])
+        mask = torch.tensor([True, False, True, False], device="cuda")
+        second = gpu.step(actions[1], active=mask)
+        for key in first["state"].keys(True, True):
+            assert torch.equal(second["state"][key][~mask], first["state"][key][~mask]), key
+        for key in ("observation", "reward", "success"):
+            assert torch.equal(second[key][~mask], first[key][~mask]), key
+        assert not torch.equal(second["observation"][mask], first["observation"][mask])
+    finally:
+        gpu.close()
