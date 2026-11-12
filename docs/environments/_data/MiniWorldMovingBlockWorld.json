@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 64,
  "frame_shape": [64, 64, 3],
- "physics": "source simulator on CPU",
+ "physics": "native Numba on CPU, native Triton on CUDA",
  "renderers": {
   "cpu": "opengl (Miniworld, pyglet)",
   "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"
@@ -40,8 +40,8 @@
   },
   {
    "key": "rng",
-   "leaves": 4,
-   "numel": 10,
+   "leaves": 2,
+   "numel": 2,
    "dtypes": ["int64"]
   },
   {

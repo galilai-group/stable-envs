@@ -33,12 +33,12 @@ All notable changes to this project are listed here. The format follows
   snapshot.
 - Miniworld: `MiniWorldMovingBlockWorld` runs the 3D Dynamic Blockworld of Flow Equivariant World Models
   (`MovingBlockWorld` from the hlillemark/Miniworld fork's `flowm_release` branch) with a complete State: room and block textures,
-  block kinds, sizes, poses and velocities, the agent and its carried block, and the env's generator.
+  block kinds, sizes, poses and velocities, the agent and its carried block, and the reset generator.
   `preset="flowm"` (default) is the paper's dynamic dataset, `preset="flowm-textured"` its textured split and
   `preset="upstream"` the registered env. Each lane draws 6 to 10 blocks per episode, as the dataset script does;
   State pads to 10 blocks with a `blocks.present` mask. Frames are Miniworld's own OpenGL agent view
-  (`miniworld` extra). Large batches step in worker processes and draw `render(state)` in render workers
-  (`miniworld-sim` and `miniworld-render` tuning paths).
+  (`miniworld` extra). Large batches draw `render(state)` in render workers (`miniworld-render` tuning
+  path).
 - MS-Human-700: `MSHumanLocomotion` wraps the whole-body musculoskeletal locomotion model (36 DoF,
   100 muscles; `mshuman` extra). Envs step every lane in one native `mujoco.batch`; CUDA envs of 256 or more
   lanes step on MuJoCo Warp; State is `float32` on the env device. Frames come from MuJoCo's OpenGL renderer. The
@@ -90,6 +90,12 @@ All notable changes to this project are listed here. The format follows
   the `rng` State fields hold each environment's key and reset count. Steps agree with Gymnasium to rounding.
   `simulation_backend="auto"` uses the NumPy steps on the host below `torch_min_envs` CUDA environments
   (default 1). On the CPU the default does not change.
+- Miniworld: `MiniWorldMovingBlockWorld` steps all environments in one batch: a Numba kernel on CPU
+  (`simulation_backend="numba"`) and a Triton kernel in a CUDA graph on CUDA (`"triton"`); `"torch"` runs
+  on any device, and `"auto"` steps CUDA batches below `triton_min_envs` (default 1) with Numba. The Numba step
+  gives the fork's values from the same State, bit for bit. Resets sample the fork's reset distribution
+  from a counter-based generator; State replaces the PCG64 fields with `rng.seed` and `rng.episode`. The
+  worker processes and the `miniworld-sim` tuning path are removed. The `miniworld` extra installs Numba.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

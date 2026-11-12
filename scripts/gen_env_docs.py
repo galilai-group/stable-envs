@@ -59,6 +59,7 @@ PHYSICS = {
     "NATIVE_NUMBA": "native Numba on CPU",
     "AUTO_NATIVE_MJX": "native MuJoCo on CPU; CUDA batches use native below 32 lanes, JAX/MJX otherwise",
     "AUTO_BATCHED": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
+    "AUTO_NUMBA_TRITON": "native Numba on CPU, native Triton on CUDA",
 }
 
 

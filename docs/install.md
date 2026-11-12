@@ -49,7 +49,7 @@ package, which tests use for comparison.
 | `mshuman` | MSHumanLocomotion | MuJoCo and MuJoCo Warp 3.17, Warp, filelock |
 | `rocket` | PyFlytRocketLanding | PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy |
 | `craftax` / `craftax-gpu` | Craftax | Craftax, JAX. `-gpu` takes JAX's CUDA 12 build for `device="cuda"` |
-| `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2 |
+| `miniworld` | MiniWorldMovingBlockWorld | the hlillemark/Miniworld fork, pyglet < 2, Numba |
 | `roadster` | Roadster (5 classes) | MuJoCo >= 3.11, Pillow |
 | `docs` / `dev` / `examples` / `hf` | not needed to render | docs, tests, example helpers, HuggingFace |
 

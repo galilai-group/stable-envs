@@ -1,17 +1,10 @@
-"""MovingBlockWorld lanes over the Miniworld fork's own simulator, with complete continuation State.
+"""MovingBlockWorld State and frames: the State schema, its checks, and the fork's own GL drawing of a State.
 
-Each lane is one ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its ``flowm_release``
-branch, the code frozen for the FloWM paper) configured as the dataset script ``scripts/generate_videos.py``
-builds it, or with the upstream defaults. State holds the
-episode's world (room textures, each block's kind, colour, size and texture), every moving quantity (agent
-pose and carried block, block poses and velocities), the env's PCG64 generator and its step count.
-
-The world is rebuilt from State as ``MiniWorldEnv.reset`` builds it after ``_gen_world``: one rectangular
-room, the agent first in the entity list, the blocks after it in placement order, then the default
-(non-randomised) parameters and the static display list.
-
-Envs hold a GL context each. They live in a process-wide pool per configuration and frame size and are
-reused by later instances, never destroyed, so instances do not create contexts per call or per state.
+A State row is drawn by rebuilding the world in a ``miniworld.envs.MovingBlockWorld`` (hlillemark/Miniworld at its
+``flowm_release`` branch, the code frozen for the FloWM paper) as ``MiniWorldEnv.reset`` builds it after
+``_gen_world``: one rectangular room, the agent first in the entity list, the blocks after it in placement order,
+then the default (non-randomised) parameters and the static display list. Render envs hold a GL context each and
+are kept for the process.
 """
 
 from __future__ import annotations
@@ -23,8 +16,6 @@ import sys
 import numpy as np
 import torch
 from tensordict import TensorDict
-
-from ...._execution.protocol import SimulatorAdapter
 
 #: Fork commit the family runs and its reference gate compares against: the head of ``flowm_release``.
 #: The fork's master changes the base palette's "gray" to "grey", which changes the drawn block colours.
@@ -253,29 +244,8 @@ def set_room(env) -> None:
     env._se_room = (env._se_config, tuple(TEXTURES.index(n) for n in names))
 
 
-_POOL: dict[tuple, list] = {}
-
-
 def _pool_key(config: dict, size: int) -> tuple:
     return (repr(sorted(config.items())), int(size))
-
-
-def acquire(config: dict, size: int, count: int) -> list:
-    """``count`` source envs for ``config`` and ``size``, reused from the pool where possible."""
-    free = _POOL.setdefault(_pool_key(config, size), [])
-    envs = [free.pop() for _ in range(min(count, len(free)))]
-    try:
-        while len(envs) < count:
-            envs.append(make_source(config, size))
-    except BaseException:
-        free.extend(envs)
-        raise
-    return envs
-
-
-def release(config: dict, size: int, envs: list) -> None:
-    """Return ``envs`` to the pool; their GL contexts stay alive for later instances."""
-    _POOL.setdefault(_pool_key(config, size), []).extend(envs)
 
 
 def frame(env) -> np.ndarray:
@@ -308,20 +278,10 @@ def state_fields(num_blocks: int) -> dict[tuple[str, str], tuple[int, torch.dtyp
         ("blocks", "pos"): (3 * m, f64),
         ("blocks", "dir"): (m, f64),
         ("blocks", "velocity"): (3 * m, f64),
-        ("rng", "state"): (4, i64),  # the env's PCG64, as four uint32 limbs, least significant first
-        ("rng", "increment"): (4, i64),
-        ("rng", "has_uint32"): (1, i64),
-        ("rng", "uinteger"): (1, i64),
+        ("rng", "seed"): (1, i64),  # the reset draws hash (seed, episode, draw index); see rng.py
+        ("rng", "episode"): (1, i64),
         ("lifecycle", "elapsed_steps"): (1, i64),
     }
-
-
-def _limbs(value: int) -> list[int]:
-    return [(int(value) >> (32 * i)) & 0xFFFF_FFFF for i in range(4)]
-
-
-def _from_limbs(value) -> int:
-    return sum(int(part) << (32 * i) for i, part in enumerate(np.asarray(value, np.int64).reshape(4)))
 
 
 def _ball_colors() -> dict[int, str]:
@@ -331,7 +291,10 @@ def _ball_colors() -> dict[int, str]:
 
 
 def read_lane(env, num_blocks: int) -> dict:
-    """One lane's State values, read from the source env; ``num_blocks`` is the padded width."""
+    """One environment's State values, read from a source env; ``num_blocks`` is the padded width.
+
+    A source env has no counter-based generator, so the ``rng`` fields are 0.
+    """
     from miniworld.entity import Ball, Box
 
     blocks = env.entities[1:]
@@ -356,9 +319,6 @@ def read_lane(env, num_blocks: int) -> dict:
     kind, color, texture, size = kind + [BOX] * pad, color + [0] * pad, texture + [-1] * pad, size + [1.0] * 3 * pad
     zeros = [0.0] * 3 * pad
     room = env.rooms[0]
-    rng = env.np_random.bit_generator.state
-    if rng["bit_generator"] != "PCG64":
-        raise RuntimeError(f"expected a PCG64 generator, got {rng['bit_generator']!r}")
     carrying = env.agent.carrying
     return {
         ("agent", "pos"): env.agent.pos,
@@ -375,10 +335,8 @@ def read_lane(env, num_blocks: int) -> dict:
         ("blocks", "pos"): np.concatenate([*(ent.pos for ent in blocks), zeros]),
         ("blocks", "dir"): [ent.dir for ent in blocks] + [0.0] * pad,
         ("blocks", "velocity"): np.concatenate([*(ent.velocity for ent in blocks), zeros]),
-        ("rng", "state"): _limbs(rng["state"]["state"]),
-        ("rng", "increment"): _limbs(rng["state"]["inc"]),
-        ("rng", "has_uint32"): [rng["has_uint32"]],
-        ("rng", "uinteger"): [rng["uinteger"]],
+        ("rng", "seed"): [0],
+        ("rng", "episode"): [0],
         ("lifecycle", "elapsed_steps"): [env.step_count],
     }
 
@@ -440,7 +398,7 @@ def build_world(env, row: dict) -> None:
 
 
 def write_lane(env, row: dict) -> None:
-    """Restore one lane from validated State values, rebuilding the world only when it differs."""
+    """Write validated State values into a source env, rebuilding the world only when it differs."""
     if getattr(env, "_se_world", None) != _world(row):
         build_world(env, row)
     blocks = env.entities[1:]
@@ -455,219 +413,60 @@ def write_lane(env, row: dict) -> None:
         ent.dir = float(row["blocks", "dir"][k])
         ent.velocity = vel[k].copy()
     env.step_count = int(row["lifecycle", "elapsed_steps"][0])
-    env.np_random.bit_generator.state = {
-        "bit_generator": "PCG64",
-        "state": {"state": _from_limbs(row["rng", "state"]), "inc": _from_limbs(row["rng", "increment"])},
-        "has_uint32": int(row["rng", "has_uint32"][0]),
-        "uinteger": int(row["rng", "uinteger"][0]),
-    }
     set_room(env)
 
 
-def wrap_heading(env) -> None:
-    """``generate_videos._wrap_angle_0_2pi`` applied to the agent's heading."""
-    env.agent.dir = float(env.agent.dir % (2.0 * math.pi))
-
-
-def host_actions(actions, num_envs: int) -> np.ndarray:
-    """Actions as ``(num_envs,)`` int64 action ids, rejecting floats and ids outside [0, ACTION_HIGH]."""
-    if torch.is_tensor(actions):
-        actions = actions.detach().cpu().numpy()
-    a = np.asarray(actions)
-    if a.size != num_envs or a.dtype.kind not in "iu":
-        raise ValueError(f"MovingBlockWorld actions must be {num_envs} integer action ids, got {a.dtype} {a.shape}")
-    a = a.reshape(num_envs).astype(np.int64)
-    if ((a < 0) | (a > ACTION_HIGH)).any():
-        raise ValueError(f"MovingBlockWorld action ids lie in [0, {ACTION_HIGH}]")
-    return a
-
-
-def host_active(active, num_envs: int) -> np.ndarray | None:
-    """The active-lane mask as a ``(num_envs,)`` bool host array, or None for every lane."""
-    if active is None:
-        return None
-    a = np.asarray(active.detach().cpu() if torch.is_tensor(active) else active, dtype=bool).reshape(-1)
-    if a.shape != (num_envs,):
-        raise ValueError(f"active must have one entry per lane ({num_envs}), got {a.shape}")
-    return a
-
-
-class MovingBlockWorldAdapter(SimulatorAdapter):
-    """``num_envs`` source envs on one configuration; lane ``i`` of ``reset(seed)`` is ``reset(seed=seed + i)``.
-
-    It is also the local adapter that ``MiniWorldProcessAdapter`` runs in each worker: workers step their lanes
-    and draw their step frames (``render_live``), and the parent copies ``process_attributes`` from a
-    one-lane prototype.
-    """
-
-    process_attributes = ("config", "size", "num_blocks", "count_range", "fields", "frame_shape")
-    action_dim = 1
-
-    def __init__(self, config: dict, num_envs: int, size: int, device="cpu"):
-        if type(num_envs) is not int or num_envs < 1:
-            raise ValueError("num_envs must be a positive integer")
-        self.config, self.num_envs, self.size = config, num_envs, int(size)
-        #: The block count range; State pads every lane to ``num_blocks``, the most blocks a lane can hold.
-        self.count_range = tuple(config["num_blocks"])
-        self.num_blocks = int(self.count_range[1])
-        self.frame_shape = (self.size, self.size, 3)
-        self.device = torch.device(device)
-        self.fields = state_fields(self.num_blocks)
-        self.envs = acquire(config, self.size, num_envs)
-        self._closed = False
-
-    def _check_open(self) -> None:
-        if self._closed:
-            raise RuntimeError("MovingBlockWorldAdapter is closed")
-
-    def close(self) -> None:
-        if not self._closed:
-            release(self.config, self.size, self.envs)
-        self.envs, self._closed = [], True
-
-    def _after_reset(self, env) -> None:
-        if self.config["heading_zero"]:
-            env.agent.dir = 0.0
-        if self.config["wrap_heading"]:
-            wrap_heading(env)
-        env._se_world = _world(read_lane(env, self.num_blocks))
-        set_room(env)
-
-    def _draw_count(self, env, seed: int | None) -> None:
-        """Set the lane's block count for the next reset, uniform in the configured range.
-
-        A seeded reset draws it from its own generator seeded with the lane's seed, so the source's
-        generator is untouched; an unseeded reset draws it from the lane's generator, which State holds.
-        """
-        lo, hi = self.count_range
-        if lo == hi:
-            env.num_blocks = lo
-            return
-        rng = env.np_random if seed is None else np.random.default_rng(seed)
-        env.num_blocks = int(rng.integers(lo, hi + 1))
-
-    def reset(self, seed: int | None = None) -> TensorDict:
-        self._check_open()
-        for i, env in enumerate(self.envs):
-            lane_seed = None if seed is None else int(seed) + i
-            self._draw_count(env, lane_seed)
-            env.reset(seed=lane_seed)
-            self._after_reset(env)
-        return self.get_state()
-
-    def get_state(self) -> TensorDict:
-        self._check_open()
-        return self.pack([read_lane(env, self.num_blocks) for env in self.envs])
-
-    def pack(self, rows: list[dict]) -> TensorDict:
-        columns = {
-            key: torch.tensor(np.asarray([row[key] for row in rows]).reshape(len(rows), width), dtype=dtype)
-            for key, (width, dtype) in self.fields.items()
-        }
-        return TensorDict({k: v.to(self.device) for k, v in columns.items()}, [len(rows)], device=self.device)
-
-    def unpack(self, state: TensorDict) -> list[dict]:
-        host = {key: state[key].detach().cpu().numpy() for key in self.fields}
-        return [{key: value[i] for key, value in host.items()} for i in range(int(state.batch_size[0]))]
-
-    def validate(self, state, *, batch: int | None = None) -> None:
-        """Require the complete typed schema with consistent values; nothing is changed."""
-        if not isinstance(state, TensorDict):
-            raise TypeError("Expected a full State TensorDict")
-        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
-            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
-        have, want = set(state.keys(True, True)), set(self.fields)
-        if have != want:
-            missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
+def validate_state(state, fields: dict, count_range: tuple[int, int], *, batch: int | None = None) -> None:
+    """Require the complete typed schema with consistent values; nothing is changed."""
+    if not isinstance(state, TensorDict):
+        raise TypeError("Expected a full State TensorDict")
+    if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+        raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+    have, want = set(state.keys(True, True)), set(fields)
+    if have != want:
+        missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
+        raise ValueError(
+            "State keys do not match the MovingBlockWorld schema"
+            + (f"; missing {missing}" if missing else "")
+            + (f"; unexpected {extra}" if extra else "")
+        )
+    n = int(state.batch_size[0])
+    for key, (width, dtype) in fields.items():
+        value = state[key]
+        if tuple(value.shape) != (n, width) or value.dtype != dtype:
             raise ValueError(
-                "State keys do not match the MovingBlockWorld schema"
-                + (f"; missing {missing}" if missing else "")
-                + (f"; unexpected {extra}" if extra else "")
+                f"State field {key!r} must be {dtype} of shape ({n}, {width}), got {value.dtype} {tuple(value.shape)}"
             )
-        n = int(state.batch_size[0])
-        for key, (width, dtype) in self.fields.items():
-            value = state[key]
-            if tuple(value.shape) != (n, width) or value.dtype != dtype:
-                raise ValueError(
-                    f"State field {key!r} must be {dtype} of shape ({n}, {width}), got {value.dtype} {tuple(value.shape)}"
-                )
-            if value.is_floating_point() and not bool(torch.isfinite(value).all()):
-                raise ValueError(f"State field {key!r} contains non-finite values")
-        host = state.cpu()
+    host = state.cpu()
+    for key, (_, dtype) in fields.items():
+        if dtype.is_floating_point and not bool(torch.isfinite(host[key]).all()):
+            raise ValueError(f"State field {key!r} contains non-finite values")
 
-        def within(key, lo, hi):
-            v = host[key]
-            if bool((v < lo).any() or (v > hi).any()):
-                raise ValueError(f"State field {key!r} must lie in [{lo}, {hi}]")
+    def within(key, lo, hi):
+        v = host[key]
+        if bool((v < lo).any() or (v > hi).any()):
+            raise ValueError(f"State field {key!r} must lie in [{lo}, {hi}]")
 
-        present = host["blocks", "present"]
-        count = present.sum(-1)
-        lo, hi = self.count_range
-        if bool((present != (torch.arange(self.num_blocks) < count[:, None])).any()):
-            raise ValueError("State field ('blocks', 'present') must list a lane's blocks first")
-        if bool(((count < lo) | (count > hi)).any()):
-            raise ValueError(f"State field ('blocks', 'present') must mark between {lo} and {hi} blocks")
-        if bool((host["agent", "carrying"][:, 0] >= count).any()):
-            raise ValueError("State field ('agent', 'carrying') must name a present block or -1")
-        within(("agent", "carrying"), -1, self.num_blocks - 1)
-        within(("room", "textures"), 0, len(TEXTURES) - 1)
-        within(("blocks", "kind"), BOX, BALL)
-        within(("blocks", "color"), 0, len(COLORS) - 1)
-        within(("blocks", "texture"), -1, len(TEXTURES) - 1)
-        within(("blocks", "size"), np.finfo(np.float64).tiny, np.inf)
-        within(("rng", "state"), 0, 0xFFFF_FFFF)
-        within(("rng", "increment"), 0, 0xFFFF_FFFF)
-        within(("rng", "has_uint32"), 0, 1)
-        within(("rng", "uinteger"), 0, 0xFFFF_FFFF)
-        within(("lifecycle", "elapsed_steps"), 0, np.iinfo(np.int64).max)
-        if bool(((host["blocks", "kind"] == BALL) & (host["blocks", "texture"] >= 0)).any()):
-            raise ValueError("State field ('blocks', 'texture') must be -1 for a ball")
-        if not bool((host["rng", "increment"][:, 0] % 2 == 1).all()):
-            raise ValueError("State field ('rng', 'increment') must be odd (a PCG64 increment)")
-
-    def set_state(self, state: TensorDict) -> None:
-        self._check_open()
-        self.validate(state, batch=self.num_envs)
-        for env, row in zip(self.envs, self.unpack(state), strict=True):
-            write_lane(env, row)
-
-    def check_step(self, actions, active):
-        return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
-
-    def probe_actions(self) -> np.ndarray:
-        return np.full((1, 1), 4, np.int64)  # do nothing
-
-    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
-        """Advance one action per lane; an inactive lane holds its state and reports zero outputs."""
-        self._check_open()
-        actions, active = self.check_step(actions, active)
-        reward = np.zeros(self.num_envs)
-        terminated = np.zeros(self.num_envs, bool)
-        truncated = np.zeros(self.num_envs, bool)
-        for i, env in enumerate(self.envs):
-            if active is not None and not active[i]:
-                continue
-            _, reward[i], terminated[i], truncated[i], _ = env.step(int(actions[i]))
-            if self.config["wrap_heading"]:
-                wrap_heading(env)
-        dev = self.device
-        out = {
-            "reward": torch.tensor(reward, dtype=torch.float64, device=dev),
-            "terminated": torch.tensor(terminated, device=dev),
-            "truncated": torch.tensor(truncated, device=dev),
-        }
-        if capture_state:
-            out["state"] = self.get_state()
-        return TensorDict(out, batch_size=[self.num_envs], device=dev)
-
-    def render_live(self) -> np.ndarray:
-        """The live lanes' agent views, ``(num_envs, size, size, 3)`` uint8."""
-        self._check_open()
-        return np.stack([frame(env) for env in self.envs])
-
-    def frames(self) -> torch.Tensor:
-        """``render_live`` on the adapter's device."""
-        return torch.from_numpy(self.render_live()).to(self.device)
+    num_blocks = fields["blocks", "present"][0]
+    present = host["blocks", "present"]
+    count = present.sum(-1)
+    lo, hi = count_range
+    if bool((present != (torch.arange(num_blocks) < count[:, None])).any()):
+        raise ValueError("State field ('blocks', 'present') must list an environment's blocks first")
+    if bool(((count < lo) | (count > hi)).any()):
+        raise ValueError(f"State field ('blocks', 'present') must mark between {lo} and {hi} blocks")
+    if bool((host["agent", "carrying"][:, 0] >= count).any()):
+        raise ValueError("State field ('agent', 'carrying') must name a present block or -1")
+    within(("agent", "carrying"), -1, num_blocks - 1)
+    within(("room", "textures"), 0, len(TEXTURES) - 1)
+    within(("blocks", "kind"), BOX, BALL)
+    within(("blocks", "color"), 0, len(COLORS) - 1)
+    within(("blocks", "texture"), -1, len(TEXTURES) - 1)
+    within(("blocks", "size"), np.finfo(np.float64).tiny, np.inf)
+    within(("rng", "episode"), 0, np.iinfo(np.int64).max)
+    within(("lifecycle", "elapsed_steps"), 0, np.iinfo(np.int64).max)
+    if bool(((host["blocks", "kind"] == BALL) & (host["blocks", "texture"] >= 0)).any()):
+        raise ValueError("State field ('blocks', 'texture') must be -1 for a ball")
 
 
 def pack_rows(state: TensorDict, fields: dict) -> np.ndarray:

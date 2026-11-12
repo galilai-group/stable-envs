@@ -127,7 +127,6 @@ _KINDS = {"n": "an int >= 1", "n0": "an int >= 0", "pow2": "a power of two", "wa
 _SIM = (
     "classic-sim",
     "fetch-sim",
-    "miniworld-sim",
     "ogb-sim",
     "pusht-sim",
     "pusht-render",
@@ -176,7 +175,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
     "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
-    "miniworld": ("miniworld-render", "miniworld-sim"),
+    "miniworld": ("miniworld-render",),
     "roadster": ("roadster-render", "roadster-sim"),
 }
 

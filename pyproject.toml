@@ -112,7 +112,7 @@ roadster = ["mujoco>=3.11", "pillow"]
 craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 # MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
 # pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
-miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2"]
+miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2", "numba>=0.60"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed

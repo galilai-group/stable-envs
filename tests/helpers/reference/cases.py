@@ -121,7 +121,7 @@ ORIGINAL_GATES: dict[str, str] = {
         ),
         "tests/unit/test_roadster_source.py::test_lanes_match_the_source_called_directly",
     ),
-    "MiniWorldMovingBlockWorld": "tests/unit/test_miniworld_source.py::test_lanes_match_the_source_called_directly",
+    "MiniWorldMovingBlockWorld": "tests/unit/test_miniworld_source.py::test_environments_step_as_the_source_called_directly",
     "MSHumanLocomotion": "tests/integration/test_mshuman_gate.py::test_matches_a_plain_mujoco_rollout",
 }
 

@@ -63,8 +63,7 @@ def test_a_carried_block_is_restored():
         env.step(np.array([[6]]), frames=None)  # drop it
         assert env.get_state()["agent", "carrying"].item() == -1
         env.set_state(saved)
-        lane = env._simulator.envs[0]
-        assert lane.agent.carrying is lane.entities[1 + index]
+        assert env.get_state()["agent", "carrying"].item() == index
         for a, want in zip((2, 1, 2), expected):
             assert_same_state(env.step(np.array([[a]]), frames=None), want)
 
@@ -106,11 +105,11 @@ def test_invalid_states_are_rejected_before_any_lane_changes():
             ),  # past the lane's blocks
             _bad(good, ("blocks", "pos"), good["blocks", "pos"].float()),
             _bad(good, ("agent", "dir"), torch.full_like(good["agent", "dir"], float("nan"))),
-            _bad(good, ("rng", "increment"), good["rng", "increment"] * 2),
+            _bad(good, ("rng", "episode"), torch.full_like(good["rng", "episode"], -1)),
             _bad(_bad(good, ("blocks", "kind"), kind), ("blocks", "texture"), texture),
         ]
         missing = good.clone()
-        del missing["rng", "uinteger"]
+        del missing["rng", "seed"]
         cases.append(missing)
         for bad in cases:
             with pytest.raises((TypeError, ValueError)):
@@ -152,50 +151,55 @@ def test_close_is_idempotent_and_refuses_later_calls():
         env.render()
 
 
-def test_worker_processes_give_the_same_lanes_and_frames(monkeypatch):
-    """Process lanes and render workers match the in-process path; a bad State changes no worker lane.
+@pytest.mark.parametrize("preset", ["flowm", "flowm-textured", "upstream"])
+def test_numba_and_torch_give_the_same_episodes(preset):
+    """Both kernels draw the same resets from the counter-based generator and step them alike.
 
-    The batch is too small for the policy to choose workers, so the test chooses two of each, unpinned.
+    Torch's cosine and sine may differ from libm's in the last bit, so continuous motion agrees to 1e-9.
     """
-    from stable_envs._execution import render_pool
-    from stable_envs._execution.process import ProcessAdapter
-    from stable_envs.envs.miniworld.simulation import execution
+    actions = _actions(5, 40, lanes=6)
+    with _make(6, preset=preset) as numba, _make(6, preset=preset, simulation_backend="torch") as torch_env:
+        assert (numba.simulation_backend, numba.execution_mode) == ("numba", "NATIVE_NUMBA")
+        assert (torch_env.simulation_backend, torch_env.execution_mode) == ("torch", "NATIVE_TORCH")
+        pairs = [(numba.reset(seed=SEED), torch_env.reset(seed=SEED))]
+        pairs += [(numba.step(a, frames=None)["state"], torch_env.step(a, frames=None)["state"]) for a in actions]
+        pairs.append((numba.reset(), torch_env.reset()))
+        for want, got in pairs:
+            for key in want.keys(True, True):
+                torch.testing.assert_close(
+                    got[key], want[key], rtol=0, atol=1e-9 if want[key].is_floating_point() else 0
+                )
 
-    actions = _actions(9, 4, lanes=4)
-    with _make(num_envs=4) as env:
-        assert not isinstance(env._simulator, ProcessAdapter)
-        env.reset(seed=SEED)
-        local = [env.step(a) for a in actions]
-        here = env.render(local[-1]["state"])
-    pools = []
 
-    def two_workers(key, factory, count, path, size, **kwargs):
-        if not pools:
-            pools.append(render_pool.RenderPool(factory, 2, None, **kwargs))
-        return pools[0]
+def test_the_simulation_backend_follows_the_device_and_the_cutoff():
+    from stable_envs.envs.miniworld.simulation.batched import miniworld_backend
 
-    monkeypatch.setattr(execution, "process_count", lambda *args, **kwargs: 2)
-    monkeypatch.setattr(render_pool, "pool", two_workers)
-    try:
-        with _make(num_envs=4) as env:
-            assert isinstance(env._simulator, ProcessAdapter) and env._simulator.live_frames
+    assert miniworld_backend("cpu", 4096) == "numba"
+    assert miniworld_backend("cuda", 1) == "triton"
+    assert miniworld_backend("cuda", 1, "auto") == "triton"  # the default cutoff is 1
+    assert miniworld_backend("cuda", 63, "auto", 64) == "numba"
+    assert miniworld_backend("cuda", 64, "auto", 64) == "triton"
+    assert miniworld_backend("cpu", 4096, "auto") == "numba"
+    assert miniworld_backend("cpu", 1, "torch") == "torch"
+    assert miniworld_backend("cuda", 4096, "numba") == "numba"
+    for bad in (("cpu", 1, "warp"), ("cpu", 1, "triton"), ("cuda", 1, "auto", 0)):
+        with pytest.raises(ValueError):
+            miniworld_backend(*bad)
+    with _make(1, simulation_backend="torch") as env:
+        assert env.simulation_backend == "torch"
+
+
+def test_inactive_environments_hold_their_state():
+    """A sequence step: an environment that truncates holds its endpoint while the others go on."""
+    for backend in ("numba", "torch"):
+        with _make(2, preset="upstream", max_episode_steps=3, simulation_backend=backend) as env:
             env.reset(seed=SEED)
-            for a, want in zip(actions, local, strict=True):
-                assert_same_state(env.step(a), want)  # step frames drawn by the worker lanes
             state = env.get_state()
-            torch.testing.assert_close(env.render(state), here, rtol=0, atol=0)  # drawn by the render workers
-            torch.testing.assert_close(env.render(), here, rtol=0, atol=0)
-            assert pools and pools[0].processes == 2
-            bad = state.clone()
-            bad["blocks", "color"][3, 0] = 6
-            with pytest.raises(ValueError):
-                env.set_state(bad)
-            assert_same_state(env.get_state(), state)
-            env.set_state(local[1]["state"])
-            assert_same_state(env.step(actions[2]), local[2])
-    finally:
-        for p in pools:
-            p.close()
+            state["lifecycle", "elapsed_steps"][1] = 1  # the second environment truncates first
+            env.set_state(state)
+            out = env.step(np.full((2, 4, 1), 2), frames=None)
+            assert out["valid"].tolist() == [[True, True, True, False], [True, True, False, False]]
+            assert out["state"]["lifecycle", "elapsed_steps"].tolist() == [[3], [3]]
 
 
 @pytest.mark.parametrize("k", [0, 7])
@@ -213,8 +217,8 @@ def test_restoring_the_state_of_step_k_replays_the_trajectory_bit_for_bit(k):
             assert_same_state(env.step(a), want)
 
 
-def test_each_lane_draws_its_block_count_at_reset():
-    """FloWM presets draw 6 to 10 blocks per lane and reset; State pads to 10 and marks the lane's blocks."""
+def test_each_environment_draws_its_block_count_at_reset():
+    """FloWM presets draw 6 to 10 blocks per environment and reset; State pads to 10 and marks its blocks first."""
     with _make(num_envs=8) as env:
         counts = set()
         for seed in range(0, 60, 10):  # 48 distinct lane seeds
@@ -258,3 +262,20 @@ def test_lanes_that_share_a_room_compile_its_display_list_once(monkeypatch):
         env.render()
         env.render()
         assert len(compiles) <= 1
+
+
+@pytest.mark.parametrize("length", [1, 3])
+def test_step_states_are_owned_copies(length):
+    """``states`` repeats each State along time, in storage of its own (one step copies two flat buffers)."""
+    with _make() as env:
+        env.reset(seed=SEED)
+        out = env.step(_actions(6, length).transpose(1, 0, 2), frames=None)
+        states, state = out["states"], out["state"]
+        assert states.batch_size == torch.Size([2, length])
+        assert_same_state(states[:, -1], state)
+        held = {state[key].untyped_storage().data_ptr() for key in state.keys(True, True)}
+        for key in states.keys(True, True):
+            assert states[key].untyped_storage().data_ptr() not in held, key
+        before = state.clone()
+        states.apply_(lambda x: x.zero_())
+        assert_same_state(state, before)
