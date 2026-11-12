@@ -7,7 +7,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
 from ..._core.plate_texels import quantise
-from ..._core.tensordicts import build_tensordict
+from ..._core.stepping import _stack_states
 from ..._execution.protocol import StepPipeline, step_pipeline
 
 configure_mujoco_gl()
@@ -19,7 +19,7 @@ from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter, maze_backend
-from .simulation.maze import BODIES, maze_fields, tree
+from .simulation.maze import BODIES, maze_fields
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -1206,22 +1206,10 @@ class MazeSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _stack_states(self, values):
-        """Stack State snapshots along a new time axis: one copy per dtype, the leaves are views of it."""
-        flat = [dict(value.items(True, True)) for value in values]
-        groups: dict = {}
-        for key, leaf in flat[0].items():
-            groups.setdefault(leaf.dtype, []).append(key)
-        stacked = {}
-        for keys in groups.values():
-            # State leaves are [B, width].
-            rows = [torch.cat([row[key] for key in keys], 1) for row in flat]
-            block = rows[0].unsqueeze(1) if len(rows) == 1 else torch.stack(rows, 1)
-            start = 0
-            for key in keys:
-                width = flat[0][key].shape[1]
-                stacked[key] = block[:, :, start : start + width]
-                start += width
-        return build_tensordict(tree(stacked), [self.B, len(values)], values[0].device)
+        """Stack the States of a step sequence; the CUDA simulator stacks its own States with one copy."""
+        stack = getattr(self._simulator, "stack_states", None)
+        stacked = None if stack is None else stack(values)
+        return _stack_states(values) if stacked is None else stacked
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)

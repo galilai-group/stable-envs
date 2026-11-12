@@ -126,6 +126,29 @@ def test_inactive_lanes_keep_their_state_and_last_outputs():
         gpu.close()
 
 
+def test_step_states_stack_with_one_copy_as_the_core_does():
+    from stable_envs._core.stepping import _stack_states
+
+    lanes = 4
+    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=3, loco="ant", maze="medium")
+    try:
+        actions = torch.as_tensor(
+            np.random.default_rng(2).uniform(-1, 1, (3, lanes, gpu.action_dim)), dtype=torch.float32, device="cuda"
+        )
+        states = [gpu.step(action)["state"] for action in actions]
+        for count in (1, 3):
+            got, want = gpu.stack_states(states[:count]), _stack_states(states[:count])
+            assert got.batch_size == want.batch_size and list(got.keys(True, True)) == list(want.keys(True, True))
+            for key in want.keys(True, True):
+                assert got[key].dtype == want[key].dtype and torch.equal(got[key], want[key]), key
+            owned = {state[key].untyped_storage().data_ptr() for state in states for key in state.keys(True, True)}
+            assert not any(got[key].untyped_storage().data_ptr() in owned for key in got.keys(True, True))
+        # States that are not one buffer of this adapter take the leafwise stack.
+        assert gpu.stack_states([state.clone() for state in states]) is None
+    finally:
+        gpu.close()
+
+
 def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
     """More teleport draws than one draw-ahead table holds, with State reads in between."""
     lanes = 32

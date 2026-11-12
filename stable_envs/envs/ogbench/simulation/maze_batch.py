@@ -662,6 +662,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
             self._applied = np.zeros(self.num_envs, np.int64)
             self._steps_since_refill = 0
         self._rng_columns = {}
+        self._state_layout = None
         self._last = None
         self.reset(seed=seed)
 
@@ -735,11 +736,49 @@ class OGBMazeWarpAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._rng_columns,
         }
-        return build_tensordict(
-            tree({key: value.to(self.fields[key][1]).clone() for key, value in columns.items()}),
-            [self.num_envs],
-            self.device,
-        )
+        if self._state_layout is None:
+            self._state_layout = self._layout(columns)
+        buffer = torch.empty(self._state_layout[1], dtype=torch.uint8, device=self.device)
+        views = self._state_views(buffer)
+        torch._foreach_copy_(list(views.values()), list(columns.values()))
+        return build_tensordict(tree(views), [self.num_envs], self.device)
+
+    def _layout(self, columns):
+        """Each State leaf's element offset in one byte buffer, and the buffer size; leaves start at 8-byte bounds."""
+        layout, offset = [], 0
+        for key in columns:
+            width, dtype = self.fields[key]
+            layout.append((key, dtype, width, offset // dtype.itemsize))
+            offset += -(-self.num_envs * width * dtype.itemsize // 8) * 8
+        return layout, offset
+
+    def _state_views(self, buffer, steps=None):
+        """Views of every State leaf in one State buffer, or in ``steps`` State buffers stacked in time."""
+        layout, nbytes = self._state_layout
+        n, flats, out = self.num_envs, {}, {}
+        for key, dtype, width, start in layout:
+            flat = flats.get(dtype)
+            if flat is None:
+                flat = flats[dtype] = buffer.view(dtype)
+            if steps is None:
+                out[key] = flat.as_strided((n, width), (width, 1), start)
+            else:
+                out[key] = flat.as_strided((n, steps, width), (width, nbytes // dtype.itemsize, 1), start)
+        return out
+
+    def stack_states(self, states):
+        """Stack States of this adapter along a new time axis with one copy; None for other States."""
+        if self._state_layout is None:
+            return None
+        layout, nbytes = self._state_layout
+        buffers = []
+        for state in states:
+            storage = state[layout[0][0]].untyped_storage()
+            if storage.nbytes() != nbytes or storage.device.type != self.device.type:
+                return None
+            buffers.append(torch.empty(0, dtype=torch.uint8, device=self.device).set_(storage))
+        views = self._state_views(torch.stack(buffers), len(buffers))
+        return build_tensordict(tree(views), [self.num_envs, len(buffers)], self.device)
 
     def set_state(self, state):
         host, decoded = self.validate(state)
