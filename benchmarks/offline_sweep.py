@@ -18,6 +18,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from benchmarks.compat import native_size, reference_gpu_render
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -169,7 +171,7 @@ def cmd_states(args) -> None:
             print(f"have {path}", flush=True)
             continue
         cls = snv.registry.REGISTRY[name]
-        size = cls.native_size or args.size
+        size = native_size(cls) or args.size
         reference = has_reference_renderer(cls)
         t = time.time()
         try:
@@ -358,8 +360,8 @@ def _source_skip(cls, blob, gpu: bool) -> str | None:
 
     if not has_reference_renderer(cls) or (blob["rows"] is None and blob["inputs"] is None):
         return "no source renderer"
-    if gpu and cls.reference_gpu_render != "mujoco-egl":
-        return f"the offline source draws on CPU (reference_gpu_render={cls.reference_gpu_render})"
+    if gpu and reference_gpu_render(cls) != "mujoco-egl":
+        return f"the offline source draws on CPU (reference_gpu_render={reference_gpu_render(cls)})"
     return None
 
 

@@ -31,6 +31,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from benchmarks.compat import native_size, reference_gpu_render
 from benchmarks.offline_sweep import _cycle, _host, _timed
 
 #: Constructor keyword arguments of source gym ids that need them.
@@ -171,7 +172,7 @@ def _make_source(name: str, size: int, gpu: bool = False):
     if name in OGB_PIXEL_SOURCES:
         return _OGBPixelSource(name, size)
     sid = source_id(name)
-    pybullet_egl = gpu and snv.registry.REGISTRY[name].reference_gpu_render == "pybullet-egl"
+    pybullet_egl = gpu and reference_gpu_render(snv.registry.REGISTRY[name]) == "pybullet-egl"
     if sid.startswith("dm_control/"):
         domain, task = sid.split("/", 1)[1].split("-", 1)
         return _DMCSource(domain, task, snv.registry.REGISTRY[name].CAMERA, size)
@@ -452,7 +453,7 @@ def _make_ours(name: str, lanes: int, size: int, device: str):
     """The class at ``size``, or at its native size when it declares one."""
     import stable_envs as snv
 
-    return snv.make(name, num_envs=lanes, size=snv.registry.REGISTRY[name].native_size or size, device=device)
+    return snv.make(name, num_envs=lanes, size=native_size(snv.registry.REGISTRY[name]) or size, device=device)
 
 
 def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:

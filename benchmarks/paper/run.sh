@@ -173,7 +173,7 @@ for spec in "$@"; do
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg) $(peak_memory)"
     o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
-    GPUSRC=$($P -c "import stable_envs as s; print(s.info('$E')['reference_gpu_render'] or '')")
+    GPUSRC=$($P -c "import stable_envs as s; from benchmarks.compat import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')")
     for dev in $DEVICES; do
       tag=$([ $dev = cpu ] && echo cpu || echo gpu)
       if has offline; then

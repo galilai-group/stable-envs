@@ -24,6 +24,8 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 
+from benchmarks.compat import native_size
+
 
 def _source_rows(name, size, inputs):
     from benchmarks.offline_sweep import _snv
@@ -161,7 +163,7 @@ def main() -> None:
 
     for name in args.envs:
         cls = snv.registry.REGISTRY[name]
-        size = cls.native_size or args.size
+        size = native_size(cls) or args.size
         try:
             ours, bridged, native, flags, how = episode(name, size, args.device, args.steps, args.seed)
             if ours.shape[1:3] != native.shape[1:3]:
