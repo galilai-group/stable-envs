@@ -176,7 +176,7 @@ extras = ["rocket"]
 groups = ["pin-rocket"]
 paths = ["stable_envs/envs/rocket/**", "stable_envs/render/nvdiff*"]
 tests = ["test_rocket_*", "test_nvdiff_*"]
-requires = ["PyFlyt==0.29.0", "pybullet==3.2.7", "numba"]
+requires = ["PyFlyt==0.29.0", "pybullet==3.2.7"]
 capabilities = ["swm"]
 swm_with = ["cvxpy"]
 
