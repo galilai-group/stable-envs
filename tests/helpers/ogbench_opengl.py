@@ -33,10 +33,13 @@ def opengl():
     spec = importlib.util.spec_from_file_location("stable_envs.envs.ogbench._opengl_test", path)
     module = importlib.util.module_from_spec(spec)
     # Stubbed renderers live in this process only, so the batches draw here rather than in OpenGL workers.
-    with patch.dict(
-        sys.modules,
-        {pixels.__name__: pixels, compat.__name__: compat, resources.__name__: resources, "mujoco": mujoco},
-    ), tuning.override(ogb_gl_workers=0):
+    with (
+        patch.dict(
+            sys.modules,
+            {pixels.__name__: pixels, compat.__name__: compat, resources.__name__: resources, "mujoco": mujoco},
+        ),
+        tuning.override(ogb_gl_workers=0),
+    ):
         spec.loader.exec_module(module)
         # A prior test may have populated the parent package attribute already.
         module.pixels = pixels
