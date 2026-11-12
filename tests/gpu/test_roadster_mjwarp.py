@@ -68,6 +68,24 @@ def test_the_native_batch_on_a_cuda_env_steps_as_on_cpu():
         assert_same_state(a.cpu(), b)
 
 
+def test_an_inactive_environment_holds_its_state_on_mujoco_warp():
+    _require_cuda()
+    with snv.RoadsterCarHop(num_envs=3, device="cuda") as env:
+        env.reset(seed=SEED, options={"variation_values": {"weather.wind": [6.0]}})
+        for _ in range(3):
+            env.step(torch.full((3, 4), 0.3, device="cuda"), frames=None)
+        before = env.get_state()
+        out = env._step(
+            torch.full((3, 4), 0.5, device="cuda"), active=torch.tensor([True, False, True], device="cuda")
+        )
+        held = out["state"][1]
+        for key in before.keys(True, True):
+            assert torch.equal(held[key], before[1][key]), key
+        assert not torch.equal(out["state"]["sim", "qpos"][0], before["sim", "qpos"][0])
+        for key in out.exclude("state").keys(True, True):
+            assert not out[key][1].any(), key
+
+
 @pytest.mark.parametrize("task", ["loop", "mission", "traffic", "rooftop", "carhop"])
 def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
     _require_cuda()
