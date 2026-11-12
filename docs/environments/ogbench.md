@@ -62,11 +62,17 @@ from the same State (64 environments):
 
 | Body | Median `xy` distance after 200 steps |
 | --- | --- |
-| PointMaze | less than 1e-5 |
+| PointMaze | less than 1e-5 (largest: 0.13 after wall contacts) |
 | AntMaze | 0.05 |
 | HumanoidMaze | 0.23 (0.11 when only the start State is rounded to float32 in MuJoCo) |
 
 A PointMaze agent that follows the OGBench subgoal oracle reaches the goal at the same step on both backends.
+
+On MuJoCo Warp, PointMaze integrates with Euler, and OGBench integrates with RK4. The point's step moves the
+position by the action and sets the velocity to zero, so away from walls the two integrators give the same
+positions. Only the response to a wall contact is different: over 300 steps of smooth actions on 32
+environments, the largest `xy` distance from OGBench is 0.13 (2e-5 with RK4). RK4 runs four forward passes in
+each substep, so the Euler step is about four times faster.
 MuJoCo Warp orders contacts with atomic operations, so two runs from one State can differ by rounding. Use
 `simulation_backend="native"` when you need results that are equal to OGBench.
 

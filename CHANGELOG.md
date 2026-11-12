@@ -126,6 +126,9 @@ All notable changes to this project are listed here. The format follows
   OGBScene on MuJoCo Warp exclude the pairs of Robotiq gripper links, which make no contacts. The Cube oracle
   replay has the same outcomes and first-success steps.
 - Fetch on MuJoCo Warp: the step of the blocked-gripper tasks does not synchronize with the host.
+- PointMaze on MuJoCo Warp integrates with Euler instead of the source's RK4. The step is about four times
+  faster; positions differ from OGBench only after a wall contact, and the subgoal oracle reaches the goal at
+  the same steps.
 - `WarpBatch` captures its graphs with the temporary arrays of MuJoCo Warp in retained memory
   (`WarpBatch.capture`), so the graphs have no allocation nodes.
 - Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics

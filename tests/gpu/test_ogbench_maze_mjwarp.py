@@ -1,5 +1,6 @@
 """Maze lanes on MuJoCo Warp follow the bit-exact CPU batch to float32 rounding, with the same task bookkeeping."""
 
+import mujoco
 import numpy as np
 import pytest
 import torch
@@ -151,3 +152,42 @@ def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
     finally:
         cpu.close()
         gpu.close()
+
+
+def _oracle_rollout(adapter, oracle, steps, on_cuda):
+    """Steps of the OGBench subgoal oracle; returns the first success step of each environment (-1: none)."""
+    adapter.reset(seed=7)
+    state = adapter.get_state()
+    first = np.full(adapter.num_envs, -1)
+    for t in range(steps):
+        xy = state["root", "position"].cpu().numpy()[:, :2].astype(np.float64)
+        goal = state["task", "goal_pos"].cpu().numpy()[:, :2].astype(np.float64)
+        actions = np.zeros((adapter.num_envs, 2), np.float32)
+        for i in range(adapter.num_envs):
+            direction = np.asarray(oracle.get_oracle_subgoal(xy[i], goal[i])[0]) - xy[i]
+            actions[i] = direction / max(np.linalg.norm(direction), 1e-6)
+        out = adapter.step(torch.as_tensor(actions, device="cuda") if on_cuda else actions)
+        state = out["state"]
+        success = out["success"].cpu().numpy().reshape(-1).astype(bool)
+        first[(first < 0) & success] = t
+    return first
+
+
+def test_point_maze_oracle_reaches_the_goal_at_the_source_step():
+    """PointMaze steps with Euler on MuJoCo Warp (``WARP_INTEGRATORS``); the oracle's outcomes stay those of RK4."""
+    from stable_envs.envs.ogbench.simulation.maze_batch import _make_maze
+
+    lanes, steps = 16, 600
+    oracle = _make_maze("point", "medium")
+    cpu = OGBMazeBatchAdapter(lanes, seed=7, loco="point", maze="medium")
+    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=7, loco="point", maze="medium")
+    try:
+        assert gpu.sim._m.opt.integrator == mujoco.mjtIntegrator.mjINT_EULER
+        want = _oracle_rollout(cpu, oracle, steps, False)
+        got = _oracle_rollout(gpu, oracle, steps, True)
+        assert (want >= 0).sum() >= lanes // 2
+        assert got.tolist() == want.tolist()
+    finally:
+        cpu.close()
+        gpu.close()
+        oracle.close()

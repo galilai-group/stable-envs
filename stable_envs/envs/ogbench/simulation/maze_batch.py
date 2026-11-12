@@ -22,6 +22,10 @@ TELEPORT_DRAWS = 32
 #: MuJoCo Warp constraint rows per environment and contacts per environment, by body: four times the most that
 #: native MuJoCo made in 400 steps of uniform random actions on 512 environments (8 and 3, 24 and 5, 64 and 17).
 WARP_BUFFERS = {"point": (32, 12), "ant": (96, 20), "humanoid": (256, 68)}
+#: Integrator of the MuJoCo Warp step where it differs from the source's. The point's step moves the position by
+#: the action and sets the velocity to zero, and no force acts on it except a wall contact. Away from walls, Euler
+#: and RK4 give the same positions, and RK4 costs four forward passes per substep.
+WARP_INTEGRATORS = {"point": int(mujoco.mjtIntegrator.mjINT_EULER)}
 
 
 class MazeTask:
@@ -631,7 +635,9 @@ class OGBMazeWarpAdapter(_MazeLanes):
         self._setup(num_envs, device, loco, maze, task)
         task = self.task
         njmax, ncon = WARP_BUFFERS[loco]
-        warp_options = {"njmax": njmax, "naconmax": ncon * self.num_envs, **warp_options}
+        options = {"integrator": WARP_INTEGRATORS[loco]} if loco in WARP_INTEGRATORS else {}
+        options.update(warp_options.pop("model_options", None) or {})
+        warp_options = {"njmax": njmax, "naconmax": ncon * self.num_envs, "model_options": options, **warp_options}
         self.sim = WarpBatch(task.model, self.num_envs, self.device, frame_skip=task.frame_skip, **warp_options)
         rb = None
         if loco == "humanoid":
