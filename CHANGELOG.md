@@ -504,6 +504,11 @@ All notable changes to this project are listed here. The format follows
 
 ### Fixed
 
+- `WarpBatch` builds its CUDA graphs when MuJoCo Warp frees temporary arrays at other points in the captured
+  call than in the first call. MuJoCo Warp frees some of them only when the garbage collector runs, and the
+  capture then raised `RuntimeError` ("requested temporary memory that its first call did not"), for example for
+  a second DMC Cheetah batch in one process. The capture now takes such memory from a reserve as large as the
+  temporary memory of the first call.
 - Classic control `render` of fewer than 8 rows with a per-environment appearance draws the frames. Before,
   it raised `ValueError`. The check for the source appearance compares with the defaults of the variation
   space.
