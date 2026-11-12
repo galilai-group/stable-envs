@@ -119,8 +119,8 @@ def test_env_with_a_swm_source_is_compared_with_it(name):
     assert _marked(gate, "swm"), f"{gate} compares with stable-worldmodel and must carry pytest.mark.swm"
 
 
-#: Installed in every profile by the test dependency group.
-_EVERYWHERE = {"pygame"}
+#: Installed in every profile: pygame by the test dependency group, jax as a core dependency.
+_EVERYWHERE = {"pygame", "jax"}
 
 
 def _requires(family: str) -> set[str]:
