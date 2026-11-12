@@ -163,6 +163,14 @@ All notable changes to this project are listed here. The format follows
   `mjwarp_min_envs` and MuJoCo Warp from there, with a measured cutoff per task. `"native"` runs physics
   on CPU with State and outputs on CUDA, and `"mjx"` remains Reacher's explicit MJX choice. The
   `mjx_min_envs` argument is removed.
+- The OGBench mazes (`PointMaze*`, `AntMaze*`, `HumanoidMaze*`) step all environments in one batched call on the
+  shared MuJoCo backend. On CPU, `mujoco.batch` steps them in float64, and the State, observations, task
+  outputs, resets and RNG streams are equal to OGBench, bit for bit. Resets sample the start, the goal and the
+  task from the RNGs of each environment, and do not run the OGBench reset. On CUDA, MuJoCo Warp steps them in
+  float32 by default, with no host synchronization in the step; teleport destinations come from each
+  environment's own RNG. `simulation_backend="auto"` steps CUDA batches smaller than `mjwarp_min_envs` on
+  `mujoco.batch`, and `"native"` and `"mjwarp"` select one backend. Before, each environment called the OGBench
+  `step` in a Python loop in worker processes, on both devices.
 - `OGBCube` and `OGBScene` use the OGBench cube size. The default `cube.size` is now 0.02, as in OGBench.
   Before, the default was the stable-worldmodel value `float32(0.02)`, which compiles to
   0.019999999552965164. That size changed the cube mass and inertia, so contacts moved the physics away

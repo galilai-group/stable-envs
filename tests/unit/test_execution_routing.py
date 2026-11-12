@@ -37,12 +37,6 @@ def _fetch(monkeypatch, target, batch, device):
     return execution.make_fetch_adapter(*args), args, {}, {"threads_per_process": 1}
 
 
-def _ogbench(monkeypatch, target, batch, device):
-    from stable_envs.envs.ogbench.simulation import execution
-
-    monkeypatch.setattr(execution, "OGBMazeProcessAdapter", _process)
-    body = dict(loco="point", maze="large")
-    return execution.make_maze_adapter(batch, device, 17, _local), (batch, device, 17), body, body
 
 
 #: (family, route, target, devices, whether the target may use processes)
@@ -51,7 +45,6 @@ TARGETS = [
     ("classic", _classic, "cartpole", ("cpu", "cuda"), False),
     ("classic", _classic, "mountain_car_continuous", ("cpu", "cuda"), False),
     ("fetch", _fetch, "Push", ("cpu",), True),
-    ("ogbench", _ogbench, "Maze", ("cpu", "cuda"), True),
 ]
 
 

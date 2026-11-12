@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
-from ...._execution.policy import cpu_affinity, process_count
 from ...._execution.protocol import SimulatorAdapter
 
 if TYPE_CHECKING:
@@ -11,8 +9,7 @@ if TYPE_CHECKING:
 
     from .manipulation_batch import OGBManipulationBatchAdapter
     from .manipulation_warp import OGBManipulationWarpAdapter
-
-from .maze_process import OGBMazeProcessAdapter
+    from .maze_batch import OGBMazeBatchAdapter, OGBMazeWarpAdapter
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
@@ -21,20 +18,41 @@ _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 MJWARP_MIN_ENVS = 256
 
 
+#: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body (L40S, 8 cores).
+MAZE_MJWARP_MIN_ENVS = {"point": 256, "ant": 256, "humanoid": 256}
+
+
+def maze_backend(
+    num_envs: int,
+    device: str | torch.device,
+    loco: str,
+    simulation_backend: str | None = "default",
+    mjwarp_min_envs: int | None = None,
+) -> str:
+    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``resolve_backend``."""
+    from ...._execution.mjbatch import resolve_backend
+
+    threshold = MAZE_MJWARP_MIN_ENVS[loco] if mjwarp_min_envs is None else mjwarp_min_envs
+    return resolve_backend(num_envs, device, simulation_backend, threshold)
+
+
 def make_maze_adapter(
     num_envs: int,
     device: str | torch.device,
     seed: int,
-    local_factory: Callable[..., _AdapterT],
     *,
     loco: str = "point",
     maze: str = "large",
-) -> _AdapterT | OGBMazeProcessAdapter:
-    cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="ogb-sim")
-    if count:
-        return OGBMazeProcessAdapter(num_envs, device, seed, processes=count, cpus=cpus, loco=loco, maze=maze)
-    return local_factory(num_envs, device, seed, loco=loco, maze=maze)
+    simulation_backend: str | None = "default",
+    mjwarp_min_envs: int | None = None,
+) -> OGBMazeBatchAdapter | OGBMazeWarpAdapter:
+    if maze_backend(num_envs, device, loco, simulation_backend, mjwarp_min_envs) == "mjwarp":
+        from .maze_batch import OGBMazeWarpAdapter
+
+        return OGBMazeWarpAdapter(num_envs, device, seed, loco=loco, maze=maze)
+    from .maze_batch import OGBMazeBatchAdapter
+
+    return OGBMazeBatchAdapter(num_envs, device, seed, loco=loco, maze=maze)
 
 
 def make_manipulation_adapter(

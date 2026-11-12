@@ -1,7 +1,6 @@
 """Persistent Maze ownership, atomic validation, RNG isolation and lookahead."""
 
 import sys
-from functools import partial
 
 import numpy as np
 import pytest
@@ -121,7 +120,13 @@ def test_public_chunks_and_early_stop(monkeypatch):
 
     local = se.make("PointMazeLargeNavigate", num_envs=3, device="cpu", seed=17)
     with monkeypatch.context() as patch:
-        patch.setattr(module, "OGBMazeAdapter", partial(OGBMazeProcessAdapter, processes=2))
+        patch.setattr(
+            module,
+            "make_maze_adapter",
+            lambda n, device, seed, *, loco, maze, **_: OGBMazeProcessAdapter(
+                n, device, seed, processes=2, loco=loco, maze=maze
+            ),
+        )
         remote = se.make("PointMazeLargeNavigate", num_envs=3, device="cpu", seed=17)
     try:
         initial = local.get_state()

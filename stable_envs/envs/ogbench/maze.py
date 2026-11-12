@@ -17,8 +17,8 @@ from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
-from .simulation.execution import make_maze_adapter
-from .simulation.maze import BODIES, OGBMazeAdapter, maze_fields
+from .simulation.execution import make_maze_adapter, maze_backend
+from .simulation.maze import BODIES, maze_fields
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -1120,21 +1120,28 @@ class OGBenchMaze(Env):
 
 
 class MazeSemantics:
-    """Compose full-State CPU simulation of the source maze with state observations.
+    """Compose full-State batched simulation of the source maze with state observations.
 
-    CUDA selects output placement; simulation remains on CPU. The renderer projection
-    is qpos, followed by the goal when the scene draws it.
+    The renderer projection is qpos, followed by the goal when the scene draws it.
     """
 
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
     execution_mode = "DELEGATED_CPU"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, simulation_backend="default", mjwarp_min_envs=None, **kwargs):
+        """Select physics at construction; outputs are on ``device``.
+
+        ``"default"`` steps CUDA batches on MuJoCo Warp (float32) and CPU batches on ``mujoco.batch``, which
+        equals the source bit for bit. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` (by
+        default a measured size per body) on ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        """
         super().__init__(*args, **kwargs)
+        self.simulation_backend = maze_backend(self.B, self.device, self.LOCO, simulation_backend, mjwarp_min_envs)
         self._simulator = make_maze_adapter(
-            self.B, self.device, self._seed, OGBMazeAdapter, loco=self.LOCO, maze=self.MAZE
+            self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )
+        self.execution_mode = getattr(self._simulator, "execution_mode", "DELEGATED_CPU")
 
     @property
     def _qpos_fields(self):

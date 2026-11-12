@@ -161,6 +161,36 @@ def _resting_lanes(rest, envs, qpos):
     return clear & np.asarray(idle, bool)
 
 
+def decode_state(state, num_envs, fields, num_tasks):
+    """Return ``(host State, [(task id, PCG64 state, legacy MT19937 state)] per lane)``, or raise."""
+    if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
+        raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
+    require_columns(state, {key: ((num_envs, width), dtype) for key, (width, dtype) in fields.items()})
+    host = state.cpu()
+    decoded = []
+    for row in host.unbind(0):
+        task_id = row["task", "id"].item()
+        if not 0 <= task_id <= num_tasks:
+            raise ValueError(f"Invalid OGBench task id {task_id}")
+        pcg = pcg_state(
+            bytes_uint128(row["rng", "env_state"].numpy()),
+            bytes_uint128(row["rng", "env_inc"].numpy()),
+            row["rng", "env_has_uint32"].item(),
+            row["rng", "env_uinteger"].item(),
+        )
+        np.random.PCG64().state = pcg
+        legacy = (
+            "MT19937",
+            row["rng", "global_keys"].numpy().astype(np.uint32),
+            row["rng", "global_position"].item(),
+            int(row["rng", "global_has_gauss"].item()),
+            row["rng", "global_cached_gaussian"].item(),
+        )
+        np.random.RandomState().set_state(legacy)
+        decoded.append((task_id, pcg, legacy))
+    return host, decoded
+
+
 class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU locomotion-maze simulators with owned State snapshots.
 
@@ -258,32 +288,7 @@ class OGBMazeAdapter(SimulatorAdapter):
 
     def validate(self, state):
         self._check_open()
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
-        require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
-        host = state.cpu()
-        decoded = []
-        for row in host.unbind(0):
-            task_id = row["task", "id"].item()
-            if not 0 <= task_id <= self.envs[0].num_tasks:
-                raise ValueError(f"Invalid OGBench task id {task_id}")
-            pcg = pcg_state(
-                bytes_uint128(row["rng", "env_state"].numpy()),
-                bytes_uint128(row["rng", "env_inc"].numpy()),
-                row["rng", "env_has_uint32"].item(),
-                row["rng", "env_uinteger"].item(),
-            )
-            np.random.PCG64().state = pcg
-            legacy = (
-                "MT19937",
-                row["rng", "global_keys"].numpy().astype(np.uint32),
-                row["rng", "global_position"].item(),
-                int(row["rng", "global_has_gauss"].item()),
-                row["rng", "global_cached_gaussian"].item(),
-            )
-            np.random.RandomState().set_state(legacy)
-            decoded.append((task_id, pcg, legacy))
-        return host, decoded
+        return decode_state(state, self.num_envs, self.fields, self.envs[0].num_tasks)
 
     def set_state(self, state):
         host, decoded = self.validate(state)
