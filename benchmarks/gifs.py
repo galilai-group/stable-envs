@@ -24,7 +24,7 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 
-from benchmarks.compat import native_size
+from benchmarks.compat import native_size, reference_inputs
 
 
 def _source_rows(name, size, inputs):
@@ -79,7 +79,7 @@ def episode(name, size, device, steps, seed):
             out = env.step(torch.as_tensor(a[None], device=env.device), frames=slice(None))
             ours.append(out["frames"][0, -1].cpu().numpy())
             if bridge:
-                inputs.extend(env.reference_inputs(out["state"]))
+                inputs.extend(reference_inputs(env, out["state"]))
     ours = np.stack(ours)
     if not bridge:
         return ours[:n], None, native[:n], np.zeros(n, bool), "same seed and actions"

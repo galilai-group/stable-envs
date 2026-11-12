@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from benchmarks.compat import native_size, reference_gpu_render
+from benchmarks.compat import native_size, reference_gpu_render, reference_inputs, row_render_devices
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -181,7 +181,7 @@ def cmd_states(args) -> None:
                 except NotImplementedError:
                     rows = None
                 states = inputs = None
-                if rows is None or set(args.devices) - set(cls.row_render_devices):
+                if rows is None or set(args.devices) - set(row_render_devices(cls)):
                     states, inputs = _rollouts(env, args.n, args.seed, args.steps, args.every, reference)
         except Exception as e:  # noqa: BLE001
             print(f"FAIL states {name}: {type(e).__name__}: {e}", flush=True)
@@ -221,7 +221,7 @@ def _rollouts(env, n: int, seed: int, steps: int, every: int, reference: bool):
             if t and t % every == 0:
                 st = env.get_state()
                 if reference:
-                    inputs.append(env.reference_inputs(st))
+                    inputs.append(reference_inputs(env, st))
                 states.append(st.cpu())
                 have += int(st.batch_size[0])
                 if have >= n:
@@ -256,7 +256,7 @@ def _cat_states(states):
 
 def _frames_of(cls, blob, device: str):
     """``(kind, data)`` that stable-envs draws on ``device``: sampled rows where it can draw rows, else States."""
-    if blob["rows"] is not None and device in cls.row_render_devices:
+    if blob["rows"] is not None and device in row_render_devices(cls):
         return "rows", blob["rows"]
     return "states", blob["states"]
 

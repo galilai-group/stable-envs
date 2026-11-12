@@ -20,3 +20,18 @@ def reference_gpu_render(cls):
         return cls.reference_gpu_render
     parts = cls.__module__.split(".")
     return _GPU_RENDER.get(parts[2]) if len(parts) > 2 and parts[1] == "envs" else None
+
+
+def row_render_devices(cls):
+    """Devices where the class draws compact rows; none means the harness draws full States."""
+    return tuple(getattr(cls, "row_render_devices", ()))
+
+
+def reference_inputs(env, state):
+    """What the class's ``reference_render`` draws for full State ``state``: its compact render rows."""
+    if hasattr(env, "reference_inputs"):
+        return env.reference_inputs(state)
+    import numpy as np
+    import torch
+
+    return np.asarray(torch.as_tensor(env._pack_render_state(state)).detach().cpu(), np.float32)
