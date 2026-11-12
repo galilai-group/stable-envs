@@ -12,7 +12,7 @@ with snv.CartPole(num_envs=8, device="cpu") as env:
 
 ## Install
 
-CartPole and Acrobot run with the core install. MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame: install it with `pip install pygame`. The `classic` extra installs Numba for the compiled CPU renderer, and CUDA needs a CUDA build of torch; see [What each family needs](../install.md#what-each-family-needs).
+CartPole and Acrobot run with the core install. MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame, which the `classic` extra installs along with Numba for the compiled CPU renderer. CUDA needs a CUDA build of torch; see [What each family needs](../install.md#what-each-family-needs).
 
 ## Task
 

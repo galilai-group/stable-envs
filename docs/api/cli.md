@@ -26,14 +26,15 @@ MuJoCo OpenGL
   skip  gl                     mujoco not installed; only the MuJoCo families need OpenGL
 
 Families                 cpu   gpu
-  ok    classic_control   ok    skip
-  skip  navigation        not installed
-                          install: pip install "stable-envs[navigation]"
+  warn  classic_control   ok    skip  MountainCar, MountainCarContinuous and Pendulum need pygame
+                          fix: pip install "stable-envs[classic]"
+  warn  navigation        ok    skip  SimplePointMaze and Piecewise's rendering.render_bias_field need matplotlib
+                          fix: pip install "stable-envs[navigation]"
   skip  pusht             not installed
                           install: pip install "stable-envs[pusht]"
   ...
-  skip  roadster          not installed
-                          install: pip install "stable-envs[roadster]"
+  skip  mshuman           not installed
+                          install: pip install "stable-envs[mshuman]"
 
 All installed families can render here.
 ```
@@ -48,7 +49,7 @@ The exit code is 0 when every installed family works, and 1 when any installed f
 
 - System: the Python version, the NVIDIA driver and the CUDA version it supports, torch and its CUDA build, Warp, how many render paths have values from `stable-envs tune` on this machine, and which `STABLE_ENVS_*` variables are set.
 - MuJoCo OpenGL: whether `MUJOCO_GL`, `PYOPENGL_PLATFORM`, `DISPLAY` and `MUJOCO_EGL_DEVICE_ID` agree, then each OpenGL backend. The backends are `egl`, `osmesa` and `glfw` on Linux, and `cgl` and `glfw` on macOS. Creating a context can hang or crash, and `doctor` tries each backend in a separate process with a 60-second timeout. It skips the OpenGL checks when MuJoCo is missing.
-- Families: for each family, whether its extra is installed, whether its modules import, and whether its CPU and GPU render paths work. `doctor` skips families whose extra is missing.
+- Families: for each family, whether its extra is installed, whether its modules import, and whether the prerequisites of its CPU and GPU paths are met: OpenGL, CUDA torch, Warp, Triton or nvdiffrast. It doesn't build or render an environment. `doctor` skips families whose extra is missing. Classic control and navigation run some classes without their extra, so `doctor` warns and names the classes that need it instead.
 
 Each check has a status: `ok`, `warn`, `fail` or `skip`. A `warn` or `fail` line also prints the fix, such as the extra to install or the environment variable to set.
 

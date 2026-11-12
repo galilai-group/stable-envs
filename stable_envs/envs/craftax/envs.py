@@ -98,9 +98,10 @@ class CraftaxEnv(Env):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         if seed is not None:
             self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state, self._keys, views = self._k.reset(self._keys)

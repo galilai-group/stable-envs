@@ -9,7 +9,7 @@ from tensordict import TensorDict, TensorDictBase
 from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
-from ...registry import REGISTRY, register
+from ...registry import REGISTRY, _require_extra, register
 from ...spaces import Box, Dict, Discrete
 from ...specs import CompositeSpec, Spec
 from . import legacy
@@ -116,6 +116,7 @@ class PushT(Env):
         ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
         CPU and returns CUDA tensors. ``"auto"`` steps CUDA batches smaller than ``triton_min_envs`` with Numba.
         """
+        _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
         from .simulation.execution import TRITON_MIN_ENVS, make_pusht_adapter, pusht_backend
 

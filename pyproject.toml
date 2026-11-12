@@ -17,7 +17,8 @@ keywords = ["reinforcement-learning", "environments", "rendering", "pytorch", "g
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "Operating System :: OS Independent",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -49,8 +50,9 @@ Source = "https://github.com/galilai-group/stable-envs"
 # the versions parity is certified under live in the pin-* dependency groups below.
 # Backends remain separate so users do not install CUDA extensions merely to compare
 # against an official CPU renderer.
-# Classic control needs no package to render; numba adds the compiled CPU renderer (the 2D families share it).
-classic = ["numba>=0.60"]
+# MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame; numba adds the compiled
+# CPU renderer (the 2D families share it).
+classic = ["pygame>=2.5", "numba>=0.60"]
 # PushT replay checks this exact Pymunk at construction.
 pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60"]
 pusht-gpu = [

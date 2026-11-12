@@ -51,12 +51,33 @@ class Family:
     gpu_extra: str | None = None
     #: Cells that need Warp on CUDA when the rest of the family does not.
     warp_cells: str = ""
+    #: (module, extra that installs it, which classes need it) for modules only some classes need.
+    optional: tuple[tuple[str, str, str], ...] = ()
 
 
-# Every MuJoCo render path, CPU or CUDA, bakes its static background with mujoco.Renderer.
+# Every MuJoCo render path except Fetch's Numba rasterizer, CPU or CUDA, bakes its static background with
+# mujoco.Renderer.
 FAMILIES = (
-    Family("classic_control", None, None, ("classic_control",)),
-    Family("navigation", "navigation", "matplotlib", ("navigation",)),
+    Family(
+        "classic_control",
+        None,
+        None,
+        ("classic_control",),
+        optional=(("pygame", "classic", "MountainCar, MountainCarContinuous and Pendulum need pygame"),),
+    ),
+    Family(
+        "navigation",
+        "navigation",
+        None,
+        ("navigation",),
+        optional=(
+            (
+                "matplotlib",
+                "navigation",
+                "SimplePointMaze and Piecewise's rendering.render_bias_field need matplotlib",
+            ),
+        ),
+    ),
     Family("pusht", "pusht", "pymunk", ("pusht", "pusht_semantics")),
     Family(
         "dmcontrol",
@@ -66,14 +87,13 @@ FAMILIES = (
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="dmcontrol-gpu",
-        warp_cells="TrackCom domains (cheetah, hopper, humanoid, quadruped, swimmer, walker)",
+        warp_cells="Default CUDA steps and the TrackCom domains (cheetah, hopper, humanoid, quadruped, swimmer, walker)",
     ),
     Family(
         "fetch",
         "robotics",
         "gymnasium-robotics",
         ("fetch",),
-        cpu=("gl",),
         gpu=("gl", "cuda", "warp"),
         gpu_extra="robotics,mjwarp",
     ),
@@ -85,10 +105,10 @@ FAMILIES = (
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="ogbench-manipulation-gpu",
-        warp_cells="Cube and Scene",
+        warp_cells="Default CUDA steps and Cube and Scene MJWarp frames",
     ),
     Family(
-        "rocket",
+        "pyflyt",
         "rocket",
         "PyFlyt",
         ("rocket_landing", "rocket_render", "rocket_semantics"),
@@ -97,6 +117,16 @@ FAMILIES = (
     Family("craftax", "craftax", "craftax", ("craftax",)),
     Family("miniworld", "miniworld", "miniworld", ("miniworld",)),
     Family("roadster", "roadster", "mujoco", ("roadster",), cpu=("gl",)),
+    Family(
+        "mshuman",
+        "mshuman",
+        "mujoco",
+        ("mshuman",),
+        cpu=("gl",),
+        gpu=("gl", "cuda"),
+        gpu_extra="mshuman",
+        warp_cells="Default CUDA steps",
+    ),
 )
 
 
@@ -502,6 +532,12 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
     notes, fixes = [], []
     if failed:
         notes.append("not imported: " + "; ".join(f"{m} ({e})" for m, e in failed.items()))
+    missing = [(extra, note) for module, extra, note in fam.optional if importlib.util.find_spec(module) is None]
+    for extra, note in missing:
+        notes.append(note)
+        fix = f'pip install "stable-envs[{extra}]"'
+        if fix not in fixes:
+            fixes.append(fix)
 
     def broken(cap: str) -> bool:
         if caps[cap].status in (OK, SKIP):
@@ -521,7 +557,7 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
     if has_gpu and fam.warp_cells and broken("warp"):
         notes.append(f"{fam.warp_cells} need Warp on CUDA: {caps['warp'].detail}")
         gpu = _worst([gpu, WARN])
-    status = _worst([cpu, gpu, WARN if failed else OK])
+    status = _worst([cpu, gpu, WARN if failed or missing else OK])
     return FamilyReport(fam.name, status, cpu, gpu, "; ".join(notes), fixes)
 
 

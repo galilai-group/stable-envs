@@ -7,7 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from ...env import Env, _split_appearance
-from ...registry import register
+from ...registry import _require_extra, register
 from ...render import _resources as _RES
 from ...render import gfxdraw as G
 from ...spaces import Dict, Discrete, RGBBox
@@ -1060,6 +1060,7 @@ def _bake_terrain(bg, terrain) -> np.ndarray:
         return hit
     import os
 
+    _require_extra("MountainCar", "classic", "pygame")
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     import pygame
 
@@ -1085,6 +1086,7 @@ def _torque_sprites(device) -> torch.Tensor:
     if key not in _SPRITE_CACHE:
         import os
 
+        _require_extra("Pendulum", "classic", "pygame")
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
         from os import path
 

@@ -130,12 +130,13 @@ class MiniWorldMovingBlockWorld(Env):
     def _validate_state(self, state, *, batch=None):
         self._simulator.validate(state, batch=batch)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
         """Reset every environment; environment ``i`` of ``reset(seed)`` draws from seed ``seed + i``.
 
         ``reset()`` draws each environment's next episode from its own seed.
         """
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):

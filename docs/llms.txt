@@ -27,7 +27,7 @@ env.close()                                # or use `with snv.CartPole(...) as e
 
 Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `"auto"` (CUDA when torch sees a GPU), to `"cuda"` for DM Control and the OGBench mazes, and to `"cpu"` for Fetch, OGBCube, OGBScene and PyFlytRocketLanding. Every family runs on CPU.
 
-- `classic_control`, `navigation`: core install (pygame for MountainCar, MountainCarContinuous and Pendulum, `navigation` for SimplePointMaze); CUDA needs CUDA torch, plus `navigation-gpu` for TwoRoom.
+- `classic_control`, `navigation`: core install (`classic` for MountainCar, MountainCarContinuous and Pendulum, `navigation` for SimplePointMaze); CUDA needs CUDA torch, plus `navigation-gpu` for TwoRoom.
 - `pusht`: `pusht`; CUDA needs CUDA torch with Triton, and `pusht-gpu` only for `simulation_backend="jax"`. `craftax`: `craftax`; CUDA needs `craftax-gpu`.
 - `dmcontrol`: `dmcontrol`; CUDA physics and the body-tracking renderer need MuJoCo Warp (`dmcontrol-gpu`).
 - `ogbench`: `ogbench` (mazes) or `ogbench-manipulation` (Cube, Scene); on CUDA, the mazes also need `mjwarp`, and Cube and Scene need `ogbench-manipulation-gpu` for MuJoCo Warp physics and for `supersample` 2 or more.
@@ -44,7 +44,7 @@ Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `
 ## Environments
 
 - [Overview](https://galilai-group.github.io/stable-envs/environments/): all 80 classes in 11 families, how to list the installed ones, and how each family compares with its upstream library.
-- [Classic control](https://galilai-group.github.io/stable-envs/environments/classic-control/): CartPole, Acrobot, MountainCar, MountainCarContinuous and Pendulum from Gymnasium; core install (pygame for three of them), CPU and CUDA.
+- [Classic control](https://galilai-group.github.io/stable-envs/environments/classic-control/): CartPole, Acrobot, MountainCar, MountainCarContinuous and Pendulum from Gymnasium; core install (`classic` extra for three of them), CPU and CUDA.
 - [Craftax](https://galilai-group.github.io/stable-envs/environments/craftax/): Craftax and Craftax-Classic with pixel or symbolic observations; `craftax` extra, CPU, and CUDA with `craftax-gpu`.
 - [DM Control](https://galilai-group.github.io/stable-envs/environments/dmcontrol/): 17 DeepMind Control Suite tasks; `dmcontrol` extra, CPU and CUDA, default `device="cuda"`.
 - [Fetch](https://galilai-group.github.io/stable-envs/environments/fetch/): 12 Gymnasium-Robotics Fetch arm tasks (Reach, Push, Slide, PickAndPlace); `robotics` extra, CPU, and CUDA with `mjwarp`, default `device="cpu"`.

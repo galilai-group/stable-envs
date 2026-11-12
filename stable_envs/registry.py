@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import math
 import pkgutil
 from typing import Any
@@ -219,6 +220,19 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
             f"stable_envs.envs.{mod_name} did not import (unexpected, not an "
             f"optional-dep miss): {type(e).__name__}: {e}",
         )
+
+
+def _require_extra(what: str, extra: str, *modules: str) -> None:
+    """Raise ``ModuleNotFoundError`` naming ``extra`` when one of the top-level ``modules`` is not installed.
+
+    ``name`` is the missing module, so callers that skip on a missing optional dependency keep working.
+    """
+    for module in modules:
+        if importlib.util.find_spec(module) is None:
+            raise ModuleNotFoundError(
+                f"{what} needs the {extra} extra ({module} is not installed): pip install 'stable-envs[{extra}]'",
+                name=module,
+            )
 
 
 def discover(force: bool = False) -> dict[str, str]:

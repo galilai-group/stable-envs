@@ -18,14 +18,14 @@ Install stable-envs with uv or pip, then add one extra for each environment [fam
     pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
     ```
 
-stable-envs supports CPython 3.10, 3.11 and 3.12. After you install, run [`stable-envs doctor`](api/cli.md#stable-envs-doctor) to see what works on this machine and what to change.
+stable-envs supports CPython 3.10, 3.11 and 3.12. It runs on Linux and macOS, and Windows isn't supported. After you install, run [`stable-envs doctor`](api/cli.md#stable-envs-doctor) to see what works on this machine and what to change.
 
 ## Missing extras
 
 A missing extra affects only its own family. The core install registers 51 classes, and 6 of them run with nothing else installed: CartPole, Acrobot, TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones.
 
 - The 27 OGBench, 12 Fetch and 2 PushT classes register without their extras and raise `ModuleNotFoundError` when you construct one.
-- SimplePointMaze needs the `navigation` extra, and MountainCar, MountainCarContinuous and Pendulum need pygame.
+- SimplePointMaze needs the `navigation` extra, and MountainCar, MountainCarContinuous and Pendulum need the `classic` extra for pygame.
 - DM Control, Craftax, Miniworld, MS-Human, Roadster and `PyFlytRocketLanding` register only once you install their extra.
 
 `snv.import_errors()` says what's missing. With only the core installed:
@@ -53,7 +53,7 @@ Every family runs on CPU, so you can try any of them without a GPU. For CUDA, so
 
 | Family | Extra and what it adds | CPU | CUDA |
 |---|---|---|---|
-| classic control | none. `classic` adds Numba for the compiled CPU renderer | nothing else | a CUDA build of torch |
+| classic control | none. `classic` adds pygame for MountainCar, MountainCarContinuous and Pendulum, and Numba for the compiled CPU renderer | nothing else | a CUDA build of torch |
 | navigation | none. `navigation` adds Matplotlib and Numba for SimplePointMaze (its exact `info.goal` image), Piecewise's `rendering.render_bias_field` and the compiled CPU renderer | nothing else | a CUDA build of torch. TwoRoom also needs `navigation-gpu`, JAX's CUDA 12 build (Linux) |
 | PushT | `pusht`: Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba | nothing else | CUDA torch. Triton, which comes with CUDA torch on Linux, steps the physics and draws the frames on the GPU. `pusht-gpu` adds JAX's CUDA 12 build (Linux) for `simulation_backend="jax"` |
 | Craftax | `craftax`: Craftax, JAX | nothing else | CUDA torch and `craftax-gpu`, which takes JAX's CUDA 12 build |
@@ -68,7 +68,7 @@ Every family runs on CPU, so you can try any of them without a GPU. For CUDA, so
 
 The `pusht-reference` extra (gym-pusht) installs only the [upstream library](terms.md#upstream-library) that the PushT tests compare against. The `docs`, `dev`, `examples` and `hf` extras aren't needed to render: they add the docs build, tests, example helpers and Hugging Face `datasets`.
 
-- MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame. Install it with `pip install pygame`; the `pusht` extra also installs it.
+- MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame, which the `classic` extra installs; the `pusht` extra also installs it.
 - On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu` installs. With another MuJoCo Warp, they render without the reflection and log a warning.
 - The `rocket` extra resolves numpy < 2, the limit PyFlyt 0.29.0 declares in its metadata.
 

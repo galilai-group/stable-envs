@@ -75,8 +75,9 @@ class MSHumanLocomotion(Env):
     def make_variation_space(self) -> Dict:
         return Dict({})
 
-    def reset(self, seed: int | None = None):
+    def reset(self, seed: int | None = None, options: dict | None = None):
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):

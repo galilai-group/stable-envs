@@ -49,7 +49,7 @@ The [Quickstart](https://galilai-group.github.io/stable-envs/quickstart/) covers
 
 | Family | Classes | Extra |
 |---|---:|---|
-| [`classic_control`](https://galilai-group.github.io/stable-envs/environments/classic-control/) | 5 | none (`pygame` for MountainCar, MountainCarContinuous and Pendulum) |
+| [`classic_control`](https://galilai-group.github.io/stable-envs/environments/classic-control/) | 5 | none (`classic` for MountainCar, MountainCarContinuous and Pendulum) |
 | [`craftax`](https://galilai-group.github.io/stable-envs/environments/craftax/) | 4 | `craftax` |
 | [`dmcontrol`](https://galilai-group.github.io/stable-envs/environments/dmcontrol/) | 17 | `dmcontrol` |
 | [`fetch`](https://galilai-group.github.io/stable-envs/environments/fetch/) | 12 | `robotics` |

@@ -8,6 +8,7 @@ from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
+from ...registry import _require_extra
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import VISUAL_LEAVES
 from .simulation.execution import MJWARP_MIN_ENVS, fetch_backend, make_fetch_adapter
@@ -61,6 +62,7 @@ class FetchSemantics:
         ``"default"`` steps on MuJoCo Warp on CUDA and on the CPU batch, bit-exact with gymnasium-robotics, on
         CPU. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` on the CPU batch.
         """
+        _require_extra(type(self).__name__, "robotics", "mujoco", "gymnasium_robotics")
         device = Env.resolve_device(device)
         self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
