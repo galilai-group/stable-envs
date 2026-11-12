@@ -132,3 +132,27 @@ def test_legacy_streams_draw_as_random_state():
     for i, state in enumerate(states):
         _, keys, position, _, _ = state.get_state()
         assert np.array_equal(mt.key[i], keys) and mt.pos[i] == position
+
+
+@pytest.mark.parametrize("maze", ["medium", "giant", "teleport"])
+def test_the_wall_grid_gives_the_clearance_test_against_every_wall(maze):
+    from stable_envs.envs.ogbench.simulation.maze import _make_maze, _rest_walls
+    from stable_envs.envs.ogbench.simulation.maze_batch import RestGrid
+
+    env = _make_maze("point", maze)
+    try:
+        lo, hi, radius, offset = rest = _rest_walls(env.model)
+    finally:
+        env.close()
+    rng = np.random.default_rng(0)
+    xy = rng.uniform(lo[:, :2].min(0) - 3, hi[:, :2].max(0) + 3, (20000, 2))
+    # Points on the clearance boundary of wall faces and corners.
+    edge = np.concatenate([lo[:, :2] - radius - 1e-3, hi[:, :2] + radius + 1e-3])
+    xy = np.concatenate([xy, edge, edge + 1e-12, edge - 1e-12])
+    centre = np.zeros((len(xy), 3))
+    centre[:, :2] = xy
+    centre += offset
+    near = np.clip(centre[:, None], lo, hi) - centre[:, None]
+    want = (near * near).sum(-1).min(1) > (radius + 1e-3) ** 2
+    got = RestGrid(*rest).resting(xy)
+    assert np.array_equal(got, want) and want.any() and not want.all()

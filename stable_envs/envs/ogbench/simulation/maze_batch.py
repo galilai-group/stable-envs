@@ -12,7 +12,7 @@ from tensordict import TensorDict
 from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
-from .maze import BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
+from .maze import _REST_CLEARANCE, BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
 from .pcg import uint128_bytes
 
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
@@ -321,6 +321,56 @@ def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
     )
 
 
+class RestGrid:
+    """``_resting_lanes``'s wall clearance test against only the walls near each ball.
+
+    The walls are bucketed by grid cell. A cell's bucket holds every wall whose box, grown by the clearance
+    distance, meets the cell in the plane, so the walls left out of a ball's test are farther than the
+    clearance and the result is the test against every wall.
+    """
+
+    CELL = 1.0
+
+    def __init__(self, lo, hi, radius, offset):
+        self.lo, self.hi, self.radius, self.offset = lo, hi, radius, offset
+        self.limit = (radius + _REST_CLEARANCE) ** 2
+        reach = radius + _REST_CLEARANCE + 1e-6
+        self.origin = lo[:, :2].min(0) - reach - self.CELL
+        top = hi[:, :2].max(0) + reach + self.CELL
+        self.shape = np.ceil((top - self.origin) / self.CELL).astype(np.int64)
+        cells = [[] for _ in range(int(self.shape.prod()))]
+        first = np.floor((lo[:, :2] - reach - self.origin) / self.CELL).astype(np.int64)
+        last = np.floor((hi[:, :2] + reach - self.origin) / self.CELL).astype(np.int64)
+        for wall, ((i0, j0), (i1, j1)) in enumerate(zip(first, last, strict=True)):
+            for i in range(i0, i1 + 1):
+                for j in range(j0, j1 + 1):
+                    cells[i * self.shape[1] + j].append(wall)
+        width = max(1, max(len(c) for c in cells))
+        # A padding wall far from every ball.
+        far = len(lo)
+        self.table = np.array([c + [far] * (width - len(c)) for c in cells], np.int64)
+        self.lo_pad = np.concatenate([lo, np.full((1, 3), 1e30)])
+        self.hi_pad = np.concatenate([hi, np.full((1, 3), 1e30)])
+
+    def resting(self, xy):
+        centre = np.zeros((len(xy), 3))
+        centre[:, :2] = xy
+        centre += self.offset
+        cell = np.floor((centre[:, :2] - self.origin) / self.CELL).astype(np.int64)
+        inside = ((cell >= 0) & (cell < self.shape)).all(1)
+        out = np.zeros(len(xy), bool)
+        if inside.any():
+            walls = self.table[cell[inside, 0] * self.shape[1] + cell[inside, 1]]
+            c = centre[inside][:, None]
+            near = np.clip(c, self.lo_pad[walls], self.hi_pad[walls]) - c
+            out[inside] = (near * near).sum(-1).min(1) > self.limit
+        if not inside.all():
+            c = centre[~inside][:, None]
+            near = np.clip(c, self.lo, self.hi) - c
+            out[~inside] = (near * near).sum(-1).min(1) > self.limit
+        return out
+
+
 class _MazeLanes(SimulatorAdapter):
     """Host task bookkeeping shared by the batched maze adapters."""
 
@@ -402,6 +452,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         if self._kinematic:
             self._xpos, self._xmat, self._sensordata = (self.sim.numpy(f) for f in ("xpos", "xmat", "sensordata"))
         self._rest = _rest_walls(self.task.model) if loco == "point" else None
+        self._rest_grid = None if self._rest is None else RestGrid(*self._rest)
         self._goal = np.zeros((self.num_envs, 3))
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
         self._last = None
@@ -451,12 +502,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
 
     def _resting(self, target, ids):
         """Point lanes whose step leaves the ball where it is (see ``_resting_lanes``)."""
-        lo, hi, radius, offset = self._rest
-        centre = np.zeros((len(ids), 3))
-        centre[:, :2] = target[ids]
-        centre += offset
-        near = np.clip(centre[:, None], lo, hi) - centre[:, None]
-        return (near * near).sum(-1).min(1) > (radius + 1e-3) ** 2
+        return self._rest_grid.resting(target[ids])
 
     def _advance(self, actions, ids):
         b, task = self._live, self.task
