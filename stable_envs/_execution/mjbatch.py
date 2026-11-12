@@ -56,6 +56,7 @@ The native batch's threads do not survive ``fork``: build backends after forking
 
 from __future__ import annotations
 
+import gc
 import os
 import threading
 import warnings
@@ -407,43 +408,30 @@ class _Scratch:
     """Device memory for the temporary arrays of a captured call, reused in the order of the first call.
 
     A buffer freed during the call serves a later request of the same size. MuJoCo Warp frees some temporary
-    arrays only when the garbage collector breaks their reference cycles, so the captured call can find fewer
-    free buffers than the first call did. ``fix()`` reserves as much memory as the first call allocated; once
-    fixed, a request that finds no free buffer takes its memory from that reserve, as the captured call makes no
-    more requests than the first call.
+    arrays only when the garbage collector breaks their reference cycles, so a request that finds no free buffer
+    collects first. Once ``fixed``, every request must find a free buffer, as the captured call repeats the
+    requests of the first call and collects at least as much garbage.
     """
-
-    _ALIGN = 256
 
     def __init__(self, device):
         self.device = device
         self.fixed = False
         self._owned: list[torch.Tensor] = []
         self._free: dict[int, list[int]] = {}
-        self._reserve: torch.Tensor | None = None
-        self._offset = 0
-
-    def _aligned(self, size_in_bytes) -> int:
-        return -(-max(int(size_in_bytes), 1) // self._ALIGN) * self._ALIGN
-
-    def fix(self) -> None:
-        self._reserve = torch.empty(
-            sum(self._aligned(b.numel()) for b in self._owned), dtype=torch.uint8, device=self.device
-        )
-        self.fixed = True
 
     def allocate(self, size_in_bytes):
         free = self._free.get(size_in_bytes)
+        if not free:
+            gc.collect(1)
+            free = self._free.get(size_in_bytes)
+        if not free and self.fixed:
+            gc.collect()
+            free = self._free.get(size_in_bytes)
         if free:
             return free.pop()
         if self.fixed:
-            size = self._aligned(size_in_bytes)
-            if self._offset + size > self._reserve.numel():
-                raise RuntimeError("A captured MuJoCo Warp call requested more temporary memory than its first call")
-            ptr = self._reserve.data_ptr() + self._offset
-            self._offset += size
-            return ptr
-        buffer = torch.empty(self._aligned(size_in_bytes), dtype=torch.uint8, device=self.device)
+            raise RuntimeError("A captured MuJoCo Warp call requested temporary memory that its first call did not")
+        buffer = torch.empty(max(int(size_in_bytes), 1), dtype=torch.uint8, device=self.device)
         self._owned.append(buffer)
         return buffer.data_ptr()
 
@@ -571,18 +559,27 @@ class WarpBatch(MjBatch):
 
         wp = self._wp
         scratch = _Scratch(self.device)
-        with (
-            wp.ScopedDevice(self._wp_device),
-            wp.ScopedAllocator(self._wp_device, scratch),
-            tree_walks(self._m, self.fused_tree) as fused,
-        ):
-            self.fused_tree = fused is not None
-            body()
-            wp.synchronize()
-            scratch.fix()
-            with wp.ScopedCapture() as capture:
+        # The scratch runs the garbage collector itself, so both calls free the same buffers at the same points.
+        collecting = gc.isenabled()
+        gc.collect()
+        gc.disable()
+        try:
+            with (
+                wp.ScopedDevice(self._wp_device),
+                wp.ScopedAllocator(self._wp_device, scratch),
+                tree_walks(self._m, self.fused_tree) as fused,
+            ):
+                self.fused_tree = fused is not None
                 body()
-            wp.synchronize()
+                wp.synchronize()
+                gc.collect()
+                scratch.fixed = True
+                with wp.ScopedCapture() as capture:
+                    body()
+                wp.synchronize()
+        finally:
+            if collecting:
+                gc.enable()
         self._scratch.append(scratch)
         if fused is not None:
             self._fused.append(fused)
