@@ -325,7 +325,10 @@ def test_reset_steps_never_clear_the_cuda_cache_or_build_another_runtime(reset_r
         pending = [0] if reset_route == "one_pending" else [0, 1, 2]
         state["lifecycle", "step_count"][pending, 0] = math.ceil(adapter._limits[0])
         state["lifecycle", "reset_next_step"][pending, 0] = True
+        # Capture every graph the loop below replays; Torch clears its cache while capturing.
+        adapter.step(actions)
         adapter.set_state(state)
+        adapter.step(actions)
         adapter.step(actions)
         built, emptied = [], []
 

@@ -890,6 +890,7 @@ class WarpRuntime:
         self._warp_stream = wp.stream_from_torch(self._torch_stream) if self._torch_stream is not None else None
         self._graphs = {}
         self._pairs = {}
+        self._scoped = False
         self.supports_pair = bool(
             self.device.type == "cuda"
             and callable(getattr(wp, "ScopedAllocator", None))
@@ -1127,6 +1128,18 @@ class WarpRuntime:
     @contextmanager
     def _scope(self):
         self._check_open()
+        if self._scoped:
+            yield
+            return
+        self._scoped = True
+        try:
+            with self._enter_scope():
+                yield
+        finally:
+            self._scoped = False
+
+    @contextmanager
+    def _enter_scope(self):
         if self.device.type == "cpu":
             with wp.ScopedDevice("cpu"):
                 yield

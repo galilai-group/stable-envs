@@ -345,13 +345,17 @@ class DMCWarpAdapter(SimulatorAdapter):
     @_ordered
     def step(self, actions, *, active=None, capture_state=True):
         _, controls = self._prepare_step(actions, active)
-        reward = torch.zeros(self.num_envs, device=self.device, dtype=torch.float64)
         paired = self._runtime.supports_pair and not self._pending.any() and np.all(self._counts < self._limits - 1)
         if paired:
             # Native resets need a host-visible success decision before RNG
             # work. Pair only calls whose two rounds both integrate every lane.
             try:
-                first_reward, captured = self._runtime.advance_pair(controls, task=self._task, controls_validated=True)
+                # One stream scope covers the graph and the checkpoint copies.
+                with self._runtime._scope():
+                    first_reward, captured = self._runtime.advance_pair(
+                        controls, task=self._task, controls_validated=True
+                    )
+                    self._save_physics(self._runtime, rounds=2)
             except PairFailure as error:
                 if error.completed_rounds == 1:
                     for key, value in error.checkpoint.items():
@@ -359,14 +363,14 @@ class DMCWarpAdapter(SimulatorAdapter):
                     self._advance_clock()
                     self._commit_ordinary_lifecycle(1)
                 raise
-            self._save_physics(self._runtime, rounds=2)
             self._commit_ordinary_lifecycle(2)
-            reward += first_reward
             out = self._outputs(self._runtime, captured)
+            reward = first_reward + out["reward"]
         else:
-            reward += self._control_step(controls, reward_only=True, controls_validated=True)
+            # A graph reward is borrowed until its next replay; own it before the second round.
+            reward = self._control_step(controls, reward_only=True, controls_validated=True).clone()
             out = self._control_step(controls, controls_validated=True)
-        reward += out["reward"]
+            reward += out["reward"]
         self._state["task", "cumulative_reward"] += reward[:, None]
         out["reward"] = reward
         out["score"] = self._state["task", "cumulative_reward"][:, 0] / 1000
