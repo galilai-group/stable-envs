@@ -111,9 +111,10 @@ def test_public_env_with_workers_matches_local(monkeypatch):
 
 def test_large_batches_split_across_processes(monkeypatch):
     monkeypatch.setattr(policy.sys, "platform", "darwin")
-    assert policy.process_count(1025, None, lanes_per_process=LANES_PER_PROCESS) == 3
+    over = 2 * LANES_PER_PROCESS + 1
+    assert policy.process_count(over, None, lanes_per_process=LANES_PER_PROCESS) == 3
     assert policy.process_count(LANES_PER_PROCESS, None, lanes_per_process=LANES_PER_PROCESS) == 0
-    assert policy.process_count(1025, None, eligible=False, lanes_per_process=LANES_PER_PROCESS) == 0
+    assert policy.process_count(over, None, eligible=False, lanes_per_process=LANES_PER_PROCESS) == 0
     with pytest.raises(ValueError, match="at most"):
         RocketProcessAdapter(LANES_PER_PROCESS + 1, "cpu", 0, processes=1)
 

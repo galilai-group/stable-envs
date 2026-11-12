@@ -35,9 +35,13 @@ reset, configuration or restore. A zero leaf that a step does not change, such a
 without a render mode, is a new zero tensor and is not copied. The State is the same as a full read of the
 engine. On CUDA, the outputs of the worker processes go to the device when they arrive.
 
-A reset makes new PyBullet clients before it closes the old ones, so that a failed reset changes no
-environment. Each client holds about 27 MB. The worker processes keep freed memory for the next clients,
-so a reset does not map and write new pages.
+Each PyBullet client holds about 27 MB. A reset or a restore replaces the client of one environment at a
+time: it makes the new client and then closes the old one. Thus a worker process holds at most one client
+more than its environments. A reset checks the arguments of every environment before it changes one. If
+PyBullet fails during a reset, the environments before the failed one can have a new episode. A restore
+keeps the State of each environment that it replaced. If a later environment is not valid, the restore
+replays these States, so no environment changes. The worker processes keep freed memory for the next
+clients, so a reset does not map and write new pages.
 
 ```python
 import stable_envs as snv

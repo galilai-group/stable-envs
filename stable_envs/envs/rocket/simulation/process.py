@@ -11,9 +11,9 @@ import torch
 from ...._execution.process import FRAME_DRAW, FRAME_FIELDS, ProcessAdapter, process_worker
 from .adapter import RocketAdapter, check_values, state_columns
 
-#: Lanes one process may own. A staged restore or reset holds two PyBullet clients per lane, frames
+#: Lanes one process may own. Reset and restoration hold one more PyBullet client than the lanes, frames
 #: use one more client, and PyBullet allows 1024 clients in one process.
-LANES_PER_PROCESS = 511
+LANES_PER_PROCESS = 1022
 
 
 def _lanes(config, frame, count, seed):

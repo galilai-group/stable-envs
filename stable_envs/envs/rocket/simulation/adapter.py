@@ -56,8 +56,11 @@ def split_rows(columns):
 class RocketAdapter(SimulatorAdapter):
     """Batch CPU Rocket owners with CPU/CUDA State storage.
 
-    Validate every action before stepping any lane. Stage reset and restoration
-    for the whole batch before replacing its current engines.
+    Validate every action before stepping any lane. Reset and restoration replace
+    the engines one lane at a time, so the batch holds at most one extra engine.
+    Reset checks the arguments of every lane before it replaces an engine.
+    Restoration keeps the State row of each replaced lane until it commits, and a
+    discarded restoration replays these rows.
     """
 
     process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST}
@@ -132,54 +135,69 @@ class RocketAdapter(SimulatorAdapter):
         return state_columns(state, self.fields, self.template, self.num_envs)
 
     def prepare_restore(self, state):
-        """Replay every lane of ``state`` into new engines; the live lanes do not change."""
+        """Replace each lane's engine with one replayed from ``state``; on failure restore the replaced lanes."""
         if self._prepared is not None:
             raise RuntimeError("A Rocket restore is already prepared")
         rows = split_rows(self.validate(state))
-        staged = []
+        previous, self._static = [], None
         try:
-            for env, row in zip(self.envs, rows, strict=True):
-                staged.append(env.reconstruct(row))
-        except BaseException:
-            for env in staged:
+            for lane, env in enumerate(self.envs):
+                row = env.get_state()
+                staged = env.reconstruct(rows[lane])
+                rows[lane] = None
+                self.envs[lane] = staged
+                previous.append(row)
                 env.close()
+        except BaseException:
+            self._replay(previous)
             raise
-        self._prepared = staged
+        self._prepared = previous
+
+    def _replay(self, rows):
+        """Replace the engines of the first ``len(rows)`` lanes with engines replayed from ``rows``."""
+        self._static = None
+        for lane, row in enumerate(rows):
+            env = self.envs[lane]
+            self.envs[lane] = env.reconstruct(row)
+            env.close()
 
     def commit_restore(self):
         if self._prepared is None:
             raise RuntimeError("No Rocket restore is prepared")
-        previous, self.envs, self._prepared, self._static = self.envs, self._prepared, None, None
-        for env in previous:
-            env.close()
+        self._prepared = None
 
     def discard_restore(self):
-        staged, self._prepared = self._prepared, None
-        for env in staged or ():
-            env.close()
+        previous, self._prepared = self._prepared, None
+        if previous:
+            self._replay(previous)
 
     def set_state(self, state):
         self.prepare_restore(state)
         self.commit_restore()
 
     def reset(self, seed=None, options=None, values=None):
-        # Stage reset with persistent configuration and owned RNG only; no physics
-        # replay is needed because authoritative reset discards the old episode.
-        staged = []
-        try:
-            for lane, env in enumerate(self.envs):
-                target = RocketReplay(env.config, initialize=False)
-                staged.append(target)
+        # Reset keeps only the persistent configuration and owned RNG of a lane. It needs no
+        # physics replay because an authoritative reset discards the old episode.
+        if values is not None and len(values) != self.num_envs:
+            raise ValueError("Expected one Rocket Variation row per lane")
+        lanes = [
+            (None if seed is None else seed + lane, None if values is None else values[lane])
+            for lane in range(self.num_envs)
+        ]
+        for env, (lane_seed, row) in zip(self.envs, lanes, strict=True):
+            env.check_reset(lane_seed, options, row)
+        self._static = None
+        for lane, (env, (lane_seed, row)) in enumerate(zip(self.envs, lanes, strict=True)):
+            target = RocketReplay(env.config, initialize=False)
+            try:
                 target.env.variation_space = copy.deepcopy(env.env.variation_space)
                 install_generator(target.env, generator_state(env.env))
                 install_generator(target.env.action_space, generator_state(env.env.action_space))
-                target.reset(None if seed is None else seed + lane, options, None if values is None else values[lane])
-        except BaseException:
-            for env in staged:
-                env.close()
-            raise
-        previous, self.envs, self._static = self.envs, staged, None
-        for env in previous:
+                target.reset(lane_seed, options, row)
+            except BaseException:
+                target.close()
+                raise
+            self.envs[lane] = target
             env.close()
         return self.get_state()
 
@@ -261,7 +279,7 @@ class RocketAdapter(SimulatorAdapter):
         )
 
     def close(self):
-        self.discard_restore()
+        self._prepared = None
         for env in self.envs:
             env.close()
         self.envs = []

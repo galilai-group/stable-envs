@@ -97,9 +97,10 @@ one simulation thread and stays within the allowed CPU affinity. DM Control step
 and one per two lanes. A call with little MuJoCo work uses fewer threads: about one thread for each 0.1 ms
 of MuJoCo work. Physics stays on CPU even when rendering uses CUDA.
 
-PyBullet allows 1024 clients in one process. A Rocket restore holds two clients per lane, and the
-step frames use one more client. Thus one process holds at most 511 Rocket lanes. A larger Rocket
-batch uses enough processes to hold it, on every platform and for every value of the tuning knobs.
+PyBullet allows 1024 clients in one process. A Rocket reset or restore holds one client more than the
+lanes, and the step frames use one more client. Thus one process holds at most 1022 Rocket lanes. A
+larger Rocket batch uses enough processes to hold it, on every platform and for every value of the tuning
+knobs.
 
 `set_state` checks the State in every worker before any worker restores it. If one lane is not valid,
 `set_state` raises the error and no lane changes.
