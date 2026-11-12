@@ -928,6 +928,7 @@ class WarpRuntime:
         self._acc_indices = torch.tensor(sensor_indices, dtype=torch.long, device=self.device)
         with self._scope():
             self._m = mjw.put_model(self._reference, batch_sizes=dict.fromkeys(self._model_fields, self.num_envs))
+            self._disableflags = int(self._m.opt.disableflags)
             for name in self._option_fields:
                 current = getattr(self._m.opt, name)
                 setattr(self._m.opt, name, wp.zeros(self.num_envs, dtype=current.dtype, device=self._wp_device))
@@ -1280,6 +1281,11 @@ class WarpRuntime:
             mjw.rne_postconstraint(self._m, self._d)
         mjw.sensor_acc(self._m, self._d, skip_rne_postconstraint=True)
 
+    def _sensors(self, enabled):
+        """Set whether the next captured MuJoCo Warp calls compute sensors."""
+        flags = self._disableflags
+        self._m.opt.disableflags = flags if enabled else flags | int(mjw.DisableBit.SENSOR)
+
     def _advance(self):
         # dm_control Physics.legacy_step refreshes position/velocity after the
         # integration while retaining acceleration-stage sensors from that step.
@@ -1287,36 +1293,52 @@ class WarpRuntime:
         # load() computed acceleration sensors already. Warp's step2 adds
         # touch forces without clearing them; native sensorAcc starts afresh.
         sensors.index_fill_(1, self._acc_indices, 0)
-        if self._pyramidal_solver is not None:
-            for substep in range(self.nsubsteps):
-                self._pyramidal_forward()
-                mjw.euler(self._m, self._d)
-                if substep + 1 < self.nsubsteps:
-                    mjw.step1(self._m, self._d)
-            torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
-        elif self._elliptic_solver is not None:
-            for substep in range(self.nsubsteps):
-                self._elliptic_forward()
-                if self._integrator in (mujoco.mjtIntegrator.mjINT_IMPLICIT, mujoco.mjtIntegrator.mjINT_IMPLICITFAST):
-                    mjw.implicit(self._m, self._d)
-                else:
+        # Sensors do not act on the dynamics, and every substep overwrites the
+        # previous one's values: only the calls whose values remain compute them.
+        last = self.nsubsteps - 1
+        try:
+            if self._pyramidal_solver is not None:
+                for substep in range(self.nsubsteps):
+                    self._sensors(substep == last)
+                    self._pyramidal_forward()
                     mjw.euler(self._m, self._d)
-                if substep + 1 < self.nsubsteps:
-                    mjw.step1(self._m, self._d)
-            torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
-        elif self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
-            for _ in range(self.nsubsteps):
-                mjw.forward(self._m, self._d)
-                # Native RK4 skips sensors at its intermediate stages. Warp
-                # recomputes them, so retain the initial-stage acceleration.
+                    if substep + 1 < self.nsubsteps:
+                        self._sensors(False)
+                        mjw.step1(self._m, self._d)
                 torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
-                mjw.rungekutta4(self._m, self._d)
-        else:
-            mjw.step2(self._m, self._d)
-            for _ in range(self.nsubsteps - 1):
-                mjw.step(self._m, self._d)
-            torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
-        mjw.step1(self._m, self._d)
+            elif self._elliptic_solver is not None:
+                for substep in range(self.nsubsteps):
+                    self._sensors(substep == last)
+                    self._elliptic_forward()
+                    if self._integrator in (
+                        mujoco.mjtIntegrator.mjINT_IMPLICIT,
+                        mujoco.mjtIntegrator.mjINT_IMPLICITFAST,
+                    ):
+                        mjw.implicit(self._m, self._d)
+                    else:
+                        mjw.euler(self._m, self._d)
+                    if substep + 1 < self.nsubsteps:
+                        self._sensors(False)
+                        mjw.step1(self._m, self._d)
+                torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
+            elif self._integrator == mujoco.mjtIntegrator.mjINT_RK4:
+                for _ in range(self.nsubsteps):
+                    mjw.forward(self._m, self._d)
+                    # Native RK4 skips sensors at its intermediate stages. Warp
+                    # recomputes them, so retain the initial-stage acceleration.
+                    torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
+                    mjw.rungekutta4(self._m, self._d)
+            else:
+                self._sensors(last == 0)
+                mjw.step2(self._m, self._d)
+                for substep in range(1, self.nsubsteps):
+                    self._sensors(substep == last)
+                    mjw.step(self._m, self._d)
+                torch.index_select(sensors, 1, self._acc_indices, out=self._acc_values)
+            self._sensors(True)
+            mjw.step1(self._m, self._d)
+        finally:
+            self._sensors(True)
         sensors.index_copy_(1, self._acc_indices, self._acc_values)
 
     def _record_result(self):

@@ -286,6 +286,15 @@ def test_mjwarp_buffer_overflow_raises_a_clear_error():
 
 
 @cuda
+def test_mjwarp_sensors_hold_the_values_of_the_last_substep():
+    # Only the last substep computes sensors; the framepos sensor then equals the site position of that substep.
+    with WarpBatch(_model(), B, "cuda", frame_skip=FRAME_SKIP, outputs=["site_xpos"]) as batch:
+        for t in range(5):
+            batch.step(_ctrl(t))
+            assert torch.equal(batch.data("sensordata"), batch.data("site_xpos")[:, 0])
+
+
+@cuda
 def test_make_backend_builds_the_routed_backend():
     backend = resolve_backend(4, "cuda", "auto", 8)
     with make_backend(backend, _model(), 4, "cuda") as batch:

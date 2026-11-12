@@ -120,6 +120,8 @@ All notable changes to this project are listed here. The format follows
 - `OGBCube` and `OGBScene` compare with the original OGBench environments (`CubeEnv`, `SceneEnv`):
   `reference_env()` builds the OGBench environment and `reference_render()` draws compact rows with its
   own renderer. Before, the reference was the class itself with `backend="opengl"`.
+- MuJoCo Warp steps (`WarpBatch` and the DMC runtime) compute sensors on the last substep of a step only. The
+  values that a step returns do not change, and the other substeps launch fewer kernels.
 - Fetch: the twelve Fetch classes step all environments in one batched call. On CPU, the Gymnasium Robotics
   step runs on arrays and MuJoCo steps every environment in `mujoco.batch`, or on up to 8 threads when the
   installed MuJoCo has no `mujoco.batch`. State and outputs are equal to Gymnasium Robotics bit for bit, and

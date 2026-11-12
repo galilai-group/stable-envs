@@ -38,7 +38,7 @@ world. The ``frame_skip`` substeps run as one captured CUDA graph, launched on t
 no host synchronization. ``naconmax`` (contacts of all worlds) and ``njmax`` (constraints per world) default
 to sizes for the batch; an overflow raises :class:`BufferOverflowError` instead of dropping contacts silently.
 ``set_physics(..., forward=True)`` forwards every world, so derived fields of the other worlds then describe
-their current state.
+their current state. Sensors are computed on the last substep only, as they do not act on the dynamics.
 
 Routing: :func:`resolve_backend`. Per-environment source resets: :class:`ResetPool`.
 
@@ -542,8 +542,17 @@ class WarpBatch(MjBatch):
 
     def _step_body(self) -> None:
         mjw, m, d = self._mjw, self._m, self._d
-        for _ in range(self.frame_skip):
-            mjw.step(m, d)
+        # Sensors do not act on the dynamics: only the last substep computes them.
+        flags = m.opt.disableflags
+        if self.model.nsensor:
+            m.opt.disableflags = flags | int(mjw.DisableBit.SENSOR)
+        try:
+            for substep in range(self.frame_skip):
+                if substep == self.frame_skip - 1:
+                    m.opt.disableflags = flags
+                mjw.step(m, d)
+        finally:
+            m.opt.disableflags = flags
         if self._rne_post:
             mjw.rne_postconstraint(m, d)
         self._wp.launch(
