@@ -90,7 +90,9 @@ operations in the same order (NumPy computes a stack of small matrix products an
 the same BLAS and LAPACK routines as one). A `device="cuda"` env with the CPU batch returns State on the GPU.
 
 The MuJoCo Warp backend runs the task logic in float64 Torch on the GPU, without host reads in a step, and
-MuJoCo in float32, so a rollout follows the source approximately. The autopilot's bounded least-squares jet
+MuJoCo in float32, so a rollout follows the source approximately. Each 50 Hz step is three CUDA graph
+launches: the Torch phase before the substeps, one MuJoCo Warp graph of the 10 substeps with a Warp kernel for
+the drag and wind force before each substep, and the Torch phase after them. The autopilot's bounded least-squares jet
 allocation uses a precomputed pseudo-inverse for each set of free jets. With wind, the gusts of an action are
 drawn on the host from each environment's generator, as the source does; an environment that ends within an
 action has then drawn the gusts of the whole action. Replays of the source's scripted expert under wind and
