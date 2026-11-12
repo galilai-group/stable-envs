@@ -376,7 +376,7 @@ def ortho_vec(v):
     return res / np.linalg.norm(res)
 
 
-def _rgba(m, g):
+def geom_rgba(m, g):
     """The colour ``mjv_updateScene`` gives model geom ``g``: its own RGBA unless that is the default and it has a material."""
     rgba = np.asarray(m.geom_rgba[g], np.float32)
     mat = int(m.geom_matid[g])
@@ -422,7 +422,7 @@ def extract(m, d, camera, option=None):
         raise NotImplementedError("reflective planes and boxes are not drawn")
     body = m.geom_bodyid[s.objid]
     s.static = (m.body_weldid[body] == 0) & (m.body_mocapid[body] < 0)
-    model_rgba = np.array([_rgba(m, int(g)) for g in s.objid], np.float32)
+    model_rgba = np.array([geom_rgba(m, int(g)) for g in s.objid], np.float32)
     if not np.allclose(model_rgba, s.rgba):
         raise RuntimeError("scene colours differ from the model colour rule")
     # Per geom: triangles in the geom frame and the texture mapping MuJoCo sets for it.

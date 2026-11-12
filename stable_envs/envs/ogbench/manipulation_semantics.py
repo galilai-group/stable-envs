@@ -428,9 +428,10 @@ _OPENGL_NOTE = (
     "At supersample 1, visual_fidelity is an implementation-consistency measurement against another stable-envs "
     "MuJoCo OpenGL instance using the same compiled model and appearance; it is not an upstream-default-appearance "
     "comparison. With supersample 2 or more, MJWarp draws CUDA frames, and its lighting and transparency can "
-    "differ from the same-style stable-envs OpenGL reference. On CPU the default backend is opengl_fast: MuJoCo "
-    "OpenGL with simplified arm meshes and a 2048 shadow map. Its frames can differ from backend='opengl' "
-    "(mean frame MSE about 1.2 for Cube and 3.1 for Scene); visual_fidelity holds the backend='opengl' values."
+    "differ from the same-style stable-envs OpenGL reference. On CPU the default backend is numba: a Numba "
+    "rasterizer that follows MuJoCo OpenGL, with simplified arm meshes. Its frames can differ from "
+    "backend='opengl' at edges, in the arm and by rounding (mean frame MSE about @NOTE@); visual_fidelity "
+    "holds the backend='opengl' values."
 )
 
 
@@ -454,8 +455,9 @@ def _opengl_fidelity(renderer):
 class OGBCube(ManipulationSemantics, _CubeRenderer):
     """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
-    source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting and transparency can differ from MuJoCo.
+    On CPU the default backend, ``numba``, is a Numba rasterizer that follows MuJoCo OpenGL with simplified arm
+    meshes; ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    its lighting and transparency can differ from MuJoCo.
     """
 
     reference_id = "ogbench/visual-cube-single-v0"
@@ -466,9 +468,9 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
 class OGBScene(ManipulationSemantics, _SceneRenderer):
     """Scene simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
 
-    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="opengl"`` draws the
-    source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws; its lighting, transparency, and button textures
-    can differ from MuJoCo.
+    On CPU the default backend, ``numba``, is a Numba rasterizer that follows MuJoCo OpenGL with simplified arm
+    meshes; ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    its lighting, transparency, and button textures can differ from MuJoCo.
     """
 
     reference_id = "ogbench/visual-scene-v0"

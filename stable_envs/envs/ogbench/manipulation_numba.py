@@ -76,7 +76,6 @@ class _Rig:
         if view_cell:
             cluster_meshes(m, view_cell)
         s = ms.extract(m, d, "front_pixels")
-        self.scene = s
         G = len(s.objid)
         self.objid = s.objid
         if any(light["castshadow"] and light["type"] != ms.DIRECTIONAL for light in s.lights):
@@ -134,7 +133,6 @@ class _Rig:
         self.plates = {}
         self.looks = {}
         self._default_rgba = s.rgba.astype(np.float64)
-        self.render_kinematics = family == "Scene"
         # Static geom poses from the configuration's own kinematics.
         self.static_pos = s.geom_pos.copy()
         self.static_mat = s.geom_mat.copy()
@@ -180,7 +178,7 @@ class _Rig:
             env.variation_space._walk("lock_color")._value = locks.copy()
             env._cur_button_states = np.frombuffer(buttons, np.int64).copy()
             _apply_render_button_colors(env, locks)
-        out = np.array([ms._rgba(m, int(g)) for g in self.objid], np.float64)
+        out = np.array([ms.geom_rgba(m, int(g)) for g in self.objid], np.float64)
         fixed = self.opaque_static
         if not np.array_equal(out[fixed], self._default_rgba[fixed]):
             raise ValueError("Cube/Scene appearance colours a static geom, which the cached plate holds")
