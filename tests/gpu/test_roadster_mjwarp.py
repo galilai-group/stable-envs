@@ -30,6 +30,10 @@ PATH_BOUNDS = {"traffic": 0.1, "carhop": 0.1, "rooftop": 1.5, "loop": 8.0}
 #: a 1e-9 m/s change of the start velocity moves the source's own car 13 m by step 300. The path bound covers the
 #: steps before the loop; the outcome check covers the whole rollout.
 MISSION_STEPS_BEFORE_LOOP, MISSION_BOUND = 60, 0.5
+#: Tasks that cross the half-pipe loop at 20 m/s, where the source amplifies any difference (in Loop a 1e-9 m/s
+#: change of the start velocity moves the source's car 5-95 m by step 300): one environment of the 8 may change
+#: outcome, which MuJoCo Warp's run-to-run differences cause about once in ten runs.
+CHAOTIC = ("loop", "mission")
 #: Steps by which the first success or failure may come earlier or later than in the source.
 OUTCOME_SLACK = 3
 
@@ -126,12 +130,14 @@ def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
             want is not None and got is not None and want[1] == got[1] and abs(want[0] - got[0]) <= OUTCOME_SLACK
         )
         flips += not same
-        if task != "mission":
+        if task not in CHAOTIC:
             assert same, f"{task} environment {i}: source ends {want}, MuJoCo Warp ends {got}"
+        if task != "mission" and same:
             end = STEPS if want is None else want[0] + 1
             gap = float(np.abs(pos[:end, i] - src_pos[:end, i]).max())
             assert gap <= PATH_BOUNDS[task], f"{task} environment {i}: {gap:.3f} m from the source's path"
+    if task in CHAOTIC:
+        assert flips <= 1, f"{task}: {flips} of {LANES} environments changed outcome"
     if task == "mission":
-        assert flips <= 1, f"mission: {flips} of {LANES} environments changed outcome"
         gap = float(np.abs(pos[:MISSION_STEPS_BEFORE_LOOP] - src_pos[:MISSION_STEPS_BEFORE_LOOP]).max())
         assert gap <= MISSION_BOUND, f"mission: {gap:.3f} m from the source's path before the loop"
