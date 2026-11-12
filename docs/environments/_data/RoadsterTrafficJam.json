@@ -8,7 +8,7 @@
  "has_dynamics": true,
  "default_size": 96,
  "frame_shape": [96, 96, 3],
- "physics": "source simulator on CPU",
+ "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
  "renderers": {
   "cpu": "opengl (MuJoCo)",
   "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"
