@@ -29,7 +29,7 @@ def test_quadruped_height_search_leaves_the_data_of_dm_control(seed):
 
 @pytest.mark.family("dmc")
 @pytest.mark.parametrize(
-    ("domain", "threaded"), [("cheetah", True), ("quadruped", True), ("finger", False), ("pendulum", False)]
+    ("domain", "threaded"), [("cheetah", True), ("quadruped", False), ("finger", False), ("pendulum", False)]
 )
 def test_only_mujoco_heavy_resets_use_the_reset_threads(domain, threaded):
     pytest.importorskip("dm_control")

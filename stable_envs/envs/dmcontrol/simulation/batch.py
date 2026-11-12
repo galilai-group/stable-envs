@@ -17,9 +17,10 @@ from .state import export_columns
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
-#: Domains whose dm_control reset is mostly MuJoCo work: CheetahRun settles for 200 steps, Quadruped searches its
-#: start height. Their lanes reset on the batch threads; the resets of other domains are faster in one thread.
-THREADED_RESETS = frozenset({"cheetah", "quadruped"})
+#: Domains whose dm_control reset is mostly long MuJoCo calls: CheetahRun settles for 200 steps in one call. Their
+#: lanes reset on the batch threads. The resets of other domains are faster in one thread: Quadruped's height search
+#: makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
+THREADED_RESETS = frozenset({"cheetah"})
 #: MuJoCo work, in seconds, that each batch thread gets per step call. Waking a thread can cost about this much.
 THREAD_WORK = 1e-4
 #: Fewest lanes per batch thread: each thread that a call waits for can be the late one.

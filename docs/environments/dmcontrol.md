@@ -103,7 +103,7 @@ values of the last integration. Contacts, constraints and the solver are those o
 Native environments own resets and RNG. Each environment keeps its complete RNG state, episode
 targets, physics values and compact model columns. The adapter writes the model values of each
 environment into the per-environment model fields of MuJoCo Warp, and writes only the fields that
-changed. For Cheetah and Quadruped, one native reset owner per `dmc_threads` thread resets a share
+changed. For Cheetah, one native reset owner per `dmc_threads` thread resets a share
 of the environments in parallel. Other tasks use one reset owner. A pending reset uses one control
 round with zero reward. When only some environments reset, the full batch advances and the reset
 environments get their new State after the round.

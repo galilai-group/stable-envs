@@ -124,6 +124,11 @@ All notable changes to this project are listed here. The format follows
   than 256 frames on one thread when the scene has no tracking light. With 8 Torch threads, idle Torch threads
   kept the cores busy while the `mujoco.batch` threads waited, and the time of an AntMaze episode of 64 steps with
   frames changed between runs by up to 10x. Frames and State do not change.
+- `DMCQuadrupedWalk` resets search the start height with MuJoCo kinematics and collision only, as only the
+  contact count is read, and then repeat dm_control's last attempt with both forward passes. The data and State
+  do not change. Quadruped resets run in one thread on CPU and in one reset owner on CUDA: many short MuJoCo calls
+  on several threads wait for the GIL. Public CPU steps/s with a reset every 64 steps, 8 cores of a Xeon
+  Platinum 8470: 13,621 at 64 environments (9,045 before), 27,631 at 256 (16,175), 28,272 at 1024 (19,839).
 - Fetch: on CPU, `backend="auto"` draws frames with a compiled Numba rasterizer that follows MuJoCo's
   OpenGL renderer: the meshes, the primitive tessellations, per-vertex lighting, 4 samples per pixel, the
   skybox and the translucent markers. It is faster than the source at every batch size. The frames differ

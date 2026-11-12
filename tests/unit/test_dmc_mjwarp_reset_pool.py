@@ -102,7 +102,7 @@ def _sharded_pool(key, threads, monkeypatch, lanes=5):
     return WarpResetPool(key, lanes, 91000, *warp_batch_fields())
 
 
-@pytest.mark.parametrize("key", ["cheetah", "quadruped"])
+@pytest.mark.parametrize("key", ["cheetah"])
 def test_threaded_domains_reset_shards_on_one_owner_per_thread(key, monkeypatch):
     with closing(_sharded_pool(key, 1, monkeypatch)) as single, closing(_sharded_pool(key, 3, monkeypatch)) as sharded:
         assert len(single._owners) == 1 and single._pool is None
@@ -120,6 +120,7 @@ def test_threaded_domains_reset_shards_on_one_owner_per_thread(key, monkeypatch)
                 np.testing.assert_array_equal(column, single.models.columns[name], err_msg=name)
 
 
-def test_other_domains_reset_on_one_owner(monkeypatch):
-    with closing(_sharded_pool("walker", 8, monkeypatch)) as pooled:
+@pytest.mark.parametrize("key", ["walker", "quadruped"])
+def test_other_domains_reset_on_one_owner(key, monkeypatch):
+    with closing(_sharded_pool(key, 8, monkeypatch)) as pooled:
         assert len(pooled._owners) == 1 and pooled._pool is None

@@ -47,28 +47,38 @@ ALIGNED_FIELDS = {domain: {**_core(domain), **_physics.state_fields(domain)} for
 def _non_contacting_height(physics, orientation):
     """dm_control's quadruped ``_find_non_contacting_height`` in direct MuJoCo calls.
 
-    Each attempt resets the data and runs both forward passes of ``reset_context`` with actuation disabled, so the
-    data end as dm_control leaves them. MuJoCo releases the GIL in these calls, so lanes reset in parallel threads.
+    An attempt only needs the contact count, which kinematics and collision give. The attempt that finds no contact
+    then runs as dm_control runs it: reset the data and both forward passes of ``reset_context`` with actuation
+    disabled, so the data end as dm_control leaves them.
     """
     import mujoco
 
     m, d = physics.model.ptr, physics.data.ptr
     adr = int(m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, "root")])
+    z, attempts = 0.0, 0
+    mujoco.mj_resetData(m, d)
+    qpos = d.qpos
+    qpos[adr : adr + 3] = 0.0, 0.0, z
+    qpos[adr + 3 : adr + 7] = orientation
+    while True:
+        qpos[adr + 2] = z
+        mujoco.mj_kinematics(m, d)
+        mujoco.mj_collision(m, d)
+        found = d.ncon == 0
+        attempts += 1
+        if attempts > 10000:
+            raise RuntimeError("Failed to find a non-contacting configuration.")
+        if found:
+            break
+        z += 0.01
     flags = m.opt.disableflags
     m.opt.disableflags = flags | mujoco.mjtDisableBit.mjDSBL_ACTUATION
     try:
-        z, attempts, contacts = 0.0, 0, 1
-        while contacts > 0:
-            mujoco.mj_resetData(m, d)
-            mujoco.mj_forward(m, d)
-            d.qpos[adr : adr + 3] = 0.0, 0.0, z
-            d.qpos[adr + 3 : adr + 7] = orientation
-            mujoco.mj_forward(m, d)
-            contacts = d.ncon
-            z += 0.01
-            attempts += 1
-            if attempts > 10000:
-                raise RuntimeError("Failed to find a non-contacting configuration.")
+        mujoco.mj_resetData(m, d)
+        mujoco.mj_forward(m, d)
+        d.qpos[adr : adr + 3] = 0.0, 0.0, z
+        d.qpos[adr + 3 : adr + 7] = orientation
+        mujoco.mj_forward(m, d)
     finally:
         m.opt.disableflags = flags
 
