@@ -25,7 +25,9 @@ def render_classic_torch(ops: C.Ops, out: torch.Tensor | None = None) -> torch.T
     if ops.plate is not None:
         p = ops.plate  # (3, 1 or B, H, W) pre-flip
         col = p[:, :, :, :].permute(1, 2, 3, 0).to(torch.int64)  # (1 or B, H, W, 3)
-        col = col.flip(1).expand(B, H, W, 3).clone()
+        # Lanes pick an image by ops.plate_idx, or by lane index when the batch has one image per lane.
+        idx = torch.arange(B, device=dev) % col.shape[0] if ops.plate_idx is None else ops.plate_idx.to(dev)
+        col = col.flip(1)[idx].clone()
     else:
         col = ops.bg.to(torch.int64).view(B, 1, 1, 3).expand(B, H, W, 3).clone()
 

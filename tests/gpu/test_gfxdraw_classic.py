@@ -101,7 +101,7 @@ def _per_primitive(env, states, style=None):
     was = env.use_fused_render
     try:
         env.use_fused_render = False
-        return env._render(states, style=style).clone()
+        return env._render(states, style=style, backend="port").clone()
     finally:
         env.use_fused_render = was
 
