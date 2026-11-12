@@ -77,12 +77,13 @@ _PI = 3.1415926535897932384626433832795029
 
 
 def _hull_vertices():
-    """Body-frame contact vertices ``(x, y, z, margin, contact threshold)`` of the rocket collision shapes.
+    """Body-frame contact vertices ``(x, y, z, margin, pad threshold, ground threshold)`` of the rocket shapes.
 
     Three leg boxes, four fin boxes, and the 32-sided hulls of the booster and body cylinders (vertex ``i`` at
-    angle ``2 pi i / 32`` from +y, as PyBullet's URDF importer builds them). The threshold is
-    ``BREAKING_THRESHOLD_FACTOR`` times the half diagonal of the shape's bounding box; the pad and the ground are
-    larger, so the rocket shape sets it.
+    angle ``2 pi i / 32`` from +y, as PyBullet's URDF importer builds them). Against the pad (a hull), Bullet's
+    convex pair reports points closer than ``BREAKING_THRESHOLD_FACTOR`` times the half diagonal of the rocket
+    shape's bounding box; the pad and the ground are larger, so the rocket shape sets it. The ground is a box, and
+    Bullet's box-box detector reports only penetrating points, so a box vertex touches the ground below zero.
     """
     v = []
 
@@ -93,7 +94,7 @@ def _hull_vertices():
             for sy in (-half[1], half[1]):
                 for sz in (-half[2], half[2]):
                     v.append(
-                        (center[0] + c * sx - s * sy, center[1] + s * sx + c * sy, center[2] + sz, 0.0, threshold)
+                        (center[0] + c * sx - s * sy, center[1] + s * sx + c * sy, center[2] + sz, 0.0, threshold, 0.0)
                     )
 
     for yaw, x, y in [(0.0, 0.0, 0.35), (4.188, 0.3031, -0.175), (-4.188, -0.3031, -0.175)]:
@@ -107,7 +108,7 @@ def _hull_vertices():
         for k in range(32):
             a = 2 * math.pi * k / 32
             for sz in (-hl, hl):
-                v.append((r * math.sin(a), r * math.cos(a), cz + sz, HULL_MARGIN, threshold))
+                v.append((r * math.sin(a), r * math.cos(a), cz + sz, HULL_MARGIN, threshold, threshold))
     return np.array(v)
 
 
@@ -345,7 +346,7 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
             threshold = verts[i, 4]
             gap = 0.0
             mu = -1.0
-            if low < threshold and abs(x) <= GROUND_HALF_EXTENT and abs(y) <= GROUND_HALF_EXTENT:
+            if low < verts[i, 5] and abs(x) <= GROUND_HALF_EXTENT and abs(y) <= GROUND_HALF_EXTENT:
                 ground_hit = True
                 gap = low
                 mu = FRICTION_GROUND
