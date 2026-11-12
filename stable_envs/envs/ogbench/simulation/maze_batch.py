@@ -474,7 +474,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         # The task steps a subset of lanes, and the humanoid observation needs the velocity stage after the step,
         # as ``HumanoidEnv`` runs ``mj_step1``: these use the batch directly.
         self.b = self.sim.b
-        # Live arrays over the batch's rows; looking one up on the batch costs more than the point step.
+        # Live arrays over the batch's rows, looked up once.
         self._live = SimpleNamespace(
             **{f: getattr(self.b, f) for f in ("qpos", "qvel", "time", "qacc_warmstart", "ctrl")}
         )
@@ -615,11 +615,12 @@ class OGBMazeBatchAdapter(_MazeLanes):
 
 
 class OGBMazeWarpAdapter(_MazeLanes):
-    """OGBench maze lanes as MuJoCo Warp worlds on CUDA (``WarpBatch``): float32 physics, no host sync per step.
+    """OGBench maze lanes as MuJoCo Warp worlds on CUDA (``WarpBatch``): float32 physics.
 
     Task outputs follow the source's step on the device. Resets sample the source's start and goal from each
     lane's own RNGs on the host. Teleport destinations are drawn ahead from each lane's RNG, so the step needs
-    no host draw; the host advances the RNGs by the draws used when it returns State or refills them.
+    no host draw; the host advances the RNGs by the draws used when it returns State, and refills the draws
+    every ``TELEPORT_DRAWS`` steps. These are the only host synchronizations of a step.
     """
 
     execution_mode = "MJWARP"
