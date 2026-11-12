@@ -122,6 +122,26 @@ def selected(env, backend=None) -> bool:
 @cache
 def _kernels():
     import warp as wp
+    from mujoco_warp._src import math as mjmath
+
+    @wp.kernel
+    def welded_geoms(
+        geom_bodyid: wp.array(dtype=int),
+        geom_pos: wp.array2d(dtype=wp.vec3),
+        geom_quat: wp.array2d(dtype=wp.quat),
+        geoms: wp.array(dtype=int),
+        xpos: wp.array2d(dtype=wp.vec3),
+        xquat: wp.array2d(dtype=wp.quat),
+        geom_xpos: wp.array2d(dtype=wp.vec3),
+        geom_xmat: wp.array2d(dtype=wp.mat33),
+    ):
+        # MuJoCo Warp's kinematics keeps the make_data pose of geoms welded to the world; these move per episode.
+        w, k = wp.tid()
+        g = geoms[k]
+        b = geom_bodyid[g]
+        q = xquat[w, b]
+        geom_xpos[w, g] = xpos[w, b] + mjmath.rot_vec_quat(geom_pos[w % geom_pos.shape[0], g], q)
+        geom_xmat[w, g] = mjmath.quat_to_mat(mjmath.mul_quat(q, geom_quat[w % geom_quat.shape[0], g]))
 
     @wp.kernel
     def copy_vec3(src: wp.array2d(dtype=wp.vec3), offset: wp.array(dtype=int), dst: wp.array2d(dtype=wp.vec3)):
@@ -386,6 +406,7 @@ def _kernels():
         "copy_mat33": copy_mat33,
         "world_sites": world_sites,
         "place_sites": place_sites,
+        "welded_geoms": welded_geoms,
         "place_tendon": place_tendon,
     }
 
@@ -456,6 +477,31 @@ def _apply_look(env, m, pr, look) -> None:
     m.light_diffuse[:] = pr["light_diffuse"]
     m.geom_group[:] = pr["geom_group"]
     m.site_group[:] = pr["site_group"]
+
+
+def _welded_geoms(env, m) -> list[int]:
+    """Geoms welded to the world whose pose an episode entry moves: their own pose or an ancestor body's."""
+    from ._model import _slot_element
+
+    bodies, geoms = set(), set()
+    for arr, k in env._slots():
+        kind, eid = _slot_element(m, arr, k)
+        if kind == "body":
+            bodies.add(int(eid))
+        elif kind == "geom" and arr in ("geom_pos", "geom_quat"):
+            geoms.add(int(eid))
+    out = []
+    for g in range(m.ngeom):
+        b = int(m.geom_bodyid[g])
+        if int(m.body_weldid[b]) != 0:
+            continue
+        chain = set()
+        while b > 0:
+            chain.add(b)
+            b = int(m.body_parentid[b])
+        if g in geoms or chain & bodies:
+            out.append(g)
+    return out
 
 
 def _drawn_sites(m, pr) -> list[int]:
@@ -662,6 +708,7 @@ class _Ctx:
         "light_base",
         "colors",
         "spheres",
+        "welded_ids",
     )
 
 
@@ -713,6 +760,8 @@ def _build(env, size: int, nworld: int, look, opts: Options, spp: int, batch=Non
         c.offset_t = wp.to_torch(c.offset)
         c.site_ids = wp.array(np.asarray(px.sites, np.int32), dtype=int) if px.sites else None
         c.world_site_ids = wp.array(np.asarray(px.world_sites, np.int32), dtype=int) if px.world_sites else None
+        welded = _welded_geoms(env, m)
+        c.welded_ids = wp.array(np.asarray(welded, np.int32), dtype=int) if welded else None
         c.solimp, c.tendon_sites, c.tendon_margin = None, None, 0.0
         if px.tendon is not None:
             t = px.tendon.id
@@ -873,6 +922,13 @@ def _frame(c: _Ctx) -> None:
             # Kinematics leaves subtree_com stale; tracking cameras and lights read it.
             c.mjw.com_pos(c.wm, c.wd)
         c.mjw.camlight(c.wm, c.wd)
+        if c.welded_ids is not None:
+            wp.launch(
+                k["welded_geoms"],
+                dim=(c.nworld, c.welded_ids.shape[0]),
+                inputs=[c.wm.geom_bodyid, c.wm.geom_pos, c.wm.geom_quat, c.welded_ids, c.wd.xpos, c.wd.xquat],
+                outputs=[c.wd.geom_xpos, c.wd.geom_xmat],
+            )
     if px.sites:
         wp.launch(
             k["place_sites"],
