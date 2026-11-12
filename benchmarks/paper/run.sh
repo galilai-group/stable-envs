@@ -11,7 +11,11 @@
 #   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
 #   CPU_SOURCES=0 leaves out the source arms that run on CPU (for GPU jobs whose CPU source cells come from a CPU job).
 #   An output file that exists is kept, so a rerun with the same OUT fills in only what is missing.
-#   SMOKE=1 uses small counts. MODE=throughput runs the throughput arms, MODE=gifs one GIF per env.
+#   SMOKE=1 uses small counts. QUICK=1 is a go/no-go check: 1 repeat of a WINDOW (default 3 s) timed window and
+#   lane counts 8:256:1024 unless SWEEP_* are set; paper numbers use the default (3 repeats of 10 s).
+#   VENV_PYTHON=path reuses an existing family venv (no build, no delete); STATES_DIR=dir keeps the stored States and
+#   episodes between runs; SRC_FROM=dir copies source cells (src-*.json) measured on the same machine into OUT first.
+#   MODE=throughput runs the throughput arms, MODE=gifs one GIF per env.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the core set of every arm. STEP_LIMIT
 #   (default 6h) stops one arm that does not exit.
 set -uo pipefail
@@ -27,12 +31,15 @@ UV=${UV:-$HOME/.local/bin/uv}
 WORK=${TMPDIR:-/tmp}/snv-bench-$$
 mkdir -p "$OUT"/{offline,online,logs} "$WORK"
 trap 'rm -rf "$WORK"' EXIT
-if [ "${SMOKE:-0}" = 1 ]; then
+if [ "${QUICK:-0}" = 1 ]; then
+  SWEEP_CPU=${SWEEP_CPU:-8:256:1024}; SWEEP_CUDA=${SWEEP_CUDA:-8:256:1024}; LENGTH=32; LANES=64; SWEPISODES=64
+  REPEATS=${REPEATS:-1}; WINDOW=${WINDOW:-3}
+elif [ "${SMOKE:-0}" = 1 ]; then
   SWEEP_CPU=${SWEEP_CPU:-1:8:64}; SWEEP_CUDA=${SWEEP_CUDA:-1:64:256}; LENGTH=32; LANES=64; SWEPISODES=64
 else
   SWEEP_CPU=${SWEEP_CPU:-1:8:64:256:1024}; SWEEP_CUDA=${SWEEP_CUDA:-1:256:512:1024:2048}; LENGTH=64; LANES=256; SWEPISODES=64
 fi
-DEVICES=${DEVICES:-cpu cuda}; ARMS=${ARMS:-offline step frames}; REPEATS=${REPEATS:-3}; CPU_SOURCES=${CPU_SOURCES:-1}
+DEVICES=${DEVICES:-cpu cuda}; ARMS=${ARMS:-offline step frames}; REPEATS=${REPEATS:-3}; WINDOW=${WINDOW:-10}; CPU_SOURCES=${CPU_SOURCES:-1}
 sweep() { [ $1 = cpu ] && echo $SWEEP_CPU | tr : " " || echo $SWEEP_CUDA | tr : " "; }
 # The stored States hold the largest offline batch; the episode set holds one episode per lane of the largest count.
 N=$(for d in $DEVICES; do sweep $d; done | tr " " "\n" | sort -n | tail -1)
@@ -104,7 +111,7 @@ for spec in "$@"; do
   fam=${spec%%=*}; envs=(${spec#*=}); envs=(${envs[@]//,/ })
   echo "=== family $fam: ${envs[*]} $(date -Is)"
   df -h "$WORK" | tail -1
-  P=$(venv $fam) || { rm -rf $WORK/venv-$fam; continue; }
+  if [ -n "${VENV_PYTHON:-}" ]; then P=$VENV_PYTHON; else P=$(venv $fam) || { rm -rf $WORK/venv-$fam; continue; }; fi
   $P -c "import torch; print('torch', torch.__version__, torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no GPU')"
   if [ $fam = craftax ]; then
     # Craftax has no source renderer to restore States into; its comparison is the upstream jitted step.
@@ -121,7 +128,7 @@ for spec in "$@"; do
     continue
   fi
   OFF="$PIN $P -m benchmarks.offline_sweep"; ON="$PIN $P -m benchmarks.online_ladder"
-  S=$WORK/states-$fam; D=$WORK/episodes-$fam; mkdir -p $S $D
+  S=${STATES_DIR:-$WORK}/states-$fam; D=${STATES_DIR:-$WORK}/episodes-$fam; mkdir -p $S $D
   if [ "${MODE:-sweep}" = throughput ]; then
     # Online throughput with frames on one CPU budget or one GPU: the source as one env, a Gymnasium SyncVectorEnv
     # and an AsyncVectorEnv (CPU OpenGL), and stable-envs on CPU and on CUDA.
@@ -173,15 +180,19 @@ for spec in "$@"; do
   for E in "${envs[@]}"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg) $(peak_memory)"
     o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
+    if [ -n "${SRC_FROM:-}" ]; then
+      for f in "$SRC_FROM"/offline/$E/src-*.json; do [ -s "$f" ] && cp -n "$f" $o/; done
+      for f in "$SRC_FROM"/online/$E/src-*.json; do [ -s "$f" ] && cp -n "$f" $n/; done
+    fi
     GPUSRC=$($P -c "import stable_envs as s; from benchmarks.compat import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')")
     for dev in $DEVICES; do
       tag=$([ $dev = cpu ] && echo cpu || echo gpu)
       if has offline; then
-        once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --output $o/snv-$tag.json
+        once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --seconds $WINDOW --output $o/snv-$tag.json
         once $o/mse-$tag.json gl $dev $OFF mse --envs $E --states $S --device $dev --output $o/mse-$tag.json
         for p in 1 $NCORES; do
-          [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-cpu-${p}p.json
-          [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --output $o/src-gpu-${p}p.json
+          [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --output $o/src-cpu-${p}p.json
+          [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --output $o/src-gpu-${p}p.json
         done
       fi
       # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.
@@ -190,7 +201,7 @@ for spec in "$@"; do
         # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there,
         # and time ours on the same 8-step window as well, so both rates carry the same share of reset cost.
         slice=$([ $dev = cuda ] && [ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
-        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --episodes $L"
+        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --seconds $WINDOW --episodes $L"
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1
@@ -211,7 +222,8 @@ for spec in "$@"; do
     done
   done
   echo "=== end of family $fam $(date -Is) $(peak_memory)"
-  rm -rf $WORK/venv-$fam $S $D
+  [ -z "${VENV_PYTHON:-}" ] && rm -rf $WORK/venv-$fam
+  [ -z "${STATES_DIR:-}" ] && rm -rf $S $D
 done
 echo "{\"end\": \"$(date -Is)\"}" > "$OUT/end.json"
 echo done
