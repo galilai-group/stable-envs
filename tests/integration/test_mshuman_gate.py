@@ -10,7 +10,9 @@ import torch
 import stable_envs as se
 
 LANES, STEPS, SEED = 3, 12, 7
-_ATOL = {"qpos": 1e-2, "qvel": 2.5, "act": 1e-6, "time": 1e-6}
+#: The CPU env steps a native mujoco.batch; worst gaps over 3,000 random trajectories were under 1.5e-5, 3e-3,
+#: 1.2e-7 and 2e-9 (docs/environments/mshuman.md), and this fixed rollout's are 2.4e-7, 7.6e-5, 6.0e-8 and 1.9e-9.
+_ATOL = {"qpos": 1e-5, "qvel": 2e-3, "act": 1e-6, "time": 1e-8}
 
 
 def _reference(actions):
