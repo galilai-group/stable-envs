@@ -26,6 +26,9 @@ class _ReacherSemantics(DelegatedSemantics):
     def _layout(self):
         return tuple((key, width, 0 if key == ("qpos",) else None) for key, (width, _) in self._fields().items())
 
+    def _render_fields(self):
+        return (("qpos",), ("task", "target_pos"))
+
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
             raise TypeError("Expected full Reacher State")

@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from ..._core.physics import state_key
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict
 from .simulation.execution import dmc_backend, make_dmc_adapter
@@ -122,24 +123,34 @@ class DelegatedSemantics:
             offset += width
         return TensorDict(values, [len(rows)], device=self.device)
 
+    def _render_fields(self):
+        """The State leaves ``_pack_render_state`` reads."""
+        return self._render_keys()
+
+    def _drawn_fields(self):
+        """The packed leaves and the physics leaves that move pixels, as ``(key, width)``."""
+        fields = self._fields()
+        keys = (*self._render_fields(), *(state_key(p) for p in sorted(self.FRAME_PHYSICS)))
+        return tuple((key, fields[key][0]) for key in keys)
+
     def render(self, state=None, **kwargs):
         """A State's own physics values draw the leaves that move pixels, unless the call names them."""
         state = self.get_state() if state is None else state
-        leaves = sorted(self.FRAME_PHYSICS)
-        if leaves and "style" not in kwargs and isinstance(state, TensorDict):
-            keys = set(state.keys(True, True))
-            variation = dict(kwargs.pop("variation", None) or {})
-            drawn = [p for p in leaves if ("physics", *p.split(".")) in keys and p not in variation]
-            if drawn:
-                values = torch.cat([state[("physics", *p.split("."))] for p in drawn], 1)
-                values = values.to(device=self.device, dtype=torch.float32)
-                rows = self._style.values.shape[0]
-                current = torch.cat([self._style[p].reshape(rows, -1) for p in drawn], 1)
-                # The live style already draws a State this env produced; skip the per-call override.
-                if values.shape != current.shape or not torch.equal(values, current):
-                    variation.update({p: values[:, i : i + 1] for i, p in enumerate(drawn)})
+        leaves = [] if "style" in kwargs else sorted(self.FRAME_PHYSICS)
+        variation = dict(kwargs.pop("variation", None) or {}) if leaves else {}
+        drawn = [p for p in leaves if p not in variation]
+        self._validate_render_state(state)
+        if drawn:
+            values = torch.cat([state[state_key(p)] for p in drawn], 1)
+            values = values.to(device=self.device, dtype=torch.float32)
+            rows = self._style.values.shape[0]
+            current = torch.cat([self._style[p].reshape(rows, -1) for p in drawn], 1)
+            # The live style already draws a State this env produced; skip the per-call override.
+            if values.shape != current.shape or not torch.equal(values, current):
+                variation.update({p: values[:, i : i + 1] for i, p in enumerate(drawn)})
+        if leaves:
             kwargs["variation"] = variation or None
-        return super().render(state, **kwargs)
+        return self._render(self._pack_render_state(state), **kwargs)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
