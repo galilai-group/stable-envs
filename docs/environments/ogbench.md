@@ -253,6 +253,11 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
   two draws of the same state, and the same variation appears in the comparison renderer.
 - With `supersample` 2 or more, MJWarp draws the CUDA frames. MJWarp frames can differ from MuJoCo in
   lighting and transparency.
+- On CUDA, `backend="nvdiff"` draws all frames of a batch with nvdiffrast and Triton. It follows MuJoCo's
+  OpenGL renderer: per-vertex lighting, the shadow map, the 4x multisample positions of NVIDIA OpenGL, the
+  skybox, the floor grid texture and the see-through arm in MuJoCo's blend order. It uses the simplified arm
+  meshes of `opengl_fast`. Install `nvdiffrast` and `triton` to use it. A draw of the same state gives the same
+  frame each time, in any batch.
 
 A reset is the OGBench reset. OGBench samples the task from NumPy's global RNG. Each lane keeps its own
 copy of that RNG in State (`rng/task`). A seeded reset seeds the copy as `np.random.seed(seed)` does with

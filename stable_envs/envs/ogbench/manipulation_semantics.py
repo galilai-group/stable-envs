@@ -257,7 +257,7 @@ class ManipulationSemantics:
         validated = checked or state is None or isinstance(state, TensorDict) and "physics" in state.keys()
         if validated and not checked:
             sampling = self.ss if supersample is None else supersample
-            host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling)
+            host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling, self.CELL)
             if state is None and host and hasattr(self._simulator, "render_columns"):
                 chosen = manipulation_renderer.host_backend(backend or self.backend, self.device)
                 return self._draw_live(size, sampling, chunk_size, out, chosen)
@@ -391,7 +391,7 @@ class ManipulationSemantics:
         # OpenGL reads host inputs, so its RenderState is built on the host.
         device = (
             torch.device("cpu")
-            if draws_on_host(kwargs.get("backend") or self.backend, self.device, supersample)
+            if draws_on_host(kwargs.get("backend") or self.backend, self.device, supersample, self.CELL)
             else self.device
         )
         if style is None and not variation:

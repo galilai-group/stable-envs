@@ -158,6 +158,12 @@ All notable changes to this project are listed here. The format follows
   about 0.6 (Cube) and 1.3 (Scene). `backend="auto"` keeps `opengl_fast` on CPU.
   `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera and shadow
   settings of a MuJoCo model for rasterizers that follow MuJoCo's OpenGL renderer.
+- `OGBCube` and `OGBScene` have a CUDA backend `backend="nvdiff"`. It draws all frames of a batch on the GPU
+  with nvdiffrast and Triton and follows MuJoCo 3.17's OpenGL renderer: per-vertex lighting with the headlight
+  and the model lights, the shadow map of the shadow light, NVIDIA's 4x multisample positions, the skybox, the
+  floor grid texture and the see-through arm in MuJoCo's blend order. The arm meshes are the simplified meshes
+  of `opengl_fast`. It needs the `nvdiffrast` and `triton` packages. `backend="opengl"` and
+  `backend="opengl_fast"` stay available.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
