@@ -3,19 +3,16 @@
 # usage: bash benchmarks/paper/job.sh OUT FAMILY ENV      (from the root of the checkout under test)
 # env: P (family venv python), W (work dir: swm, uv, tmp, cores.lock), MODE (full or gpu), SWEEP_CPU, SWEEP_CUDA,
 #   CAPS (file of "ENV LANES": step sources of ENV stop at LANES), WINDOW, REPEATS, STEP_LIMIT, PARALLEL_DEVICES (1).
-# MODE=full (default):
-#   cpu-a   DEVICES=cpu ARMS="offline step" at SWEEP_CPU, with the CPU sources
+# CPU pass (MODE=full only), with the CPU sources:
+#   cpu-a   DEVICES=cpu ARMS="offline step" at SWEEP_CPU
 #   cpu-f   DEVICES=cpu ARMS=frames up to the family's CPU frames limit (frames_cpu)
-#   cuda-a  DEVICES=cuda ARMS="offline step" at SWEEP_CUDA, CPU_SOURCES=0
-#   cuda-f  DEVICES=cuda ARMS=frames at 1:8:64:256, then at 1024 with the source GPU cell written as capped
-#   The two passes run at the same time on two disjoint sets of 8 idle physical cores when 16 are free, else in turn.
-# MODE=gpu: CUDA cells only, ours at SWEEP_CUDA; the sources at the lane counts where they reach their rate:
-#   g-a     DEVICES=cuda ARMS="offline step" at SWEEP_CUDA, step sources up to the cap (default 1024)
-#   g-s     ARMS=step at the cap, when SWEEP_CUDA does not hold it
-#   g-f8    ARMS=frames at 8 lanes with the CPU and GPU sources; g-f64 at 64 lanes with the GPU source
-#   g-f     ARMS=frames at SWEEP_CUDA, source GPU cells above 256 lanes written as capped
-# done.json marks a finished job; cores.txt records the cores and how busy they were.
-# DRY_RUN=1 prints the calls and writes nothing.
+# CUDA pass, ours and the source at every lane count and batch of SWEEP_CUDA:
+#   cuda-o  ARMS=offline; cuda-s ARMS=step; cuda-f ARMS=frames (the source's GPU renderer where it has one, else the
+#           CPU source). Source cells that the CPU pass times are left to it; MODE=gpu times them here, and cuda-fc adds
+#           the CPU frames source of an env with a GPU renderer, for the case that the GPU source fails its frame check.
+# MODE=full runs the two passes at the same time on two disjoint sets of 8 idle physical cores when 16 are free, else
+# one after the other. A cell that runs out of memory or time is kept as a result with that status (run.sh).
+# done.json marks a finished job; cores.txt records the cores and how busy they were. DRY_RUN=1 prints the calls only.
 set -uo pipefail
 OUT=$1; fam=$2; E=$3
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -79,83 +76,48 @@ gpusrc() {
   $P -c "import stable_envs as s; from tests.helpers.reference.sources import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')" 2>/dev/null
 }
 
-# cap_gpu_frames LANES...: write the source GPU frames cells at these lane counts as capped (run.sh keeps a file it finds).
-cap_gpu_frames() {
-  local L f
-  [ "$DRY" = 1 ] && { echo "  $E source GPU frames at $* lanes: written as capped $(gpusrc)"; return 0; }
-  for L in "$@"; do
-    f=$OUT/pass-cuda/online/$E/src-render-gpu-L$L.json
-    [ -s $f ] && continue
-    mkdir -p "$(dirname "$f")"
-    echo "{\"env\": \"$E\", \"arms\": {\"src-pipelined-render-gpu\": {\"status\": \"capped\", \"note\": \"source GPU frames stop at 256 lanes\"}}}" > $f
-  done
-}
+# lanes SWEEP OP N: the lane counts of SWEEP with L OP N (le or gt), colon-separated.
+lanes() { echo "$1" | tr : '\n' | awk -v n="$3" -v op="$2" '(op == "le" && $1 <= n) || (op == "gt" && $1 > n)' | paste -sd: -; }
 
 cpu_pass() {
-  call cpu-a cpu "offline step" $SWEEP_CPU "$1" "$2" CPU_SOURCES=1 || return 3
+  call cpu-a cpu "offline step" "$SWEEP_CPU" "$1" "$2" CPU_SOURCES=1 || return 3
   call cpu-f cpu frames "$(frames_cpu)" "$1" "$2" CPU_SOURCES=1 || return 3
 }
 
 cuda_pass() {
-  call cuda-a cuda "offline step" $SWEEP_CUDA "$1" "$2" CPU_SOURCES=0 || return 3
-  call cuda-f cuda frames 1:8:64:256 "$1" "$2" CPU_SOURCES=0 || return 3
-  [ -n "$(gpusrc)" ] && cap_gpu_frames 1024
-  call cuda-f2 cuda frames 1024 "$1" "$2" CPU_SOURCES=0 || return 3
-}
-
-gpu_pass() {
-  local c=$1 b=$2 sl=${CAPL:-1024} big
-  [ $sl -gt 1024 ] && sl=1024
-  # Step sources stop at sl lanes; ours keeps every lane count of the sweep.
-  [ "$DRY" = 1 ] || echo "$E" > "$CAPF"
-  CAPL=$sl
-  call g-a cuda "offline step" $SWEEP_CUDA "$c" "$b" CPU_SOURCES=1 || return 3
-  [[ ":$SWEEP_CUDA:" == *":$sl:"* ]] || call g-s cuda step $sl "$c" "$b" CPU_SOURCES=1 || return 3
-  call g-f8 cuda frames 8 "$c" "$b" CPU_SOURCES=1 || return 3
-  [ -n "$(gpusrc)" ] && { call g-f64 cuda frames 64 "$c" "$b" CPU_SOURCES=0 || return 3; }
-  if [ -n "$(gpusrc)" ]; then
-    big=$(echo $SWEEP_CUDA | tr : '\n' | awk '$1 > 256')
-    [ -n "$big" ] && cap_gpu_frames $big
+  local c=$1 b=$2 cs g fmax small big
+  cs=$([ "$MODE" = gpu ] && echo 1 || echo 0)
+  call cuda-o cuda offline "$SWEEP_CUDA" "$c" "$b" CPU_SOURCES=$cs || return 3
+  small=$(lanes "$SWEEP_CUDA" le 1024); big=$(lanes "$SWEEP_CUDA" gt 1024)
+  [ -n "$small" ] && { call cuda-s cuda step "$small" "$c" "$b" CPU_SOURCES=$cs || return 3; }
+  [ -n "$big" ] && { call cuda-s2 cuda step "$big" "$c" "$b" CPU_SOURCES=1 || return 3; }
+  g=$(gpusrc)
+  if [ -n "$g" ]; then
+    call cuda-f cuda frames "$SWEEP_CUDA" "$c" "$b" CPU_SOURCES=0 || return 3
+    [ "$MODE" = gpu ] && { call cuda-fc cuda frames "$(frames_cpu)" "$c" "$b" CPU_SOURCES=1 || return 3; }
+  else
+    fmax=$(frames_cpu | tr : '\n' | tail -1)
+    small=$(lanes "$SWEEP_CUDA" le "$fmax"); big=$(lanes "$SWEEP_CUDA" gt "$fmax")
+    [ -n "$small" ] && { call cuda-f cuda frames "$small" "$c" "$b" CPU_SOURCES=$cs || return 3; }
+    [ -n "$big" ] && { call cuda-f2 cuda frames "$big" "$c" "$b" CPU_SOURCES=1 || return 3; }
   fi
-  call g-f cuda frames $SWEEP_CUDA "$c" "$b" CPU_SOURCES=0 || return 3
-}
-
-# hardware: the machine and software of this job; merged into run.json at the end.
-hardware() {
-  local g=${CUDA_VISIBLE_DEVICES:-0}
-  $P - "$1" "$g" <<'PY'
-import json, os, platform, subprocess, sys
-import stable_envs, torch
-sh = lambda c: subprocess.run(c, shell=True, capture_output=True, text=True).stdout.strip()
-cores, g = sys.argv[1], sys.argv[2]
-smi = sh("nvidia-smi")
-print(json.dumps({
-    "gpu": sh(f"nvidia-smi -i {g} --query-gpu=name --format=csv,noheader"), "gpu_count": len(sh("nvidia-smi -L").splitlines()),
-    "driver": sh(f"nvidia-smi -i {g} --query-gpu=driver_version --format=csv,noheader"),
-    "cuda": smi.split("CUDA Version:")[1].split()[0] if "CUDA Version:" in smi else None,
-    "cpu": sh("lscpu | sed -n 's/^Model name: *//p' | head -1"), "cores": cores,
-    "cpu_quota": sh("cat /sys/fs/cgroup/cpu.max 2>/dev/null"), "nproc": os.cpu_count(),
-    "ram_gib": round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30),
-    "os": sh(". /etc/os-release && echo $PRETTY_NAME"), "python": platform.python_version(), "torch": torch.__version__,
-    "stable_envs": getattr(stable_envs, "__version__", None), "commit": sh("git rev-parse HEAD"),
-}))
-PY
+  return 0
 }
 
 rc=0
-if [ "$DRY" = 1 ] && [ "$MODE" != gpu ]; then
-  echo "  $E: CPU pass and CUDA pass at the same time on two sets of 8 idle cores when the CPU quota and 16 idle cores allow"
-  cpu_pass "<8 cores>" -; cuda_pass "<8 cores>" -
+if [ "$DRY" = 1 ]; then
+  [ "$MODE" = gpu ] || { echo "  $E: CPU and CUDA passes at the same time on two sets of 8 idle cores when the quota allows"; cpu_pass "<8 cores>" -; }
+  cuda_pass "<8 cores>" -
 elif [ "$MODE" = gpu ]; then
   # shellcheck disable=SC2046
-  set -- $(reserve 8); gpu_pass "$1" "${2:-}" || rc=3
+  set -- $(reserve 8); cuda_pass "$1" "${2:-}" || rc=3
 elif [ "${PARALLEL_DEVICES:-1}" = 1 ] && q=$(awk '{print ($1 == "max") ? 100000 : int($1 / $2)}' /sys/fs/cgroup/cpu.max 2>/dev/null || echo 100000) \
     && [ "${q:-100000}" -ge 16 ] && r=$(TRIES=1 PICK_STRICT=1 reserve 16); then
   set -- $r
-  ( cpu_pass "$(echo $1 | cut -d, -f1-8)" "${2:-}" ) &
-  ( cuda_pass "$(echo $1 | cut -d, -f9-16)" "${2:-}" ) || rc=3
+  ( cpu_pass "$(echo "$1" | cut -d, -f1-8)" "${2:-}" ) &
+  ( cuda_pass "$(echo "$1" | cut -d, -f9-16)" "${2:-}" ) || rc=3
   wait
-  echo "parallel passes" >> $OUT/cores.txt
+  echo "parallel passes" >> "$OUT/cores.txt"
 else
   # shellcheck disable=SC2046
   set -- $(reserve 8)

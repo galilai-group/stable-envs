@@ -86,6 +86,45 @@ def cells(folder, env):
     return out
 
 
+KIND = {
+    "snv-step-cpu": "steps CPU",
+    "snv-step-gpu": "steps GPU",
+    "snv-render-cpu": "frames+steps CPU",
+    "snv-render-gpu": "frames+steps GPU",
+    "src-step": "steps (source)",
+    "src-render-cpu": "frames+steps (CPU source)",
+    "src-render-gpu": "frames+steps (GPU source)",
+}
+
+
+def failed(folder, env):
+    """[(workload, lane count or batch, status, detail)] of the cells that did not give a rate (oom, timeout, ...)."""
+    out = []
+    for f in glob.glob(f"{folder}/online/{env}/*-L*.json"):
+        m = re.match(r"(.*)-L(\d+)\.json$", os.path.basename(f))
+        d = load(f) or {}
+        for k, a in d.get("arms", {}).items():
+            st = a.get("status", "ok")
+            if m and st != "ok":
+                out.append(
+                    (
+                        KIND.get(m.group(1), m.group(1)),
+                        int(m.group(2)),
+                        st,
+                        (a.get("error") or a.get("note") or "")[:80],
+                    )
+                )
+    for f in glob.glob(f"{folder}/offline/{env}/*.json"):
+        name = os.path.basename(f)[:-5]
+        e = ((load(f) or {}).get("envs") or {}).get(env, {})
+        pts = e.get("points") or [e]
+        for p in pts:
+            st = p.get("status", "ok")
+            if st not in ("ok", None) and not name.startswith("mse"):
+                out.append((f"offline {name}", p.get("batch", "-"), st, (p.get("error") or "")[:80]))
+    return out
+
+
 def gm(xs):
     return math.exp(sum(map(math.log, xs)) / len(xs)) if xs else float("nan")
 
@@ -102,6 +141,10 @@ def hardware(folder):
         f"{h.get('os', '?')}; Python {h.get('python', '?')}, torch {h.get('torch', '?')}, "
         f"stable-envs {h.get('stable_envs', '?')} ({(h.get('commit') or run.get('commit') or '?')[:8]})"
     )
+    seed = load(f"{folder}/hardware-rt4.json")
+    if seed:
+        line += f"; plus the rt4 cells on {seed.get('gpu')} and {seed.get('cpu')} ({seed.get('source', 'rt4')})"
+        cpu = f"{cpu} + rt4 {seed.get('cpu')}"
     return (gpu, cpu), line
 
 
@@ -153,6 +196,16 @@ def table(out, envs, keep, label):
             xs = [x for (e, B), x in by_b[g].items() if B == b]
             row.append(f"{gm(xs):.2f} ({len(xs)})" if xs else "-")
         L.append(f"| {NAMES[g[0]]} {g[1].upper()} | " + " | ".join(row) + " |")
+    bad = sorted((e, *x) for e in envs for x in failed(f"{out}/{e}", e))
+    if bad:
+        L += [
+            "",
+            f"Cells without a rate ({len(bad)}; status from the harness: oom, timeout, killed, error, invalid):",
+            "",
+            "| Env | Cell | B or L | Status | Detail |",
+            "|---|---|---|---|---|",
+        ]
+        L += [f"| {e} | {k} | {b} | {st} | {d} |" for e, k, b, st, d in bad]
     return L
 
 

@@ -1,46 +1,47 @@
 #!/bin/bash
-# stable-envs against the source libraries on this machine, in one command.
-# usage: bash benchmarks/paper/compare.sh OUT [--gpu-only] [--sweep L:L...] [--smoke] [--ref REF] [--gpus N] [ENV ...]
+# stable-envs v0.1.0 against the source libraries on this machine, in one command.
+# usage: bash benchmarks/paper/compare.sh OUT [--missing-only] [options] [ENV ...]
 #        bash benchmarks/paper/compare.sh --summary OUT
-#   Default: every paper env (fleet/costs.json), CPU and GPU cells, the lane counts and batches of the paper.
-#   --gpu-only     only the GPU cells (steps, frames+steps, offline), ours at the --sweep lane counts and batches
-#   --sweep        ours' GPU lane counts and batches (default 1:8:64:256:1024:4096; with --gpu-only 1024:2048)
-#   --smoke        short episodes and small lane counts, to check the machine
-#   --ref REF      time the library at git REF (for example v0.1.0) with the harness of this checkout
-#   --gpus N       use the first N GPUs (default: all); one env per GPU at a time, each on its own 8 or 16 cores
-#   --summary OUT  print the headline of OUT again (also of a partial OUT) and run nothing
-#   --dry-run      print the setup steps and every run.sh call of every env; install and run nothing
+#   Default: every paper env (fleet/costs.json); CPU cells at the lane counts, batches and source caps of the L40S
+#   re-time (rt4); GPU cells (steps, frames+steps, offline) at 1:8:64:256:1024:2048:4096, ours and the source. A cell
+#   that runs out of memory or time (STEP_LIMIT per cell process, default 20m) is kept as a result with that status.
+#   --missing-only  start from the rt4 L40S results (rt4_l40s.tar.gz) and time only the GPU cells they do not have
+#   --summary       print the headline of OUT again (also of a partial OUT) and run nothing
+#   --dry-run       print the setup steps and every run.sh call; install and run nothing
+#   --gpu-only      only the GPU cells;  --sweep L:L  other GPU lane counts and batches;  --smoke  a short check
+#   --ref REF       the library to time (default v0.1.0; HEAD for this checkout), with the harness of this checkout
+#   --gpus N        use the first N GPUs (default: all); one env per GPU at a time, each on its own 8 or 16 cores
 # It installs what it needs (apt packages, uv, stable-worldmodel, family venvs, nvdiffrast) under COMPARE_WORK
 # (default ~/.cache/snv-compare), skips envs whose OUT/ENV/done.json exists, and ends with OUT/HEADLINE.md.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); SRC=$(cd "$HERE/../.." && pwd)
 SWM_SHA=21446f1ede6d5284e981bd7b47f432b994e6d812
-MODE=full; SWEEP=; SMOKE=0; DRY=0; REF=; NGPU=; SUMMARY=0; ENVS=(); OUT=
+MODE=full; SWEEP=; SMOKE=0; DRY=0; REF=v0.1.0; MISSING=0; NGPU=; SUMMARY=0; ENVS=(); OUT=
 while [ $# -gt 0 ]; do
   case $1 in
     --gpu-only) MODE=gpu;;
+    --missing-only) MODE=gpu; MISSING=1;;
     --sweep) SWEEP=$2; shift;;
     --smoke) SMOKE=1;;
     --ref) REF=$2; shift;;
     --gpus) NGPU=$2; shift;;
     --summary) SUMMARY=1;;
     --dry-run) DRY=1;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0;;
     -*) echo "unknown option $1" >&2; exit 2;;
     *) if [ -z "$OUT" ]; then OUT=$1; else ENVS+=("$1"); fi;;
   esac
   shift
 done
-[ -n "$OUT" ] || { sed -n '2,16p' "$0"; exit 2; }
+[ -n "$OUT" ] || { sed -n '2,17p' "$0"; exit 2; }
 mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 
 summary() {
-  local b; b=$(python3 -c "import json; print(json.load(open('$OUT/compare.json')).get('batches', ''))" 2>/dev/null)
-  python3 "$HERE/headline.py" "$OUT" ${b:+--batches $b} --write
+  python3 "$HERE/headline.py" "$OUT" --write
 }
 [ $SUMMARY = 1 ] && { summary; exit 0; }
 
-if [ $MODE = gpu ]; then SWEEP_CUDA=${SWEEP:-1024:2048}; else SWEEP_CUDA=${SWEEP:-1:8:64:256:1024:4096}; fi
+SWEEP_CUDA=${SWEEP:-1:8:64:256:1024:2048:4096}
 SWEEP_CPU=1:8:64:256:1024
 [ $SMOKE = 1 ] && { SWEEP_CPU=1:8; [ -z "$SWEEP" ] && SWEEP_CUDA=8:64; }
 W=${COMPARE_WORK:-$HOME/.cache/snv-compare}
@@ -59,12 +60,61 @@ for e in sorted(want, key=lambda e: -c["env_s"].get(e, c["family_s"].get(c["envs
 PY
 }
 
+# layout: GPUs, usable physical cores (affinity and CPU quota), concurrent jobs, and whether each job gets 16 cores.
+layout() {
+  python3 - "${NGPU:-}" <<'PY'
+import os, subprocess, sys
+try:
+    g = len(subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True).stdout.strip().splitlines())
+except OSError:
+    g = 0
+g = int(sys.argv[1]) if sys.argv[1] else g
+try:
+    aff = sorted(os.sched_getaffinity(0))
+    phys = len({open(f"/sys/devices/system/cpu/cpu{c}/topology/thread_siblings_list").read().strip() for c in aff})
+except (AttributeError, OSError):
+    phys = os.cpu_count() or 0
+try:
+    q, p = open("/sys/fs/cgroup/cpu.max").read().split()
+    quota = phys if q == "max" else int(int(q) / int(p))
+except (OSError, ValueError):
+    quota = phys
+usable = min(phys, quota)
+jobs = max(1, min(g, usable // 8)) if g else 0
+par = int(usable >= 16 * jobs) if jobs else 0
+print(g, usable, jobs, par)
+PY
+}
+# estimate JOBS PARALLEL: wall time and GPU-hours from rt4's minutes per env (fleet/costs.json).
+estimate() {
+  python3 - "$HERE/fleet/costs.json" "$MODE" "$MISSING" "$1" "$2" "$W/tmp/dry-queue" <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1])); mode, missing, jobs, par = sys.argv[2], sys.argv[3] == "1", int(sys.argv[4]), sys.argv[5] == "1"
+envs = [l.split()[1] for l in open(sys.argv[6]) if l.strip()]
+gs = set(c.get("gpu_source_families", []))
+lo = hi = 0.0
+for e in envs:
+    m = c["rt4_min"].get(e, 30.0)
+    if not par and e in c["rt4_parallel"]:
+        m *= 2  # rt4 ran the two passes at the same time
+    if mode == "gpu":
+        m *= 0.6 if not missing else 0.3
+    m *= 1.4  # the GPU cells at 2048 and 4096 lanes and batches
+    lo += m
+    hi += m + (60 if c["envs"][e] in gs else 0)  # source GPU frames at 1024, 2048 and 4096: up to 20 min each
+print(f"estimate: {len(envs)} envs, {lo / 60:.1f}-{hi / 60:.1f} GPU-hours; with {max(jobs, 1)} jobs at a time "
+      f"{lo / 60 / max(jobs, 1):.1f}-{hi / 60 / max(jobs, 1):.1f} h of wall time (from rt4 on L40S; rough)")
+PY
+}
+
 if [ "$DRY" = 1 ]; then
   echo "setup: apt-get xvfb xauth libgl1 libgl1-mesa-dri libegl1 libosmesa6 libglfw3 libglew2.2 libglu1-mesa git rsync python3-venv"
   echo "setup: uv 0.13.5 in $W/uvenv; stable-worldmodel $SWM_SHA in $W/swm; family venvs in $W/venvs (torch 2.14.1+cu126)"
   echo "setup: nvdiffrast 253ac4fc built with nvcc for the Rocket venv"
   [ -n "$REF" ] && echo "library: $REF = $(git -C "$SRC" rev-parse "$REF^{commit}" 2>/dev/null || echo 'NOT FOUND (git fetch --tags)'), harness of $(git -C "$SRC" rev-parse --short HEAD)"
-  echo "GPUs: $(nvidia-smi -L 2>/dev/null | grep -c ^GPU) found; ${NGPU:-all} used, one env per GPU at a time"
+  read -r g usable jobs par < <(layout)
+  echo "layout: $g GPUs, $usable usable physical cores, $jobs jobs at a time (one per GPU), each on $([ "$par" = 1 ] && echo "16 cores (CPU and CUDA passes at the same time)" || echo "8 cores (passes one after the other)")"
+  [ "$g" -gt "$jobs" ] && echo "layout: fewer jobs than GPUs: $usable physical cores hold $jobs sets of 8"
   echo "mode $MODE, CPU lane counts $SWEEP_CPU, GPU lane counts and batches $SWEEP_CUDA, windows ${WINDOW:-3} s x ${REPEATS:-3}"
   env_list > "$W/tmp/dry-queue" || exit 2
   while read -r fam E; do
@@ -72,7 +122,9 @@ if [ "$DRY" = 1 ]; then
     DRY_RUN=1 W=$W MODE=$MODE SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=$HERE/fleet/src_cap_envs \
       bash "$HERE/job.sh" "$OUT/$E" "$fam" "$E"
   done < "$W/tmp/dry-queue"
-  echo "end: $OUT/HEADLINE.md$([ $MODE = gpu ] && echo " for batches $SWEEP_CUDA")"
+  [ "$MISSING" = 1 ] && echo "missing-only: OUT starts from rt4_l40s.tar.gz; run.sh skips every cell file that is there"
+  estimate "$jobs" "$par"
+  echo "end: $OUT/HEADLINE.md"
   exit 0
 fi
 
@@ -98,9 +150,20 @@ if [ -n "$REF" ]; then
 fi
 export SNV_REPO=$REPO SWM=$W/swm UV=$W/uvenv/bin/uv VENVS=$W/venvs UV_CACHE_DIR=$W/uvcache UV_LINK_MODE=copy \
   UV_HTTP_TIMEOUT=600 TMPDIR=$W/tmp W NVDIFFRAST_SITE=${NVDIFFRAST_SITE:-} MODE SWEEP_CPU SWEEP_CUDA SMOKE \
-  CAPS=$HERE/fleet/src_cap_envs WINDOW=${WINDOW:-3} REPEATS=${REPEATS:-3}
-G=${NGPU:-$(nvidia-smi -L | grep -c ^GPU)}
-python3 - "$OUT" "$REPO" "$SRC" "$MODE" "$SWEEP_CUDA" "$G" <<'EOF'
+  CAPS=$HERE/fleet/src_cap_envs WINDOW=${WINDOW:-3} REPEATS=${REPEATS:-3} STEP_LIMIT=${STEP_LIMIT:-20m}
+read -r G usable JOBS PAR < <(layout)
+[ "$JOBS" -ge 1 ] || { log "no GPU found"; exit 2; }
+[ "$PAR" = 1 ] || export PARALLEL_DEVICES=0
+log "layout: $G GPUs, $usable usable physical cores, $JOBS jobs at a time, $([ "$PAR" = 1 ] && echo 16 || echo 8) cores per job"
+[ "$G" -gt "$JOBS" ] && log "fewer jobs than GPUs: the CPU quota or the cores hold only $JOBS sets of 8 cores"
+if [ "$MISSING" = 1 ]; then
+  # The rt4 L40S cells; run.sh times only the cell files that are not there.
+  tar xzf "$HERE/rt4_l40s.tar.gz" -C "$W/tmp" && for d in "$W/tmp/rt4-l40s"/*/; do
+    e=$(basename "$d"); mkdir -p "$OUT/$e"
+    [ -f "$OUT/$e/hardware-rt4.json" ] || { cp -rn "$d"/offline "$d"/online "$OUT/$e/" && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"; }
+  done
+fi
+python3 - "$OUT" "$REPO" "$SRC" "$MODE" "$SWEEP_CUDA" "$JOBS" <<'EOF'
 import json, os, subprocess, sys
 out, repo, src, mode, sweep, g = sys.argv[1:]
 sh = lambda c: subprocess.run(c, shell=True, capture_output=True, text=True).stdout.strip()
@@ -112,14 +175,14 @@ m = {"commit": sh(f"git -C {repo} rev-parse HEAD"), "harness": sh(f"git -C {src}
      "cpu_quota": sh("cat /sys/fs/cgroup/cpu.max 2>/dev/null"), "mem_gib": round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30),
      "date": sh("date -Is")}
 json.dump(m, open(f"{out}/machine.json", "w"), indent=1)
-json.dump({"mode": mode, "sweep_cuda": sweep, "batches": sweep if mode == "gpu" else ""}, open(f"{out}/compare.json", "w"))
+json.dump({"mode": mode, "sweep_cuda": sweep}, open(f"{out}/compare.json", "w"))
 print(m)
 EOF
 
 # --- jobs: the most expensive env first; envs with done.json are skipped
 env_list > "$OUT/.queue" || exit 2
 [ -s "$OUT/.queue" ] || exit 2
-log "$(wc -l < "$OUT/.queue" | tr -d ' ') envs, mode $MODE, GPU sweep $SWEEP_CUDA, $G GPUs, library $(git -C "$REPO" rev-parse --short HEAD)"
+log "$(wc -l < "$OUT/.queue" | tr -d ' ') envs, mode $MODE, GPU sweep $SWEEP_CUDA, $JOBS jobs, library $(git -C "$REPO" rev-parse --short HEAD)"
 
 worker() {  # worker GPU: take envs from the queue until it is empty
   local gpu=$1 line fam E P rc
@@ -136,9 +199,9 @@ worker() {  # worker GPU: take envs from the queue until it is empty
     [ $rc = 3 ] && { log "GPU $gpu no longer initialises CUDA; its worker stops"; return 3; }
   done
 }
-for g in $(seq 0 $((G - 1))); do worker $g & sleep 5; done
+for g in $(seq 0 $((JOBS - 1))); do worker "$g" & sleep 5; done
 wait
 finished=(); for d in "$OUT"/*/; do [ -f "$d/done.json" ] && finished+=("$d"); done
 python3 "$HERE/fleet/check_cells.py" "${finished[@]}" > "$OUT/problems.txt"
-log "$(ls "$OUT"/*/done.json 2>/dev/null | wc -l | tr -d ' ') envs finished; cells not ok: $(grep -vc capped "$OUT/problems.txt")"
+log "$(ls "$OUT"/*/done.json 2>/dev/null | wc -l | tr -d ' ') envs finished; cells not ok: $(grep -c . "$OUT/problems.txt")"
 summary

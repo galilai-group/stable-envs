@@ -169,11 +169,18 @@ for spec in "$@"; do
   # cuda_lost: true when a new process can no longer initialise CUDA, as after a GPU driver fault.
   cuda_lost() { [[ $DEVICES == *cuda* ]] && [ "$(python3 -c 'import ctypes; print(ctypes.CDLL("libcuda.so.1").cuInit(0))' 2>&1)" != 0 ]; }
   # once FILE CMD...: run CMD unless FILE holds a result; stop the run if the GPU no longer initialises CUDA.
+  # A cell whose process exits without a result file gets a file with its status, so a run with the same OUT keeps it:
+  # "timeout" (STEP_LIMIT), "killed" (SIGKILL: out of host memory, or STEP_LIMIT's kill) or "error".
   once() {
-    local f=$1; shift
+    local f=$1 rc st; shift
     [ -s "$f" ] && { echo "have $f"; return 0; }
-    wait_gpu; "$@"
+    wait_gpu; "$@"; rc=$?
     cuda_lost && { echo "CUDA LOST after $f"; exit 3; }
+    if [ ! -s "$f" ]; then
+      case $rc in 124) st=timeout;; 137) st=killed;; *) st=error;; esac
+      echo "{\"env\": \"$E\", \"status\": \"$st\", \"rc\": $rc, \"step_limit\": \"${STEP_LIMIT:-6h}\", \"arms\": {\"cell\": {\"status\": \"$st\", \"rc\": $rc}}, \"envs\": {\"$E\": {\"status\": \"$st\", \"rc\": $rc}}}" > "$f"
+      echo "$st (rc $rc): $f"
+    fi
     return 0
   }
   has offline && sw $OFF states --envs "${envs[@]}" --out $S --n $N --devices $DEVICES
