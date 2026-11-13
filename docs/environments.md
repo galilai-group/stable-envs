@@ -44,7 +44,7 @@ Classes that declare a fidelity record report it in `env.describe()["visual_fide
 - The DM Control body-tracking classes. They declare a fidelity record.
 - `PyFlytRocketLanding` on CUDA, which nvdiffrast draws. It declares a fidelity record for these frames.
 
-`backend="opengl"` draws Fetch, `OGBCube` and `OGBScene` with MuJoCo OpenGL, the renderer of the upstream library. On CPU, these frames are bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a pixel by 1/255 between two draws of the same state, on a few pixels of a few frames in each pass; the comparison renderer shows the same variation. For `OGBCube` and `OGBScene`, the OpenGL fidelity record compares two OpenGL instances with the same compiled appearance. It is not a comparison with the default OGBench appearance. At `supersample=2` or more, MJWarp is measured against that same stable-envs OpenGL path. See [OGBench](environments/ogbench.md#cube-and-scene-render-backends).
+`backend="opengl"` draws Fetch, `OGBCube` and `OGBScene` with MuJoCo OpenGL, the renderer of the upstream library. On CPU, these frames are bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a pixel by 1 or 2 levels (of 255) between two draws of the same state, on a few pixels of a few frames in each pass; the comparison renderer shows the same variation. For `OGBCube` and `OGBScene`, the OpenGL fidelity record compares two OpenGL instances with the same compiled appearance. It is not a comparison with the default OGBench appearance. At `supersample=2` or more, MJWarp is measured against that same stable-envs OpenGL path. See [OGBench](environments/ogbench.md#cube-and-scene-render-backends).
 
 ## Frame size
 
