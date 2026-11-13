@@ -4,7 +4,7 @@ Every batch row can have its own [variation](../terms.md#variation): one render 
 
 ## Prerequisites
 
-You need the core install (`pip install stable-envs`) and a CPU. Each code block continues from the one before it, so the page runs top to bottom as one script. The PushT block near the end needs the `pusht` extra (`pip install "stable-envs[pusht]"`), and you can skip it.
+You need the core install (`pip install stable-envs`) and a CPU. Each code block continues from the one before it, so the page runs top to bottom as one script. On Linux, CartPole draws these batches of frames in worker processes, and each worker imports your script again. In a script, put the code in a function that runs under `if __name__ == "__main__":`, or run the page in a notebook. The PushT block near the end needs the `pusht` extra (`pip install "stable-envs[pusht]"`), and you can skip it.
 
 ## Inspect the space
 

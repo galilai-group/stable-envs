@@ -21,10 +21,12 @@ stable-envs API only: `snv.make`, `reset`, `get_state`, `step` and `render`.
 
 ## Install
 
-Use Linux with an NVIDIA GPU for training. The CPU works for the small check below.
+Use Linux with an NVIDIA GPU for training. The CPU works for the small check below. Run the commands from the root of a clone of this repository.
 
 ```bash
-pip install -e ".[pusht]"        # from the stable-envs repository root
+git clone https://github.com/galilai-group/stable-envs
+cd stable-envs
+pip install "stable-envs[pusht]"
 pip install "stable-worldmodel[train,format] @ git+https://github.com/galilai-group/stable-worldmodel@21446f1ede6d5284e981bd7b47f432b994e6d812" \
     "stable-pretraining==0.1.8" scikit-learn
 ```
@@ -36,7 +38,7 @@ pymunk 7.2.0 on Python 3.12.
 
 ## PushT
 
-Get the LeWM PushT dataset (46 GB after decompression):
+Get the LeWM PushT dataset (46 GB after decompression). The `hf` command comes with stable-worldmodel, and `zstd` is a system package (`sudo apt install zstd` on Ubuntu):
 
 ```bash
 hf download quentinll/lewm-pusht pusht_expert_train.h5.zst --repo-type dataset --local-dir data

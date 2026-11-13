@@ -123,7 +123,7 @@ print(env.variation_names)                       # ['agent.color', 'background.c
 To look at a frame, save it as a PNG:
 
 ```python
-# needs Pillow
+# needs Pillow: pip install pillow
 from PIL import Image
 
 Image.fromarray(frames[0].numpy()).save("/tmp/reach2d.png")

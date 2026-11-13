@@ -14,10 +14,12 @@ The model, the loss, the optimizer, the data split and the planning values are t
 
 ## Prerequisites
 
-Use Linux with an NVIDIA GPU for training. A CPU is sufficient for the small check at the end. Install stable-envs with the `pusht` extra, then stable-worldmodel at the pinned commit:
+Use Linux with an NVIDIA GPU for training. A CPU is sufficient for the small check at the end. The scripts aren't part of the PyPI package, so clone the repository and run the commands on this page from its root. Install stable-envs with the `pusht` extra, then stable-worldmodel at the pinned commit:
 
 ```bash
-pip install -e ".[pusht]"        # from the stable-envs repository root
+git clone https://github.com/galilai-group/stable-envs
+cd stable-envs
+pip install "stable-envs[pusht]"
 pip install "stable-worldmodel[train,format] @ git+https://github.com/galilai-group/stable-worldmodel@21446f1ede6d5284e981bd7b47f432b994e6d812" \
     "stable-pretraining==0.1.8" scikit-learn
 ```
@@ -60,7 +62,7 @@ print(frames.shape, frames.dtype)  # torch.Size([2, 224, 224, 3]) torch.uint8
 
 ## Make the dataset
 
-Get the LeWM PushT dataset (46 GB after decompression):
+Get the LeWM PushT dataset (46 GB after decompression). The `hf` command comes with stable-worldmodel, and `zstd` is a system package (`sudo apt install zstd` on Ubuntu):
 
 ```bash
 hf download quentinll/lewm-pusht pusht_expert_train.h5.zst --repo-type dataset --local-dir data
