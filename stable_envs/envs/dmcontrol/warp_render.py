@@ -108,7 +108,7 @@ def selected(env, backend=None) -> bool:
     """Whether ``env`` draws with this renderer.
 
     ``backend="mjwarp"`` selects it. ``backend="auto"`` selects it on CUDA for the body-tracking cells, and for
-    every cell when ``STABLE_ENVS_DMC_CUDA_RENDER`` is ``mjwarp``.
+    every cell but Manipulator when ``STABLE_ENVS_DMC_CUDA_RENDER`` is ``mjwarp``.
     """
     from .trackcom import DMControlTrackCom
 
@@ -117,7 +117,9 @@ def selected(env, backend=None) -> bool:
         return True
     if chosen != "auto" or env.device.type != "cuda":
         return False
-    return isinstance(env, DMControlTrackCom) or _environ.read("STABLE_ENVS_DMC_CUDA_RENDER") == "mjwarp"
+    if isinstance(env, DMControlTrackCom):
+        return True
+    return getattr(env, "DOMAIN", None) != "manipulator" and _environ.read("STABLE_ENVS_DMC_CUDA_RENDER") == "mjwarp"
 
 
 # --------------------------------------------------------------------------- kernels

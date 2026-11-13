@@ -171,6 +171,9 @@ All notable changes to this project are listed here. The format follows
 - DM Control: `backend="mjwarp"` draws all 17 classes on CUDA with the MuJoCo Warp ray tracer. The fixed-camera
   cells draw their sites and the tendon catenary as extra geoms. With MuJoCo Warp physics, `env.render()` and step
   frames read the physics poses on the device. `render_options` sets shadows, samples per pixel, geom groups, BVH
+- DM Control: `backend="mjwarp"` draws every class except Manipulator on CUDA with the MuJoCo Warp ray tracer.
+  The fixed-camera cells draw their sites and the tendon catenary as extra geoms. With MuJoCo Warp physics,
+  `env.render()` and step frames read the physics poses on the device. `render_options` sets shadows, samples per pixel, geom groups, BVH
   refit or rebuild, CUDA graph replay, worlds per launch, the reflection and sky passes, and per-pixel
   segmentation and depth. On CUDA, `backend="auto"` selects it for the body-tracking classes.
   `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the fixed-camera classes, and

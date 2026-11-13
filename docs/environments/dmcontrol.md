@@ -43,10 +43,10 @@ in cup is the exception: its `success` value is 1 when the ball is in the cup.
 
 ## MuJoCo Warp renderer
 
-`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it.
-On CUDA, `backend="auto"` selects it for the body-tracking classes (Cheetah, Hopper, Humanoid, Quadruped,
-Swimmer and Walker). `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the fixed-camera classes. On
-CPU, `backend="mjwarp"` raises `ValueError`.
+`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. Every class except the
+Manipulator classes accepts it. On CUDA, `backend="auto"` selects it for the body-tracking classes (Cheetah,
+Hopper, Humanoid, Quadruped, Swimmer and Walker). `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the
+other fixed-camera classes. On CPU, and for the Manipulator classes, `backend="mjwarp"` raises `ValueError`.
 
 The renderer draws the cell's geoms. MuJoCo Warp does not draw sites and tendons, so the fixed-camera
 cells add one geom for each site in groups 0-2 and one capsule for each segment of a drawn tendon.
