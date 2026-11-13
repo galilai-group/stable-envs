@@ -44,23 +44,22 @@ def test_cluster_meshes_simplifies_only_the_arm(name):
 
 @pytest.mark.parametrize("name", FAMILIES)
 @pytest.mark.egl
-def test_cpu_auto_draws_opengl_fast_close_to_opengl(name):
+def test_opengl_fast_draws_close_to_opengl(name):
     selection = os.environ.get("SE_FIDELITY_TEST_FAMILY", "")
     if selection and not name.startswith(selection):
         pytest.skip("Different pinned family profile")
-    env = se.make(name, num_envs=4, device="cpu", seed=5)
+    env = se.make(name, num_envs=4, device="cpu", seed=5, backend="opengl_fast")
     try:
         env.reset(seed=11)
         for _ in range(6):
             env.step(env.action_spec.sample(env.B, np.random.default_rng(0)), frames=None)
         state = env.to_render_state()
-        auto = env.render(state)
         fast = env.render(state, backend="opengl_fast")
         exact = env.render(state, backend="opengl")
         live = env.render()
     finally:
         env.close()
-    assert torch.equal(auto, fast) and torch.equal(live, fast)
+    assert torch.equal(live, fast)
     assert not torch.equal(fast, exact)
     mse = ((fast.double() - exact.double()) ** 2).mean(dim=(1, 2, 3))
     assert float(mse.mean()) <= 5.0

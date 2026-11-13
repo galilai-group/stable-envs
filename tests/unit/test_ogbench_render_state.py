@@ -252,17 +252,18 @@ def test_renderstate_size_validation(family, cls):
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
-def test_cpu_default_render_uses_existing_opengl_backend(family, cls):
-    from stable_envs.envs.ogbench import manipulation_opengl
+def test_cpu_default_render_uses_the_rasterizer(family, cls):
+    pytest.importorskip("numba")
+    from stable_envs.envs.ogbench import manipulation_raster
 
     with cls(num_envs=2, size=64, seed=17) as env:
         state = env.get_state()
         image = torch.zeros((2, 64, 64, 3), dtype=torch.uint8)
-        with patch.object(manipulation_opengl, "render", return_value=image) as draw:
+        with patch.object(manipulation_raster, "frames", return_value=image) as draw:
             assert env.render(state) is image
             args = draw.call_args.args
             assert args[0] == family and args[2] == torch.device("cpu")
-            pixels.validate(family, args[1])
+            assert args[1]["renderer", "size"].shape == (2, 1)
             draw.reset_mock()
             with pytest.raises(NotImplementedError, match="CPU mesh"):
                 env.render(state, backend="mjwarp")

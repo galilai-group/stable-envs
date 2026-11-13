@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import threading
-from functools import lru_cache
 
 import numpy as np
 import torch
 
 from ..._core.config import log
 from ..._core.warp_cuda import require_warp_cuda
+from ...render.mujoco_scene import rasterizer_available
 from . import manipulation as core
 from .manipulation_opengl import check_versions
 from .simulation import render_state as pixels
@@ -15,11 +15,7 @@ from .simulation import render_state as pixels
 _LOCK = threading.RLock()
 OPENGL = ("opengl", "opengl_fast")
 # Backends that draw from host RenderState columns.
-HOST = (*OPENGL, "numba", "raster")
-#: The batched CUDA rasterizer of manipulation_nvdiff.
-NVDIFF = "nvdiff"
-#: Families whose CUDA ``auto`` backend at 1x sampling is ``nvdiff``.
-AUTO_NVDIFF = frozenset()
+HOST = (*OPENGL, "raster")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
@@ -240,45 +236,26 @@ def configured_renderer(key, device, size, supersample):
     return renderer
 
 
-def draws_on_host(backend, device, supersample, family=None):
-    """Whether ``backend`` draws through MuJoCo OpenGL from host inputs.
+def draws_on_host(backend, device, supersample):
+    """Whether ``backend`` draws from host inputs: the rasterizer or MuJoCo OpenGL.
 
-    ``auto`` does so on CPU, and on CUDA at the source's own 1x sampling unless it selects ``nvdiff``; CUDA
-    ``auto`` at 2x or more keeps the MJWarp fidelity renderer.
+    ``auto`` does so on CPU, and on CUDA at the source's own 1x sampling; CUDA ``auto`` at 2x or more keeps the
+    MJWarp fidelity renderer.
     """
-    if backend == "auto" and draws_nvdiff(backend, device, supersample, family):
-        return False
     return backend in HOST or (backend == "auto" and (torch.device(device).type == "cpu" or supersample == 1))
 
 
 def host_backend(backend, device):
-    """The host backend that ``backend`` draws with on ``device``: opengl, opengl_fast, numba or raster.
+    """The host backend that ``backend`` draws with on ``device``: raster, opengl or opengl_fast.
 
-    ``auto`` draws with opengl_fast on CPU and with opengl on CUDA.
+    ``auto`` draws with the rasterizer when it is installed for the device; else with opengl_fast on CPU and
+    with opengl on CUDA.
     """
     if backend in HOST:
         return backend
+    if rasterizer_available(device):
+        return "raster"
     return "opengl_fast" if torch.device(device).type == "cpu" else "opengl"
-
-
-def draws_nvdiff(backend, device, supersample, family):
-    """Whether ``backend`` draws with the CUDA rasterizer.
-
-    That is ``nvdiff``, and CUDA ``auto`` at 1x sampling for the families in ``AUTO_NVDIFF`` when nvdiffrast and
-    Triton are installed.
-    """
-    if backend == NVDIFF:
-        return True
-    if backend != "auto" or family not in AUTO_NVDIFF or supersample != 1 or torch.device(device).type != "cuda":
-        return False
-    return _nvdiff_installed()
-
-
-@lru_cache
-def _nvdiff_installed():
-    from importlib.util import find_spec
-
-    return find_spec("nvdiffrast") is not None and find_spec("triton") is not None
 
 
 def _supersample(state):
@@ -289,23 +266,12 @@ def _supersample(state):
 
 
 def render(family, state, device, backend="auto", chunk_size=None, validated=False):
-    if draws_nvdiff(backend, device, _supersample(state), family):
-        from . import manipulation_nvdiff
-
-        if backend == "auto":
-            log("DEBUG", f"Renderer backend 'auto' chose {NVDIFF} on {device}.")
-        return manipulation_nvdiff.render(family, state, device, chunk_size, validated)
     if draws_on_host(backend, device, _supersample(state)):
         from . import manipulation_opengl
 
         chosen = host_backend(backend, device)
         if backend == "auto":
             log("DEBUG", f"Renderer backend 'auto' chose {chosen} on {device}.")
-        if chosen == "numba":
-            from . import manipulation_numba
-
-            host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
-            return manipulation_numba.frames(family, manipulation_opengl.columns(host), device)
         if chosen == "raster":
             from . import manipulation_raster
 
@@ -319,7 +285,7 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
         raise ValueError(
-            "Cube/Scene rendering supports mjwarp, mjwarp_fidelity, nvdiff, opengl, opengl_fast, numba or raster backends"
+            "Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl, opengl_fast or raster backends"
         )
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")

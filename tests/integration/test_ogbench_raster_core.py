@@ -1,4 +1,4 @@
-"""Cube/Scene ``backend="raster"`` on CPU: the shared MuJoCo rasterizer against the Numba rasterizer and OpenGL."""
+"""Cube/Scene ``backend="raster"`` on CPU, the default: the shared MuJoCo rasterizer against OpenGL."""
 
 import os
 
@@ -57,26 +57,13 @@ def _mse(a, b):
 
 
 @pytest.mark.parametrize("name", FAMILIES)
-def test_raster_equals_the_numba_rasterizer(name, software_gl):
-    """The shared core draws the frames of manipulation_numba bit for bit, default and varied."""
-    env, state = _state(name)
-    try:
-        for leaf, value in [(None, None), *LOOK.items()]:
-            if leaf == "lock_color" and name != "OGBScene":
-                continue
-            looked = state if leaf is None else _vary(state, leaf, value)
-            assert torch.equal(env.render(looked, backend="raster"), env.render(looked, backend="numba")), leaf
-    finally:
-        env.close()
-
-
-@pytest.mark.parametrize("name", FAMILIES)
 def test_raster_follows_opengl(name, software_gl):
     env, state = _state(name)
     try:
         expected = env.render(state, backend="opengl")
         actual = env.render(state, backend="raster")
         assert torch.equal(env.render(backend="raster"), actual)
+        assert torch.equal(env.render(state), actual)
     finally:
         env.close()
     assert actual.shape == expected.shape and actual.dtype == torch.uint8

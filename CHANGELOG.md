@@ -153,25 +153,14 @@ All notable changes to this project are listed here. The format follows
 - Fetch, `OGBCube` and `OGBScene`: `backend="raster"` draws CPU and CUDA frames with one MuJoCo rasterizer,
   `stable_envs/render/mujoco_raster.py`. It has a Numba CPU backend and a CUDA backend (nvdiffrast and Triton).
   Both backends read the scene arrays of `mujoco_scene.pack` and light the vertices with the same formula. The
-  CPU backend clips triangles at the near plane, keeps a plate of the static geoms for each camera, light and
-  look, and draws Cube/Scene frames equal to `backend="numba"`. Fetch and Cube/Scene get `render_semantic`:
-  segmentation and planar depth in the model of the reference env. `mujoco_scene` refuses scene features that
-  were not compared with the OpenGL renderer of the installed MuJoCo version. `backend="auto"` is unchanged.
-
-- `OGBCube` and `OGBScene`: `backend="numba"` draws CPU frames with a compiled Numba rasterizer that follows
-  MuJoCo's OpenGL renderer: the meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of
-  the scene light with MuJoCo's depth offset, the floor texture with mipmaps, the skybox, the see-through arm and
-  4 samples per pixel. The arm meshes have one vertex per 2 mm grid cell. The static geoms, their shadows and the
-  skybox are drawn once per configuration. Mean frame MSE against `backend="opengl"` on 8 States (0-255 scale):
-  about 0.6 (Cube) and 1.3 (Scene). `backend="auto"` keeps `opengl_fast` on CPU.
-  `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera and shadow
-  settings of a MuJoCo model for rasterizers that follow MuJoCo's OpenGL renderer.
-- `OGBCube` and `OGBScene` have a CUDA backend `backend="nvdiff"`. It draws all frames of a batch on the GPU
-  with nvdiffrast and Triton and follows MuJoCo 3.17's OpenGL renderer: per-vertex lighting with the headlight
-  and the model lights, the shadow map of the shadow light, NVIDIA's 4x multisample positions, the skybox, the
-  floor grid texture and the see-through arm in MuJoCo's blend order. The arm meshes are the simplified meshes
-  of `opengl_fast`. It needs the `nvdiffrast` and `triton` packages. `backend="opengl"` and
-  `backend="opengl_fast"` stay available.
+  CPU backend clips triangles at the near plane and keeps a plate of the static geoms for each camera, light
+  and look. Fetch and Cube/Scene get `render_semantic`: segmentation and planar depth in the model of the
+  reference env. `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera
+  and shadow settings of a MuJoCo model, and refuses scene features that were not compared with the OpenGL
+  renderer of the installed MuJoCo version. Fetch keeps its default backends.
+- `OGBCube` and `OGBScene`: `backend="auto"` draws with the shared MuJoCo rasterizer (`backend="raster"`) on CPU
+  and on CUDA at 1x sampling. On CPU without Numba it uses `opengl_fast`; on CUDA without nvdiffrast or Triton it
+  uses NVIDIA OpenGL. `backend="opengl"` stays the exact reference.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
