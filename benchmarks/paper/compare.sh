@@ -162,10 +162,11 @@ log "layout: $G GPUs, $usable usable physical cores, $JOBS jobs at a time, $([ "
 [ "$G" -gt "$JOBS" ] && log "fewer jobs than GPUs: the CPU quota or the cores hold only $JOBS sets of 8 cores"
 if [ "$MISSING" = 1 ]; then
   # The rt4 L40S cells; run.sh times only the cell files that are not there.
-  tar xzf "$HERE/rt4_l40s.tar.gz" -C "$W/tmp" && for d in "$W/tmp/rt4-l40s"/*/; do
-    e=$(basename "$d"); mkdir -p "$OUT/$e"
-    [ -f "$OUT/$e/hardware-rt4.json" ] || { mkdir -p "$OUT/$e/pass-cuda" && cp -rn "$d"/offline "$d"/online "$OUT/$e/" \
-      && cp -rn "$d"/offline "$d"/online "$OUT/$e/pass-cuda/" && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"; }
+  tar xzf "$HERE/rt4_l40s.tar.gz" -C "$W/tmp" && env_list | while read -r _ e; do
+    d=$W/tmp/rt4-l40s/$e
+    [ -d "$d" ] && [ ! -f "$OUT/$e/hardware-rt4.json" ] || continue
+    mkdir -p "$OUT/$e/pass-cuda" && cp -rn "$d"/offline "$d"/online "$OUT/$e/" 2> /dev/null \
+      && cp -rn "$d"/offline "$d"/online "$OUT/$e/pass-cuda/" 2> /dev/null && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"
   done
 fi
 python3 - "$OUT" "$REPO" "$SRC" "$MODE" "$SWEEP_CUDA" "$JOBS" <<'EOF'
