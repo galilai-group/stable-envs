@@ -63,7 +63,7 @@ tests = []
 [family.classic]
 aliases = ["native", "acrobot", "cartpole", "pendulum", "mountain_car"]
 groups = ["pin-classic"]
-paths = ["stable_envs/envs/classic_control/**", "stable_envs/render/gfxdraw/**"]
+paths = ["stable_envs/envs/classic_control/**", "stable_envs/render/gfxdraw/**", "benchmarks/**"]
 tests = [
   "test_acrobot_*",
   "test_classic_*",
