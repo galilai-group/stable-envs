@@ -58,6 +58,19 @@ TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not
 [Install](../install.md). TinyRenderer is the source's renderer. The nvdiffrast frames differ from the
 TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 
+The `backend` argument selects the CPU renderer:
+
+| `backend` | Renderer |
+| --- | --- |
+| `"pybullet"` (also `"tiny"`) | PyBullet's TinyRenderer, one `getCameraImage` call for each frame |
+| `"numba"` | A Numba port of TinyRenderer that draws all the frames in one call, one frame for each thread |
+| `"auto"` (default) | `"pybullet"` |
+
+The Numba port uses the meshes that TinyRenderer makes from the URDFs: the Bullet convex hull of each cylinder,
+the textured cube of each box and the `plane100.obj` ground. It also uses the arithmetic of TinyRenderer: float32
+vertex transforms, near-plane clipping, double-precision barycentric coordinates at integer pixel positions, a
+float32 depth buffer, the default light without shadows, and truncation to `uint8`.
+
 With the PyBullet backend on CPU with worker processes, the workers draw the step frames of their running lanes with
 TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of
 2 or more States in render worker processes, for every number of lanes. `render_workers` sets the number of

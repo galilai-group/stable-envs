@@ -36,6 +36,27 @@ STATE_READS = {
 }
 #: Fewest CPU frames one ``render`` draws in render workers when the ``render_worker_min_rows`` knob is not set.
 MIN_WORKER_ROWS = 2
+#: CPU renderers. ``"pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer; ``"numba"`` draws
+#: all frames in one call of the Numba port in ``tiny_raster``. ``"auto"`` selects ``CPU_AUTO``.
+CPU_BACKENDS = ("auto", "pybullet", "tiny", "numba")
+CPU_AUTO = "pybullet"
+#: CUDA renderers; ``"auto"`` is ``"nvdiffrast"``.
+CUDA_BACKENDS = ("auto", "nvdiffrast")
+
+
+def check_backend(backend, device):
+    """Raise ValueError unless ``backend`` names a Rocket renderer on ``device``."""
+    kind = torch.device(device).type
+    allowed = CPU_BACKENDS if kind == "cpu" else CUDA_BACKENDS
+    if backend not in allowed:
+        raise ValueError(f"Rocket rendering on {kind} uses a backend in {allowed}, got {backend!r}")
+
+
+def cpu_backend(backend):
+    """``"pybullet"`` or ``"numba"`` for a CPU ``backend`` name."""
+    check_backend(backend, "cpu")
+    backend = CPU_AUTO if backend == "auto" else backend
+    return "pybullet" if backend == "tiny" else backend
 
 
 def host_leaves(state, reads, batch):
@@ -93,6 +114,37 @@ def project(state):
         .clone(),
         ("renderer", "rgba"): state["render", "rgba"].to(torch.float64).clone(),
     }
+
+
+def pose_row_fields(rows, style):
+    """``(body, links, rgba)`` of ``(B, 13)`` observation rows and ``(B, 16)`` renderer style rows.
+
+    The rocket is at the row's pose and its camera link at ``legacy.lagged_pose``'s previous pose; the colours
+    are ``legacy.material_table``'s with the alphas the reference bridge paints.
+    """
+    rows = np.asarray(rows, np.float64).reshape(-1, geometry.PyFlytRocketLanding.state_dim)
+    position, quaternion, previous, previous_quaternion, _, _ = geometry.lagged_pose(rows)
+    batch = len(rows)
+    body = np.zeros((batch, 3, 7))
+    body[..., 6] = 1.0
+    body[:, 1, :3], body[:, 1, 3:] = position, quaternion
+    body[:, 2, :3] = geometry.PAD_POS
+    links = np.concatenate([previous, previous_quaternion], -1)
+    material = geometry.material_table(style)
+    rgba = np.ones((batch, 6, 4))
+    for row, geom in (
+        (BODY_COLOR, BODY_GEOM),
+        (FIN_COLOR, FIN_GEOMS.start),
+        (LEG_COLOR, LEG_GEOMS.start),
+        (BOOSTER_COLOR, BOOSTER_GEOM),
+        (PAD_COLOR, PAD_GEOM),
+        (FLAME_COLOR, FLAME_GEOM),
+    ):
+        rgba[:, row, :3] = material[:, geom]
+    offset, _ = geometry.style_layout()["flame.ignited"]
+    ignited = np.asarray(style, np.float64).reshape(batch, -1)[:, offset] > 0.5
+    rgba[:, FLAME_COLOR, 3] = np.where(ignited, geometry.IGNITION_RGBA[3], geometry.FLAME_RGBA[3])
+    return body, links, rgba
 
 
 def camera_view(link, bullet):
@@ -305,14 +357,19 @@ def draw_cpu(env, body, links, colors, size, ss):
         )
 
 
-def render_cpu(env, body, links, colors, size, ss):
-    """Draw host body poses, camera link poses and colours on CPU."""
+def render_cpu(env, body, links, colors, size, ss, backend=None):
+    """Draw host body poses, camera link poses and colours on CPU with ``backend`` (default: the env's)."""
     env._check_open("render")
+    backend = cpu_backend(env.backend if backend is None else backend)
     with env.__dict__.setdefault("_rocket_pixel_lock", threading.RLock()):
+        if backend == "numba":
+            from . import tiny_raster
+
+            return torch.from_numpy(tiny_raster.draw(body, links, colors, size, ss))
         return torch.from_numpy(draw_cpu(env, body, links, colors, size, ss))
 
 
-def render(env, state, size, ss, chunk_size=None):
+def render(env, state, size, ss, chunk_size=None, backend=None):
     """Draw a RenderState with explicit poses."""
     if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
         raise ValueError("chunk_size must be a positive integer")
@@ -320,7 +377,7 @@ def render(env, state, size, ss, chunk_size=None):
     host = {k: state["renderer", k].detach().cpu().numpy() for k in FIELDS}
     body, links, colors = host["source_pose"], host["camera_pose"], host["rgba"]
     if env.device.type == "cpu":
-        return render_cpu(env, body, links, colors, size, ss)
+        return render_cpu(env, body, links, colors, size, ss, backend)
     if env.device.type != "cuda":
         raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
     return draw_gpu(env, body, links, colors, size, ss, chunk_size)
