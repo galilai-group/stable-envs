@@ -64,7 +64,7 @@ class DMControlSuite(_DMCModel):
         return _GRID_SLOTS[key]
 
     def make_variation_space(self) -> Dict:
-        """Add the checker’s two RGB colors to the model-derived appearance space.
+        """Add the checker's two RGB colors to the model-derived appearance space.
 
         The source material file supplies their defaults. Texture substitution uploads
         into the existing GL context rather than creating another renderer.
@@ -134,7 +134,7 @@ class DMControlSuite(_DMCModel):
         m.cam_fovy[:] = pr["cam_fovy"] * float(self._var(variation, "camera.fovy_scale")[0])
         m.light_diffuse[:] = np.clip(pr["light_diffuse"] * float(self._var(variation, "light.diffuse_scale")[0]), 0, 1)
         m.light_specular[:] = pr["light_specular"]
-        # Render-only shape edits: see the collision-bound restriction in this method’s contract.
+        # Render-only shape edits: see the collision-bound restriction in this method's contract.
         for group, geoms in self.GEOM_COLORS.items():
             rgba = np.r_[self._var(variation, f"{group}.color"), 1.0]
             for name in geoms:
@@ -181,9 +181,9 @@ class DMControlSuite(_DMCModel):
         return g, s
 
     def _apply_floor(self, m, r, variation) -> None:
-        """Assign floor texels absolutely and upload with the renderer’s GL context current.
+        """Assign floor texels absolutely and upload with the renderer's GL context current.
 
-        Both model and context retain the previous bake’s colors, so every bake
+        Both model and context retain the previous bake's colors, so every bake
         must assign its own texture, including the default.
         """
         slots = self._grid_slots()
@@ -399,7 +399,7 @@ class DMControlSuite(_DMCModel):
         if hit is not None:
             return hit
         m, d = sc.model, sc.data
-        # Use static membership captured at bake time, not the shared model’s current visibility.
+        # Use static membership captured at bake time, not the shared model's current visibility.
         gstat, sstat = sc.statics
         import mujoco
 
@@ -498,7 +498,7 @@ class DMControlSuite(_DMCModel):
                 getattr(m, arr)[:] = pr[arr]
             self._apply_variation(m, pr, None)
             # Lazy static depth reads live model arrays; discard scenes after restoring defaults
-            # to prevent later depth initialization from using this probe’s appearance.
+            # to prevent later depth initialization from using this probe's appearance.
             _SCENE_CACHE.clear()
         return out
 
@@ -596,7 +596,7 @@ class DMControlSuite(_DMCModel):
     def _occluded(sc, p, L, sl, xpos, xmat, sizes, skip=None, eps: float = 1e-6):
         """Return whether movers block rays from ``p`` to light ``sl``.
 
-        ``skip`` excludes each ray’s originating convex primitive. Its front-facing
+        ``skip`` excludes each ray's originating convex primitive. Its front-facing
         surface cannot occlude itself; back-facing illumination is already zero.
         """
         o, d, lim = DMControlSuite._shadow_rays(p, L, sl, eps)
@@ -792,7 +792,7 @@ class DMControlSuite(_DMCModel):
         return torch.clamp(torch.round(frame), 0, 255).to(torch.uint8)
 
     def _floor_tensors(self, sc: _Scene):
-        """Cache the reflective plane’s size, position and rotation on the render device."""
+        """Cache the reflective plane's size, position and rotation on the render device."""
         hit = sc.const.get("floor")
         if hit is None:
             fsize, fpos, fmat = sc.floor
@@ -823,7 +823,7 @@ class DMControlSuite(_DMCModel):
         r = float(sc.reflectance)
         val = r * colr + (1.0 - r) * surf
         w3 = widx.unsqueeze(-1).expand(-1, -1, 3)
-        # base is this render’s private canvas; in-place scatter avoids another full-frame copy.
+        # base is this render's private canvas; in-place scatter avoids another full-frame copy.
         return base.scatter_(1, w3, torch.where(seen.unsqueeze(-1), val, base.gather(1, w3)))
 
     def _ray_constants(self, rays, sc: _Scene, ss: int):

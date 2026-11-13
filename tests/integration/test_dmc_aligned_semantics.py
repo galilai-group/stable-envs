@@ -1,4 +1,4 @@
-"""Integrated exact gate and public specs for the aligned DMC cohort."""
+"""Integrated exact gate and public specs for the DMC domains in ``aligned.CONFIG``."""
 
 import os
 

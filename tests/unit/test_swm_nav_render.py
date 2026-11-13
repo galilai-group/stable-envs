@@ -175,7 +175,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
         got = env._render(st, style=rows)
         assert torch.equal(want, got), f"{cfg}: two styles with repeats"
 
-        # the gather really was the branch taken, not the expand and not the fallback
+        # the gather was the branch taken, not the expand and not the fallback
         plates = {}
         for i in range(6):
             plates.setdefault(tuple(rows[i, off : off + 3]), []).append(i)

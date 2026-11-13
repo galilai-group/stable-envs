@@ -353,8 +353,8 @@ class DMControlTrackCom(_DMCModel):
         m.mat_rgba[:] = pr["mat_rgba"]
         m.light_diffuse[:] = pr["light_diffuse"]
         m.geom_group[:] = pr["geom_group"]
-        # Match MJWarp’s visible geom set, excluding sites. Static non-plane geoms
-        # also receive per-row poses; their transforms simply repeat.
+        # Match MJWarp's visible geom set, excluding sites. Static non-plane geoms
+        # also receive per-row poses; their transforms repeat.
         alpha = effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
         movers = [
             g
@@ -520,12 +520,12 @@ class DMControlTrackCom(_DMCModel):
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)
             c.wp.synchronize()
-            # MJWarp’s packed byte view is BGRA; select RGB channels explicitly.
+            # MJWarp's packed byte view is BGRA; select RGB channels explicitly.
             buf[lo:hi] = c.bgra[: hi - lo][..., [2, 1, 0]]
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int, masses=None, floor=None, palette=None) -> None:
-        """Write compact rows and styles into the context’s per-world buffers."""
+        """Write compact rows and styles into the context's per-world buffers."""
         import mujoco
 
         n = hi - lo

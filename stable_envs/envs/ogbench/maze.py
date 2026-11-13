@@ -811,7 +811,7 @@ class OGBenchMaze(Env):
         )
 
     def _check_point_fk(self, sc) -> None:
-        """Verify the point body’s translation shortcut against MuJoCo kinematics."""
+        """Verify the point body's translation shortcut against MuJoCo kinematics."""
         import mujoco
 
         m, d = sc.model, sc.data
@@ -1032,7 +1032,7 @@ class OGBenchMaze(Env):
             self.device,
         )
         sc.geom_local_pos = np.stack([m.geom_pos[g] for g in agent])
-        # Keep the ant’s white leg geoms separate; they make its heading visible.
+        # Keep the ant's white leg geoms separate; they make its heading visible.
         selfmat = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, "self")
         sc.agent_base = np.stack([_mat_and_tex(m, g)[0] for g in agent])
         sc.agent_is_self = np.array([int(m.geom_matid[g]) == selfmat for g in agent])
@@ -1308,7 +1308,7 @@ class OGBenchMaze(Env):
     def _agent_appearance(self, sc: _Scene, sty, sub):
         """Return per-geom colors and per-row scale, preserving non-self materials.
 
-        The ant’s white leg geoms distinguish its heading and must not be recolored.
+        The ant's white leg geoms distinguish its heading and must not be recolored.
         """
         base = torch.as_tensor(sc.agent_base, device=self.device, dtype=torch.float32)
         is_self = torch.as_tensor(sc.agent_is_self, device=self.device)

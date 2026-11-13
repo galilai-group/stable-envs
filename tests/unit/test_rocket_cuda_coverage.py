@@ -1,4 +1,4 @@
-"""Regression for thin fin coverage and near-plane ground triangles."""
+"""Rocket CUDA frames: coverage of thin fins, and ground triangles near the near plane."""
 
 import numpy as np
 import pytest

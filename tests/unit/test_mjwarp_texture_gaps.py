@@ -150,7 +150,7 @@ def test_a_textured_mesh_with_no_texcoords_is_a_gap():
 
 
 def test_an_untextured_mesh_without_texcoords_is_not_a_gap():
-    """No texture, no sampling, no crash — the condition must not fire on geometry alone."""
+    """No texture, no sampling, no crash: the condition must not fire on geometry alone."""
     m = _model("2d", "mesh", textured=False, texcoord=False)
     assert int(m.mesh_texcoordnum[0]) == 0
     assert texture_gaps(m) == []

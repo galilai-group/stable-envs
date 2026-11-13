@@ -168,7 +168,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
     ops = _ops(env, s, sty).finish()
 
     if style_kind == "per-row":
-        # Check the batch really is mixed: both aa settings, distinct colors, and (MountainCar) one plate
+        # Check that the batch is mixed: both aa settings, distinct colors, and (MountainCar) one plate
         # row per environment, the kernel's PLATE_B = B specialization.
         assert len(set(ops.aa.tolist())) == 2, f"{name}: the batch does not hold both aa settings"
         cols = ops.meta_t[..., FC.CM_R : FC.CM_B + 1]

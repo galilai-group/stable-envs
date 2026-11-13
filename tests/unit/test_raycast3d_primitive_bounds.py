@@ -137,7 +137,7 @@ def test_any_blocking_is_unchanged_by_the_bound(case):
 
 
 def test_a_ray_aimed_straight_at_a_primitive_is_never_pruned():
-    """The bound must keep the rays that obviously hit — a test that fails if it prunes everything."""
+    """The bound keeps the rays that hit; the test fails if the bound prunes everything."""
     kinds = [R3.SPHERE, R3.CAPSULE]
     sizes = torch.tensor([[[0.2, 0.0, 0.0], [0.1, 0.3, 0.0]]])
     pos = torch.tensor([[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]])

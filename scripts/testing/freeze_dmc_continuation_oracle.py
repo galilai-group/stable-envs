@@ -1,4 +1,4 @@
-"""Create immutable reference-only oracles for the continuation DMC cohort."""
+"""Create immutable reference-only oracles for DMC Cheetah, Hopper and Walker."""
 
 import importlib.metadata
 from pathlib import Path

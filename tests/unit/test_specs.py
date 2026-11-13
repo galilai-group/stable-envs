@@ -2,7 +2,7 @@
 
 CPU only, no device and no reference package. The refusal is the part worth testing: an unbounded
 continuous spec does not invent a distribution to sample from, because a state spec with no declared
-bounds is a statement that the reachable set is not a box and the env — not this class — knows it.
+bounds states that the reachable set is not a box, and the env, not this class, knows it.
 """
 
 from __future__ import annotations

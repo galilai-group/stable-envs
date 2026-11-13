@@ -1,4 +1,4 @@
-"""Create immutable reference-only oracles for the aligned DMC cohort."""
+"""Create immutable reference-only oracles for DMC Ball in Cup, Finger, Manipulator and Quadruped."""
 
 import importlib.metadata
 from pathlib import Path

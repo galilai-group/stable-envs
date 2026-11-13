@@ -4,8 +4,8 @@ Example: python benchmarks/dmc_mjwarp.py --output results/dmc-mjwarp.json --pret
 
 The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x 3 seeds x native/MJWarp
 (510 records). --extended-batches appends 2048,4096,8192 to the selected batches.
-Seeded uniform actions, 20 warmups, a checkpoint restore and 100 timed calls match
-the PR #28 rollout workload. Action generation and upload happen outside timing.
+Each record uses seeded uniform actions, 20 warmups, a checkpoint restore and 100 timed
+calls. Action generation and upload happen outside timing.
 Use --dry-run to inspect the matrix without CUDA initialization or worker launches.
 Use --measurement-profile focused for construction and public stepping with memory
 reporting, omitting repeated reset/restore and rendering measurements.

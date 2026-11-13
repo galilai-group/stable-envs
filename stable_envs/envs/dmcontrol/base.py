@@ -108,7 +108,7 @@ class _DMCModel(Env):
     def _load_env(cls, seed: int):
         """Load the common source used for models, sampling and reference frames.
 
-        Override here when a registration requires a model other than suite.load’s.
+        Override here when a registration requires a model other than suite.load's.
         """
         return _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": seed})
 
@@ -274,7 +274,7 @@ class _DMCModel(Env):
 
     @staticmethod
     def _qpos_names(m) -> tuple[str, ...]:
-        """Name scalar positions and quaternion components from the model’s joint layout."""
+        """Name scalar positions and quaternion components from the model's joint layout."""
         import mujoco
 
         free = ("_x", "_y", "_z", "_qw", "_qx", "_qy", "_qz")
@@ -436,7 +436,7 @@ class _DMCModel(Env):
         out = []
         for st in np.asarray(states, np.float64):
             # Write model entries before reset_context runs forward kinematics, so derived
-            # world poses use this row rather than the previous render’s episode fields.
+            # world poses use this row rather than the previous render's episode fields.
             for (arr, k), v in zip(slots, st[nq:]):
                 getattr(m, arr).reshape(-1)[k] = v
             with p.reset_context():

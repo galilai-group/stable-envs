@@ -280,7 +280,7 @@ def build_model(family, row=None, names=None):
                 env.variation_space._walk(name).set_value(value)
             else:
                 env.variation_space._walk(name)._value = value
-        # Floor, cube and agent RGB use the renderer’s per-world color paths.
+        # Floor, cube and agent RGB use the renderer's per-world color paths.
         env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
         env.compile_model_and_data()
         env._cube_colors_from_variation()
