@@ -54,7 +54,7 @@ source, or for another `agent_hz`.
 ## Rendering
 
 The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. On CPU,
-TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not on PyPI. See
+a Numba port of TinyRenderer draws the frames. On CUDA, nvdiffrast draws them. nvdiffrast is not on PyPI. See
 [Install](../install.md). TinyRenderer is the source's renderer. The nvdiffrast frames differ from the
 TinyRenderer frames. `env.describe()["visual_fidelity"]` gives the measured agreement.
 
@@ -62,9 +62,12 @@ The `backend` argument selects the CPU renderer:
 
 | `backend` | Renderer |
 | --- | --- |
-| `"pybullet"` (also `"tiny"`) | PyBullet's TinyRenderer, one `getCameraImage` call for each frame |
 | `"numba"` | A Numba port of TinyRenderer that draws all the frames in one call, one frame for each thread |
-| `"auto"` (default) | `"pybullet"` |
+| `"pybullet"` (also `"tiny"`) | PyBullet's TinyRenderer, one `getCameraImage` call for each frame |
+| `"auto"` (default) | `"numba"` |
+
+With `simulation_backend="pybullet"` and worker processes, the workers draw the step frames with PyBullet's
+TinyRenderer for each value of `backend`.
 
 The Numba port uses the meshes that TinyRenderer makes from the URDFs: the Bullet convex hull of each cylinder,
 the textured cube of each box and the `plane100.obj` ground. It also uses the arithmetic of TinyRenderer: float32

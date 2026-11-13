@@ -39,7 +39,7 @@ MIN_WORKER_ROWS = 2
 #: CPU renderers. ``"pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer; ``"numba"`` draws
 #: all frames in one call of the Numba port in ``tiny_raster``. ``"auto"`` selects ``CPU_AUTO``.
 CPU_BACKENDS = ("auto", "pybullet", "tiny", "numba")
-CPU_AUTO = "pybullet"
+CPU_AUTO = "numba"
 #: CUDA renderers; ``"auto"`` is ``"nvdiffrast"``.
 CUDA_BACKENDS = ("auto", "nvdiffrast")
 

@@ -47,7 +47,7 @@ RENDERERS = {
     "ogbench-maze": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
     "ogbench-manipulation": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
     "pusht": {"cpu": "pygame (source renderer)", "cuda": "pygame on CPU, frames copied to CUDA"},
-    "pyflyt": {"cpu": "tiny (TinyRenderer)", "cuda": "nvdiffrast"},
+    "pyflyt": {"cpu": "numba (TinyRenderer port)", "cuda": "nvdiffrast"},
     "roadster": {"cpu": "opengl (MuJoCo)", "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"},
 }
 
