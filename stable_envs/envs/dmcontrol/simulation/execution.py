@@ -90,7 +90,10 @@ def make_dmc_adapter(
         try:
             from .mjwarp import DMCWarpAdapter
         except ImportError as exc:
-            raise ImportError("simulation_backend='mjwarp' requires the DMC and GPU dependencies") from exc
+            raise ImportError(
+                f"simulation_backend='mjwarp' could not import its backend ({exc}): "
+                "pip install 'stable-envs[dmcontrol-gpu]'"
+            ) from exc
 
         return DMCWarpAdapter(domain, num_envs, device, seed)
     if backend == "mjx":

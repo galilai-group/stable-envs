@@ -46,6 +46,23 @@ def rocket_backend(
     return backend
 
 
+def require_nvvm() -> None:
+    """Raise with the install steps when Numba CUDA cannot load libNVVM, which compiles the CUDA physics."""
+    try:
+        from numba.cuda.cudadrv.nvvm import NVVM
+    except ImportError:
+        return
+    try:
+        NVVM()
+    except Exception as e:  # noqa: BLE001 — re-raised with the fix
+        raise RuntimeError(
+            "PyFlytRocketLanding steps on CUDA with Numba CUDA, which compiles with libNVVM from a CUDA toolkit, "
+            f"and Numba cannot load it ({type(e).__name__}: {e}). Install a CUDA toolkit as the nvdiffrast "
+            "section of docs/install.md shows (for example `apt install cuda-nvcc-13-2` from NVIDIA's CUDA apt "
+            "repository) and set CUDA_HOME to it, or pass simulation_backend='numba' to step on the CPU."
+        ) from e
+
+
 def make_rocket_adapter(
     num_envs: int,
     device: str | torch.device,
@@ -63,6 +80,7 @@ def make_rocket_adapter(
 
         return RocketNumbaAdapter(num_envs, device, seed, config, frame)
     if simulation_backend == "numba_cuda":
+        require_nvvm()
         from .numba_cuda_batch import RocketCudaAdapter
 
         return RocketCudaAdapter(num_envs, device, seed, config, frame)

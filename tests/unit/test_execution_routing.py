@@ -178,6 +178,18 @@ def test_dmc_auto_uses_the_task_cutoff_on_cuda(monkeypatch, key, batch, device, 
 
 
 @pytest.mark.family("dmc")
+def test_dmc_cuda_physics_without_warp_names_the_extra(monkeypatch):
+    import importlib.util
+
+    from stable_envs.envs.dmcontrol.simulation import mjwarp
+
+    real = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda n, *a: None if n == "mujoco_warp" else real(n, *a))
+    with pytest.raises(ModuleNotFoundError, match=r"stable-envs\[dmcontrol-gpu\]"):
+        mjwarp.DMCWarpAdapter("cheetah", 2, "cuda", 0)
+
+
+@pytest.mark.family("dmc")
 def test_dmc_default_is_gpu_physics_on_cuda_and_explicit_names_select(monkeypatch):
     execution = _fake_adapters(monkeypatch)
     for backend, kind in ((None, "mjwarp"), ("native", "batch"), ("mjwarp", "mjwarp")):

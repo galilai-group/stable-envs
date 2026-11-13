@@ -478,7 +478,16 @@ class WarpBatch(MjBatch):
         **_native_options,
     ):
         import mujoco
-        import mujoco_warp as mjw
+
+        try:
+            import mujoco_warp as mjw
+        except ImportError as e:
+            raise ModuleNotFoundError(
+                f"MuJoCo Warp physics on CUDA needs mujoco-warp and warp-lang ({e}). The family's GPU extra installs "
+                "them: stable-envs[dmcontrol-gpu], [ogbench,mjwarp], [ogbench-manipulation-gpu], [robotics,mjwarp], "
+                "[roadster-gpu] or [mshuman]",
+                name="mujoco_warp",
+            ) from e
 
         from .._core.warp_cuda import require_warp_cuda
 

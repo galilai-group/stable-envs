@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from functools import cache, wraps
 
 import mujoco
@@ -21,6 +22,16 @@ CONTACTS_PER_WORLD, CONSTRAINTS_PER_WORLD = 128, 512
 #: Bits of the step's device flag.
 _BAD_CONTROLS, _BAD_PHYSICS = 1, 2
 _MATRICES = ("xmat", "ximat", "geom_xmat", "site_xmat", "cam_xmat")
+
+
+def _require_gpu_extra():
+    absent = [m for m in ("mujoco_warp", "warp") if importlib.util.find_spec(m) is None]
+    if absent:
+        raise ModuleNotFoundError(
+            f"DMC physics on CUDA steps with MuJoCo Warp, and {' and '.join(absent)} {'are' if len(absent) > 1 else 'is'} not installed: "
+            "pip install 'stable-envs[dmcontrol-gpu]', or pass simulation_backend='native' to step on the CPU",
+            name=absent[0],
+        )
 
 
 def _require_cuda(device):
@@ -230,6 +241,7 @@ class DMCWarpAdapter(SimulatorAdapter):
     simulation_backend = "mjwarp"
 
     def __init__(self, key, num_envs, device="cuda", seed=0):
+        _require_gpu_extra()
         _require_cuda(device)
         from ...._execution.mjbatch import WarpBatch
 
