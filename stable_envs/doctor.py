@@ -55,7 +55,7 @@ class Family:
     optional: tuple[tuple[str, str, str], ...] = ()
 
 
-# Every MuJoCo render path except the MuJoCo rasterizer (the Fetch, Cube and Scene default), CPU or CUDA,
+# Every MuJoCo render path except the CPU rasterizers of Fetch, Cube and Scene, CPU or CUDA,
 # bakes its static background with mujoco.Renderer.
 FAMILIES = (
     Family(

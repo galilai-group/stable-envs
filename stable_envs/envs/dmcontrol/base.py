@@ -82,6 +82,8 @@ class _DMCModel(Env):
         assert len(self.state_names) == self.state_dim
         if self.backend == "mjwarp" and self.device.type != "cuda":
             raise ValueError(f"{type(self).__name__}: backend='mjwarp' draws on CUDA; got device={self.device}")
+        if self.backend == "mjwarp" and self.DOMAIN == "manipulator":
+            raise ValueError(f"{type(self).__name__}: backend='mjwarp' does not draw the Manipulator cells")
 
     def render_semantic(self, states):
         """Per-pixel ``(objid, objtype)`` pairs of the cell's model and planar depth of compact rows.

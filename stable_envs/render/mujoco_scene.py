@@ -6,8 +6,7 @@ them, the averaged camera, the textures with their mipmaps, the skybox and the s
 into triangles as Mesa splits ``GL_QUADS``. The values are host NumPy arrays; a renderer adds the per-frame geom
 poses and colours.
 
-``pack`` turns an extracted scene into the flat arrays that the CPU and CUDA backends of ``render.mujoco_raster``
-read: corners, triangles, materials, textures, light rows, camera row and shadow matrices.
+``pack`` turns an extracted scene into the flat arrays that ``render.mujoco_raster`` reads: corners, triangles, materials, textures, light rows, camera row and shadow matrices.
 
 The extraction follows the MuJoCo versions in ``VERIFIED``. Each version lists the scene features whose frames
 were compared with that version's OpenGL renderer; a scene that needs another feature raises NotImplementedError.
@@ -44,14 +43,10 @@ def mujoco_version():
 
 
 def rasterizer_available(device):
-    """Whether ``render.mujoco_raster`` draws on ``device``: Numba, and on CUDA also nvdiffrast and Triton."""
-    from importlib.util import find_spec
-
+    """Whether ``render.mujoco_raster`` draws on ``device``: CPU, with Numba installed."""
     from . import cpu_raster
 
-    if not cpu_raster.available():
-        return False
-    return not str(device).startswith("cuda") or all(find_spec(name) is not None for name in ("nvdiffrast", "triton"))
+    return str(device).startswith("cpu") and cpu_raster.available()
 
 
 def require(s, feature):

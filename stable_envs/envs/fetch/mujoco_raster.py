@@ -5,7 +5,7 @@ geoms, materials, lights, skybox and camera, read by ``render.mujoco_scene`` (Mu
 kinematics gives the geom poses (with the mocap welds that ``reset_mocap2body_xpos`` follows), the free camera
 gives the view, and the look leaves give the colours: ``floor.color``, ``table.color``, ``object.color``,
 ``arm.color``, ``goal.color``, ``rendering.transparent_arm``, ``light.diffuse`` (model lights) and ``sky.color``
-(a flat sky away from its default). ``render.mujoco_raster`` draws the frames on CPU and on CUDA.
+(a flat sky away from its default). ``render.mujoco_raster`` draws the frames on CPU.
 """
 
 from __future__ import annotations
@@ -144,8 +144,10 @@ def frames(scene, rows, values):
 
 
 def render(env, states=None, size=None, supersample=None, variation=None, style=None, out=None):
-    """Fetch frames of compact ``states`` (the live lanes by default) on the env's device."""
+    """Fetch frames of compact ``states`` (the live lanes by default) on CPU."""
     env._check_open("render")
+    if env.device.type != "cpu":
+        raise ValueError("backend='raster' draws Fetch frames on CPU only; on CUDA use backend='auto'")
     rows = torch.as_tensor(env._render_state if states is None else states, device=env.device)
     lead = tuple(rows.shape[:-1])
     rows = rows.reshape(-1, env.state_dim).detach().cpu().numpy()
@@ -163,34 +165,12 @@ def render(env, states=None, size=None, supersample=None, variation=None, style=
         raise ValueError("Invalid Fetch render output buffer")
     inputs = frames(env.SCENE, rows, values)
     scene = config(env.SCENE).scene
-    if env.device.type == "cuda":
-        from ...render import mujoco_raster_cuda as cuda
-
-        target = torch.empty((len(rows), size, size, 3), dtype=torch.uint8, device=env.device)
-        with torch.cuda.device(env.device):
-            cuda.draw(device_scene(env.SCENE, env.device), *inputs, ss, target)
-        result = target.reshape(shape)
-        return result if out is None else out.copy_(result)
     host = None if out is None else out.view(-1, size, size, 3).numpy()
     images = np.empty((len(rows), size, size, 3), np.uint8) if host is None else host
     core.draw(scene, *inputs, ss, images)
     if host is not None:
         return out
     return torch.from_numpy(images).reshape(shape)
-
-
-_DEVICES: dict = {}
-
-
-def device_scene(scene, device):
-    """The packed scene of a Fetch scene on a CUDA ``device``."""
-    from ...render import mujoco_raster_cuda as cuda
-
-    key = (scene, str(device))
-    with _LOCK:
-        if key not in _DEVICES:
-            _DEVICES[key] = cuda.DeviceScene(config(scene).scene, device)
-        return _DEVICES[key]
 
 
 def semantic(env, states):
