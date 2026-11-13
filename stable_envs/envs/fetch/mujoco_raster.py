@@ -1,11 +1,11 @@
-"""Fetch configuration of the MuJoCo rasterizer (``backend="raster"``).
+"""Fetch configuration of the shared MuJoCo rasterizer, for ``render_semantic``.
 
 The scene is the render model of the OpenGL backend with the translucent markers in their drawn groups: its
 geoms, materials, lights, skybox and camera, read by ``render.mujoco_scene`` (MuJoCo 3.11). Per frame, MuJoCo's
 kinematics gives the geom poses (with the mocap welds that ``reset_mocap2body_xpos`` follows), the free camera
 gives the view, and the look leaves give the colours: ``floor.color``, ``table.color``, ``object.color``,
 ``arm.color``, ``goal.color``, ``rendering.transparent_arm``, ``light.diffuse`` (model lights) and ``sky.color``
-(a flat sky away from its default). ``render.mujoco_raster`` draws the frames on CPU.
+(a flat sky away from its default). ``render.mujoco_raster`` gives the segmentation and depth on CPU.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ import copy
 import threading
 
 import numpy as np
-import torch
 
 from ...render import mujoco_raster as core
 from ...render import mujoco_scene as ms
@@ -141,36 +140,6 @@ def frames(scene, rows, values):
             if not np.array_equal(np.round(color, 6), np.round(c.sky_default, 6)):
                 sky[i] = (np.clip(color, 0.0, 1.0) * 255.0).astype(np.uint8)
     return gpos, gmat, rgba, cams, lights, sky
-
-
-def render(env, states=None, size=None, supersample=None, variation=None, style=None, out=None):
-    """Fetch frames of compact ``states`` (the live lanes by default) on CPU."""
-    env._check_open("render")
-    if env.device.type != "cpu":
-        raise ValueError("backend='raster' draws Fetch frames on CPU only; on CUDA use backend='auto'")
-    rows = torch.as_tensor(env._render_state if states is None else states, device=env.device)
-    lead = tuple(rows.shape[:-1])
-    rows = rows.reshape(-1, env.state_dim).detach().cpu().numpy()
-    size, ss = int(size or env.size), int(env.ss if supersample is None else supersample)
-    if size < 1 or not 1 <= ss <= 4:
-        raise ValueError("Invalid Fetch render size/supersample")
-    if not len(rows):
-        raise ValueError("Cannot render an empty Fetch batch")
-    style = env.resolve_style(style, variation, batch=len(rows))
-    values = {k: style[k].detach().cpu().numpy().reshape(len(rows), -1) for k in env.variation_space.names()}
-    shape = (*lead, size, size, 3)
-    if out is not None and (
-        out.shape != shape or out.device != env.device or out.dtype != torch.uint8 or not out.is_contiguous()
-    ):
-        raise ValueError("Invalid Fetch render output buffer")
-    inputs = frames(env.SCENE, rows, values)
-    scene = config(env.SCENE).scene
-    host = None if out is None else out.view(-1, size, size, 3).numpy()
-    images = np.empty((len(rows), size, size, 3), np.uint8) if host is None else host
-    core.draw(scene, *inputs, ss, images)
-    if host is not None:
-        return out
-    return torch.from_numpy(images).reshape(shape)
 
 
 def semantic(env, states):

@@ -40,7 +40,7 @@ The tests measure the per-frame mean squared error (MSE) between each class's fr
 Classes that declare a fidelity record report it in `env.describe()["visual_fidelity"]`: the measured MSE as `mse_mean`, `mse_p95` and `mse_max` on the 0-255 scale, with the measurement setup. `env.describe()["visual_note"]` says where the frames differ. These classes draw with a different rasterizer from the upstream library:
 
 - Fetch with the default backend: the Fetch Numba rasterizer on CPU and MJWarp on CUDA.
-- `OGBCube` and `OGBScene` with the default backend on CPU: the stable-envs MuJoCo rasterizer (`backend="raster"`).
+- `OGBCube` and `OGBScene` with the default backend on CPU: the stable-envs MuJoCo rasterizer (`backend="numba"`).
 - The DM Control body-tracking classes. They declare a fidelity record.
 - `PyFlytRocketLanding` on CUDA, which nvdiffrast draws. It declares a fidelity record for these frames.
 

@@ -1,4 +1,4 @@
-"""Cube/Scene ``backend="raster"`` on CPU, the default: the shared MuJoCo rasterizer against OpenGL."""
+"""Cube/Scene ``backend="numba"`` on CPU, the default: the shared MuJoCo rasterizer against OpenGL."""
 
 import os
 
@@ -61,8 +61,8 @@ def test_raster_follows_opengl(name, software_gl):
     env, state = _state(name)
     try:
         expected = env.render(state, backend="opengl")
-        actual = env.render(state, backend="raster")
-        assert torch.equal(env.render(backend="raster"), actual)
+        actual = env.render(state, backend="numba")
+        assert torch.equal(env.render(backend="numba"), actual)
         assert torch.equal(env.render(state), actual)
     finally:
         env.close()
@@ -80,7 +80,7 @@ def test_raster_draws_every_look_leaf(name, software_gl):
         for leaf in leaves:
             varied = _vary(state, leaf, LOOK[leaf])
             expected = env.render(varied, backend="opengl")
-            actual = env.render(varied, backend="raster")
+            actual = env.render(varied, backend="numba")
             ignored = float(_mse(base, expected).mean())
             assert float(_mse(actual, expected).mean()) < min(2.0, 0.1 * ignored), leaf
     finally:
@@ -92,16 +92,16 @@ def test_raster_batches_rows_and_mixed_looks_alike(name, software_gl):
     """A row draws the same frame alone, in a batch and in a batch whose rows have other looks."""
     env, state = _state(name)
     try:
-        batch = env.render(state, backend="raster")
+        batch = env.render(state, backend="numba")
         for lane in range(len(state)):
-            assert torch.equal(env.render(state[lane : lane + 1], backend="raster"), batch[lane : lane + 1])
+            assert torch.equal(env.render(state[lane : lane + 1], backend="numba"), batch[lane : lane + 1])
         mixed = state.clone()
         mixed[1:2] = _vary(state[1:2], "light.intensity", LOOK["light.intensity"])
         mixed[2:3] = _vary(state[2:3], "camera.angle_delta", LOOK["camera.angle_delta"])
-        frames = env.render(mixed, backend="raster")
+        frames = env.render(mixed, backend="numba")
         assert torch.equal(frames[0], batch[0]) and torch.equal(frames[3], batch[3])
         for lane in (1, 2):
-            assert torch.equal(frames[lane : lane + 1], env.render(mixed[lane : lane + 1], backend="raster"))
+            assert torch.equal(frames[lane : lane + 1], env.render(mixed[lane : lane + 1], backend="numba"))
     finally:
         env.close()
 
@@ -111,7 +111,7 @@ def test_raster_supersample_and_resize(software_gl):
     try:
         for size, ss in ((64, 1), (63, 1), (96, 2)):
             expected = env.render(state, backend="opengl", size=size, supersample=ss)
-            actual = env.render(state, backend="raster", size=size, supersample=ss)
+            actual = env.render(state, backend="numba", size=size, supersample=ss)
             assert actual.shape == (2, size, size, 3)
             assert float(_mse(actual, expected).mean()) < 4.0
     finally:

@@ -9,7 +9,7 @@ A family draws [frames](../terms.md#frame) either with its [upstream library](..
 | `raycast3d` | MuJoCo primitive scenes | OGBench mazes, fixed-camera DM Control tasks | Torch and Numba on CPU, Torch and Triton on CUDA |
 | `cpu3d` | MuJoCo primitive scenes with a floor and a tracking camera | DM Control body-tracking tasks on CPU | Torch and Numba, CPU only |
 | `nvdiff` | textured, lit triangle meshes | `PyFlytRocketLanding` | CUDA only |
-| `mujoco_raster` | MuJoCo scenes, as MuJoCo's OpenGL renderer draws them | OGBench Cube and Scene (the CPU default); Fetch with `backend="raster"` | Numba, CPU only |
+| `mujoco_raster` | MuJoCo scenes, as MuJoCo's OpenGL renderer draws them | OGBench Cube and Scene (`backend="numba"`, the CPU default); Fetch `render_semantic` | Numba, CPU only |
 | `mjwarp` | MuJoCo models | DM Control body-tracking tasks on CUDA, Fetch on CUDA, OGBench Cube and Scene at `supersample` 2 or more | CUDA only |
 
 The other MuJoCo paths use [MuJoCo's OpenGL renderer](../install.md#what-each-family-needs). The [benchmarks](../benchmarks.md) measure the throughput of the ray caster and MJWarp.
@@ -168,7 +168,7 @@ See [OGBench](../environments/ogbench.md#cube-and-scene-render-backends) for how
 
 ## MuJoCo rasterizer
 
-`stable_envs.render.mujoco_raster` draws MuJoCo scenes on CPU with a Numba rasterizer that follows MuJoCo's fixed-function OpenGL renderer (`render_gl3.c`). It reads one scene model and one set of per-frame inputs. It is the default CPU renderer of the OGBench Cube and Scene tasks, and Fetch uses it with `backend="raster"`. `backend="opengl"` stays the exact reference. On CUDA, `backend="raster"` raises `ValueError`.
+`stable_envs.render.mujoco_raster` draws MuJoCo scenes on CPU with a Numba rasterizer that follows MuJoCo's fixed-function OpenGL renderer (`render_gl3.c`). It reads one scene model and one set of per-frame inputs. It is the default CPU renderer of the OGBench Cube and Scene tasks (`backend="numba"`), and Fetch uses it for `render_semantic` only. `backend="opengl"` stays the exact reference. On CUDA, the Cube and Scene `backend="numba"` raises `ValueError`.
 
 ### Scene model
 

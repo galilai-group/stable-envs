@@ -102,11 +102,11 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
 
 | Device and setting | `backend="auto"` draws with | Frames |
 |---|---|---|
-| CPU | the MuJoCo rasterizer in Numba, as `backend="raster"` | differ from MuJoCo OpenGL; a draw of the same state gives the same frame each time, in any batch |
+| CPU | the MuJoCo rasterizer in Numba, as `backend="numba"` | differ from MuJoCo OpenGL; a draw of the same state gives the same frame each time, in any batch |
 | CUDA, `supersample=1` | NVIDIA OpenGL | the driver can change a pixel by 1/255 between two draws of the same state, and so can the OpenGL reference |
 | CUDA, `supersample` 2 or more | two-pass MJWarp, as `backend="mjwarp_fidelity"` | can differ from MuJoCo in lighting and transparency |
 
-- `backend="raster"` is the shared [MuJoCo rasterizer](../contributing/renderers.md#mujoco-rasterizer). It follows MuJoCo's OpenGL renderer: the same meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of the scene light, the floor texture with its mipmaps, the skybox, the see-through arm and 4 samples per pixel. It draws the arm meshes with one vertex per grid cell of 2 mm. On CPU, the first render after an install compiles the Numba kernels in about 1 to 2 minutes, and Numba keeps the compiled code in a cache for later processes. On CUDA, `backend="raster"` raises `ValueError`. `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows.
+- `backend="numba"` is the shared [MuJoCo rasterizer](../contributing/renderers.md#mujoco-rasterizer). It follows MuJoCo's OpenGL renderer: the same meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of the scene light, the floor texture with its mipmaps, the skybox, the see-through arm and 4 samples per pixel. It draws the arm meshes with one vertex per grid cell of 2 mm. On CPU, the first render after an install compiles the Numba kernels in about 1 to 2 minutes, and Numba keeps the compiled code in a cache for later processes. On CUDA, `backend="numba"` raises `ValueError`. `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows.
 - Without Numba, the CPU default is software OpenGL (`backend="opengl"`). The CUDA default at `supersample=1` is NVIDIA OpenGL.
 - `backend="opengl"` draws the frames of the source. On CPU, these frames are bit-exact. On CUDA, the NVIDIA driver can change a pixel by 1/255 between two draws of the same state, and so can the OpenGL reference.
 - CPU OpenGL rendering refuses a hardware GL context. For `backend="opengl"`, configure [Mesa software OpenGL](../install.md#what-each-family-needs) before you import MuJoCo.
@@ -249,4 +249,4 @@ The scene has a cube, a drawer, a window and two button locks. The agent changes
 - With `supersample` 2 or more, MJWarp draws the CUDA frames. It is measured against the same stable-envs OpenGL path, but `visual_fidelity` holds only the values of `backend="opengl"`.
 - `HumanoidMazeGiantNavigate` on CUDA isn't reproducible across processes on at least one GPU.
 - MuJoCo Warp orders contacts with atomic operations, so two runs from one state can differ by rounding. Use `simulation_backend="native"` when you need results equal to OGBench.
-- The default CPU `raster` frames differ from the `backend="opengl"` frames that `visual_fidelity` records. Only `backend="opengl"` gives the frames of the source.
+- The default CPU `numba` frames differ from the `backend="opengl"` frames that `visual_fidelity` records. Only `backend="opengl"` gives the frames of the source.
