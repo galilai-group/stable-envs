@@ -37,7 +37,7 @@ stable-envs steps PushT with a port of the Pymunk contact solver, and one call s
 | `"jax"` | the environment device | JAX `vmap` in float64. The default on CUDA without Triton. |
 | `"auto"` | CPU or CUDA | on CUDA, `"numba"` below `triton_min_envs` environments and the CUDA default from there. On CPU, `"numba"`. |
 
-With `"numba"` on CUDA, the physics runs on the CPU and the state and outputs are CUDA tensors. On an L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs` is 1 by default. A Triton step takes about 0.3 to 0.5 ms. A JAX step on CUDA takes about 45 ms with 8 environments and 60 ms with 1024, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, in about 50 s, or 80 s for agent shapes other than the disc, unless Triton has it in its cache.
+With `"numba"` on CUDA, the physics runs on the CPU and the state and outputs are CUDA tensors. On an L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs` is 1 by default. A JAX step on CUDA is much slower than a Triton step, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, unless Triton has it in its cache. The compile takes longer for agent shapes other than the disc.
 
 The port follows Munk2D, the Chipmunk2D fork that pymunk 7.2.0 builds. It uses the same integration, PD control, damping and sequential impulse solver, and these Munk2D details:
 

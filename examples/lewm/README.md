@@ -110,29 +110,17 @@ with stable-envs frames is in the stable-envs paper.
 
 ## Epoch time
 
-One epoch of the half-size model with bf16 and `torch.compile` on PushT (13,933 steps of 128 samples) on
-one NVIDIA L40S. The training process and its W DataLoader workers had W + 1 CPU cores (AMD EPYC 9374F).
-The time excludes the process start and the compile time of the first 200 steps.
+To compare the time of one epoch, train the same model with the same settings and change only the source of
+the frames:
 
 - stored frames: the frames from `pusht_expert_train.h5`, decoded and resized in the DataLoader workers.
 - source renderer: the stable-worldmodel PushT renderer (pygame) draws the frames in the DataLoader workers.
 - stable-envs on GPU: `render` draws the frames on the GPU after the batch moves there.
 
-| W | CPU cores | stored frames | source renderer | stable-envs on GPU |
-|---|---|---|---|---|
-| 1 | 2 | 189.3 min (157 samples/s) | 223.7 min (133 samples/s) | 20.7 min (1439 samples/s) |
-| 2 | 3 | 103.9 min (286 samples/s) | 109.5 min (271 samples/s) | 20.9 min (1421 samples/s) |
-| 4 | 5 | 58.3 min (509 samples/s) | 72.5 min (410 samples/s) | 20.8 min (1426 samples/s) |
-| 8 | 9 | 32.0 min (928 samples/s) | not measured | not measured |
-
-The training step alone (random batches on the GPU, no DataLoader) runs at 1644 samples/s on this GPU. The
-stable-envs column uses 86% to 88% of that rate. The GPU render takes about 7.5% of each step. The workers
-read only the states and the actions, so the stable-envs column does not change with W. The runs that
-did not finish the epoch in the time limit give a projected time: 13,933 times the steady step time.
-
-These times come from the experiment code of the paper, which drew the frames from compact render rows.
-`train.py` draws them from full States with the public `render`. The model, data and training settings
-are the same. Measure on your own hardware before you compare.
+With the first two sources, the epoch time depends on the number of DataLoader workers and CPU cores. With
+stable-envs on the GPU, the workers read only the states and the actions, so the epoch time does not change
+with the number of workers. Leave the process start and the compile time of the first steps out of the
+timing, and measure on your own hardware.
 
 ## Other environments
 

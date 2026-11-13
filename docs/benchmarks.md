@@ -1,6 +1,6 @@
 # Benchmarks
 
-The benchmarks below time how long stable-envs takes to turn a [state](terms.md#state) into a uint8 [frame](terms.md#frame) and compare it with the upstream renderer, with the commands that reproduce each number. Run the harnesses from a clone of the repository. The installed wheel leaves out the `benchmarks` package.
+The benchmarks below time how long stable-envs takes to turn a [state](terms.md#state) into a uint8 [frame](terms.md#frame) and compare it with the upstream renderer. This page gives the commands and what they measure. It gives no results, because results change with the hardware and the versions. Run the harnesses from a clone of the repository. The installed wheel leaves out the `benchmarks` package.
 
 ```bash
 python -m benchmarks.render --envs TwoRoom --device cpu --batches 64   # prints one JSON record
@@ -8,39 +8,18 @@ python -m benchmarks.render --envs TwoRoom --device cpu --batches 64   # prints 
 
 ## PushT
 
-On CPU, PushT draws with a Numba rasterizer whose frames equal the pygame frames of the pinned stable-worldmodel implementation. The useful comparison is the cost per frame against `backend="source"`, which draws with that pygame code in up to 8 render worker processes on Linux for batches of 64 or more.
+On CPU, PushT draws with a Numba rasterizer whose frames equal the pygame frames of the pinned stable-worldmodel implementation. The useful comparison is the cost per frame against `backend="source"`, which draws with that pygame code in up to 8 render worker processes on Linux for batches of 64 or more. Set the thread count with `NUMBA_NUM_THREADS`, because Numba does not read `--threads`:
 
-| Backend | Threads | Batch 256, ms per frame | Batch 1,024, ms per frame |
-|---|---:|---:|---:|
-| `"auto"` (Numba) | 1 | 0.095 | 0.093 |
-| `"auto"` (Numba) | 64 | 0.014 | 0.0082 |
-| `"source"` (pygame) | 64 | 0.184 | 0.129 |
-
-With 64 threads at batch 1,024, Numba takes 0.0082 ms per frame, about 16× less than the pygame path.
-
-??? note "Hardware and command"
-
-    One node with a Xeon Gold 6548Y+ and 64 CPUs allocated, median of 3 runs, with N = 1 or 64:
-
-    ```bash
-    NUMBA_NUM_THREADS=N OMP_NUM_THREADS=N MKL_NUM_THREADS=N python -m benchmarks.render \
-      --envs PushT --device cpu --size 224 --batches 256,1024 --warmup 2 --repeats 7 --threads N
-    ```
-
-    Numba takes its thread count from `NUMBA_NUM_THREADS`, not from `--threads`.
+```bash
+NUMBA_NUM_THREADS=N OMP_NUM_THREADS=N MKL_NUM_THREADS=N python -m benchmarks.render \
+  --envs PushT --device cpu --size 224 --batches 256,1024 --warmup 2 --repeats 7 --threads N
+```
 
 `benchmarks.render` leaves the first render of a batch out of its timings. That render builds one Pymunk scene per batch row, and the first Numba render in a process also loads the compiled kernels.
 
 ## DM Control ray casting
 
-`DMCBallInCupCatch` at batch 64, rendered from saved states by the [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) and by the upstream renderer (NVIDIA OpenGL on the GPU row), with the same states, output destination and device class:
-
-| Device and output | stable-envs FPS | Upstream FPS | Ratio | MSE (0-255), mean ± SD |
-| --- | ---: | ---: | ---: | ---: |
-| One Xeon Platinum 8268 thread, CPU output | 15.6 | 14.9 | 1.05× | 3.1 ± 1.2 |
-| One RTX 3090, CPU output | 2,190 | 240 | 9.1× | 3.6 ± 1.5 |
-
-Sixteen states were repeated to fill each batch, and each timing used three warmed samples. Timing excludes the rollout, state loading, restoring and render-state preparation.
+The [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) draws DM Control frames from saved states on CPU and CUDA. To compare it with the upstream renderer, give both the same states, output destination and device class, and leave the rollout, state loading, restoring and render-state preparation out of the timing. The [comparison with the upstream libraries](#comparison-with-the-upstream-libraries) does this and also writes the frame MSE.
 
 ## DM Control physics
 
@@ -55,24 +34,7 @@ Remove `--dry-run` and add `--output results/dmc-mjwarp.json` to measure it. Mea
 
 ## OGBench Cube and Scene on CUDA
 
-The [MJWarp renderer](contributing/renderers.md#mjwarp) at `supersample=2` and 64 × 64, against the stable-envs NVIDIA OpenGL path with the same compiled appearance, on one H200 with MuJoCo and MuJoCo Warp 3.17. The default for these classes is `supersample=1`, which uses OpenGL. MJWarp returns CUDA tensors. The OpenGL path returns NumPy images, and its time includes the GPU readback.
-
-| Class | Batch | MJWarp FPS | OpenGL FPS | Ratio |
-| --- | ---: | ---: | ---: | ---: |
-| Cube | 1 | 237 | 261 | 0.907× |
-| Cube | 64 | 8,147 | 264 | 30.8× |
-| Cube | 256 | 13,506 | 264 | 51.1× |
-| Scene | 1 | 184 | 230 | 0.803× |
-| Scene | 64 | 6,160 | 230 | 26.7× |
-| Scene | 256 | 9,971 | 230 | 43.3× |
-
-The run used 32 saved states, each reached independently and repeated to fill the larger batches, with three warm-up and six timed samples. Timing includes the public `render` call and synchronization, and excludes the rollout, loading, projection, the first transfer and batch indexing. FPS values are rounded, and the ratios come from the unrounded timings.
-
-These ratios are specific to this H200. They are amplified because the OpenGL baseline ran about 6–7× slower here than in earlier RTX 3090 runs, and the GPU, driver, host and MuJoCo version all changed, so the comparison doesn't isolate a hardware effect.
-
-## nvdiffrast on CUDA
-
-The [nvdiffrast renderer](contributing/renderers.md#nvdiffrast) drew a textured antmaze-medium scene at 12,992 FPS at batch 256 and 15,994 FPS at batch 4,096, at 224 px on one H200. The poses were already on the GPU, and the timing leaves out simulation and state preparation.
+The default for these classes is `supersample=1`, which draws with the NVIDIA OpenGL path. `supersample=2` draws with the [MJWarp renderer](contributing/renderers.md#mjwarp). MJWarp returns CUDA tensors. The OpenGL path returns NumPy images, so a timing of it includes the GPU readback. The OpenGL time changes with the GPU, the driver, the host and the MuJoCo version, so compare the two paths on the same machine.
 
 ## Method
 
@@ -81,7 +43,7 @@ Each run takes states from the environment's own reset distribution or from save
 - `python -m benchmarks.render` times `env.render` on a reset state over a range of batch sizes. It measures the throughput and batch scaling of stable-envs alone, without the upstream renderer.
 - `python -m benchmarks.pipeline` times the path from a host state to a frame: the copy to the device and the `env.render` call. With `--jpeg-dir`, it adds a single-process Pillow baseline that decodes real JPEG files.
 
-Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md) has their options and output schema. Keep these in mind when you read the numbers:
+Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md) has their options and output schema. Keep these in mind when you read the results:
 
 - The ray-cast and CPU3D families (OGBench mazes, DM Control, navigation) depend on the host CPU, and their numbers change with machine load.
 - The upstream renderers run in one process and have no batched entry point.

@@ -88,7 +88,7 @@ The table compares MuJoCo Warp with native CPU physics over 300 public calls (60
 
 In tasks with contacts, the float32 trajectories move apart and the difference grows over the rollout, but the returns stay close. Humanoid falls under these actions on both backends. Many tasks give a zero return under these actions, so their return difference shows little; the `qpos` columns cover them.
 
-`simulation_backend="mjx"` keeps Reacher's JAX/MJX physics. On an L40S, MuJoCo Warp stepped Reacher faster than MJX at every batch from 1 to 4096, for example 1,167,156 against 552,472 steps per second at 4096 environments, including resets.
+`simulation_backend="mjx"` keeps Reacher's JAX/MJX physics. On an L40S, MuJoCo Warp stepped Reacher faster than MJX at every batch from 1 to 4096, including resets.
 
 ## Rendering
 

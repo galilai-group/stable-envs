@@ -100,17 +100,7 @@ Each environment keeps its own units, such as PushT's 512-unit board or CartPole
 
 The cache key holds the exact bytes of the static primitives and the background color, the supersampled resolution, `world`, `flip_y`, the vertex count, the prefix length and the device. A variation that recolors a static primitive or the background therefore invalidates the bake. The rasterizer skips the bake when `K/N × B × H × W` (K static primitives out of N, at the supersampled resolution) is below `raster2d._BAKE_MIN_WORK = 8e6` evaluations, and then no comparison or transfer happens. An environment that passes its `StyleTensor` to the builder (`SceneBuilder(B, ..., style=sty)`) also skips the comparison when the style differs per batch row.
 
-Speedup of baked over unbaked on one H200, supersample 1, timing rasterization of a pre-built scene:
-
-| Batch | PushT 96 px | PushT 224 px | SimplePointMaze 500 px |
-|---|---|---|---|
-| static / total primitives | 6 / 9 | 6 / 9 | 6 / 13 |
-| 256 | not baked | 1.33× | 1.65× |
-| 1,024 | not baked | 1.92× | 1.72× |
-| 4,096 | 1.81× | 2.18× | 1.74× |
-| 16,384 | 2.15× | 2.26× | over the output budget |
-
-The PushT columns use an internal Scene2D PushT scene. The public PushT classes draw with their own Numba (CPU) and Triton (CUDA) rasterizers.
+Baking saves more work as the batch and the resolution grow. Below the work threshold the rasterizer does not bake, because the bake would cost more than it saves. The public PushT classes do not use this cache: they draw with their own Numba (CPU) and Triton (CUDA) rasterizers.
 
 ## gfxdraw
 

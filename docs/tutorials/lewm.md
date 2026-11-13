@@ -114,7 +114,7 @@ python examples/lewm/eval.py --data data/pusht_small.h5 --policy runs/checkpoint
     --device cpu --num-eval 8 eval.eval_budget=20
 ```
 
-The [README](https://github.com/galilai-group/stable-envs/blob/main/examples/lewm/README.md#epoch-time) gives the measured epoch times with stored frames, with the source renderer and with stable-envs on the GPU.
+The [README](https://github.com/galilai-group/stable-envs/blob/main/examples/lewm/README.md#epoch-time) tells how to compare the epoch time with stored frames, with the source renderer and with stable-envs on the GPU.
 
 ## Checklist
 
