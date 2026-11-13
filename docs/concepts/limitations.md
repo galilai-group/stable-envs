@@ -17,7 +17,7 @@ snv.import_errors()     # families this interpreter could not import
 |---|---|---|
 | PushT, PushTDiscrete | Numba physics and Numba rendering | JAX physics and Triton rendering |
 | classic control, navigation, OGBench mazes | yes | yes |
-| Fetch (12 classes) | software OpenGL | MJWarp or explicit NVIDIA OpenGL |
+| Fetch (12 classes) | MuJoCo rasterizer (Numba) | MuJoCo rasterizer (nvdiffrast and Triton), MJWarp or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | software OpenGL | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
@@ -48,8 +48,9 @@ OpenGL, configured before the first MuJoCo import. See [System setup](../system-
 - Fetch `sky.color` at its default draws the registered gradient skybox. The official wrapper's
   `background.color` cannot express it, because `background.color` fills the sky with one colour.
 - Fetch with MJWarp does not draw the translucent mocap markers (the 1 cm cube and the three
-  crosshair bars). MJWarp has no alpha blending and would draw them opaque. Fetch with OpenGL
-  (CPU, or `backend="opengl"` on CUDA) draws them at the gripper, as Gymnasium Robotics does.
+  crosshair bars). MJWarp has no alpha blending and would draw them opaque. Fetch with the MuJoCo
+  rasterizer (`backend="raster"`) or with OpenGL (`backend="opengl"`) draws them at the gripper, as
+  Gymnasium Robotics does.
 - DM Control body-tracking cells draw `floor.color` from a per-texel palette texture.
   `DMCWalkerWalk` `floor.rotation_y` tilts the floor per row.
 - OGBench `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world

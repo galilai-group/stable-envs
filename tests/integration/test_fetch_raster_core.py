@@ -1,4 +1,4 @@
-"""Fetch ``backend="raster"`` on CPU: the shared MuJoCo rasterizer against MuJoCo OpenGL and the Fetch rasterizer."""
+"""Fetch ``backend="raster"`` on CPU, the default: the shared MuJoCo rasterizer against MuJoCo OpenGL."""
 
 import os
 
@@ -57,12 +57,9 @@ def test_raster_follows_opengl(scene: str, varied: bool, software_gl: None) -> N
         state = env.get_state()
         expected = env.render(state, backend="opengl")
         actual = env.render(state, backend="raster")
-        fetch_raster = env.render(state, backend="numba")
-        assert torch.equal(env.render(state, backend="raster"), actual)
+        assert torch.equal(env.render(state), actual)
     mse = _mse(actual, expected)
     assert float(mse.max()) < 0.5
-    # The Fetch rasterizer draws the same scene with its own tessellations of the primitives and the floor.
-    assert float(_mse(actual, fetch_raster).max()) < 0.5
 
 
 @pytest.mark.parametrize("scene", ["Reach", "PickAndPlace"])

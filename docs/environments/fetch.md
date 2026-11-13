@@ -20,23 +20,19 @@ Each task comes in three classes:
 - `Fetch<Task>Dict` has the same task and reward as `Fetch<Task>`. Its name matches the
   stable-worldmodel id `swm/Fetch<Task>Dict-v3`.
 
-Fetch needs `mujoco<3.12`. Install it in its own environment with the `robotics` extra. On CUDA, MJWarp
-draws the frames. See [System setup](../system-setup.md).
+Fetch needs `mujoco<3.12`. Install it in its own environment with the `robotics` extra. See
+[System setup](../system-setup.md).
 
-On CPU, `backend="auto"` (the default) and `backend="numba"` draw the frames with a compiled Numba
-rasterizer at the requested size. The rasterizer follows MuJoCo's OpenGL renderer: the same meshes and
-primitive tessellations, per-vertex lighting with the headlight, 4 samples per pixel, the skybox, and the
-translucent mocap markers and arm blended after the opaque scene. The frames differ from the Gymnasium
-Robotics frames only at some edges and by rounding. The mean squared error per frame is about 0.15 on
-average and less than 0.4 (0-255 scale). The first render after an install compiles the rasterizer in
-about 30 s. Numba keeps the compiled code in a cache for later processes. Without Numba,
-`backend="auto"` uses MuJoCo OpenGL.
-
-`backend="raster"` draws the frames with the shared MuJoCo rasterizer
-([MuJoCo rasterizer](../api/mujoco-raster.md)), on CPU and on CUDA. It reads the scene from the OpenGL render
-model, with MuJoCo's plane grid and primitive tessellations. On CUDA it needs `nvdiffrast` and `triton`.
-`render_semantic(rows)` gives the segmentation and the planar depth of compact render rows, with the goal as
-the site `target0` of the Gymnasium Robotics model.
+`backend="auto"` (the default) and `backend="raster"` draw the frames with the shared MuJoCo rasterizer
+([MuJoCo rasterizer](../api/mujoco-raster.md)), on CPU and on CUDA. The rasterizer follows MuJoCo's OpenGL
+renderer: the meshes, MuJoCo's plane grid and primitive tessellations, per-vertex lighting with the headlight,
+4 samples per pixel, the skybox, and the translucent mocap markers and arm blended after the opaque scene. The
+frames differ from the Gymnasium Robotics frames at some edges and by rounding. On CUDA it needs `nvdiffrast`
+and `triton`. The first render after an install compiles the CPU kernels in about 1 minute. Numba keeps the
+compiled code in a cache for later processes. Without Numba, `backend="auto"` uses MuJoCo OpenGL on CPU. On
+CUDA without nvdiffrast or Triton, `backend="auto"` uses MJWarp. `render_semantic(rows)` gives the
+segmentation and the planar depth of compact render rows, with the goal as the site `target0` of the
+Gymnasium Robotics model.
 
 `backend="opengl"` draws the frames with MuJoCo OpenGL, as Gymnasium Robotics does. On CPU this needs a
 software OpenGL backend, and the frames are equal to the source frames. On Linux, a CPU batch of at least

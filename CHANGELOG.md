@@ -157,6 +157,10 @@ All notable changes to this project are listed here. The format follows
   look, and draws Cube/Scene frames equal to `backend="numba"`. Fetch and Cube/Scene get `render_semantic`:
   segmentation and planar depth in the model of the reference env. `mujoco_scene` refuses scene features that
   were not compared with the OpenGL renderer of the installed MuJoCo version. `backend="auto"` is unchanged.
+- Fetch: `backend="auto"` draws with the shared MuJoCo rasterizer (`backend="raster"`) on CPU and on CUDA. On
+  CUDA without nvdiffrast or Triton it uses MJWarp; on CPU without Numba it uses MuJoCo OpenGL. The Fetch Numba
+  rasterizer (`backend="numba"`, `stable_envs/envs/fetch/raster.py`) is removed. `backend="opengl"` stays the
+  exact reference.
 
 - `OGBCube` and `OGBScene`: `backend="numba"` draws CPU frames with a compiled Numba rasterizer that follows
   MuJoCo's OpenGL renderer: the meshes and primitive tessellations, per-vertex lighting, the 4096 shadow map of
