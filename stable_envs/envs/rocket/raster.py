@@ -88,8 +88,9 @@ def _weights(x, y, x0, y0, z0, w0, x1, y1, z1, w1, x2, y2, z2, w2):
     p, q, r = p * inv_total, q * inv_total, r * inv_total
     depth = p * z0 + q * z1 + r * z2
     ndc = a * (z0 / w0) + b * (z1 / w1) + c * (z2 / w2)
+    # TinyRenderer's barycentric() drops a triangle whose doubled screen area is at most 1e-2 square pixels.
     valid = (
-        (tl.abs(det) > 1e-12)
+        (tl.abs(det) > 1e-2)
         & (a >= 0)
         & (b >= 0)
         & (c >= 0)

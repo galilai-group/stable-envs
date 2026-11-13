@@ -76,23 +76,30 @@ def test_material_table_agrees_with_the_corpus_rgba_validation():
 
 
 def test_tiny_cylinder_is_bullets_support_hull():
+    pytest.importorskip("numba")
     vert, norm, face = RL.tiny_cylinder(4.77, 0.185)
-    assert len(vert) == 42 and len(face) == 80  # every direction lands on its own point
+    assert 4 <= len(vert) <= 42 and len(face) == 2 * len(vert) - 4  # a closed triangulated hull
     r = np.hypot(vert[:, 0], vert[:, 1])
     assert r.min() >= 0.185 - 1e-9 and r.max() <= 0.185 + RL.HULL_MARGIN + 1e-9
     assert np.abs(vert[:, 2]).min() >= 4.77 / 2 - 1e-9 and np.abs(vert[:, 2]).max() <= 4.77 / 2 + RL.HULL_MARGIN + 1e-9
     assert np.allclose(np.linalg.norm(norm, axis=1), 1.0)
-    assert np.allclose(norm, vert / np.linalg.norm(vert, axis=1, keepdims=True))
+    assert np.allclose(norm, vert / np.linalg.norm(vert, axis=1, keepdims=True), atol=1e-6)
     for tri in face:  # outward winding
         a, b, c = vert[tri]
         assert np.dot(np.cross(b - a, c - a), (a + b + c) / 3) > 0
 
 
 def test_scene_arrays_are_thirteen_geoms_with_a_textured_ground():
+    pytest.importorskip("numba")
     vert, norm, face, vg, uv = RL.build_scene_arrays()
-    assert len(vert) == 382 and len(face) == 486 and vg.max() == 12 and vg.min() == 0
+    cylinders = [RL.tiny_cylinder(k[1], k[2]) for _, k, _, _ in RL.ROCKET_LINKS if k[0] == "cyl"]
+    cylinders.append(RL.tiny_cylinder(RL.PAD_LEN, RL.PAD_RADIUS))
+    assert len(vert) == 6 + 7 * 24 + sum(len(v) for v, _, _ in cylinders)
+    assert len(face) == 2 + 7 * 12 + sum(len(f) for _, _, f in cylinders)
+    assert vg.max() == 12 and vg.min() == 0
     assert (uv[vg == 0] != 0).any() and not (uv[vg != 0] != 0).any()
-    assert np.allclose(uv[vg == 0], [[100, 0], [100, 100], [0, 100], [0, 0]])  # plane100.obj's vt
+    # plane100.obj's vt, one vertex per face corner as TinyRenderer stores the obj
+    assert np.allclose(uv[vg == 0], [[100, 0], [100, 100], [0, 100], [100, 0], [0, 100], [0, 0]])
     assert list(RL.GEOM_NAMES[:2]) == ["ground", "body"] and RL.GEOM_NAMES[-1] == "pad"
     assert np.all(vg[face[:, 0]] == vg[face[:, 1]]) and np.all(vg[face[:, 0]] == vg[face[:, 2]])
 

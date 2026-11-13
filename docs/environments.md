@@ -72,7 +72,7 @@ With every extra installed, these 80 classes register. Without PyFlyt, 79 classe
 
 `reference_id` names the source that the tests compare a class with. The "Renderer on CPU" and
 "Renderer on CUDA" rows of each class on its family page name the code that draws the frames. For
-example, PushT uses a Numba port of the source's pygame drawing, and PyFlytRocketLanding uses
+example, PushT uses a Numba port of the source's pygame drawing, and PyFlytRocketLanding uses a Numba port of
 TinyRenderer on CPU.
 
 For classes that draw with a different rasterizer from the source,

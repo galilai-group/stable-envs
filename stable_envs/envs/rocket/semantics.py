@@ -38,6 +38,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     ``numba_cuda_min_envs``. ``"pybullet"`` steps PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with
     replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
     CPU or the nvdiffrast path on CUDA.
+
+    On CPU, ``backend="pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer, and ``"numba"``
+    draws all frames in one call of a Numba port of it (``tiny_raster``). ``"auto"`` selects ``render.CPU_AUTO``.
     """
 
     requires_cuda = False
@@ -68,7 +71,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         simulation_backend=None,
         numba_cuda_min_envs=NUMBA_CUDA_MIN_ENVS,
     ):
+        from .render import check_backend
+
         device = Env.resolve_device(device)
+        check_backend(backend, device)
         self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, numba_cuda_min_envs)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
         # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
@@ -183,6 +189,31 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return rocket_render.draw_gpu(
             self, fields["body"], fields["link"], fields["rgba"], self.size, self.ss, views=fields["view"]
         )
+
+    @torch.no_grad()
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
+        """Draw ``(..., 13)`` pose rows on CUDA with the explicit-pose renderer of ``render(state)``.
+
+        The rocket is at the row's pose and the camera at its link pose one physics substep earlier
+        (``legacy.lagged_pose``), as the reference bridge places them. The colours come from the style rows.
+        """
+        if self.device.type != "cuda":
+            return frozen.PyFlytRocketLanding._render(self, states, size, supersample, variation, style, out)
+        from . import render as rocket_render
+
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        lead = tuple(s.shape[:-1])
+        s = s.reshape(-1, self.state_dim)
+        batch = int(s.shape[0])
+        size = int(size or self.size)
+        ss = int(self.ss if supersample is None else supersample)
+        style_rows = self.resolve_style(style, variation, batch=batch).values.detach().cpu().numpy()
+        body, links, rgba = rocket_render.pose_row_fields(s.detach().cpu().numpy(), style_rows)
+        frames = rocket_render.draw_gpu(self, body, links, rgba, size, ss)
+        if out is not None:
+            out.view(batch, size, size, 3).copy_(frames)
+            frames = out.view(batch, size, size, 3)
+        return frames.view(*lead, size, size, 3) if lead else frames
 
     def _variation_rows(self, attribute):
         keys = [key for key, _, _ in self.variation_space.flat_layout()]
@@ -408,14 +439,12 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         from . import render as rocket_render
 
         backend = self.backend if backend is None else backend
-        allowed = ("auto", "tiny") if self.device.type == "cpu" else ("auto", "nvdiffrast")
-        if backend not in allowed:
-            raise ValueError("Rocket CPU rendering uses tiny; CUDA rendering uses nvdiffrast")
+        rocket_render.check_backend(backend, self.device)
         for value in (size, supersample, chunk_size):
             if value is not None and (type(value) is not int or value < 1):
                 raise ValueError("Render dimensions/chunk must be positive integers")
         if state is None or isinstance(state, TensorDict) and "current" in state.keys():
-            frames = self._render_full(state, size, supersample, chunk_size)
+            frames = self._render_full(state, size, supersample, chunk_size, backend)
             if out is not None:
                 if out.shape != frames.shape or out.dtype != frames.dtype or out.device != frames.device:
                     raise ValueError("Invalid Rocket render output buffer")
@@ -425,12 +454,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         b, complete, resolution, ss = self._render_dimensions(state, size, supersample)
         chunk = b if chunk_size is None else chunk_size
         frames = (
-            rocket_render.render(self, state, resolution, ss, chunk_size)
+            rocket_render.render(self, state, resolution, ss, chunk_size, backend)
             if complete
             else torch.cat(
                 [
-                    frozen.PyFlytRocketLanding._render(
-                        self,
+                    self._render(
                         state["renderer", "pose"][i : i + chunk],
                         size=resolution,
                         supersample=ss,
@@ -447,7 +475,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             return out
         return frames
 
-    def _render_full(self, state, size, supersample, chunk_size):
+    def _render_full(self, state, size, supersample, chunk_size, backend=None):
         """Draw full States; only the leaves the frame reads are checked."""
         from . import render as rocket_render
 
@@ -458,7 +486,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         size = self.size if size is None else size
         supersample = self.ss if supersample is None else supersample
         if self.device.type == "cpu":
-            return rocket_render.render_cpu(self, *args, size, supersample)
+            return rocket_render.render_cpu(self, *args, size, supersample, backend)
         return rocket_render.draw_gpu(self, *args, size, supersample, chunk_size)
 
     def _render_dimensions(self, state, size, supersample):
