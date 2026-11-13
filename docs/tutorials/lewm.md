@@ -102,19 +102,36 @@ Plan with the trained model on 50 start and goal pairs from the dataset:
 python examples/lewm/eval.py --data data/pusht_state.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_100.pt
 ```
 
-`--policy random` evaluates random actions. `--num-eval` sets the number of pairs, `--env-device` the device of the stable-envs environments and `--device` the device of the model and the planner. The script prints the success rate as JSON. `--out` also appends it as one JSON line to a file.
+`--policy random` evaluates random actions. `--num-eval` sets the number of pairs, `--env-device` the device of the stable-envs environments and `--device` the device of the model and the planner. The script prints the success rate as JSON. `--out` also appends it as one JSON line to a file. `--video DIR` writes one video per environment. It needs a dataset with a `pixels` column, for example from `make_dataset.py` without `--states-only`.
 
 ## Small check
 
-This runs a few hundred steps on a small part of the data:
+This runs a few hundred steps on a small part of the data. Make a state dataset from the first 200 episodes:
 
 ```bash
 python examples/lewm/make_dataset.py data/pusht_expert_train.h5 data/pusht_small.h5 --states-only --episodes 200
+```
+
+Train and evaluate on the CPU:
+
+```bash
 python examples/lewm/train.py --data data/pusht_small.h5 --half --max-steps 300 --precision 32 --accelerator cpu \
     loader.batch_size=16 loader.num_workers=2
 python examples/lewm/eval.py --data data/pusht_small.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_1.pt \
     --device cpu --num-eval 8 eval.eval_budget=20
 ```
+
+Train and evaluate on a GPU:
+
+```bash
+python examples/lewm/train.py --data data/pusht_small.h5 --half --compile --max-steps 300
+python examples/lewm/eval.py --data data/pusht_small.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_1.pt \
+    --num-eval 8 eval.eval_budget=20
+```
+
+`train.py` prints one JSON line with the losses at the end of each epoch. After 300 steps, the success rate is low.
+
+In a container with a CPU limit, set `OMP_NUM_THREADS` and `NUMBA_NUM_THREADS` to the number of CPUs in the limit. Without these variables, PyTorch and Numba start threads for all the CPUs of the host, and the CPU steps become much slower.
 
 The [README](https://github.com/galilai-group/stable-envs/blob/main/examples/lewm/README.md#epoch-time) tells how to compare the epoch time with stored frames, with the source renderer and with stable-envs on the GPU.
 
