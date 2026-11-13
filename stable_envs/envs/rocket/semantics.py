@@ -190,6 +190,31 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             self, fields["body"], fields["link"], fields["rgba"], self.size, self.ss, views=fields["view"]
         )
 
+    @torch.no_grad()
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
+        """Draw ``(..., 13)`` pose rows on CUDA with the explicit-pose renderer of ``render(state)``.
+
+        The rocket is at the row's pose and the camera at its link pose one physics substep earlier
+        (``legacy.lagged_pose``), as the reference bridge places them. The colours come from the style rows.
+        """
+        if self.device.type != "cuda":
+            return frozen.PyFlytRocketLanding._render(self, states, size, supersample, variation, style, out)
+        from . import render as rocket_render
+
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        lead = tuple(s.shape[:-1])
+        s = s.reshape(-1, self.state_dim)
+        batch = int(s.shape[0])
+        size = int(size or self.size)
+        ss = int(self.ss if supersample is None else supersample)
+        style_rows = self.resolve_style(style, variation, batch=batch).values.detach().cpu().numpy()
+        body, links, rgba = rocket_render.pose_row_fields(s.detach().cpu().numpy(), style_rows)
+        frames = rocket_render.draw_gpu(self, body, links, rgba, size, ss)
+        if out is not None:
+            out.view(batch, size, size, 3).copy_(frames)
+            frames = out.view(batch, size, size, 3)
+        return frames.view(*lead, size, size, 3) if lead else frames
+
     def _variation_rows(self, attribute):
         keys = [key for key, _, _ in self.variation_space.flat_layout()]
         return torch.as_tensor(
@@ -433,8 +458,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             if complete
             else torch.cat(
                 [
-                    frozen.PyFlytRocketLanding._render(
-                        self,
+                    self._render(
                         state["renderer", "pose"][i : i + chunk],
                         size=resolution,
                         supersample=ss,

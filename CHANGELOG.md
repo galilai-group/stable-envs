@@ -156,7 +156,8 @@ All notable changes to this project are listed here. The format follows
   frames of `backend="pybullet"` (also `"tiny"`), which stays the default. An unknown `backend` raises `ValueError`
   at construction. On CUDA, the renderer uses the same meshes, the float32 model, view and projection matrices of
   TinyRenderer, its rule for small triangles and its colour law, and it computes the view matrices without a
-  PyBullet call for each frame.
+  PyBullet call for each frame. On CUDA, `env._render` draws pose rows with the same renderer as `render(state)`:
+  the rocket at the pose of the row and the camera at the lagged link pose of the reference bridge.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the

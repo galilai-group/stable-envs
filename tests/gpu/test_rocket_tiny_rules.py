@@ -41,9 +41,12 @@ def test_cuda_frames_track_the_tinyrenderer_port(colours, record_property):
             rgba[:, :5, :3] = rng.integers(0, 256, (N, 5, 3)) / 255.0
             rgba[:, RR.FLAME_COLOR] = np.where(rng.random((N, 1)) < 0.5, RL.IGNITION_RGBA, RL.FLAME_RGBA)
         ours = RR.draw_gpu(env, body, links, rgba, SIZE, 1).cpu().numpy().astype(np.float64)
+        rows_frames = env._render(torch.as_tensor(rows, device="cuda"), style=torch.as_tensor(style)).cpu().numpy()
     port = TR.draw(body, links, rgba, SIZE, 1).astype(np.float64)
     per_frame = ((ours - port) ** 2).mean((1, 2, 3))
     record_property("mse_mean", float(per_frame.mean()))
     record_property("mse_max", float(per_frame.max()))
     print(f"CUDA vs port, colours={colours}: raw MSE mean {per_frame.mean():.4f} max {per_frame.max():.4f}")
     assert per_frame.mean() <= MSE_MEAN_MAX and per_frame.max() <= MSE_FRAME_MAX, np.round(per_frame, 2)
+    if not colours:
+        assert np.array_equal(rows_frames, ours.astype(np.uint8))
