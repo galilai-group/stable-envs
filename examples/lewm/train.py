@@ -103,8 +103,9 @@ def main() -> None:
     state_col = cfg.env.state_column
 
     keys = ["action", state_col] if online else ["pixels", "action"]
+    # stable-worldmodel resolves a relative path under its cache folder, not the working directory.
     dataset = swm.data.load_dataset(
-        a.data,
+        str(Path(a.data).resolve()),
         num_steps=cfg.wm.history_size + cfg.wm.num_preds,
         frameskip=cfg.data.frameskip,
         keys_to_load=keys,

@@ -120,7 +120,8 @@ def main() -> None:
     if ENV_ID not in registry:
         register(id=ENV_ID, entry_point=make_task_env)
 
-    dataset = swm.data.load_dataset(a.data, keys_to_cache=list(ev.keys_to_cache))
+    # stable-worldmodel resolves a relative path under its cache folder, not the working directory.
+    dataset = swm.data.load_dataset(str(Path(a.data).resolve()), keys_to_cache=list(ev.keys_to_cache))
     names = set(dataset.column_names) | set(getattr(dataset, "_schema_names", ()))
     episode_col = "episode_idx" if "episode_idx" in names else "ep_idx"
     episodes = dataset.get_col_data(episode_col)
