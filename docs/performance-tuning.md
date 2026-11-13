@@ -74,8 +74,8 @@ names one.
 | `cpu3d_chunk` | 16 | none (TrackCom cells use a per-cell table) | Xeon Platinum 8268 | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. |
 | `dmc_cpu_ray_budget` | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | not recorded | Rays per CPU render chunk of the fixed-camera DMC cells, counting supersamples. |
 | `dmc_ray_budget` | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | not recorded | Rays per CUDA render chunk of the fixed-camera DMC cells. |
-| `dmc_launch_rays` | 256 × 224 × 224 | none | not recorded | Rays per MJWarp launch of the DMC TrackCom cells. This value sets worlds per launch (at most 256). |
-| `dmc_min_worlds` | 64 | none | not recorded | Fewest worlds per MJWarp launch of the DMC TrackCom cells. |
+| `dmc_launch_rays` | 256 × 224 × 224 | none | not recorded | Rays per MJWarp launch of the DMC TrackCom cells and of the DMC `backend="mjwarp"` renderer. This value sets worlds per launch (at most 256). The `worlds` render option overrides it. |
+| `dmc_min_worlds` | 64 | none | not recorded | Fewest worlds per MJWarp launch of the DMC TrackCom cells and of the DMC `backend="mjwarp"` renderer. |
 | `fetch_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the Fetch cells. |
 | `ogb_mjw_worlds` | 256 | none | not recorded | Most worlds per MJWarp launch of the OGBench Cube and Scene cells. |
 | `ogb_gl_workers` | 8 | min(value, CPUs in the process affinity, rows) | not recorded | Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux. A batch that uses fewer than 2 workers draws in the main process. The value 0 draws every batch in the main process. |

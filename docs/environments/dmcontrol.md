@@ -41,6 +41,54 @@ The reward of each source control step is in [0, 1]. Each public action repeats 
 the sum of both rewards. The suite does not define a success criterion. Ball
 in cup is the exception: its `success` value is 1 when the ball is in the cup.
 
+## MuJoCo Warp renderer
+
+`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it.
+On CUDA, `backend="auto"` selects it for the body-tracking classes (Cheetah, Hopper, Humanoid, Quadruped,
+Swimmer and Walker). `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the fixed-camera classes. On
+CPU, `backend="mjwarp"` raises `ValueError`.
+
+The renderer draws the cell's geoms. MuJoCo Warp does not draw sites and tendons, so the fixed-camera
+cells add one geom for each site in groups 0-2 and one capsule for each segment of a drawn tendon.
+A kernel puts these geoms at the site poses and on the tendon's catenary each frame. The catenary uses
+the gravity of each row. A pass replaces the sky with the source frame for cameras that keep one
+orientation. A second pass draws the floor reflection and the floor colours of each row.
+
+Material colours, the light scale, the geom colour leaves, the sphere radius leaves, gravity and the
+floor colours change per world. The field of view, visibility and shape leaves need a separate render
+model. The renderer groups the rows by these leaves and draws each group with its own context.
+
+When the physics runs on MuJoCo Warp, `env.render()` and the frames of `env.step` copy the physics poses
+on the device into the render data. They do not read the State back to the host and do not run
+kinematics again. The render kernels run on the current CUDA stream after the physics kernels.
+
+`render_options` sets the speed and fidelity options. `STABLE_ENVS_DMC_WARP_OPTIONS` sets defaults as a
+JSON object.
+
+| option | default | effect |
+|---|---|---|
+| `shadows` | `"all"` | `"all"` lights that cast shadows do so, `"one"` only the first of them, `"none"` no shadow rays. |
+| `samples` | None | Sub-pixel samples per axis. None uses `supersample`. |
+| `groups` | `(0, 1, 2)` | The geom groups that the renderer draws. |
+| `bvh` | `"refit"` | `"refit"` updates the bounds of the scene BVH each frame. `"rebuild"` builds the BVH again. |
+| `graph` | True | Replays one captured CUDA graph per launch. False launches each kernel. |
+| `worlds` | None | Worlds per launch. None uses the `dmc_launch_rays` and `dmc_min_worlds` tuning knobs. |
+| `reflection` | True | The floor reflection pass. |
+| `sky` | True | The source sky for cameras that keep one orientation. False draws MuJoCo Warp's skybox. |
+| `segmentation`, `depth` | False | Keep the geom id and the planar depth of each pixel. |
+
+`graph`, `bvh` and `worlds` change only the speed. The other options can change the pixels.
+
+```python
+import stable_envs as snv
+
+env = snv.DMCCartpoleSwingup(num_envs=1024, device="cuda", backend="mjwarp", render_options={"shadows": "one"})
+```
+
+`env.render_semantic(rows)` returns the `(objid, objtype)` pair of each pixel in MuJoCo's `mjtObj`
+numbering and the planar depth along the optical axis, for compact render rows. Ids index the model of
+`reference_env`. The sky is -1.
+
 ## GPU physics and backend selection
 
 On a CUDA device, all 17 classes step with MuJoCo Warp at every batch size. On CPU they step with
