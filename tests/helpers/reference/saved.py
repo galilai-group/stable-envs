@@ -5,7 +5,9 @@ They verify recorded measurements without regenerating trajectories.
 
 from __future__ import annotations
 
+import io
 import json
+import tarfile
 from pathlib import Path
 
 import numpy as np
@@ -112,7 +114,17 @@ def rocket_render_mse(ours, source) -> dict:
     return mse_summary(frame_mse(ours, source))
 
 
-def verify_rocket_render(directory, candidate_root, *, revision=None):
+def recorded_code(directory):
+    """The revision and the stored file contents named by ``recorded_code.json`` in a saved report directory."""
+    root = Path(directory)
+    meta = json.loads((root / "recorded_code.json").read_text())
+    data = (root / meta["archive"]).read_bytes()
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
+        sources = {m.name: archive.extractfile(m).read() for m in archive.getmembers() if m.isfile()}
+    return meta["revision"], sources
+
+
+def verify_rocket_render(directory, candidate_root, *, revision=None, sources=None):
     """Verify the saved 204-case Rocket render report and its per-frame MSE against the recorded band."""
     root = Path(directory)
     report = json.loads((root / "result.json").read_text())
@@ -120,7 +132,7 @@ def verify_rocket_render(directory, candidate_root, *, revision=None):
     assert report["per_frame_mse_pass"] is True
     assert report["oracle_source"]["sha256"] == ROCKET_SOURCE
     assert report["versions"]["PyFlyt"] == "0.29.0" and report["versions"]["pybullet"] == "3.2.7"
-    identity = verify_recorded_code(report["production_hashes"], candidate_root, revision=revision)
+    identity = verify_recorded_code(report["production_hashes"], candidate_root, revision=revision, sources=sources)
 
     def key(label, seed, dtype):
         return CaseKey("swm/PFRocketLanding-v0", "render", f"{label}/{seed}/{dtype}", report["device"])

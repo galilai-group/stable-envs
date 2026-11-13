@@ -18,16 +18,23 @@ class CodeIdentity(TypedDict):
     files: dict[str, str]
 
 
-def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision: str | None = None) -> CodeIdentity:
-    """Verify recorded file hashes against the worktree or, with ``revision``, a Git commit.
+def verify_recorded_code(
+    files: Mapping[str, str],
+    root: str | Path,
+    *,
+    revision: str | None = None,
+    sources: Mapping[str, bytes] | None = None,
+) -> CodeIdentity:
+    """Verify recorded file hashes against the worktree, a Git commit (``revision``) or stored contents.
 
-    A commit is read from Git objects, without checking out or running its code.
+    A commit is read from Git objects, without checking out or running its code. ``sources`` maps each
+    recorded path to the stored bytes of that file; ``revision`` then only names the commit they came from.
     """
     root = Path(root).resolve(strict=True)
     if not files:
         raise ValueError("Missing recorded code identity")
-    commit = None
-    if revision is not None:
+    commit = revision if sources is not None else None
+    if revision is not None and sources is None:
         commit = subprocess.check_output(
             ["git", "-C", str(root), "rev-parse", "--verify", "--end-of-options", f"{revision}^{{commit}}"],
             text=True,
@@ -36,7 +43,11 @@ def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision
         path = Path(name)
         if path.is_absolute() or ".." in path.parts or path.as_posix() != name or not name:
             raise ValueError(f"Invalid recorded code path: {name!r}")
-        if commit:
+        if sources is not None:
+            if name not in sources:
+                raise ValueError(f"Missing stored code: {name}")
+            actual = hashlib.sha256(sources[name]).hexdigest()
+        elif commit:
             content = subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:{name}"])
             actual = hashlib.sha256(content).hexdigest()
         else:
@@ -46,7 +57,8 @@ def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision
             actual = sha256(target)
         if actual != expected:
             raise ValueError(f"Recorded code hash mismatch: {name}")
-    return dict(mode="historical" if commit else "worktree", commit=commit, files=dict(files))
+    historical = commit is not None or sources is not None
+    return dict(mode="historical" if historical else "worktree", commit=commit, files=dict(files))
 
 
 # Unknown recorded versions cannot establish a declared match.

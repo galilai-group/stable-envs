@@ -10,22 +10,22 @@ from pathlib import Path
 import pytest
 
 from stable_envs.testing.evidence import verify_seal
-from tests.helpers.reference.saved import native_corpus, verify_rocket_render
+from tests.helpers.reference.saved import native_corpus, recorded_code, verify_rocket_render
 
 ROOT = Path(__file__).resolve().parents[2]
 ROCKET = ROOT / "tests/fixtures/saved/rocket_public_cpu_coverage"
-ROCKET_REVISION = "ebf82e6eeed8b2b9c7560e4dff6f9a6b5c95e95b"
+ROCKET_REVISION, ROCKET_CODE = recorded_code(ROCKET)
 
 
 @pytest.fixture(scope="module")
 def recorded_tree(tmp_path_factory):
-    """Materialize the code the report recorded, read from Git without checking it out."""
+    """Materialize the code the report recorded from the stored copy, without running it."""
     root = tmp_path_factory.mktemp("recorded-rocket")
     report = json.loads((ROCKET / "result.json").read_text())
     for name in report["production_hashes"]:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(subprocess.check_output(["git", "show", f"{ROCKET_REVISION}:{name}"], cwd=ROOT))
+        path.write_bytes(ROCKET_CODE[name])
     return root
 
 
@@ -33,7 +33,7 @@ def test_rocket_fixture_passes_coverage_and_code_identity(tmp_path):
     """Control: the unmodified fixture gets past coverage, then stops for lack of frames."""
     shutil.copy(ROCKET / "result.json", tmp_path / "result.json")
     with pytest.raises(FileNotFoundError, match="frames.npz"):
-        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
+        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION, sources=ROCKET_CODE)
 
 
 @pytest.mark.parametrize("defect", ["duplicate", "missing_group", "sibling"])
@@ -47,7 +47,20 @@ def test_new_rocket_coverage_rejects_duplicate_or_missing_groups_before_pixels(t
         report["groups"].pop(next(iter(report["groups"])))
     (tmp_path / "result.json").write_text(json.dumps(report))
     with pytest.raises(AssertionError):
-        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
+        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION, sources=ROCKET_CODE)
+
+
+@pytest.mark.parametrize("defect", ["changed", "missing"])
+def test_changed_or_missing_stored_code_is_rejected(tmp_path, defect):
+    shutil.copy(ROCKET / "result.json", tmp_path / "result.json")
+    sources = dict(ROCKET_CODE)
+    name = next(iter(sources))
+    if defect == "changed":
+        sources[name] += b"\n# Deliberate mismatch\n"
+    else:
+        del sources[name]
+    with pytest.raises(ValueError, match="hash mismatch" if defect == "changed" else "Missing stored code"):
+        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION, sources=sources)
 
 
 def test_a_report_does_not_certify_changed_code(recorded_tree, tmp_path):
