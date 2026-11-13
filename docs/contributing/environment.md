@@ -204,4 +204,21 @@ Before review, run the final acceptance comparison with the upstream library tha
 
 A new registration is ready for review when everything you say it supports is implemented, every required check passes, and each supported item points to the test or recorded comparison behind it. Unsupported paths raise a clear error instead of running, and a skipped required check counts as a failure. Frozen fixtures and thresholds stay as they are when a check fails, and a sibling class's result doesn't count for your registration unless the code path and configuration are identical. In the pull request, name the layer and every affected registration, report fast tests and final acceptance separately, and keep the driver script, upstream versions and hashes, dependency and platform versions, raw logs and the result of each check for review.
 
-Mistakes reviewers see most: saving only `qpos`, dropping reset RNG or anchors, restoring fields in the wrong order, a setter that changes hidden history, casting float64 upstream arithmetic to float32, silently clipping actions, confusing the visual goal with the reward goal, changing `<` to `<=`, dropping velocity terms from a dense reward, using a trainer's horizon as the simulator's, accepting siblings by name, changing physics while rendering a snapshot, making frames depend on batch order, releasing shared contexts, and saying the physics is right because the pixels match.
+These are the mistakes that reviewers see most:
+
+- Saving only `qpos`.
+- Dropping the reset RNG or the anchors.
+- Restoring fields in the wrong order.
+- A setter that changes hidden history.
+- Casting float64 upstream arithmetic to float32.
+- Clipping actions without an error or a log message.
+- Confusing the visual goal with the reward goal.
+- Changing `<` to `<=`.
+- Dropping velocity terms from a dense reward.
+- Using a trainer's horizon as the simulator's horizon.
+- Accepting a sibling class by name.
+- Changing physics while rendering a snapshot.
+- Frames that depend on batch order.
+- Releasing shared contexts.
+- Saying that the physics is correct because the pixels match.
+

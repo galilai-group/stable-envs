@@ -6,7 +6,7 @@ Most renderers here must match a reference with zero differing pixels. A rasteri
 
 `a / b` on float32 lowers to PTX `div.full.f32`, and `tl.sqrt` lowers to `sqrt.approx.f32`. Both are accurate to about 1 ulp, short of IEEE round-to-nearest, and the error shows when the kernel rounds or compares the result:
 
-- `render/gfxdraw/fused.py` takes the `floor` of a float32 quotient. An exact `-42.0 / 14.0 = -3.0` came back slightly below `-3`, and a scanline moved by one pixel.
+- `render/gfxdraw/fused.py` takes the `floor` of a float32 quotient. With `div.full.f32`, the exact quotient `-42.0 / 14.0 = -3.0` can come out slightly below `-3`, which moves a scanline by one pixel.
 - `render/raycast3d.py` uses `disc > 0` as the hit test, where a 1-ulp error in the inputs changes hits.
 
 Use `tl.math.div_rn(a, b)` and `tl.sqrt_rn(x)` instead.
