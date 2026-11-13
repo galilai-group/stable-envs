@@ -33,8 +33,8 @@ about 30 s. Numba keeps the compiled code in a cache for later processes. Withou
 `backend="auto"` uses MuJoCo OpenGL.
 
 `backend="raster"` draws the frames with the shared MuJoCo rasterizer
-([MuJoCo rasterizer](../api/mujoco-raster.md)), on CPU and on CUDA. It reads the scene from the OpenGL render
-model, with MuJoCo's plane grid and primitive tessellations. On CUDA it needs `nvdiffrast` and `triton`.
+([MuJoCo rasterizer](../api/mujoco-raster.md)) on CPU. It reads the scene from the OpenGL render model, with
+MuJoCo's plane grid and primitive tessellations. On CUDA it raises `ValueError`.
 `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows, with the goal as
 the site `target0` of the Gymnasium Robotics model.
 

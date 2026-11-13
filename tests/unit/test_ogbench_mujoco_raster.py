@@ -135,17 +135,3 @@ def test_triangles_through_the_near_plane_are_clipped():
     core.draw(p, *inputs, 1, images)
     bottom = images[0, -1]
     assert not np.any(np.all(bottom == [255, 0, 255], -1))
-
-
-def test_shade_points_follows_the_frame_lighting():
-    m, d, p = _scene()
-    floor = int(np.flatnonzero(p.objid == m.geom("floor").id)[0])
-    points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0]])
-    normals = np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
-    lights = ms.headlight_rows(p.lights, p.cam[None])[0]
-    lit = core.shade_points(p, floor, points, normals, p.rgba[floor], p.cam, lights)
-    assert lit.shape == (2, 2, 3)
-    assert np.all((lit >= 0) & (lit <= 1))
-    # The first pass holds at least the headlight's ambient share; the sun's share is the shadow light's.
-    assert np.all(lit[:, 0] >= 0.1 * p.rgba[floor, :3] - 1e-12)
-    assert np.all(lit[:, 1] > 0)
