@@ -125,6 +125,9 @@ All notable changes to this project are listed here. The format follows
   (to hide it, set `STABLE_ENVS_TUNING_HINT=0`). `STABLE_ENVS_AUTOTUNE=1` tunes such a path on first use.
 - docs/environment-variables.md lists every `STABLE_ENVS_*` variable.
 - `Env.describe()` reports `state_fields`: the shape and dtype of each State field.
+- Tuning knob `worker_timeout` (`STABLE_ENVS_WORKER_TIMEOUT`, default 120): the seconds that a CPU simulator
+  worker can take to answer one request before the batch fails. A worker can take up to the larger of this value
+  and 300 seconds to start. Set a larger value when the reset of the environments in one worker takes minutes.
 
 ### Changed
 

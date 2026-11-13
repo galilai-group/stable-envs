@@ -2,6 +2,8 @@ import time
 
 import numpy as np
 
+from .. import tuning
+
 
 def lane_slices(num_envs, processes):
     """Split ``num_envs`` lanes into ``processes`` contiguous, nearly equal slices."""
@@ -18,7 +20,9 @@ class ProcessRequests:
 
     _worker_family = "Simulation"
 
-    def _responses(self, timeout=120):
+    def _responses(self, timeout=None):
+        if timeout is None:
+            timeout = tuning.get("worker_timeout")
         results, errors = [], []
         deadline = time.monotonic() + timeout
         for conn, process in zip(self._connections, self._processes):
@@ -54,7 +58,7 @@ class ProcessRequests:
                 child.close()
             self._connections.append(parent)
             self._processes.append(process)
-        self.worker_info = self._responses(timeout=300)
+        self.worker_info = self._responses(timeout=max(300, tuning.get("worker_timeout")))
 
     def _check_idle(self):
         self._check_open()

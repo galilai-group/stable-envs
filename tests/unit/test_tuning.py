@@ -217,6 +217,21 @@ def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
 
+@pytest.mark.parametrize(("knobs", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
+def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expected):
+    from stable_envs._execution import requests
+
+    clock = iter(range(10_000))
+    monkeypatch.setattr(requests.time, "monotonic", lambda: next(clock))
+    owner = requests.ProcessRequests()
+    owner._connections = [SimpleNamespace(poll=lambda _: False)]
+    owner._processes = [SimpleNamespace(is_alive=lambda: True, pid=1)]
+    with tuning.override(**knobs), pytest.raises(RuntimeError, match="timed out"):
+        owner._responses()
+    # The deadline is read once; each poll reads the clock once more.
+    assert next(clock) == expected + 1
+
+
 @pytest.mark.parametrize(
     ("capability", "arches", "ok"),
     [
