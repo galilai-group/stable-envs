@@ -19,8 +19,13 @@ snv.import_errors()                  # {module: exception} for families this mac
 EGL context or a compiled scene.
 
 `info` returns `class_name`, `id`, `class`, `module`, `family`, `domain`, `reference_id`,
-`render_state_dim`, `render_state_names`, `default_size`, `action_dim`, `has_dynamics` and
+`render_state_dim`, `render_state_names`, `default_size`, `native_size`, `action_dim`, `has_dynamics` and
 `requires_cuda`. `class` is the class object and `module` is the name of its module.
+
+`native_size` is the only `size` that a class draws. It is the size that the source library draws, and it is
+also `default_size`. The classic control, navigation and Craftax classes set it, because their sources draw
+every primitive in fixed pixels. Another `size` raises `ValueError`. `native_size` is None for the classes that
+draw any size.
 
 `snv.info` returns metadata. It does not return an `snv.Spec`. An `snv.Spec` describes tensors
 (`env.frame_spec`, `env.state_spec`, …).

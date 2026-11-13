@@ -7,6 +7,7 @@
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 128,
+ "native_size": null,
  "frame_shape": [128, 128, 3],
  "physics": null,
  "renderers": {

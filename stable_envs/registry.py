@@ -154,6 +154,7 @@ def info(name: str) -> dict[str, Any]:
         "render_state_dim": render_dim,
         "render_state_names": list(getattr(cls, "state_names", ()) or ()),
         "default_size": getattr(cls, "default_size", None),
+        "native_size": getattr(cls, "native_size", None),
         "reference_id": getattr(cls, "reference_id", None),
         "action_dim": getattr(cls, "action_dim", None),
         "has_dynamics": getattr(cls, "_step", None) is not Env._step,

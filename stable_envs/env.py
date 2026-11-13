@@ -364,6 +364,8 @@ class Env:
     state_names: tuple[str, ...] = ()
     requires_cuda: bool = False
     default_size: int = 96
+    #: The only ``size`` the class draws, which is the size the source library draws; None draws any size.
+    native_size: int | None = None
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()

@@ -121,3 +121,19 @@ def test_a_lane_renders_the_same_alone_as_in_a_batch(name):
         frames = env.render(state)
         for lane in range(LANES):
             assert_same_state(env.render(state[lane : lane + 1])[0], frames[lane])
+
+
+@pytest.mark.parametrize("name", envs("native_size"))
+def test_a_class_draws_any_size_unless_it_declares_its_native_size(name):
+    cls = se.registry.REGISTRY[name]
+    if cls.native_size is None:
+        with se.make(name, num_envs=1, size=128, device="cpu") as env:
+            assert tuple(env.render(env.reset(seed=SEED)).shape[1:3]) == (128, 128)
+        return
+    assert cls.default_size == cls.native_size
+    with _make(name) as env:
+        assert env.size == cls.native_size
+        assert tuple(env.render(env.reset(seed=SEED)).shape[1:]) == tuple(env.frame_spec.shape)
+    with pytest.raises(ValueError):
+        with se.make(name, num_envs=1, size=cls.native_size + 8, device="cpu") as env:
+            env.render(env.reset(seed=SEED))

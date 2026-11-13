@@ -128,9 +128,14 @@ All notable changes to this project are listed here. The format follows
 - Tuning knob `worker_timeout` (`STABLE_ENVS_WORKER_TIMEOUT`, default 120): the seconds that a CPU simulator
   worker can take to answer one request before the batch fails. A worker can take up to the larger of this value
   and 300 seconds to start. Set a larger value when the reset of the environments in one worker takes minutes.
+- `Env.native_size`: the only `size` that a class draws, which is the size that the source library draws. It is
+  also the class's `default_size`. The classic control classes, the navigation classes and the Craftax classes set
+  it. It is None for the classes that draw any size. `snv.info()` and the environment pages show it.
 
 ### Changed
 
+- `Env.native_size` replaces the navigation attribute `fixed_size` and the classic control attribute `native`.
+  The classic control classes give their `(H, W)` canvas in `frame_shape`.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the

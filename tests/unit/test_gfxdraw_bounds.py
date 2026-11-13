@@ -101,7 +101,7 @@ def test_the_extreme_states_actually_exercise_something(name):
     states = _states(name, 24, seed=20260913)
     env = se.make(name, num_envs=len(states), device="cpu")
     frames = _render(env, states)
-    H, W = env.native
+    H, W = env.frame_shape
     # Many frames show only static furniture because the moving primitive is off the surface.
     distinct = len({f.numpy().tobytes() for f in frames})
     assert distinct >= 3, f"{name}: only {distinct} distinct frames from {len(states)} extreme states"

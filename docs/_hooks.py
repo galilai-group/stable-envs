@@ -162,6 +162,7 @@ def _env_section(name, data, page_url):
         ("Renderer on CPU", data["renderers"]["cpu"]),
         ("Renderer on CUDA", data["renderers"]["cuda"]),
         ("Default frame", f"{h} × {w} × {c}, `uint8`"),
+        ("Native size", f"{data['native_size']} px, the only size" if data.get("native_size") else ""),
         ("Action", _action(data["action"])),
     ]
     if media.get("device"):

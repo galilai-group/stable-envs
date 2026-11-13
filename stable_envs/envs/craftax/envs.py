@@ -163,7 +163,7 @@ class CraftaxClassicPixels(CraftaxEnv):
 
     reference_id = "Craftax-Classic-Pixels-v1"
     frame_shape = (63, 63)
-    default_size = 63
+    default_size = native_size = 63
     action_high = 16
 
 
@@ -173,7 +173,7 @@ class CraftaxClassicSymbolic(CraftaxEnv):
 
     reference_id = "Craftax-Classic-Symbolic-v1"
     frame_shape = (63, 63)
-    default_size = 63
+    default_size = native_size = 63
     action_high = 16
 
 
@@ -183,7 +183,7 @@ class CraftaxPixels(CraftaxEnv):
 
     reference_id = "Craftax-Pixels-v1"
     frame_shape = (130, 110)
-    default_size = 130
+    default_size = native_size = 130
     action_high = 42
 
 
@@ -193,5 +193,5 @@ class CraftaxSymbolic(CraftaxEnv):
 
     reference_id = "Craftax-Symbolic-v1"
     frame_shape = (130, 110)
-    default_size = 130
+    default_size = native_size = 130
     action_high = 42

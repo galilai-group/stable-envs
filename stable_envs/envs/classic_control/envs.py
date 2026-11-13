@@ -52,8 +52,8 @@ class _Classic(Env):
 
     family = "classic_control"
 
-    # Native (H, W); source primitive dimensions are fixed in pixels.
-    native: tuple[int, int] = (0, 0)
+    # The source's (H, W) canvas; its primitive dimensions are fixed in pixels.
+    frame_shape: tuple[int, int] = (0, 0)
 
     # Numerical variables map explicitly to render columns; torque may be drawn while velocity is omitted.
     sim_state_names: tuple[str, ...] = ()
@@ -69,7 +69,7 @@ class _Classic(Env):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        H, W = self.native
+        H, W = self.frame_shape
         self.gfx = G.Gfx(H, W, self.device)
         f = dict(device=self.device, dtype=torch.float64)
         self._sim = torch.zeros(self.B, max(1, len(self.sim_state_names)), **f)
@@ -187,7 +187,7 @@ class _Classic(Env):
         """
         if backend not in ("auto", "source", "port"):
             raise ValueError(f"backend must be 'auto', 'source' or 'port', got {backend!r}")
-        H, W = self.native
+        H, W = self.frame_shape
         want = int(self.size if size is None else size)
         if want != W:
             raise ValueError(
@@ -268,7 +268,7 @@ class _Classic(Env):
         from ..._core.stepping import _padded_buffer
 
         b, f = rows.shape[:2]
-        H, W = self.native
+        H, W = self.frame_shape
         # Host frames reuse the memory of a previous step's frames once no tensor uses it.
         spares = self.__dict__.setdefault("_frame_buffers", {})
         out = _padded_buffer(spares, "frames", rows.new_empty(0, dtype=torch.uint8), (b, f, H, W, 3))
@@ -276,11 +276,6 @@ class _Classic(Env):
         if f == 1 or style.shared:
             return self._render(rows, out=out)
         return self._render(rows, style=style.values.repeat_interleave(f, 0), out=out)
-
-    @property
-    def frame_shape(self) -> tuple[int, int]:
-        """Return native (H, W); size denotes width and the canvas need not be square."""
-        return self.native
 
     #: physics leaves the frame's geometry reads, each with the value the class-constant geometry encodes.
     geometry_leaves: dict[str, float] = {}
@@ -350,7 +345,7 @@ class _Classic(Env):
     def _ops_begin(self, s, sty):
         from ...render.gfxdraw import classic as F
 
-        H, W = self.native
+        H, W = self.frame_shape
         ops = F.Ops(s.shape[0], H, W, self.device)
         if self._disc_tables is None and self.disc_radii:
             self._disc_tables = F.DiscTables(self.disc_radii, self.device)
@@ -402,8 +397,8 @@ class CartPole(ClassicControlSemantics, _Classic):
     name = "cartpole"
     state_dim = 2
     state_names = ("x", "theta")
-    native = (400, 600)
-    default_size = 600
+    frame_shape = (400, 600)
+    default_size = native_size = 600
     reference_id = "CartPole-v1"
     CLASSIC_DOMAIN = "cartpole"
 
@@ -464,7 +459,7 @@ class CartPole(ClassicControlSemantics, _Classic):
 
     def _draw(self, cv, s, sty, geo=None) -> None:
         g, B = self.gfx, s.shape[0]
-        H, W = self.native
+        H, W = self.frame_shape
         bi = g.batch_index(B)
         cartx = s[:, 0] * self.SCALE + 300.0
         carty = torch.full_like(cartx, self.CARTY)
@@ -528,8 +523,8 @@ class Pendulum(ClassicControlSemantics, _Classic):
     name = "pendulum"
     state_dim = 2
     state_names = ("theta", "torque")
-    native = (500, 500)
-    default_size = 500
+    frame_shape = (500, 500)
+    default_size = native_size = 500
     reference_id = "Pendulum-v1"
     CLASSIC_DOMAIN = "pendulum"
 
@@ -568,7 +563,7 @@ class Pendulum(ClassicControlSemantics, _Classic):
 
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
-        H, W = self.native
+        H, W = self.frame_shape
         bi = g.batch_index(B)
         th, off = s[:, 0], self.OFF
         rl, rw = 1.0 * self.SCALE, 0.2 * self.SCALE
@@ -660,8 +655,8 @@ class Acrobot(ClassicControlSemantics, _Classic):
     name = "acrobot"
     state_dim = 2
     state_names = ("theta1", "theta2")
-    native = (500, 500)
-    default_size = 500
+    frame_shape = (500, 500)
+    default_size = native_size = 500
     reference_id = "Acrobot-v1"
     CLASSIC_DOMAIN = "acrobot"
 
@@ -703,7 +698,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
         """Joint radii present, and each link's per-edge step bounds and window, over every lane."""
         if self._varied_host is not None and self._varied_host[0] is geo:
             return self._varied_host[1]
-        H, W = self.native
+        H, W = self.frame_shape
         off = self.OFF
         sc = 500 / ((geo[:, 0] + geo[:, 1] + 0.2) * 2)
         radii = tuple(int(v) for v in np.unique(np.trunc(0.1 * sc)))
@@ -721,7 +716,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
 
         The whole picture scales with 500 / (2 * (l1 + l2 + 0.2)), as AcrobotEnv.render draws it.
         """
-        B, W = s.shape[0], self.native[1]
+        B, W = s.shape[0], self.native_size
         ln = torch.stack([sty["physics.link_length_1"], sty["physics.link_length_2"]], 1).to(torch.float64)
         sc, off = 500 / ((ln[:, 0] + ln[:, 1] + 0.2) * 2), self.OFF
         t1, t2 = s[:, 0], s[:, 1]
@@ -743,7 +738,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
         if geo is not None:
             return self._draw_varied(cv, s, sty, geo)
         g, B = self.gfx, s.shape[0]
-        H, W = self.native
+        H, W = self.frame_shape
         bi = g.batch_index(B)
         sc, off = self.SCALE, self.OFF
         t1, t2 = s[:, 0], s[:, 1]
@@ -856,8 +851,8 @@ class MountainCar(ClassicControlSemantics, _Classic):
     name = "mountain-car"
     state_dim = 1
     state_names = ("position",)
-    native = (400, 600)
-    default_size = 600
+    frame_shape = (400, 600)
+    default_size = native_size = 600
     reference_id = "MountainCar-v0"
     CLASSIC_DOMAIN = "mountain_car"
 
@@ -929,7 +924,7 @@ class MountainCar(ClassicControlSemantics, _Classic):
 
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
-        H, W = self.native
+        H, W = self.frame_shape
         bi = g.batch_index(B)
         cv.fill_from(self._terrain_base(sty["background.color"], sty["terrain.color"]))
 

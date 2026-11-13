@@ -7,6 +7,7 @@
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 500,
+ "native_size": 500,
  "frame_shape": [500, 500, 3],
  "physics": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
  "renderers": {

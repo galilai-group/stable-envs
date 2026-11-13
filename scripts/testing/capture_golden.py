@@ -28,7 +28,7 @@ def main():
         if args.device == "cpu" and getattr(cls, "requires_cuda", False):
             continue
         kw = {}
-        if args.max_size and not getattr(cls, "fixed_size", None) and (cls.default_size or 0) > args.max_size:
+        if args.max_size and not cls.native_size and (cls.default_size or 0) > args.max_size:
             kw["size"] = args.max_size
         try:
             env = se.make(name, num_envs=G.N, device=args.device, **kw)

@@ -186,6 +186,7 @@ def metadata(name: str, device: str = "cpu") -> dict:
             "requires_cuda": info["requires_cuda"],
             "has_dynamics": info["has_dynamics"],
             "default_size": info["default_size"],
+            "native_size": info["native_size"],
             "frame_shape": list(env.frame_spec.shape),
             "physics": PHYSICS.get(_execution_mode(cls, env), None),
             "renderers": RENDERERS[renderer_cell(cls)],

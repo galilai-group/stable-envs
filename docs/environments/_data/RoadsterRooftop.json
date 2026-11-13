@@ -7,6 +7,7 @@
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 96,
+ "native_size": null,
  "frame_shape": [96, 96, 3],
  "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
  "renderers": {

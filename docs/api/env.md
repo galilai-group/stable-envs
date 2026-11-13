@@ -8,6 +8,8 @@ rendering interface:
 - `step(actions, *, states=slice(None), frames=slice(-1, None))` accepts `[B,A]` or `[B,T,A]` and returns
   State and the task's reward, success and done values. See [Stepping](../concepts/dynamics.md).
 - `render(full_state)` returns a uint8 Frame.
+- `native_size` is the only `size` that the class draws, or None when the class draws any size. See
+  [Environments](../environments.md).
 - `close` and the context manager release owned resources.
 - The State, action, frame and Variation specs describe shapes and dtypes. Family validators check
   full schemas before restoring.

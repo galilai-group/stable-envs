@@ -35,7 +35,7 @@ def test_workers_draw_the_in_process_frames():
     style = env.resolve_style(batch=len(rows)).values.numpy()
     pool = render_pool.RenderPool(render_pool.EnvRows("CartPole", size=env.size), 3, name="test render")
     try:
-        frames = pool.render(len(rows), (*env.native, 3), lambda part: (rows[part].numpy(), style[part], {}))
+        frames = pool.render(len(rows), (*env.frame_shape, 3), lambda part: (rows[part].numpy(), style[part], {}))
     finally:
         pool.close()
     with tuning.override(render_workers=0):

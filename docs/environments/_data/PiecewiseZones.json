@@ -7,6 +7,7 @@
  "requires_cuda": false,
  "has_dynamics": true,
  "default_size": 224,
+ "native_size": 224,
  "frame_shape": [224, 224, 3],
  "physics": "native Numba on CPU",
  "renderers": {
