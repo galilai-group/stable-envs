@@ -156,8 +156,8 @@ for spec in "$@"; do
   # a CUDA process cannot start while GPU memory is full.
   wait_gpu() {
     [[ $DEVICES == *cuda* ]] || return 0
-    local i used
-    for i in $(seq 60); do
+    local used
+    for _ in $(seq 60); do
       used=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)
       [ "$used" -lt 4096 ] && return 0
       sleep 10
@@ -180,8 +180,8 @@ for spec in "$@"; do
     echo "--- $E $(date -Is) load $(cut -d' ' -f1-3 /proc/loadavg) $(peak_memory)"
     o=$OUT/offline/$E; n=$OUT/online/$E; mkdir -p $o $n
     if [ -n "${SRC_FROM:-}" ]; then
-      for f in "$SRC_FROM"/offline/$E/src-*.json; do [ -s "$f" ] && cp -n "$f" $o/; done
-      for f in "$SRC_FROM"/online/$E/src-*.json; do [ -s "$f" ] && cp -n "$f" $n/; done
+      for f in "$SRC_FROM"/offline/"$E"/src-*.json; do [ -s "$f" ] && cp -n "$f" $o/; done
+      for f in "$SRC_FROM"/online/"$E"/src-*.json; do [ -s "$f" ] && cp -n "$f" $n/; done
     fi
     GPUSRC=$($P -c "import stable_envs as s; from tests.helpers.reference.sources import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')")
     for dev in $DEVICES; do
@@ -225,4 +225,4 @@ for spec in "$@"; do
   [ -z "${STATES_DIR:-}" ] && rm -rf $S $D
 done
 echo "{\"end\": \"$(date -Is)\"}" > "$OUT/end.json"
-echo done
+echo "done"
