@@ -235,14 +235,14 @@ backend then loads the result. A small CUDA batch steps faster on `mujoco.batch`
 The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and `visual-scene-v0`: the
 `front_pixels` camera, a purple gripper, a see-through arm, and no goal cube.
 
-- The CPU default backend is `raster`, the shared MuJoCo rasterizer ([MuJoCo rasterizer](../api/mujoco-raster.md)).
+- The CPU default backend is `numba`, the shared MuJoCo rasterizer ([MuJoCo rasterizer](../api/mujoco-raster.md)).
   It follows MuJoCo's OpenGL renderer: the same meshes and primitive
   tessellations, per-vertex lighting, the 4096 shadow map of the scene light, the floor texture with its
   mipmaps, the skybox, the see-through arm and 4 samples per pixel. It draws the arm meshes with one vertex per
   grid cell of 2 mm. On CPU it uses Numba; the first render after an install compiles the kernels in about 1 to
   2 minutes, and Numba keeps the compiled code in a cache for later processes. A draw of the same state gives
   the same frame each time, in any batch. `render_semantic(rows)` gives the segmentation and the planar depth of
-  compact render rows. On CUDA, `backend="raster"` raises `ValueError`.
+  compact render rows. On CUDA, `backend="numba"` raises `ValueError`.
 - Without Numba, the CPU default is software OpenGL (`backend="opengl"`). The CUDA default is NVIDIA OpenGL.
 - `backend="opengl"` draws the frames of the source.
 - With `supersample` 2 or more, MJWarp draws the CUDA frames. MJWarp frames can differ from MuJoCo in

@@ -158,14 +158,15 @@ All notable changes to this project are listed here. The format follows
   takes an `.npz` full State with one array per field; `--state-key` and packed-row files are removed.
 - `benchmarks/dmc_mjwarp.py` uses only the public API. It no longer measures raw physics or records simulator
   internals (worker PIDs, MuJoCo thread count, model options, control substeps).
-- Fetch, `OGBCube` and `OGBScene`: `backend="raster"` draws CPU frames with one Numba MuJoCo rasterizer,
-  `stable_envs/render/mujoco_raster.py`. It clips triangles at the near plane and keeps a plate of the static
-  geoms for each camera, light and look. On CUDA it raises `ValueError`. Fetch and Cube/Scene get `render_semantic`: segmentation and planar depth in the model of the
-  reference env. `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera
-  and shadow settings of a MuJoCo model, and refuses scene features that were not compared with the OpenGL
-  renderer of the installed MuJoCo version. Fetch keeps its default backends.
-- `OGBCube` and `OGBScene`: `backend="auto"` draws CPU frames with the shared MuJoCo rasterizer
-  (`backend="raster"`), and with software OpenGL without Numba. CUDA frames stay on NVIDIA OpenGL.
+- A shared Numba MuJoCo rasterizer, `stable_envs/render/mujoco_raster.py`, draws CPU frames. It clips triangles
+  at the near plane and keeps a plate of the static geoms for each camera, light and look. Fetch and Cube/Scene
+  get `render_semantic`: segmentation and planar depth in the model of the reference env.
+  `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera and shadow
+  settings of a MuJoCo model, and refuses scene features that were not compared with the OpenGL renderer of the
+  installed MuJoCo version. Fetch keeps its backends.
+- `OGBCube` and `OGBScene`: `backend="numba"` draws with the shared MuJoCo rasterizer on CPU; on CUDA it raises
+  `ValueError`. `backend="auto"` selects it on CPU, and software OpenGL without Numba. CUDA frames stay on
+  NVIDIA OpenGL.
   `backend="opengl"` stays the exact reference. `backend="opengl_fast"` (OpenGL with
   simplified arm meshes and a 2048 shadow map) is removed.
 - DM Control: `backend="mjwarp"` draws all 17 classes on CUDA with the MuJoCo Warp ray tracer. The fixed-camera
