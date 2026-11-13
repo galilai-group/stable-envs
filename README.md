@@ -1,16 +1,29 @@
 <img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/brand/banner.jpg" alt="stable-envs: frames from ten environment families" width="100%">
 
-**Fast and Reproducible Environments with Controllable Variations**
+<p align="center"><i>Fast and Reproducible Environments with Controllable Variations</i></p>
+
+<p align="center">
+  <a href="https://galilai-group.github.io/stable-envs/"><img alt="Docs" src="https://img.shields.io/badge/docs-galilai--group.github.io-black.svg"/></a>
+  <a href="https://pypi.org/project/stable-envs/"><img alt="PyPI" src="https://img.shields.io/pypi/v/stable-envs.svg?color=black"/></a>
+  <a href="https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml/badge.svg?branch=main"/></a>
+  <a href="https://github.com/galilai-group/stable-envs/blob/main/pyproject.toml"><img alt="Python 3.10 to 3.12" src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-black.svg"/></a>
+  <a href="https://github.com/galilai-group/stable-envs/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT%20%2B%20LGPL--2.1-black.svg"/></a>
+</p>
+
+<p align="center">
+  <a href="#installation"><b>Installation</b></a> ·
+  <a href="#quick-start"><b>Quick Start</b></a> ·
+  <a href="#environments"><b>Environments</b></a> ·
+  <a href="https://galilai-group.github.io/stable-envs/"><b>Documentation</b></a>
+</p>
+
+---
 
 stable-envs is a library of batched simulation environments that keep the full simulator state, so you can restore any step exactly and render images from it later, on CPU or GPU.
 
-[![Docs](https://img.shields.io/badge/docs-galilai--group.github.io-black.svg)](https://galilai-group.github.io/stable-envs/) [![PyPI](https://img.shields.io/pypi/v/stable-envs.svg?color=black)](https://pypi.org/project/stable-envs/) [![CI](https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml) [![Python 3.10 to 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-black.svg)](https://github.com/galilai-group/stable-envs/blob/main/pyproject.toml) [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](https://github.com/galilai-group/stable-envs/blob/main/LICENSE)
-
-[Install](#install) · [Quickstart](#quickstart) · [Environments](#environments) · [Documentation](https://galilai-group.github.io/stable-envs/)
-
 Store states instead of pixels, replay or branch from any step, and render frames from a stored state as many times as you like. 80 environment classes in 11 families share the same API.
 
-## Install
+## Installation
 
 ```bash
 pip install stable-envs                       # or: uv add stable-envs
@@ -21,7 +34,7 @@ stable-envs doctor                            # check what works on this machine
 
 Install the `robotics` extra (Fetch) in its own environment, because it needs MuJoCo below 3.12, while `dmcontrol`, `mshuman`, `roadster` and `ogbench-manipulation` need 3.17. [Install](https://galilai-group.github.io/stable-envs/install/) lists every extra and the OpenGL setup.
 
-## Quickstart
+## Quick Start
 
 ```python
 import torch
