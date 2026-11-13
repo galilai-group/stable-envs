@@ -214,72 +214,33 @@ def camera_pose(pos_prev: np.ndarray, q_prev: np.ndarray):
     return eye, np.stack([s, u, -f], -1)
 
 
-def tiny_cylinder(length: float, radius: float, steps: int = CYL_STEPS, margin: float = HULL_MARGIN):
-    """Build Bullet cylinder hull vertices, unit normals, and outward-wound triangles.
+def tiny_cylinder(length: float, radius: float):
+    """Bullet's hull of the 32-step cylinder as TinyRenderer meshes it: vertices, unit normals, outward triangles.
 
-    Support-point ties follow Bullet ring order. Normals are normalized vertex
-    positions; SciPy may triangulate planar caps differently from Bullet.
+    The hull is ``btShapeHull::buildHull`` over the support points at the 42 unit-sphere directions, with Bullet's
+    ``HullLibrary`` triangles. Normals are the normalized vertex positions after TinyRenderer's float32
+    renormalization.
     """
-    from scipy.spatial import ConvexHull
+    from .tiny_raster import bullet_cylinder
 
-    i = np.arange(steps)
-    ring = np.stack([radius * np.sin(2 * np.pi * i / steps), radius * np.cos(2 * np.pi * i / steps)], -1)
-    pts = np.concatenate(
-        [
-            np.concatenate([ring, np.full((steps, 1), length / 2.0)], -1),
-            np.concatenate([ring, np.full((steps, 1), -length / 2.0)], -1),
-        ]
-    )
-    # Interleaved top/bottom ring order preserves Bullet's first-maximum support-point ties.
-    pts = pts.reshape(2, steps, 3).transpose(1, 0, 2).reshape(-1, 3)
-    sup = []
-    for d in UNIT_SPHERE_42:
-        k = int(np.argmax(pts @ d))
-        sup.append(pts[k] + margin * d)
-    sup = np.unique(np.round(np.asarray(sup), 12), axis=0)
-    hull = ConvexHull(sup)
-    vert = sup[hull.vertices]
-    remap = {int(v): i for i, v in enumerate(hull.vertices)}
-    face = np.array([[remap[int(a)] for a in tri] for tri in hull.simplices], np.int64)
-    # wind outward: scipy's simplex order is arbitrary, its facet equation is not
-    for k, tri in enumerate(face):
-        a, b, c = vert[tri]
-        if np.dot(np.cross(b - a, c - a), hull.equations[k, :3]) < 0:
-            face[k] = tri[[0, 2, 1]]
-    norm = vert / np.linalg.norm(vert, axis=-1, keepdims=True)
-    return vert, norm, face
+    vert, norm, face = bullet_cylinder(float(length), float(radius))
+    return vert.copy(), norm.astype(np.float64), face.copy()
 
 
 def build_scene_arrays():
-    """The 13 geoms as one triangle soup in each geom's own frame, ground UVs and the checker texture."""
+    """The 13 geoms as TinyRenderer meshes them, each in its own frame, with the ground UVs (``tiny_raster``)."""
+    from .tiny_raster import OBJECTS, object_mesh
+
     V, N, F, VG, UV = [], [], [], [], []
     nv = 0
-
-    def add(g, v, n, f, uv=None):
-        nonlocal nv
+    for g, (_, _, _, spec, _) in enumerate(OBJECTS):
+        v, n, f, uv = object_mesh(spec)
         V.append(v)
-        N.append(n)
+        N.append(np.asarray(n, np.float64))
         F.append(f + nv)
         VG.append(np.full(len(v), g, np.int64))
-        UV.append(np.zeros((len(v), 2)) if uv is None else uv)
+        UV.append(uv)
         nv += len(v)
-
-    gq = np.array(
-        [
-            [GROUND_HALF, -GROUND_HALF, 0.0],
-            [GROUND_HALF, GROUND_HALF, 0.0],
-            [-GROUND_HALF, GROUND_HALF, 0.0],
-            [-GROUND_HALF, -GROUND_HALF, 0.0],
-        ]
-    )
-    guv = np.array([[100.0, 0.0], [100.0, 100.0], [0.0, 100.0], [0.0, 0.0]])  # plane100.obj's vt
-    add(0, gq, np.tile([0.0, 0.0, 1.0], (4, 1)), np.array([[0, 1, 2], [0, 2, 3]], np.int64), guv)
-    for g, (name, kind, _pos, _rpy) in enumerate(ROCKET_LINKS, start=1):
-        if kind[0] == "cyl":
-            add(g, *tiny_cylinder(kind[1], kind[2]))
-        else:
-            add(g, *ND._box(np.asarray(kind[1:], np.float64) / 2.0))
-    add(N_GEOMS - 1, *tiny_cylinder(PAD_LEN, PAD_RADIUS))
     return (np.concatenate(V), np.concatenate(N), np.concatenate(F), np.concatenate(VG), np.concatenate(UV))
 
 

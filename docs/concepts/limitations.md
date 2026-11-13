@@ -19,7 +19,7 @@ snv.import_errors()     # families this interpreter could not import
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | Fetch rasterizer (Numba) | MJWarp, explicit MuJoCo rasterizer or explicit NVIDIA OpenGL |
 | OGBCube, OGBScene | MuJoCo rasterizer (Numba) | NVIDIA OpenGL, explicit MuJoCo rasterizer, or MJWarp with `supersample` 2 or more |
-| PyFlytRocketLanding | TinyRenderer | CUDA rendering |
+| PyFlytRocketLanding | Numba port of TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.

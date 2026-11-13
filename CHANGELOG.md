@@ -184,6 +184,15 @@ All notable changes to this project are listed here. The format follows
   draws again only the boxes of the agent, of each block part and of the contact lines, not one box around all
   of them. Frames with action markers use the Numba frame and the OpenCV marker call of the source, not pygame.
   The frames do not change.
+- `PyFlytRocketLanding` on CPU accepts `backend="numba"`: a Numba port of PyBullet's TinyRenderer
+  (`stable_envs/envs/rocket/tiny_raster.py`) draws all the frames of a batch in one call, one frame for each thread.
+  It uses the meshes that TinyRenderer makes from the URDFs and the arithmetic of TinyRenderer, so it draws the
+  frames of `backend="pybullet"` (also `"tiny"`). `"auto"`, the default, selects `"numba"`; `"pybullet"` stays the
+  exact reference. An unknown `backend` raises `ValueError` at construction. On CUDA, the renderer uses the same
+  meshes, the float32 model, view and projection matrices of TinyRenderer, its rule for small triangles and its
+  colour law, and it computes the view matrices without a PyBullet call for each frame. On CUDA, `env.render(rows)`
+  draws pose rows with the same renderer as `render(state)`: the rocket at the pose of the row and the camera at
+  the lagged link pose of the reference bridge.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the

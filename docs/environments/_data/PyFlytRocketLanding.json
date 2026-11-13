@@ -11,7 +11,7 @@
  "frame_shape": [480, 480, 3],
  "physics": "native Numba on CPU",
  "renderers": {
-  "cpu": "tiny (TinyRenderer)",
+  "cpu": "numba (TinyRenderer port)",
   "cuda": "nvdiffrast"
  },
  "action": {
