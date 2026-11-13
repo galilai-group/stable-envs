@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import statistics
 import sys
 import time
@@ -11,6 +10,7 @@ import numpy as np
 import torch
 
 from . import tuning
+from ._core.cpus import cpu_limit
 
 STEPS = 4
 
@@ -33,7 +33,7 @@ def candidates(knob: tuning.Knob, start: int, env) -> list[int]:
     raw = [start >> 2, start >> 1, start, start << 1, start << 2] + ([0] if knob.unit == "cpus" else [])
     free = tuning.free_cuda_bytes(env.device) if env.device.type == "cuda" else None
     frame = env.size * env.size * env.ss * env.ss
-    cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count() or 1
+    cpus = cpu_limit()
     split = {
         "rows": lambda v: min(v, env.num_envs),
         "rays": lambda v: min(env.num_envs, max(1, v // frame)),

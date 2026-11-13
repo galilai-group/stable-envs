@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -8,6 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from .... import tuning
+from ...._core.cpus import cpu_limit
 from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
@@ -133,7 +133,7 @@ class FetchAdapter(SimulatorAdapter):
         self._workers = 1
         self.reset(seed=seed)
         # Bound threads by scheduler affinity and keep small batches serial.
-        available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+        available = cpu_limit()
         where = dict(path="fetch-sim", size=0, batch=self.num_envs)
         if self.num_envs >= tuning.get("worker_min_lanes", **where) and available > 1:
             self._set_workers(min(tuning.get("fetch_threads", **where), available, self.num_envs))

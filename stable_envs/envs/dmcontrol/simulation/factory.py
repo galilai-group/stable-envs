@@ -1,13 +1,12 @@
 """Construct the same domain implementation in local and batch execution."""
 
-import os
 from collections.abc import Callable
 from functools import partial
 
 import torch
 
 from .... import tuning
-from ...._execution.policy import cpu_affinity
+from ...._core.cpus import cpu_limit
 from .aligned import ALIGNED_BATCH, ALIGNED_FIELDS, MODEL_KEYS, DMCAlignedAdapter
 from .aligned import CONFIG as ALIGNED
 from .batch import DMCBatchAdapter
@@ -55,7 +54,7 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
 
 def batch_threads(num_envs: int) -> int:
     """The ``dmc_threads`` knob, at most one thread per CPU in the process affinity and one per lane."""
-    cpus = len(cpu_affinity() or ()) or os.cpu_count() or 1
+    cpus = cpu_limit()
     return min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
 
 

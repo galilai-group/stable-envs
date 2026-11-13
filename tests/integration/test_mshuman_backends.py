@@ -176,7 +176,7 @@ def test_native_batch_results_do_not_depend_on_the_thread_count(monkeypatch):
     actions = np.random.default_rng(SEED).uniform(0, 1, (6, lanes, 100)).astype(np.float32)
     runs = []
     for affinity in ([0], list(range(lanes))):
-        monkeypatch.setattr(mjbatch, "cpu_affinity", lambda affinity=affinity: affinity)
+        monkeypatch.setattr(mjbatch, "cpu_limit", lambda affinity=affinity: len(affinity))
         with _make(lanes) as env:
             assert env._simulator.b.nthread == len(affinity)
             env.reset()
@@ -265,18 +265,18 @@ def test_close_is_idempotent_and_releases_the_batch():
         adapter.get_state()
 
 
-def test_native_batch_threads_respect_the_cpu_affinity(monkeypatch):
-    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: [0, 1])
+def test_native_batch_threads_respect_the_cpu_limit(monkeypatch):
+    monkeypatch.setattr(mjbatch, "cpu_limit", lambda: 2)
     with _make(64) as env:
         assert env._simulator.b.nthread == 2
-    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: list(range(16)))
+    monkeypatch.setattr(mjbatch, "cpu_limit", lambda: 16)
     with _make(9) as env:
         assert env._simulator.b.nthread == 8
 
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="counts threads in /proc/self/task")
 def test_close_and_del_join_the_native_threads(monkeypatch):
-    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: [0, 1, 2, 3])
+    monkeypatch.setattr(mjbatch, "cpu_limit", lambda: 4)
     with _make(8) as env:
         env.step(np.zeros((8, 100)), frames=None)
     gc.collect()

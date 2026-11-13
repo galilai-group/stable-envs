@@ -17,6 +17,7 @@ import torch
 
 from ... import tuning
 from ..._core.config import log
+from ..._core.cpus import cpu_limit
 from ..._execution.workers import send_failure, send_ready
 from . import manipulation_opengl
 
@@ -161,14 +162,14 @@ def _anonymous_file():
 def _llvmpipe_threads(device_type, workers):
     if device_type != "cpu" or "LP_NUM_THREADS" in os.environ:
         return None
-    return max(1, len(os.sched_getaffinity(0)) // workers)
+    return max(1, cpu_limit() // workers)
 
 
 def workers(batch, device_type="cpu"):
     """Number of OpenGL worker processes a batch of ``batch`` states uses; 0 draws in this process."""
     if batch < 2 or not sys.platform.startswith("linux") or mp.current_process().daemon:
         return 0
-    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)))
+    count = min(tuning.get("ogb_gl_workers"), cpu_limit())
     if device_type == "cpu":
         # Single-threaded software workers beat one multi-threaded context once each worker has a state.
         return count if count >= 2 and batch >= count else 0
@@ -178,7 +179,7 @@ def workers(batch, device_type="cpu"):
 
 
 def _pool(family, device_type):
-    count = min(tuning.get("ogb_gl_workers"), len(os.sched_getaffinity(0)))
+    count = min(tuning.get("ogb_gl_workers"), cpu_limit())
     key = (family, device_type, count)
     if key not in _POOLS:
         for other in [k for k in _POOLS if k[:2] == key[:2]]:

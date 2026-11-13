@@ -19,6 +19,7 @@ import math
 import numpy as np
 from numba import njit, prange
 
+from ..._core.cpus import numba_threads
 from . import legacy as geometry
 
 F32 = np.float32
@@ -1133,7 +1134,7 @@ def _threads(frames):
     from ...render import cpu_raster
 
     cpu_raster.available()
-    before = numba.get_num_threads()
+    before = numba_threads()
     numba.set_num_threads(max(1, min(before, frames)))
     try:
         yield

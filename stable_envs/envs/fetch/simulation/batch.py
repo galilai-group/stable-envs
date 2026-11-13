@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.policy import cpu_affinity
+from ...._core.cpus import cpu_limit
 from ...._execution.protocol import SimulatorAdapter
 from .adapter import _VISUAL_GROUPS, VISUAL_LEAVES, _integer, _words, episode_limits, host_actions, host_active
 from .adapter import state_fields as _state_fields
@@ -34,7 +33,7 @@ _OUTPUTS = ("xpos", "xquat", "site_xpos")
 
 
 def physics_threads(num_envs: int) -> int:
-    cpus = len(cpu_affinity() or ()) or os.cpu_count() or 1
+    cpus = cpu_limit()
     return max(1, min(MAX_THREADS, cpus, int(num_envs)))
 
 
