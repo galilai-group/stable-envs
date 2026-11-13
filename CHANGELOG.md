@@ -142,6 +142,12 @@ All notable changes to this project are listed here. The format follows
 
 ### Changed
 
+- `Env.render(x=None, **options)` is the one public render method. `x` is None (the live frames), a full State, a
+  RenderState from `to_render_state` (Cube, Scene, PushT, PyFlytRocketLanding) or compact `(B, state_dim)` rows as
+  `sample_states` returns them. A State draws with its own appearance; rows draw with the env's current Variation or
+  with `variation=`. Classes without compact rows (PushT, MiniWorld, Craftax) and PyFlytRocketLanding on CPU refuse
+  rows with an error that gives the accepted forms. `render` checks the rows or the drawn State fields once: the
+  renderer does not scan them for non-finite values a second time on CPU.
 - `Env.native_size` replaces the navigation attribute `fixed_size` and the classic control attribute `native`.
   The classic control classes give their `(H, W)` canvas in `frame_shape`.
 - `benchmarks/pipeline.py` times the copy of a host State to the device and `env.render(state)`. `--state-file`

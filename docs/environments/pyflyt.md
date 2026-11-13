@@ -69,6 +69,10 @@ camera link pose in `current/diagnostic/cached_links` and the colours in `render
 also checks the first 13 values of `current/wrapper/state`. They check the shape, the dtype, that the values are
 finite and that the colours are in [0, 1]. `set_state` checks all the leaves.
 
+`render` also accepts the RenderState from `to_render_state`. On CUDA, `render` also accepts `(B, 13)` pose rows
+from `sample_states` and draws them with the current Variation, with the flame off. On CPU, `render` refuses rows:
+give a full State or a RenderState.
+
 With the PyBullet backend, a step reads from PyBullet only the State leaves that a step can change: the rocket pose, velocity and fuel
 tank mass, the cached link poses, and the task, RNG and history fields. The other leaves come from the last
 reset, configuration or restore. A zero leaf that a step does not change, such as `current/wrapper/current_goal`

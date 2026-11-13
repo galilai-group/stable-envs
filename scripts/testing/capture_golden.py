@@ -40,7 +40,7 @@ def main():
             continue
         try:
             states = sample_render_rows(env, G.N, rng=np.random.default_rng(G.SEED))
-            frames = env._render(states).cpu().numpy()
+            frames = env.render(states).cpu().numpy()
             size = int(env.size)
         except Exception as e:
             skipped[name] = f"{type(e).__name__}: {e}"

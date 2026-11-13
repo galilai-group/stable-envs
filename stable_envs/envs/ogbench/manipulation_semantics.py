@@ -241,7 +241,7 @@ class ManipulationSemantics:
             state = state.select(*pixels.projected_keys(self.CELL)).cpu()
         return pixels.project(self.CELL, state, size, supersample, check=not trusted)
 
-    def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
+    def _render_state_input(self, state, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         return self._render_frames(
             state, False, size=size, supersample=supersample, backend=backend, chunk_size=chunk_size, out=out
         )
@@ -395,8 +395,9 @@ class ManipulationSemantics:
             state = self._rows_to_render_state(rows, None, size, supersample, device, appearance)
             # The env's own appearance is valid, so finite rows and a valid frame size need no full check.
             checked = self._render_style is None and 1 <= size <= 4096 and 1 <= supersample <= 4
-            checked = checked and bool(torch.isfinite(state["pose", "qpos"]).all())
-            checked = checked and bool(torch.isfinite(state["pose", "mocap_pos"]).all())
+            if states is None or states is not self._checked_rows:
+                checked = checked and bool(torch.isfinite(state["pose", "qpos"]).all())
+                checked = checked and bool(torch.isfinite(state["pose", "mocap_pos"]).all())
         else:
             sty = self.resolve_style(style, variation, batch=len(rows))
             state = self._rows_to_render_state(rows, sty, size, supersample, device)

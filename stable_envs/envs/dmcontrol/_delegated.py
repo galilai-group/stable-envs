@@ -133,7 +133,7 @@ class DelegatedSemantics:
         keys = (*self._render_fields(), *(state_key(p) for p in sorted(self.FRAME_PHYSICS)))
         return tuple((key, fields[key][0]) for key in keys)
 
-    def render(self, state=None, **kwargs):
+    def _render_state_input(self, state, **kwargs):
         """A State's own physics values draw the leaves that move pixels, unless the call names them."""
         state = self.get_state() if state is None else state
         leaves = [] if "style" in kwargs else sorted(self.FRAME_PHYSICS)
@@ -150,7 +150,7 @@ class DelegatedSemantics:
                 variation.update({p: values[:, i : i + 1] for i, p in enumerate(drawn)})
         if leaves:
             kwargs["variation"] = variation or None
-        return self._render(self._pack_render_state(state), **kwargs)
+        return self._render_checked(self._pack_render_state(state), **kwargs)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")

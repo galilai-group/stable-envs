@@ -144,7 +144,7 @@ class CraftaxEnv(Env):
             result["observation"] = observation
         return build_tensordict(result, [self.B], self.device)
 
-    def render(self, state=None):
+    def _render_state_input(self, state):
         """Draw ``(N, H, W, 3)`` uint8 frames from a State of any batch, or from the live lanes."""
         if state is None:
             return self._k.render(self._live("render"))

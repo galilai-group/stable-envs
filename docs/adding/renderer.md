@@ -10,12 +10,19 @@ also changes.
 full State → private RenderState → Frame → downstream learner packaging
 ```
 
-`Env.render(state=None, ...)` is the public entry point. A family supplies:
+`Env.render(x=None, ...)` is the public entry point. It sends None and a TensorDict to
+`_render_state_input`, and compact rows to `_render`. A family supplies:
 
 - `_pack_render_state` and the private decode helpers
 - `_render`, or a `scene()` that an existing renderer consumes
 - `state_names` / `state_dim` (also `render_state_names` / `render_state_dim`), the renderer input
   layout. This is not the full State schema.
+- `_render_state_input`, only if a State or a RenderState draws through a different path
+- `_rows_unsupported`, only if the family cannot draw compact rows on a device. A family with
+  `state_dim` 0 refuses rows.
+
+`render(rows)` checks the shape, the dtype and the finite values of the rows once. `_render` does
+not check the same rows again.
 
 `render(state)` checks only the fields that the renderer reads: the fields with a render offset, and the
 fields that `_drawn_fields` adds. It checks presence, shape and finite values. If the renderer also reads a
@@ -34,8 +41,8 @@ Reuse the upstream renderer or an existing rendering path. CartPole in
 
 ## Example: full/private equality and no mutation
 
-This example uses private renderer methods to check the boundary. Applications call
-`render(full_state)`.
+This example uses private renderer methods to make the compact rows. Applications call
+`render(full_state)` or `render(rows)`.
 
 ```python
 import torch
@@ -46,7 +53,7 @@ with se.CartPole(num_envs=2, device="cpu") as env:
     held, live = saved.clone(), env.get_state()
     rows = env._pack_render_state(saved)
     full = env.render(saved)
-    compact = env._render(rows)
+    compact = env.render(rows)
     assert full.dtype == torch.uint8
     assert full.shape[0] == 2 and full.shape[-1] == 3
     assert torch.equal(full, compact)

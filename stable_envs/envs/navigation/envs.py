@@ -1299,13 +1299,12 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
 
     _frame_targets = None
 
-    def render(self, state=None, **kwargs) -> torch.Tensor:
+    def _render_state_input(self, state, **kwargs) -> torch.Tensor:
         """Render full State; the target, hidden from the compact rows, is drawn from it when enabled."""
         state = self.get_state() if state is None else state
-        if isinstance(state, TensorDict):
-            self._frame_targets = state.get(("target", "position"), None)
+        self._frame_targets = state.get(("target", "position"), None)
         try:
-            return super().render(state, **kwargs)
+            return super()._render_state_input(state, **kwargs)
         finally:
             self._frame_targets = None
 
