@@ -87,6 +87,17 @@ def test_backend_selection(monkeypatch, backend, device, variable, expected):
     assert warp_render.selected(env) is expected
 
 
+@pytest.mark.parametrize(("backend", "device", "expected"), [("auto", "cuda", True), ("auto", "cpu", False)])
+def test_body_tracking_cells_select_it_by_default(backend, device, expected):
+    from unittest import mock
+
+    from stable_envs.envs.dmcontrol.trackcom import DMControlTrackCom
+
+    env = mock.MagicMock(spec=DMControlTrackCom)
+    env.backend, env.device = backend, torch.device(device)
+    assert warp_render.selected(env) is expected
+
+
 def test_the_render_variable_takes_auto_or_mjwarp(monkeypatch):
     monkeypatch.setenv("STABLE_ENVS_DMC_CUDA_RENDER", "opengl")
     environ._parsed.cache_clear()

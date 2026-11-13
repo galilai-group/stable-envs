@@ -107,13 +107,17 @@ class Options:
 def selected(env, backend=None) -> bool:
     """Whether ``env`` draws with this renderer.
 
-    ``backend="mjwarp"`` selects it. ``backend="auto"`` selects it on CUDA when
-    ``STABLE_ENVS_DMC_CUDA_RENDER`` is ``mjwarp``.
+    ``backend="mjwarp"`` selects it. ``backend="auto"`` selects it on CUDA for the body-tracking cells, and for
+    every cell when ``STABLE_ENVS_DMC_CUDA_RENDER`` is ``mjwarp``.
     """
+    from .trackcom import DMControlTrackCom
+
     chosen = env.backend if backend is None else backend
     if chosen == "mjwarp":
         return True
-    return chosen == "auto" and env.device.type == "cuda" and _environ.read("STABLE_ENVS_DMC_CUDA_RENDER") == "mjwarp"
+    if chosen != "auto" or env.device.type != "cuda":
+        return False
+    return isinstance(env, DMControlTrackCom) or _environ.read("STABLE_ENVS_DMC_CUDA_RENDER") == "mjwarp"
 
 
 # --------------------------------------------------------------------------- kernels

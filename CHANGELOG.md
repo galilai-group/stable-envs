@@ -154,9 +154,10 @@ All notable changes to this project are listed here. The format follows
   cells draw their sites and the tendon catenary as extra geoms. With MuJoCo Warp physics, `env.render()` and step
   frames read the physics poses on the device. `render_options` sets shadows, samples per pixel, geom groups, BVH
   refit or rebuild, CUDA graph replay, worlds per launch, the reflection and sky passes, and per-pixel
-  segmentation and depth. `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` selects it for `backend="auto"`, and
+  segmentation and depth. On CUDA, `backend="auto"` selects it for the body-tracking classes.
+  `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the fixed-camera classes, and
   `STABLE_ENVS_DMC_WARP_OPTIONS` sets default options. `env.render_semantic(rows)` returns the object id and the
-  planar depth of each pixel. The default backends do not change.
+  planar depth of each pixel.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
