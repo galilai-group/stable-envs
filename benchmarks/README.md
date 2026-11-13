@@ -84,16 +84,17 @@ Facts about the source libraries, such as which source draws on a GPU, are in
 
 ### One command
 
-On a Linux machine with NVIDIA GPUs, run one of these commands from the repository root:
+On a Linux machine with NVIDIA GPUs, clone the repository and run one command from its root:
 
 ```bash
-bash benchmarks/paper/compare.sh results/h100 --gpu-only --sweep 1024:2048 --ref v0.1.0
-bash benchmarks/paper/compare.sh results/full --ref v0.1.0
+bash benchmarks/paper/compare.sh results-h100                   # H100 node: all cells
+bash benchmarks/paper/compare.sh results-l40s --missing-only    # L40S node: the cells that rt4 does not have
 ```
 
-The first command measures only the GPU cells at batches 1024 and 2048. The second measures all cells. The script installs
-the packages, builds the venvs, uses all GPUs (one env per GPU) and writes `HEADLINE.md`. Run it again to continue a stopped
-run. `bash benchmarks/paper/compare.sh --summary OUT` shows the table again. `--help` lists the options.
+The script installs what it needs and uses all GPUs, one env per GPU. It times the stable-envs cells of all envs first,
+then the source cells. A source cell stops after 20 minutes and gets the status `timeout`. Run the same command again
+to continue. At the end, the script shows the table and writes `HEADLINE.md`. `--summary OUT` shows the table again, and
+`--dry-run` shows the plan without a run.
 
 ### Run
 

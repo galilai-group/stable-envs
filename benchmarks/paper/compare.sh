@@ -12,7 +12,8 @@
 #   --ref REF       the library to time (default v0.1.0; HEAD for this checkout), with the harness of this checkout
 #   --gpus N        use the first N GPUs (default: all); one env per GPU at a time, each on its own 8 or 16 cores
 # It installs what it needs (apt packages, uv, stable-worldmodel, family venvs, nvdiffrast) under COMPARE_WORK
-# (default ~/.cache/snv-compare), skips envs whose OUT/ENV/done.json exists, and ends with OUT/HEADLINE.md.
+# (default ~/.cache/snv-compare). It times every env's stable-envs cells first, then every env's source cells (an
+# env whose OUT/ENV/done-ours.json or done.json exists is skipped in that phase), and ends with OUT/HEADLINE.md.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); SRC=$(cd "$HERE/../.." && pwd)
 SWM_SHA=21446f1ede6d5284e981bd7b47f432b994e6d812
@@ -27,13 +28,13 @@ while [ $# -gt 0 ]; do
     --gpus) NGPU=$2; shift;;
     --summary) SUMMARY=1;;
     --dry-run) DRY=1;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0;;
+    -h|--help) sed -n '2,18p' "$0"; exit 0;;
     -*) echo "unknown option $1" >&2; exit 2;;
     *) if [ -z "$OUT" ]; then OUT=$1; else ENVS+=("$1"); fi;;
   esac
   shift
 done
-[ -n "$OUT" ] || { sed -n '2,17p' "$0"; exit 2; }
+[ -n "$OUT" ] || { sed -n '2,18p' "$0"; exit 2; }
 mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 
 summary() {
@@ -117,11 +118,14 @@ if [ "$DRY" = 1 ]; then
   [ "$g" -gt "$jobs" ] && echo "layout: fewer jobs than GPUs: $usable physical cores hold $jobs sets of 8"
   echo "mode $MODE, CPU lane counts $SWEEP_CPU, GPU lane counts and batches $SWEEP_CUDA, windows ${WINDOW:-3} s x ${REPEATS:-3}"
   env_list > "$W/tmp/dry-queue" || exit 2
-  while read -r fam E; do
-    [ -f "$OUT/$E/done.json" ] && { echo "$E: done, skipped"; continue; }
-    DRY_RUN=1 W=$W MODE=$MODE SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=$HERE/fleet/src_cap_envs \
-      bash "$HERE/job.sh" "$OUT/$E" "$fam" "$E"
-  done < "$W/tmp/dry-queue"
+  for side in ours source; do
+    echo "phase $side: every env's $side cells$([ $side = ours ] && echo ' (stable-envs and the frame MSE), on all GPUs' || echo ', after the ours phase; STEP_LIMIT per cell, else timeout')"
+    while read -r fam E; do
+      [ -f "$OUT/$E/done-$side.json" ] && { echo "  $E: done, skipped"; continue; }
+      DRY_RUN=1 W=$W MODE=$MODE SIDE=$side SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=$HERE/fleet/src_cap_envs \
+        bash "$HERE/job.sh" "$OUT/$E" "$fam" "$E"
+    done < "$W/tmp/dry-queue"
+  done
   [ "$MISSING" = 1 ] && echo "missing-only: OUT starts from rt4_l40s.tar.gz; run.sh skips every cell file that is there"
   estimate "$jobs" "$par"
   echo "end: $OUT/HEADLINE.md"
@@ -160,7 +164,8 @@ if [ "$MISSING" = 1 ]; then
   # The rt4 L40S cells; run.sh times only the cell files that are not there.
   tar xzf "$HERE/rt4_l40s.tar.gz" -C "$W/tmp" && for d in "$W/tmp/rt4-l40s"/*/; do
     e=$(basename "$d"); mkdir -p "$OUT/$e"
-    [ -f "$OUT/$e/hardware-rt4.json" ] || { cp -rn "$d"/offline "$d"/online "$OUT/$e/" && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"; }
+    [ -f "$OUT/$e/hardware-rt4.json" ] || { mkdir -p "$OUT/$e/pass-cuda" && cp -rn "$d"/offline "$d"/online "$OUT/$e/" \
+      && cp -rn "$d"/offline "$d"/online "$OUT/$e/pass-cuda/" && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"; }
   done
 fi
 python3 - "$OUT" "$REPO" "$SRC" "$MODE" "$SWEEP_CUDA" "$JOBS" <<'EOF'
@@ -179,28 +184,29 @@ json.dump({"mode": mode, "sweep_cuda": sweep}, open(f"{out}/compare.json", "w"))
 print(m)
 EOF
 
-# --- jobs: the most expensive env first; envs with done.json are skipped
-env_list > "$OUT/.queue" || exit 2
-[ -s "$OUT/.queue" ] || exit 2
-log "$(wc -l < "$OUT/.queue" | tr -d ' ') envs, mode $MODE, GPU sweep $SWEEP_CUDA, $JOBS jobs, library $(git -C "$REPO" rev-parse --short HEAD)"
-
-worker() {  # worker GPU: take envs from the queue until it is empty
-  local gpu=$1 line fam E P rc
+# --- jobs: every env's stable-envs cells first, on all GPUs; then every env's source cells. The most expensive env
+# first in each phase; an env whose done-SIDE.json exists is skipped in that phase.
+worker() {  # worker GPU SIDE: take envs from the queue until it is empty
+  local gpu=$1 side=$2 line fam E P rc
   while true; do
     line=$(flock "$OUT/.queue.lock" sh -c "head -1 '$OUT/.queue'; sed -i 1d '$OUT/.queue'")
     [ -z "$line" ] && return 0
     set -- $line; fam=$1; E=$2
-    [ -f "$OUT/$E/done.json" ] && continue
-    P=$(flock "$W/venvs/$fam.lock" bash "$HERE/fleet/venv.sh" $fam 2>> "$OUT/compare.log") || { log "venv $fam failed: $E"; continue; }
-    log "GPU $gpu: $E"
-    ( cd "$REPO" && CUDA_VISIBLE_DEVICES=$gpu P=$P PYTHONPATH=$REPO bash "$REPO/benchmarks/paper/job.sh" "$OUT/$E" $fam $E )
+    [ -f "$OUT/$E/done-$side.json" ] && continue
+    P=$(flock "$W/venvs/$fam.lock" bash "$HERE/fleet/venv.sh" "$fam" 2>> "$OUT/compare.log") || { log "venv $fam failed: $E"; continue; }
+    log "GPU $gpu: $E ($side)"
+    ( cd "$REPO" && CUDA_VISIBLE_DEVICES=$gpu P=$P SIDE=$side PYTHONPATH=$REPO bash "$REPO/benchmarks/paper/job.sh" "$OUT/$E" "$fam" "$E" )
     rc=$?
-    log "GPU $gpu: $E rc=$rc"
+    log "GPU $gpu: $E ($side) rc=$rc"
     [ $rc = 3 ] && { log "GPU $gpu no longer initialises CUDA; its worker stops"; return 3; }
   done
 }
-for g in $(seq 0 $((JOBS - 1))); do worker "$g" & sleep 5; done
-wait
+for side in ours source; do
+  env_list > "$OUT/.queue" || exit 2
+  log "$side cells: $(wc -l < "$OUT/.queue" | tr -d ' ') envs, mode $MODE, GPU sweep $SWEEP_CUDA, $JOBS jobs, library $(git -C "$REPO" rev-parse --short HEAD)"
+  for g in $(seq 0 $((JOBS - 1))); do worker "$g" $side & sleep 5; done
+  wait
+done
 finished=(); for d in "$OUT"/*/; do [ -f "$d/done.json" ] && finished+=("$d"); done
 python3 "$HERE/fleet/check_cells.py" "${finished[@]}" > "$OUT/problems.txt"
 log "$(ls "$OUT"/*/done.json 2>/dev/null | wc -l | tr -d ' ') envs finished; cells not ok: $(grep -c . "$OUT/problems.txt")"

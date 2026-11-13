@@ -150,6 +150,9 @@ def hardware(folder):
 
 def table(out, envs, keep, label):
     best, by_b, n_cells, below = {}, defaultdict(dict), 0, 0
+    # Multiples only for envs whose source phase finished (done.json); the others are listed as "not run".
+    pending = [e for e in envs if not os.path.exists(f"{out}/{e}/done.json")]
+    envs = [e for e in envs if e not in pending]
     for e in envs:
         for reg, dev, B, T, ours, src in cells(f"{out}/{e}", e):
             if keep and B not in keep:
@@ -161,11 +164,10 @@ def table(out, envs, keep, label):
             if x > best.get((e, g), (0,))[0]:
                 best[(e, g)] = (x, B, T)
             by_b[g][(e, B)] = max(by_b[g].get((e, B), 0), x)
-    done = [e for e in envs if os.path.exists(f"{out}/{e}/done.json")]
     L = [
         f"Hardware: {label}",
         "",
-        f"Envs: {len(envs)} with results, {len(done)} finished; cells: {n_cells}, below 1x: {below}"
+        f"Envs: {len(envs)} finished, {len(pending)} with source cells not run yet; cells: {n_cells}, below 1x: {below}"
         + (f"; batches and lane counts {':'.join(map(str, sorted(keep)))}" if keep else ""),
         "",
         "| Workload | Geomean of best cell | N envs | Median | Min env (x) | Envs best < 1x |",
@@ -196,7 +198,15 @@ def table(out, envs, keep, label):
             xs = [x for (e, B), x in by_b[g].items() if B == b]
             row.append(f"{gm(xs):.2f} ({len(xs)})" if xs else "-")
         L.append(f"| {NAMES[g[0]]} {g[1].upper()} | " + " | ".join(row) + " |")
-    bad = sorted((e, *x) for e in envs for x in failed(f"{out}/{e}", e))
+    if pending:
+        L += [
+            "",
+            f"Not run: the source cells of {len(pending)} envs, so no multiples for them yet: "
+            + ", ".join(
+                f"{e} ({len(glob.glob(f'{out}/{e}/online/{e}/snv-*.json'))} ours cell files)" for e in pending
+            ),
+        ]
+    bad = sorted((e, *x) for e in envs + pending for x in failed(f"{out}/{e}", e))
     if bad:
         L += [
             "",

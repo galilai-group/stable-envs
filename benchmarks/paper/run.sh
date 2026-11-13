@@ -23,7 +23,7 @@
 #   SRC_CAP_FILE=file lists envs whose source cells stop at SRC_CAP_L (default 256) lanes.
 #   SWM is the stable-worldmodel checkout, UV the uv binary and NVDIFFRAST_SITE a directory with an nvdiffrast build;
 #   they are read only to build a family venv.
-#   MODE=throughput runs the throughput arms.
+#   MODE=throughput runs the throughput arms. SIDE=ours or SIDE=source times only the cells of that side.
 #   CORES (default: the first NPIN, default 8, cores the job may use) is the core set of every arm. STEP_LIMIT
 #   (default 6h) stops one arm that does not exit.
 # shellcheck disable=SC2015,SC2046,SC2068,SC2086,SC2155,SC2206
@@ -174,6 +174,8 @@ for spec in "$@"; do
   once() {
     local f=$1 rc st; shift
     [ -s "$f" ] && { echo "have $f"; return 0; }
+    # SIDE=ours times only the stable-envs cells (and the frame MSE), SIDE=source only the source cells.
+    case "${SIDE:-both}:$(basename "$f")" in ours:src-*|source:snv-*|source:mse-*) return 0;; esac
     wait_gpu; "$@"; rc=$?
     cuda_lost && { echo "CUDA LOST after $f"; exit 3; }
     if [ ! -s "$f" ]; then

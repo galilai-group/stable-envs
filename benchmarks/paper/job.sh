@@ -12,7 +12,9 @@
 #           the CPU frames source of an env with a GPU renderer, for the case that the GPU source fails its frame check.
 # MODE=full runs the two passes at the same time on two disjoint sets of 8 idle physical cores when 16 are free, else
 # one after the other. A cell that runs out of memory or time is kept as a result with that status (run.sh).
-# done.json marks a finished job; cores.txt records the cores and how busy they were. DRY_RUN=1 prints the calls only.
+# SIDE=ours or SIDE=source (run.sh) times one side only; done-SIDE.json marks it finished, done.json the source side
+# (compare.sh runs every env's ours side first). cores.txt records the cores and how busy they were. DRY_RUN=1 prints the
+# calls only.
 set -uo pipefail
 OUT=$1; fam=$2; E=$3
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -56,7 +58,7 @@ trap release EXIT
 call() {
   local name=$1 dev=$2 arms=$3 sweep=$4 cores=$5 busy=$6 o=$OUT/pass-$2; shift 6
   if [ "$DRY" = 1 ]; then
-    echo "  $E $name: run.sh DEVICES=$dev ARMS=\"$arms\" lanes $sweep $* step-source cap ${CAPL:-none} cores $cores"
+    echo "  $E ${SIDE:-both} $name: run.sh DEVICES=$dev ARMS=\"$arms\" lanes $sweep $* step-source cap ${CAPL:-none} cores $cores"
     return 0
   fi
   echo "$name $(date -Is) cores $cores busy ${busy:-?} load $(cut -d' ' -f1-3 /proc/loadavg)" >> $OUT/cores.txt
@@ -132,5 +134,9 @@ hardware "$(awk '$3 == "cores" {print $4}' $OUT/cores.txt | sort -u | tr '\n' ' 
 import json; r = json.load(open('$OUT/run.json')); r['hardware'] = json.load(open('$OUT/hardware.json'))
 json.dump(r, open('$OUT/run.json', 'w'), indent=1)" 2>> $LOG
 rm -rf "$W/st/$E-"*
-[ $rc = 0 ] && { echo "{\"end\": \"$(date -Is)\"}" > $OUT/end.json; cp $OUT/end.json $OUT/done.json; }
+if [ $rc = 0 ]; then
+  echo "{\"end\": \"$(date -Is)\", \"side\": \"${SIDE:-both}\"}" > "$OUT/end.json"
+  cp "$OUT/end.json" "$OUT/done-${SIDE:-both}.json"
+  [ "${SIDE:-both}" = ours ] || cp "$OUT/end.json" "$OUT/done.json"
+fi
 exit $rc
