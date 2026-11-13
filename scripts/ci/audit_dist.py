@@ -22,9 +22,15 @@ EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
 REQUIRED_LICENSES = {
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "licenses/envX-APACHE-2.0.txt",
-    "licenses/ms-human-700-APACHE-2.0.txt",
+    "licenses/APACHE-2.0.txt",
+    "licenses/Bullet-zlib.txt",
+    "licenses/Gymnasium-MIT.txt",
+    "licenses/Gymnasium-Robotics-MIT.txt",
     "licenses/Munk2D-MIT.txt",
+    "licenses/NumPy-BSD-3-Clause.txt",
+    "licenses/NumPy-random-NCSA-BSD-3-Clause.txt",
+    "licenses/OGBench-MIT.txt",
+    "licenses/PyFlyt-MIT.txt",
 }
 
 

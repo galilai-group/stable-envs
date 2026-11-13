@@ -1,7 +1,7 @@
 """MJX Reacher dynamics adapted from fracapuano/envX at d26c817c1124229c819be574f137cd68bda4380a.
 
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
-See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
+See licenses/APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 """
 
 from __future__ import annotations

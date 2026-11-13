@@ -1,7 +1,7 @@
 """PushT contact solver adapted from fracapuano/envX at d26c817.
 
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
-See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
+See licenses/APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
 The wall contacts (``SegmentToPoly``, ``ContactPoints``) and the arbiter contact cache port Munk2D at commit
 ade7ed72849e. Copyright (c) 2025 Victor Blomqvist, Copyright (c) 2007-2024 Scott Lembcke and Howling Moon

@@ -1,7 +1,7 @@
 """Batched TwoRoom physics with Torch/JAX buffer exchange.
 
 Copyright 2026 Francesco Capuano. SPDX-License-Identifier: Apache-2.0
-See licenses/envX-APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
+See licenses/APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
 Torch owns the live state. Steps exchange device buffers through DLPack and return
 new position arrays. Borrowed inputs are not retained between steps or donated to
