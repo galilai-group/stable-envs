@@ -19,7 +19,11 @@ import stable_envs as se
 from tests.gpu._shared import family_params, resolve_family
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
-DMC = [name for name, cls in se.registry.REGISTRY.items() if cls.family == "dmcontrol"]
+DMC = [
+    name
+    for name, cls in se.registry.REGISTRY.items()
+    if cls.family == "dmcontrol" and getattr(cls, "DOMAIN", None) != "manipulator"
+]
 #: Bound on the mean frame MSE (0-255 scale) against MuJoCo OpenGL; cells not listed use DEFAULT_BOUND.
 MSE_BOUND: dict[str, float] = {}
 DEFAULT_BOUND = 40.0

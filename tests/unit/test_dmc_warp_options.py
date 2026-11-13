@@ -87,6 +87,13 @@ def test_backend_selection(monkeypatch, backend, device, variable, expected):
     assert warp_render.selected(env) is expected
 
 
+def test_the_variable_leaves_manipulator_on_its_renderer(monkeypatch):
+    monkeypatch.setenv("STABLE_ENVS_DMC_CUDA_RENDER", "mjwarp")
+    environ._parsed.cache_clear()
+    env = SimpleNamespace(backend="auto", device=torch.device("cuda"), DOMAIN="manipulator")
+    assert warp_render.selected(env) is False
+
+
 @pytest.mark.parametrize(("backend", "device", "expected"), [("auto", "cuda", True), ("auto", "cpu", False)])
 def test_body_tracking_cells_select_it_by_default(backend, device, expected):
     from unittest import mock
