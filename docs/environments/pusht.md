@@ -75,10 +75,13 @@ Pymunk on the CPU resets the environments, with the source reset distribution. O
 `worker_min_lanes` lanes resets in up to `workers` processes. The worker processes do not change the
 State, the frames or the task outputs.
 
-On CPU with Numba installed, `render` draws with a Numba rasterizer. It builds the same primitive
-records as the GPU path, in parallel over States. It paints and resizes the background, goal and walls
-once for each distinct goal and colour set in the batch, then redraws only the region that the bodies
-cover in each frame. Its frames are byte-identical to the pygame frames. The first render in a process
+On CPU with Numba installed, `render` draws with a Numba rasterizer. One Numba call draws all the
+frames of a batch. Each thread builds the primitive records of a frame, the same records as the GPU
+path, and draws them. The renderer keeps the frames of the background, goal and walls alone between
+calls: one for each set of goal pose, goal colour and background colour, and at most 64. A frame copies
+its kept frame and then draws again only the boxes of the agent, of each block part and of the contact
+lines. A frame without a kept frame is drawn completely. Action markers are drawn with the OpenCV call
+of the source. The frames are byte-identical to the pygame frames. The first render in a process
 loads the compiled kernels, and compiles them if Numba has no cache yet. Without Numba, or with
 `backend="source"`, CPU frames are drawn with pygame.
 

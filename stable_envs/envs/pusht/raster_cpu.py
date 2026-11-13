@@ -195,35 +195,39 @@ def _transform(pose):
     return cos, sin, gx - (cogx * cos - cogy * sin), gy - (cogx * sin + cogy * cos)
 
 
+@njit(cache=True)
+def _build_one(f, rec, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots):
+    rec[:] = 0
+    for m in range(len(shapes)):
+        b, r = owners[m], rec[starts[m]]
+        cos, sin, tx, ty = _transform(pose[f, b])
+        for k in range(5):
+            x, y = shapes[m, k % 4, 0], shapes[m, k % 4, 1]
+            r[PX + k], r[PY + k] = int(np.rint(cos * x + -sin * y + tx)), int(np.rint(sin * x + cos * y + ty))
+        _poly(r, light[f, b] if b else color[f, 0], 5)
+        if b == 0:
+            r[KIND], r[STATIC] = POLY * goal[f], 1
+            continue
+        for e in range(4):
+            s = starts[m] + 1 + 4 * e
+            fat_segment(rec[s : s + 4], color[f, b], r[PX + e], r[PY + e], r[PX + e + 1], r[PY + e + 1])
+    for d in range(len(discs)):
+        b, s = int(discs[d, 0]), int(discs[d, 5])
+        cos, sin, tx, ty = _transform(pose[f, b])
+        x, y = discs[d, 1], discs[d, 2]
+        cx, cy = int(np.rint(cos * x + -sin * y + tx)), int(np.rint(sin * x + cos * y + ty))
+        _circle(rec[s], color[f, b], cx, cy, int(discs[d, 3]))
+        _circle(rec[s + 1], light[f, b], cx, cy, int(discs[d, 4]))
+    for w in range(len(wall_slots)):
+        for k in range(RECORD):
+            rec[wall_slots[w], k] = walls[w, k]
+
+
 @njit(parallel=True, cache=True)
 def build(lanes, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots, out):
     for i in prange(len(lanes)):
         f = lanes[i]
-        rec = out[f]
-        rec[:] = 0
-        for m in range(len(shapes)):
-            b, r = owners[m], rec[starts[m]]
-            cos, sin, tx, ty = _transform(pose[f, b])
-            for k in range(5):
-                x, y = shapes[m, k % 4, 0], shapes[m, k % 4, 1]
-                r[PX + k], r[PY + k] = int(np.rint(cos * x + -sin * y + tx)), int(np.rint(sin * x + cos * y + ty))
-            _poly(r, light[f, b] if b else color[f, 0], 5)
-            if b == 0:
-                r[KIND], r[STATIC] = POLY * goal[f], 1
-                continue
-            for e in range(4):
-                s = starts[m] + 1 + 4 * e
-                fat_segment(rec[s : s + 4], color[f, b], r[PX + e], r[PY + e], r[PX + e + 1], r[PY + e + 1])
-        for d in range(len(discs)):
-            b, s = int(discs[d, 0]), int(discs[d, 5])
-            cos, sin, tx, ty = _transform(pose[f, b])
-            x, y = discs[d, 1], discs[d, 2]
-            cx, cy = int(np.rint(cos * x + -sin * y + tx)), int(np.rint(sin * x + cos * y + ty))
-            _circle(rec[s], color[f, b], cx, cy, int(discs[d, 3]))
-            _circle(rec[s + 1], light[f, b], cx, cy, int(discs[d, 4]))
-        for w in range(len(wall_slots)):
-            for k in range(RECORD):
-                rec[wall_slots[w], k] = walls[w, k]
+        _build_one(f, out[f], pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots)
 
 
 @njit(cache=True)
@@ -534,3 +538,130 @@ def draw(records, background, writes, out):
     args, whole = (taps, edge, position, table, i0, i1, a0, a1), np.full(len(reps), -1)
     _frames(fixed, background[reps], statics, whole, *writes[:4], np.zeros_like(whole), *args, statics)
     _frames(records, background, statics, plate, *writes, *args, out)
+
+
+@njit(cache=True)
+def _area(x0, y0, x1, y1):
+    w = min(x1, CANVAS - 1) - max(x0, 0) + 1
+    h = min(y1, CANVAS - 1) - max(y0, 0) + 1
+    return max(w, 0) * max(h, 0)
+
+
+@njit(cache=True)
+def _merge(boxes, count):
+    """Move the nonempty boxes first and join two of them while their joint box covers at most their two areas.
+
+    Return the number of boxes left.
+    """
+    m = 0
+    for g in range(count):
+        if boxes[g, 0] <= boxes[g, 2] and boxes[g, 1] <= boxes[g, 3]:
+            for k in range(4):
+                boxes[m, k] = boxes[g, k]
+            m += 1
+    joined = True
+    while joined:
+        joined = False
+        for a in range(m):
+            for b in range(a + 1, m):
+                x0, y0 = min(boxes[a, 0], boxes[b, 0]), min(boxes[a, 1], boxes[b, 1])
+                x1, y1 = max(boxes[a, 2], boxes[b, 2]), max(boxes[a, 3], boxes[b, 3])
+                apart = _area(boxes[a, 0], boxes[a, 1], boxes[a, 2], boxes[a, 3])
+                apart += _area(boxes[b, 0], boxes[b, 1], boxes[b, 2], boxes[b, 3])
+                if _area(x0, y0, x1, y1) <= apart:
+                    boxes[a, 0], boxes[a, 1], boxes[a, 2], boxes[a, 3] = x0, y0, x1, y1
+                    for k in range(4):
+                        boxes[b, k] = boxes[m - 1, k]
+                    m -= 1
+                    joined = True
+                    break
+            if joined:
+                break
+    return m
+
+
+@njit(cache=True)
+def _grow(boxes, g, x0, y0, x1, y1):
+    boxes[g, 0], boxes[g, 1] = min(boxes[g, 0], x0), min(boxes[g, 1], y0)
+    boxes[g, 2], boxes[g, 3] = max(boxes[g, 2], x1), max(boxes[g, 3], y1)
+
+
+@njit(cache=True)
+def _blend(color, r, c, new, brightness):
+    # pygame's blend: float32 products, summed in float32 and truncated.
+    one, b, old, v = np.float32(1.0), np.float32(brightness), color[r, c], 0
+    for shift in (16, 8, 0):
+        fg = np.float32((new >> shift) & 255)
+        bg = np.float32((old >> shift) & 255)
+        value = int(np.float32(b * fg) + np.float32((one - b) * bg))
+        v |= min(max(value, 0), 255) << shift
+    color[r, c] = v
+
+
+@njit(cache=True)
+def _region(canvas, rec, writes, count, background, oy0, oy1, ox0, ox1, tables, frame):
+    """Draw output rows ``[oy0, oy1)`` and columns ``[ox0, ox1)`` of a frame: paint, blend ``count`` writes, resize."""
+    taps, edge, position, table, i0, i1, w0, w1 = tables
+    ra, rb, ca, cb = i0[oy0], i1[oy1 - 1] + 1, i0[ox0], i1[ox1 - 1] + 1
+    for r in range(ra, rb):
+        for c in range(ca, cb):
+            canvas[r, c] = background
+    _paint(canvas, rec, range(ra, rb), range(ca, cb), taps, edge, table)
+    wx, wy, wb, wc = writes
+    for w in range(count):
+        r, c = position[wy[w]], position[wx[w]]
+        if ra <= r < rb and ca <= c < cb:
+            _blend(canvas, r, c, wc[w], wb[w])
+    _resize(canvas, i0, i1, w0, w1, range(oy0, oy1), range(ox0, ox1), frame)
+
+
+@njit(parallel=True, cache=True)
+def frames(lanes, dest, scene, segments, segment_counts, plate, plates, layout, groups, tables, scratch, static, out):
+    """Draw the frames of rows ``lanes`` into ``out[dest]``; one scratch row of ``scratch`` per thread.
+
+    ``scene`` is ``(pose, color, light, goal, background)`` per row, ``layout`` the arrays of one template,
+    ``groups`` the box group of each record slot (−1 for static slots), and ``tables`` the canvas taps and resize
+    weights of the output size. A row with ``plate`` ≥ 0 copies ``plates[plate]``, the frame of its background,
+    goal and walls alone, and redraws the output pixels of the boxes of its moving parts and contact lines. With
+    ``static``, the frames hold the background, goal and walls only.
+    """
+    pose, color, light, goal, background = scene
+    shapes, owners, starts, discs, walls, wall_slots = layout
+    records, canvases, wx, wy, wb, wc = scratch
+    edge, i0, i1 = tables[1], tables[4], tables[5]
+    threads, n, size, other = len(records), len(lanes), out.shape[1], max(groups.max(), -1) + 1
+    for t in prange(threads):
+        rec, canvas = records[t], canvases[t]
+        writes = (wx[t], wy[t], wb[t], wc[t])
+        boxes = np.empty((other + 1, 4), np.int64)
+        for i in range(t, n, threads):
+            f = lanes[i]
+            frame = out[dest[i]]
+            _build_one(f, rec, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots)
+            count = 0
+            if static:
+                for p in range(len(rec)):
+                    if rec[p, STATIC] == 0:
+                        rec[p, KIND] = 0
+            else:
+                for k in range(min(segment_counts[f], segments.shape[1])):
+                    count = _aaline(writes, count, segments[f, k])
+            if plate[f] < 0:
+                _region(canvas, rec, writes, count, background[f], 0, size, 0, size, tables, frame)
+                continue
+            src, dst = plates[plate[f]].reshape(-1), frame.reshape(-1)
+            for k in range(dst.size):
+                dst[k] = src[k]
+            for g in range(other + 1):
+                boxes[g, 0], boxes[g, 1], boxes[g, 2], boxes[g, 3] = _BIG, _BIG, -_BIG, -_BIG
+            for p in range(len(rec)):
+                if rec[p, KIND] != 0 and rec[p, STATIC] == 0:
+                    g = groups[p] if p < len(groups) and groups[p] >= 0 else other
+                    _grow(boxes, g, rec[p, BX0], rec[p, BY0], rec[p, BX1], rec[p, BY1])
+            for w in range(count):
+                _grow(boxes, other, wx[t][w], wy[t][w], wx[t][w], wy[t][w])
+            for k in range(_merge(boxes, other + 1)):
+                oy0, oy1 = _outputs(edge, i0, i1, boxes[k, 1], boxes[k, 3])
+                ox0, ox1 = _outputs(edge, i0, i1, boxes[k, 0], boxes[k, 2])
+                if oy0 < oy1 and ox0 < ox1:
+                    _region(canvas, rec, writes, count, background[f], oy0, oy1, ox0, ox1, tables, frame)
