@@ -8,6 +8,10 @@ All notable changes to this project are listed here. The format follows
 
 ### Added
 
+- The paper harness `benchmarks/paper/run.sh` with `benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py`.
+  It times stable-envs against the source library offline (stored inputs) and online (steps with frames), and
+  writes the frame MSE against the source. It uses only the public API. `benchmarks/README.md` tells how to run it.
+  A classic control test runs it end to end on CartPole.
 - Shared batched MuJoCo backend (`stable_envs/_execution/mjbatch.py`) for the MuJoCo families: native
   `mujoco.batch` on CPU, bit-exact with one float64 `MjData` per environment, and MuJoCo Warp on CUDA, with the
   substeps of one step in one captured CUDA graph. It writes and reads the integration State of a subset of
