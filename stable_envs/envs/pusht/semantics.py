@@ -33,6 +33,20 @@ def _to_host(tensors):
     return {key: host[key] for key in tensors}
 
 
+def _finite(arrays):
+    """Whether the float ``arrays`` hold only finite values; small arrays of one dtype share one check."""
+    small = {}
+    for array in arrays:
+        if array.dtype.kind != "f":
+            continue
+        if array.size > 4096:
+            if not np.isfinite(array).all():
+                return False
+        else:
+            small.setdefault(array.dtype, []).append(array.reshape(-1))
+    return all(np.isfinite(np.concatenate(parts)).all() for parts in small.values())
+
+
 def _lookup(nodes, key):
     """``state.get(key, None)`` through ``nodes``: the children of each nested TensorDict already reached."""
     parent = key[:-1]
@@ -368,14 +382,12 @@ class PushT(Env):
                 key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
                 raise ValueError(f"Nonfinite PushT render field: {key}")
             return {"/".join(key): value for key, value in selected.items()}
-        host = _to_host(selected)
-        fields = {}
-        # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
-        for key, value in host.items():
-            array = value.numpy()
-            if array.dtype.kind == "f" and not np.isfinite(array).all():
-                raise ValueError(f"Nonfinite PushT render field: {key}")
-            fields["/".join(key)] = array
+        fields = {"/".join(key): value.numpy() for key, value in _to_host(selected).items()}
+        if not _finite(fields.values()):
+            # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
+            for key, array in fields.items():
+                if array.dtype.kind == "f" and not np.isfinite(array).all():
+                    raise ValueError(f"Nonfinite PushT render field: {key}")
         if error is not None:
             raise error
         return fields
@@ -411,7 +423,8 @@ class PushT(Env):
                 raise ValueError(
                     "PushT render output buffer must be contiguous and match the frames in shape, dtype and device"
                 )
-            out.copy_(frames)
+            if frames is not out:
+                out.copy_(frames)
             return out
         return frames
 
