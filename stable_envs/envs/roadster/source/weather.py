@@ -101,7 +101,6 @@ class Weather:
         m.geom_group[self.rain_ids[: int(round(N_RAIN * self.rain))]] = 1  # visible drops scale with the strength
         m.geom_rgba[self.rain_ids] = RAIN_RGBA
 
-    # ------------------------------------------------------------------ state
     def get_state(self) -> dict:
         """Everything the wind model needs to continue: configuration, gust state and its RNG."""
         return {

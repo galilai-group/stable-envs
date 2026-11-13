@@ -70,7 +70,6 @@ class RoadsterPlanEnv:
         self._roll_t0, self._roll_done = None, False
         self._prev_cost, self.steps = 0.0, 0
 
-    # ------------------------------------------------------------------ state
     @property
     def model(self):
         return self.sim.model
@@ -170,7 +169,6 @@ class RoadsterPlanEnv:
         d.ctrl[:] = 0.0
         self.sim.forward()
 
-    # ------------------------------------------------------------------ tasks
     def _sample_task(self, rng: np.random.Generator):
         """Places the car at a start state and returns the goal (pos, yaw, vel)."""
         c, s = self.sim.course, self.sim
@@ -288,7 +286,6 @@ class RoadsterPlanEnv:
             and not self.sim.contacts()[0]["any"].any()
         )
 
-    # ------------------------------------------------------------------ episode
     def reset(self, seed: int | None = None, wind: float = 0.0, rain: float = 0.0):
         """Start an episode of the task.
 

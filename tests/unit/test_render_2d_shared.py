@@ -14,7 +14,6 @@ from stable_envs.render.gfxdraw import fused as GF
 pytestmark = pytest.mark.unit
 
 
-# --------------------------------------------------------------------------- the tile law
 #: Frame geometries that separate the interesting cases: sizes that are a power of two, sizes that
 #: are not, sizes below one tile, and the registered sizes of the 2-D cells (64, 84, 96, 144, 224,
 #: 300, 400x600, 500, 600, 1000x800).
@@ -44,7 +43,6 @@ def test_a_tile_never_wastes_more_lanes_than_the_bound_allows():
             assert 1 <= bh and bh * bw <= 1024
 
 
-# --------------------------------------------------------------------------- the Wu edge law
 def _random_quads(seed, n=9, H=37, W=53, spread=25):
     g = torch.Generator().manual_seed(seed)
     vx = torch.randint(-spread, W + spread, (n, 4), generator=g, dtype=torch.int64)

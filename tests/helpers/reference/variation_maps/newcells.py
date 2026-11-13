@@ -28,8 +28,6 @@ from ..variation import VariationMap
 __all__ = ["NEWCELL_VARIATION_MAPS", "LEAF_CLASSIFICATION"]
 
 
-# ====================================================================== evidence vocabulary
-
 #: The probes these classifications rest on, quoted in the reasons with what each one measured.
 PROBES = {
     "rocket_liveness": (
@@ -43,8 +41,6 @@ PROBES = {
     ),
 }
 
-
-# ====================================================================== OGB manipulation
 
 #: Reset leaves that reach the OGB frame only through State (qpos and the mocap goal pose).
 _OGB_STATE_LEAVES = (
@@ -77,8 +73,6 @@ _OGB_PLACEMENT_NOTES = {
 }
 
 
-# ====================================================================== Rocket
-
 #: Reset distributions for the drop pose. They are Variation on both sides (per lane, sampled with
 #: ``seed + lane`` or set through ``variation_values``) and reach pixels by moving the rocket.
 ROCKET_START_LEAVES = (
@@ -103,8 +97,6 @@ _ROCKET_SWM_ONLY = {
     ),
 }
 
-
-# ====================================================================== the maps
 
 #: our class name -> how its variation relates to the official swm env's.
 NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
@@ -141,9 +133,6 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
         },
     ),
 }
-
-
-# ====================================================================== structured classification
 
 
 def _cls(bucket, reason, evidence=None, mechanism=None):
@@ -238,8 +227,6 @@ for _family, _mapped in [("Cube", _OGB_CUBE_MAPPED), ("Scene", _OGB_SCENE_MAPPED
     LEAF_CLASSIFICATION["swm/OGB" + _family + "-v0"] = {"our_envs": ["OGB" + _family], "leaves": _leaves}
 
 
-# ====================================================================== the leaf inventory
-
 #: What each swm id's ``variation_space.names()`` returns, recorded from the live wrapper so the
 #: completeness test runs where ``stable_worldmodel`` is not importable. A live test asserts this
 #: table still matches wherever swm is importable.
@@ -287,8 +274,6 @@ RECORDED_SWM_LEAVES: dict[str, tuple[str, ...]] = {
 #: The allowed verdicts.
 BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
 
-
-# ====================================================================== OGB maze / SimplePointMaze
 
 _MAZE_PROBES = {
     "ogbmaze": (

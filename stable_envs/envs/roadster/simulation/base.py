@@ -93,7 +93,6 @@ class RoadsterBatch(SimulatorAdapter):
         self._closed = False
         self.reset(0)  # every environment in a valid episode, so a step before the first reset is defined
 
-    # ------------------------------------------------------------------ backend hooks
     def _build(self) -> None:
         """Create the physics batch, the compute tensors (``_alloc``) and their views."""
         raise NotImplementedError
@@ -114,7 +113,6 @@ class RoadsterBatch(SimulatorAdapter):
         """Write each environment's tyre grip into its model."""
         raise NotImplementedError
 
-    # ------------------------------------------------------------------ storage
     def _alloc(self, device: torch.device) -> None:
         n = self.num_envs
         self._compute = device
@@ -133,7 +131,6 @@ class RoadsterBatch(SimulatorAdapter):
         t = self._s[(group, name)]
         return t[:, 0] if t.shape[1] == 1 else t
 
-    # ------------------------------------------------------------------ lifecycle
     def _check_open(self) -> None:
         if self._closed:
             raise RuntimeError(f"{type(self).__name__} is closed")
@@ -215,7 +212,6 @@ class RoadsterBatch(SimulatorAdapter):
     def _close_physics(self) -> None:
         pass
 
-    # ------------------------------------------------------------------ State
     def _live_state(self) -> TensorDict:
         """A TensorDict over the live storage of every State field, refreshed; not a snapshot."""
         n = self.num_envs
@@ -359,7 +355,6 @@ class RoadsterBatch(SimulatorAdapter):
         self._episode = self._physics.copy()
         self._leaves.copy_(torch.from_numpy(self._episode))
 
-    # ------------------------------------------------------------------ stepping
     def check_step(self, actions, active):
         """Return host ``(actions, active)``, or raise before any environment moves."""
         actions = host_actions(actions, self.num_envs)

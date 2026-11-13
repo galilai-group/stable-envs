@@ -74,8 +74,6 @@ def test_the_blocked_record_carries_the_mismatch_for_the_report(check):
     assert rec["why"].startswith("reference version mismatch")
 
 
-# ------------------------------------------------------------------ the downsample bound's protocol
-
 import ast  # noqa: E402
 from pathlib import Path  # noqa: E402
 

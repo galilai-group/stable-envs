@@ -36,9 +36,6 @@ def _needs_ogbench():
     pytest.importorskip("ogbench")
 
 
-# ===================================================================== structural: where things live
-
-
 def test_maze_cells_are_reexported_from_the_package_as_the_registered_classes():
     assert hasattr(OGB, "__path__"), "stable_envs.envs.ogbench must be the package"
     for cell in MAZE_CELLS:
@@ -84,9 +81,6 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
         assert MANIP.CELL_CLASSES[cell].__bases__ == (MANIP.OGBManipBase,)
 
 
-# ============================================================ structural: the declarations
-
-
 @pytest.mark.parametrize("cell", MANIP_CELLS)
 def test_the_manipulation_declarations_are_still_the_measured_visual_ones(cell):
     """A manipulation cell declares how it was measured and its pinned reference versions."""
@@ -105,9 +99,6 @@ def test_frozen_renderer_cpu_is_refused_rather_than_served_from_the_gpu(cell):
     """The MJWarp renderer classes refuse a CPU device before building anything."""
     with pytest.raises(ValueError, match="requires device='cuda'"):
         MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
-
-
-# =============================================================== structural: the public State layout
 
 
 @pytest.mark.parametrize("loco,dim", [("point", 2), ("ant", 15), ("humanoid", 28)])
@@ -158,9 +149,6 @@ def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
         assert list(space.names()) == ["cube.color", "floor.color"]
         assert space["cube"]["color"].shape == (3,)
         assert space["floor"]["color"].shape == (2, 3)
-
-
-# ===================================================================== behavioral: the maze cells
 
 
 @pytest.fixture(scope="module")

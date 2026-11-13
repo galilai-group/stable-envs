@@ -13,7 +13,6 @@ from .util import vec
 VIS = 'contype="0" conaffinity="0"'
 
 
-# ---------------------------------------------------------------------------------------------- materials
 def assets_xml() -> str:
     """Scenery textures (by their ``textures.assets()`` names) and materials."""
     return "\n".join(
@@ -41,7 +40,6 @@ def assets_xml() -> str:
     )
 
 
-# ---------------------------------------------------------------------------------------------- props
 def tree(x: float, y: float, s: float = 1.0, pine: bool = False) -> str:
     out = [f'<geom type="cylinder" size="{0.18 * s} {1.3 * s}" pos="{x} {y} {1.3 * s}" material="bark" {VIS}/>']
     if pine:
@@ -135,7 +133,6 @@ def parked_car(i: int, color: str, size) -> list[str]:
     return g
 
 
-# ---------------------------------------------------------------------------------------------- loop course
 def loop_decor(course) -> str:
     c = course
     out = []
@@ -223,7 +220,6 @@ def loop_decor(course) -> str:
     return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------------------------- highway
 def traffic_decor(y0: float) -> str:
     out = []
     rng = np.random.default_rng(21)
@@ -258,7 +254,6 @@ def traffic_decor(y0: float) -> str:
     return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------------------------- city
 def roof_props(cx: float, cy: float, hx: float, hy: float, h: float) -> list[str]:
     """AC units, a water tank, railings and a blinking-style antenna light on a roof at height h."""
     out = []
@@ -333,7 +328,6 @@ def city_decor(yc: float, towers, scenery) -> str:
     return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------------------------- car-hop plaza
 def hop_plaza(x0: float, y0: float) -> str:
     """Paved strip for the car-hop scenario: asphalt, parking bay lines, curbs, lamps and a few trees."""
     out = [f'<geom type="box" size="72 11 0.006" pos="{x0 + 66} {y0} 0.006" material="asphalt" {VIS}/>']

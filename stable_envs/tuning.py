@@ -216,9 +216,6 @@ def check(knobs: Mapping[str, Any]) -> dict[str, int | None]:
     return {name: KNOBS[name].check(value) for name, value in knobs.items()}
 
 
-# --------------------------------------------------------------------------- the measured cache
-
-
 @cache
 def _cpu_name() -> str:
     with contextlib.suppress(OSError), open("/proc/cpuinfo") as fh:
@@ -363,8 +360,6 @@ def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
     return path
 
 
-# --------------------------------------------------------------------------- lookup
-
 _set: dict[str, int] = {}
 _scopes: contextvars.ContextVar[tuple[Mapping[str, int], ...]] = contextvars.ContextVar("tuning_scopes", default=())
 _derived: dict[tuple[str, str], int | None] = {}
@@ -484,8 +479,6 @@ def describe(**where) -> dict[str, tuple[int | None, str]]:
     """
     return {name: lookup(name, **where) for name in KNOBS}
 
-
-# --------------------------------------------------------------------------- hint and autotune
 
 _noticed: dict[tuple[str, str], None] = {}
 

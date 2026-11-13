@@ -95,7 +95,7 @@ _SIMD_2_PI = 2.0 * math.pi
 _FLT_MAX_D = float(np.finfo(np.float32).max)
 
 
-# -- Bullet's convex hull of a cylinder (btShapeHull::buildHull(0) and HullLibrary), in double precision ----------
+# Bullet's convex hull of a cylinder (btShapeHull::buildHull(0) and HullLibrary), in double precision.
 
 
 def _dot(a, b):
@@ -543,9 +543,6 @@ def scene():
     return Scene()
 
 
-# -- Poses ---------------------------------------------------------------------------------------------------------
-
-
 def _bt_matrix(q):
     """``btMatrix3x3::setRotation`` (and pybullet's ``getMatrixFromQuaternion``) of ``(..., 4)`` xyzw rows."""
     x, y, z, w = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
@@ -755,9 +752,6 @@ def object_colors(colors):
     painted = rows >= 0
     out[:, painted] = colors[:, rows[painted]].astype(np.float32)
     return out
-
-
-# -- Kernel ----------------------------------------------------------------------------------------------------------
 
 
 @njit(cache=True, error_model="numpy", inline="always")

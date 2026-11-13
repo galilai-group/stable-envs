@@ -250,9 +250,6 @@ def step_serial(actions, active, apos, adir, carry, count, rad, height, bpos, bd
             _step_env(i, actions[i], apos, adir, carry, count, rad, height, bpos, bdir, vel, steps, truncated, P)
 
 
-# ---------------------------------------------------------------------------------------------- reset
-
-
 @njit(cache=True)
 def _extents(r, P):
     """``_spawn_extents``: the buffered placement box, or the whole room (flag False)."""

@@ -106,7 +106,6 @@ def _per_primitive(env, states, style=None):
         env.use_fused_render = was
 
 
-# ------------------------------------------------------------------ joint 1: the description
 @pytest.mark.parametrize("name", CLASSIC)
 @pytest.mark.parametrize("kind", sorted(STATE_CLASSES))
 def test_the_described_frame_is_the_drawn_frame(name, kind):
@@ -142,7 +141,6 @@ def test_the_description_carries_per_row_appearance(name):
     )
 
 
-# ------------------------------------------------------------------ joint 2: the kernel
 @pytest.mark.gpu
 @pytest.mark.parametrize("name", CLASSIC)
 @pytest.mark.parametrize("kind", sorted(STATE_CLASSES))

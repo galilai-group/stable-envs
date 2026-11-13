@@ -72,9 +72,6 @@ def test_building_an_env_does_not_release_anything():
     assert d["renderer_closed"] == 0
 
 
-# ------------------------------------------------------------------ opt-in: real crashes
-
-
 @pytest.mark.selftest
 def test_selftest_segfault_with_live_egl_contexts():
     """SIGSEGV while a real env and its GPU contexts are live; the supervisor must lose only this test."""

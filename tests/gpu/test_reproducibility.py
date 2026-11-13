@@ -76,9 +76,6 @@ def _continuous_leaf(env):
     return None
 
 
-# ------------------------------------------------------------------ fixtures
-
-
 @pytest.fixture(scope="module", params=ENV_NAMES)
 def env(request):
     return se.make(request.param, num_envs=N, device="cuda")
@@ -179,9 +176,6 @@ def _rows_only(env, why: str) -> None:
         pytest.skip(f"{type(env).__name__} has no render rows: {why}")
 
 
-# ------------------------------------------------------------------ 1. cross-process
-
-
 def test_seeded_sampling_reproduces_in_a_fresh_process(env, fresh_process):
     """``sample_states(rng=)`` and ``sample_style(rng=)`` give the same bytes in a new interpreter.
 
@@ -270,9 +264,6 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
         )
 
 
-# ------------------------------------------------------------------ 2. batch size and chunking
-
-
 def _big_batch(env) -> int:
     """The largest batch from ``BIG_BATCHES`` whose frames fit ``BIG_FRAME_BUDGET``."""
     probe = S.render_any(env, S.draw_states(env, 1, np.random.default_rng(0)))
@@ -314,8 +305,6 @@ def test_chunked_render_states_is_chunk_independent(env, inputs):
         f"({r['worst_case']}, max {r['max_abs_diff']}/255): {r}"
     )
 
-
-# ------------------------------------------------------------------ 3. resolution
 
 #: Measured per-env floors on the fraction of pixels where rendering at 2S and box-downsampling equals
 #: rendering at S. The two are not expected to be equal (point sampling against area averaging differs
@@ -519,9 +508,6 @@ def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
     )
 
 
-# ------------------------------------------------------------------ 4. input forms
-
-
 def test_every_input_form_gives_the_same_frame(env, inputs):
     """numpy or torch, CPU or CUDA, float32 or float64, contiguous or strided inputs give one frame.
 
@@ -592,9 +578,6 @@ def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(e
         f"{type(env).__name__}: render(out=<non-contiguous>) reported an error but had already "
         f"written into the caller's buffer"
     )
-
-
-# ------------------------------------------------------------------ 4b. the per-environment style contract
 
 
 def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
@@ -708,9 +691,6 @@ def _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v):
     )
 
 
-# ------------------------------------------------------------------ 5. purity, idempotence, ordering
-
-
 def test_render_is_pure_and_set_state_is_idempotent(env, inputs):
     """Rendering does not mutate the env, and ``set_state(get_state())`` twice equals once."""
     states, style = inputs
@@ -795,9 +775,6 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
         f"{name}: after one render(size={2 * int(env.size)}), a plain render() returns {tuple(after)} "
         f"instead of {tuple(before)} while env.size is still {env.size}"
     )
-
-
-# ------------------------------------------------------------------ 6. serialization
 
 
 def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
@@ -926,9 +903,6 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
         f"draw different pictures (max "
         f"{int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}/255)"
     )
-
-
-# ------------------------------------------------------------------ 7. stepping from a restored State
 
 
 #: Default CUDA physics backends that are approximate: float32 and not bitwise reproducible, since contact
@@ -1097,9 +1071,6 @@ def test_an_approximate_backend_continues_a_restored_rollout(env):
             assert flips <= ROLLOUT_SUCCESS_FLIPS, f"{cls.__name__}: {flips} of {N} lanes changed task outcome"
 
 
-# ------------------------------------------------------------------ 8. the reference renderer
-
-
 @pytest.mark.reference
 def test_the_reference_renderer_on_this_machine_is_deterministic(env):
     """The official reference renderer returns the same pixels twice for the same states on this machine.
@@ -1118,9 +1089,6 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
         f"machine (max {r['max_abs_diff']}/255). The machine's rasterizer is nondeterministic; parity "
         f"numbers measured here are unreliable"
     )
-
-
-# ------------------------------------------------------------------ 9. scene cache
 
 
 def _visibility_capable_envs():

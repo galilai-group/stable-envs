@@ -106,7 +106,6 @@ class RoadsterBase(Env):
             self._simulator.close()
             raise
 
-    # ------------------------------------------------------------------ variation
     def make_variation_space(self):
         """The physics leaves ``weather.wind`` / ``weather.rain`` and the visual leaf ``rendering.cinematic``.
 
@@ -124,7 +123,6 @@ class RoadsterBase(Env):
             }
         )
 
-    # ------------------------------------------------------------------ state
     def _layout(self):
         return tuple(
             (key, width, self._row_layout[_RENDER_KEYS[key]][0] if key in _RENDER_KEYS else None)
@@ -164,7 +162,6 @@ class RoadsterBase(Env):
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
 
-    # ------------------------------------------------------------------ rendering
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         """Draw ``(..., state_dim)`` render rows to ``(..., size, size, 3)`` uint8 frames.

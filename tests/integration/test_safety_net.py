@@ -131,8 +131,6 @@ def test_the_stall_watchdog_kills_a_hung_test_and_carries_on(tmp_path):
     assert res["counts"]["passed"] == 2, f"the run did not continue past the hang: {res}\n{log}"
 
 
-# ------------------------------------------------------------------ the resource guard
-
 #: Violates each guard rule through the guard's own accounting, without EGL. Attachment to
 #: ``mujoco.egl.GLContext`` is checked in tests/gpu/test_crash_isolation.py.
 GUARD_PROBE = """
@@ -218,9 +216,6 @@ def test_the_guard_can_be_put_in_report_only_mode_for_a_bisect(tmp_path):
     assert "1 passed" in p.stdout, p.stdout + p.stderr
 
 
-# ------------------------------------------------------------------ the per-test timeout
-
-
 def test_the_per_test_timeout_is_applied_but_never_required(tmp_path):
     """The timeout defaults to 900s, an explicit ``--timeout`` wins, and the suite runs without pytest-timeout.
 
@@ -274,9 +269,6 @@ def test_the_per_test_timeout_is_applied_but_never_required(tmp_path):
         f"the suite did not even start without pytest-timeout:\n{p.stdout}\n{p.stderr}"
     )
     assert "unrecognized arguments" not in p.stderr, p.stderr
-
-
-# ------------------------------------------------------------------ the node gate
 
 
 def test_a_condemned_node_is_refused_by_name_before_anything_is_measured():
@@ -379,9 +371,6 @@ def _run_supervisor_env(tmp_path: Path, module_src: str, **envextra):
     p = subprocess.run(cmd, env=_clean_env(**envextra), capture_output=True, text=True, timeout=300, cwd=str(tmp_path))
     res = json.loads(out_json.read_text()) if out_json.exists() else {}
     return p.returncode, res, p.stdout + p.stderr
-
-
-# ------------------------------------------------------------------ selection
 
 
 def test_the_smoke_subset_covers_every_env_family_exactly_once():

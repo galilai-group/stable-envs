@@ -70,9 +70,6 @@ def _swm_space(m):
     return swm_variation_space(gymnasium.make(m.swm_id))
 
 
-# --------------------------------------------------------------------- completeness
-
-
 @needs_swm
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_every_leaf_is_classified(cell):
@@ -99,9 +96,6 @@ def test_classification_counts_match_the_declaration(cell):
         for label in ("mapped", "unsupported", "dead_upstream", "not_applicable"):
             got[label] = sum(1 for v in r["classification"].values() if v == label)
         assert got == EXPECTED_COUNTS[variation_map(env).swm_id], cell
-
-
-# --------------------------------------------------------------------- the registered default
 
 
 @pytest.mark.nightly
@@ -156,9 +150,6 @@ def test_classic_default_matches_the_official_swm_render(cell):
         assert np.array_equal(ours, official), f"{cell}: {int((ours != official).sum())} bytes differ"
 
 
-# --------------------------------------------------------------------- isolation
-
-
 @needs_swm
 @pytest.mark.parametrize("cell", _gl(CELLS))
 def test_mapped_leaves_are_isolated(cell):
@@ -205,9 +196,6 @@ def _probe(leaf):
     hi = np.asarray(leaf.high, np.float64).reshape(np.shape(iv))
     far = np.where(np.abs(iv - lo) > np.abs(iv - hi), lo, hi)
     return np.asarray(iv + 0.9 * (far - iv), leaf.dtype)
-
-
-# --------------------------------------------------------------------- round trip
 
 
 @needs_swm
@@ -273,8 +261,6 @@ def test_light_intensity_lands_on_the_model(cell):
         assert float(at_lo[o]) == pytest.approx(scale_low, rel=1e-6), cell
         assert float(dark[o]) < scale_low - 1e-6, f"{cell}: the declared dark-end gap does not exist"
 
-
-# --------------------------------------------------------------------- dead upstream
 
 #: Re-measuring ``dead_upstream`` drives the live swm wrapper through variation resets, each of which
 #: recompiles and drops the previous ``Physics``, freeing a GL context that corrupts the others live in
@@ -381,9 +367,6 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
             )
 
 
-# --------------------------------------------------------------------- enum and affine
-
-
 @needs_dmc
 def test_enum_alternatives_round_trip():
     """The one ``enum`` leaf in this family: swm's Discrete(2) into our Discrete(3), both ways."""
@@ -444,9 +427,6 @@ def test_a_non_invertible_affine_is_refused():
 
     with pytest.raises(ValueError, match="not invertible"):
         replace(VARIATION_MAPS["Pendulum"], affine={"a.b": ("c.d", 0.0, 1.0)})
-
-
-# --------------------------------------------------------------------- floor.color
 
 
 @needs_dmc

@@ -84,9 +84,6 @@ def _classic_enabled() -> bool:
     return bool(FC.HAVE_TRITON)
 
 
-# ------------------------------------------------------------------ the cases
-
-
 @dataclass(frozen=True)
 class FastPath:
     """One optimization and what is needed to render it against the path it replaces."""
@@ -497,9 +494,6 @@ def test_the_fast_path_is_bit_identical_to_the_path_it_replaces(case_id, name, s
     slow = case.frames(env, payload, False)
     at = "" if size is None else f" @{size}px"
     assert_frames_identical(fast, slow, what=f"{name}{at} [{case.id}]", why=case.why)
-
-
-# ------------------------------------------------------------------ direct checks
 
 
 def test_an_unknown_geom_code_is_refused_by_both_cast_backends():

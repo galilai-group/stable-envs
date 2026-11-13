@@ -96,7 +96,6 @@ class RoadsterSim:
         self._stale_pose: np.ndarray | None = None
         self.reset()
 
-    # ------------------------------------------------------------------ helpers
     @property
     def pos(self) -> np.ndarray:
         return self.data.qpos[:3]
@@ -195,7 +194,6 @@ class RoadsterSim:
         arm = R @ np.array([-0.35, 0.0, 0.12])
         return np.r_[f, np.cross(arm, f)]
 
-    # ------------------------------------------------------------------ exhaust history
     def _fx_record(self):
         """Append this step to the exhaust history.
 
@@ -229,7 +227,6 @@ class RoadsterSim:
         self._fx_count = 0
         self._fx_hist[:] = 0.0
 
-    # ------------------------------------------------------------------ visual effects
     def _refresh_fx_geoms(self):
         """World poses of the effect geoms from the newly written model values (what mj_kinematics would do)."""
         m, d, g, b = self.model, self.data, self._fx_geoms, self._fx_bodies
@@ -294,7 +291,6 @@ class RoadsterSim:
                 m.geom_pos[self._shadow] = (0, 0, -50)
         self._refresh_fx_geoms()
 
-    # ------------------------------------------------------------------ control
     def reset(self):
         """The car on the start line of the main course, at rest, with a full tank and no exhaust history."""
         mujoco.mj_resetData(self.model, self.data)

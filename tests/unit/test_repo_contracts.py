@@ -79,9 +79,6 @@ def test_maintained_product_files_do_not_cite_scratch_paths():
     assert not hits, "maintained files still cite scratch/ paths:\n  " + "\n  ".join(hits[:40])
 
 
-# ------------------------------------------------------------------ documentation
-
-
 def _nav_targets(node, out):
     if isinstance(node, str):
         out.append(node)

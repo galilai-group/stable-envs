@@ -38,8 +38,6 @@ import numpy as np
 
 from ..variation import VariationMap
 
-# ===================================================================== classic control
-
 #: Every classic-control cell offers this and swm does not.
 _AA_ONLY = {
     "rendering.antialias": "exact anti-aliasing on or off; swm's envs are pygame and have no "
@@ -191,7 +189,6 @@ def _mountain_car(swm_id: str, *dyn: str) -> VariationMap:
 _CLASSIC_MAPS["MountainCar"] = _mountain_car("swm/MountainCarControl-v0", "gravity", "force", "max_speed")
 _CLASSIC_MAPS["MountainCarContinuous"] = _mountain_car("swm/MountainCarContinuousControl-v0", "power", "max_speed")
 
-# ===================================================================== DM Control
 
 #: ``light.intensity`` is an absolute diffuse in [0, 1]; ``light.diffuse_scale`` multiplies the
 #: compiled model's own diffuse and clips to [0, 1]. The factor is ``1 / base``, with the base read
@@ -626,8 +623,6 @@ for _cell in ("DMCCartpoleBalance", "DMCCartpoleSwingup"):
 #: stable-envs class name -> its map. Installed by ``variation_maps.install``.
 MAPS: dict[str, VariationMap] = {**_CLASSIC_MAPS, **_DMC_MAPS}
 
-
-# ===================================================================== the light range gap
 
 #: ``light.intensity`` is mapped over 86-88 % of its range; the gap is recorded here.
 #: ``cell -> (base, reachable_low, reachable_high, note)``.

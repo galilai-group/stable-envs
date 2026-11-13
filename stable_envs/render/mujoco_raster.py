@@ -231,9 +231,6 @@ def semantic(p, gpos, gmat, rgba, cams, size):
     return seg, depth
 
 
-# ----------------------------------------------------------------------------------------------- kernels
-
-
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)
 def _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, which, out, o):
     """Fixed-function lighting of one vertex.

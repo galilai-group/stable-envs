@@ -21,9 +21,6 @@ except ImportError as e:
     pytest.skip(f"ogbench.manipulation's dependencies are absent: {e}", allow_module_level=True)
 
 
-# --------------------------------------------------------------------------- state layout
-
-
 @pytest.mark.parametrize("cell,nq,nbuttons", [("Cube", 21, 0), ("Scene", 25, 2)])
 def test_state_layout_is_qpos_goal_and_buttons(cell, nq, nbuttons):
     b = ogb._bundle(cell)
@@ -50,9 +47,6 @@ def test_mocap_quat_really_is_constant_in_the_registered_distribution(cell):
             seen.add(tuple(np.round(u.data.mocap_quat.ravel(), 9)))
     assert len(seen) == 1, f"mocap_quat varies after all: {seen}"
     assert np.allclose(np.array(next(iter(seen))).reshape(-1, 4)[:, 0], 1.0)
-
-
-# --------------------------------------------------------------------------- reproducibility
 
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
@@ -84,9 +78,6 @@ def test_sample_states_leaves_the_global_numpy_rng_alone(cell):
     before = np.random.get_state()[1][:8].copy()
     ogb.OGBManipBase.sample_states(fake, 2, np.random.default_rng(0))
     assert np.array_equal(np.random.get_state()[1][:8], before)
-
-
-# --------------------------------------------------------------------------- button tables
 
 
 def test_button_tables_cover_every_combination_and_differ():
@@ -126,9 +117,6 @@ def test_button_deltas_are_the_same_whatever_task_the_env_starts_in():
         u._apply_button_states()
 
 
-# --------------------------------------------------------------------------- the composite rule
-
-
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_the_mover_set_contains_the_cube_and_excludes_the_floor(cell):
     """The composite takes MJWarp only where a mover was hit; a floor in the set would hide the baked plate."""
@@ -139,9 +127,6 @@ def test_the_mover_set_contains_the_cube_and_excludes_the_floor(cell):
     floor = mujoco.mj_name2id(b.model, mujoco.mjtObj.mjOBJ_GEOM, "floor")
     assert floor >= 0 and floor not in movers
     assert set(int(g) for g in b.cube_geoms) <= movers
-
-
-# --------------------------------------------------------------------------- the frozen corpus
 
 
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])

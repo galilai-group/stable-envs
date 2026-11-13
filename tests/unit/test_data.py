@@ -84,9 +84,6 @@ def _style_id(frames) -> np.ndarray:
     return f[..., 0, 1, 0].reshape(-1)
 
 
-# ------------------------------------------------------------------ collate_batched
-
-
 def test_collate_is_the_identity_on_something_already_batched():
     """``collate_batched`` passes an already-assembled batch through without copying.
 
@@ -102,9 +99,6 @@ def test_collate_still_handles_a_genuine_list_of_samples():
     """A list of samples is still stacked, so the collate works with any dataset."""
     out = collate_batched([torch.tensor([1.0, 2.0]), torch.tensor([3.0, 4.0])])
     assert out.shape == (2, 2) and torch.equal(out[1], torch.tensor([3.0, 4.0]))
-
-
-# ------------------------------------------------------------------ render_states
 
 
 def test_leading_dimensions_survive_the_round_trip():
@@ -174,9 +168,6 @@ def test_a_numpy_out_buffer_is_filled_rather_than_crashed_on():
     got = render_states(env, _states(6), out=out, chunk=4, device="cpu")
     assert _state_id(got).tolist() == list(range(6))
     assert out[:, 0, 0, 0].tolist() == list(range(6))
-
-
-# ------------------------------------------------------------------ StateDataset
 
 
 def test_a_state_dataset_renders_the_rows_it_was_indexed_with():
@@ -261,9 +252,6 @@ def test_the_caller_s_own_dataloader_iterates_the_dataset_in_order():
     assert _state_id(batches[1]).tolist() == [4, 5, 6, 7]
 
 
-# ------------------------------------------------------------------ TrajectoryDataset: the corpus shapes
-
-
 def test_dense_input_becomes_flat_storage_with_one_length_per_trajectory():
     ds = TrajectoryDataset(RecordingEnv(), _states(12).reshape(3, 4, 2), device="cpu")
     assert ds.n_trajectories == 3 and ds.lengths.tolist() == [4, 4, 4]
@@ -303,9 +291,6 @@ def test_lengths_that_do_not_account_for_every_row_are_refused():
 def test_a_state_width_the_env_does_not_take_is_refused_at_construction():
     with pytest.raises(ValueError, match="state_dim 2"):
         TrajectoryDataset(RecordingEnv(), np.zeros((2, 4, 5), np.float32), device="cpu")
-
-
-# ------------------------------------------------------------------ TrajectoryDataset: the clip index
 
 
 @pytest.mark.parametrize(
@@ -372,9 +357,6 @@ def test_a_list_index_and_a_scalar_index_agree():
     assert torch.equal(one, many[0])
 
 
-# ------------------------------------------------------------------ TrajectoryDataset: style is per trajectory
-
-
 def test_style_is_expanded_over_a_trajectory_s_OWN_rows():
     """Each trajectory's style is expanded over its own rows (``repeat_interleave``, not ``repeat``).
 
@@ -439,9 +421,6 @@ def test_compression_counts_stored_rows_and_not_overlapping_clips():
     c = ds.compression
     assert len(ds) == 9, "the clips do not overlap"
     assert c["n_steps"] == 12 and c["frame_bytes"] == 12 * 3 * 5 * 3
-
-
-# ------------------------------------------------------------------ HuggingFace
 
 
 @pytest.fixture

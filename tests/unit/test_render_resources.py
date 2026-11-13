@@ -17,8 +17,6 @@ import pytest
 
 from stable_envs.render import _resources as RES
 
-# --------------------------------------------------------------------------- a fake backend object
-
 
 class FakeBackend(RES.Closeable):
     """What a real backend does, with the frees replaced by an observable list."""
@@ -38,9 +36,6 @@ class FakeBackend(RES.Closeable):
     def use(self):
         self._check_open("use")
         return self.buffer
-
-
-# --------------------------------------------------------------------------- the close protocol
 
 
 @pytest.mark.unit
@@ -161,9 +156,6 @@ def test_a_failed_release_is_observable_and_closes_the_object_once():
     assert b.calls == 1
 
 
-# --------------------------------------------------------------------------- the bounded cache
-
-
 @pytest.mark.unit
 def test_the_cache_is_bounded():
     c = RES.BoundedCache(3, name="t")
@@ -261,9 +253,6 @@ def test_a_zero_capacity_cache_is_refused():
         RES.BoundedCache(0)
 
 
-# --------------------------------------------------------------------------- the deliberate leak
-
-
 @pytest.mark.unit
 def test_process_lifetime_retention_records_its_reason_and_is_capped():
     obj = object()
@@ -287,9 +276,6 @@ def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch
     assert RES.retain_process_lifetime(obj, "foreign texture owner", overflow="retain") is obj
     assert RES.counts()["retained"] == before + 1
     assert "Keeping it" in caplog.text
-
-
-# --------------------------------------------------------------------------- the backends' shape
 
 
 @pytest.mark.unit

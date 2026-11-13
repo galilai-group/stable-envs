@@ -27,9 +27,6 @@ def _env(num_envs: int = 8) -> TinyEnv:
     return TinyEnv(num_envs=num_envs, device=DEV)
 
 
-# ------------------------------------------------------------------ the recommended idiom
-
-
 def test_a_plain_dataloader_with_drop_last_false_runs_to_the_end_of_its_epoch():
     """With torch's defaults every row reaches the renderer exactly once, including a short last batch."""
     env = _env(4)
@@ -59,17 +56,11 @@ def test_states_that_are_already_on_the_env_s_device_are_accepted_unchanged():
     assert frame_ids(env._set_render_state(s)._render()) == [0, 1, 2, 3]
 
 
-# ------------------------------------------------------------------ no loader factory
-
-
 def test_the_datasets_no_longer_ship_a_dataloader_factory():
     """``StateDataset`` and ``TrajectoryDataset`` have no ``loader()``; callers build their own ``DataLoader``."""
     ds = StateDataset(_env(1), id_states(6), device=DEV)
     assert not hasattr(ds, "loader"), "StateDataset must not expose a loader() factory"
     assert not hasattr(TrajectoryDataset(_env(1), np.stack([id_states(4)]), device=DEV), "loader")
-
-
-# ------------------------------------------------------------------ the library datasets under a caller's loader
 
 
 def test_a_batch_sampler_iterates_a_state_dataset_with_torch_s_own_collate():

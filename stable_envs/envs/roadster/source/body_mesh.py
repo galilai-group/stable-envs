@@ -270,7 +270,6 @@ def mesh_xml(name: str, V: np.ndarray, F: np.ndarray) -> str:
     return f'<mesh name="{name}" vertex="{v}" face="{f}" smoothnormal="false" inertia="shell"/>'
 
 
-# ---------------------------------------------------------------------------------------------- faceted
 # Panel-style shell: one straight-sided section per station, quads between
 # neighboring stations split along the less-twisted diagonal, and unshared vertices per triangle so
 # every panel is shaded flat and every crease stays sharp.

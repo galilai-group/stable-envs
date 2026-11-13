@@ -87,7 +87,6 @@ class Smoke:
             self.m.geom_rgba[self.ids, 3] = 0.0
             self.m.geom_pos[self.ids] = (0.0, 0.0, -80.0)
 
-    # ------------------------------------------------------------------ emission
     def _emit(self, hist: np.ndarray):
         """Puffs emitted by the history entries: (p0, v0, r0, life, t_emit, wind) arrays, youngest last."""
         n_noz = len(self.nozzles)
@@ -150,7 +149,6 @@ class Smoke:
             hist[e, ENTRY["wind"][0] : ENTRY["wind"][0] + 3],
         )
 
-    # ------------------------------------------------------------------ motion
     @staticmethod
     def _advance(p0, v0, r0, life, age, wind):
         """Position and radius of each puff at `age`.
@@ -178,7 +176,6 @@ class Smoke:
             p[low, 2] = r[low]
         return p, r, frac
 
-    # ------------------------------------------------------------------ drawing
     def puffs(self, hist: np.ndarray, t_now: float):
         """Live puffs at time `t_now`: (positions, radii, colors, alphas), youngest first, at most N_SMOKE."""
         emitted = self._emit(np.asarray(hist, float))

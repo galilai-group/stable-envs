@@ -29,9 +29,6 @@ def _map_for(swm_id):
     return ms[0]
 
 
-# ---------------------------------------------------------------- registration
-
-
 def test_the_new_maps_are_registered_in_the_shared_table():
     """``tests/helpers/reference/variation.py`` installs these into ``VARIATION_MAPS``."""
     for name, m in NEWCELL_VARIATION_MAPS.items():
@@ -42,9 +39,6 @@ def test_the_new_maps_are_registered_in_the_shared_table():
 def test_registering_the_new_maps_did_not_disturb_the_pre_existing_ones():
     for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"):
         assert name in VARIATION_MAPS, f"{name} is missing from VARIATION_MAPS"
-
-
-# ---------------------------------------------------------------- completeness
 
 
 @pytest.mark.parametrize("swm_id", IDS)
@@ -114,8 +108,6 @@ def test_every_unmapped_leaf_explains_itself(swm_id):
                 f"{swm_id}:{leaf} is {rec['classification']} with a reason too short to be one"
             )
 
-
-# ---------------------------------------------------------------- Rocket, the one family with dims
 
 ROCKET = "swm/PFRocketLanding-v0"
 
@@ -192,9 +184,6 @@ def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
     assert list(row[o : o + w]) == [255.0, 255.0, 255.0]
 
 
-# ---------------------------------------------------------------- OGB, the empty-style family
-
-
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
 def test_ogb_maps_recovered_public_configuration(swm_id):
     """The public semantic adapter has a wider configuration than the frozen renderer."""
@@ -224,9 +213,6 @@ def test_lock_color_is_scene_only():
     assert "lock_color" not in _map_for("swm/OGBCube-v0").swm_only
 
 
-# ---------------------------------------------------------------- against the LIVE wrapper
-
-
 @pytest.mark.swm
 @pytest.mark.parametrize("swm_id", IDS)
 def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
@@ -246,8 +232,6 @@ def test_the_recorded_inventory_still_matches_the_live_wrapper(swm_id):
         f"{sorted(RECORDED_SWM_LEAVES[swm_id])}. Re-enumerate and re-classify the difference"
     )
 
-
-# ---------------------------------------------------------------- the maze families
 
 MAZE = "swm/OGBMaze-v0"
 SPM = "swm/SimplePointMaze-v0"
@@ -393,7 +377,6 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
         assert leaf in ours, f"{leaf} is mapped but is not a leaf of SimplePointMaze's own space"
 
 
-# ---------------------------------------------------------------- OGB cube.color, on the CPU
 #
 # These run the real `_cube_colours`, `_cube_geom_index` and `_upload_cube_colours` against a stub
 # bundle and a stub mujoco_warp context, so they need no GPU. The render context is reused across
@@ -535,9 +518,6 @@ def test_the_colour_write_touches_only_the_cube_geoms():
     _upload(env, c, _sty([[1.0, 0.0, 0.0]] * 2), 2, 2)
     other = [g for g in range(ngeom) if g not in _CUBE_GEOMS]
     assert torch.equal(buf[:, other], before[:, other])
-
-
-# ---------------------------------------------------------------- the cube.color shape contract
 
 
 def _ogb_space(cell):

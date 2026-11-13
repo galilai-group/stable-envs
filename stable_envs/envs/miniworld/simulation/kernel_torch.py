@@ -73,7 +73,6 @@ class TorchKernel:
             as_t(world.box_pool),
         )
 
-    # ------------------------------------------------------------------------------------------ geometry
     def wall_hit(self, x, z, r):
         """``intersect_circle_segs`` against the four walls, elementwise."""
         S, hit = self.S, None
@@ -141,7 +140,6 @@ class TorchKernel:
             torch.where(ok, cz.gather(1, first)[:, 0], z),
         )
 
-    # ------------------------------------------------------------------------------------------ step
     def step(self, s: dict, a: torch.Tensor, active: torch.Tensor | None) -> dict:
         """One step of every environment (``active`` ones only, when given); returns the new State dict."""
         P, B = self.P, a.shape[0]
@@ -287,7 +285,6 @@ class TorchKernel:
             v3[..., axis] = torch.where(go, nv, v)
         return pos, v3
 
-    # ------------------------------------------------------------------------------------------ reset
     def reset(self, s: dict) -> dict:
         """Every environment's next episode from its ``seed`` and ``episode``; returns the new State dict."""
         P, S, dev = self.P, self.S, self.device

@@ -71,9 +71,6 @@ def _visual(name="Vis", **over):
     return _cls(name, "A test env drawn by a different rasterizer.", **attrs)
 
 
-# ------------------------------------------------------------------ the declaration
-
-
 def test_a_well_formed_declaration_of_each_kind_registers():
     """Classes with and without ``visual_fidelity`` register (the control for the refusals below)."""
     register(_cls("Plain", "An ordinary env."))
@@ -108,9 +105,6 @@ def test_a_visual_env_with_no_visual_note_is_refused():
         register(_visual("Bad", visual_note=""))
 
 
-# ------------------------------------------------------------------ registration itself
-
-
 def test_two_classes_cannot_share_a_lookup_key():
     """Registering a different class under an existing name raises instead of overwriting."""
     a = register(_cls("Twin", "doc"))
@@ -133,9 +127,6 @@ def test_an_unknown_env_name_lists_the_ones_that_exist():
         make("Pusht")  # the plausible casing mistake
     assert "unknown env" in str(e.value)
     assert len(str(e.value)) > 100, "the error must list the known names, not merely reject one"
-
-
-# ------------------------------------------------------------------ what the listing shows
 
 
 def test_the_listing_names_each_class_and_its_reference():
@@ -163,9 +154,6 @@ def test_describe_reports_the_measured_agreement_only_when_declared():
     vis = _visual("V2")(num_envs=1, device="cpu").describe()
     assert vis["visual_fidelity"]["mse_mean"] == 2.45
     assert vis["visual_note"] == "a different rasterizer draws the same scene"
-
-
-# ------------------------------------------------------------------ the real registry
 
 
 def test_every_registered_class_still_satisfies_its_fidelity_declaration():
@@ -224,9 +212,6 @@ def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away()
     for mod in errs:
         offenders = [n for n, c in se.registry.REGISTRY.items() if c.__module__.endswith(f".{mod}")]
         assert not offenders, f"{mod} is recorded as having failed to import, yet {offenders} claim to come from it"
-
-
-# ------------------------------------------------------------- base/subclass attribute collisions
 
 
 def test_no_env_shadows_an_attribute_the_base_class_owns():
@@ -332,8 +317,6 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
         f"for the life of the process, so a high live count alone is not a violation"
     )
 
-
-# ------------------------------------------------------------------ reference versions
 
 from stable_envs.env import MEASURED_WITH_KEY, REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
 

@@ -36,9 +36,6 @@ def jam():
         yield env
 
 
-# ------------------------------------------------------------------ every cell
-
-
 @pytest.mark.parametrize("name", NAMES)
 def test_cell_builds_resets_steps_and_restores_state(name):
     with snv.make(name, num_envs=LANES, device="cpu", seed=SEED) as env:
@@ -90,9 +87,6 @@ def test_the_integration_state_is_split_in_mujoco_order(jam):
         "mocap_pos",
         "mocap_quat",
     }
-
-
-# ------------------------------------------------------------------ State contract
 
 
 def test_set_state_validates_everything_before_changing_any_lane(jam):
@@ -200,9 +194,6 @@ def test_actions_are_validated_before_the_simulator_moves(jam):
         assert_same_state(jam.get_state(), live)
 
 
-# ------------------------------------------------------------------ Variation
-
-
 def test_wind_and_rain_reach_the_physics_at_reset():
     with snv.RoadsterTrafficJam(num_envs=LANES, device="cpu") as env:
         assert env.variation_names == ["rendering.cinematic", "weather.rain", "weather.wind"]
@@ -233,9 +224,6 @@ def test_wind_and_rain_reach_the_physics_at_reset():
         )
         sampled = env.reset(seed=SEED, options={"variation": ["weather.rain"]})
         assert (sampled["weather", "rain"] > 0).all() and (sampled["weather", "grip"] < 1).all()
-
-
-# ------------------------------------------------------------------ rendering
 
 
 def test_render_draws_the_wm_camera_without_touching_the_simulation(jam):
@@ -313,9 +301,6 @@ def test_rendered_weather_follows_the_state(jam):
     assert torch.equal(jam.render(dry, variation={"weather.rain": [1.0]}), b)
     with pytest.raises(KeyError):
         jam.render(dry, variation={"sky.color": [0, 0, 0]})
-
-
-# ------------------------------------------------------------------ registration
 
 
 def test_the_family_registers_five_cells_and_reports_a_missing_extra():

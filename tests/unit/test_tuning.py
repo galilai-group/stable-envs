@@ -64,9 +64,6 @@ def _cache(value=16, batch=4, size=8):
     return tuning.write_cache({tuning.entry_key("navigation", size, batch): {"nav_render_chunk": value}}, "cpu")
 
 
-# --------------------------------------------------------------------------- registry, validation, precedence
-
-
 def test_every_knob_documents_itself_and_has_a_valid_fallback():
     paths = {p for ps in tuning.RENDER_PATHS.values() for p in ps}
     for name, knob in tuning.KNOBS.items():
@@ -110,9 +107,6 @@ def test_layers_take_precedence_in_order(monkeypatch):
     assert tuning.describe()["workers"] == (0, "set")
 
 
-# --------------------------------------------------------------------------- environment variables
-
-
 @pytest.mark.parametrize(("text", "value"), [("8", 8), (" 16 ", 16), ("1_024", 1024), ("2K", 2048), ("6GiB", 6 << 30)])
 def test_environment_values_parse(monkeypatch, text, value):
     monkeypatch.setenv("STABLE_ENVS_NVD_BUDGET_BYTES", text)
@@ -129,9 +123,6 @@ def test_bad_environment_values_name_the_variable(monkeypatch, text):
     monkeypatch.setenv("STABLE_ENVS_CPU3D_CHUNK", text)
     with pytest.raises(ValueError, match="STABLE_ENVS_CPU3D_CHUNK"):
         tuning.get("cpu3d_chunk")
-
-
-# --------------------------------------------------------------------------- the measured cache
 
 
 @pytest.mark.parametrize(("batch", "lo", "hi"), [(1, 1, 1), (2, 2, 3), (64, 64, 127), (100, 64, 127)])
@@ -162,9 +153,6 @@ def test_a_stale_or_corrupt_cache_is_ignored():
         assert Probe().chunk() == 256
     with pytest.raises(ValueError):
         _cache(0)
-
-
-# --------------------------------------------------------------------------- tune
 
 
 def test_tune_sweeps_from_the_default_and_later_envs_on_the_path_use_it(capsys):
@@ -245,9 +233,6 @@ def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expec
 )
 def test_torch_arch_compatibility(capability, arches, ok):
     assert doctor.runs_on(capability, arches) is ok
-
-
-# --------------------------------------------------------------------------- hint and autotune
 
 
 def _logged(caplog, text):

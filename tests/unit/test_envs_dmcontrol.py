@@ -75,9 +75,6 @@ def _build(name, **kw):
         pytest.skip(f"{name} is not constructible here: {type(exc).__name__}: {exc}")
 
 
-# --------------------------------------------------------------- package surface
-
-
 def test_package_exports_the_names_callers_import():
     assert hasattr(dmc, "__path__")
     for name in (
@@ -199,9 +196,6 @@ def test_trackcom_render_model_carries_the_swm_default_material(name):
         np.testing.assert_array_equal(rgba, np.asarray([0.7, 0.5, 0.3, 1.0], np.float32))
     finally:
         source.close()
-
-
-# --------------------------------------------------------------- the Env contract, live
 
 
 @pytest.mark.parametrize("name", ALL)

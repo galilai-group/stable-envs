@@ -30,8 +30,6 @@ def _assert_identical(a, b, what):
         )
 
 
-# --------------------------------------------------------------------------- the differential fuzz
-
 CASES = [
     # (id, scene kwargs, composite kwargs)
     ("small-sphere-tiled", dict(seed=1, K=1, kinds=(R3.SPHERE,)), dict(tile=16)),
@@ -223,9 +221,6 @@ def test_per_environment_colour_and_scale_are_still_per_environment():
     assert not all(torch.equal(frames[0], f) for f in frames[1:]), (
         "every row came out identical, so the per-environment appearance is not reaching the shade"
     )
-
-
-# --------------------------------------------------------------------------- the window choice
 
 
 @pytest.mark.parametrize("seed", range(12))

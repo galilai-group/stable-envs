@@ -66,9 +66,6 @@ def uploads(monkeypatch):
     return seen
 
 
-# ----------------------------------------------------------------------------- quantization
-
-
 @pytest.mark.parametrize(
     "v,want",
     [
@@ -92,9 +89,6 @@ def test_quantise_is_what_swm_writes():
     """swm's Fetch skybox write ``(bg * 255).astype(np.uint8)`` truncates the same way."""
     v = np.linspace(0.0, 1.0, 101)
     assert np.array_equal(quantise(np.stack([v, v, v], 1)), (np.stack([v, v, v], 1) * 255).astype(np.uint8))
-
-
-# ----------------------------------------------------------------------------------- slots
 
 
 def test_slots_are_none_when_the_texture_is_absent():
@@ -127,9 +121,6 @@ def test_explicit_masks_are_checked_against_the_texture():
 def test_a_mask_of_the_wrong_length_is_refused():
     with pytest.raises(AssertionError, match="texels"):
         texel_slots(_checker(), 0, [A, B], masks=[np.ones(3, bool), np.ones(3, bool)])
-
-
-# ------------------------------------------------------------------------------ substitute
 
 
 def test_substitute_writes_the_masked_texels_and_nothing_else(uploads):
@@ -199,9 +190,6 @@ def test_a_four_channel_texture_keeps_its_fourth_channel(uploads):
     substitute(m, r, s, [[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
     body = m.tex_data[m.lead :].reshape(-1, 4)
     assert list(body[:, 3]) == [11, 22]
-
-
-# -------------------------------------------------------------------------------- cache key
 
 
 def test_the_key_is_none_at_the_default_by_whatever_route():

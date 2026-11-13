@@ -142,7 +142,6 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         self._graph = self._reset_graph = None
         self._closed = False
 
-    # ------------------------------------------------------------------------------------------ lifecycle
     def _check_open(self) -> None:
         if self._closed:
             raise RuntimeError("MovingBlockWorld simulator is closed")
@@ -189,7 +188,6 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         for key, value in resetter.reset(self.s).items():
             self.s[key].copy_(value)
 
-    # ------------------------------------------------------------------------------------------ State
     def get_state(self) -> TensorDict:
         self._check_open()
         dev = self.device
@@ -265,7 +263,6 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         for key, value in values.items():
             s[key].copy_(value)
 
-    # ------------------------------------------------------------------------------------------ step
     def check_step(self, actions, active):
         """Actions as ``(num_envs,)`` int64 on the simulation device.
 

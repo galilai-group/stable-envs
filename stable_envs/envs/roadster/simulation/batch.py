@@ -249,7 +249,7 @@ class RoadsterNativeAdapter(RoadsterBatch):
         self.yaw_cmd[:] = np.arctan2(R[:, 1, 0], R[:, 0, 0])
         self.prev_cost[:] = self._cost(ids)
 
-    # ------------------------------------------------------------------ autopilot (source.control)
+    # Autopilot, as in source.control.
     def _rot(self, ids) -> np.ndarray:
         return self.xmat[ids, self.index.chassis].reshape(-1, 3, 3)
 
@@ -294,7 +294,7 @@ class RoadsterNativeAdapter(RoadsterBatch):
             raw[jets, 2:] = self._air_jets(ids[jets], R[jets], v[jets], acc_w, yaw[jets])
         return raw
 
-    # ------------------------------------------------------------------ simulator (source.sim)
+    # Simulator, as in source.sim.
     def _contacts(self, ids) -> dict[str, np.ndarray]:
         s = self.sensors[ids] > 0
         return {name: s[:, sl] for name, sl in self.index.sensors.items()}
@@ -393,7 +393,7 @@ class RoadsterNativeAdapter(RoadsterBatch):
         self.fx_count[ids] = np.where(full, count, count + 1)
         self.head[ids] = np.where(full, (head + 1) % self.ring.shape[1], head)
 
-    # ------------------------------------------------------------------ task (source.tasks)
+    # Task, as in source.tasks.
     def _barrel_roll(self, ids, n_wheels) -> None:
         t, pos = self.time[ids], self.qpos[ids, :3]
         idle = ~self.has_roll_t0[ids] & ~self.roll_done[ids]
@@ -491,7 +491,6 @@ class RoadsterNativeAdapter(RoadsterBatch):
             return parked & (_norm(vel) < 1.0) & (up_z > 0.9) & last
         return self.status[ids] == _SUCCESS
 
-    # ------------------------------------------------------------------ stepping
     def step(self, actions, *, active=None, capture_state: bool = True) -> TensorDict:
         """Advance one action per environment; an inactive environment holds its state and reports zeros.
 

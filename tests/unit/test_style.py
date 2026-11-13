@@ -40,9 +40,6 @@ def _style(rows, shared=None):
     return StyleTensor(v, LAYOUT, shared=shared)
 
 
-# ------------------------------------------------------------------ rows_are_equal
-
-
 def test_rows_are_equal_reads_the_values_not_how_the_tensor_was_made():
     """A strided slice whose rows are equal is batch-uniform; one whose rows differ is not.
 
@@ -83,9 +80,6 @@ def test_rows_are_equal_is_the_conjunction_over_everything_it_is_given():
     assert rows_are_equal(same, also_same)
     assert not rows_are_equal(same, also_same, differs)
     assert not rows_are_equal(differs, same)
-
-
-# ------------------------------------------------------------------ for_batch: the rule
 
 
 def test_a_matching_batch_returns_the_same_object_untouched():
@@ -141,9 +135,6 @@ def test_the_owner_of_a_refusal_is_named():
         s.for_batch(1, owner="PushT.render")
 
 
-# ------------------------------------------------------------------ indexing and conversion
-
-
 def test_a_leaf_is_addressed_by_path_and_keeps_its_width():
     """``(B, w)`` for a multi-value leaf and ``(B,)`` for a scalar one.
 
@@ -172,9 +163,6 @@ def test_to_preserves_the_layout_and_what_is_already_known_about_sharedness():
     assert m.values.dtype == torch.float64
     assert m.paths == s.paths and m.layout == s.layout
     assert m._shared is True, "moving a style re-measured a property it was told at construction"
-
-
-# ------------------------------------------------------------------ from_space
 
 
 def test_the_default_is_the_declared_appearance_repeated_per_environment():

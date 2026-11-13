@@ -182,8 +182,6 @@ def _args(state):
     return tuple(state[k] for k in _ORDER)
 
 
-# --------------------------------------------------------------------------------------------- PCG64 normals
-
 _U32 = np.uint64(0xFFFFFFFF)
 _MULT_HI = np.uint64(0x2360ED051FC65DA4)
 _MULT_LO = np.uint64(0x4385DF649FCCF645)
@@ -279,9 +277,6 @@ def normals(rng: np.ndarray, count: int) -> np.ndarray:
     out = np.empty((rng.shape[0], count))
     _normals_kernel(rng.view(np.uint64), out)
     return out
-
-
-# --------------------------------------------------------------------------------------------- small math
 
 
 @njit(cache=True, inline="always")
@@ -422,9 +417,6 @@ def _aero(alpha, act):
     cd = (cn * math.sin(ae)) + (ct * math.cos(ae))
     cm = -cn * (0.25 - (0.175 * (1.0 - ((2.0 * abs(ae)) / math.pi))))
     return cl, cd, cm
-
-
-# --------------------------------------------------------------------------------------------- one substep
 
 
 @njit(cache=True)
@@ -659,9 +651,6 @@ def _substep(b, z, pos, quat, vel, avel, lrot, lvel, fin, gim, thr_, fuel_, ign_
     for i in range(9):
         lrot[b, i] = R0[i]
     return pad_hit, ground_hit
-
-
-# --------------------------------------------------------------------------------------------- task
 
 
 @njit(cache=True)
@@ -1100,9 +1089,6 @@ def _start_kernel(
                 start_pos, start_orn,
                 s_start_pos, s_start_orn, s_position, s_linvel, s_angvel, s_fuel,
             )  # fmt: skip
-
-
-# --------------------------------------------------------------------------------------------- public API
 
 
 def _scratch(num_envs):

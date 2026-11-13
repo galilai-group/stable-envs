@@ -135,7 +135,6 @@ def test_the_shape_leaf_default_is_the_compiled_model(cell):
         assert not np.array_equal(base, other), f"target_ball.shape = {k} changed no pixel"
 
 
-# --------------------------------------------------------------------------- synthetic bodies
 #
 # ``manipulator`` is the only registered cell with a body slot and its ``target_ball`` carries one drawn
 # geom, so the multi-geom path and the both-kinds refusal are exercised on a hand-built model.
@@ -234,7 +233,6 @@ def test_a_body_carrying_both_drawn_geoms_and_drawn_sites_raises():
         cls._hideable()
 
 
-# --------------------------------------------------------- render-invariant exclusion
 #
 # ball_y / target_ball_quat_qw / target_ball_quat_qy orient an untextured sphere, which an analytic
 # per-pixel intersector draws identically. ``check_state_dims_matter`` excludes them only after
@@ -333,7 +331,6 @@ def test_an_env_that_declares_nothing_is_unaffected(cell):
         del env.RENDER_INVARIANT_DIMS
 
 
-# ------------------------------------------------- the rule must not trust the env
 #
 # Each test wraps the real cell's scene signature so the env supplies misleading evidence.
 

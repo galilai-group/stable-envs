@@ -71,9 +71,6 @@ class DiscreteEnv(IntegratorEnv):
     action_high = 7.0
 
 
-# ------------------------------------------------------------------ the refusals
-
-
 def test_an_env_with_no_simulator_says_so_and_points_at_the_alternative():
     """``sample`` on a renderer-only env raises ``NotImplementedError`` naming the env and the alternative."""
     with pytest.raises(NotImplementedError) as e:
@@ -87,9 +84,6 @@ def test_a_batch_that_is_not_the_env_s_batch_is_refused_at_the_top():
     """Every buffer in the loop is sized ``env.B``; a mismatch would fail deep or, worse, broadcast."""
     with pytest.raises(ValueError, match="batch 8 != env batch 4"):
         sample(IntegratorEnv(batch=4), steps=2, batch=8)
-
-
-# ------------------------------------------------------------------ what sample returns
 
 
 def test_the_trajectory_has_one_more_state_than_it_has_actions():
@@ -156,9 +150,6 @@ def test_the_seed_reaches_the_env_s_own_generator_too():
     env.rng = np.random.default_rng(999)  # advance it somewhere else entirely
     again = sample(env, steps=1, seed=7)["states"][:, 0]
     assert torch.equal(first, again), "the initial states were not drawn from the rollout's seed"
-
-
-# ------------------------------------------------------------------ the policies
 
 
 def test_the_base_policy_is_an_interface_and_says_so():

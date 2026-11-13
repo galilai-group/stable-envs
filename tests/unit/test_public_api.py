@@ -26,9 +26,6 @@ def _clean_config():
     _config.set(**before)
 
 
-# ------------------------------------------------------------------ namespace
-
-
 def test_dir_advertises_the_documented_namespace_and_the_environments_only():
     """The top level exposes the happy path, and backend machinery and internal names do not resolve there."""
     listed = set(dir(snv))
@@ -104,9 +101,6 @@ def test_state_and_stepresult_are_the_tensordict_type_and_not_private_subclasses
     assert "StepResult" in snv.__all__, "`StepResult` names what step returns and must be exported"
 
 
-# ------------------------------------------------------------------ constructor
-
-
 @pytest.mark.family("pusht")
 def test_make_takes_num_envs():
     env = snv.make("PushT", num_envs=4, device="cpu")
@@ -134,9 +128,6 @@ def test_batch_is_not_a_spelling_of_num_envs():
         snv.PushT(batch=4, device="cpu")
     with pytest.raises(TypeError, match="unexpected keyword argument 'batch'"):
         snv.make("PushT", batch=4, device="cpu")
-
-
-# ------------------------------------------------------------------ config
 
 
 def test_config_is_two_keys_and_a_typo_is_an_error():
@@ -168,9 +159,6 @@ def test_default_device_is_honoured_when_the_caller_names_none():
     env = snv.PushT(num_envs=2)
     assert env.device == torch.device("cpu")
     env.close()
-
-
-# ------------------------------------------------------------------ lifecycle
 
 
 @pytest.mark.family("pusht")

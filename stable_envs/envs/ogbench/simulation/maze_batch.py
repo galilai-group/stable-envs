@@ -666,8 +666,6 @@ class OGBMazeWarpAdapter(_MazeLanes):
         self._last = None
         self.reset(seed=seed)
 
-    # RNG columns and teleport draws ------------------------------------------------------------------------
-
     def _upload_rng(self, ids=None):
         cols = self._random.columns
         if ids is None or not self._rng_columns:
@@ -709,8 +707,6 @@ class OGBMazeWarpAdapter(_MazeLanes):
         if refill:
             self._refill(np.flatnonzero(used))
             self._steps_since_refill = 0
-
-    # Adapter interface --------------------------------------------------------------------------------------
 
     def reset(self, seed=None):
         self._check_open()

@@ -122,9 +122,6 @@ def selected(env, backend=None) -> bool:
     return getattr(env, "DOMAIN", None) != "manipulator" and _environ.read("STABLE_ENVS_DMC_CUDA_RENDER") == "mjwarp"
 
 
-# --------------------------------------------------------------------------- kernels
-
-
 @cache
 def _kernels():
     import warp as wp
@@ -417,9 +414,6 @@ def _kernels():
     }
 
 
-# --------------------------------------------------------------------------- render model
-
-
 def _is_suite(env) -> bool:
     """Fixed-camera cells apply appearance through ``_apply_variation`` and draw sites and the tendon."""
     return hasattr(env, "_apply_variation")
@@ -677,9 +671,6 @@ def _sky(cls, size: int) -> np.ndarray:
     option.sitegroup[:] = 0
     option.tendongroup[:] = 0
     return source.physics.render(height=size, width=size, camera_id=cls.CAMERA, scene_option=option).copy()
-
-
-# --------------------------------------------------------------------------- contexts
 
 
 class _Ctx:
@@ -982,9 +973,6 @@ def _frame(c: _Ctx) -> None:
         c.textures.render()
     if c.reflection is not None:
         c.reflection.render()
-
-
-# --------------------------------------------------------------------------- per-call uploads
 
 
 @dataclass

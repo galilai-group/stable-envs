@@ -61,9 +61,6 @@ def leaves_for(scene: str) -> tuple[str, ...]:
     return SWM_LEAVES["Reach"] if scene == "Reach" else SWM_LEAVES["object"]
 
 
-# ============================================================== tier 1: the table, no dependencies
-
-
 def test_every_registered_fetch_id_has_a_map():
     """All twelve, reachable through the name a caller uses."""
     for c in CLASSES:
@@ -150,8 +147,6 @@ def test_background_drives_the_floor_and_the_sky():
         assert m.classification()["background.color"] == "mapped", c
 
 
-# ====================================================== the opt-in strictness switch for tiers 2/3
-
 #: Under ``STABLE_ENVS_REQUIRE_LIVE_SWM=1`` a missing dependency in tier 2 or 3 is a failure.
 REQUIRE_LIVE = os.environ.get("STABLE_ENVS_REQUIRE_LIVE_SWM", "").strip() not in ("", "0", "false")
 
@@ -169,9 +164,6 @@ def _need(module: str):
         return pytest.importorskip(module)
     except pytest.skip.Exception:
         _unavailable(f"{module} is not importable")
-
-
-# ============================================================== tier 2: the live swm wrapper
 
 
 def _live_space(swm_id):
@@ -218,9 +210,6 @@ def test_check_mapping_reads_the_variation_space_through_the_fetch_wrapper():
     for leaf in ("background.color", "table.color", "rendering.transparent_arm", "block.mass"):
         assert got["classification"][leaf] == "mapped", leaf
     assert set(got["covered"]) == set(space.names()) - {"camera.angle_delta"}
-
-
-# ============================================================== tier 3: against a built env
 
 
 @pytest.fixture(scope="module")

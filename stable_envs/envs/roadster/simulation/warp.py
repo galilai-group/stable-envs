@@ -223,7 +223,6 @@ class RoadsterWarpAdapter(RoadsterBatch):
     def _close_physics(self) -> None:
         self.physics.close()
 
-    # ------------------------------------------------------------------ physics state
     def _sim(self, name: str) -> torch.Tensor:
         if name == "time":
             return self._time
@@ -264,7 +263,6 @@ class RoadsterWarpAdapter(RoadsterBatch):
         self._col("autopilot", "yaw_cmd").copy_(torch.atan2(R[:, 1, 0], R[:, 0, 0]))
         self._col("task", "prev_cost").copy_(self._cost())
 
-    # ------------------------------------------------------------------ views
     def _rot(self) -> torch.Tensor:
         return self.physics.data("xmat")[:, self.index.chassis].to(torch.float64).reshape(-1, 3, 3)
 
@@ -278,7 +276,7 @@ class RoadsterWarpAdapter(RoadsterBatch):
         s = self.physics.data("sensordata") > 0
         return {name: s[:, a:b] for name, (a, b) in self._sens.items()}
 
-    # ------------------------------------------------------------------ autopilot (source.control)
+    # Autopilot, as in source.control.
     def _allocate(self, w: torch.Tensor) -> torch.Tensor:
         """``Autopilot._alloc`` for each row: the bounded least-squares jet commands."""
         lo, hi = self._lo[2:], self._hi[2:]
@@ -336,7 +334,7 @@ class RoadsterWarpAdapter(RoadsterBatch):
         jets = torch.where((~ground | (acc[:, 2] > 0.5))[:, None], jets, 0.0)
         return torch.cat([drive[:, None], steering[:, None], jets], 1)
 
-    # ------------------------------------------------------------------ simulator (source.sim)
+    # Simulator, as in source.sim.
     def _physics_pre(self, raw) -> None:
         """``RoadsterSim.step`` up to the substeps: the controls, and what a stopped environment holds."""
         p, carry = self.physics, self._carry
@@ -433,7 +431,7 @@ class RoadsterWarpAdapter(RoadsterBatch):
         count.copy_(torch.where(run & ~full, count + 1, count))
         head.copy_(torch.where(run & full, (head + 1) % size, head))
 
-    # ------------------------------------------------------------------ task (source.tasks)
+    # Task, as in source.tasks.
     def _barrel_roll(self, n_wheels, run) -> None:
         t, pos = self._time, self._pos()
         has_t0, t0 = self._col("task", "has_roll_t0"), self._col("task", "roll_t0")
@@ -544,7 +542,6 @@ class RoadsterWarpAdapter(RoadsterBatch):
             return parked & (_norm(vel) < 1.0) & (up_z > 0.9) & last
         return self._col("task", "status") == _SUCCESS
 
-    # ------------------------------------------------------------------ stepping
     def check_step(self, actions, active):
         """Return ``(actions, active)`` for the step, or raise before any environment moves.
 

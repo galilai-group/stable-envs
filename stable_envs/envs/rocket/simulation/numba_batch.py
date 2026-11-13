@@ -246,8 +246,6 @@ class RocketNumbaAdapter(SimulatorAdapter):
     def zero_state_leaves(self):
         return frozenset()
 
-    # -- Variation values -------------------------------------------------------------------------------------
-
     def _value(self, path, lane, init=False):
         value, code, init_value, init_code = self._variation[path]
         return _decode(init_value[lane], init_code[lane]) if init else _decode(value[lane], code[lane])
@@ -279,8 +277,6 @@ class RocketNumbaAdapter(SimulatorAdapter):
     def variation_rows(self, attribute, keys):
         index = 2 if attribute == "init_value" else 0
         return np.concatenate([self._variation[k][index].reshape(self.num_envs, -1) for k in keys], 1)
-
-    # -- reset ------------------------------------------------------------------------------------------------
 
     def _rng_rows(self):
         """``(B, 4)`` host copy of the ``rng`` field: each environment's thrust-noise generator."""
@@ -411,8 +407,6 @@ class RocketNumbaAdapter(SimulatorAdapter):
             for lane in np.flatnonzero(painted):
                 self._rgba[lane, _RGBA_ROW[path]] = _painted_rgba(path, tuple(value[lane].astype(np.uint8).tolist()))
 
-    # -- step -------------------------------------------------------------------------------------------------
-
     def check_step(self, actions, active):
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
@@ -489,8 +483,6 @@ class RocketNumbaAdapter(SimulatorAdapter):
             key: moved[start : start + value.nbytes].view(torch.from_numpy(value[:0]).dtype).view(value.shape)
             for (key, value), start in zip(host.items(), offsets, strict=True)
         }
-
-    # -- State ------------------------------------------------------------------------------------------------
 
     def _fixed_leaves(self):
         """``{key tuple: host array}`` of the State leaves that never change: the configuration and fixed bodies."""
@@ -599,8 +591,6 @@ class RocketNumbaAdapter(SimulatorAdapter):
         for name, value in zip(_VARIATION_LEAVES, self._values, strict=True):
             value[...] = host[("variation", name)]
         self._last = None
-
-    # -- frames -----------------------------------------------------------------------------------------------
 
     def live_fields(self):
         """Every environment's body poses, camera link pose and colours, as ``render.project`` reads a State."""

@@ -40,9 +40,6 @@ def _colors(frames: torch.Tensor) -> list[int]:
     return frames[:, 0, 1, 0].tolist()
 
 
-# ============================================================ frames where states were meant
-
-
 def test_a_frame_stack_whose_size_divides_is_refused():
     """8*5*5*3 is 600 numbers, a multiple of 5, so a size-based rule would reshape and render it."""
     env = _env(120)  # 600 / 5 = 120, so even the batch lined up
@@ -81,9 +78,6 @@ def test_a_frame_stack_is_refused_even_when_its_last_axis_equals_state_dim():
         env._set_render_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     msg = str(e.value)
     assert "FRAMES" in msg or "2-D" in msg, msg
-
-
-# ============================================================ rank, width, flatness, emptiness
 
 
 def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
@@ -134,9 +128,6 @@ def test_an_empty_batch_is_refused():
         env._set_render_state(np.zeros((0, 5), np.float32))
 
 
-# ============================================================ NaN and inf
-
-
 def test_non_finite_states_name_the_rows_and_the_named_columns():
     """Non-finite states are refused; the message names the rows, the columns and the kind."""
     env = _env(6)
@@ -172,9 +163,6 @@ def test_the_non_finite_scan_runs_on_the_caller_s_tensor_before_any_device_copy(
     assert _nonfinite_report(torch.zeros(4, 5), NAMES) is None
 
 
-# ============================================================ things that are not arrays at all
-
-
 def test_a_trajectory_batch_dict_says_which_key_holds_the_states():
     """``TrajectoryDataset`` yields a dict, and ``torch.as_tensor`` on it dies without naming a key."""
     env = _env(4)
@@ -195,9 +183,6 @@ def test_something_that_is_not_an_array_at_all_names_the_type_and_what_is_wanted
     with pytest.raises(TypeError) as e:
         env._set_render_state(object())
     assert "state_dim" in str(e.value) and "object" in str(e.value)
-
-
-# ============================================================ the batch rule (short is FINE, long is not)
 
 
 def test_a_partial_final_batch_is_accepted_and_renders_exactly_those_rows():
@@ -237,9 +222,6 @@ def test_set_state_returns_the_env_so_render_chains_off_it():
     assert env._set_render_state(id_states(4)) is env
 
 
-# ============================================================ sibling: render(states=)
-
-
 def test_render_refuses_a_frame_stack_too():
     """``render`` refuses a frame stack; it accepts any leading dims but keeps the last-axis rule."""
     env = _env(4)
@@ -266,9 +248,6 @@ def test_render_takes_any_batch_because_it_does_not_touch_the_env_buffer():
     assert env._render(id_states(9)).shape[0] == 9
 
 
-# ============================================================ sibling: render_states
-
-
 def test_render_states_refuses_a_frame_stack():
     env = _env(4)
     with pytest.raises(ValueError) as e:
@@ -283,9 +262,6 @@ def test_render_states_refuses_a_non_finite_corpus():
     with pytest.raises(ValueError) as e:
         render_states(env, st, device=DEV)
     assert "[3]" in str(e.value) and "agent_y" in str(e.value)
-
-
-# ============================================================ sibling: the style path
 
 
 def test_a_transposed_style_is_refused_rather_than_regrouped():
@@ -352,9 +328,6 @@ def test_check_style_accepts_the_two_documented_forms():
     assert check_style(env, np.zeros((4, 3), np.float32), 4, "t").shape == (4, 3)
 
 
-# ============================================================ sibling: the dataset constructors
-
-
 def test_a_state_dataset_refuses_a_frame_stack():
     """The corpus width comes from the env, not the input, so a frame stack is rejected at construction."""
     with pytest.raises(ValueError) as e:
@@ -391,9 +364,6 @@ def test_a_trajectory_dataset_still_accepts_a_dense_corpus():
     assert ds.n_trajectories == 2 and len(ds) == 6
 
 
-# ============================================================ sibling: out= buffers
-
-
 def test_a_strided_out_buffer_is_refused_by_name():
     """A strided ``out`` would scatter frames across the caller's neighboring slices."""
     buf = torch.zeros((4, 3, 8, 8, 3), dtype=torch.uint8)
@@ -425,9 +395,6 @@ def test_an_out_buffer_of_the_wrong_size_or_dtype_is_refused():
         _destination(torch.zeros(2 * 4 * 4 * 3, dtype=torch.float32), 2, 4, 4)
     with pytest.raises(TypeError, match="torch tensor"):
         _destination(np.zeros(2 * 4 * 4 * 3, np.uint8), 2, 4, 4)
-
-
-# ============================================================ the validator itself
 
 
 def test_check_states_is_reusable_and_does_not_know_about_the_env_batch():
