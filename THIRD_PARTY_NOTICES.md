@@ -65,6 +65,17 @@ draws from a counter-based generator instead of the source's NumPy generator. Th
 distributed in `licenses/APACHE-2.0.txt`. The `flowm` preset and the heading handling follow the
 fork's `scripts/generate_videos.py` at commit `bc7972050155b67e242c07bfdccfe1eeddbf9882`.
 
+## pygame drawing routines (LGPL)
+
+`stable_envs/envs/pusht/raster.py`, `raster_cpu.py` and `raster_device.py` port the
+`draw_fillpoly`, `draw_circle_filled`, `draw_line_width` and `draw_aaline` routines of
+`src_c/draw.c` from [pygame](https://github.com/pygame/pygame) 2.6.1
+(Copyright (C) 2000-2001 Pete Shinners, GNU Library General Public License version 2 or later).
+Modifications: the routines are batched over frames, evaluated only at the pixels that the resize reads,
+and run in Numba and Torch. These three files are licensed under LGPL-2.1-or-later, not MIT; each file
+starts with an SPDX line that says so. The license text is in `licenses/LGPL-2.1.txt`.
+pygame is not a runtime dependency of these files.
+
 ## SDL_gfx drawing rules
 
 `stable_envs/render/gfxdraw/` reimplements in Torch the integer rasterization and

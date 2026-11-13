@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Ports pygame 2.6.1 src_c/draw.c (Copyright (C) 2000-2001 Pete Shinners, LGPL). See THIRD_PARTY_NOTICES.md.
 """Batched PushT frames equal to the pygame frames: the pygame 2.6.1 draw calls and cv2 resize in integer arithmetic.
 
 The host turns render state into a list of primitives per frame in pygame's painter order: polygon

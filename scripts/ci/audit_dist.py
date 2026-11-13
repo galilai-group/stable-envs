@@ -26,6 +26,7 @@ REQUIRED_LICENSES = {
     "licenses/Bullet-zlib.txt",
     "licenses/Gymnasium-MIT.txt",
     "licenses/Gymnasium-Robotics-MIT.txt",
+    "licenses/LGPL-2.1.txt",
     "licenses/Munk2D-MIT.txt",
     "licenses/NumPy-BSD-3-Clause.txt",
     "licenses/NumPy-random-NCSA-BSD-3-Clause.txt",
@@ -47,7 +48,7 @@ def _audit_metadata(text: str) -> None:
     assert metadata["Name"] == "stable-envs"
     assert metadata["Version"]
     assert {part.strip() for part in metadata["Requires-Python"].split(",")} == {">=3.10", "<3.13"}
-    assert metadata["License-Expression"] == "MIT"
+    assert metadata["License-Expression"] == "MIT AND LGPL-2.1-or-later"
     assert set(metadata.get_all("License-File", [])) == REQUIRED_LICENSES
 
     requirements = metadata.get_all("Requires-Dist", [])

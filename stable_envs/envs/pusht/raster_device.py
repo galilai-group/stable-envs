@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Ports pygame 2.6.1 src_c/draw.c (Copyright (C) 2000-2001 Pete Shinners, LGPL). See THIRD_PARTY_NOTICES.md.
 """PushT primitive records built on the device from state tensors, equal to ``raster.primitives``."""
 
 from __future__ import annotations
