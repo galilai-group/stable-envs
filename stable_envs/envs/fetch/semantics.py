@@ -13,6 +13,14 @@ from .simulation.adapter import VISUAL_LEAVES
 from .simulation.execution import MJWARP_MIN_ENVS, fetch_backend, make_fetch_adapter
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
+#: Render backend names; ``auto`` draws with MJWarp on CUDA and with ``numba``, or ``opengl`` without Numba, on CPU.
+RENDER_BACKENDS = ("auto", "numba", "opengl")
+
+
+def _check_render_backend(backend):
+    if backend not in RENDER_BACKENDS:
+        raise ValueError(f"Fetch render backend must be one of {RENDER_BACKENDS}; got {backend!r}")
+
 
 class FetchSemantics:
     """Compose Fetch CPU simulation with lazily constructed render backends.
@@ -61,6 +69,7 @@ class FetchSemantics:
         ``"default"`` steps on MuJoCo Warp on CUDA and on the CPU batch, bit-exact with gymnasium-robotics, on
         CPU. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` on the CPU batch.
         """
+        _check_render_backend(backend)
         device = Env.resolve_device(device)
         self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
@@ -278,6 +287,7 @@ class FetchSemantics:
 
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)
+        _check_render_backend(backend)
         if backend == "auto" and self.device.type != "cuda":
             from ...render import cpu_raster
 
