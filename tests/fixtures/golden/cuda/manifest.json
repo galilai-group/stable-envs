@@ -1455,9 +1455,9 @@
     },
     "PyFlytRocketLanding": {
       "file": "PyFlytRocketLanding.npz",
-      "sha256": "3812371becfe3429c5c198a60794801e9750dbcbfea248a131ac5337aec51886",
+      "sha256": "e58a86b2fa8f6c2656ce847069faaa9c7bc75fdaef20b65f40ad95db9e5e9556",
       "size": 480,
-      "bytes": 46389,
+      "bytes": 46204,
       "profile": {
         "device": "cuda",
         "versions": {
@@ -1469,11 +1469,11 @@
           "warp-lang": null,
           "nvdiffrast": "0.4.0",
           "pygame": "2.6.1",
-          "pymunk": null,
-          "jax": null
+          "pymunk": "7.2.0",
+          "jax": "0.12.0.1"
         },
         "machine": "x86_64",
-        "gpu": "NVIDIA GeForce RTX 3090"
+        "gpu": "NVIDIA L40S"
       }
     },
     "SimplePointMaze": {
