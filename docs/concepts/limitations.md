@@ -35,7 +35,7 @@ software OpenGL, configured before the first MuJoCo import. See [System setup](.
 - These classes draw with a different rasterizer from the source:
   - Fetch with the default backend: the Fetch Numba rasterizer on CPU and MJWarp on CUDA.
   - OGBCube and OGBScene with the default backend on CPU: the stable-envs MuJoCo rasterizer
-    (`backend="raster"`).
+    (`backend="numba"`).
   - The DM Control body-tracking classes.
   - PyFlytRocketLanding on CUDA.
 

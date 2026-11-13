@@ -15,7 +15,7 @@ from .simulation import render_state as pixels
 _LOCK = threading.RLock()
 OPENGL = ("opengl",)
 # Backends that draw from host RenderState columns.
-HOST = (*OPENGL, "raster")
+HOST = (*OPENGL, "numba")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
@@ -246,7 +246,7 @@ def draws_on_host(backend, device, supersample):
 
 
 def host_backend(backend, device):
-    """The host backend that ``backend`` draws with on ``device``: raster or opengl.
+    """The host backend that ``backend`` draws with on ``device``: numba or opengl.
 
     ``auto`` draws with the rasterizer on CPU when Numba is installed, else with opengl. On CUDA, NVIDIA OpenGL
     is faster than the rasterizer's CUDA backend.
@@ -254,7 +254,7 @@ def host_backend(backend, device):
     if backend in HOST:
         return backend
     if torch.device(device).type == "cpu" and rasterizer_available(device):
-        return "raster"
+        return "numba"
     return "opengl"
 
 
@@ -272,7 +272,7 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
         chosen = host_backend(backend, device)
         if backend == "auto":
             log("DEBUG", f"Renderer backend 'auto' chose {chosen} on {device}.")
-        if chosen == "raster":
+        if chosen == "numba":
             from . import manipulation_raster
 
             host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
@@ -284,7 +284,7 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
-        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl or raster backends")
+        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl or numba backends")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
     check_versions("unified", warp=True)

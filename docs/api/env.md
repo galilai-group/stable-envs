@@ -27,9 +27,9 @@ can affect physics, reset, task or appearance.
 
 ## OGBench Cube and Scene backends
 
-- On CPU, `backend="auto"` selects `backend="raster"`: the shared MuJoCo rasterizer
+- On CPU, `backend="auto"` selects `backend="numba"`: the shared MuJoCo rasterizer
   ([MuJoCo rasterizer](mujoco-raster.md)). Without Numba it selects software OpenGL. On CUDA at 1× sampling,
-  it selects NVIDIA OpenGL. `backend="raster"` draws on CPU only.
+  it selects NVIDIA OpenGL. `backend="numba"` draws on CPU only.
 - `backend="opengl"` draws the source's frames. For it, configure Mesa software OpenGL before importing
   MuJoCo. CPU OpenGL rendering rejects a hardware GL context.
 - The fidelity record compares two stable-envs OpenGL instances with the same compiled appearance, not

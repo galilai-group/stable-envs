@@ -267,7 +267,7 @@ class FetchSemantics:
         self._simulator.configure_object_mass(mass)
 
     def render_semantic(self, states):
-        """Segmentation and planar depth of compact render rows, drawn by ``backend="raster"``.
+        """Segmentation and planar depth of compact render rows, from the shared MuJoCo rasterizer.
 
         Returns ``(B, size, size, 2)`` ``(objid, objtype)`` pairs in the model of ``reference_env`` (-1 for
         background) and ``(B, size, size)`` depth along the optical axis, top row first.
@@ -282,10 +282,6 @@ class FetchSemantics:
             from ...render import cpu_raster
 
             backend = "numba" if cpu_raster.available() else "opengl"
-        if backend == "raster":
-            from . import mujoco_raster
-
-            return mujoco_raster.render(self, *args, **kwargs)
         if backend == "numba":
             from ...render import cpu_raster
 

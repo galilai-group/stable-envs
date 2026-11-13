@@ -2,8 +2,8 @@
 
 `stable_envs.render.mujoco_raster` draws MuJoCo scenes on CPU with a Numba rasterizer that follows MuJoCo's
 fixed-function OpenGL renderer (`render_gl3.c`). It is the CPU default renderer of the OGBench Cube and Scene
-tasks (`backend="raster"`). `backend="opengl"` stays the exact reference. On CUDA, `backend="raster"` raises
-`ValueError`.
+tasks (`backend="numba"`). `backend="opengl"` stays the exact reference. On CUDA, `backend="numba"` raises
+`ValueError`. Fetch uses it for `render_semantic` only.
 
 ## Scene model
 

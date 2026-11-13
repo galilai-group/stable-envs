@@ -1,4 +1,4 @@
-"""Cube and Scene configuration of the MuJoCo rasterizer (``backend="raster"``).
+"""Cube and Scene configuration of the MuJoCo rasterizer (``backend="numba"``).
 
 A configuration is the private render model of the OpenGL backend for one value of the compiled look leaves
 (``cube.size``, ``floor.color``, ``camera.angle_delta``, ``light.intensity``): its geoms, the ``front_pixels``
@@ -172,9 +172,9 @@ def frames(family, columns, device, chunk_size=None):
     """Frames of host RenderState ``columns`` on CPU ``device``."""
     from .manipulation_opengl import check_versions
 
-    check_versions("raster")
+    check_versions("numba")
     if torch.device(device).type != "cpu":
-        raise ValueError("backend='raster' draws Cube/Scene frames on CPU only; on CUDA use backend='auto'")
+        raise ValueError("backend='numba' draws Cube/Scene frames on CPU only; on CUDA use backend='auto'")
     b, size = len(columns["renderer", "size"]), int(columns["renderer", "size"][0, 0])
     images = np.empty((b, size, size, 3), np.uint8)
     draw(family, columns, images)
