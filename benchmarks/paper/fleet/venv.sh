@@ -17,6 +17,7 @@ case $fam in
 esac
 [ -s $v.ok ] && { echo $v/bin/python; exit 0; }
 rm -rf $v
+# shellcheck disable=SC2046
 ( cd "$REPO" && UV_PROJECT_ENVIRONMENT=$v $UV sync --frozen --python 3.12 --no-default-groups \
     $(for e in $extras; do echo --extra $e; done) $(for g in $groups torch-cuda test; do echo --group $g; done) ) \
     > $log 2>&1 || { echo "venv $fam failed" >&2; exit 1; }

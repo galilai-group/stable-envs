@@ -9,12 +9,13 @@
 #   --ref REF      time the library at git REF (for example v0.1.0) with the harness of this checkout
 #   --gpus N       use the first N GPUs (default: all); one env per GPU at a time, each on its own 8 or 16 cores
 #   --summary OUT  print the headline of OUT again (also of a partial OUT) and run nothing
+#   --dry-run      print the setup steps and every run.sh call of every env; install and run nothing
 # It installs what it needs (apt packages, uv, stable-worldmodel, family venvs, nvdiffrast) under COMPARE_WORK
 # (default ~/.cache/snv-compare), skips envs whose OUT/ENV/done.json exists, and ends with OUT/HEADLINE.md.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); SRC=$(cd "$HERE/../.." && pwd)
 SWM_SHA=21446f1ede6d5284e981bd7b47f432b994e6d812
-MODE=full; SWEEP=; SMOKE=0; REF=; NGPU=; SUMMARY=0; ENVS=(); OUT=
+MODE=full; SWEEP=; SMOKE=0; DRY=0; REF=; NGPU=; SUMMARY=0; ENVS=(); OUT=
 while [ $# -gt 0 ]; do
   case $1 in
     --gpu-only) MODE=gpu;;
@@ -23,13 +24,14 @@ while [ $# -gt 0 ]; do
     --ref) REF=$2; shift;;
     --gpus) NGPU=$2; shift;;
     --summary) SUMMARY=1;;
-    -h|--help) sed -n '2,15p' "$0"; exit 0;;
+    --dry-run) DRY=1;;
+    -h|--help) sed -n '2,16p' "$0"; exit 0;;
     -*) echo "unknown option $1" >&2; exit 2;;
     *) if [ -z "$OUT" ]; then OUT=$1; else ENVS+=("$1"); fi;;
   esac
   shift
 done
-[ -n "$OUT" ] || { sed -n '2,15p' "$0"; exit 2; }
+[ -n "$OUT" ] || { sed -n '2,16p' "$0"; exit 2; }
 mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 
 summary() {
@@ -44,6 +46,35 @@ SWEEP_CPU=1:8:64:256:1024
 W=${COMPARE_WORK:-$HOME/.cache/snv-compare}
 mkdir -p "$W"/{tmp,venvs,uvcache,st}
 log() { echo "$(date -u +%H:%M:%S) $*" | tee -a "$OUT/compare.log"; }
+
+env_list() {  # FAMILY ENV per line, the most expensive env first
+  python3 - "$HERE/fleet/costs.json" "${ENVS[@]}" <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1]))
+want = sys.argv[2:] or list(c["envs"])
+for e in sorted(want, key=lambda e: -c["env_s"].get(e, c["family_s"].get(c["envs"].get(e, ""), 0))):
+    if e not in c["envs"]:
+        sys.exit(f"unknown env {e}")
+    print(c["envs"][e], e)
+PY
+}
+
+if [ "$DRY" = 1 ]; then
+  echo "setup: apt-get xvfb xauth libgl1 libgl1-mesa-dri libegl1 libosmesa6 libglfw3 libglew2.2 libglu1-mesa git rsync python3-venv"
+  echo "setup: uv 0.13.5 in $W/uvenv; stable-worldmodel $SWM_SHA in $W/swm; family venvs in $W/venvs (torch 2.14.1+cu126)"
+  echo "setup: nvdiffrast 253ac4fc built with nvcc for the Rocket venv"
+  [ -n "$REF" ] && echo "library: $REF = $(git -C "$SRC" rev-parse "$REF^{commit}" 2>/dev/null || echo 'NOT FOUND (git fetch --tags)'), harness of $(git -C "$SRC" rev-parse --short HEAD)"
+  echo "GPUs: $(nvidia-smi -L 2>/dev/null | grep -c ^GPU) found; ${NGPU:-all} used, one env per GPU at a time"
+  echo "mode $MODE, CPU lane counts $SWEEP_CPU, GPU lane counts and batches $SWEEP_CUDA, windows ${WINDOW:-3} s x ${REPEATS:-3}"
+  env_list > "$W/tmp/dry-queue" || exit 2
+  while read -r fam E; do
+    [ -f "$OUT/$E/done.json" ] && { echo "$E: done, skipped"; continue; }
+    DRY_RUN=1 W=$W MODE=$MODE SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=$HERE/fleet/src_cap_envs \
+      bash "$HERE/job.sh" "$OUT/$E" "$fam" "$E"
+  done < "$W/tmp/dry-queue"
+  echo "end: $OUT/HEADLINE.md$([ $MODE = gpu ] && echo " for batches $SWEEP_CUDA")"
+  exit 0
+fi
 
 # --- setup: system packages, uv, stable-worldmodel, the checkout under test
 if command -v apt-get > /dev/null; then
@@ -86,15 +117,7 @@ print(m)
 EOF
 
 # --- jobs: the most expensive env first; envs with done.json are skipped
-python3 - "$HERE/fleet/costs.json" "${ENVS[@]}" > "$OUT/.queue" <<'EOF'
-import json, sys
-c = json.load(open(sys.argv[1]))
-want = sys.argv[2:] or list(c["envs"])
-for e in sorted(want, key=lambda e: -c["env_s"].get(e, c["family_s"].get(c["envs"].get(e, ""), 0))):
-    if e not in c["envs"]:
-        sys.exit(f"unknown env {e}")
-    print(c["envs"][e], e)
-EOF
+env_list > "$OUT/.queue" || exit 2
 [ -s "$OUT/.queue" ] || exit 2
 log "$(wc -l < "$OUT/.queue" | tr -d ' ') envs, mode $MODE, GPU sweep $SWEEP_CUDA, $G GPUs, library $(git -C "$REPO" rev-parse --short HEAD)"
 
@@ -115,6 +138,7 @@ worker() {  # worker GPU: take envs from the queue until it is empty
 }
 for g in $(seq 0 $((G - 1))); do worker $g & sleep 5; done
 wait
-python3 "$HERE/fleet/check_cells.py" $(for d in "$OUT"/*/; do [ -f $d/done.json ] && echo $d; done) > "$OUT/problems.txt"
+finished=(); for d in "$OUT"/*/; do [ -f "$d/done.json" ] && finished+=("$d"); done
+python3 "$HERE/fleet/check_cells.py" "${finished[@]}" > "$OUT/problems.txt"
 log "$(ls "$OUT"/*/done.json 2>/dev/null | wc -l | tr -d ' ') envs finished; cells not ok: $(grep -vc capped "$OUT/problems.txt")"
 summary
