@@ -1,12 +1,7 @@
-"""The opengl_fast backend: simplified arm meshes and a smaller shadow map, close to backend="opengl"."""
-
-import os
+"""Arm mesh clustering of the private render models: only the ur5e meshes lose faces."""
 
 import numpy as np
 import pytest
-import torch
-
-import stable_envs as se
 
 FAMILIES = [
     pytest.param("OGBCube", marks=pytest.mark.family("ogbench")),
@@ -27,7 +22,7 @@ def test_cluster_meshes_simplifies_only_the_arm(name):
     env.compile_model_and_data()
     model = env.model
     before = model.mesh_facenum.copy()
-    gl.cluster_meshes(model, gl.FAST[family][1])
+    gl.cluster_meshes(model, 0.003)
     meshes = (model.geom_type == mujoco.mjtGeom.mjGEOM_MESH) & (model.geom_group < 3)
     drawn = {int(i) for i in model.geom_dataid[meshes]}
     arm = [i for i in drawn if model.mesh(i).name.startswith("ur5e/")]
@@ -40,27 +35,3 @@ def test_cluster_meshes_simplifies_only_the_arm(name):
         face = model.mesh_face[fa : fa + fn]
         assert face.min() >= 0 and face.max() < vn
         assert np.all((face[:, 0] != face[:, 1]) & (face[:, 1] != face[:, 2]) & (face[:, 0] != face[:, 2]))
-
-
-@pytest.mark.parametrize("name", FAMILIES)
-@pytest.mark.egl
-def test_cpu_auto_draws_opengl_fast_close_to_opengl(name):
-    selection = os.environ.get("SE_FIDELITY_TEST_FAMILY", "")
-    if selection and not name.startswith(selection):
-        pytest.skip("Different pinned family profile")
-    env = se.make(name, num_envs=4, device="cpu", seed=5)
-    try:
-        env.reset(seed=11)
-        for _ in range(6):
-            env.step(env.action_spec.sample(env.B, np.random.default_rng(0)), frames=None)
-        state = env.to_render_state()
-        auto = env.render(state)
-        fast = env.render(state, backend="opengl_fast")
-        exact = env.render(state, backend="opengl")
-        live = env.render()
-    finally:
-        env.close()
-    assert torch.equal(auto, fast) and torch.equal(live, fast)
-    assert not torch.equal(fast, exact)
-    mse = ((fast.double() - exact.double()) ** 2).mean(dim=(1, 2, 3))
-    assert float(mse.mean()) <= 5.0

@@ -50,10 +50,10 @@ def _worker(conn, family, device_type, threads):
                 os.close(fd)
                 continue
             try:
-                _, offset, columns, fast = message
+                _, offset, columns = message
                 size = int(columns[_SIZE][0, 0])
                 images = np.ndarray((len(columns[_SIZE]), size, size, 3), np.uint8, frames, offset)
-                manipulation_opengl.draw(family, columns, device_type, images, fast)
+                manipulation_opengl.draw(family, columns, device_type, images)
             except Exception:  # noqa: BLE001 - the parent raises it; this worker stays usable
                 send_failure(conn)
             else:
@@ -118,7 +118,7 @@ class _Pool:
             os.close(self.fd)
         self.capacity, self.frames, self.fd = capacity, frames, fd
 
-    def draw(self, columns, size, fast=False):
+    def draw(self, columns, size):
         """Return (B, size, size, 3) uint8 frames of validated NumPy state columns; the array views the buffer."""
         n = len(columns[_SIZE])
         frame = size * size * 3
@@ -126,7 +126,7 @@ class _Pool:
         bounds = np.linspace(0, n, min(n, len(self.processes)) + 1).astype(int)
         active = []
         for conn, lo, hi in zip(self.connections, bounds[:-1].tolist(), bounds[1:].tolist()):
-            conn.send(("draw", lo * frame, {key: value[lo:hi] for key, value in columns.items()}, fast))
+            conn.send(("draw", lo * frame, {key: value[lo:hi] for key, value in columns.items()}))
             active.append(conn)
         self._replies(active)
         return np.ndarray((n, size, size, 3), np.uint8, self.frames)
@@ -192,7 +192,7 @@ def _pool(family, device_type):
     return _POOLS[key], key
 
 
-def draw(family, columns, device_type, size, fast=False):
+def draw(family, columns, device_type, size):
     """Frames of validated NumPy state columns drawn by worker processes, or None when they draw in this process.
 
     The returned array is a view of the shared buffer, valid until the next call.
@@ -204,7 +204,7 @@ def draw(family, columns, device_type, size, fast=False):
         if pool is None:
             return None
         try:
-            return pool.draw(columns, size, fast)
+            return pool.draw(columns, size)
         except _WorkerError:
             raise
         except BaseException:

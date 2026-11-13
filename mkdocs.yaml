@@ -130,6 +130,7 @@ nav:
       - 2D raster rendering: api/raster2d.md
       - Analytic raycast and CPU3D: api/raycast3d.md
       - Triangle rendering with nvdiffrast: api/nvdiff.md
+      - MuJoCo rasterizer: api/mujoco-raster.md
       - MJWarp rendering: api/mjwarp.md
   - Benchmarks: benchmarks.md
   - Contributing:
