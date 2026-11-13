@@ -234,9 +234,9 @@ def test_pipeline_cli_cpu_smoke_uses_public_state_contract(tmp_path):
     assert record["benchmark"] == "host-state-render-pipeline"
     assert record["methodology"]["stable_worldmodel_required"] is False
     assert "jpeg_comparison" not in row
-    assert row["state_source"] == "env.reset(seed) -> structured RenderState"
-    assert row["state_format"] == "structured_render_state"
-    assert row["packed_state_shape"] is None
+    assert row["state_source"] == "env.reset(seed) -> env.to_render_state"
+    assert row["state_format"] == "render_state"
+    assert row["output_buffer_reused"] is True
     assert row["state_bytes_per_frame"] > 0
     assert row["renderer_backend"] == "pygame"
     assert row["frame_shape"] == [224, 224, 3]
@@ -266,12 +266,19 @@ def test_unknown_environment_is_recorded_and_exits_nonzero(tmp_path):
 
 
 def test_short_state_corpus_is_not_duplicated(tmp_path):
-    path = tmp_path / "states.npy"
-    np.save(path, np.zeros((1, 5), np.float32))
-    fake_env = argparse.Namespace(state_dim=5)
-    args = argparse.Namespace(state_file=str(path), state_key="states", batch=2)
-    with pytest.raises(ValueError, match="will not duplicate rows silently"):
-        pipeline_benchmark._load_states(fake_env, args)
+    path = tmp_path / "states.npz"
+    np.savez(path, **{"body/position": np.zeros((1, 2), np.float32)})
+    args = argparse.Namespace(state_file=str(path), batch=2)
+    with pytest.raises(ValueError, match="will not duplicate states silently"):
+        pipeline_benchmark._load_states(argparse.Namespace(), args)
+
+
+def test_a_state_file_must_hold_full_state_fields(tmp_path):
+    path = tmp_path / "rows.npy"
+    np.save(path, np.zeros((2, 5), np.float32))
+    args = argparse.Namespace(state_file=str(path), batch=2)
+    with pytest.raises(ValueError, match="one array per field"):
+        pipeline_benchmark._load_states(argparse.Namespace(), args)
 
 
 def test_oversized_point_is_skipped_not_failed(tmp_path):
@@ -389,12 +396,30 @@ def test_cli_refuses_unavailable_cuda_without_json(tmp_path, monkeypatch):
     assert not (tmp_path / "no.json").exists()
 
 
-@pytest.mark.parametrize("script", ["__init__.py", "_common.py", "render.py", "pipeline.py"])
+@pytest.mark.parametrize("script", ["__init__.py", "_common.py", "render.py", "pipeline.py", "dmc_mjwarp.py"])
 def test_scripts_do_not_import_worldmodel_testing_or_render_internals(script):
     imported = _imported_modules(ROOT / "benchmarks" / script)
     assert not any(
         name == prefix or name.startswith(prefix + ".") for name in imported for prefix in FORBIDDEN_IMPORT_PREFIXES
     )
+    assert not any(name.startswith("stable_envs.envs") or name.startswith("stable_envs._") for name in imported)
+
+
+@pytest.mark.parametrize("script", ["pipeline.py", "dmc_mjwarp.py", "render.py"])
+def test_scripts_use_no_private_env_attributes(script):
+    tree = ast.parse((ROOT / "benchmarks" / script).read_text())
+    private = sorted(
+        {
+            node.attr
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Attribute)
+            and node.attr.startswith("_")
+            and not node.attr.startswith("__")
+            and isinstance(node.value, ast.Name)
+            and node.value.id in ("env", "candidate", "cls", "se", "snv", "parser", "adapter")
+        }
+    )
+    assert private == []
 
 
 @pytest.mark.parametrize(

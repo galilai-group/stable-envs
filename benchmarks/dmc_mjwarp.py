@@ -7,15 +7,14 @@ The default matrix is 17 DMC cells x batches 1,16,64,256,1024 x 3 seeds x native
 Seeded uniform actions, 20 warmups, a checkpoint restore and 100 timed calls match
 the PR #28 rollout workload. Action generation and upload happen outside timing.
 Use --dry-run to inspect the matrix without CUDA initialization or worker launches.
-Use --measurement-profile focused for construction, public stepping and raw physics
-with memory reporting, omitting repeated reset/restore and rendering measurements.
+Use --measurement-profile focused for construction and public stepping with memory
+reporting, omitting repeated reset/restore and rendering measurements.
 Install psutil and nvidia-ml-py for memory measurements.
 Each environment/batch/seed/backend record runs in a fresh process so allocator
 caches from earlier records cannot contaminate its process memory measurements.
 An output file is atomically updated after each record, so a long sweep retains
 completed measurements. Errors remain explicit records and cause a nonzero exit.
-Raw MJWarp physics advances two control rounds, matching one public DMC action;
-it excludes task evaluation, public snapshots, rendering and reset bookkeeping.
+Every measurement goes through the public stable_envs API.
 """
 
 from __future__ import annotations
@@ -41,7 +40,6 @@ import torch  # noqa: E402
 
 from benchmarks import _common as common  # noqa: E402
 from stable_envs.registry import REGISTRY  # noqa: E402
-from stable_envs.testing.evidence import sha256  # noqa: E402
 
 # Keep the benchmark matrix available on hosts without the optional DMC packages.
 CELLS = (
@@ -67,6 +65,10 @@ DEFAULT_BATCHES = (1, 16, 64, 256, 1024)
 EXTENDED_BATCHES = (2048, 4096, 8192)
 DEFAULT_SEEDS = (91000, 91010, 91020)
 ACTION_SEED_OFFSET = 91717
+
+
+def sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def _seeds(value):
@@ -255,41 +257,6 @@ def _rollout_metric(step, restore, actions, args, device, *, transitions):
     return value
 
 
-def native_raw_physics(name, batch, args, device):
-    """Same models/control steps, local sequential CPU lanes, without worker IPC."""
-    import stable_envs as se
-    from stable_envs.envs.dmcontrol.simulation.factory import make_local
-
-    key = getattr(se, name)._simulator_key()
-    started = time.perf_counter()
-    source = make_local(key, batch, "cpu", args.seed)
-    try:
-        construction_ms = (time.perf_counter() - started) * 1000
-        spec = source.envs[0]._env.action_spec()
-        saved = source.get_state()
-        actions = _action_array(batch, source.action_dim, args.seed, max(args.warmup, args.repeats))
-        controls = spec.minimum + (spec.maximum - spec.minimum) / 2 * (actions + 1)
-        nsubsteps = source.envs[0]._env._n_sub_steps
-
-        def physics(control):
-            for _ in range(2):
-                for lane, env in enumerate(source.envs):
-                    env.physics.set_control(control[lane])
-                    env.physics.step(nsubsteps)
-
-        return {
-            "raw_native_construction": {"wall_ms": construction_ms, "samples": 1},
-            "raw_physics_two_control_rounds": _rollout_metric(
-                physics, lambda: source.set_state(saved), controls, args, device, transitions=batch
-            ),
-        }, {
-            "raw_physics_scope": "standalone native local lanes, sequential CPU, no process IPC or task/snapshot/render",
-            "control_substeps": nsubsteps,
-        }
-    finally:
-        source.close()
-
-
 def measure_cell(name, batch, simulation_backend, args, device):
     kwargs = common.env_kwargs(args, batch)
     kwargs["simulation_backend"] = simulation_backend
@@ -352,68 +319,26 @@ def measure_cell(name, batch, simulation_backend, args, device):
                 device,
                 transitions=batch,
             )
-        adapter = candidate._simulator
-        raw_description = "native raw physics measured separately after public adapter closes"
-        if simulation_backend == "mjwarp":
-            candidate.set_state(saved)
-            controls = tuple(adapter._controls(action) for action in actions)
-
-            def raw_physics(control):
-                adapter.batch.step(control)
-                adapter.batch.step(control)
-
-            metrics["raw_physics_two_control_rounds"] = _rollout_metric(
-                raw_physics, lambda: candidate.set_state(saved), controls, args, device, transitions=batch
-            )
-            candidate.set_state(saved)  # raw timing intentionally bypassed adapter bookkeeping
-            raw_description = "two WarpBatch.step calls; native controls precomputed outside timing"
-        models = getattr(adapter, "_models", None) or [getattr(getattr(adapter, "batch", None), "model", None)]
-        models = [m for m in models if m is not None]
-        source = getattr(adapter, "lanes", getattr(adapter, "_source", adapter))
-        lanes = getattr(source, "envs", [])
-        model = models[0] if models else None
-        if model is None and lanes:
-            model = lanes[0].physics.model.ptr
-        substeps = getattr(adapter, "_nsubsteps", None)
-        if substeps is None and lanes:
-            substeps = lanes[0]._env._n_sub_steps
         metadata = {
             "measurement_profile": args.measurement_profile,
             "execution_mode": candidate.execution_mode,
-            "simulation_adapter": type(adapter).__name__,
-            "simulation_worker_pids": [process.pid for process in getattr(adapter, "_processes", [])],
             "action_dim": candidate.action_dim,
             "action_dtype": str(actions[0].dtype),
             "inputs": inputs,
-            "native_nthread": int(adapter.b.nthread) if simulation_backend == "native" else None,
             "torch_num_threads": torch.get_num_threads(),
             "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
             "output_device": str(device),
             "physics_dtype": "float64" if simulation_backend == "native" else "float32",
             "action_repeat": 2,
-            "control_substeps": substeps,
             "render_size": candidate.size,
             "render_supersample": candidate.ss,
             "render_backend_request": candidate.backend,
-            "raw_physics_scope": raw_description,
             "cpu_time_scope": "parent process CPU/wall ratio; excludes child simulation workers",
             "memory_scope": (
                 "Torch allocator peaks; Python tracemalloc peak; kernel process-lifetime peak RSS through each "
                 "sample (rss_peak_self_bytes, excluding children); sampled RSS/workers and NVML device/process usage. "
                 "Lifetime peaks include imports and earlier phases; RSS sums/NVML are point samples, not peaks."
             ),
-            "model": None
-            if model is None
-            else {
-                "nq": model.nq,
-                "nv": model.nv,
-                "nu": model.nu,
-                "physics_timestep": model.opt.timestep,
-                "solver": int(model.opt.solver),
-                "iterations": model.opt.iterations,
-                "ls_iterations": model.opt.ls_iterations,
-                "tolerance": model.opt.tolerance,
-            },
         }
         return {"status": "ok", "metadata": metadata, "metrics": metrics}
     finally:
@@ -424,10 +349,6 @@ def measure_record(name, batch, backend, args, device):
     row = dict(env=name, batch=batch, seed=args.seed, simulation_backend=backend, worker_pid=os.getpid())
     try:
         row.update(measure_cell(name, batch, backend, args, device))
-        if backend == "native":
-            metrics, metadata = native_raw_physics(name, batch, args, device)
-            row["metrics"].update(metrics)
-            row["metadata"].update(metadata)
     except Exception as exc:
         row.update(common.error_record(exc))
     return row
@@ -574,21 +495,24 @@ def benchmark_versions():
 
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
-    common.add_common_arguments(parser, batches=True)
+    common.add_common_arguments(
+        parser,
+        batches=True,
+        overrides={
+            "--envs": {"help": "comma-separated supported DMC environment names (default: all 17)"},
+            "--batches": {"help": "comma-separated batch sizes (default: 1,16,64,256,1024)"},
+            "--seed": {
+                "type": common.nonnegative_int,
+                "help": "one reset seed; replaces the default three-seed sweep",
+            },
+            "--warmup": {"help": "untimed action-prefix calls before checkpoint restore (default: 20)"},
+            "--repeats": {"help": "synchronized timed calls after checkpoint restore (default: 100)"},
+            "--size": {"help": "render size (default: 32), or native"},
+        },
+    )
     parser.set_defaults(
         envs=list(CELLS), batches=list(DEFAULT_BATCHES), device="cuda", seed=None, warmup=20, repeats=100, size=32
     )
-    parser._option_string_actions["--envs"].help = "comma-separated supported DMC environment names (default: all 17)"
-    parser._option_string_actions["--batches"].help = "comma-separated batch sizes (default: 1,16,64,256,1024)"
-    parser._option_string_actions["--seed"].type = common.nonnegative_int
-    parser._option_string_actions["--seed"].help = "one reset seed; replaces the default three-seed sweep"
-    parser._option_string_actions[
-        "--warmup"
-    ].help = "untimed action-prefix calls before checkpoint restore (default: 20)"
-    parser._option_string_actions[
-        "--repeats"
-    ].help = "synchronized timed calls after checkpoint restore (default: 100)"
-    parser._option_string_actions["--size"].help = "render size (default: 32, as in the PR harness), or native"
     parser.add_argument(
         "--seeds",
         type=_seeds,
@@ -606,7 +530,7 @@ def _parser():
         "--measurement-profile",
         choices=("full", "focused"),
         default="full",
-        help="focused measures construction, first/no-pixel public steps, raw physics and memory; full adds reset/restore and rendering",
+        help="focused measures construction, first/no-pixel public steps and memory; full adds reset/restore and rendering",
     )
     parser.add_argument(
         "--simulation-backends", type=common.names, default=["native", "mjwarp"], help="native,mjwarp (default: both)"

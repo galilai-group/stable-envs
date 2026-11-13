@@ -10,8 +10,8 @@ uint8 frames at the class's native supersampling. The maintained harnesses measu
 
 - `python -m benchmarks.render` times `env.render` on a reset State over a range of batch sizes. It
   measures throughput and batch scaling. It does not run a reference renderer.
-- `python -m benchmarks.pipeline` times the path from a host render State to a frame: the copy to
-  the device and the render call. With `--jpeg-dir`, it adds a single-process Pillow baseline that
+- `python -m benchmarks.pipeline` times the path from a host State to a frame: the copy to the device
+  and the `env.render` call. With `--jpeg-dir`, it adds a single-process Pillow baseline that
   decodes real JPEG files.
 
 Neither harness imports stable-worldmodel. See

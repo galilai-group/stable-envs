@@ -10,7 +10,7 @@ import platform
 import subprocess
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -60,38 +60,41 @@ def native_int(value: str) -> int | None:
     return positive_int(value)
 
 
-def add_common_arguments(parser: argparse.ArgumentParser, *, batches: bool) -> None:
-    parser.add_argument(
-        "--envs", type=names, default=["PushT"], help="comma-separated canonical environment names (default: PushT)"
-    )
+def add_common_arguments(
+    parser: argparse.ArgumentParser, *, batches: bool, overrides: Mapping[str, Mapping[str, Any]] | None = None
+) -> None:
+    """Add the shared options; ``overrides`` maps an option to ``add_argument`` keywords that replace the shared ones."""
+
+    def add(flag: str, **kwargs: Any) -> None:
+        parser.add_argument(flag, **{**kwargs, **(overrides or {}).get(flag, {})})
+
+    add("--envs", type=names, default=["PushT"], help="comma-separated canonical environment names (default: PushT)")
     if batches:
-        parser.add_argument(
-            "--batches", type=positive_ints, default=[1, 16, 64, 256], help="comma-separated batch sizes"
-        )
+        add("--batches", type=positive_ints, default=[1, 16, 64, 256], help="comma-separated batch sizes")
     else:
-        parser.add_argument("--batch", type=positive_int, default=64)
-    parser.add_argument("--device", default="cpu", help="torch device, for example cpu, cuda, or cuda:1")
-    parser.add_argument("--warmup", type=nonnegative_int, default=5, help="untimed calls before measurement")
-    parser.add_argument("--repeats", type=positive_int, default=10, help="synchronized timed calls")
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument(
+        add("--batch", type=positive_int, default=64)
+    add("--device", default="cpu", help="torch device, for example cpu, cuda, or cuda:1")
+    add("--warmup", type=nonnegative_int, default=5, help="untimed calls before measurement")
+    add("--repeats", type=positive_int, default=10, help="synchronized timed calls")
+    add("--seed", type=int, default=0)
+    add(
         "--threads", type=positive_int, default=1, help="torch/OpenMP/MKL CPU thread budget (recorded on every device)"
     )
-    parser.add_argument(
+    add(
         "--size",
         type=native_int,
         default=None,
         help="output size, or native to leave the environment default unchanged",
     )
-    parser.add_argument(
+    add(
         "--supersample",
         type=native_int,
         default=None,
         help="supersampling factor, or native to leave the environment default unchanged",
     )
-    parser.add_argument("--backend", default="auto")
-    parser.add_argument("--output", default="-", help="JSON path, or - for stdout (default)")
-    parser.add_argument("--pretty", action="store_true", help="indent JSON output")
+    add("--backend", default="auto")
+    add("--output", default="-", help="JSON path, or - for stdout (default)")
+    add("--pretty", action="store_true", help="indent JSON output")
 
 
 def checked_device(value: str) -> torch.device:

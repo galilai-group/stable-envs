@@ -3,8 +3,8 @@
 Two scripts measure rendering cost through the public `stable_envs` API:
 
 - `render.py` measures synchronized `env.render(state, out=buffer)` throughput at given batch sizes.
-- `pipeline.py` measures host-state transfer plus rendering. It can also time JPEG decoding of a
-  directory of files as a baseline.
+- `pipeline.py` measures the copy of a host State to the device plus `env.render(state, out=buffer)`. It
+  can also time JPEG decoding of a directory of files as a baseline.
 
 They do not test pixel correctness, fidelity or dynamics. The test suite covers those.
 Neither script imports `stable_worldmodel` or renderer internals.
@@ -25,9 +25,10 @@ python -m benchmarks.pipeline \
 
 The scripts refuse a device that is not available. They never fall back to another device.
 
-`pipeline.py` can read States from a file instead of a seeded reset. Pass an `.npy` array, or an
-`.npz` file with a two-dimensional array, with `--state-file` and `--state-key`. The file must hold at
-least one full batch.
+`pipeline.py` can read a full State from a file instead of a seeded reset. Pass an `.npz` file with one
+array per State field with `--state-file`. Each key is the field path joined by `/`, for example
+`agent/position`. The file must hold at least one full batch. Classes that have `to_render_state`, such as
+PushT, copy only the fields that `render` reads.
 
 `pipeline.py --jpeg-dir frames/` decodes `batch` distinct `.jpg`/`.jpeg` files on every timed call.
 With several `--envs`, put the files under `frames/<EnvName>/`. This needs Pillow. The JPEG timing
@@ -58,5 +59,5 @@ configuration and the Git revision.
 
 - `render.py` writes one point per `(environment, batch)`: frames/s, µs/frame, output GB/s, frame
   shape, settings, timing distribution and optional CUDA peak memory.
-- `pipeline.py` writes one point per environment, with packed-state and frame byte sizes. The JPEG
+- `pipeline.py` writes one point per environment, with State and frame byte sizes. The JPEG
   result and the throughput ratio are nested under that environment.
