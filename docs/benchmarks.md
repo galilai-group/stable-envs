@@ -51,13 +51,12 @@ Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github
 
 ## Comparison with the upstream libraries
 
-`benchmarks/paper/run.sh` measures the speed of stable-envs against the upstream library of each family and the frame MSE between them. It pins each measurement to the same CPU cores and uses only the public `stable_envs` API. It has three parts:
+`benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py` measure the speed of stable-envs against the upstream library of each family, and the frame MSE between them. They use only the public `stable_envs` API. Pin each measurement to the same CPU cores. They have these measurements:
 
-- `offline`: stable-envs draws stored inputs with `env.render` at each batch size. The inputs are rows from `sample_states`, or full states from random-action rollouts for a class without rows. The upstream library draws the same inputs in 1 process and in one process for each core. The frame MSE compares the two on the 0-255 scale.
-- `step`: physics steps at each batch size, against the upstream library stepping the same number of environments on CPU.
-- `frames`: steps with a frame after each step.
+- offline: stable-envs draws stored inputs with `env.render` at each batch size. The inputs are rows from `sample_states`, or full states from random-action rollouts for a class without rows. The upstream library draws the same inputs. The frame MSE compares the two on the 0-255 scale.
+- online: physics steps at each batch size, and steps with a frame after each step, against the upstream library stepping the same number of environments on CPU.
 
-`benchmarks/offline_sweep.py`, `benchmarks/online_ladder.py` and `benchmarks/draw.py` do the measurements. `benchmarks/paper/summarize.py` writes Markdown tables from one results directory, and `benchmarks/paper/sanity.py` checks the spread and the status of each cell. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#paper-harness) gives the options, the environment variables and the output files.
+`benchmarks/draw.py` is the call that draws the stable-envs frames. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#comparison-with-the-source-libraries) gives the options and the output files.
 
 ## Reproduce
 

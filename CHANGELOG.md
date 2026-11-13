@@ -71,7 +71,7 @@ First public release.
 - Comparison tests check each environment against its upstream library and against stable-worldmodel, for state, simulation, tasks and pixels.
 - The tests compare frames with a recorded source MSE for each class (`tests/fixtures/source_mse.json`) and with golden frames of the project's own renderers (`tests/fixtures/golden/`).
 - `stable_envs.testing` measurement helpers, the `benchmarks/` harness, including `benchmarks/dmc_mjwarp.py` for native and MuJoCo Warp DM Control physics, and the MkDocs documentation. The benchmarks use only the public API.
-- `benchmarks/paper/run.sh`, with `benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py`, times stable-envs against the upstream library of each family on stored inputs and in online rollouts, and writes the frame MSE against the upstream library.
+- `benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py` time stable-envs against the upstream library of each family on stored inputs and in online rollouts, and writes the frame MSE against the upstream library.
 - `examples/lewm/` trains and evaluates the LeWM world model of stable-worldmodel on PushT. `train.py` reads states and actions from the dataset and draws the frames with `env.render(state)` on the training device.
 
 For known gaps, see the Limitations section of each [environment page](https://galilai-group.github.io/stable-envs/environments/).

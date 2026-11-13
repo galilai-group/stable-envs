@@ -1,4 +1,4 @@
-"""The one call through which the paper harness draws stable-envs frames from stored inputs."""
+"""The one call through which the offline sweep draws stable-envs frames from stored inputs."""
 
 from __future__ import annotations
 
