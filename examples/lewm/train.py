@@ -176,7 +176,7 @@ def main() -> None:
                 "steps": int(trainer.global_step),
                 "epoch_seconds": round(seconds, 2),
                 "samples_per_s": round(self.samples / max(seconds, 1e-9), 1),
-                **{k: round(float(v), 5) for k, v in trainer.callback_metrics.items() if k.startswith("train/")},
+                **{k: round(float(v), 5) for k, v in trainer.callback_metrics.items() if k.startswith("fit/")},
             }
             print(json.dumps(row), flush=True)
             if trainer.is_global_zero:
