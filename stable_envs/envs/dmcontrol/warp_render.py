@@ -8,8 +8,8 @@ light scales, sphere radii and gravity change per world without a new context.
 MuJoCo Warp draws geoms only. For the fixed-camera cells the render model adds one proxy geom for each site
 in a visible group and one capsule for each segment of a drawn tendon. A kernel places them each frame.
 
-With MuJoCo Warp physics, a live frame copies the physics poses on the device into the render data and
-draws them. Otherwise each launch writes the compact rows and runs kinematics in the render data.
+Each launch writes the compact rows and runs kinematics in the render data, so a frame is a function of the
+State.
 """
 
 from __future__ import annotations
@@ -38,9 +38,7 @@ BVH_MODES = ("refit", "rebuild")
 MAX_WORLDS = 256
 #: Name of the body that carries the proxy geoms.
 PROXY_BODY = "snv_render_proxies"
-# Contexts for compact rows; contexts that read live physics belong to their environment.
 _CACHE = _RES.BoundedCache(8, name="dmcontrol.warp", on_evict=MW.release_cached_ctx)
-_UNSET = object()
 
 
 @dataclass(frozen=True)
@@ -145,34 +143,6 @@ def _kernels():
         q = xquat[w, b]
         geom_xpos[w, g] = xpos[w, b] + mjmath.rot_vec_quat(geom_pos[w % geom_pos.shape[0], g], q)
         geom_xmat[w, g] = mjmath.quat_to_mat(mjmath.mul_quat(q, geom_quat[w % geom_quat.shape[0], g]))
-
-    @wp.kernel
-    def copy_vec3(src: wp.array2d(dtype=wp.vec3), offset: wp.array(dtype=int), dst: wp.array2d(dtype=wp.vec3)):
-        w, i = wp.tid()
-        r = w + offset[0]
-        if r < src.shape[0]:
-            dst[w, i] = src[r, i]
-
-    @wp.kernel
-    def copy_mat33(src: wp.array2d(dtype=wp.mat33), offset: wp.array(dtype=int), dst: wp.array2d(dtype=wp.mat33)):
-        w, i = wp.tid()
-        r = w + offset[0]
-        if r < src.shape[0]:
-            dst[w, i] = src[r, i]
-
-    @wp.kernel
-    def world_sites(
-        site_pos: wp.array2d(dtype=wp.vec3),
-        sites: wp.array(dtype=int),
-        offset: wp.array(dtype=int),
-        site_xpos: wp.array2d(dtype=wp.vec3),
-    ):
-        # A site on the world body has its model position as its world position.
-        w, k = wp.tid()
-        r = w + offset[0]
-        if r < site_pos.shape[0]:
-            s = sites[k]
-            site_xpos[w, s] = site_pos[r, s]
 
     @wp.kernel
     def place_sites(
@@ -405,9 +375,6 @@ def _kernels():
             geom_rgba[w, gid] = wp.vec4(colour[0], colour[1], colour[2], 1.0)
 
     return {
-        "copy_vec3": copy_vec3,
-        "copy_mat33": copy_mat33,
-        "world_sites": world_sites,
         "place_sites": place_sites,
         "welded_geoms": welded_geoms,
         "place_tendon": place_tendon,
@@ -601,7 +568,6 @@ def _copy_appearance(m, m2) -> None:
 class _Proxies:
     first: int = 0
     sites: tuple[int, ...] = ()
-    world_sites: tuple[int, ...] = ()
     tendon: object = None
     tendon_first: int = 0
 
@@ -622,7 +588,6 @@ def _render_model(env, m, pr, look, opts: Options):
     else:
         m2 = copy.deepcopy(m)
     px = _Proxies(first=int(m.ngeom), sites=tuple(sites), tendon=tendon, tendon_first=int(m.ngeom) + len(sites))
-    px.world_sites = tuple(s for s in sites if int(m.site_bodyid[s]) == 0)
     for k, s in enumerate(sites):
         g = px.first + k
         m2.geom_type[g] = m2.site_type[s]
@@ -696,10 +661,6 @@ class _Ctx:
         "views",
         "gravity",
         "solimp",
-        "offset",
-        "offset_t",
-        "sources",
-        "site_pos",
         "names",
         "mats",
         "masses_varied",
@@ -707,7 +668,6 @@ class _Ctx:
         "static_rows",
         "wp_device",
         "site_ids",
-        "world_site_ids",
         "tendon_sites",
         "tendon_margin",
         "keymap",
@@ -726,8 +686,8 @@ def _view(c, owner, name):
     return v
 
 
-def _build(env, size: int, nworld: int, look, opts: Options, spp: int, batch=None) -> _Ctx:
-    """Build a context for one look. ``batch`` (a ``WarpBatch``) makes it read live physics poses."""
+def _build(env, size: int, nworld: int, look, opts: Options, spp: int) -> _Ctx:
+    """Build a context for one look."""
     import mujoco
     import mujoco_warp as mjw
 
@@ -760,12 +720,8 @@ def _build(env, size: int, nworld: int, look, opts: Options, spp: int, batch=Non
         mujoco.mj_forward(m2, d0)
         c.wm = mjw.put_model(m2, batch_sizes={k: int(nworld) for k in sorted(batched)})
         c.wd = mjw.put_data(m2, d0, nworld=int(nworld))
-        k = _kernels()
         c.gravity = wp.array(np.tile(np.asarray(m2.opt.gravity, np.float32), (int(nworld), 1)), dtype=wp.vec3)
-        c.offset = wp.zeros(1, dtype=int)
-        c.offset_t = wp.to_torch(c.offset)
         c.site_ids = wp.array(np.asarray(px.sites, np.int32), dtype=int) if px.sites else None
-        c.world_site_ids = wp.array(np.asarray(px.world_sites, np.int32), dtype=int) if px.world_sites else None
         welded = _welded_geoms(env, m)
         c.welded_ids = wp.array(np.asarray(welded, np.int32), dtype=int) if welded else None
         c.solimp, c.tendon_sites, c.tendon_margin = None, None, 0.0
@@ -780,26 +736,6 @@ def _build(env, size: int, nworld: int, look, opts: Options, spp: int, batch=Non
             s[2] = max(0.0, s[2])
             s[4] = max(1.0, s[4])
             c.solimp = wp.array(s, dtype=wp.float64)
-        c.sources, c.site_pos = [], None
-        if batch is not None:
-            sources = [
-                ("geom_xpos", wp.vec3, m.ngeom),
-                ("geom_xmat", wp.mat33, m.ngeom),
-                ("cam_xpos", wp.vec3, m.ncam),
-            ]
-            sources += [("cam_xmat", wp.mat33, m.ncam), ("light_xpos", wp.vec3, m.nlight)]
-            sources += [("light_xdir", wp.vec3, m.nlight), ("site_xpos", wp.vec3, m.nsite)]
-            sources += [("site_xmat", wp.mat33, m.nsite)]
-            for name, dtype, count in sources:
-                if count:
-                    src = wp.from_torch(batch.data(name), dtype=dtype)
-                    kernel = k["copy_vec3"] if dtype is wp.vec3 else k["copy_mat33"]
-                    c.sources.append((kernel, src, getattr(c.wd, name), int(count)))
-            if px.world_sites:
-                try:
-                    c.site_pos = wp.from_torch(batch.model_field("site_pos"), dtype=wp.vec3)
-                except KeyError:
-                    c.site_pos = None
         with MW.gl_rounding():
             c.rc = MW.create_render_context(
                 m2,
@@ -913,28 +849,18 @@ def _bvh(c: _Ctx) -> None:
 def _frame(c: _Ctx) -> None:
     """Poses, proxies, BVH, the ray tracer, then the sky and reflection passes."""
     wp, k, px = c.wp, _kernels(), c.proxies
-    if c.sources:
-        for kernel, src, dst, count in c.sources:
-            wp.launch(kernel, dim=(c.nworld, count), inputs=[src, c.offset, dst])
-        if c.site_pos is not None:
-            wp.launch(
-                k["world_sites"],
-                dim=(c.nworld, len(px.world_sites)),
-                inputs=[c.site_pos, c.world_site_ids, c.offset, c.wd.site_xpos],
-            )
-    else:
-        c.mjw.kinematics(c.wm, c.wd)
-        if c.needs_com:
-            # Kinematics leaves subtree_com stale; tracking cameras and lights read it.
-            c.mjw.com_pos(c.wm, c.wd)
-        c.mjw.camlight(c.wm, c.wd)
-        if c.welded_ids is not None:
-            wp.launch(
-                k["welded_geoms"],
-                dim=(c.nworld, c.welded_ids.shape[0]),
-                inputs=[c.wm.geom_bodyid, c.wm.geom_pos, c.wm.geom_quat, c.welded_ids, c.wd.xpos, c.wd.xquat],
-                outputs=[c.wd.geom_xpos, c.wd.geom_xmat],
-            )
+    c.mjw.kinematics(c.wm, c.wd)
+    if c.needs_com:
+        # Kinematics leaves subtree_com stale; tracking cameras and lights read it.
+        c.mjw.com_pos(c.wm, c.wd)
+    c.mjw.camlight(c.wm, c.wd)
+    if c.welded_ids is not None:
+        wp.launch(
+            k["welded_geoms"],
+            dim=(c.nworld, c.welded_ids.shape[0]),
+            inputs=[c.wm.geom_bodyid, c.wm.geom_pos, c.wm.geom_quat, c.welded_ids, c.wd.xpos, c.wd.xquat],
+            outputs=[c.wd.geom_xpos, c.wd.geom_xmat],
+        )
     if px.sites:
         wp.launch(
             k["place_sites"],
@@ -1101,22 +1027,16 @@ def _worlds(env, size: int, batch: int, spp: int, opts: Options) -> int:
     return max(1, min(cap, 1 << max(0, int(batch) - 1).bit_length()))
 
 
-def _context(env, size: int, nworld: int, look, key, opts: Options, spp: int, live: bool) -> _Ctx:
+def _context(env, size: int, nworld: int, look, key, opts: Options, spp: int) -> _Ctx:
     cache_key = (type(env), int(size), int(nworld), key, opts, int(spp))
-    if live:
-        store = env.__dict__.setdefault("_warp_live", {})
-        hit = store.get(cache_key)
-        if hit is None:
-            hit = store[cache_key] = _build(env, size, nworld, look, opts, spp, env._simulator.batch)
-        return hit
     hit = _CACHE.get(cache_key)
     if hit is None:
         hit = _CACHE.put(cache_key, _build(env, size, nworld, look, opts, spp))
     return hit
 
 
-def render(env, s, sty, size: int, out: torch.Tensor, spp: int, *, live: bool = False, opts=None, aux=None):
-    """Draw rows ``s`` (or, with ``live``, the physics worlds) with style ``sty`` into ``out`` (B, H, W, 3).
+def render(env, s, sty, size: int, out: torch.Tensor, spp: int, *, opts=None, aux=None):
+    """Draw rows ``s`` with style ``sty`` into ``out`` (B, H, W, 3).
 
     ``aux`` receives ``geom`` (B, H, W) int32 geom ids of the render model, -1 for the sky, and ``depth``
     (B, H, W) float32 ray hit distances when the options keep them, and ``names`` for the geom ids.
@@ -1125,8 +1045,6 @@ def render(env, s, sty, size: int, out: torch.Tensor, spp: int, *, live: bool = 
     spp = int(opts.samples or spp)
     B = int(out.shape[0])
     plan = _plan(env, sty, B, opts)
-    if live and len(plan.groups) > 1:
-        s, live = env._pack_render_state(env.get_state()), False
     worlds = _worlds(env, size, B, spp, opts)
     if aux is not None:
         if opts.segmentation:
@@ -1134,18 +1052,15 @@ def render(env, s, sty, size: int, out: torch.Tensor, spp: int, *, live: bool = 
         if opts.depth:
             aux["depth"] = torch.empty((B, size, size), dtype=torch.float32, device=env.device)
     for look, key, idx in plan.groups:
-        c = _context(env, size, worlds, look, key, opts, spp, live)
+        c = _context(env, size, worlds, look, key, opts, spp)
         rows = B if idx is None else len(idx)
         for lo in range(0, rows, worlds):
             hi = min(rows, lo + worlds)
             n = hi - lo
             sel = slice(lo, hi) if idx is None else idx[lo:hi]
-            if live:
-                c.offset_t.fill_(lo)
-            else:
-                _upload_rows(env, c, s[sel], n)
-                if idx is None:
-                    _upload_trackcom(env, c, sty, lo, hi)
+            _upload_rows(env, c, s[sel], n)
+            if idx is None:
+                _upload_trackcom(env, c, sty, lo, hi)
             _upload_style(env, c, sty, sel, n, plan.palette)
             _launch(c, env.device)
             frames = c.bgra[:n, ..., [2, 1, 0]]  # MuJoCo Warp packs its bytes as BGRA.
@@ -1165,39 +1080,6 @@ def render(env, s, sty, size: int, out: torch.Tensor, spp: int, *, live: bool = 
             if aux is not None:
                 aux["names"], aux["keymap"] = c.names, c.keymap
     return out
-
-
-def live_renderer(env):
-    """A callable that draws the live worlds from MuJoCo Warp physics, or None when that path does not apply."""
-    hit = env.__dict__.get("_warp_live_fn", _UNSET)
-    if hit is not _UNSET:
-        return hit
-    fn = None
-    sim = env.__dict__.get("_simulator")
-    batch = getattr(sim, "batch", None)
-    if (
-        env.device.type == "cuda"
-        and selected(env)
-        and getattr(sim, "simulation_backend", None) == "mjwarp"
-        and batch is not None
-        and _same_layout(type(env)._model(), batch.model)
-    ):
-
-        def fn():
-            B = int(env.B)
-            out = torch.empty((B, env.size, env.size, 3), dtype=torch.uint8, device=env.device)
-            sty = env.resolve_style(None, None, batch=B)
-            return render(env, None, sty, env.size, out, env.ss, live=True)
-
-    env.__dict__["_warp_live_fn"] = fn
-    return fn
-
-
-def _same_layout(m, physics) -> bool:
-    names = ("ngeom", "nsite", "ncam", "nlight", "nbody", "nq")
-    return all(int(getattr(m, n)) == int(getattr(physics, n)) for n in names) and np.array_equal(
-        np.asarray(m.geom_bodyid), np.asarray(physics.geom_bodyid)
-    )
 
 
 def semantics(env, rows, size: int | None = None) -> dict:
@@ -1233,8 +1115,5 @@ def semantic(env, rows) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def release(env) -> None:
-    """Drop the contexts that read this environment's physics."""
-    for c in env.__dict__.pop("_warp_live", {}).values():
-        MW.release_cached_ctx(c)
-    env.__dict__.pop("_warp_live_fn", None)
+    """Drop this environment's cached look plan."""
     env.__dict__.pop("_warp_plan", None)

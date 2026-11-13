@@ -133,20 +133,8 @@ class DelegatedSemantics:
         keys = (*self._render_fields(), *(state_key(p) for p in sorted(self.FRAME_PHYSICS)))
         return tuple((key, fields[key][0]) for key in keys)
 
-    @property
-    def _render_live(self):
-        """The stepping hook: draw the live worlds from MuJoCo Warp physics, or None when it does not apply."""
-        from . import warp_render
-
-        return warp_render.live_renderer(self)
-
     def _render_state_input(self, state, **kwargs):
         """A State's own physics values draw the leaves that move pixels, unless the call names them."""
-        if state is None and not kwargs:
-            live = self._render_live
-            if live is not None:
-                self._check_open("render")
-                return live()
         state = self.get_state() if state is None else state
         leaves = [] if "style" in kwargs else sorted(self.FRAME_PHYSICS)
         variation = dict(kwargs.pop("variation", None) or {}) if leaves else {}
