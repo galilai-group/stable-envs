@@ -59,16 +59,9 @@ def main() -> None:
             print(f"wrote {rows} rows without pixels to {a.dst} in {time.perf_counter() - t0:.1f} s")
             return
 
-        from state_render import StateRenderer
+        from state_render import from_config
 
-        renderer = StateRenderer(
-            cfg.id,
-            OmegaConf.to_container(cfg.leaves),
-            list(cfg.zero),
-            device=a.device,
-            size=a.size,
-            env_kwargs=OmegaConf.to_container(cfg.kwargs),
-        )
+        renderer = from_config(OmegaConf.to_container(cfg), device=a.device, size=a.size)
         compression = None if a.compression == "none" else a.compression
         pixels = fo.create_dataset(
             "pixels",

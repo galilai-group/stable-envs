@@ -10,15 +10,16 @@ import stable_envs as snv
 class StateRenderer:
     """Write dataset state rows into full States and draw them with ``env.render(state)``.
 
-    ``leaves`` maps a dotted State leaf to the ``[start, stop)`` columns of a state row that hold it.
-    The leaves in ``zero`` are set to zero. Every other leaf keeps its value from ``env.reset(seed)``.
+    ``leaves`` holds ``(leaf, start, stop)``: a dotted State leaf and the ``[start, stop)`` columns of a state
+    row that hold it. The leaves in ``zero`` are set to zero. Every other leaf keeps its value from
+    ``env.reset(seed)``.
     """
 
     def __init__(self, env_id, leaves, zero=(), *, device="cpu", size=None, env_kwargs=None, seed=0):
         self.env = snv.make(env_id, num_envs=1, device=device, **dict(env_kwargs or {}))
         self.env.reset(seed=seed)
         self.size = size
-        self.leaves = [(tuple(key.split(".")), int(start), int(stop)) for key, (start, stop) in leaves.items()]
+        self.leaves = [(tuple(key.split(".")), int(start), int(stop)) for key, start, stop in leaves]
         self.zero = [tuple(key.split(".")) for key in zero]
         self._template = self.env.get_state()
         self._batch = None
@@ -52,3 +53,10 @@ class StateRenderer:
 
     def close(self) -> None:
         self.env.close()
+
+
+def from_config(env_cfg, *, device="cpu", size=None) -> StateRenderer:
+    """Build a :class:`StateRenderer` from the ``env`` section of a config (a mapping)."""
+    leaves = [(item["leaf"], *item["columns"]) for item in env_cfg["leaves"]]
+    kwargs = dict(env_cfg.get("kwargs") or {})
+    return StateRenderer(env_cfg["id"], leaves, list(env_cfg["zero"]), device=device, size=size, env_kwargs=kwargs)

@@ -9,9 +9,9 @@ env:
   state_column: state
   # State leaf <- [start, stop) columns of a state row: agent x, y, block x, y, block angle, agent vx, vy.
   leaves:
-    current.body.agent.position: [0, 2]
-    current.body.block.position: [2, 4]
-    current.body.block.angle: [4, 5]
+    - {leaf: current.body.agent.position, columns: [0, 2]}
+    - {leaf: current.body.block.position, columns: [2, 4]}
+    - {leaf: current.body.block.angle, columns: [4, 5]}
   # Dataset rows hold no contact points, so the frames show no contact markers.
   zero: [current.render_segments, current.render_segment_count]
 
@@ -88,9 +88,7 @@ model:
       _partial_: true
 
 # --half: 6 encoder layers instead of 12, 3 predictor layers instead of 6.
-half:
-  model.encoder.num_hidden_layers: 6
-  model.predictor.depth: 3
+half: [model.encoder.num_hidden_layers=6, model.predictor.depth=3]
 
 loss:
   sigreg:

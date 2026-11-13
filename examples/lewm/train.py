@@ -37,18 +37,9 @@ class Pixels:
     @torch.no_grad()
     def __call__(self, rows: torch.Tensor) -> torch.Tensor:
         if self.renderer is None:
-            from omegaconf import OmegaConf
-            from state_render import StateRenderer
+            from state_render import from_config
 
-            cfg = self.env_cfg
-            self.renderer = StateRenderer(
-                cfg.id,
-                OmegaConf.to_container(cfg.leaves),
-                list(cfg.zero),
-                device=str(rows.device),
-                size=self.size,
-                env_kwargs=OmegaConf.to_container(cfg.kwargs),
-            )
+            self.renderer = from_config(self.env_cfg, device=str(rows.device), size=self.size)
             self.mean, self.std = self.mean.to(rows.device), self.std.to(rows.device)
         b, n = rows.shape[:2]
         x = self.renderer(rows.float()).reshape(b * n, self.size, self.size, 3)
@@ -101,7 +92,7 @@ def main() -> None:
 
     cfg = OmegaConf.load(a.config)
     if a.half:
-        cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist([f"{k}={v}" for k, v in cfg.half.items()]))
+        cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(list(cfg.half)))
     cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(a.overrides))
     if a.precision is not None:
         cfg.trainer.precision = a.precision
@@ -156,7 +147,7 @@ def main() -> None:
             "interval": "epoch",
         },
     }
-    pixels = Pixels(cfg.env, cfg.img_size, stats["mean"], stats["std"]) if online else None
+    pixels = Pixels(OmegaConf.to_container(cfg.env), cfg.img_size, stats["mean"], stats["std"]) if online else None
     module = spt.Module(
         model=model,
         sigreg=SIGReg(**cfg.loss.sigreg.kwargs),

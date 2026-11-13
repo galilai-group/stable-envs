@@ -27,7 +27,7 @@ def make_task_env(**kwargs):
     """Build the gymnasium env that ``World`` steps: one stable-envs environment per instance."""
     import gymnasium as gym
     import torch
-    from state_render import StateRenderer
+    from state_render import from_config
 
     class Task(gym.Env):
         """One stable-envs environment with the stable-worldmodel task interface."""
@@ -36,14 +36,7 @@ def make_task_env(**kwargs):
 
         def __init__(self, env_cfg, eval_cfg, device="cpu", size=224, render_mode="rgb_array"):
             self.render_mode = render_mode
-            self.renderer = StateRenderer(
-                env_cfg["id"],
-                env_cfg["leaves"],
-                env_cfg["zero"],
-                device=device,
-                size=size,
-                env_kwargs=env_cfg["kwargs"],
-            )
+            self.renderer = from_config(env_cfg, device=device, size=size)
             self.env = self.renderer.env
             self.state_column = env_cfg["state_column"]
             self.observation_leaf = tuple(eval_cfg["observation_leaf"].split("."))
