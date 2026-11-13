@@ -8,6 +8,8 @@ canvas pixels that ``cv2.resize(INTER_LINEAR)`` reads, then applies the fixed-po
 
 from __future__ import annotations
 
+import threading
+from collections import OrderedDict
 from functools import cache, lru_cache
 
 import numpy as np
@@ -233,6 +235,18 @@ class _Layout:
         owner = {"agent": 1, "block": 2}
         discs = [(owner[o], *xy, round(r), round(r - 4), s) for o, xy, r, s in self.circles if o in owner]
         self.discs = np.array(discs, np.float64).reshape(-1, 6)
+        # The CPU renderer redraws one box per body polygon and per disc: the slots of each share a group.
+        self.groups = np.full(slot, -1, np.int64)
+        group = 0
+        for body in ("agent", "block"):
+            for start in self.fills[body]:
+                self.groups[start : start + 17] = group
+                group += 1
+        for o, _, _, s in self.circles:
+            if o in owner:
+                self.groups[s : s + 2] = group
+                group += 1
+        self.radius = max(2, int(self.discs[:, 3].max(initial=0)))
 
 
 @cache
@@ -251,18 +265,7 @@ def primitives(fields):
     config = fields["recipe/config"]
     fallback = config[:, 2] != 0  # action markers
     # Rows with equal anchor shape and scale fields (values and type tags) share a template.
-    raw = np.concatenate(
-        [
-            np.ascontiguousarray(fields[f"anchor/variation/{body}/{leaf}/current/{part}"])
-            .reshape(count, -1)
-            .view(np.uint8)
-            for body in ("agent", "block")
-            for leaf in ("shape", "scale")
-            for part in ("value", "type")
-        ],
-        1,
-    )
-    first, inverse = _unique_rows(raw)
+    first, inverse = _unique_rows(_shape_bytes(fields, count))
     layouts = {}
     for index, lane0 in enumerate(first.tolist()):
         try:
@@ -272,6 +275,39 @@ def primitives(fields):
     records = np.empty((count, max([1] + [layout.slots for layout in layouts.values()]), RECORD), np.int32)
     records[fallback] = 0
     counts = np.zeros(count, np.int64)
+    pose, color, light, goal, _ = _scene(fields, count)
+    for index, layout in layouts.items():
+        lanes = np.flatnonzero(inverse == index)
+        cpu.build(
+            lanes, pose, color, light, goal, layout.shapes, layout.owners, layout.starts,
+            layout.discs, layout.walls, layout.wall_slots.reshape(-1), records,
+        )  # fmt: skip
+        counts[lanes] = layout.slots
+    return records, counts, fallback
+
+
+_SHAPE_FIELDS = tuple(
+    f"anchor/variation/{body}/{leaf}/current/{part}"
+    for body in ("agent", "block")
+    for leaf in ("shape", "scale")
+    for part in ("value", "type")
+)
+
+
+def _shape_bytes(fields, count):
+    """``[N, bytes]``: the anchor shape and scale fields of each row, values and type tags, as bytes."""
+    return np.concatenate(
+        [np.ascontiguousarray(fields[key]).reshape(count, -1).view(np.uint8) for key in _SHAPE_FIELDS], 1
+    )
+
+
+def _scene(fields, count):
+    """``(pose [N, 3, 5], color [N, 3], light [N, 3], goal [N], background [N])`` of host render ``fields``.
+
+    A pose is (x, y, centre of gravity x, y, angle) of the goal, the agent and the block; colours are packed RGB.
+    ``goal`` is True where the goal is drawn.
+    """
+    config = fields["recipe/config"]
     pose = np.zeros((count, 3, 5))
     pose[:, 0, :2] = fields["owned/variation/goal/position/current/value"]
     pose[:, 0, 4] = fields["owned/variation/goal/angle/current/value"].reshape(count)
@@ -282,14 +318,8 @@ def primitives(fields):
     color = np.stack([fields[f"owned/variation/{name}/color/current/value"] for name in ("goal", "agent", "block")], 1)
     color = color.astype(np.int64)
     goal = (fields["owned/variation/rendering/render_goal/current/value"].reshape(count) != 0) & (config[:, 3] != 0)
-    for index, layout in layouts.items():
-        lanes = np.flatnonzero(inverse == index)
-        cpu.build(
-            lanes, pose, pack(color), pack(_light(color)), goal, layout.shapes, layout.owners, layout.starts,
-            layout.discs, layout.walls, layout.wall_slots.reshape(-1), records,
-        )  # fmt: skip
-        counts[lanes] = layout.slots
-    return records, counts, fallback
+    background = pack(fields["owned/variation/background/color/current/value"].astype(np.int64))
+    return pose, pack(color), pack(_light(color)), goal, background
 
 
 def contact_writes(fields):
@@ -1128,37 +1158,199 @@ def draw_cuda(records, counts, background, writes, size, device, tile=32):
     return _launch(records, counts, background, writes, size, device, index, static_out, box, tile)
 
 
-def render_cpu(fields, size, fallback, out=None, chunk=1024):
+#: CPU render state kept between calls: the template of each shape byte string, the frames of the background, goal
+#: and walls alone ("plates") with their least recently used order, and the plates that one call left undrawn.
+_CPU_LOCK = threading.Lock()
+_CPU_LAYOUTS: dict = {}
+_CPU_PLATES: OrderedDict = OrderedDict()
+_CPU_SEEN: OrderedDict = OrderedDict()
+_CPU_PLATE_LIMIT = 64
+_CPU_SCRATCH = threading.local()
+#: At least the blend writes of one contact line (``raster_cpu._aaline`` writes at most 2 per column and 4 more).
+_LINE_WRITES = 1040
+
+
+@cache
+def _cpu_tables(size, radius):
+    """Canvas taps of the ``size`` resize, their positions, the circle spans and the resize taps and weights."""
+    s, a0, a1 = resize_coefficients(CANVAS, size)
+    taps = np.unique(np.concatenate([s, s + 1]))
+    position = np.full(CANVAS, -1, np.int64)
+    position[taps] = np.arange(len(taps))
+    edge = np.searchsorted(taps, np.arange(CANVAS + 1))
+    return taps, edge, position, circle_table(radius), position[s], position[s + 1], a0, a1
+
+
+def _cpu_scratch(threads, slots, taps, width):
+    """Record, canvas and blend-write buffers for ``threads`` Numba threads, kept on this Python thread."""
+    held = _CPU_SCRATCH.__dict__
+    canvas = held.get("canvas")
+    if canvas is None or len(canvas) < threads or canvas.shape[1] != taps:
+        canvas = held["canvas"] = np.empty((threads, taps, taps), np.int32)
+    writes = held.get("writes")
+    if writes is None or len(writes[0]) < threads or writes[0].shape[1] < width:
+        dtypes = (np.int64, np.int64, np.float32, np.int64)
+        writes = held["writes"] = tuple(np.empty((threads, width), dtype) for dtype in dtypes)
+    records = np.empty((threads, slots, RECORD), np.int32)
+    return (records, canvas[:threads], *(w[:threads] for w in writes))
+
+
+def _cpu_layouts(fields, count):
+    """``([(template key, layout, rows)], unsupported [N])``: the rows of each template the CPU renderer draws."""
+    raw = _shape_bytes(fields, count)
+    if (raw == raw[0]).all():
+        first, inverse = [0], None
+    else:
+        first, inverse = _unique_rows(raw)
+        first = first.tolist()
+    groups, unsupported = [], np.zeros(count, np.bool_)
+    for index, lane in enumerate(first):
+        rows = np.arange(count) if inverse is None else np.flatnonzero(inverse == index)
+        name = raw[lane].tobytes()
+        entry = _CPU_LAYOUTS.get(name)
+        if entry is None:
+            key = template_key(fields, lane)
+            try:
+                entry = (key, _layout(_template(key)))
+            except NotImplementedError:
+                entry = (key, None)
+            with _CPU_LOCK:
+                if len(_CPU_LAYOUTS) >= 256:
+                    _CPU_LAYOUTS.clear()
+                _CPU_LAYOUTS[name] = entry
+        if entry[1] is None:
+            unsupported[rows] = True
+        else:
+            groups.append((entry[0], entry[1], rows))
+    return groups, unsupported
+
+
+class _CpuDraw:
+    """``raster_cpu.frames`` for the rows of one template: ``(rows, dest, plate, plates, static, target)``."""
+
+    def __init__(self, layout, size, scene, segments, used, width):
+        self.layout, self.tables = layout, _cpu_tables(size, layout.radius)
+        self.inputs, self.width = (scene, segments, used), width
+        self.arrays = (
+            layout.shapes, layout.owners, layout.starts, layout.discs, layout.walls, layout.wall_slots.reshape(-1),
+        )  # fmt: skip
+
+    def __call__(self, rows, dest, plate, plates, static, target):
+        import numba
+
+        from . import raster_cpu as cpu
+
+        threads = min(numba.get_num_threads(), len(rows))
+        scratch = _cpu_scratch(threads, self.layout.slots, len(self.tables[0]), self.width)
+        cpu.frames(
+            rows, dest, *self.inputs, plate, plates, self.arrays, self.layout.groups, self.tables, scratch, static,
+            target,
+        )  # fmt: skip
+
+
+def _cpu_plates(key, rows, scene, size, draw):
+    """Return the plate index of each of ``rows`` (−1: draw the whole frame) and the plates ``[K, size, size, 3]``.
+
+    A plate is the frame of the background, goal and walls alone. The plates are kept between calls. A call draws
+    the plates it needs when they are at most a quarter of its rows, or when an earlier call needed them too.
+    """
+    pose, color, _, goal, background = scene
+    n, shown = len(rows), goal[rows]
+    keys = np.zeros((n, 6), np.int64)
+    keys[:, 0] = background[rows]
+    keys[:, 1] = np.where(shown, color[rows, 0], 0)
+    keys[:, 2] = shown
+    keys[:, 3:] = np.where(shown[:, None], np.ascontiguousarray(pose[rows, 0][:, [0, 1, 4]]).view(np.int64), 0)
+    if (keys == keys[0]).all():
+        first, inverse = np.zeros(1, np.int64), np.zeros(n, np.int64)
+    else:
+        first, inverse = _unique_rows(keys)
+    index, plates, missing = np.full(len(first), -1, np.int64), [], []
+    with _CPU_LOCK:
+        for u, row in enumerate(first.tolist()):
+            name = (key, size, keys[row].tobytes())
+            plate = _CPU_PLATES.get(name)
+            if plate is not None:
+                _CPU_PLATES.move_to_end(name)
+            elif len(first) * 4 <= n or name in _CPU_SEEN:
+                missing.append((u, name))
+            else:
+                _CPU_SEEN[name] = None
+                if len(_CPU_SEEN) > 4 * _CPU_PLATE_LIMIT:
+                    _CPU_SEEN.popitem(last=False)
+                continue
+            index[u] = len(plates)
+            plates.append(plate)
+    if missing:
+        drawn = np.empty((len(missing), size, size, 3), np.uint8)
+        reps = rows[first[[u for u, _ in missing]]]
+        none = np.full(len(goal), -1, np.int64)
+        draw(reps, np.arange(len(reps)), none, np.empty((0, size, size, 3), np.uint8), True, drawn)
+        with _CPU_LOCK:
+            for (u, name), frame in zip(missing, drawn):
+                plates[index[u]] = _CPU_PLATES[name] = frame.copy()
+                _CPU_SEEN.pop(name, None)
+            while len(_CPU_PLATES) > _CPU_PLATE_LIMIT:
+                _CPU_PLATES.popitem(last=False)
+    stack = np.stack(plates) if plates else np.empty((0, size, size, 3), np.uint8)
+    return index[inverse], stack
+
+
+def _markers(fields, frames, rows, size):
+    """Draw the source's action marker, ``cv2.drawMarker`` on the resized frame, on ``frames[rows]``."""
+    import cv2
+
+    for lane in rows.tolist():
+        row = {key: fields[key][lane] for key in ("current/latest/value", "current/latest/type")}
+        coord = (np.array(get_value(row, "current/latest")) / 512 * 96).astype(np.int32)
+        frames[lane] = cv2.drawMarker(
+            frames[lane], coord, color=(255, 0, 0), markerType=cv2.MARKER_CROSS,
+            markerSize=int(8 / 96 * size), thickness=int(1 / 96 * size),
+        )  # fmt: skip
+
+
+def render_cpu(fields, size, fallback, out=None):
     """Return ``[N, size, size, 3]`` uint8 CPU frames for host render ``fields`` with the Numba rasterizer.
 
-    ``fallback(rows)`` draws the rows this renderer does not cover (action markers) with pygame.
-    The frames are drawn into ``out`` when it is a matching contiguous CPU tensor.
+    One Numba call draws the frames of each template. ``fallback(rows)`` draws the rows whose shapes this renderer
+    does not cover with pygame. The frames are drawn into ``out`` when it is a matching contiguous CPU tensor.
     """
     import numba
 
-    from . import raster_cpu as cpu
-
-    shape = (len(fields["recipe/config"]), size, size, 3)
+    count = len(fields["recipe/config"])
+    shape = (count, size, size, 3)
     if (
         out is None
         or (out.shape, out.dtype, out.device.type) != (shape, torch.uint8, "cpu")
         or not out.is_contiguous()
     ):
         out = torch.empty(shape, dtype=torch.uint8)
+    if count == 0:
+        return out
+    frames = out.numpy()
+    groups, unsupported = _cpu_layouts(fields, count)
+    scene = _scene(fields, count)
+    segments = np.ascontiguousarray(fields["current/render_segments"], np.float64)
+    used = fields["current/render_segment_count"].astype(np.int64).reshape(-1)
+    width = _LINE_WRITES * max(1, int(min(used.max(), segments.shape[1])))
     threads = numba.get_num_threads()
-    numba.set_num_threads(max(1, min(threads, shape[0])))
+    numba.set_num_threads(max(1, min(threads, count)))
     try:
-        for start in range(0, shape[0], chunk):
-            rows = {key: value[start : start + chunk] for key, value in fields.items()}
-            records, _, unsupported = primitives(rows)
-            background = pack(rows["owned/variation/background/color/current/value"].astype(np.int64))
-            frames = out[start : start + chunk].numpy()
-            cpu.draw(records, background, contact_writes(rows), frames)
-            if unsupported.any():
-                lanes = np.flatnonzero(unsupported)
-                frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in rows.items()}))
+        for key, layout, rows in groups:
+            draw = _CpuDraw(layout, size, scene, segments, used, width)
+            index, plates = _cpu_plates(key, rows, scene, size, draw)
+            plate = np.full(count, -1, np.int64)
+            plate[rows] = index
+            draw(rows, rows, plate, plates, False, frames)
     finally:
         numba.set_num_threads(threads)
+    config = fields["recipe/config"]
+    if (config[:, 2] != 0).any():
+        present = np.asarray(fields["current/latest_present"]).reshape(count, -1)[:, 0] != 0
+        _markers(fields, frames, np.flatnonzero((config[:, 2] != 0) & present & ~unsupported), size)
+    if unsupported.any():
+        lanes = np.flatnonzero(unsupported)
+        frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in fields.items()}))
     return out
 
 

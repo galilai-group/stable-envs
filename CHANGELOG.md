@@ -181,6 +181,12 @@ All notable changes to this project are listed here. The format follows
   segmentation and depth. `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` selects it for `backend="auto"`, and
   `STABLE_ENVS_DMC_WARP_OPTIONS` sets default options. `env.render_semantic(rows)` returns the object id and the
   planar depth of each pixel. The default backends do not change.
+- PushT and PushTDiscrete on CPU (Numba render): one Numba call draws all the frames of a batch, and each
+  thread builds the records of its frames in its own buffers. The renderer keeps the frames of the background,
+  goal and walls alone between calls (at most 64), so a batch of 1 or 8 frames does not draw them again. A frame
+  draws again only the boxes of the agent, of each block part and of the contact lines, not one box around all
+  of them. Frames with action markers use the Numba frame and the OpenCV marker call of the source, not pygame.
+  The frames do not change.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
