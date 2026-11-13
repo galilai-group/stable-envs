@@ -11,6 +11,7 @@ from ...render import raycast3d as R3
 from ...render.cpu_raster import ray_module
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
+from . import warp_render
 from ._model import (
     _GRID_SLOTS,
     _SCENE_CACHE,
@@ -619,11 +620,13 @@ class DMControlSuite(_DMCModel):
         size = int(size or self.size)
         ss = int(self.ss if supersample is None else supersample)
         sty = self.resolve_style(style, variation, batch=B)
-        tuning.on_render("dmc-suite", size, B, self)
-
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
+        if self.device.type == "cuda" and warp_render.selected(self):
+            warp_render.render(self, s, sty, size, buf, ss)
+            return buf.view(*lead, size, size, 3) if lead else buf
+        tuning.on_render("dmc-suite", size, B, self)
 
         key = torch.cat([sty[p].reshape(B, -1) for p in self.PLATE_PATHS], 1).cpu().numpy()
         uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)

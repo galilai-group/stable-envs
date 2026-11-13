@@ -6,10 +6,12 @@ from ..._core.mujoco_gl import mujoco_renderer
 from ...env import Env
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict, Discrete
+from . import warp_render
 from ._model import (
     _ENV_CACHE,
     VISIBLE_GROUPS,
     _episode_slots,
+    _row_width,
     _slot_element,
     _slot_name,
     _suite,
@@ -54,8 +56,14 @@ class _DMCModel(Env):
         device: str = "cuda",
         backend: str = "auto",
         seed: int = 0,
+        render_options: dict | None = None,
     ):
-        """Derive compact-row names and widths from the compiled model."""
+        """Derive compact-row names and widths from the compiled model.
+
+        ``backend="mjwarp"`` draws with MuJoCo Warp's ray tracer on CUDA. ``render_options`` sets its
+        speed and fidelity options (see ``warp_render.Options``).
+        """
+        self.render_options = warp_render.Options.parse(render_options)
         m = self._model()
         self.nq = int(m.nq)
         self.state_dim = self.nq + len(self._slots())
@@ -72,14 +80,27 @@ class _DMCModel(Env):
             seed=seed,
         )
         assert len(self.state_names) == self.state_dim
+        if self.backend == "mjwarp" and self.device.type != "cuda":
+            raise ValueError(f"{type(self).__name__}: backend='mjwarp' draws on CUDA; got device={self.device}")
+
+    def render_semantic(self, states):
+        """Per-pixel ``(objid, objtype)`` pairs of the cell's model and planar depth of compact rows.
+
+        MuJoCo Warp's ray tracer draws them on CUDA at ``self.size``. Return ``(seg, depth)``: seg is
+        (B, H, W, 2) int64 with -1 for the sky, depth is (B, H, W) float32.
+        """
+        if self.device.type != "cuda":
+            raise ValueError(f"{type(self).__name__}.render_semantic draws with MuJoCo Warp on CUDA")
+        return warp_render.semantic(self, states)
 
     def _ray_backend(self) -> str:
         """The CPU ray backend: ``"numba"`` or ``"torch"`` when the env names one, else ``"auto"``."""
         return self.backend if self.backend in ("numba", "torch") else "auto"
 
     def _close(self) -> None:
-        """Drop instance CPU scenes; shared GL and MJWarp contexts remain cached."""
+        """Drop instance CPU scenes and live MJWarp contexts; shared GL and MJWarp contexts remain cached."""
         self.__dict__.pop("_cpu_scenes", None)
+        warp_render.release(self)
 
     @classmethod
     def _load_env(cls, seed: int):
@@ -196,6 +217,31 @@ class _DMCModel(Env):
             seen[name] = (kind, ids)
             out.append((kind, name, ids))
         return tuple(out)
+
+    @classmethod
+    def _static_slot_rows(cls) -> dict:
+        """Map world-body position slots to derived data rows requiring direct uploads.
+
+        MJWarp kinematics skips world-body geoms/sites. Updating only their model
+        positions leaves stale world poses; the identity parent frame permits direct copies.
+        """
+        hit = cls.__dict__.get("_slot_rows_cache")
+        if hit is not None:
+            return hit
+        m, pr = cls._model(), cls._pristine()
+        rows: dict = {}
+        for j, (arr, k) in enumerate(cls._slots()):
+            kind, eid = _slot_element(m, arr, k)
+            if kind not in ("geom", "site") or not arr.endswith("_pos"):
+                continue
+            bodyid = m.geom_bodyid if kind == "geom" else m.site_bodyid
+            if int(bodyid[eid]) != 0:
+                continue  # kinematics recomputes poses on non-world bodies
+            rows.setdefault((kind, eid), [np.asarray(pr[arr], np.float64)[eid].copy(), []])[1].append(
+                (j, int(k % _row_width(m, arr)))
+            )
+        cls._slot_rows_cache = rows
+        return rows
 
     @classmethod
     def _shape_element(cls, name: str) -> tuple[str, int]:

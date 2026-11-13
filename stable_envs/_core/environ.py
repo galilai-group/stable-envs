@@ -104,6 +104,44 @@ def parse_verbosity(text: str) -> str:
     return t
 
 
+def parse_dmc_render(text: str) -> str:
+    """Parse ``auto`` (or empty) or ``mjwarp``."""
+    t = text.strip() or "auto"
+    if t not in ("auto", "mjwarp"):
+        raise ValueError("expected auto or mjwarp")
+    return t
+
+
+def parse_json_object(text: str) -> dict | None:
+    """Parse a JSON object; an empty value is None."""
+    import json
+
+    t = text.strip()
+    if not t:
+        return None
+    try:
+        value = json.loads(t)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"expected a JSON object: {e}") from None
+    if not isinstance(value, dict):
+        raise ValueError("expected a JSON object")
+    return value
+
+
+register(
+    "STABLE_ENVS_DMC_CUDA_RENDER",
+    "choice",
+    "auto",
+    "mjwarp makes backend='auto' DM Control environments on CUDA draw with MuJoCo Warp's ray tracer.",
+    parse_dmc_render,
+)
+register(
+    "STABLE_ENVS_DMC_WARP_OPTIONS",
+    "json",
+    None,
+    "A JSON object of default MuJoCo Warp render options for DM Control; render_options= overrides it.",
+    parse_json_object,
+)
 register(
     "STABLE_ENVS_VERBOSE",
     "level",
