@@ -85,4 +85,4 @@ Open an [issue](https://github.com/galilai-group/stable-envs/issues) on GitHub.
 
 ## License
 
-MIT, except the three PushT rasterizer files that port pygame's drawing routines, which are LGPL-2.1-or-later. See [LICENSE](https://github.com/galilai-group/stable-envs/blob/main/LICENSE) and [THIRD_PARTY_NOTICES.md](https://github.com/galilai-group/stable-envs/blob/main/THIRD_PARTY_NOTICES.md).
+MIT, with some ported files under their upstream licenses. See [LICENSE](https://github.com/galilai-group/stable-envs/blob/main/LICENSE) and [THIRD_PARTY_NOTICES.md](https://github.com/galilai-group/stable-envs/blob/main/THIRD_PARTY_NOTICES.md).
