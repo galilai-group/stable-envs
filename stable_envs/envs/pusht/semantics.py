@@ -393,8 +393,16 @@ class PushT(Env):
             raise error
         return fields
 
-    def _render_state_input(self, state, *, size=None, out=None):
+    def _render_state_input(self, state, *, size=None, out=None, **options):
         self._check_open("render")
+        if "variation" in options:
+            raise TypeError(
+                "PushT keeps its variation in the State, so render(state) draws each row's own appearance and "
+                "takes no variation=. Draw other appearances from states that reset(options={'variation': ...}) "
+                "returns. PushT render accepts size= and out="
+            )
+        if options:
+            raise TypeError(f"PushT render accepts size= and out=, got {sorted(options)}")
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
             raise ValueError("PushT render size must be a positive integer")

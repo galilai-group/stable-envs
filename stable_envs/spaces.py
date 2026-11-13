@@ -33,6 +33,9 @@ class _Valued:
         """Set the current value back to the default."""
         self._value = self._init_value
 
+    def _in_space(self, value) -> bool:
+        return super().contains(value)  # the Gymnasium space, without constrain_fn
+
     def set_init_value(self, value, reset_value: bool = True) -> None:
         """Replace the default value, and the current value too if ``reset_value``.
 
@@ -43,7 +46,7 @@ class _Valued:
         Raises:
             ValueError: If ``value`` is not in the space. ``constrain_fn`` is not checked.
         """
-        if not super().contains(value):
+        if not self._in_space(value):
             raise ValueError(f"{type(self).__name__}: {value!r} is not in the space")
         self._init_value = value
         if reset_value:
@@ -58,13 +61,13 @@ class _Valued:
         Raises:
             ValueError: If ``value`` is not in the space. ``constrain_fn`` is not checked.
         """
-        if not super().contains(value):
+        if not self._in_space(value):
             raise ValueError(f"{type(self).__name__}: {value!r} is not in the space")
         self._value = value
 
     def check(self) -> bool:
         """Return whether the current value lies in the space and satisfies ``constrain_fn``."""
-        return super().contains(self._value) and self.constrain_fn(self._value)
+        return self._in_space(self._value) and self.constrain_fn(self._value)
 
 
 class Discrete(_Valued, gspaces.Discrete):
@@ -136,6 +139,15 @@ class Box(_Valued, gspaces.Box):
     def contains(self, x) -> bool:
         """Return whether ``x``, cast to ``dtype``, lies in the bounds and satisfies ``constrain_fn``."""
         return gspaces.Box.contains(self, np.asarray(x, dtype=self.dtype)) and self.constrain_fn(x)
+
+    def _in_space(self, value) -> bool:
+        # Gymnasium casts a non-array the same way, with a warning.
+        if not isinstance(value, np.ndarray):
+            try:
+                value = np.asarray(value, dtype=self.dtype)
+            except (ValueError, TypeError):
+                return False
+        return gspaces.Box.contains(self, value)
 
     def set_value(self, value) -> None:
         """Replace the current value, cast to ``dtype`` and ``shape`` unless ``exact``."""
