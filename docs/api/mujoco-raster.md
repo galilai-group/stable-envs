@@ -2,8 +2,8 @@
 
 `stable_envs.render.mujoco_raster` draws MuJoCo scenes with a rasterizer that follows MuJoCo's fixed-function
 OpenGL renderer (`render_gl3.c`). It has a CPU backend (Numba) and a CUDA backend (nvdiffrast and Triton). Both
-backends read one scene model and one set of per-frame inputs. Fetch and the OGBench Cube and Scene tasks use it
-with `backend="raster"`.
+backends read one scene model and one set of per-frame inputs. It is the default renderer of Fetch and of the
+OGBench Cube and Scene tasks (`backend="raster"`). `backend="opengl"` stays the exact reference.
 
 ## Scene model
 

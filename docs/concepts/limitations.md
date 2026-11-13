@@ -18,14 +18,14 @@ snv.import_errors()     # families this interpreter could not import
 | PushT, PushTDiscrete | Numba physics and Numba rendering | JAX physics and Triton rendering |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | MuJoCo rasterizer (Numba) | MuJoCo rasterizer (nvdiffrast and Triton), MJWarp or explicit NVIDIA OpenGL |
-| OGBCube, OGBScene | software OpenGL | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
+| OGBCube, OGBScene | MuJoCo rasterizer (Numba) | MuJoCo rasterizer (nvdiffrast and Triton), NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
 
 `device=` is a constructor argument. A class that cannot run on a device refuses at construction.
 
-For Cube and Scene, physics runs on CPU whatever the render backend. CPU rendering needs Mesa software
-OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
+For Cube and Scene, physics runs on CPU whatever the render backend. The OpenGL backends on CPU need Mesa
+software OpenGL, configured before the first MuJoCo import. See [System setup](../system-setup.md).
 
 ## Agreement with the source
 

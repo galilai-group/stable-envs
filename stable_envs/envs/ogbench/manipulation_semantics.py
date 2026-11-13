@@ -257,7 +257,7 @@ class ManipulationSemantics:
         validated = checked or state is None or isinstance(state, TensorDict) and "physics" in state.keys()
         if validated and not checked:
             sampling = self.ss if supersample is None else supersample
-            host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling, self.CELL)
+            host = manipulation_renderer.draws_on_host(backend or self.backend, self.device, sampling)
             if state is None and host and hasattr(self._simulator, "render_columns"):
                 chosen = manipulation_renderer.host_backend(backend or self.backend, self.device)
                 return self._draw_live(size, sampling, chunk_size, out, chosen)
@@ -292,10 +292,6 @@ class ManipulationSemantics:
             raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
         columns = pixels.state_columns(self.CELL, self._simulator.render_columns(), size, supersample)
         tuning.on_render("ogb-manipulation", size, self.B, self)
-        if chosen == "numba":
-            from . import manipulation_numba
-
-            return self._into(manipulation_numba.frames(self.CELL, columns, self.device), out)
         if chosen == "raster":
             from . import manipulation_raster
 
@@ -395,7 +391,7 @@ class ManipulationSemantics:
         # OpenGL reads host inputs, so its RenderState is built on the host.
         device = (
             torch.device("cpu")
-            if draws_on_host(kwargs.get("backend") or self.backend, self.device, supersample, self.CELL)
+            if draws_on_host(kwargs.get("backend") or self.backend, self.device, supersample)
             else self.device
         )
         if style is None and not variation:
@@ -448,9 +444,9 @@ _OPENGL_NOTE = (
     "At supersample 1, visual_fidelity is an implementation-consistency measurement against another stable-envs "
     "MuJoCo OpenGL instance using the same compiled model and appearance; it is not an upstream-default-appearance "
     "comparison. With supersample 2 or more, MJWarp draws CUDA frames, and its lighting and transparency can "
-    "differ from the same-style stable-envs OpenGL reference. On CPU the default backend is opengl_fast: MuJoCo "
-    "OpenGL with simplified arm meshes and a 2048 shadow map. Its frames can differ from backend='opengl' "
-    "(mean frame MSE about 1.2 for Cube and 3.1 for Scene); visual_fidelity holds the backend='opengl' values."
+    "differ from the same-style stable-envs OpenGL reference. At supersample 1 the default backend is raster: the "
+    "shared MuJoCo rasterizer, which follows MuJoCo OpenGL with arm meshes on a 2 mm grid. Its frames can differ "
+    "from backend='opengl' at edges and by rounding; visual_fidelity holds the backend='opengl' values."
 )
 
 
@@ -472,10 +468,10 @@ def _opengl_fidelity(renderer):
 
 
 class OGBCube(ManipulationSemantics, _CubeRenderer):
-    """Cube simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
+    """Cube simulation with restorable State and rendering on CPU and GPU.
 
-    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="numba"`` draws with a
-    Numba rasterizer that follows MuJoCo OpenGL; ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    The default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo OpenGL;
+    ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
     its lighting and transparency can differ from MuJoCo.
     """
 
@@ -485,10 +481,10 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
 
 
 class OGBScene(ManipulationSemantics, _SceneRenderer):
-    """Scene simulation with restorable State and MuJoCo OpenGL rendering on CPU and GPU.
+    """Scene simulation with restorable State and rendering on CPU and GPU.
 
-    On CPU the default backend, ``opengl_fast``, draws simplified arm meshes; ``backend="numba"`` draws with a
-    Numba rasterizer that follows MuJoCo OpenGL; ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    The default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo OpenGL;
+    ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
     its lighting, transparency, and button textures can differ from MuJoCo.
     """
 

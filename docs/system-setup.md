@@ -20,7 +20,7 @@ that fixes them.
 | Craftax | nothing beyond the extra | CUDA builds of torch and JAX (`craftax-gpu`) |
 | DM Control, OGBench mazes | MuJoCo OpenGL | MuJoCo OpenGL and CUDA torch. TrackCom domains also need MuJoCo Warp (`dmcontrol-gpu`) |
 | Fetch | nothing beyond the extra (MuJoCo OpenGL for `backend="opengl"`) | CUDA torch, Triton and [nvdiffrast](install.md#nvdiffrast); without them MuJoCo Warp (`robotics` + `mjwarp`) |
-| OGBench Cube / Scene | MuJoCo OpenGL | NVIDIA OpenGL and CUDA torch. `supersample` 2 or more also needs MuJoCo Warp (`ogbench-manipulation-gpu`) |
+| OGBench Cube / Scene | MuJoCo OpenGL | CUDA torch, Triton and [nvdiffrast](install.md#nvdiffrast), or NVIDIA OpenGL. `supersample` 2 or more also needs MuJoCo Warp (`ogbench-manipulation-gpu`) |
 | Rocket | nothing beyond the extra | CUDA torch, Triton and [nvdiffrast](install.md#nvdiffrast) |
 
 The MuJoCo families draw each scene's static background once per appearance with MuJoCo's own
