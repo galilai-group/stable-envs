@@ -2,7 +2,7 @@
 # stable-envs v0.1.0 against the source libraries on this machine, in one command.
 # usage: bash benchmarks/paper/compare.sh OUT [--missing-only] [options] [ENV ...]
 #        bash benchmarks/paper/compare.sh --summary OUT
-#   Default: the envs TwoRoom PushT DMCHopperHop OGBCube PyFlytRocketLanding (or the ENV arguments); steps,
+#   Default: the envs TwoRoom PushT DMCReacher OGBCube (or the ENV arguments); steps,
 #   frames+steps and offline, on CPU and GPU, ours and the source, at lane counts and batches 1:16:256:1024 for both
 #   devices, with no source caps. A cell that runs out of memory or time (STEP_LIMIT per cell process, default 20m) is
 #   kept as a result with that status.
@@ -47,7 +47,7 @@ summary() {
 
 SWEEP_CPU=${SWEEP:-1:16:256:1024}; SWEEP_CUDA=$SWEEP_CPU
 [ $SMOKE = 1 ] && [ -z "$SWEEP" ] && { SWEEP_CPU=1:16; SWEEP_CUDA=1:16; }
-[ ${#ENVS[@]} = 0 ] && ENVS=(TwoRoom PushT DMCHopperHop OGBCube PyFlytRocketLanding)
+[ ${#ENVS[@]} = 0 ] && ENVS=(TwoRoom PushT DMCReacher OGBCube)
 # CPU frames at every lane count, with no cap.
 export FRAMES_CPU=$SWEEP_CPU
 W=${COMPARE_WORK:-$HOME/.cache/snv-compare}

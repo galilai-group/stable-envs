@@ -92,7 +92,7 @@ bash benchmarks/paper/compare.sh results-l40s --missing-only    # L40S node: the
 ```
 
 The cells are steps, frames+steps and offline, on CPU and GPU, for stable-envs and the source, at 1, 16, 256 and 1024
-envs, for TwoRoom, PushT, DMCHopperHop, OGBCube and PyFlytRocketLanding. The script installs what it needs, uses all
+envs, for TwoRoom, PushT, DMCReacher and OGBCube. The script installs what it needs, uses all
 GPUs, and times the stable-envs cells first, then the source cells. A cell stops after 20 minutes (status `timeout`).
 Run the command again to continue. It writes `HEADLINE.md`; `--summary OUT` shows it, `--dry-run` shows the cells.
 
