@@ -867,19 +867,20 @@ def _texel(tex, u, v, channel):
 def _shade(b0, b1, b2, nrm, uv, rgba, textured, tex, light, flat_k, flat, out, idx):
     """Shader::fragment for float32 barycentrics; writes RGB at ``out[idx]``.
 
-    With ``flat`` set the triangle's three normals are equal and ``flat_k`` is its vertex shade. A pixel shade is then
-    within 3e-4 of it per channel, so the vertex shade gives the truncation unless it lies within ``_FLAT_MARGIN`` of an
-    integer; such channels take the per-pixel path.
+    With ``flat`` set the triangle's three normals are equal and ``flat_k`` is its vertex shade. With barycentrics in
+    [0, 1] a pixel shade is then within 3e-4 of it per channel, so the vertex shade gives the truncation unless it lies
+    within ``_FLAT_MARGIN`` of an integer; such channels and other barycentrics take the per-pixel path.
     """
     u, v = _ZERO, _ZERO
     if textured:
         u = ((_ZERO + uv[2, 0] * b2) + uv[1, 0] * b1) + uv[0, 0] * b0
         v = ((_ZERO + uv[2, 1] * b2) + uv[1, 1] * b1) + uv[0, 1] * b0
+    near_vertex = flat and b0 >= _ZERO and b1 >= _ZERO and b2 >= _ZERO and b0 <= _ONE and b1 <= _ONE and b2 <= _ONE
     k = F32(np.nan)
     for c in range(3):
         base = _texel(tex, u, v, c) if textured else np.uint8(255)
         c8 = F32(np.uint8(F32(base) * rgba[c]))
-        if flat:
+        if near_vertex:
             if c8 == _ZERO:
                 out[idx + c] = 0
                 continue
@@ -999,7 +1000,7 @@ def _triangle(
                 total = (d0 + d1) + d2
                 _shade(
                     F32(d0 / total), F32(d1 / total), F32(d2 / total),
-                    nrm, uv, rgba, textured, tex, light, flat_k, False, img, index * 3,
+                    nrm, uv, rgba, textured, tex, light, flat_k, flat, img, index * 3,
                 )  # fmt: skip
             else:
                 if depth < far64 or depth > near64:
@@ -1095,17 +1096,14 @@ def _frames(verts, norms, uvs, faces, vstart, fstart, textured, tex, models, vie
                     uv[k, 0], uv[k, 1] = uvs[v0 + i, 0], uvs[v0 + i, 1]
                 if org[0, 3] < _ZERO and org[1, 3] < _ZERO and org[2, 3] < _ZERO:
                     continue
+                flat = (
+                    fast
+                    and nrm[0, 0] == nrm[1, 0] == nrm[2, 0]
+                    and nrm[0, 1] == nrm[1, 1] == nrm[2, 1]
+                    and nrm[0, 2] == nrm[1, 2] == nrm[2, 2]
+                )
+                flat_k = _light_term(nrm[0, 0], nrm[0, 1], nrm[0, 2], light) if flat else _ZERO
                 if org[0, 3] >= _ZERO and org[1, 3] >= _ZERO and org[2, 3] >= _ZERO:
-                    flat = (
-                        fast
-                        and org[0, 3] > _ZERO
-                        and org[1, 3] > _ZERO
-                        and org[2, 3] > _ZERO
-                        and nrm[0, 0] == nrm[1, 0] == nrm[2, 0]
-                        and nrm[0, 1] == nrm[1, 1] == nrm[2, 1]
-                        and nrm[0, 2] == nrm[1, 2] == nrm[2, 2]
-                    )
-                    flat_k = _light_term(nrm[0, 0], nrm[0, 1], nrm[0, 2], light) if flat else _ZERO
                     _triangle(org, org, False, nrm, uv, rgba, textured[o], tex, light, flat_k, flat, zbuf, img, R,
                               near, far, pts, opts)  # fmt: skip
                     continue
@@ -1115,7 +1113,7 @@ def _frames(verts, norms, uvs, faces, vstart, fstart, textured, tex, models, vie
                 for t in range(1, count - 1):
                     for c in range(4):
                         fan[0, c], fan[1, c], fan[2, c] = poly[0, c], poly[t, c], poly[t + 1, c]
-                    _triangle(fan, org, True, nrm, uv, rgba, textured[o], tex, light, _ZERO, False, zbuf, img, R,
+                    _triangle(fan, org, True, nrm, uv, rgba, textured[o], tex, light, flat_k, flat, zbuf, img, R,
                               near, far, pts, opts)  # fmt: skip
         # TinyRenderer's row 0 is the bottom row; supersampled pixels average to the nearest integer, ties to even.
         n = ss * ss
