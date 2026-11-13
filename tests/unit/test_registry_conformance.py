@@ -12,6 +12,7 @@ import torch
 
 import stable_envs as se
 from tests.helpers.exemptions import param
+from tests.helpers.reference import sources
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.unit
@@ -137,3 +138,16 @@ def test_a_class_draws_any_size_unless_it_declares_its_native_size(name):
     with pytest.raises(ValueError):
         with se.make(name, num_envs=1, size=cls.native_size + 8, device="cpu") as env:
             env.render(env.reset(seed=SEED))
+
+
+@pytest.mark.parametrize("name", envs("reference"))
+def test_the_source_draws_the_reference_inputs_of_a_state(name):
+    cls = se.registry.REGISTRY[name]
+    if not sources.has_source_renderer(cls):
+        pytest.skip("no source renderer")
+    with _make(name) as env:
+        state = env.reset(seed=SEED)
+        inputs = sources.reference_inputs(env, state)
+        assert len(inputs) == env.num_envs
+        frames = sources.reference_render(cls, sources.reference_env(cls, env.size), inputs)
+        assert frames.shape == tuple(env.render(state).shape)

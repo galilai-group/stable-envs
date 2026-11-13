@@ -131,6 +131,10 @@ All notable changes to this project are listed here. The format follows
 - `Env.native_size`: the only `size` that a class draws, which is the size that the source library draws. It is
   also the class's `default_size`. The classic control classes, the navigation classes and the Craftax classes set
   it. It is None for the classes that draw any size. `snv.info()` and the environment pages show it.
+- `tests/helpers/reference/sources.py` holds the source comparison data that is not part of `Env`: the GPU
+  renderer of each source (`"mujoco-egl"` for DM Control, Fetch and OGBench, `"pybullet-egl"` for
+  PyFlytRocketLanding) and the inputs that the source renderer draws for a full State. A conformance check on every
+  class with a source renderer draws these inputs with the source and compares the frame shape with `env.render(state)`.
 
 ### Changed
 
