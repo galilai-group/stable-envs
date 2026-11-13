@@ -30,8 +30,6 @@ _BUTTONS: dict = {}
 _KINEMATICS: dict = {}
 _PINNED_ROWS = 8
 _CLUSTERED: dict = {}
-# Fast drawing per family: the shadow map size and the arm mesh clustering cell in metres.
-FAST = {"Cube": (2048, 0.003), "Scene": (2048, 0.003)}
 
 
 @lru_cache
@@ -50,11 +48,11 @@ def _key(family, row, resolution):
     return h.hexdigest()
 
 
-def _renderer(family, row, resolution, fast=False):
+def _renderer(family, row, resolution):
     import mujoco  # noqa: F401 — selects PYOPENGL_PLATFORM before PyOpenGL loads
     from OpenGL import GL
 
-    key = _key(family, row, resolution) + ("/fast" if fast else "")
+    key = _key(family, row, resolution)
     if key not in _CACHE:
         env = (CompatibleCube if family == "Cube" else CompatibleScene)(seed=0)
         for k in MODEL_VALUES:
@@ -63,10 +61,6 @@ def _renderer(family, row, resolution, fast=False):
         env.compile_model_and_data()
         env.model.vis.global_.offwidth = max(int(env.model.vis.global_.offwidth), resolution)
         env.model.vis.global_.offheight = max(int(env.model.vis.global_.offheight), resolution)
-        if fast:
-            shadow, cell = FAST[family]
-            env.model.vis.quality.shadowsize = shadow
-            cluster_meshes(env.model, cell)
         renderer = mujoco_renderer(env.model, height=resolution, width=resolution)
         renderer._gl_context.make_current()
         vendor = GL.glGetString(GL.GL_VENDOR).decode()
@@ -323,16 +317,16 @@ def _apply_render_button_colors(env, lock_colors):
         env.model.material(("drawer_handle", "window_handle")[index]).rgba[:] = [*color, 1.0]
 
 
-def render(family, state, device, chunk_size=None, validated=False, fast=False):
+def render(family, state, device, chunk_size=None, validated=False):
     """Render named states through OpenGL using candidate assets, in worker processes for large batches.
 
     CPU output requires software OpenGL. CUDA output uses NVIDIA OpenGL plus
-    host readback and upload. ``fast`` draws simplified arm meshes with a smaller shadow map.
+    host readback and upload.
     """
     # OpenGL consumes host model inputs anyway. Validate that same detached copy
     # rather than synchronizing CUDA once for every scalar validation predicate.
     host, device, size = prepare(family, state, device, chunk_size, validated)
-    return frames(family, columns(host), device, fast)
+    return frames(family, columns(host), device)
 
 
 def columns(host):
@@ -340,14 +334,14 @@ def columns(host):
     return {key: value.numpy() for key, value in host.items(True, True)}
 
 
-def frames(family, columns, device, fast=False):
+def frames(family, columns, device):
     """Frames of host RenderState columns on ``device``, across worker processes for large batches."""
     from . import manipulation_opengl_pool
 
     check_versions("OpenGL")
     device = torch.device(device)
     b, size = len(columns[_SIZE]), int(columns[_SIZE][0, 0])
-    shared = manipulation_opengl_pool.draw(family, columns, device.type, size, fast)
+    shared = manipulation_opengl_pool.draw(family, columns, device.type, size)
     if shared is not None:
         return torch.from_numpy(shared.copy()) if device.type == "cpu" else torch.from_numpy(shared).to(device)
     if device.type == "cuda" and b <= _PINNED_ROWS:
@@ -356,12 +350,12 @@ def frames(family, columns, device, fast=False):
             staging = _PINNED.get((b, size))
             if staging is None:
                 staging = _PINNED[b, size] = torch.empty((b, size, size, 3), dtype=torch.uint8, pin_memory=True)
-            draw(family, columns, device.type, staging.numpy(), fast)
+            draw(family, columns, device.type, staging.numpy())
             result = staging.to(device, non_blocking=True)
             torch.cuda.current_stream(device).synchronize()
             return result
     images = np.empty((b, size, size, 3), dtype=np.uint8)
-    draw(family, columns, device.type, images, fast)
+    draw(family, columns, device.type, images)
     return torch.from_numpy(images) if device.type == "cpu" else torch.from_numpy(images).to(device)
 
 
@@ -391,7 +385,7 @@ class _Row:
         return torch.from_numpy(np.array(self.columns[key][self.index]))
 
 
-def draw(family, host, device_type, images, fast=False):
+def draw(family, host, device_type, images):
     """Draw validated host states (NumPy columns or a RenderState) into ``images`` with this process's OpenGL."""
     import mujoco
 
@@ -406,11 +400,9 @@ def draw(family, host, device_type, images, fast=False):
     high_resolution = np.empty((size * ss, size * ss, 3), dtype=np.uint8) if ss != 1 else None
     with _LOCK:
         for packed, indices in _groups(host).items():
-            entry = _ENTRIES.get((family, size * ss, packed, fast))
+            entry = _ENTRIES.get((family, size * ss, packed))
             if entry is None:
-                entry = _ENTRIES[family, size * ss, packed, fast] = _renderer(
-                    family, _Row(host, indices[0]), size * ss, fast
-                )
+                entry = _ENTRIES[family, size * ss, packed] = _renderer(family, _Row(host, indices[0]), size * ss)
             env, renderer, vendor, gl_device = entry
             software = any(s in gl_device.lower() for s in ("llvmpipe", "softpipe", "swrast", "software rasterizer"))
             if device_type == "cpu" and not software:

@@ -243,8 +243,8 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
   2 minutes, and Numba keeps the compiled code in a cache for later processes. On CUDA it needs `nvdiffrast` and
   `triton`. A draw of the same state gives the same frame each time, in any batch. `render_semantic(rows)`
   gives the segmentation and the planar depth of compact render rows.
-- Without Numba, the CPU default is `opengl_fast`: software OpenGL with simplified arm meshes and a 2048 shadow
-  map. Without nvdiffrast or Triton, the CUDA default is NVIDIA OpenGL.
+- Without Numba, the CPU default is software OpenGL (`backend="opengl"`). Without nvdiffrast or Triton, the
+  CUDA default is NVIDIA OpenGL.
 - `backend="opengl"` draws the frames of the source.
 - With `supersample` 2 or more, MJWarp draws the CUDA frames. MJWarp frames can differ from MuJoCo in
   lighting and transparency.

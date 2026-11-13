@@ -29,10 +29,9 @@ can affect physics, reset, task or appearance.
 
 - On CPU, and on CUDA at 1× sampling, `backend="auto"` selects `backend="raster"`: the shared MuJoCo
   rasterizer ([MuJoCo rasterizer](mujoco-raster.md)). Without Numba (and on CUDA without nvdiffrast or
-  Triton), it selects `backend="opengl_fast"` on CPU and NVIDIA OpenGL on CUDA.
-- `backend="opengl"` draws the source's frames. `backend="opengl_fast"` is software OpenGL with simplified arm
-  meshes and a 2048 shadow map. For the OpenGL backends, configure Mesa software OpenGL before importing MuJoCo.
-  CPU OpenGL rendering rejects a hardware GL context.
+  Triton), it selects `backend="opengl"`: software OpenGL on CPU and NVIDIA OpenGL on CUDA.
+- `backend="opengl"` draws the source's frames. For it, configure Mesa software OpenGL before importing
+  MuJoCo. CPU OpenGL rendering rejects a hardware GL context.
 - The fidelity record compares two stable-envs OpenGL instances with the same compiled appearance, not
   upstream-default OGBench frames. With `supersample=2` or more on CUDA, `backend="auto"` selects the two-pass
   MJWarp renderer, as `backend="mjwarp_fidelity"` does; its reference is that same-style stable-envs OpenGL
