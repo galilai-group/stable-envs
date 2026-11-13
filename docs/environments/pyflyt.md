@@ -69,7 +69,9 @@ The `backend` argument selects the CPU renderer:
 The Numba port uses the meshes that TinyRenderer makes from the URDFs: the Bullet convex hull of each cylinder,
 the textured cube of each box and the `plane100.obj` ground. It also uses the arithmetic of TinyRenderer: float32
 vertex transforms, near-plane clipping, double-precision barycentric coordinates at integer pixel positions, a
-float32 depth buffer, the default light without shadows, and truncation to `uint8`.
+float32 depth buffer, the default light without shadows, and truncation to `uint8`. On CUDA, the renderer uses the
+same meshes, the same float32 matrices, the same rule for small triangles and the same colour law. Its coverage and
+its interpolation of normals are float32.
 
 With the PyBullet backend on CPU with worker processes, the workers draw the step frames of their running lanes with
 TinyRenderer. A step then does not export a State only to draw it. On Linux, `render` draws a batch of

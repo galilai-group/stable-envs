@@ -154,7 +154,9 @@ All notable changes to this project are listed here. The format follows
   (`stable_envs/envs/rocket/tiny_raster.py`) draws all the frames of a batch in one call, one frame for each thread.
   It uses the meshes that TinyRenderer makes from the URDFs and the arithmetic of TinyRenderer, so it draws the
   frames of `backend="pybullet"` (also `"tiny"`), which stays the default. An unknown `backend` raises `ValueError`
-  at construction.
+  at construction. On CUDA, the renderer uses the same meshes, the float32 model, view and projection matrices of
+  TinyRenderer, its rule for small triangles and its colour law, and it computes the view matrices without a
+  PyBullet call for each frame.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the
