@@ -1,0 +1,55 @@
+{
+ "class_name": "CraftaxClassicSymbolic",
+ "module": "stable_envs.envs.craftax.envs",
+ "family": "craftax",
+ "domain": "craftax",
+ "reference_id": "Craftax-Classic-Symbolic-v1",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 63,
+ "native_size": 63,
+ "frame_shape": [63, 63, 3],
+ "physics": null,
+ "renderers": {
+  "cpu": "Craftax pixel renderer (JAX)",
+  "cuda": "Craftax pixel renderer (JAX)"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "int64",
+  "low": 0,
+  "high": 16
+ },
+ "state": [
+  {
+   "key": "engine",
+   "leaves": 49,
+   "numel": 8343,
+   "dtypes": ["bool", "float32", "int32"]
+  },
+  {
+   "key": "key",
+   "shape": [2],
+   "dtype": "int32"
+  }
+ ],
+ "variation": [],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "RuntimeError: device='cuda' needs a CUDA build of JAX: pip install 'stable-envs[craftax-gpu]'"
+ },
+ "media": {
+  "device": "cpu",
+  "render_size": 63,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 188,
+   "height": 188,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 24044
+  },
+  "variation": null,
+  "variation_note": "no Variation leaves"
+ }
+}

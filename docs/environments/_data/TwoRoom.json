@@ -1,0 +1,160 @@
+{
+ "class_name": "TwoRoom",
+ "module": "stable_envs.envs.navigation.envs",
+ "family": "navigation",
+ "domain": "navigation",
+ "reference_id": null,
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "native_size": 224,
+ "frame_shape": [224, 224, 3],
+ "physics": "native Numba on CPU",
+ "renderers": {
+  "cpu": "Numba dot compositor",
+  "cuda": "Triton dot compositor"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "agent",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  },
+  {
+   "key": "target",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 0, 0]
+  },
+  {
+   "path": "agent.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 7,
+   "high": 14,
+   "default": 7
+  },
+  {
+   "path": "agent.speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.1,
+   "high": 50,
+   "default": 5
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "door.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "door.number",
+   "type": "Discrete",
+   "reset": false,
+   "n": 3,
+   "start": 1,
+   "default": 1
+  },
+  {
+   "path": "door.position",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 223,
+   "default": 49
+  },
+  {
+   "path": "door.size",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 1,
+   "high": 21,
+   "default": 14
+  },
+  {
+   "path": "wall.axis",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  },
+  {
+   "path": "wall.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "wall.thickness",
+   "type": "Discrete",
+   "reset": false,
+   "n": 35,
+   "start": 7,
+   "default": 10
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 5509
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 7388
+  },
+  "variation_leaves": "all"
+ }
+}

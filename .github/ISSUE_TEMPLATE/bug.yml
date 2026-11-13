@@ -1,0 +1,43 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: The environment class or name, for example `CartPole`.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead. Paste the full error.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: The shortest script that shows the bug.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of stable-envs doctor --json
+      description: Run `stable-envs doctor --json` in the same environment and paste the output.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: >-
+        The stable-envs version or commit, Python, torch, and the family's library (for example
+        mujoco or dm-control). Also the OS and the GPU, if any.
+    validations:
+      required: true

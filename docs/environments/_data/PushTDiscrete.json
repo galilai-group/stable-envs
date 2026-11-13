@@ -1,0 +1,233 @@
+{
+ "class_name": "PushTDiscrete",
+ "module": "stable_envs.envs.pusht.semantics",
+ "family": "pusht",
+ "domain": "pusht",
+ "reference_id": "swm/PushT-Discrete-v1",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "native_size": null,
+ "frame_shape": [224, 224, 3],
+ "physics": "native Numba on CPU, native Triton on CUDA",
+ "renderers": {
+  "cpu": "Numba rasterizer (pygame bytes); pygame without Numba",
+  "cuda": "Triton rasterizer (pygame bytes); pygame on CPU, frames copied to CUDA, without Triton"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "int64",
+  "n": 16,
+  "low": 0,
+  "high": 15
+ },
+ "state": [
+  {
+   "key": "recipe",
+   "leaves": 2,
+   "numel": 5,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "history",
+   "leaves": 4,
+   "numel": 1,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  },
+  {
+   "key": "anchor",
+   "leaves": 101,
+   "numel": 438,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  },
+  {
+   "key": "current",
+   "leaves": 37,
+   "numel": 151475,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  },
+  {
+   "key": "owned",
+   "leaves": 95,
+   "numel": 417,
+   "dtypes": ["float64", "int64", "uint8"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.angle",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": -6.28319,
+   "high": 6.28319,
+   "default": 0
+  },
+  {
+   "path": "agent.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [65, 105, 225]
+  },
+  {
+   "path": "agent.scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": 20,
+   "high": 60,
+   "default": 40
+  },
+  {
+   "path": "agent.shape",
+   "type": "Discrete",
+   "reset": false,
+   "n": 8,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "agent.start_position",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": 50,
+   "high": 450,
+   "default": [256, 400]
+  },
+  {
+   "path": "agent.velocity",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": 0,
+   "high": 512,
+   "default": 0
+  },
+  {
+   "path": "background.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "block.angle",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": -6.28319,
+   "high": 6.28319,
+   "default": 0
+  },
+  {
+   "path": "block.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [119, 136, 153]
+  },
+  {
+   "path": "block.scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": 20,
+   "high": 60,
+   "default": 30
+  },
+  {
+   "path": "block.shape",
+   "type": "Discrete",
+   "reset": false,
+   "n": 7,
+   "start": 1,
+   "default": 2
+  },
+  {
+   "path": "block.start_position",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": 100,
+   "high": 400,
+   "default": [400, 100]
+  },
+  {
+   "path": "goal.angle",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": -6.28319,
+   "high": 6.28319,
+   "default": 0.785398
+  },
+  {
+   "path": "goal.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [144, 238, 144]
+  },
+  {
+   "path": "goal.position",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": 50,
+   "high": 450,
+   "default": 256
+  },
+  {
+   "path": "goal.scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [],
+   "low": 20,
+   "high": 60,
+   "default": 40
+  },
+  {
+   "path": "rendering.render_goal",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 7227
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 10134
+  },
+  "variation_leaves": "all"
+ }
+}

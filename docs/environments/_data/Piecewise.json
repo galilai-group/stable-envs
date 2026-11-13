@@ -1,0 +1,179 @@
+{
+ "class_name": "Piecewise",
+ "module": "stable_envs.envs.navigation.envs",
+ "family": "navigation",
+ "domain": "navigation",
+ "reference_id": null,
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "native_size": 224,
+ "frame_shape": [224, 224, 3],
+ "physics": "native Numba on CPU",
+ "renderers": {
+  "cpu": "Numba dot compositor",
+  "cuda": "Triton dot compositor"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "agent",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  },
+  {
+   "key": "target",
+   "leaves": 1,
+   "numel": 2,
+   "dtypes": ["float32"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [255, 0, 0]
+  },
+  {
+   "path": "agent.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 7,
+   "high": 14,
+   "default": 7
+  },
+  {
+   "path": "agent.speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.1,
+   "high": 50,
+   "default": 5
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "border.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "rendering.render_bias_field",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "rendering.render_target",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "target.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [0, 255, 0]
+  },
+  {
+   "path": "target.radius",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 7,
+   "high": 14,
+   "default": 7
+  },
+  {
+   "path": "zones.bias_0",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [2, 0]
+  },
+  {
+   "path": "zones.bias_1",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [0, 2]
+  },
+  {
+   "path": "zones.bias_2",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [-2, 0]
+  },
+  {
+   "path": "zones.bias_3",
+   "type": "Box",
+   "reset": false,
+   "shape": [2],
+   "low": -10,
+   "high": 10,
+   "default": [0, -2]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 5325
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 14586
+  },
+  "variation_leaves": "all"
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "env": "PFRocketLanding",
+ "kept": 64,
+ "n_states": 64,
+ "note": "selection metadata for states.npz in this directory, which carries no 'meta' key",
+ "rows_taken": 64,
+ "sha256": "f4707e54f3007b2e9afb1c236e932626373ee767eaa705161d53faa937d6eedf",
+ "source_key": "state13",
+ "source_npz": "tests/fixtures/states/rocket_landing/states.npz",
+ "state_dim": 13
+}

@@ -1,0 +1,44 @@
+default_language_version:
+  python: python3
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: >-
+          ^(?:docs/assets/|tests/fixtures/)
+      - id: end-of-file-fixer
+        exclude: >-
+          ^(?:docs/assets/|tests/fixtures/)
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-json
+        exclude: ^tests/fixtures/regression/
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+        exclude: ^(?:docs/assets/media/|uv\.lock$)
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py|noxfile\.py)
+      - id: ruff-format
+        types_or: [python, pyi]
+        files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py|noxfile\.py)
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        require_serial: true
+        exclude: ^docs/

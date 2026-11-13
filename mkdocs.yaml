@@ -1,0 +1,153 @@
+site_name: stable-envs
+site_description: Fast and Reproducible Environments with Controllable Variations
+repo_url: https://github.com/galilai-group/stable-envs
+repo_name: galilai-group/stable-envs
+site_url: https://galilai-group.github.io/stable-envs/
+edit_uri: edit/main/docs/
+use_directory_urls: true
+
+theme:
+  name: material
+  logo: assets/brand/mark.svg
+  favicon: assets/brand/mark.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - toc.follow
+  font: false
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/galilai-group/stable-envs
+      name: stable-envs on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/stable-envs/
+      name: stable-envs on PyPI
+
+# Anchors and links are validated. omitted_files stays at its default (info).
+validation:
+  links:
+    anchors: warn
+    unrecognized_links: warn
+    absolute_links: warn
+
+# The hook reads the snapshots from disk; the site publishes neither them nor the hook.
+exclude_docs: |
+  environments/_data/
+  _hooks.py
+  __pycache__/
+
+extra_css:
+  - assets/stylesheets/envs.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+hooks:
+  - docs/_hooks.py
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          inventories:
+          - https://docs.python.org/3/objects.inv
+          - https://numpy.org/doc/stable/objects.inv
+          - https://docs.pytorch.org/docs/stable/objects.inv
+          - https://docs.pytorch.org/tensordict/stable/objects.inv
+          paths: [.]
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+              warn_missing_types: false
+            docstring_section_style: list
+            summary: true
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            separate_signature: true
+            signature_crossrefs: true
+            merge_init_into_class: true
+            heading_level: 3
+            filters: ["!^_"]
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Install: install.md
+  - Terms: terms.md
+  - Environments:
+      - Overview: environments.md
+      - Classic control: environments/classic-control.md
+      - Craftax: environments/craftax.md
+      - DM Control: environments/dmcontrol.md
+      - Fetch: environments/fetch.md
+      - Miniworld: environments/miniworld.md
+      - MS-Human-700: environments/mshuman.md
+      - Navigation: environments/navigation.md
+      - OGBench: environments/ogbench.md
+      - PushT: environments/pusht.md
+      - PyFlyt: environments/pyflyt.md
+      - Roadster: environments/roadster.md
+  - Benchmarks: benchmarks.md
+  - Tutorials:
+      - Store states, render later: tutorials/store-and-render.md
+      - Randomize appearance and physics: tutorials/variation.md
+      - Write your own environment: tutorials/custom-env.md
+      - Train a world model (LeWM): tutorials/lewm.md
+  - Performance tuning: performance-tuning.md
+  - CLI: api/cli.md
+  - API:
+      - stable_envs: api/index.md
+      - Env: api/env.md
+      - Specs and spaces: api/specs.md
+      - Tuning: api/tuning.md
+      - Environment variables: environment-variables.md
+  - Contributing:
+      - Adding an environment: contributing/environment.md
+      - Matching the upstream library: contributing/upstream.md
+      - Renderers: contributing/renderers.md
+      - Bit-exact Triton kernels: contributing/bit-exact-triton.md
+      - Tests: contributing/testing.md
+  - Changelog: changelog.md

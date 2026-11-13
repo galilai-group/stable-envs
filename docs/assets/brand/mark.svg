@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
+     role="img" aria-label="stable-envs">
+  <title>stable-envs</title>
+  <desc>A compact state projecting into a rendered frame. Colours are the PushT palette as emitted by
+  stable_envs/envs/pusht/legacy.py: LightSlateGray #778899 outline over #8FA3B8 fill (the T-block), RoyalBlue
+  #4169E1 (the agent), LightGreen #90EE90 (the goal pose). Wordmark glyphs are outlines, not text.</desc>
+  <!-- the beam: a compact state expanding into a frame -->
+  <path d="M11.5,25.0 L17.0,9.5 L17.0,54.5 L11.5,39.0 Z" fill="#778899" opacity="0.22"/>
+  <!-- the compact state -->
+  <rect x="1.5" y="25.0" width="10.0" height="14.0" rx="2.5" fill="#778899"/>
+  <!-- the frame: goal pose, T-block, agent -->
+  <clipPath id="se-mark"><rect x="17.0" y="9.5" width="45.0" height="45.0" rx="7"/></clipPath>
+  <g clip-path="url(#se-mark)">
+    <path transform="translate(45.5,25.5) rotate(22.0)" d="M-12.50,-15.62 h25.00 v6.25 h-9.38 v25.00 h-6.25 v-25.00 h-9.38 Z" fill="#90EE90"/>
+    <path transform="translate(39.0,33.0) rotate(22.0)" d="M-12.50,-15.62 h25.00 v6.25 h-9.38 v25.00 h-6.25 v-25.00 h-9.38 Z" fill="#8FA3B8" stroke="#778899" stroke-width="2.6" stroke-linejoin="round"/>
+    <circle cx="26.5" cy="46.5" r="6.0" fill="#4169E1"/>
+  </g>
+  <rect x="17.0" y="9.5" width="45.0" height="45.0" rx="7" fill="none" stroke="#778899" stroke-width="3.2"/>
+</svg>

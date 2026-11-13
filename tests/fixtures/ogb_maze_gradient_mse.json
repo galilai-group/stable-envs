@@ -1,0 +1,9 @@
+{
+ "measured": "Per-frame MSE (pixels and channels, 0-255 scale) of each maze with floor.pixel_encoding=1 against the ogbench source's position-encoding floor, over the 32 rows of sample_render_rows(default_rng(20260811)); NVIDIA H200 / driver 580.173.02 / MUJOCO_GL=egl, torch 2.15.0+cu132, mujoco 3.17.0, ogbench 1.2.1.",
+ "gpu": "NVIDIA H200",
+ "classes": {
+  "AntMazeMediumNavigate": {"mse_mean": 9.8849, "mse_p95": 19.2538, "mse_max": 22.3448},
+  "HumanoidMazeMediumNavigate": {"mse_mean": 1.6638, "mse_p95": 3.6969, "mse_max": 4.464},
+  "PointMazeMediumNavigate": {"mse_mean": 4.7881, "mse_p95": 10.5282, "mse_max": 12.0721}
+ }
+}

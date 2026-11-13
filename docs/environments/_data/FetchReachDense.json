@@ -1,0 +1,190 @@
+{
+ "class_name": "FetchReachDense",
+ "module": "stable_envs.envs.fetch.envs",
+ "family": "fetch",
+ "domain": "reach",
+ "reference_id": "FetchReachDense-v4",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 480,
+ "native_size": null,
+ "frame_shape": [480, 480, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "Numba rasterizer; opengl (MuJoCo) without Numba",
+  "cuda": "mjwarp"
+ },
+ "action": {
+  "shape": [4],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "qpos",
+   "shape": [15],
+   "dtype": "float64"
+  },
+  {
+   "key": "qvel",
+   "shape": [15],
+   "dtype": "float64"
+  },
+  {
+   "key": "time",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "task",
+   "leaves": 1,
+   "numel": 3,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "warmstart",
+   "shape": [15],
+   "dtype": "float64"
+  },
+  {
+   "key": "controller",
+   "leaves": 2,
+   "numel": 7,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "goal",
+   "shape": [3],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["int64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "arm.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.086, 0.506, 0.767]
+  },
+  {
+   "path": "camera.azimuth_delta",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -25,
+   "high": 25,
+   "default": 0
+  },
+  {
+   "path": "camera.distance_scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.6,
+   "high": 1.6,
+   "default": 1
+  },
+  {
+   "path": "camera.elevation_delta",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -20,
+   "high": 20,
+   "default": 0
+  },
+  {
+   "path": "floor.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 0.2
+  },
+  {
+   "path": "goal.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [1, 0, 0]
+  },
+  {
+   "path": "light.diffuse",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 2,
+   "default": 1
+  },
+  {
+   "path": "rendering.transparent_arm",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "sky.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.443137, 0.85098, 0.564706]
+  },
+  {
+   "path": "table.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 0.93
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cpu",
+  "render_size": 480,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 16650
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 18698
+  },
+  "variation_leaves": "all"
+ }
+}

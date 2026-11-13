@@ -1,0 +1,867 @@
+{
+  "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "seed": 17,
+  "batch": 3,
+  "steps": 32,
+  "generator": "scripts/testing/freeze_dmc_aligned_oracle.py",
+  "versions": {
+    "numpy": "2.5.3",
+    "mujoco": "3.17.0",
+    "dm-control": "1.0.50",
+    "stable-worldmodel": "0.0.6"
+  },
+  "source": "Real pinned SWM wrappers only; independent of candidate adapter",
+  "domains": {
+    "ball_in_cup": {
+      "file": "ball_in_cup_swm_176d545_mujoco317.npz",
+      "sha256": "94a69c1781d81866d640c1c34a160f6dadc5639eb61efa5782e875cbaddd4621",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "state/qpos": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "float64"
+        },
+        "state/qvel": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "float64"
+        },
+        "state/time": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/warmstart": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "float64"
+        },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/step_count": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/lifecycle/reset_next_step": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/keys": {
+          "shape": [
+            33,
+            3,
+            624
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_gauss": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/ball/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/ball/size": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "output/reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/observation": {
+          "shape": [
+            32,
+            3,
+            8
+          ],
+          "dtype": "float32"
+        },
+        "output/score": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/success": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qpos": {
+          "shape": [
+            32,
+            3,
+            4
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qvel": {
+          "shape": [
+            32,
+            3,
+            4
+          ],
+          "dtype": "float64"
+        }
+      }
+    },
+    "finger": {
+      "file": "finger_swm_176d545_mujoco317.npz",
+      "sha256": "1f64499385d9cae4bbddb6dd32277f9f673e2dde1cfb0b11067d484f49ef5509",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "state/qpos": {
+          "shape": [
+            33,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "state/qvel": {
+          "shape": [
+            33,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "state/time": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/warmstart": {
+          "shape": [
+            33,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/step_count": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/lifecycle/reset_next_step": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/keys": {
+          "shape": [
+            33,
+            3,
+            624
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_gauss": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/model/target_site_xz": {
+          "shape": [
+            33,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/proximal_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/fingertip_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/spinner/density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/spinner/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "output/reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/observation": {
+          "shape": [
+            32,
+            3,
+            12
+          ],
+          "dtype": "float32"
+        },
+        "output/score": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/success": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qpos": {
+          "shape": [
+            32,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qvel": {
+          "shape": [
+            32,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/hinge_velocity": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/target_position": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "output/info/tip_position": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        }
+      }
+    },
+    "manipulator": {
+      "file": "manipulator_swm_176d545_mujoco317.npz",
+      "sha256": "9708c16d616fe09ec6cfb107143c5356fa4bc8f5389866c54e2edb6c67a472fe",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            5
+          ],
+          "dtype": "float64"
+        },
+        "state/qpos": {
+          "shape": [
+            33,
+            3,
+            11
+          ],
+          "dtype": "float64"
+        },
+        "state/qvel": {
+          "shape": [
+            33,
+            3,
+            11
+          ],
+          "dtype": "float64"
+        },
+        "state/time": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/warmstart": {
+          "shape": [
+            33,
+            3,
+            11
+          ],
+          "dtype": "float64"
+        },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/step_count": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/lifecycle/reset_next_step": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/keys": {
+          "shape": [
+            33,
+            3,
+            624
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_gauss": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/model/target_body_xz": {
+          "shape": [
+            33,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "state/model/target_body_qwqy": {
+          "shape": [
+            33,
+            3,
+            2
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/upper_arm_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/hand_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "output/reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/observation": {
+          "shape": [
+            32,
+            3,
+            44
+          ],
+          "dtype": "float32"
+        },
+        "output/score": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/success": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qpos": {
+          "shape": [
+            32,
+            3,
+            11
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qvel": {
+          "shape": [
+            32,
+            3,
+            11
+          ],
+          "dtype": "float64"
+        }
+      }
+    },
+    "quadruped": {
+      "file": "quadruped_swm_176d545_mujoco317.npz",
+      "sha256": "0d0ea44235d5943b80d560cd46f7e57bb069eb12cb5ff10feb5b54d4864334c8",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            12
+          ],
+          "dtype": "float64"
+        },
+        "state/qpos": {
+          "shape": [
+            33,
+            3,
+            23
+          ],
+          "dtype": "float64"
+        },
+        "state/qvel": {
+          "shape": [
+            33,
+            3,
+            22
+          ],
+          "dtype": "float64"
+        },
+        "state/time": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/warmstart": {
+          "shape": [
+            33,
+            3,
+            22
+          ],
+          "dtype": "float64"
+        },
+        "state/task/cumulative_reward": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/step_count": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/lifecycle/reset_next_step": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/keys": {
+          "shape": [
+            33,
+            3,
+            624
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_gauss": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/rng/cached_gaussian": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/activation": {
+          "shape": [
+            33,
+            3,
+            12
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/x": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/y": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/gravity/z": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/torso_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/agent/foot_back_left_density": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/physics/floor/friction": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "output/reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "output/observation": {
+          "shape": [
+            32,
+            3,
+            78
+          ],
+          "dtype": "float32"
+        },
+        "output/score": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/success": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qpos": {
+          "shape": [
+            32,
+            3,
+            23
+          ],
+          "dtype": "float64"
+        },
+        "output/info/qvel": {
+          "shape": [
+            32,
+            3,
+            22
+          ],
+          "dtype": "float64"
+        },
+        "output/info/torso_velocity": {
+          "shape": [
+            32,
+            3,
+            3
+          ],
+          "dtype": "float64"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "baseline_commit": "28f7c8049b93b96d40e5c752922f1527b6eebb40",
+  "baseline_gpu": "NVIDIA A40",
+  "baseline_tests": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0
+  },
+  "refactor_gpu_tests": {
+    "passed": [
+      "test_public_render_matches_golden[Cube-mjwarp]",
+      "test_public_render_matches_golden[Cube-mjwarp_fidelity]",
+      "test_public_render_matches_golden[Scene-mjwarp]",
+      "test_named_render_state_boundary[Cube-OGBCube]",
+      "test_named_render_state_boundary[Scene-OGBScene]",
+      "test_render_model_configuration_no_steps_or_rng_mutation[Cube-OGBCube]",
+      "test_render_model_configuration_no_steps_or_rng_mutation[Scene-OGBScene]",
+      "test_renderstate_configuration_grouping[Cube-OGBCube]",
+      "test_renderstate_configuration_grouping[Scene-OGBScene]",
+      "test_cpu_default_render_uses_existing_opengl_backend[Cube-OGBCube]",
+      "test_cpu_default_render_uses_existing_opengl_backend[Scene-OGBScene]"
+    ],
+    "failed_extra_tests": [
+      "test_state_roundtrip_reset_replay_and_atomic_validation[Cube]",
+      "test_state_roundtrip_reset_replay_and_atomic_validation[Scene]"
+    ],
+    "failure_reason": "Obsolete assertion that CPU rendering is unsupported; removed because renderer dispatch is covered separately."
+  },
+  "final_cpu_tests": {
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "selection": [
+      "tests/unit/test_ogbench_render_state.py",
+      "tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation"
+    ]
+  },
+  "post_gpu_changes": "Documentation and descriptive fidelity provenance only; executable renderer AST compared equal after excluding those fields.",
+  "broader_renderer_checks": {
+    "mujoco_warp_3.11.0": {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0
+    },
+    "mujoco_warp_3.12.0": {
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "registry_declaration_baseline_and_final": {
+    "passed": 97,
+    "failed": 7,
+    "skipped": 2,
+    "note": "Identical seven failures in an isolated checkout of 933c0235 and the final working tree; this is not a clean whole-repository suite."
+  }
+}

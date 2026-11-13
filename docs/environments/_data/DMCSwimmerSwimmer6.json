@@ -1,0 +1,159 @@
+{
+ "class_name": "DMCSwimmerSwimmer6",
+ "module": "stable_envs.envs.dmcontrol",
+ "family": "dmcontrol",
+ "domain": "swimmer",
+ "reference_id": "dm_control/swimmer-swimmer6",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 84,
+ "native_size": null,
+ "frame_shape": [84, 84, 3],
+ "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
+ "renderers": {
+  "cpu": "cpu3d (Numba)",
+  "cuda": "mjwarp"
+ },
+ "action": {
+  "shape": [5],
+  "dtype": "float64",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "qpos",
+   "shape": [8],
+   "dtype": "float64"
+  },
+  {
+   "key": "qvel",
+   "shape": [8],
+   "dtype": "float64"
+  },
+  {
+   "key": "time",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "warmstart",
+   "shape": [8],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["bool", "int64"]
+  },
+  {
+   "key": "task",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 627,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "model",
+   "leaves": 2,
+   "numel": 4,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "floor.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [2, 3],
+   "low": 0,
+   "high": 1,
+   "default": [0.1, 0.2, 0.3, 0.2, 0.3, 0.4]
+  },
+  {
+   "path": "light.diffuse_scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.2,
+   "high": 1.8,
+   "default": 1
+  },
+  {
+   "path": "material.effector",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.7, 0.4, 0.2]
+  },
+  {
+   "path": "material.eye",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0, 0.2, 1]
+  },
+  {
+   "path": "material.grid",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 1
+  },
+  {
+   "path": "material.self",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.7, 0.5, 0.3]
+  },
+  {
+   "path": "material.target",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.6, 0.3, 0.3]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 160,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 160,
+   "height": 160,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 15058
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 23798
+  },
+  "variation_leaves": "all"
+ }
+}

@@ -1,0 +1,52 @@
+# Waivers of the registry-wide rules in tests/unit/test_registry_conformance.py and
+# tests/unit/test_registry_coverage.py; the checks are named in tests/helpers/exemptions.py and `env`
+# may be a glob over class names. A waived check still runs and must keep failing: once it passes, the
+# entry is stale and the suite fails until it is removed. Changes need CODEOWNERS review.
+
+[[exemption]]
+env = "TwoRoomTarget"
+family = "navigation"
+checks = ["original", "swm"]
+reason = "no CPU test compares it with swm/TwoRoom-v1(render_target=True); the navigation gates exclude it and only tests/gpu conformance renders it against the source"
+
+[[exemption]]
+env = "Fetch*Dense"
+family = "fetch"
+checks = ["original", "swm"]
+reason = "the Fetch source gate drives only the base tasks; dense rewards are never compared with gymnasium-robotics"
+
+[[exemption]]
+env = "Fetch*Dict"
+family = "fetch"
+checks = ["original", "swm"]
+reason = "the Fetch source gate drives only the base tasks; dict observations are never compared with gymnasium-robotics"
+
+[[exemption]]
+env = "PyFlytRocketLanding"
+family = "rocket"
+checks = ["batch_render"]
+reason = "render() refuses a State whose batch is not num_envs (ValueError: Rocket full State requires batch [num_envs])"
+
+[[exemption]]
+env = "PiecewiseZones"
+family = "navigation"
+checks = ["original"]
+reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
+
+[[exemption]]
+env = "PushT*"
+family = "pusht"
+checks = ["original"]
+reason = "stable-worldmodel is its original and no corpus has been recorded from it; only the swm layer compares it"
+
+[[exemption]]
+env = "OGB*"
+family = "ogbench"
+checks = ["original"]
+reason = "the only oracle is swm's CubeEnv/SceneEnv fork; ogbench's own cube_env/scene_env defaults are not yet compared"
+
+[[exemption]]
+env = "PyFlytRocketLanding"
+family = "rocket"
+checks = ["original"]
+reason = "the only oracle is swm's fork of PyFlyt's RocketLandingEnv; PyFlyt's own env is not yet compared"

@@ -1,0 +1,89 @@
+name: extras-smoke
+
+# Compatible extra groups only. There is no [all] extra: Fetch needs mujoco<3.12,
+# and nvdiffrast is not PyPI metadata.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Extra smoke profile
+        required: true
+        type: choice
+        options: [cheap, mujoco, robotics]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extras-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cheap:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.profile == 'cheap') && (github.event_name != 'pull_request' || !github.event.pull_request.draft))
+    name: cheap extras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install cheap extras
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,pusht]"
+      - name: Smoke cheap extras
+        env:
+          SDL_VIDEODRIVER: dummy
+          SE_SKIP_NODE_GATE: "1"
+        run: python scripts/ci/smoke_extra.py --profile cheap
+
+  mujoco:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.profile == 'mujoco'))
+    name: MuJoCo extras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Software OpenGL for CPU rendering
+        run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev libgl1 libegl1
+      - name: Install MuJoCo extras
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,dmcontrol,ogbench,ogbench-manipulation,mshuman,mjwarp]"
+      - name: Smoke MuJoCo extras
+        env:
+          MUJOCO_GL: osmesa
+          SE_SKIP_NODE_GATE: "1"
+        run: python scripts/ci/smoke_extra.py --profile mujoco
+
+  robotics:
+    if: github.event_name == 'workflow_dispatch' && inputs.profile == 'robotics'
+    name: robotics extra (import only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install robotics extra
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,robotics]"
+      - name: Smoke robotics extra
+        env:
+          MUJOCO_GL: osmesa
+          SE_SKIP_NODE_GATE: "1"
+        run: python scripts/ci/smoke_extra.py --profile robotics

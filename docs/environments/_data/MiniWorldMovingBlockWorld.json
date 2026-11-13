@@ -1,0 +1,74 @@
+{
+ "class_name": "MiniWorldMovingBlockWorld",
+ "module": "stable_envs.envs.miniworld.envs",
+ "family": "miniworld",
+ "domain": "moving_blockworld",
+ "reference_id": "MiniWorld-MovingBlockWorld-v0",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 64,
+ "native_size": null,
+ "frame_shape": [64, 64, 3],
+ "physics": "native Numba on CPU, native Triton on CUDA",
+ "renderers": {
+  "cpu": "opengl (Miniworld, pyglet)",
+  "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "int64",
+  "low": 0,
+  "high": 8
+ },
+ "state": [
+  {
+   "key": "agent",
+   "leaves": 3,
+   "numel": 5,
+   "dtypes": ["float64", "int64"]
+  },
+  {
+   "key": "room",
+   "leaves": 1,
+   "numel": 3,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "blocks",
+   "leaves": 8,
+   "numel": 140,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  }
+ ],
+ "variation": [],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cpu",
+  "render_size": 160,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 160,
+   "height": 160,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 8091
+  },
+  "variation": null,
+  "variation_note": "no Variation leaves"
+ }
+}

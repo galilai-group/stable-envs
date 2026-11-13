@@ -1,0 +1,170 @@
+{
+ "class_name": "MountainCar",
+ "module": "stable_envs.envs.classic_control.envs",
+ "family": "classic_control",
+ "domain": "classic_control",
+ "reference_id": "MountainCar-v0",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 600,
+ "native_size": 600,
+ "frame_shape": [400, 600, 3],
+ "physics": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
+ "renderers": {
+  "cpu": "gfxdraw port (Numba; Torch or Gymnasium without Numba)",
+  "cuda": "gfxdraw port (fused Triton kernel)"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "int64",
+  "n": 3,
+  "low": 0,
+  "high": 2
+ },
+ "state": [
+  {
+   "key": "position",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "velocity",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 3,
+   "numel": 3,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "car.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "flag.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [204, 204, 0]
+  },
+  {
+   "path": "flag.pole_color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "physics.force",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.0005,
+   "high": 0.0015,
+   "default": 0.001
+  },
+  {
+   "path": "physics.gravity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.00125,
+   "high": 0.00375,
+   "default": 0.0025
+  },
+  {
+   "path": "physics.max_speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.035,
+   "high": 0.105,
+   "default": 0.07
+  },
+  {
+   "path": "rendering.antialias",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  },
+  {
+   "path": "terrain.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "wheel.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 128
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 600,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 150,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 6793
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 148,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 6800
+  },
+  "variation_leaves": "all"
+ }
+}

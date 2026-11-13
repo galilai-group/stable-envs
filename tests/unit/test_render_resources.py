@@ -1,0 +1,450 @@
+"""``render/_resources.py``: the close protocol, the bounded LRU cache, and the never-release rule.
+
+The protocol is tested against a fake backend whose frees are observable, since a real warp array's
+free is not visible from Python: released once, before reuse, never twice, never by the collector.
+
+The backend classes are checked by shape (they honor the protocol and declare what they own) rather
+than by construction, which needs a GPU; the GPU resource-lifetime suite covers construction.
+"""
+
+from __future__ import annotations
+
+import gc
+import inspect
+import threading
+
+import pytest
+
+from stable_envs.render import _resources as RES
+
+# --------------------------------------------------------------------------- a fake backend object
+
+
+class FakeBackend(RES.Closeable):
+    """What a real backend does, with the frees replaced by an observable list."""
+
+    resource_kind = "test.FakeBackend"
+
+    def __init__(self, log: list, *, open_it: bool = True):
+        self.log = log
+        self.buffer = object()
+        if open_it:
+            self._opened()
+
+    def _release(self) -> None:
+        self.log.append("released")
+        self.buffer = None
+
+    def use(self):
+        self._check_open("use")
+        return self.buffer
+
+
+# --------------------------------------------------------------------------- the close protocol
+
+
+@pytest.mark.unit
+def test_close_releases_once_and_is_idempotent():
+    log = []
+    b = FakeBackend(log)
+    assert not b.closed
+    b.close()
+    b.close()
+    b.close()
+    assert log == ["released"], "close ran _release more than once"
+    assert b.closed
+
+
+@pytest.mark.unit
+def test_use_after_close_raises_instead_of_reading_freed_state():
+    b = FakeBackend([])
+    assert b.use() is not None
+    b.close()
+    with pytest.raises(RES.UseAfterCloseError) as e:
+        b.use()
+    # the caller sees this far from the close, so the message names the object
+    assert "FakeBackend.use" in str(e.value) and "closed" in str(e.value)
+
+
+@pytest.mark.unit
+def test_the_context_manager_closes_on_the_way_out_including_on_an_exception():
+    log = []
+    with FakeBackend(log) as b:
+        assert b.use() is not None
+    assert log == ["released"] and b.closed
+
+    log2 = []
+    with pytest.raises(ValueError):
+        with FakeBackend(log2):
+            raise ValueError("boom")
+    assert log2 == ["released"], "__exit__ must close on the error path too"
+
+
+@pytest.mark.unit
+def test_correctness_never_depends_on_del():
+    """Dropping the last reference does not release; an unclosed object leaks, visibly and countably.
+
+    A ``__del__`` that freed device memory would depend on when the collector runs and could run at
+    interpreter shutdown after the CUDA bindings are gone.
+    """
+    log = []
+    FakeBackend(log)  # no reference kept
+    gc.collect()
+    gc.collect()
+    assert log == [], "a backend object released itself from __del__ / GC"
+    assert not hasattr(RES.Closeable, "__del__")
+
+
+@pytest.mark.unit
+def test_a_half_built_object_is_not_open():
+    """``_opened`` is what declares an object live, so a constructor that raises leaves it closed."""
+    b = FakeBackend([], open_it=False)
+    assert b.closed
+    with pytest.raises(RES.UseAfterCloseError):
+        b.use()
+    b.close()  # and closing it is a no-op, not a double free
+
+
+@pytest.mark.unit
+def test_the_counters_track_create_and_close_cycles():
+    before = RES.counts()
+    live0 = RES.live("test.FakeBackend")
+    objs = [FakeBackend([]) for _ in range(5)]
+    assert RES.live("test.FakeBackend") == live0 + 5
+    for o in objs:
+        o.close()
+        o.close()  # idempotent: must not count twice
+    assert RES.live("test.FakeBackend") == live0
+    d = RES.delta(before)
+    assert d["created"]["test.FakeBackend"] == 5
+    assert d["closed"]["test.FakeBackend"] == 5
+
+
+@pytest.mark.unit
+def test_concurrent_close_releases_once():
+    log = []
+    b = FakeBackend(log)
+    threads = [threading.Thread(target=b.close) for _ in range(16)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert log == ["released"]
+
+
+@pytest.mark.unit
+def test_a_failed_release_is_observable_and_closes_the_object_once():
+    class Boom(RES.Closeable):
+        resource_kind = "test.Boom"
+
+        def __init__(self):
+            self.calls = 0
+            self._opened()
+
+        def _release(self):
+            self.calls += 1
+            raise RuntimeError("the free failed")
+
+    before = RES.counts()
+    live0 = RES.live("test.Boom")
+    b = Boom()
+    with pytest.raises(RuntimeError, match="the free failed"):
+        b.close()
+    assert b.closed and b.calls == 1
+    assert RES.live("test.Boom") == live0
+    change = RES.delta(before)
+    assert change["created"]["test.Boom"] == 1
+    assert change["release_failed"]["test.Boom"] == 1
+    assert change["closed"]["test.Boom"] == 1
+    assert RES.release_failures()[-1] == {"kind": "test.Boom", "error": "RuntimeError", "message": "the free failed"}
+    b.close()
+    assert b.calls == 1
+
+
+# --------------------------------------------------------------------------- the bounded cache
+
+
+@pytest.mark.unit
+def test_the_cache_is_bounded():
+    c = RES.BoundedCache(3, name="t")
+    for i in range(50):
+        c.put(i, i)
+    assert len(c) == 3
+
+
+@pytest.mark.unit
+def test_eviction_is_least_recently_used_and_one_entry_at_a_time():
+    """Eviction drops only the least recently used entry, not the whole cache."""
+    c = RES.BoundedCache(3, name="t")
+    c.put("a", 1)
+    c.put("b", 2)
+    c.put("c", 3)
+    assert c.get("a") == 1  # a is now the most recently USED
+    c.put("d", 4)  # so b, the coldest, is what goes
+    assert sorted(c.keys()) == ["a", "c", "d"]
+    assert c.get("b") is None
+    assert c.evictions == 1, "one insertion must evict one entry, not empty the cache"
+
+
+@pytest.mark.unit
+def test_a_key_in_use_survives_an_unrelated_insertion():
+    """A key read between insertions stays cached.
+
+    A miss on a key the warm-up render wrote can mean a device-to-host copy inside a CUDA graph
+    capture, which CUDA refuses.
+    """
+    c = RES.BoundedCache(2, name="t")
+    c.put("hot", "value")
+    for i in range(20):
+        c.get("hot")
+        c.put(i, i)
+    assert c.get("hot") == "value"
+
+
+@pytest.mark.unit
+def test_eviction_can_release_what_it_drops_and_a_replacement_counts_as_a_drop():
+    log = []
+    c = RES.BoundedCache(2, name="t", on_evict=lambda v: v.close())
+    a, b, d = FakeBackend(log), FakeBackend(log), FakeBackend(log)
+    c.put("a", a)
+    c.put("b", b)
+    c.put("c", d)  # evicts a
+    assert a.closed and not b.closed and not d.closed
+    c.put("b", FakeBackend(log))  # replacing b is as much a drop as evicting it
+    assert b.closed
+
+
+@pytest.mark.unit
+def test_pop_hands_ownership_back_without_releasing():
+    log = []
+    c = RES.BoundedCache(2, name="t", on_evict=lambda v: v.close())
+    b = FakeBackend(log)
+    c.put("a", b)
+    assert c.pop("a") is b
+    assert not b.closed, "pop transfers ownership; only eviction and clear release"
+    assert len(c) == 0
+
+
+@pytest.mark.unit
+def test_clear_releases_everything():
+    log = []
+    c = RES.BoundedCache(4, name="t", on_evict=lambda v: v.close())
+    objs = [FakeBackend(log) for _ in range(3)]
+    for i, o in enumerate(objs):
+        c.put(i, o)
+    c.clear()
+    assert all(o.closed for o in objs) and len(c) == 0
+
+
+@pytest.mark.unit
+def test_a_failing_release_does_not_fail_the_insertion_that_triggered_it():
+    def boom(_):
+        raise RuntimeError("release failed")
+
+    before = RES.counts()
+    failures0 = len(RES.release_failures())
+    c = RES.BoundedCache(1, name="t", on_evict=boom)
+    c.put("a", 1)
+    c.put("b", 2)  # must not raise: an eviction happens far from
+    assert c.get("b") == 2  # anything the caller is thinking about
+    assert RES.delta(before)["release_failed"]["cache:t"] == 1
+    assert RES.release_failures()[failures0] == {
+        "kind": "cache:t",
+        "error": "RuntimeError",
+        "message": "release failed",
+    }
+
+
+@pytest.mark.unit
+def test_a_zero_capacity_cache_is_refused():
+    with pytest.raises(ValueError):
+        RES.BoundedCache(0)
+
+
+# --------------------------------------------------------------------------- the deliberate leak
+
+
+@pytest.mark.unit
+def test_process_lifetime_retention_records_its_reason_and_is_capped():
+    obj = object()
+    assert RES.retain_process_lifetime(obj, "a unit test") is obj
+    assert "a unit test" in RES.retained_reasons()
+
+
+@pytest.mark.unit
+def test_retention_past_the_cap_raises_rather_than_growing_without_limit(monkeypatch):
+    monkeypatch.setattr(RES, "MAX_RETAINED", len(RES.retained_reasons()))
+    with pytest.raises(RuntimeError, match="refusing to retain"):
+        RES.retain_process_lifetime(object(), "one too many")
+
+
+@pytest.mark.unit
+@pytest.mark.usefixtures("loguru_to_caplog")
+def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch, caplog):
+    before = RES.counts()["retained"]
+    monkeypatch.setattr(RES, "MAX_RETAINED", before)
+    obj = object()
+    assert RES.retain_process_lifetime(obj, "foreign texture owner", overflow="retain") is obj
+    assert RES.counts()["retained"] == before + 1
+    assert "Keeping it" in caplog.text
+
+
+# --------------------------------------------------------------------------- the backends' shape
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "module,cls",
+    [
+        ("stable_envs.render.mjwarp", "BatchRenderer"),
+        ("stable_envs.render.nvdiff", "BatchRenderer"),
+        ("stable_envs.render.nvdiff", "Scene"),
+    ],
+)
+def test_every_backend_object_honours_the_close_protocol(module, cls):
+    """Every backend declares the protocol; actual CPU construction is checked where available."""
+    import importlib
+
+    c = getattr(importlib.import_module(module), cls)
+    assert issubclass(c, RES.Closeable), f"{module}.{cls} must be Closeable"
+    assert c.resource_kind != RES.Closeable.resource_kind, f"{module}.{cls} needs its own kind"
+    assert "_release" in c.__dict__, f"{module}.{cls} must say what it releases"
+    assert "__del__" not in c.__dict__, f"{module}.{cls} must not free from the collector"
+
+
+@pytest.mark.unit
+def test_every_backend_construction_path_declares_itself_open():
+    from stable_envs.render import mjwarp as MW
+    from stable_envs.render import nvdiff as ND
+
+    paths = (
+        MW.BatchRenderer.__init__,
+        ND.Scene.__init__,
+        ND.Scene.from_triangles.__func__,
+        ND.BatchRenderer.__init__,
+    )
+    for path in paths:
+        assert "._opened()" in inspect.getsource(path), f"{path.__qualname__} forgot _opened()"
+
+
+@pytest.mark.unit
+def test_a_cpu_scene_releases_every_owned_tensor_and_refuses_reuse():
+    import numpy as np
+    import torch
+
+    from stable_envs.render import nvdiff as ND
+
+    vert, norm, face = ND._box((0.5, 0.25, 1.0))
+    before = RES.counts()
+    live0 = RES.live("nvdiff.Scene")
+    scene = ND.Scene.from_triangles(
+        vert, norm, face, np.zeros(len(vert), np.int64), rgba=[[1.0, 1.0, 1.0, 1.0]], device="cpu"
+    )
+    owned = (
+        "vert",
+        "norm",
+        "uv",
+        "vgeom",
+        "face",
+        "fgeom",
+        "mjgeom",
+        "S3",
+        "S4",
+        "S3p",
+        "mat_rgb",
+        "alpha",
+        "spec",
+        "shininess",
+        "emission",
+        "texid",
+    )
+    assert all(isinstance(getattr(scene, name), torch.Tensor) for name in owned)
+    assert RES.live("nvdiff.Scene") == live0 + 1
+    scene.close()
+    assert all(getattr(scene, name) is None for name in owned)
+    assert scene.textures == {}
+    assert RES.live("nvdiff.Scene") == live0
+    change = RES.delta(before)
+    assert change["created"]["nvdiff.Scene"] == 1
+    assert change["closed"]["nvdiff.Scene"] == 1
+    assert "nvdiff.Scene" not in change["release_failed"]
+    with pytest.raises(RES.UseAfterCloseError, match=r"Scene\.clip"):
+        scene.clip(None, None, None, None)
+
+
+@pytest.mark.unit
+def test_the_per_renderer_ray_cache_is_bounded():
+    """``nvdiff.BatchRenderer._ray_cache``, checked without building a renderer (it needs CUDA)."""
+    import stable_envs.render.nvdiff as ND
+
+    assert ND.RAY_CACHE_MAX == 8
+    src = _code_of("nvdiff.py")
+    assert "_ray_cache = _resources . BoundedCache" in src
+    assert "self . _ray_cache . put (" in src and "self . _ray_cache . get (" in src
+
+
+def _code_of(name: str) -> str:
+    """A module's source with every comment and string literal removed, without importing it.
+
+    The modules' prose mentions the forbidden calls, and some of them need CUDA to import.
+    """
+    import pathlib
+    import tokenize
+
+    path = pathlib.Path(RES.__file__).parent / name
+    out = []
+    with open(path, "rb") as fh:
+        for tok in tokenize.tokenize(fh.readline):
+            if tok.type in (tokenize.COMMENT, tokenize.STRING):
+                continue
+            out.append(tok.string)
+    return " ".join(out)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("name", ["mjwarp/__init__.py", "nvdiff.py", "_resources.py"])
+def test_nothing_in_the_render_backends_releases_an_egl_context(name):
+    """The rule ``tests/_runner/resource_guard.py`` enforces, checked at the source.
+
+    Releasing one EGL context corrupts rendering in every other live context in the process, so
+    ``close()`` on a render backend must never reach ``GLContext.free`` or ``mujoco.Renderer.close``.
+    """
+    code = _code_of(name)
+    for forbidden in (". free (", "GLContext", "eglDestroyContext", "mujoco . Renderer"):
+        assert forbidden not in code, f"{name} must not reach {forbidden!r}"
+
+
+@pytest.mark.unit
+def test_family_device_caches_release_on_eviction():
+    """Renderer-resource caches release on eviction rather than dropping to the collector."""
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
+    checks = [
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
+        (
+            root / "envs" / "ogbench" / "manipulation.py",
+            "ContextCache(on_evict=_release_context",
+            "release_cached_ctx",
+        ),
+        (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(3, name="dmcontrol.tc"', "release_cached_ctx"),
+        (root / "envs" / "rocket" / "legacy.py", 'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
+        (root / "envs" / "rocket" / "legacy.py", "owns_scene = True", "owns_scene"),
+    ]
+    for path, needle, label in checks:
+        src = path.read_text(encoding="utf-8")
+        assert needle in src, f"{path.relative_to(root.parent)} missing {label}: {needle!r}"
+    cpu = [
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(32, name="fetch.plate"'),
+        (root / "envs" / "fetch" / "envs.py", 'BoundedCache(256, name="fetch.cam"'),
+        (root / "envs" / "ogbench" / "maze.py", 'BoundedCache(_SCENE_CACHE_MAX, name="ogbench.maze"'),
+        (root / "envs" / "ogbench" / "manipulation.py", 'BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate"'),
+        (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(_SCENE_CACHE_MAX, name="dmcontrol.scene"'),
+        (root / "envs" / "classic_control" / "envs.py", 'BoundedCache(_TERRAIN_CACHE_MAX, name="classic.terrain"'),
+        (root / "envs" / "navigation" / "envs.py", 'BoundedCache(_BAKE_CACHE_MAX, name="navigation.bake"'),
+        (root / "render" / "raster2d.py", 'BoundedCache(_BASE_CACHE_MAX, name="raster2d.base"'),
+        (root / "render" / "raycast3d.py", "_Memo = _RES.BoundedCache"),
+    ]
+    for path, needle in cpu:
+        src = path.read_text(encoding="utf-8")
+        assert needle in src, f"{path.relative_to(root.parent)} missing CPU BoundedCache: {needle!r}"

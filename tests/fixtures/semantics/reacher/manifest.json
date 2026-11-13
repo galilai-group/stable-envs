@@ -1,0 +1,174 @@
+{
+  "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "file": "swm_176d545_mujoco317.npz",
+  "sha256": "54e654212cdc132e045fa1a410d672f26662436ebd6ee0f7c433cb7086ff67f3",
+  "seed": 17,
+  "batch": 3,
+  "steps": 32,
+  "generator": "scripts/testing/freeze_reacher_oracle.py",
+  "versions": {
+    "numpy": "2.5.3",
+    "mujoco": "3.17.0",
+    "dm-control": "1.0.50",
+    "stable-worldmodel": "0.0.6"
+  },
+  "source": "Real SWM wrapper only; independent of candidate adapter",
+  "arrays": {
+    "actions": {
+      "shape": [
+        32,
+        3,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "state/qpos": {
+      "shape": [
+        33,
+        3,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "state/qvel": {
+      "shape": [
+        33,
+        3,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "state/time": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "float64"
+    },
+    "state/warmstart": {
+      "shape": [
+        33,
+        3,
+        2
+      ],
+      "dtype": "float64"
+    },
+    "state/task/cumulative_reward": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "float64"
+    },
+    "state/task/target_pos": {
+      "shape": [
+        33,
+        3,
+        3
+      ],
+      "dtype": "float64"
+    },
+    "state/lifecycle/step_count": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "int64"
+    },
+    "state/lifecycle/reset_next_step": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "bool"
+    },
+    "state/rng/keys": {
+      "shape": [
+        33,
+        3,
+        624
+      ],
+      "dtype": "int64"
+    },
+    "state/rng/position": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "int64"
+    },
+    "state/rng/has_gauss": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "bool"
+    },
+    "state/rng/cached_gaussian": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "float64"
+    },
+    "state/physics/agent/arm_density": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "float64"
+    },
+    "state/physics/agent/finger_density": {
+      "shape": [
+        33,
+        3,
+        1
+      ],
+      "dtype": "float64"
+    },
+    "reward": {
+      "shape": [
+        32,
+        3
+      ],
+      "dtype": "float64"
+    },
+    "terminated": {
+      "shape": [
+        32,
+        3
+      ],
+      "dtype": "bool"
+    },
+    "truncated": {
+      "shape": [
+        32,
+        3
+      ],
+      "dtype": "bool"
+    },
+    "observation": {
+      "shape": [
+        32,
+        3,
+        6
+      ],
+      "dtype": "float32"
+    },
+    "score": {
+      "shape": [
+        32,
+        3
+      ],
+      "dtype": "float64"
+    }
+  }
+}

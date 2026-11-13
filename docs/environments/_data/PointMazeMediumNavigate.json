@@ -1,0 +1,164 @@
+{
+ "class_name": "PointMazeMediumNavigate",
+ "module": "stable_envs.envs.ogbench",
+ "family": "ogbench",
+ "domain": "pointmaze",
+ "reference_id": "ogbench/pointmaze-medium-v0",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 224,
+ "native_size": null,
+ "frame_shape": [224, 224, 3],
+ "physics": "source simulator on CPU",
+ "renderers": {
+  "cpu": "raycast3d (torch)",
+  "cuda": "raycast3d (torch)"
+ },
+ "action": {
+  "shape": [2],
+  "dtype": "float32",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "root",
+   "leaves": 2,
+   "numel": 4,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "simulator",
+   "leaves": 2,
+   "numel": 3,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "task",
+   "leaves": 2,
+   "numel": 4,
+   "dtypes": ["float64", "int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 8,
+   "numel": 661,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.7, 0.5, 0.3]
+  },
+  {
+   "path": "agent.scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.25,
+   "high": 6,
+   "default": 1
+  },
+  {
+   "path": "camera.distance_scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.6,
+   "high": 1.8,
+   "default": 1
+  },
+  {
+   "path": "camera.elevation",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -90,
+   "high": -35,
+   "default": -90
+  },
+  {
+   "path": "floor.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [2, 3],
+   "low": 0,
+   "high": 1,
+   "default": [0.08, 0.11, 0.16, 0.15, 0.18, 0.25]
+  },
+  {
+   "path": "floor.pixel_encoding",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "floor.tint",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 1
+  },
+  {
+   "path": "light.intensity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 1
+  },
+  {
+   "path": "rendering.decolor_floor",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 0
+  },
+  {
+   "path": "walls.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 0.6
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 224,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 5471
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 10379
+  },
+  "variation_leaves": "all"
+ }
+}

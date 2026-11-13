@@ -1,0 +1,180 @@
+{
+ "class_name": "Pendulum",
+ "module": "stable_envs.envs.classic_control.envs",
+ "family": "classic_control",
+ "domain": "classic_control",
+ "reference_id": "Pendulum-v1",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 500,
+ "native_size": 500,
+ "frame_shape": [500, 500, 3],
+ "physics": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
+ "renderers": {
+  "cpu": "gfxdraw port (Numba; Torch or Gymnasium without Numba)",
+  "cuda": "gfxdraw port (fused Triton kernel)"
+ },
+ "action": {
+  "shape": [1],
+  "dtype": "float32",
+  "low": -2,
+  "high": 2
+ },
+ "state": [
+  {
+   "key": "theta",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "theta_dot",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "torque",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "task",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["bool"]
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 10,
+   "dtypes": ["int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 6,
+   "numel": 6,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "axle.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 0
+  },
+  {
+   "path": "background.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": 255
+  },
+  {
+   "path": "physics.dt",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.025,
+   "high": 0.1,
+   "default": 0.05
+  },
+  {
+   "path": "physics.g",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 5,
+   "high": 15,
+   "default": 10
+  },
+  {
+   "path": "physics.l",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.m",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.5,
+   "high": 1.5,
+   "default": 1
+  },
+  {
+   "path": "physics.max_speed",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 4,
+   "high": 12,
+   "default": 8
+  },
+  {
+   "path": "physics.max_torque",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 1,
+   "high": 4,
+   "default": 2
+  },
+  {
+   "path": "rendering.antialias",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  },
+  {
+   "path": "rod.color",
+   "type": "RGBBox",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 255,
+   "default": [204, 77, 77]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 500,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 11399
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 12819
+  },
+  "variation_leaves": "all"
+ }
+}

@@ -1,0 +1,213 @@
+# Which family owns each source path and test file, what a family needs installed, and how
+# its profile environment is built. Read by tests/conftest.py, noxfile.py and scripts/ci/plan.py.
+#
+# family.<name>:
+#   extras, groups   `uv sync --extra ... --group ...` for the profile (python 3.12 unless `python`)
+#   paths            repository globs whose change selects this family's profile
+#   tests            test file basename globs owned by the family; unmatched test files are core
+#   aliases          words that tie other files under tests/ (fixtures, gates) to the family
+#   requires         distributions (with the exact version where the code checks one) whose absence
+#                    skips the family's tests, or fails them when SE_REQUIRE_FAMILIES names the family
+#   capabilities     capabilities the profile's CI job must have (SE_REQUIRE_CAPABILITIES); "swm" also
+#                    makes noxfile.py install stable-worldmodel at [swm].commit into the profile
+#   swm_with         distributions installed beside stable-worldmodel that the profile's gates need
+#   linux_env        environment for the profile's test run on Linux
+#   shards           CI jobs the profile's tests are split into, per tier: { pr = N, nightly = M }; default 1.
+#                    Sized from ci/durations.json so a pull-request job stays near 10 minutes on a
+#                    4-vCPU runner and a nightly one near 30
+#   env_affinity     true runs the tests with --env-affinity (tests/_runner/shard.py): the tests of one
+#                    env share an xdist worker, so each worker caches its own envs rather than all of them
+
+# The stable-worldmodel commit the reference gates compare against; tests/unit/test_family_map.py
+# keeps SWM_PIN in tests/helpers/reference and the benchmark PIN constants equal to it.
+[swm]
+url = "https://github.com/galilai-group/stable-worldmodel"
+commit = "21446f1ede6d5284e981bd7b47f432b994e6d812"
+
+# A change to any of these selects every profile.
+[shared]
+paths = [
+  "stable_envs/__init__.py",
+  "stable_envs/__about__.py",
+  "stable_envs/env.py",
+  "stable_envs/registry.py",
+  "stable_envs/spaces.py",
+  "stable_envs/specs.py",
+  "stable_envs/tuning.py",
+  "stable_envs/envs/__init__.py",
+  "stable_envs/_core/**",
+  "stable_envs/_execution/**",
+  "stable_envs/render/__init__.py",
+  "stable_envs/render/_resources.py",
+  "stable_envs/testing/**",
+  "conftest.py",
+  "tests/conftest.py",
+  "tests/_runner/**",
+  "tests/helpers/*.py",
+  "tests/helpers/reference/*.py",
+  "pyproject.toml",
+  "uv.lock",
+  "noxfile.py",
+  "ci/**",
+  "scripts/ci/**",
+  ".github/workflows/**",
+]
+
+# A change made only of these needs the docs build and nothing else.
+[docs]
+paths = ["docs/**", "*.md", "mkdocs.yaml"]
+
+[family.core]
+tests = []
+
+[family.classic]
+aliases = ["native", "acrobot", "cartpole", "pendulum", "mountain_car"]
+groups = ["pin-classic"]
+paths = ["stable_envs/envs/classic_control/**", "stable_envs/render/gfxdraw/**", "benchmarks/**"]
+tests = [
+  "test_acrobot_*",
+  "test_classic_*",
+  "test_native_classic_*",
+  "test_gfxdraw_*",
+  "test_native_acceptance.py",
+  "test_native_source_pixels.py",
+]
+requires = ["pygame"]
+capabilities = ["swm"]
+
+[family.navigation]
+aliases = ["nav_", "tworoom", "two_room", "pointmaze"]
+extras = ["navigation"]
+groups = ["pin-navigation"]
+paths = [
+  "stable_envs/envs/navigation/**",
+  "stable_envs/render/raster2d*",
+  "stable_envs/render/scene.py",
+  "stable_envs/render/primitives.py",
+]
+tests = [
+  "test_tworoom_jax*",
+  "test_native_navigation_*",
+  "test_nav_*",
+  "test_navdot_*",
+  "test_swm_nav_*",
+  "test_raster2d_*",
+  "test_envs_classic_nav.py",
+  "test_variation_navigation.py",
+  "test_navigation_source_pixels.py",
+]
+requires = ["jax", "matplotlib"]
+capabilities = ["swm"]
+swm_with = ["scipy"]
+
+[family.pusht]
+extras = ["pusht"]
+groups = ["pin-pusht"]
+paths = ["stable_envs/envs/pusht/**", "stable_envs/render/scene.py"]
+tests = ["test_pusht_*", "test_variation_pusht.py", "test_benchmark_surface.py"]
+requires = ["pymunk==7.2.0", "pygame", "shapely"]
+capabilities = ["swm"]
+linux_env = { SDL_VIDEODRIVER = "dummy" }
+
+[family.dmc]
+aliases = ["dmcontrol", "reacher"]
+extras = ["dmcontrol"]
+groups = ["pin-dmc"]
+paths = [
+  "stable_envs/envs/dmcontrol/**",
+  "stable_envs/render/cpu3d*",
+  "stable_envs/render/texture_mip*",
+  "stable_envs/render/raycast3d*",
+  "stable_envs/render/mjwarp/**",
+]
+tests = [
+  "test_dmc_*",
+  "test_dmcontrol_*",
+  "test_envs_dmcontrol.py",
+  "test_reacher_*",
+  "test_cpu3d*",
+  "test_variation_maps_dmc_*",
+  "test_variation_hooks.py",
+  "test_mjwarp_*",
+  "test_mjbatch*",
+  "test_plate_texels.py",
+]
+requires = ["dm-control", "mujoco>=3.17,<3.18"]
+capabilities = ["gl", "swm"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+shards = { pr = 3, nightly = 4 }
+
+[family.fetch]
+extras = ["robotics"]
+groups = ["pin-fetch"]
+paths = [
+  "stable_envs/envs/fetch/**",
+  "stable_envs/render/mjwarp/**",
+  "stable_envs/render/cpu_raster/__init__.py",
+  "stable_envs/render/mujoco_scene.py",
+  "stable_envs/render/mujoco_raster*",
+]
+tests = ["test_fetch_*", "test_envs_fetch.py", "test_variation_maps_fetch.py"]
+requires = ["gymnasium-robotics", "mujoco"]
+capabilities = ["swm"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+
+[family.ogbench]
+aliases = ["ogb"]
+extras = ["ogbench", "ogbench-manipulation"]
+groups = ["pin-ogbench"]
+paths = [
+  "stable_envs/envs/ogbench/**",
+  "stable_envs/render/mujoco_scene.py",
+  "stable_envs/render/mujoco_raster*",
+  "stable_envs/render/mjwarp/**",
+  "stable_envs/render/raycast3d*",
+  "stable_envs/render/primitives.py",
+]
+tests = ["test_ogb*", "test_envs_ogbench.py", "test_variation_maps_newcells.py"]
+requires = ["ogbench", "mujoco"]
+capabilities = ["swm"]
+swm_with = ["pymunk", "shapely"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+shards = { pr = 6, nightly = 6 }
+env_affinity = true
+
+[family.mshuman]
+aliases = ["ms_human", "musculoskeletal"]
+extras = ["mshuman"]
+paths = ["stable_envs/envs/mshuman/**"]
+tests = ["test_mshuman_*"]
+requires = ["mujoco", "warp-lang"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+
+[family.rocket]
+extras = ["rocket"]
+groups = ["pin-rocket"]
+paths = ["stable_envs/envs/rocket/**", "stable_envs/render/nvdiff*"]
+tests = ["test_rocket_*", "test_nvdiff_*"]
+requires = ["PyFlyt==0.29.0", "pybullet==3.2.7"]
+capabilities = ["swm"]
+swm_with = ["cvxpy"]
+
+[family.roadster]
+extras = ["roadster"]
+paths = ["stable_envs/envs/roadster/**"]
+tests = ["test_roadster_*"]
+requires = ["mujoco", "pillow"]
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
+
+[family.craftax]
+extras = ["craftax"]
+groups = ["pin-craftax"]
+paths = ["stable_envs/envs/craftax/**"]
+tests = ["test_craftax*"]
+requires = ["craftax", "jax"]
+capabilities = ["swm"]
+shards = { pr = 1, nightly = 1 }
+env_affinity = true
+
+[family.miniworld]
+extras = ["miniworld"]
+paths = ["stable_envs/envs/miniworld/**"]
+tests = ["test_miniworld_*"]
+requires = ["miniworld", "pyglet"]

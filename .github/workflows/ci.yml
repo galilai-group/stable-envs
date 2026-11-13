@@ -1,0 +1,256 @@
+name: ci
+
+# Pull requests run the families their diff touches plus core (scripts/ci/plan.py); pushes to
+# main, the weekly schedule and manual runs test every family and add the `nightly` tests. Each
+# family profile runs as duration-balanced shards (ci/families.toml `shards`, ci/durations.json).
+# ci-ok is the single required check. Family profiles with the swm capability install
+# stable-worldmodel at ci/families.toml's [swm] commit (noxfile.py) and fail when its CPU gates
+# skip; GPU parity stays manual (regression.yml). Draft pull requests run nothing.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+  merge_group:
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Profiles to test
+        type: choice
+        options: [all, affected]
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  UV_FROZEN: "1"
+  SE_SKIP_NODE_GATE: "1"
+  SDL_VIDEODRIVER: dummy
+
+jobs:
+  plan:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.plan.outputs.core }}
+      families: ${{ steps.plan.outputs.families }}
+      tier: ${{ steps.plan.outputs.tier }}
+      docs_only: ${{ steps.plan.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          SCOPE: ${{ inputs.scope }}
+          FULL_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'ci:full') }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          scope=affected
+          tier="pr"
+          if [[ "$EVENT" == push || "$EVENT" == schedule ]]; then scope=all; tier="nightly"; fi
+          if [[ "$EVENT" == merge_group ]]; then scope=all; fi
+          if [[ "$EVENT" == workflow_dispatch && "$SCOPE" != affected ]]; then scope=all; tier="nightly"; fi
+          if [[ "$FULL_LABEL" == true ]]; then scope=all; tier="nightly"; fi
+          uv run --no-project --python 3.12 scripts/ci/plan.py --scope "$scope" --tier "$tier" --base "$BASE" --head "$HEAD" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  static:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: static
+      # Pull requests are held to the hooks on the files they change; other runs check the tree.
+      - name: pre-commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ -n "$BASE" ]]; then
+            uvx nox -s lint -- --from-ref "$BASE" --to-ref HEAD
+          else
+            uvx nox -s lint
+          fi
+      - name: Lockfile matches pyproject.toml
+        run: uv lock --check
+      - name: Adapter interfaces
+        run: uvx nox -s typecheck
+      - name: Packaging and workflow contracts
+        run: .venvs/typecheck-py3.12/bin/python -m pytest tests/packaging/test_distribution.py -q
+
+  core:
+    needs: plan
+    if: needs.plan.outputs.core == 'true'
+    name: core (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        # Pull requests test the newest Python; main and scheduled runs test every supported one.
+        python: ${{ fromJSON(github.event_name == 'pull_request' && '["3.12"]' || '["3.10", "3.11", "3.12"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: core-${{ matrix.os }}-${{ matrix.python }}
+      - name: Core tests
+        env:
+          CI: "1"
+          SE_PYTHON: ${{ matrix.python }}
+          SE_NIGHTLY: ${{ needs.plan.outputs.tier == 'nightly' && '1' || '' }}
+        run: uvx nox -s "test(core)" -- -q --junitxml=junit-core-${{ matrix.os }}-${{ matrix.python }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-core-${{ matrix.os }}-${{ matrix.python }}
+          path: junit-*.xml
+
+  family:
+    needs: plan
+    if: needs.plan.outputs.families != '{"include":[]}' && needs.plan.outputs.families != ''
+    name: family (${{ matrix.profile }} ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.families) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Software OpenGL for CPU rendering
+        run: sudo apt-get update && sudo apt-get install -y libosmesa6-dev libgl1 libegl1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.profile }}
+      - name: Family tests under the reference profile
+        env:
+          CI: "1"
+          SE_SHARD: ${{ matrix.shard }}
+          SE_NIGHTLY: ${{ needs.plan.outputs.tier == 'nightly' && '1' || '' }}
+        run: uvx nox -s "test(${{ matrix.profile }})" -- -q --junitxml=junit-${{ matrix.profile }}.xml --record-durations=durations-${{ matrix.profile }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.profile }}-${{ strategy.job-index }}
+          path: |
+            junit-*.xml
+            durations-*.json
+
+  docs:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-suffix: docs
+      - run: uvx nox -s docs
+
+  package:
+    name: build distributions
+    needs: plan
+    if: needs.plan.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+          python scripts/ci/audit_dist.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error
+
+  install:
+    name: install ${{ matrix.distribution }}
+    needs: package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution: [wheel, sdist]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - name: Install and smoke-test distribution
+        shell: bash
+        run: |
+          python -m venv .dist-venv
+          if [[ "${{ matrix.distribution }}" == "wheel" ]]; then
+            artifact=(dist/*.whl)
+          else
+            artifact=(dist/*.tar.gz)
+          fi
+          .dist-venv/bin/python -m pip install --upgrade pip
+          .dist-venv/bin/python -m pip install "${artifact[0]}"
+          .dist-venv/bin/python scripts/ci/smoke_installed.py
+
+  # The only check branch protection requires. Jobs the plan skipped count as passing.
+  ci-ok:
+    if: (vars.STABLE_ENVS_CI == 'true' || github.event_name == 'workflow_dispatch') && (always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft))
+    needs: [plan, static, core, family, docs, package, install]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          allowed-skips: core, family, package, install
+          jobs: ${{ toJSON(needs) }}
+
+  # A red full run on main or the weekly schedule opens (or comments on) one tracking issue.
+  report:
+    needs: ci-ok
+    if: failure() && (github.event_name == 'push' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="ci: main is red"
+          body="The $EVENT run on $SHA failed: $RUN"
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [[ -n "$number" ]]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

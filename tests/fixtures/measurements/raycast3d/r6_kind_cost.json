@@ -1,0 +1,64 @@
+{
+ "tool": "r6_kind_cost_agg",
+ "supersedes": "the per-run `predicate` fields, which use the superseded 1 + 3*worst_rsd margin",
+ "rule": "bounded(kind) iff ns_intersect/ns_bound > 1 at every measured (B, N) in EVERY independent run: cost_bound < cost_intersect is the condition that holds for any scene, since the fraction of rays kept is >= 0",
+ "shape": "nearest",
+ "threads": 1,
+ "cpu": "x86_64",
+ "predicate": {
+  "PLANE": false,
+  "SPHERE": false,
+  "BOX": true,
+  "CYLINDER": true,
+  "CAPSULE": true
+ },
+ "ratio_worst_per_run": {
+  "SPHERE": [
+   0.27170925927427153,
+   0.2788357553128019,
+   0.2793262044054972
+  ],
+  "BOX": [
+   1.1343588908457785,
+   1.1092011988031554,
+   1.125045738981925
+  ],
+  "CYLINDER": [
+   1.2412569261823767,
+   1.2289435942488542,
+   1.2435959819412814
+  ],
+  "CAPSULE": [
+   1.4844794204926537,
+   1.477339329457357,
+   1.4684089642900604
+  ]
+ },
+ "ratio_best_per_run": {
+  "SPHERE": [
+   0.4582603604249843,
+   0.3689990091896602,
+   0.41254163265295996
+  ],
+  "BOX": [
+   1.6269237976356705,
+   1.587287547931394,
+   1.8572453548261576
+  ],
+  "CYLINDER": [
+   1.919327248533635,
+   1.7522161681150519,
+   1.717222282546084
+  ],
+  "CAPSULE": [
+   2.2265947395761945,
+   2.0591403374037975,
+   3.36793397389407
+  ]
+ },
+ "separation": {
+  "dearest_unbounded_at_its_best": 0.4582603604249843,
+  "cheapest_bounded_at_its_worst": 1.1092011988031554,
+  "gap_x": 2.420460713151139
+ }
+}

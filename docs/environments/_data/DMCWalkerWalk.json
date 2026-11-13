@@ -1,0 +1,195 @@
+{
+ "class_name": "DMCWalkerWalk",
+ "module": "stable_envs.envs.dmcontrol",
+ "family": "dmcontrol",
+ "domain": "walker",
+ "reference_id": "dm_control/walker-walk",
+ "requires_cuda": false,
+ "has_dynamics": true,
+ "default_size": 84,
+ "native_size": null,
+ "frame_shape": [84, 84, 3],
+ "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
+ "renderers": {
+  "cpu": "cpu3d (Numba)",
+  "cuda": "mjwarp"
+ },
+ "action": {
+  "shape": [6],
+  "dtype": "float64",
+  "low": -1,
+  "high": 1
+ },
+ "state": [
+  {
+   "key": "qpos",
+   "shape": [9],
+   "dtype": "float64"
+  },
+  {
+   "key": "qvel",
+   "shape": [9],
+   "dtype": "float64"
+  },
+  {
+   "key": "time",
+   "shape": [1],
+   "dtype": "float64"
+  },
+  {
+   "key": "warmstart",
+   "shape": [9],
+   "dtype": "float64"
+  },
+  {
+   "key": "lifecycle",
+   "leaves": 2,
+   "numel": 2,
+   "dtypes": ["bool", "int64"]
+  },
+  {
+   "key": "task",
+   "leaves": 1,
+   "numel": 1,
+   "dtypes": ["float64"]
+  },
+  {
+   "key": "rng",
+   "leaves": 4,
+   "numel": 627,
+   "dtypes": ["bool", "float64", "int64"]
+  },
+  {
+   "key": "physics",
+   "leaves": 7,
+   "numel": 7,
+   "dtypes": ["float64"]
+  }
+ ],
+ "variation": [
+  {
+   "path": "agent.left_foot_density",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 500,
+   "high": 1500,
+   "default": 1000
+  },
+  {
+   "path": "agent.torso_density",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 500,
+   "high": 1500,
+   "default": 1000
+  },
+  {
+   "path": "floor.color",
+   "type": "Box",
+   "reset": false,
+   "shape": [2, 3],
+   "low": 0,
+   "high": 1,
+   "default": [0.1, 0.2, 0.3, 0.2, 0.3, 0.4]
+  },
+  {
+   "path": "floor.friction",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 1
+  },
+  {
+   "path": "floor.rotation_y",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -10,
+   "high": 10,
+   "default": 0
+  },
+  {
+   "path": "gravity.x",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -5,
+   "high": 5,
+   "default": 0
+  },
+  {
+   "path": "gravity.y",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -5,
+   "high": 5,
+   "default": 0
+  },
+  {
+   "path": "gravity.z",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": -20,
+   "high": 0,
+   "default": -9.81
+  },
+  {
+   "path": "light.diffuse_scale",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0.2,
+   "high": 1.8,
+   "default": 1
+  },
+  {
+   "path": "material.grid",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": 1
+  },
+  {
+   "path": "material.self",
+   "type": "Box",
+   "reset": false,
+   "shape": [3],
+   "low": 0,
+   "high": 1,
+   "default": [0.7, 0.5, 0.3]
+  }
+ ],
+ "devices": {
+  "cpu": "ok",
+  "cuda": "ok"
+ },
+ "media": {
+  "device": "cuda",
+  "render_size": 160,
+  "rollout": {
+   "file": "rollout.mp4",
+   "width": 160,
+   "height": 160,
+   "frames": 61,
+   "fps": 15,
+   "bytes": 39178
+  },
+  "variation": {
+   "file": "variation.mp4",
+   "width": 224,
+   "height": 224,
+   "frames": 46,
+   "fps": 15,
+   "bytes": 57388
+  },
+  "variation_leaves": "all"
+ }
+}

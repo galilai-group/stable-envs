@@ -1,0 +1,10 @@
+{
+  "required": [
+    "swm/CartPoleControl-v1",
+    "swm/PendulumControl-v1",
+    "swm/AcrobotControl-v1",
+    "swm/MountainCarControl-v0",
+    "swm/MountainCarContinuousControl-v0"
+  ],
+  "scope": "State/task trajectories; no render or acceptance claim"
+}
