@@ -43,6 +43,17 @@ def mujoco_version():
     return ".".join(version("mujoco").split(".")[:2])
 
 
+def rasterizer_available(device):
+    """Whether ``render.mujoco_raster`` draws on ``device``: Numba, and on CUDA also nvdiffrast and Triton."""
+    from importlib.util import find_spec
+
+    from . import cpu_raster
+
+    if not cpu_raster.available():
+        return False
+    return not str(device).startswith("cuda") or all(find_spec(name) is not None for name in ("nvdiffrast", "triton"))
+
+
 def require(s, feature):
     """Raise NotImplementedError unless ``feature`` is verified for the MuJoCo version of scene ``s``."""
     if feature not in VERIFIED.get(s.version, frozenset()):
