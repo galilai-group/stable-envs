@@ -52,17 +52,3 @@ with snv.CartPole(num_envs=8, device="cpu") as env:
 | write an environment of your own | [Write your own environment](tutorials/custom-env.md) |
 | find an environment and see what it looks like | [Environments](environments.md) |
 | look up a function or class | [API](api/index.md) |
-
-## Citation
-
-If you use stable-envs in your research, please cite:
-
-```bibtex
-@inproceedings{stableenvs2026,
-  title     = {stable-envs-v1: Fast and Reproducible Environments with Controllable Variations},
-  author    = {[TODO]},
-  booktitle = {[TODO]},
-  year      = {2026},
-  url       = {https://github.com/galilai-group/stable-envs}
-}
-```

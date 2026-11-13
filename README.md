@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/brand/logo-dark.png">
-  <img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/brand/logo.png" alt="stable-envs" width="340">
-</picture>
+<img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/brand/banner.jpg" alt="stable-envs: frames from ten environment families" width="100%">
 
 **Fast and Reproducible Environments with Controllable Variations**
 
@@ -9,9 +6,7 @@ stable-envs is a library of batched simulation environments that keep the full s
 
 [![Docs](https://img.shields.io/badge/docs-galilai--group.github.io-black.svg)](https://galilai-group.github.io/stable-envs/) [![PyPI](https://img.shields.io/pypi/v/stable-envs.svg?color=black)](https://pypi.org/project/stable-envs/) [![CI](https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/galilai-group/stable-envs/actions/workflows/ci.yml) [![Python 3.10 to 3.12](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-black.svg)](https://github.com/galilai-group/stable-envs/blob/main/pyproject.toml) [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](https://github.com/galilai-group/stable-envs/blob/main/LICENSE)
 
-[Install](#install) · [Quickstart](#quickstart) · [Environments](#environments) · [Documentation](https://galilai-group.github.io/stable-envs/) · [Citation](#citation)
-
-<img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/PushT/variation_batch.png" alt="24 PushT environments in one batch, each with its own sampled colors" width="786">
+[Install](#install) · [Quickstart](#quickstart) · [Environments](#environments) · [Documentation](https://galilai-group.github.io/stable-envs/)
 
 Store states instead of pixels, replay or branch from any step, and render frames from a stored state as many times as you like. 80 environment classes in 11 families share the same API.
 
@@ -70,18 +65,6 @@ The [Quickstart](https://galilai-group.github.io/stable-envs/quickstart/) covers
 ## Documentation
 
 The full documentation is at [galilai-group.github.io/stable-envs](https://galilai-group.github.io/stable-envs/).
-
-## Citation
-
-```bibtex
-@inproceedings{stableenvs2026,
-  title     = {stable-envs-v1: Fast and Reproducible Environments with Controllable Variations},
-  author    = {[TODO]},
-  booktitle = {[TODO]},
-  year      = {2026},
-  url       = {https://github.com/galilai-group/stable-envs}
-}
-```
 
 ## Questions
 
