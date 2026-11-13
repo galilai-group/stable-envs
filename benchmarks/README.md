@@ -85,5 +85,5 @@ use the same hardware.
 - Offline: stable-envs draws stored inputs with `env.render` at each batch. The inputs are rows from the
   family sampler (`sample_states`). For a class without a sampler, the inputs are full States from
   random-action rollouts. The source draws the same inputs. The frame MSE compares the two on the 0-255 scale.
-- Online: physics steps with L lanes, and steps with a frame after each step, against the source stepping L
+- Online: physics steps of L environments, and steps with a frame after each step, against the source stepping L
   envs on CPU.
