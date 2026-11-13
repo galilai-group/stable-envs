@@ -73,9 +73,7 @@ The `pusht-reference` extra (gym-pusht) installs only the [upstream library](ter
 
 The first construction, step or render of many classes compiles kernels: Numba on CPU, and Triton, Warp or JAX on CUDA. This can take from a few seconds to a few minutes for each class, and nothing shows progress during this time. Most compiled kernels stay in a cache on disk, so the next process starts faster. Do some warm-up calls before you measure speed.
 
-The MuJoCo families draw some or all of their frames with MuJoCo's own OpenGL renderer, so they need an OpenGL backend on GPU machines too. MuJoCo picks the backend from `MUJOCO_GL`. If it's unset, stable-envs picks one: on Linux the backend that `PYOPENGL_PLATFORM` names (`egl` or `osmesa`), otherwise `egl` on Linux and `cgl` on macOS.
-
-On Linux, `import mujoco` loads the libraries of that backend. Fetch, `OGBCube` and `OGBScene` don't draw with OpenGL on CPU, but they import MuJoCo, so they also need the packages of [Headless Linux with an NVIDIA GPU](#headless-linux-with-an-nvidia-gpu) or [Headless Linux without a GPU](#headless-linux-without-a-gpu).
+The MuJoCo families draw some or all of their frames with MuJoCo's own OpenGL renderer, so they need an OpenGL backend on GPU machines too. MuJoCo picks the backend from `MUJOCO_GL`. If it's unset, stable-envs picks one. On macOS, it is `cgl`. On Linux, it is the backend that `PYOPENGL_PLATFORM` names (`egl` or `osmesa`), otherwise `egl` when libEGL and libGL load, then `osmesa` when libOSMesa loads. When no GL library loads, stable-envs sets `MUJOCO_GL=disable`: physics and the CPU renderers of Fetch, `OGBCube` and `OGBScene` work, and a MuJoCo OpenGL renderer raises an error that gives the packages to install. stable-envs keeps a `MUJOCO_GL` that you set.
 
 Miniworld draws through pyglet, which runs headless on EGL on Linux unless `PYGLET_HEADLESS` is set. It needs an EGL driver, and the EGL steps below apply to it as well. Without a GPU, Mesa's llvmpipe works. pyglet also loads libGL and GLU, so on Debian and Ubuntu install these packages, with or without a GPU:
 
