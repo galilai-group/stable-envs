@@ -7,10 +7,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         exclude: >-
-          ^(?:docs/assets/|tests/fixtures/)
+          ^(?:docs/assets/|tests/fixtures/|licenses/)
       - id: end-of-file-fixer
         exclude: >-
-          ^(?:docs/assets/|tests/fixtures/)
+          ^(?:docs/assets/|tests/fixtures/|licenses/)
       - id: check-ast
       - id: check-case-conflict
       - id: check-json
