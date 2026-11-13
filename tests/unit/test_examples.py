@@ -107,7 +107,69 @@ SMOKE = {
     "domain_randomization.py": ("CartPole", ["--num-envs", "4", "--device", "cpu", "--reps", "1"]),
     "gallery.py": ("CartPole", ["--envs", "CartPole", "--num-envs", "2", "--steps", "2", "--device", "cpu"]),
     "render.py": ("CartPole", ["--env", "CartPole", "--num-envs", "2", "--device", "cpu"]),
+    "lewm/state_render.py": ("PushT", []),
+    "lewm/make_dataset.py": ("PushT", ["{tmp}/states.h5", "{tmp}/pixels.h5", "--size", "96", "--batch", "16"]),
+    "lewm/train.py": (
+        "PushT",
+        [
+            "--data",
+            "{tmp}/states.h5",
+            "--out",
+            "{tmp}/runs",
+            "--half",
+            "--precision",
+            "32",
+            "--accelerator",
+            "cpu",
+            "--max-steps",
+            "2",
+            "loader.batch_size=4",
+            "loader.num_workers=0",
+            "img_size=56",
+        ],
+    ),
+    "lewm/eval.py": (
+        "PushT",
+        [
+            "--data",
+            "{tmp}/states.h5",
+            "--policy",
+            "random",
+            "--device",
+            "cpu",
+            "--num-eval",
+            "2",
+            "eval.eval_budget=4",
+            "eval.goal_offset_steps=3",
+            "img_size=96",
+        ],
+    ),
 }
+
+
+def _write_lewm_states(path: Path) -> None:
+    """Write two short PushT episodes in the stable-worldmodel HDF5 layout: states, proprio and actions."""
+    import numpy as np
+
+    h5py = pytest.importorskip("h5py")
+    rng = np.random.default_rng(0)
+    n, episodes = 40, 2
+    state = np.concatenate(
+        [
+            rng.uniform(150, 350, (n * episodes, 4)),
+            rng.uniform(0, 2 * np.pi, (n * episodes, 1)),
+            np.zeros((n * episodes, 2)),
+        ],
+        axis=1,
+    ).astype(np.float32)
+    with h5py.File(path, "w") as f:
+        f["state"] = state
+        f["proprio"] = state[:, [0, 1, 5, 6]]
+        f["action"] = rng.uniform(-1, 1, (n * episodes, 2)).astype(np.float32)
+        f["ep_idx"] = np.repeat(np.arange(episodes), n)
+        f["step_idx"] = np.tile(np.arange(n), episodes)
+        f["ep_len"] = np.full(episodes, n, np.int32)
+        f["ep_offset"] = np.arange(episodes, dtype=np.int64) * n
 
 
 def test_every_script_has_smoke_arguments():
@@ -124,6 +186,9 @@ def test_every_script_runs_end_to_end(path: Path, tmp_path: Path):
         pytest.skip(f"{name} is not registered in this interpreter")
     if path.name == "gallery.py":
         args = [*args, "--out", str(tmp_path)]
+    if path.parent.name == "lewm":
+        _write_lewm_states(tmp_path / "states.h5")
+        args = [arg.replace("{tmp}", str(tmp_path)) for arg in args]
     _run(path, args)
     if path.name == "gallery.py":
         written = sorted(p.name for p in (tmp_path / "CartPole").iterdir())

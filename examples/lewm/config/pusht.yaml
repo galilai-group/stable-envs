@@ -1,0 +1,127 @@
+# LeWM on stable-envs PushT. The model, loss and optimizer values are the values of
+# stable-worldmodel scripts/train/config/lewm.yaml; the planning values are those of
+# scripts/plan/config/pusht.yaml (stable-worldmodel 21446f1).
+
+env:
+  id: PushT
+  kwargs: {}
+  # The dataset column that holds the state rows.
+  state_column: state
+  # State leaf <- [start, stop) columns of a state row: agent x, y, block x, y, block angle, agent vx, vy.
+  leaves:
+    current.body.agent.position: [0, 2]
+    current.body.block.position: [2, 4]
+    current.body.block.angle: [4, 5]
+  # Dataset rows hold no contact points, so the frames show no contact markers.
+  zero: [current.render_segments, current.render_segment_count]
+
+data:
+  frameskip: 5
+
+seed: 3072
+train_split: 0.9
+img_size: 224
+
+trainer:
+  max_epochs: 100
+  precision: bf16-mixed
+  gradient_clip_val: 1.0
+
+loader:
+  batch_size: 128
+  num_workers: 6
+  drop_last: true
+  persistent_workers: true
+  prefetch_factor: 3
+  pin_memory: true
+  shuffle: true
+
+optimizer:
+  type: AdamW
+  lr: 5e-5
+  weight_decay: 1e-3
+
+wm:
+  history_size: 3
+  num_preds: 1
+
+model:
+  _target_: stable_worldmodel.wm.lewm.LeWM
+  encoder:
+    _target_: stable_pretraining.backbone.utils.vit_hf
+    size: tiny
+    patch_size: 14
+    image_size: ${img_size}
+    pretrained: false
+    use_mask_token: false
+  predictor:
+    _target_: stable_worldmodel.wm.lewm.module.Predictor
+    num_frames: ${wm.history_size}
+    input_dim: 192
+    hidden_dim: 192
+    output_dim: 192
+    depth: 6
+    heads: 16
+    mlp_dim: 2048
+    dim_head: 64
+    dropout: 0.1
+    emb_dropout: 0.0
+  action_encoder:
+    _target_: stable_worldmodel.wm.lewm.module.Embedder
+    input_dim: ???
+    emb_dim: 192
+  projector:
+    _target_: stable_worldmodel.wm.lewm.module.MLP
+    input_dim: 192
+    output_dim: 192
+    hidden_dim: 2048
+    norm_fn:
+      _target_: torch.nn.BatchNorm1d
+      _partial_: true
+  pred_proj:
+    _target_: stable_worldmodel.wm.lewm.module.MLP
+    input_dim: 192
+    output_dim: 192
+    hidden_dim: 2048
+    norm_fn:
+      _target_: torch.nn.BatchNorm1d
+      _partial_: true
+
+# --half: 6 encoder layers instead of 12, 3 predictor layers instead of 6.
+half:
+  model.encoder.num_hidden_layers: 6
+  model.predictor.depth: 3
+
+loss:
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024
+
+eval:
+  seed: 42
+  num_eval: 50
+  goal_offset_steps: 25
+  eval_budget: 50
+  # The task observation: a State leaf, and the columns of it that are the proprioception.
+  observation_leaf: current.observation
+  proprio_columns: [0, 1, 5, 6]
+  # Reset option <- dataset column. A ``goal_`` column comes from the goal step of the episode.
+  reset_options:
+    state: state
+    goal_state: goal_state
+  keys_to_cache: [action, proprio, state]
+  plan:
+    horizon: 5
+    receding_horizon: 5
+    action_block: 5
+  solver:
+    _target_: stable_worldmodel.planning.solver.CEMSolver
+    batch_size: 1
+    num_samples: 300
+    var_scale: 1.0
+    n_steps: 30
+    topk: 30
+  objective:
+    _target_: stable_worldmodel.planning.GoalMSE

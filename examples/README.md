@@ -20,3 +20,8 @@ python examples/action_sequences.py
 
 Store full State snapshots in your own dataset. Call `env.render(batch)` on them after transfer. You
 do not need to call `set_state` first. See the [State contract](../docs/concepts/state.md).
+
+## LeWM world model
+
+[`lewm/`](lewm/README.md) trains and evaluates LeWM (stable-worldmodel) on stable-envs PushT. The training
+script draws the frames on the training GPU from the state rows of the dataset.

@@ -135,6 +135,10 @@ All notable changes to this project are listed here. The format follows
   renderer of each source (`"mujoco-egl"` for DM Control, Fetch and OGBench, `"pybullet-egl"` for
   PyFlytRocketLanding) and the inputs that the source renderer draws for a full State. A conformance check on every
   class with a source renderer draws these inputs with the source and compares the frame shape with `env.render(state)`.
+- `examples/lewm/`: scripts that train and evaluate the LeWM world model of stable-worldmodel on PushT.
+  `train.py` reads states and actions from the dataset and draws the frames with `env.render(state)` on the
+  training device, or reads stored frames. `make_dataset.py` makes a state dataset or a dataset with stable-envs
+  frames. `eval.py` plans with CEM through stable-worldmodel's `World`, from start and goal pairs in the dataset.
 
 ### Changed
 
