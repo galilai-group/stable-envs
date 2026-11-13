@@ -91,10 +91,10 @@ bash benchmarks/paper/compare.sh results-h100                   # H100 node: all
 bash benchmarks/paper/compare.sh results-l40s --missing-only    # L40S node: the cells that rt4 does not have
 ```
 
-The script installs what it needs and uses all GPUs, one env per GPU. It times the stable-envs cells of all envs first,
-then the source cells. A source cell stops after 20 minutes and gets the status `timeout`. Run the same command again
-to continue. At the end, the script shows the table and writes `HEADLINE.md`. `--summary OUT` shows the table again, and
-`--dry-run` shows the plan without a run.
+The cells are steps, frames+steps and offline, on CPU and GPU, for stable-envs and the source, at 1, 16, 256 and 1024
+envs, for TwoRoom, PushT, DMCHopperHop, OGBCube and PyFlytRocketLanding. The script installs what it needs, uses all
+GPUs, and times the stable-envs cells first, then the source cells. A cell stops after 20 minutes (status `timeout`).
+Run the command again to continue. It writes `HEADLINE.md`; `--summary OUT` shows it, `--dry-run` shows the cells.
 
 ### Run
 

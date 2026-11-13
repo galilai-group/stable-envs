@@ -2,13 +2,15 @@
 # stable-envs v0.1.0 against the source libraries on this machine, in one command.
 # usage: bash benchmarks/paper/compare.sh OUT [--missing-only] [options] [ENV ...]
 #        bash benchmarks/paper/compare.sh --summary OUT
-#   Default: every paper env (fleet/costs.json); CPU cells at the lane counts, batches and source caps of the L40S
-#   re-time (rt4); GPU cells (steps, frames+steps, offline) at 1:8:64:256:1024:2048:4096, ours and the source. A cell
-#   that runs out of memory or time (STEP_LIMIT per cell process, default 20m) is kept as a result with that status.
-#   --missing-only  start from the rt4 L40S results (rt4_l40s.tar.gz) and time only the GPU cells they do not have
+#   Default: the envs TwoRoom PushT DMCHopperHop OGBCube PyFlytRocketLanding (or the ENV arguments); steps,
+#   frames+steps and offline, on CPU and GPU, ours and the source, at lane counts and batches 1:16:256:1024 for both
+#   devices, with no source caps. A cell that runs out of memory or time (STEP_LIMIT per cell process, default 20m) is
+#   kept as a result with that status.
+#   --missing-only  start from the rt4 L40S cells (rt4_l40s.tar.gz: steps and frames+steps at the lane counts rt4
+#                   timed) and time only the other cells; the offline cells are all timed again on this machine
 #   --summary       print the headline of OUT again (also of a partial OUT) and run nothing
 #   --dry-run       print the setup steps and every run.sh call; install and run nothing
-#   --gpu-only      only the GPU cells;  --sweep L:L  other GPU lane counts and batches;  --smoke  a short check
+#   --gpu-only      only the GPU cells;  --sweep L:L  other lane counts and batches;  --smoke  a short check
 #   --ref REF       the library to time (default v0.1.0; HEAD for this checkout), with the harness of this checkout
 #   --gpus N        use the first N GPUs (default: all); one env per GPU at a time, each on its own 8 or 16 cores
 # It installs what it needs (apt packages, uv, stable-worldmodel, family venvs, nvdiffrast) under COMPARE_WORK
@@ -21,7 +23,7 @@ MODE=full; SWEEP=; SMOKE=0; DRY=0; REF=v0.1.0; MISSING=0; NGPU=; SUMMARY=0; ENVS
 while [ $# -gt 0 ]; do
   case $1 in
     --gpu-only) MODE=gpu;;
-    --missing-only) MODE=gpu; MISSING=1;;
+    --missing-only) MISSING=1;;
     --sweep) SWEEP=$2; shift;;
     --smoke) SMOKE=1;;
     --ref) REF=$2; shift;;
@@ -38,13 +40,16 @@ done
 mkdir -p "$OUT"; OUT=$(cd "$OUT" && pwd)
 
 summary() {
-  python3 "$HERE/headline.py" "$OUT" --write
+  local b; b=$(python3 -c "import json; print(json.load(open('$OUT/compare.json')).get('sizes', ''))" 2>/dev/null)
+  python3 "$HERE/headline.py" "$OUT" ${b:+--batches $b} --write
 }
 [ $SUMMARY = 1 ] && { summary; exit 0; }
 
-SWEEP_CUDA=${SWEEP:-1:8:64:256:1024:2048:4096}
-SWEEP_CPU=1:8:64:256:1024
-[ $SMOKE = 1 ] && { SWEEP_CPU=1:8; [ -z "$SWEEP" ] && SWEEP_CUDA=8:64; }
+SWEEP_CPU=${SWEEP:-1:16:256:1024}; SWEEP_CUDA=$SWEEP_CPU
+[ $SMOKE = 1 ] && [ -z "$SWEEP" ] && { SWEEP_CPU=1:16; SWEEP_CUDA=1:16; }
+[ ${#ENVS[@]} = 0 ] && ENVS=(TwoRoom PushT DMCHopperHop OGBCube PyFlytRocketLanding)
+# CPU frames at every lane count, with no cap.
+export FRAMES_CPU=$SWEEP_CPU
 W=${COMPARE_WORK:-$HOME/.cache/snv-compare}
 mkdir -p "$W"/{tmp,venvs,uvcache,st}
 log() { echo "$(date -u +%H:%M:%S) $*" | tee -a "$OUT/compare.log"; }
@@ -86,28 +91,6 @@ par = int(usable >= 16 * jobs) if jobs else 0
 print(g, usable, jobs, par)
 PY
 }
-# estimate JOBS PARALLEL: wall time and GPU-hours from rt4's minutes per env (fleet/costs.json).
-estimate() {
-  python3 - "$HERE/fleet/costs.json" "$MODE" "$MISSING" "$1" "$2" "$W/tmp/dry-queue" <<'PY'
-import json, sys
-c = json.load(open(sys.argv[1])); mode, missing, jobs, par = sys.argv[2], sys.argv[3] == "1", int(sys.argv[4]), sys.argv[5] == "1"
-envs = [l.split()[1] for l in open(sys.argv[6]) if l.strip()]
-gs = set(c.get("gpu_source_families", []))
-lo = hi = 0.0
-for e in envs:
-    m = c["rt4_min"].get(e, 30.0)
-    if not par and e in c["rt4_parallel"]:
-        m *= 2  # rt4 ran the two passes at the same time
-    if mode == "gpu":
-        m *= 0.6 if not missing else 0.3
-    m *= 1.4  # the GPU cells at 2048 and 4096 lanes and batches
-    lo += m
-    hi += m + (60 if c["envs"][e] in gs else 0)  # source GPU frames at 1024, 2048 and 4096: up to 20 min each
-print(f"estimate: {len(envs)} envs, {lo / 60:.1f}-{hi / 60:.1f} GPU-hours; with {max(jobs, 1)} jobs at a time "
-      f"{lo / 60 / max(jobs, 1):.1f}-{hi / 60 / max(jobs, 1):.1f} h of wall time (from rt4 on L40S; rough)")
-PY
-}
-
 if [ "$DRY" = 1 ]; then
   echo "setup: apt-get xvfb xauth libgl1 libgl1-mesa-dri libegl1 libosmesa6 libglfw3 libglew2.2 libglu1-mesa git rsync python3-venv"
   echo "setup: uv 0.13.5 in $W/uvenv; stable-worldmodel $SWM_SHA in $W/swm; family venvs in $W/venvs (torch 2.14.1+cu126)"
@@ -122,12 +105,14 @@ if [ "$DRY" = 1 ]; then
     echo "phase $side: every env's $side cells$([ $side = ours ] && echo ' (stable-envs and the frame MSE), on all GPUs' || echo ', after the ours phase; STEP_LIMIT per cell, else timeout')"
     while read -r fam E; do
       [ -f "$OUT/$E/done-$side.json" ] && { echo "  $E: done, skipped"; continue; }
-      DRY_RUN=1 W=$W MODE=$MODE SIDE=$side SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=$HERE/fleet/src_cap_envs \
+      DRY_RUN=1 W=$W MODE=$MODE SIDE=$side SWEEP_CPU=$SWEEP_CPU SWEEP_CUDA=$SWEEP_CUDA CAPS=/dev/null \
         bash "$HERE/job.sh" "$OUT/$E" "$fam" "$E"
     done < "$W/tmp/dry-queue"
   done
-  [ "$MISSING" = 1 ] && echo "missing-only: OUT starts from rt4_l40s.tar.gz; run.sh skips every cell file that is there"
-  estimate "$jobs" "$par"
+  echo "cells to time ($([ "$MISSING" = 1 ] && echo "not in rt4_l40s.tar.gz, " )not in OUT), with an estimate:"
+  dry_envs=(); while read -r _ e; do dry_envs+=("$e"); done < "$W/tmp/dry-queue"
+  extra=(); [ "$MISSING" = 1 ] && extra=(--missing-only)
+  python3 "$HERE/plan.py" --envs "${dry_envs[@]}" --sizes "$SWEEP_CUDA" --out "$OUT" --jobs "$jobs" ${extra[@]+"${extra[@]}"}
   echo "end: $OUT/HEADLINE.md"
   exit 0
 fi
@@ -154,7 +139,7 @@ if [ -n "$REF" ]; then
 fi
 export SNV_REPO=$REPO SWM=$W/swm UV=$W/uvenv/bin/uv VENVS=$W/venvs UV_CACHE_DIR=$W/uvcache UV_LINK_MODE=copy \
   UV_HTTP_TIMEOUT=600 TMPDIR=$W/tmp W NVDIFFRAST_SITE=${NVDIFFRAST_SITE:-} MODE SWEEP_CPU SWEEP_CUDA SMOKE \
-  CAPS=$HERE/fleet/src_cap_envs WINDOW=${WINDOW:-3} REPEATS=${REPEATS:-3} STEP_LIMIT=${STEP_LIMIT:-20m}
+  CAPS=/dev/null WINDOW=${WINDOW:-3} REPEATS=${REPEATS:-3} STEP_LIMIT=${STEP_LIMIT:-20m}
 read -r G usable JOBS PAR < <(layout)
 [ "$JOBS" -ge 1 ] || { log "no GPU found"; exit 2; }
 [ "$PAR" = 1 ] || export PARALLEL_DEVICES=0
@@ -165,8 +150,11 @@ if [ "$MISSING" = 1 ]; then
   tar xzf "$HERE/rt4_l40s.tar.gz" -C "$W/tmp" && env_list | while read -r _ e; do
     d=$W/tmp/rt4-l40s/$e
     [ -d "$d" ] && [ ! -f "$OUT/$e/hardware-rt4.json" ] || continue
-    mkdir -p "$OUT/$e/pass-cuda" && cp -rn "$d"/offline "$d"/online "$OUT/$e/" 2> /dev/null \
-      && cp -rn "$d"/offline "$d"/online "$OUT/$e/pass-cuda/" 2> /dev/null && cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"
+    for p in "" pass-cpu/ pass-cuda/; do
+      mkdir -p "$OUT/$e/${p}online/$e"
+      for L in ${SWEEP_CPU//:/ }; do cp -n "$d/online/$e/"*-L"$L".json "$OUT/$e/${p}online/$e/" 2> /dev/null; done
+    done
+    cp "$d/hardware.json" "$OUT/$e/hardware-rt4.json"
   done
 fi
 python3 - "$OUT" "$REPO" "$SRC" "$MODE" "$SWEEP_CUDA" "$JOBS" <<'EOF'
@@ -181,7 +169,7 @@ m = {"commit": sh(f"git -C {repo} rev-parse HEAD"), "harness": sh(f"git -C {src}
      "cpu_quota": sh("cat /sys/fs/cgroup/cpu.max 2>/dev/null"), "mem_gib": round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30),
      "date": sh("date -Is")}
 json.dump(m, open(f"{out}/machine.json", "w"), indent=1)
-json.dump({"mode": mode, "sweep_cuda": sweep}, open(f"{out}/compare.json", "w"))
+json.dump({"mode": mode, "sizes": sweep}, open(f"{out}/compare.json", "w"))
 print(m)
 EOF
 

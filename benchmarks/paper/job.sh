@@ -30,6 +30,7 @@ if [ "$DRY" != 1 ]; then
 fi
 
 frames_cpu() {
+  [ -n "${FRAMES_CPU:-}" ] && { echo "$FRAMES_CPU"; return; }
   case $E in OGBCube|OGBScene) echo 1:8; return;; esac
   case $fam in dmc|fetch|ogbench|rocket) echo 1:8:64;; *) echo 1:8:64:256;; esac
 }
@@ -74,7 +75,8 @@ call() {
 }
 
 gpusrc() {
-  [ "$DRY" = 1 ] && { echo "(if the source has a GPU renderer)"; return 0; }
+  [ "$DRY" = 1 ] && { python3 -c "import json, sys; print(json.load(open(sys.argv[1]))['gpu_source'].get(sys.argv[2], ''))" \
+    "$HERE/fleet/costs.json" "$E"; return 0; }
   $P -c "import stable_envs as s; from tests.helpers.reference.sources import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')" 2>/dev/null
 }
 
