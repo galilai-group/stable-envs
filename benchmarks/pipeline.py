@@ -1,6 +1,6 @@
 """Measure host-state-to-frame throughput, with an optional real-JPEG decode comparison.
 
-The stable-envs arm includes packed host-state ingress and the public ``env.render`` call. Supplying
+The stable-envs arm includes the copy of a host State to the device and the public ``env.render`` call. Supplying
 ``--jpeg-dir`` adds a separately labelled, single-process Pillow baseline over real files. Neither
 arm imports or requires stable_worldmodel.
 """
@@ -8,6 +8,7 @@ arm imports or requires stable_worldmodel.
 from __future__ import annotations
 
 import argparse
+import inspect
 import sys
 from pathlib import Path
 from typing import Any
@@ -52,9 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     add_common_arguments(parser, batches=False)
     parser.add_argument(
-        "--state-file", default=None, help=".npy or .npz packed-state corpus; default uses env.reset(seed)"
+        "--state-file",
+        default=None,
+        help=".npz full State, one array per field with keys joined by '/'; default uses env.reset(seed)",
     )
-    parser.add_argument("--state-key", default="states", help="array key for an .npz state corpus")
     parser.add_argument(
         "--jpeg-dir",
         default=None,
@@ -69,46 +71,38 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray | TensorDict, str]:
-    if args.state_file is None:
-        state = env.reset(seed=args.seed)
-        if env.state_dim == 0 and hasattr(env, "to_render_state"):
-            return env.to_render_state(state).cpu(), "env.reset(seed) -> structured RenderState"
-        rows = env._pack_render_state(state).detach().cpu().numpy().copy()
-        return rows, "env.reset(seed) -> env._pack_render_state(public State)"
-
-    path = Path(args.state_file)
+def _read_state(path: Path, batch: int) -> TensorDict:
     if not path.is_file():
-        raise FileNotFoundError(f"state corpus does not exist: {path}")
+        raise FileNotFoundError(f"state file does not exist: {path}")
     loaded = np.load(path, allow_pickle=False)
-    if isinstance(loaded, np.lib.npyio.NpzFile):
-        try:
-            if env.state_dim == 0 and hasattr(env, "to_render_state"):
-                if "recipe/version" not in loaded.files:
-                    raise ValueError("This environment requires a full numeric State NPZ, not packed rows")
-                if len(loaded["recipe/version"]) < args.batch:
-                    raise ValueError("State NPZ has fewer lanes than --batch")
-                state = TensorDict(
-                    {tuple(k.split("/")): torch.tensor(loaded[k][: args.batch]) for k in loaded.files},
-                    [args.batch],
-                    device="cpu",
-                )
-                return env.to_render_state(state).cpu(), "state-file -> structured RenderState"
-            if args.state_key not in loaded.files:
-                raise KeyError(f"{path} has keys {loaded.files}, not --state-key={args.state_key!r}")
-            rows = np.asarray(loaded[args.state_key])
-        finally:
-            loaded.close()
+    if not isinstance(loaded, np.lib.npyio.NpzFile):
+        raise ValueError(f"{path}: expected an .npz full State with one array per field, not one array")
+    try:
+        lanes = min(len(loaded[k]) for k in loaded.files)
+        if lanes < batch:
+            raise ValueError(
+                f"{path}: contains {lanes} states, fewer than --batch={batch}; "
+                "the benchmark will not duplicate states silently"
+            )
+        fields = {tuple(k.split("/")): torch.tensor(loaded[k][:batch]) for k in loaded.files}
+    finally:
+        loaded.close()
+    return TensorDict(fields, [batch], device="cpu")
+
+
+def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[TensorDict, str]:
+    if args.state_file is None:
+        state, source = env.reset(seed=args.seed), "env.reset(seed)"
     else:
-        rows = np.asarray(loaded)
-    if rows.ndim != 2 or rows.shape[1] != int(env.state_dim):
-        raise ValueError(f"{path}: expected packed states shaped (N, {env.state_dim}), got {rows.shape}")
-    if len(rows) < args.batch:
-        raise ValueError(
-            f"{path}: contains {len(rows)} states, fewer than --batch={args.batch}; "
-            "the benchmark will not duplicate rows silently"
-        )
-    return np.ascontiguousarray(rows[: args.batch], dtype=np.float32), "state-file"
+        state, source = _read_state(Path(args.state_file), args.batch), "state-file"
+    if hasattr(env, "to_render_state"):
+        return env.to_render_state(state).cpu(), f"{source} -> env.to_render_state"
+    return state.cpu(), source
+
+
+def _accepts_out(render) -> bool:
+    params = inspect.signature(render).parameters.values()
+    return any(p.name == "out" or p.kind is inspect.Parameter.VAR_KEYWORD for p in params)
 
 
 def _jpeg_paths(root: Path, name: str, multi_env: bool, batch: int) -> list[Path]:
@@ -175,18 +169,12 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
                 0,
             )
 
-        host_rows, source = _load_states(env, args)
-        structured = isinstance(host_rows, TensorDict)
-        draw = env.render if structured else env._render
-
-        def ingest():
-            return host_rows.to(device) if structured else torch.as_tensor(host_rows, dtype=torch.float32).to(device)
-
-        first = draw(ingest())
-        out = torch.empty_like(first)
+        host_state, source = _load_states(env, args)
+        out = torch.empty_like(env.render(host_state.to(device)))
+        reuse = _accepts_out(env.render)
 
         def ingest_and_render() -> None:
-            draw(ingest(), out=out)
+            env.render(host_state.to(device), **({"out": out} if reuse else {}))
 
         timing = measure(ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
         median_ms = timing["median_ms"]
@@ -194,15 +182,10 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
             "status": "ok",
             "batch": args.batch,
             "state_source": source,
-            "state_format": "structured_render_state" if structured else "packed_rows",
+            "state_format": "render_state" if hasattr(env, "to_render_state") else "full_state",
             "renderer_backend": env.backend,
-            "packed_state_shape": None if structured else list(host_rows.shape),
-            "packed_state_bytes_per_frame": None if structured else int(host_rows[0].nbytes),
-            "state_bytes_per_frame": (
-                sum(v[0].numel() * v.element_size() for v in host_rows.values(True, True))
-                if structured
-                else int(host_rows[0].nbytes)
-            ),
+            "output_buffer_reused": reuse,
+            "state_bytes_per_frame": sum(v[0].numel() * v.element_size() for v in host_state.values(True, True)),
             "frame_shape": list(out.shape[1:]),
             "frame_bytes_per_frame": int(out[0].numel() * out.element_size()),
             "resolved_size": int(env.size),
@@ -241,8 +224,8 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": (
-            "host numeric RenderState.to(device) -> renderer(out=reused_uint8_buffer); "
-            "structured projections use env.render, packed state rows use env._render"
+            "host State.to(device) -> env.render(state, out=reused_uint8_buffer); "
+            "classes with to_render_state copy only the fields that render reads"
         ),
         "setup_excluded": [
             "environment construction",

@@ -144,6 +144,10 @@ All notable changes to this project are listed here. The format follows
 
 - `Env.native_size` replaces the navigation attribute `fixed_size` and the classic control attribute `native`.
   The classic control classes give their `(H, W)` canvas in `frame_shape`.
+- `benchmarks/pipeline.py` times the copy of a host State to the device and `env.render(state)`. `--state-file`
+  takes an `.npz` full State with one array per field; `--state-key` and packed-row files are removed.
+- `benchmarks/dmc_mjwarp.py` uses only the public API. It no longer measures raw physics or records simulator
+  internals (worker PIDs, MuJoCo thread count, model options, control substeps).
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the

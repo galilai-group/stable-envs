@@ -315,7 +315,7 @@ def test_paired_measurements_require_identical_inputs(mismatch):
 @pytest.mark.parametrize("backend", ["native", "mjwarp"])
 @pytest.mark.parametrize("profile", ["full", "focused"])
 def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeypatch, backend, profile):
-    actions_seen, controls_seen = [], []
+    actions_seen = []
 
     class FakeEnvironment:
         action_dim = 1
@@ -328,11 +328,6 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
             self.backend = "auto"
             self.count = 0
             self.resets = 0
-            self._simulator = SimpleNamespace(
-                b=SimpleNamespace(nthread=1),
-                _controls=lambda action: action.to(torch.float32),
-                batch=SimpleNamespace(step=lambda control: controls_seen.append(control.clone())),
-            )
 
         def reset(self, seed):
             self.count = 0
@@ -381,11 +376,6 @@ def test_measurement_phases_replay_the_same_inputs_with_fake_environment(monkeyp
         assert not {"reset", "restore", "render_saved_state", "public_step_with_pixels"} & row["metrics"].keys()
     for seen, indices in phases:
         np.testing.assert_array_equal(np.stack([action.numpy() for _, action in seen]), expected[indices])
-    if backend == "mjwarp":
-        np.testing.assert_array_equal(
-            np.stack([control.numpy() for control in controls_seen]),
-            expected[[0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 0, 0]].astype(np.float32),
-        )
     assert row["metadata"]["inputs"]["actions_sha256"] == hashlib.sha256(expected).hexdigest()
     assert row["metadata"]["measurement_profile"] == profile
     assert len(row["metrics"]["public_step_no_pixels"]["samples_ms"]) == 3
