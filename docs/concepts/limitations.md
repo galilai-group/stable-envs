@@ -32,16 +32,22 @@ software OpenGL, configured before the first MuJoCo import. See [System setup](.
 - The tests measure the per-frame MSE between our frames and each class's declared reference frames,
   and compare it with a recorded value. See
   [Frame regression checks](../testing.md#frame-regression-checks).
-- The DM Control body-tracking classes and PyFlytRocketLanding on CUDA draw with a different
-  rasterizer from the source. `env.describe()["visual_fidelity"]` gives their measured MSE.
-  `env.describe()["visual_note"]` tells where the frames differ.
-- OGBCube and OGBScene use stable-envs MuJoCo OpenGL. At `supersample=1`, the fidelity record compares
-  two OpenGL instances with the same compiled appearance; it is not an upstream-default OGBench
-  appearance comparison. CPU frames are bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver
-  can change a pixel by 1/255 between two draws of the same state, on a few pixels of a few frames in
-  each pass; the comparison renderer shows the same variation. At `supersample=2` or more, MJWarp is
-  measured against that same-style stable-envs OpenGL path. See
-  [OGBench](../environments/ogbench.md#manipulation).
+- These classes draw with a different rasterizer from the source:
+  - Fetch, OGBCube and OGBScene with the default backend. The default is the stable-envs MuJoCo
+    rasterizer (`backend="raster"`) on CPU and on CUDA. On CUDA, OGBCube and OGBScene use it at
+    `supersample=1` only.
+  - The DM Control body-tracking classes.
+  - PyFlytRocketLanding on CUDA.
+
+  `env.describe()["visual_fidelity"]` gives their measured MSE. `env.describe()["visual_note"]` tells
+  where the frames differ.
+- `backend="opengl"` draws Fetch, OGBCube and OGBScene with MuJoCo OpenGL, the renderer of the source.
+  On CPU, these frames are bit-exact and repeatable. On CUDA, the NVIDIA OpenGL driver can change a
+  pixel by 1/255 between two draws of the same state, on a few pixels of a few frames in each pass; the
+  comparison renderer shows the same variation. For OGBCube and OGBScene, the OpenGL fidelity record
+  compares two OpenGL instances with the same compiled appearance; it is not an upstream-default
+  OGBench appearance comparison. At `supersample=2` or more, MJWarp is measured against that same-style
+  stable-envs OpenGL path. See [OGBench](../environments/ogbench.md#manipulation).
 
 ## Rendering details
 
