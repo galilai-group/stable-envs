@@ -16,6 +16,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs.testing.conformance import reference_env
 from tests.gpu._shared import family_params, resolve_family
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
@@ -66,7 +67,7 @@ def test_mse_against_mujoco_opengl(name):
         rows = _rows(env, FRAMES)
         ours = env._render(rows).cpu().numpy()
         cls = type(env)
-        ref = cls.reference_render(cls.reference_env(env.size), rows.double().cpu().numpy())
+        ref = cls.reference_render(reference_env(cls, env.size), rows.double().cpu().numpy())
     with _make(name, FRAMES) as current:
         default = current._render(rows).cpu().numpy()
     got = {"cell": name, "mse_warp": _mse(ours, ref), "mse_default": _mse(default, ref), "frames": FRAMES}
