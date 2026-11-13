@@ -229,7 +229,7 @@ def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
     assert "4" in msg and "9" in msg, f"the message does not name both batches: {msg}"
     assert "SHORTER" in msg, f"the message does not say which direction is allowed: {msg}"
     assert "num_envs=9" in msg, f"the message does not give the constructor fix: {msg}"
-    assert "env._render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
+    assert "env.render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
 
 
 def test_set_state_returns_the_env_so_render_chains_off_it():

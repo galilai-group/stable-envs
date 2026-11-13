@@ -185,8 +185,11 @@ def render_states_arg(env, states) -> torch.Tensor:
 
     CUDA tensors skip the nonfinite scan to avoid a host synchronization. Array
     inputs are scanned before transfer; full State inputs use the layout projection.
+    Rows that ``Env.render`` checked for this call pass through unchanged.
     """
     env._check_open("render")
+    if states is not None and states is env._checked_rows:
+        return states
     if states is None:
         return env._get_render_state()
     if isinstance(states, TensorDict):
@@ -389,6 +392,8 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
+    #: The rows ``render`` checked for the call in progress; ``_render`` does not check them again.
+    _checked_rows: torch.Tensor | None = None
 
     def __init__(
         self,
@@ -558,15 +563,62 @@ class Env:
         """Return an independent full snapshot, as with :meth:`get_state`."""
         return self.get_state()
 
-    def render(self, state: State | None = None, **kwargs) -> torch.Tensor:
-        """Render full State, or the live snapshot when omitted, without advancing simulation.
+    def render(self, x=None, **kwargs) -> torch.Tensor:
+        """Draw uint8 RGB frames ``(..., H, W, 3)`` on ``device`` without advancing simulation.
 
-        Return uint8 RGB frames on ``device``. Renderer options are forwarded to
-        ``_render``; the supplied State may have a different batch size from this env.
+        ``x`` takes one of these forms:
+
+        - None: the frames of the live environments.
+        - A full State (from ``get_state``, ``reset`` or ``step``), of any batch size.
+        - Compact rows ``(B, state_dim)``, numpy or torch, as ``sample_states`` returns them.
+
+        Families with ``to_render_state`` also accept the RenderState it returns. A State draws
+        with its own appearance; sampled rows draw with the env's current Variation, or with
+        ``variation=``. Other options (``size``, ``out`` and family options) go to the renderer.
+        A form that the family cannot draw raises an error that names the accepted forms.
         """
+        self._check_open("render")
+        if x is None or isinstance(x, TensorDict):
+            return self._render_state_input(x, **kwargs)
+        return self._render_checked(self._check_render_rows(x), **kwargs)
+
+    def _render_state_input(self, state: State | None, **kwargs) -> torch.Tensor:
+        """Draw a full State, or the live State when ``state`` is None."""
         state = self.get_state() if state is None else state
         self._validate_render_state(state)
-        return self._render(self._pack_render_state(state), **kwargs)
+        return self._render_checked(self._pack_render_state(state), **kwargs)
+
+    def _render_checked(self, rows: torch.Tensor, **kwargs) -> torch.Tensor:
+        """Draw rows that are already checked, so that ``_render`` does not scan them again."""
+        self._checked_rows = rows
+        try:
+            return self._render(rows, **kwargs)
+        finally:
+            self._checked_rows = None
+
+    def _rows_unsupported(self) -> str | None:
+        """Why ``render`` refuses compact rows, or None when the family draws them."""
+        if int(self.state_dim) == 0:
+            return f"{type(self).__name__} has no compact rows (state_dim is 0)"
+        return None
+
+    def _render_forms(self) -> str:
+        forms = ["None for the live frames", "a full State from get_state()"]
+        if callable(getattr(self, "to_render_state", None)):
+            forms.append("a RenderState from to_render_state()")
+        if self._rows_unsupported() is None:
+            forms.append(f"(B, {int(self.state_dim)}) rows as sample_states() returns them")
+        return ", ".join(forms[:-1]) + " or " + forms[-1]
+
+    def _check_render_rows(self, rows) -> torch.Tensor:
+        """Check the shape, dtype, device and finite values of compact rows once."""
+        reason = self._rows_unsupported()
+        if reason is not None:
+            raise TypeError(
+                f"{type(self).__name__}.render: got {type(rows).__name__}; {reason}. "
+                f"render accepts {self._render_forms()}."
+            )
+        return check_states(self, rows, f"{type(self).__name__}.render", leading=True)
 
     def _get_render_state(self) -> torch.Tensor:
         """Return a view of live compact rows, excluding unused buffer capacity."""
@@ -580,7 +632,7 @@ class Env:
             raise ValueError(
                 f"{type(self).__name__}.set_state: this env holds {self.B} environment(s) and got {n} "
                 f"states. A batch may be SHORTER than the env, but not longer. Build the env at this "
-                f"batch, make({type(self).__name__!r}, num_envs={n}), or call env._render(states), "
+                f"batch, make({type(self).__name__!r}, num_envs={n}), or call env.render(states), "
                 f"which takes any batch."
             )
         self._render_state[:n].copy_(s)

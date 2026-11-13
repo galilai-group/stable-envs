@@ -34,5 +34,4 @@ def test_render_checks_only_drawn_fields(name, drawn, hidden):
             env.render(bad)
         with pytest.raises(ValueError, match=f"missing {drawn}"):
             env.render(state.exclude(drawn))
-        with pytest.raises(TypeError, match="full State"):
-            env.render(env._pack_render_state(state))
+        assert torch.equal(env.render(env._pack_render_state(state)), frames)

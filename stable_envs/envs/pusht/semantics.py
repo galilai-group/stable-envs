@@ -380,7 +380,7 @@ class PushT(Env):
             raise error
         return fields
 
-    def render(self, state=None, *, size=None, out=None):
+    def _render_state_input(self, state, *, size=None, out=None):
         self._check_open("render")
         size = self.size if size is None else size
         if type(size) is not int or size < 1:

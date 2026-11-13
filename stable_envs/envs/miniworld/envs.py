@@ -156,7 +156,7 @@ class MiniWorldMovingBlockWorld(Env):
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
-    def render(self, state=None, *, size=None, supersample=None, variation=None, style=None, out=None):
+    def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
         """Draw ``(N, size, size, 3)`` uint8 frames from a State of any batch, or from the live environments.
 
         ``size`` defaults to the env's; ``out`` takes a contiguous uint8 buffer of the frames' shape. Miniworld

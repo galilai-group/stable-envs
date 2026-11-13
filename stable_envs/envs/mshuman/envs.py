@@ -11,7 +11,7 @@ import torch
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.stepping import _stack_states, _threads
 from ..._execution.mjbatch import resolve_backend
-from ...env import Env, render_states_arg, require_contiguous_out
+from ...env import Env, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
 from ...spaces import Dict
@@ -105,7 +105,6 @@ class MSHumanLocomotion(Env):
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         require_contiguous_out(f"{type(self).__name__}.render", out)
-        states = render_states_arg(self, states)
         size = int(size or self.size)
         # TODO: render CUDA envs on the GPU with render/mjwarp once MuJoCo Warp draws tendons.
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()

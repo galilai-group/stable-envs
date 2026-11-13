@@ -398,7 +398,12 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             self._render_style = self.resolve_style(style, variation, batch=self._live_rows).values
         return self
 
-    def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
+    def _rows_unsupported(self):
+        if self.device.type == "cpu":
+            return "Rocket draws compact pose rows only on CUDA; on CPU it draws a full State or a RenderState"
+        return None
+
+    def _render_state_input(self, state, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         self._check_open("render")
         from . import render as rocket_render
 
