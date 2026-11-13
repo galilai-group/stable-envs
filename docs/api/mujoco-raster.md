@@ -1,9 +1,9 @@
 # MuJoCo rasterizer
 
-`stable_envs.render.mujoco_raster` draws MuJoCo scenes with a rasterizer that follows MuJoCo's fixed-function
-OpenGL renderer (`render_gl3.c`). It has a CPU backend (Numba) and a CUDA backend (nvdiffrast and Triton). Both
-backends read one scene model and one set of per-frame inputs. It is the default renderer of Fetch and of the
-OGBench Cube and Scene tasks (`backend="raster"`). `backend="opengl"` stays the exact reference.
+`stable_envs.render.mujoco_raster` draws MuJoCo scenes on CPU with a Numba rasterizer that follows MuJoCo's
+fixed-function OpenGL renderer (`render_gl3.c`). It is the CPU default renderer of the OGBench Cube and Scene
+tasks (`backend="raster"`). `backend="opengl"` stays the exact reference. On CUDA, `backend="raster"` raises
+`ValueError`.
 
 ## Scene model
 
@@ -32,28 +32,20 @@ A family gives these arrays for each frame:
 
 ## Rendering contract
 
-- Lighting is per vertex, with a local viewer, the headlight and the model lights. Both backends use the same
-  formula, the same light rows and the same table of specular powers. The CPU backend computes in float64, the
-  CUDA backend in float32.
-- Each frame has 4 samples per pixel. The CPU backend uses the sample positions of Mesa and shades at the pixel
-  centre. The CUDA backend uses the sample positions of NVIDIA and shades at the pixel centre when the centre is
-  in the triangle, else at the sample.
+- Lighting is per vertex, in float64, with a local viewer, the headlight and the model lights.
+- Each frame has 4 samples per pixel at the sample positions of Mesa, shaded at the pixel centre.
 - A shadow light adds its light where the shadow map has no nearer caster. The static geoms make one map per
   scene; the moving geoms make a map per frame.
 - Translucent geoms blend after the opaque geoms and the skybox, sorted by distance to the camera less their
   bounding radius, once front to back and once back to front.
-- The CPU backend clips triangles at the near plane. On CUDA, nvdiffrast clips the opaque triangles; the
-  translucent triangles that cross the camera plane are not drawn.
-- On CUDA, a static plane with a 2-D texture at the world origin is drawn as background, and a geom with a cube
-  texture is drawn in the mean colour of the texture.
+- Triangles are clipped at the near plane.
 - A draw of the same inputs gives the same frame each time, alone or in any batch.
 
 ## Plates
 
-Frames with the same camera, light rows, sky colour and colours of the static geoms share a plate on CPU. The
-plate holds the static opaque geoms, their shadows and the skybox. Each frame starts from its plate and draws
-the other geoms. The CUDA backend keeps the skybox and the background plane for each camera, light rows, plane
-colour and sky colour.
+Frames with the same camera, light rows, sky colour and colours of the static geoms share a plate. The plate
+holds the static opaque geoms, their shadows and the skybox. Each frame starts from its plate and draws the
+other geoms.
 
 ## Segmentation and depth
 

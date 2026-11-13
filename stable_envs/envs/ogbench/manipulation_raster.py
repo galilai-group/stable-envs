@@ -5,7 +5,7 @@ A configuration is the private render model of the OpenGL backend for one value 
 camera, the lights, the shadow light and the floor texture, read by ``render.mujoco_scene``. The arm meshes have
 one vertex per ``ARM_CELL`` grid cell. Per row, MuJoCo's kinematics gives the geom poses and the source's colour
 rules give the geom colours of ``cube.color``, ``agent.color``, ``lock_color`` and the Scene buttons, with the
-see-through arm and the hidden goal cube. ``render.mujoco_raster`` draws the frames on CPU and on CUDA.
+see-through arm and the hidden goal cube. ``render.mujoco_raster`` draws the frames on CPU.
 """
 
 from __future__ import annotations
@@ -71,7 +71,6 @@ class _Rig:
         self.scene = ms.pack(s, cast)
         self.objid = self.scene.objid
         self.looks = {}
-        self.devices = {}
 
     def rgba(self, look):
         """Drawn geom colours for one (cube, agent, lock, buttons) look, as the OpenGL path writes them."""
@@ -138,16 +137,6 @@ class _Rig:
         sky = np.full((n, 3), -1.0)
         return gpos, gmat, rgba, cams, lights, sky
 
-    def device_scene(self, device):
-        """The scene's arrays on a CUDA ``device``."""
-        from ...render import mujoco_raster_cuda as cuda
-
-        key = str(device)
-        hit = self.devices.get(key)
-        if hit is None:
-            hit = self.devices[key] = cuda.DeviceScene(self.scene, device)
-        return hit
-
 
 def _rig(family, columns, index, cell):
     key = _key(family, columns, index, cell)
@@ -179,35 +168,14 @@ def draw(family, columns, images, cell=None):
                 images[np.asarray(indices)] = out
 
 
-def draw_cuda(family, columns, out, cell=None, chunk_size=None):
-    """Draw validated host RenderState ``columns`` into the CUDA uint8 tensor ``out`` (B, size, size, 3)."""
-    from ...render import mujoco_raster_cuda as cuda
-
-    cell = ARM_CELL if cell is None else cell
-    ss = int(columns["renderer", "supersample"][0, 0])
-    with _LOCK, torch.cuda.device(out.device):
-        for indices in _groups(family, columns, cell).values():
-            rig = _rig(family, columns, indices[0], cell)
-            scene = rig.device_scene(out.device)
-            rows = torch.as_tensor(indices, device=out.device)
-            whole = len(indices) == len(out)
-            target = out if whole else torch.empty((len(indices), *out.shape[1:]), dtype=out.dtype, device=out.device)
-            cuda.draw(scene, *rig.frames(columns, indices), ss, target, chunk_size)
-            if not whole:
-                out[rows] = target
-
-
 def frames(family, columns, device, chunk_size=None):
-    """Frames of host RenderState ``columns`` on ``device``."""
+    """Frames of host RenderState ``columns`` on CPU ``device``."""
     from .manipulation_opengl import check_versions
 
     check_versions("raster")
-    device = torch.device(device)
+    if torch.device(device).type != "cpu":
+        raise ValueError("backend='raster' draws Cube/Scene frames on CPU only; on CUDA use backend='auto'")
     b, size = len(columns["renderer", "size"]), int(columns["renderer", "size"][0, 0])
-    if device.type == "cuda":
-        result = torch.empty((b, size, size, 3), dtype=torch.uint8, device=device)
-        draw_cuda(family, columns, result, chunk_size=chunk_size)
-        return result
     images = np.empty((b, size, size, 3), np.uint8)
     draw(family, columns, images)
     return torch.from_numpy(images)

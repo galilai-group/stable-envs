@@ -231,26 +231,6 @@ def semantic(p, gpos, gmat, rgba, cams, size):
     return seg, depth
 
 
-def shade_points(p, geom, points, normals, rgba, cam, lights):
-    """First-pass and shadow-light vertex colours (N, 2, 3) of world ``points`` with world ``normals`` on ``geom``.
-
-    The same lighting as the rasterizer; the CUDA backend lights its background plane with it.
-    """
-    out = np.empty((len(points), 2, 3))
-    _shade_points(
-        np.ascontiguousarray(points, np.float64),
-        np.ascontiguousarray(normals, np.float64),
-        np.ascontiguousarray(rgba, np.float64),
-        p.material[geom],
-        p.powlut[int(p.material[geom, 3])],
-        np.ascontiguousarray(cam, np.float64),
-        np.ascontiguousarray(lights, np.float64),
-        p.ambient,
-        out,
-    )
-    return out
-
-
 # ----------------------------------------------------------------------------------------------- kernels
 
 
@@ -320,21 +300,6 @@ def _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, ligh
     out[o, 0] = min(max(o0, 0.0), 1.0)
     out[o, 1] = min(max(o1, 0.0), 1.0)
     out[o, 2] = min(max(o2, 0.0), 1.0)
-
-
-@njit(parallel=True, cache=True, error_model="numpy", fastmath=True)
-def _shade_points(points, normals, rgba, material, lut, cam, lights, ambient, out):
-    for i in prange(points.shape[0]):
-        a = np.empty((1, 3))
-        b = np.empty((1, 3))
-        wx, wy, wz = points[i, 0], points[i, 1], points[i, 2]
-        nx, ny, nz = normals[i, 0], normals[i, 1], normals[i, 2]
-        r, g, bb = rgba[0], rgba[1], rgba[2]
-        _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, material[0], lut, material[2], ambient, lights, 0, a, 0)
-        _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, material[0], lut, material[2], ambient, lights, 1, b, 0)
-        for ch in range(3):
-            out[i, 0, ch] = a[0, ch]
-            out[i, 1, ch] = b[0, ch]
 
 
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)

@@ -17,8 +17,8 @@ snv.import_errors()     # families this interpreter could not import
 |---|---|---|
 | PushT, PushTDiscrete | Numba physics and Numba rendering | JAX physics and Triton rendering |
 | classic control, navigation, OGBench mazes | yes | yes |
-| Fetch (12 classes) | Fetch rasterizer (Numba) | MJWarp, explicit MuJoCo rasterizer or explicit NVIDIA OpenGL |
-| OGBCube, OGBScene | MuJoCo rasterizer (Numba) | NVIDIA OpenGL, explicit MuJoCo rasterizer, or MJWarp with `supersample` 2 or more |
+| Fetch (12 classes) | Fetch rasterizer (Numba) | MJWarp or explicit NVIDIA OpenGL |
+| OGBCube, OGBScene | MuJoCo rasterizer (Numba) | NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | Numba port of TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
 
