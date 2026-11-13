@@ -6,7 +6,7 @@ against a loop of one-lane renders. Envs whose variation lives in the state (Pus
 Cube/Scene) take it through ``reset(options={"variation": [...]})`` instead.
 
     python examples/domain_randomization.py
-    python examples/domain_randomization.py --env TwoRoom --num-envs 256 --device cuda
+    python examples/domain_randomization.py --env TwoRoom --num-envs 256 --device cuda  # needs navigation-gpu
 """
 
 from __future__ import annotations
@@ -56,8 +56,14 @@ def main(argv: list[str] | None = None) -> int:
         rng = np.random.default_rng(args.seed)
         rows = torch.as_tensor(env.sample_variation(n, paths=appearance, rng=rng), device=env.device)
 
-        frames = env.render(shared, variation=rows)
-        print(f"{args.env}: {len(appearance)} appearance leaves, variation_dim {env.variation_dim}")
+        try:
+            frames = env.render(shared, variation=rows)
+        except TypeError:
+            raise SystemExit(
+                f"{args.env} keeps its variation in the state: sample it with "
+                'reset(options={"variation": [...]}) instead of render(..., variation=).'
+            ) from None
+        print(f"{args.env}:{len(appearance)} appearance leaves, variation_dim {env.variation_dim}")
         print(f"default Variation: {distinct(env.render(shared))}/{n} distinct frames")
         print(f"sampled Variation: {distinct(frames)}/{n} distinct frames, shape {tuple(frames.shape)}")
 

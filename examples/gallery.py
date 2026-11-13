@@ -77,7 +77,12 @@ def env_sheets(name: str, out: Path, n: int, steps: int, device: str, seed: int)
             appearance = [p for p in env.variation_names if p not in env.dynamics_variation_leaves]
             rows = torch.as_tensor(env.sample_variation(n, paths=appearance, rng=env.rng), device=env.device)
             shared = state[torch.zeros(n, dtype=torch.long)]
-            write_png(d / "variation.png", tile(env.render(shared, variation=rows).cpu().numpy(), cols))
+            try:
+                frames = env.render(shared, variation=rows)
+            except TypeError:
+                # PushT, Rocket, OGBCube and OGBScene keep their variation in the state.
+                return written
+            write_png(d / "variation.png", tile(frames.cpu().numpy(), cols))
             written.append("variation.png")
     return written
 
@@ -92,9 +97,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args(argv)
 
-    names = [s for s in args.envs.split(",") if s] or snv.list_envs()
-    for name in names:
-        written = env_sheets(name, args.out, args.num_envs, args.steps, args.device, args.seed)
+    chosen = [s for s in args.envs.split(",") if s]
+    for name in chosen or snv.list_envs():
+        try:
+            written = env_sheets(name, args.out, args.num_envs, args.steps, args.device, args.seed)
+        except (ImportError, RuntimeError) as e:
+            # Without --envs, skip the classes whose extra is missing on this machine.
+            if chosen:
+                raise
+            print(f"skipped {name}: {e}")
+            continue
         print(f"{name}: {', '.join(written)} in {args.out / name}")
     return 0
 
