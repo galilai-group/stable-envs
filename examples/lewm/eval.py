@@ -99,7 +99,9 @@ def main() -> None:
     p.add_argument("--device", default="cuda", help="device of the world model and the planner")
     p.add_argument("--bf16", action="store_true", help="plan in bfloat16")
     p.add_argument("--num-eval", type=int, default=None, help="number of start and goal pairs")
-    p.add_argument("--video", default=None, help="write one video per environment to this folder")
+    p.add_argument(
+        "--video", default=None, help="write one video per environment to this folder (needs a pixels column)"
+    )
     p.add_argument("--out", default=None, help="append the result as one JSON line to this file")
     p.add_argument("overrides", nargs="*", help="OmegaConf dotlist overrides, e.g. eval.eval_budget=100")
     a = p.parse_args()
@@ -124,6 +126,9 @@ def main() -> None:
     dataset = swm.data.load_dataset(str(Path(a.data).resolve()), keys_to_cache=list(ev.keys_to_cache))
     names = set(dataset.column_names) | set(getattr(dataset, "_schema_names", ()))
     episode_col = "episode_idx" if "episode_idx" in names else "ep_idx"
+    if a.video and "pixels" not in names:
+        # World puts the dataset frames and the goal frame of each episode next to the agent frames.
+        p.error("--video needs a dataset with a pixels column, for example from make_dataset.py without --states-only")
     episodes = dataset.get_col_data(episode_col)
     steps = dataset.get_col_data("step_idx")
 
