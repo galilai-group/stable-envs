@@ -266,20 +266,29 @@ class FetchSemantics:
         mass = np.where(encoded == registered.astype(np.float32), registered, encoded.astype(np.float64))
         self._simulator.configure_object_mass(mass)
 
+    def render_semantic(self, states):
+        """Segmentation and planar depth of compact render rows, drawn by ``backend="raster"``.
+
+        Returns ``(B, size, size, 2)`` ``(objid, objtype)`` pairs in the model of ``reference_env`` (-1 for
+        background) and ``(B, size, size)`` depth along the optical axis, top row first.
+        """
+        from . import mujoco_raster
+
+        return mujoco_raster.semantic(self, states)
+
     def _render(self, *args, **kwargs):
         backend = kwargs.pop("backend", self.backend)
-        if backend == "auto" and self.device.type != "cuda":
-            from ...render import cpu_raster
+        if backend == "auto":
+            from ...render.mujoco_scene import rasterizer_available
 
-            backend = "numba" if cpu_raster.available() else "opengl"
-        if backend == "numba":
-            from ...render import cpu_raster
+            if rasterizer_available(self.device):
+                backend = "raster"
+            elif self.device.type != "cuda":
+                backend = "opengl"
+        if backend == "raster":
+            from . import mujoco_raster
 
-            if not cpu_raster.available():
-                raise ValueError("backend='numba' needs numba, which does not import here")
-            from . import raster
-
-            return raster.render(self, *args, **kwargs)
+            return mujoco_raster.render(self, *args, **kwargs)
         if backend == "opengl":
             from . import opengl
 

@@ -158,6 +158,22 @@ All notable changes to this project are listed here. The format follows
   takes an `.npz` full State with one array per field; `--state-key` and packed-row files are removed.
 - `benchmarks/dmc_mjwarp.py` uses only the public API. It no longer measures raw physics or records simulator
   internals (worker PIDs, MuJoCo thread count, model options, control substeps).
+- Fetch, `OGBCube` and `OGBScene`: `backend="raster"` draws CPU and CUDA frames with one MuJoCo rasterizer,
+  `stable_envs/render/mujoco_raster.py`. It has a Numba CPU backend and a CUDA backend (nvdiffrast and Triton).
+  Both backends read the scene arrays of `mujoco_scene.pack` and light the vertices with the same formula. The
+  CPU backend clips triangles at the near plane and keeps a plate of the static geoms for each camera, light
+  and look. Fetch and Cube/Scene get `render_semantic`: segmentation and planar depth in the model of the
+  reference env. `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera
+  and shadow settings of a MuJoCo model, and refuses scene features that were not compared with the OpenGL
+  renderer of the installed MuJoCo version.
+- Fetch: `backend="auto"` draws with the shared MuJoCo rasterizer (`backend="raster"`) on CPU and on CUDA. On
+  CUDA without nvdiffrast or Triton it uses MJWarp; on CPU without Numba it uses MuJoCo OpenGL. The Fetch Numba
+  rasterizer (`backend="numba"`, `stable_envs/envs/fetch/raster.py`) is removed. `backend="opengl"` stays the
+  exact reference.
+- `OGBCube` and `OGBScene`: `backend="auto"` draws with the shared MuJoCo rasterizer (`backend="raster"`) on CPU
+  and on CUDA at 1x sampling. On CPU without Numba it uses software OpenGL; on CUDA without nvdiffrast or Triton
+  it uses NVIDIA OpenGL. `backend="opengl"` stays the exact reference. `backend="opengl_fast"` (OpenGL with
+  simplified arm meshes and a 2048 shadow map) is removed.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:
   `task.target_pos`) and the physics leaves that move pixels, such as the Ball-in-Cup gravity and ball size, the

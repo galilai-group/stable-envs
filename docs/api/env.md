@@ -27,13 +27,15 @@ can affect physics, reset, task or appearance.
 
 ## OGBench Cube and Scene backends
 
-- On CPU, `backend="auto"` selects `backend="opengl_fast"`: software OpenGL with simplified arm meshes
-  and a 2048 shadow map. `backend="opengl"` draws the source's frames. Configure Mesa software OpenGL
-  before importing MuJoCo. CPU rendering rejects a hardware GL context.
-- On CUDA, `backend="auto"` selects NVIDIA OpenGL at 1× sampling. Its fidelity record compares two
-  stable-envs OpenGL instances with the same compiled appearance, not upstream-default OGBench frames.
-  With `supersample=2` or more, `backend="auto"` selects the two-pass MJWarp renderer, as
-  `backend="mjwarp_fidelity"` does; its reference is that same-style stable-envs OpenGL path.
+- On CPU, and on CUDA at 1× sampling, `backend="auto"` selects `backend="raster"`: the shared MuJoCo
+  rasterizer ([MuJoCo rasterizer](mujoco-raster.md)). Without Numba (and on CUDA without nvdiffrast or
+  Triton), it selects `backend="opengl"`: software OpenGL on CPU and NVIDIA OpenGL on CUDA.
+- `backend="opengl"` draws the source's frames. For it, configure Mesa software OpenGL before importing
+  MuJoCo. CPU OpenGL rendering rejects a hardware GL context.
+- The fidelity record compares two stable-envs OpenGL instances with the same compiled appearance, not
+  upstream-default OGBench frames. With `supersample=2` or more on CUDA, `backend="auto"` selects the two-pass
+  MJWarp renderer, as `backend="mjwarp_fidelity"` does; its reference is that same-style stable-envs OpenGL
+  path.
 - The default `supersample` is 1 on every device. An explicit `supersample` argument keeps its value.
   The sampling setting stored in a supplied RenderState also keeps its value.
 - On Linux, a batch draws in up to `ogb_gl_workers` OpenGL worker processes
