@@ -106,6 +106,27 @@ cuda_pass() {
   return 0
 }
 
+# hardware CORES: the machine and software of this job; merged into run.json at the end.
+hardware() {
+  $P - "$1" "${CUDA_VISIBLE_DEVICES:-0}" <<'PY'
+import json, os, platform, subprocess, sys
+import stable_envs, torch
+sh = lambda c: subprocess.run(c, shell=True, capture_output=True, text=True).stdout.strip()
+cores, g = sys.argv[1], sys.argv[2]
+smi = sh("nvidia-smi")
+print(json.dumps({
+    "gpu": sh(f"nvidia-smi -i {g} --query-gpu=name --format=csv,noheader"), "gpu_count": len(sh("nvidia-smi -L").splitlines()),
+    "driver": sh(f"nvidia-smi -i {g} --query-gpu=driver_version --format=csv,noheader"),
+    "cuda": smi.split("CUDA Version:")[1].split()[0] if "CUDA Version:" in smi else None,
+    "cpu": sh("lscpu | sed -n 's/^Model name: *//p' | head -1"), "cores": cores.strip(),
+    "cpu_quota": sh("cat /sys/fs/cgroup/cpu.max 2>/dev/null"), "nproc": os.cpu_count(),
+    "ram_gib": round(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30),
+    "os": sh(". /etc/os-release && echo $PRETTY_NAME"), "python": platform.python_version(), "torch": torch.__version__,
+    "stable_envs": getattr(stable_envs, "__version__", None), "commit": sh("git rev-parse HEAD"),
+}))
+PY
+}
+
 rc=0
 if [ "$DRY" = 1 ]; then
   [ "$MODE" = gpu ] || { echo "  $E: CPU and CUDA passes at the same time on two sets of 8 idle cores when the quota allows"; cpu_pass "<8 cores>" -; }
