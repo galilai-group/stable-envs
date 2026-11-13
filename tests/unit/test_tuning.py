@@ -216,6 +216,7 @@ def test_tune_names_the_missing_extra(monkeypatch, capsys):
 def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
+    monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
     with tuning.override(**knobs):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
