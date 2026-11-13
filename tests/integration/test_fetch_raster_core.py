@@ -84,10 +84,11 @@ def test_raster_draws_every_look_leaf(scene: str, software_gl: None) -> None:
 def test_raster_rows_batches_sizes(software_gl: None) -> None:
     with _env("Push", 3, varied=True) as env:
         state = env.get_state()
-        rows = env._pack_render_state(state)
-        together = env._render(rows, backend="raster")
+        variation = env.get_variation()
+        together = env.render(state, backend="raster")
         for lane in range(3):
-            assert torch.equal(env._render(rows[lane : lane + 1], backend="raster"), together[lane : lane + 1])
+            one = env.render(state[lane : lane + 1], backend="raster", variation=variation[lane : lane + 1])
+            assert torch.equal(one, together[lane : lane + 1])
         for size, ss in ((1, 1), (63, 1), (96, 2), (64, 3)):
             expected = env.render(state, backend="opengl", size=size, supersample=ss).double()
             actual = env.render(state, backend="raster", size=size, supersample=ss).double()
