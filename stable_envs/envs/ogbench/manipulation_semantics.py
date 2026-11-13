@@ -470,8 +470,9 @@ def _opengl_fidelity(renderer):
 class OGBCube(ManipulationSemantics, _CubeRenderer):
     """Cube simulation with restorable state and rendering on CPU and GPU.
 
-    The default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo OpenGL;
-    ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    On CPU, the default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo
+    OpenGL; on CUDA the default is NVIDIA OpenGL. ``backend="opengl"`` draws the source's frames. With
+    ``supersample`` 2 or more on the GPU, MJWarp draws;
     its lighting and transparency can differ from MuJoCo.
     """
 
@@ -483,8 +484,9 @@ class OGBCube(ManipulationSemantics, _CubeRenderer):
 class OGBScene(ManipulationSemantics, _SceneRenderer):
     """Scene simulation with restorable state and rendering on CPU and GPU.
 
-    The default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo OpenGL;
-    ``backend="opengl"`` draws the source's frames. With ``supersample`` 2 or more on the GPU, MJWarp draws;
+    On CPU, the default backend, ``raster``, draws with the shared MuJoCo rasterizer, which follows MuJoCo
+    OpenGL; on CUDA the default is NVIDIA OpenGL. ``backend="opengl"`` draws the source's frames. With
+    ``supersample`` 2 or more on the GPU, MJWarp draws;
     its lighting, transparency, and button textures can differ from MuJoCo.
     """
 

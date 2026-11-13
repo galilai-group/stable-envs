@@ -32,7 +32,7 @@ Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `
 - `pusht`: `pusht`; CUDA needs CUDA torch with Triton, and `pusht-gpu` only for `simulation_backend="jax"`. `craftax`: `craftax`; CUDA needs `craftax-gpu`.
 - `dmcontrol`: `dmcontrol`; CUDA physics and the body-tracking renderer need MuJoCo Warp (`dmcontrol-gpu`).
 - `ogbench`: `ogbench` (mazes) or `ogbench-manipulation` (Cube, Scene); on CUDA, the mazes also need `mjwarp`, and Cube and Scene need `ogbench-manipulation-gpu` for MuJoCo Warp physics and for `supersample` 2 or more.
-- `fetch`: `robotics`, in its own environment (MuJoCo < 3.12); CUDA needs Triton and nvdiffrast for the default MuJoCo rasterizer, and `mjwarp` for MuJoCo Warp physics.
+- `fetch`: `robotics`, in its own environment (MuJoCo < 3.12); CUDA also needs `mjwarp`.
 - `pyflyt`: `rocket`; CUDA needs nvdiffrast built from source. `roadster`: `roadster`; CUDA physics needs `roadster-gpu`. `mshuman`: `mshuman`. `miniworld`: the hlillemark/Miniworld fork plus `miniworld`.
 
 ## Get started

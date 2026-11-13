@@ -101,7 +101,7 @@ On CPU, one compiled Numba kernel draws the frames of each group, and the `dmcon
 
 ### MuJoCo Warp renderer
 
-`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it. `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` selects it for environments with `backend="auto"` on CUDA. On CPU, `backend="mjwarp"` raises `ValueError`. The default backends do not change.
+`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it. On CUDA, `backend="auto"` selects it for the body-tracking classes (Cheetah, Hopper, Humanoid, Quadruped, Swimmer and Walker). `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` also selects it for the fixed-camera classes. On CPU, `backend="mjwarp"` raises `ValueError`.
 
 The renderer draws the geoms of the task. MuJoCo Warp does not draw sites and tendons, so the fixed-camera tasks add one geom for each site in groups 0-2 and one capsule for each segment of a drawn tendon. A kernel puts these geoms at the site poses and on the catenary of the tendon each frame. The catenary uses the gravity of each batch row. A pass replaces the sky with the source frame for cameras that keep one orientation. A second pass draws the floor reflection and the floor colors of each batch row.
 

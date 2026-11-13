@@ -1,6 +1,6 @@
 # Fetch
 
-A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. MuJoCo steps the batch in one call on CPU and MuJoCo Warp on CUDA. The stable-envs MuJoCo rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
+A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. MuJoCo steps the batch in one call on CPU and MuJoCo Warp on CUDA. A Numba rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
 
 ```python
 # needs the robotics extra
@@ -52,9 +52,11 @@ A scripted controller ran 200 steps on Gymnasium-Robotics, and its actions were 
 
 ## Rendering
 
-`backend="auto"` (the default) and `backend="raster"` draw the frames at the requested size with the shared [MuJoCo rasterizer](../contributing/renderers.md#mujoco-rasterizer), on CPU and on CUDA. The rasterizer follows MuJoCo's OpenGL renderer: the meshes, MuJoCo's plane grid and primitive tessellations, per-vertex lighting with the headlight, 4 samples per pixel, the skybox, and the translucent mocap markers and arm blended after the opaque scene. Its frames differ from Gymnasium-Robotics' frames at some edges and by rounding. On CUDA it needs `nvdiffrast` and `triton`. The first render after an install compiles the CPU kernels in about 1 minute, and Numba keeps the compiled code in a cache for later processes. Without Numba, `backend="auto"` uses MuJoCo OpenGL on CPU. On CUDA without nvdiffrast or Triton, `backend="auto"` uses MJWarp. `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows, with the goal as the site `target0` of the Gymnasium-Robotics model.
+On CPU, `backend="auto"` (the default) and `backend="numba"` draw the frames at the requested size with a compiled Numba rasterizer that follows MuJoCo's OpenGL renderer: the same meshes and primitive tessellations, per-vertex lighting with the headlight, 4 samples per pixel, the skybox, and the translucent mocap markers and arm blended after the opaque scene. Its frames differ from Gymnasium-Robotics' frames only at some edges and by rounding: the mean squared error per frame is about 0.15 on average and below 0.4 on the 0-255 scale. The first render after an install compiles the rasterizer in about 30 s, and Numba caches the result for later processes. Without Numba, `backend="auto"` uses MuJoCo OpenGL.
 
-`backend="opengl"` draws with MuJoCo OpenGL, as Gymnasium-Robotics does. On CPU it needs a software OpenGL backend and gives the source frames. On CUDA, it draws with NVIDIA OpenGL.
+`backend="raster"` draws the frames with the shared [MuJoCo rasterizer](../contributing/renderers.md#mujoco-rasterizer), on CPU and on CUDA. It reads the scene from the OpenGL render model, with MuJoCo's plane grid and primitive tessellations. On CUDA it needs `nvdiffrast` and `triton`. `render_semantic(rows)` gives the segmentation and the planar depth of compact render rows, with the goal as the site `target0` of the Gymnasium-Robotics model.
+
+`backend="opengl"` draws with MuJoCo OpenGL, as Gymnasium-Robotics does. On CPU it needs a software OpenGL backend and gives the source frames. On CUDA, MJWarp draws the frames by default, and `backend="opengl"` draws them with NVIDIA OpenGL instead.
 
 On Linux, a CPU batch of at least `render_worker_min_rows` [states](../terms.md#state) drawn with `backend="opengl"` uses up to `render_workers` [worker processes](../performance-tuning.md#worker-processes), each with its own OpenGL context, and gives the same frames as one process.
 
@@ -130,7 +132,7 @@ The agent grasps a block and moves it to a goal position. The goal can be on the
 
 ## Limitations
 
-- MJWarp has no alpha blending, so it leaves out the translucent mocap markers (the 1 cm cube and three crosshair bars). The MuJoCo rasterizer (`backend="raster"`) and OpenGL (`backend="opengl"`) draw them at the gripper, as Gymnasium-Robotics does.
+- MJWarp has no alpha blending, so it leaves out the translucent mocap markers (the 1 cm cube and three crosshair bars). The Numba rasterizer, the MuJoCo rasterizer (`backend="raster"`) and OpenGL draw them at the gripper, as Gymnasium-Robotics does.
 - On MuJoCo Warp, two steps from the same state can differ in the last bits, because MuJoCo Warp sums contact forces with atomic operations. The puck of Slide slides freely, so small differences grow: after 200 replayed steps its mean position differs from the source by 10 cm, while an action noise of 1e-6 on the CPU source alone moves it by 3.3 cm.
-- The default `raster` frames differ from the source frames at some edges and by rounding. Only `backend="opengl"` on CPU gives the frames of the source.
+- The default CPU frames differ from the source frames at some edges and by rounding. Only `backend="opengl"` on CPU gives the frames of the source.
 - `sky.color` at its default draws the registered gradient skybox, which the official wrapper's single-color `background.color` can't express.

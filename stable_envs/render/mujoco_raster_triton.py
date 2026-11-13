@@ -18,6 +18,11 @@ TRI_BITS, LOCAL_BITS, RANK_BITS = 20, 16, 15
 DEPTH_BITS = float(2**24 - 1)
 OFFSET_FACTOR, OFFSET_UNITS = -1.5, -4.0
 TRANSPARENT_ALPHA = 0.995
+# Kernels read module values only as constexpr.
+_DEPTH_BITS = tl.constexpr(DEPTH_BITS)
+_OFFSET_FACTOR = tl.constexpr(OFFSET_FACTOR)
+_OFFSET_UNITS = tl.constexpr(OFFSET_UNITS)
+_TRANSPARENT_ALPHA = tl.constexpr(TRANSPARENT_ALPHA)
 
 
 @triton.jit
@@ -428,7 +433,7 @@ def _shadow(CPos, Tri, TGeom, Xf, Smat, Dyn, G, i0, j0, ni, nj, BLOCK: tl.conste
     dd = tl.where(valid, det, 1.0)
     dzdx = ((z1 - z0) * (y2 - y0) - (z2 - z0) * (y1 - y0)) / dd
     dzdy = ((x1 - x0) * (z2 - z0) - (x2 - x0) * (z1 - z0)) / dd
-    off = OFFSET_FACTOR * tl.maximum(tl.abs(dzdx), tl.abs(dzdy)) + OFFSET_UNITS / DEPTH_BITS
+    off = _OFFSET_FACTOR * tl.maximum(tl.abs(dzdx), tl.abs(dzdy)) + _OFFSET_UNITS / _DEPTH_BITS
     lox = tl.maximum(tl.ceil(tl.minimum(x0, tl.minimum(x1, x2)) - 0.5), 0.0).to(tl.int32)
     hix = tl.minimum(tl.floor(tl.maximum(x0, tl.maximum(x1, x2)) - 0.5), ni - 1.0).to(tl.int32)
     loy = tl.maximum(tl.ceil(tl.minimum(y0, tl.minimum(y1, y2)) - 0.5), 0.0).to(tl.int32)
@@ -533,7 +538,7 @@ def _fragments(
     area = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0)
     # Back faces are culled; a triangle crossing the camera plane is not drawn; opaque geoms of this frame are not
     # translucent fragments.
-    valid = (area > 0) & (w0 > 0) & (w1 > 0) & (w2 > 0) & (alpha < TRANSPARENT_ALPHA)
+    valid = (area > 0) & (w0 > 0) & (w1 > 0) & (w2 > 0) & (alpha < _TRANSPARENT_ALPHA)
     lox = tl.maximum(tl.ceil(tl.minimum(x0, tl.minimum(x1, x2)) - 0.875), 0.0).to(tl.int32)
     hix = tl.minimum(tl.floor(tl.maximum(x0, tl.maximum(x1, x2)) - 0.125), S - 1.0).to(tl.int32)
     loy = tl.maximum(tl.ceil(tl.minimum(y0, tl.minimum(y1, y2)) - 0.875), 0.0).to(tl.int32)

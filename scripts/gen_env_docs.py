@@ -42,10 +42,7 @@ RENDERERS = {
     "craftax": {"cpu": "Craftax pixel renderer (JAX)", "cuda": "Craftax pixel renderer (JAX)"},
     "dmcontrol-suite": {"cpu": "raycast3d (Numba)", "cuda": "raycast3d (torch)"},
     "dmcontrol-trackcom": {"cpu": "cpu3d (Numba)", "cuda": "mjwarp"},
-    "fetch": {
-        "cpu": "MuJoCo rasterizer (Numba); opengl (MuJoCo) without Numba",
-        "cuda": "MuJoCo rasterizer (nvdiffrast and Triton); mjwarp without them",
-    },
+    "fetch": {"cpu": "Numba rasterizer; opengl (MuJoCo) without Numba", "cuda": "mjwarp"},
     "miniworld": {"cpu": "opengl (Miniworld, pyglet)", "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"},
     "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
     "navigation": {"cpu": "raster2d (torch)", "cuda": "raster2d (torch) with the Triton dot compositor"},
@@ -53,7 +50,7 @@ RENDERERS = {
     "ogbench-maze": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
     "ogbench-manipulation": {
         "cpu": "MuJoCo rasterizer (Numba); opengl (MuJoCo, software) without Numba",
-        "cuda": "MuJoCo rasterizer (nvdiffrast and Triton) at supersample 1; mjwarp at 2 or more",
+        "cuda": "opengl (MuJoCo, NVIDIA) at supersample 1; mjwarp at 2 or more",
     },
     "pusht": {
         "cpu": "Numba rasterizer (pygame bytes); pygame without Numba",

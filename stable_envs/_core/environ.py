@@ -132,7 +132,7 @@ register(
     "STABLE_ENVS_DMC_CUDA_RENDER",
     "choice",
     "auto",
-    "mjwarp makes backend='auto' DM Control environments on CUDA draw with MuJoCo Warp's ray tracer.",
+    "mjwarp makes backend='auto' fixed-camera DM Control environments on CUDA draw with MuJoCo Warp's ray tracer.",
     parse_dmc_render,
 )
 register(

@@ -98,7 +98,7 @@ def test_the_numba_frames_equal_the_torch_port(name, varied):
     var = _variation(env, n, 11) if varied else None
     fast = env._render(states, variation=var, backend="port").clone()
     slow = _torch_port(name, states, var)
-    assert fast.shape == (n, *env.native, 3)
+    assert fast.shape == (n, *env.frame_shape, 3)
     bad = int(_differs(fast, slow).sum())
     assert bad == 0, f"{name} varied={varied}: {bad} of {n} frames differ from the Torch port"
     assert len({f.numpy().tobytes() for f in fast}) > 8

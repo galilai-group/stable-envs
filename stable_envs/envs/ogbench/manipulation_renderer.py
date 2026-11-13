@@ -109,7 +109,7 @@ class _Lock:
 
 
 def _lock(token, bundle, value):
-    """Scene button color tables for one lock_color, applied by the source rule to the shared model."""
+    """Scene button colour tables for one lock_color, applied by the source rule to the shared model."""
     key = (token, value.tobytes())
     hit = _LOCKS.get(key)
     if hit is not None:
@@ -248,11 +248,12 @@ def draws_on_host(backend, device, supersample):
 def host_backend(backend, device):
     """The host backend that ``backend`` draws with on ``device``: raster or opengl.
 
-    ``auto`` draws with the rasterizer when it is installed for the device, else with opengl.
+    ``auto`` draws with the rasterizer on CPU when Numba is installed, else with opengl. On CUDA, NVIDIA OpenGL
+    is faster than the rasterizer's CUDA backend.
     """
     if backend in HOST:
         return backend
-    if rasterizer_available(device):
+    if torch.device(device).type == "cpu" and rasterizer_available(device):
         return "raster"
     return "opengl"
 
@@ -260,7 +261,7 @@ def host_backend(backend, device):
 def _supersample(state):
     try:
         return int(state["renderer", "supersample"].reshape(-1)[0])
-    except Exception:  # noqa: BLE001 - validation reports the malformed state
+    except Exception:  # noqa: BLE001 - validation reports the malformed State
         return None
 
 

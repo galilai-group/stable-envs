@@ -25,14 +25,14 @@ def test_each_input_form_draws_the_same_frames():
         state = env.reset(seed=5)
         rows = env._pack_render_state(state)
         frames = env.render(state)
-        assert frames.dtype == torch.uint8 and frames.shape == (3, env.size, env.size, 3)
+        assert frames.dtype == torch.uint8 and frames.shape == (3, *env.frame_shape, 3)
         assert torch.equal(env.render(), frames)
         assert torch.equal(env.render(rows), frames)
         assert torch.equal(env.render(rows.numpy()), frames)
         assert torch.equal(env.render(rows.double()), frames)
         assert torch.equal(env.render(rows[None]), frames[None])
         sampled = env.sample_states(4, np.random.default_rng(0))
-        assert env.render(sampled).shape == (4, env.size, env.size, 3)
+        assert env.render(sampled).shape == (4, *env.frame_shape, 3)
 
 
 def test_a_state_and_its_packed_rows_draw_identical_frames_under_one_variation():

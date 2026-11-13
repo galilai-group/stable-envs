@@ -81,10 +81,11 @@ def test_raster_draws_every_look_leaf(scene: str, software_gl: None) -> None:
 def test_raster_rows_batches_sizes(software_gl: None) -> None:
     with _env("Push", 3, varied=True) as env:
         state = env.get_state()
-        rows = env._pack_render_state(state)
-        together = env._render(rows, backend="raster")
+        variation = env.get_variation()
+        together = env.render(state, backend="raster")
         for lane in range(3):
-            assert torch.equal(env._render(rows[lane : lane + 1], backend="raster"), together[lane : lane + 1])
+            one = env.render(state[lane : lane + 1], backend="raster", variation=variation[lane : lane + 1])
+            assert torch.equal(one, together[lane : lane + 1])
         for size, ss in ((1, 1), (63, 1), (96, 2), (64, 3)):
             expected = env.render(state, backend="opengl", size=size, supersample=ss).double()
             actual = env.render(state, backend="raster", size=size, supersample=ss).double()
@@ -114,10 +115,18 @@ def test_render_semantic_maps_onto_the_reference_model(software_gl: None) -> Non
         rows = env._pack_render_state(env.get_state())
         seg, depth = env.render_semantic(rows)
         ref = reference_env(type(env), env.size).unwrapped.model
+        # Pixels whose colour follows sky.color show the sky; every other pixel shows a geom.
+        skies = [
+            env._render(rows, variation={"sky.color": np.asarray(c, np.float32)}, backend="raster").numpy()
+            for c in ([1.0, 0.0, 0.0], [0.0, 0.0, 1.0])
+        ]
     seg, depth = np.asarray(seg), np.asarray(depth)
     assert seg.shape == (2, env.size, env.size, 2) and depth.shape == (2, env.size, env.size)
     hit = seg[..., 0] >= 0
-    assert hit.mean() > 0.5
+    sky = np.any(skies[0] != skies[1], axis=-1)
+    # Antialiased silhouette pixels mix sky and geom colour, so a few disagree at the edges.
+    assert np.mean(hit == ~sky) > 0.98
+    assert 0.05 < hit.mean() < 0.95
     geoms = np.unique(seg[..., 0][hit & (seg[..., 1] == 5)])
     names = {mujoco.mj_id2name(ref, mujoco.mjtObj.mjOBJ_GEOM, int(g)) for g in geoms}
     assert {"floor0", "object0"} <= names
