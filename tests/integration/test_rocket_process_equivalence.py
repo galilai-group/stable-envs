@@ -174,7 +174,14 @@ def test_step_frames_match_state_render(monkeypatch, workers):
 )
 def test_state_render_in_render_workers_matches_in_process():
     with se.make(
-        "PyFlytRocketLanding", num_envs=5, size=40, supersample=2, device="cpu", seed=3, simulation_backend="pybullet"
+        "PyFlytRocketLanding",
+        num_envs=5,
+        size=40,
+        supersample=2,
+        device="cpu",
+        seed=3,
+        simulation_backend="pybullet",
+        backend="pybullet",
     ) as env:
         env.set_variation({"rocket.body_color": np.array([10.0, 200.0, 30.0])})
         env.reset(seed=11)
