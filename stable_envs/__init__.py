@@ -1,4 +1,4 @@
-"""Batched environments with explicit State, Variation and state-driven rendering.
+"""Batched environments with explicit state, variation and state-driven rendering.
 
 Environment classes are attributes named by their registry key, for example ``stable_envs.PushT``.
 """
@@ -21,32 +21,35 @@ _registry.discover()
 
 
 def make(name: str, **kwargs) -> Env:
-    """Construct an environment by class name, forwarding constructor keywords.
+    """Construct a registered environment by class name.
 
-    For example ``make("PushT", num_envs=64)``. Unknown names raise KeyError.
+    ``make("CartPole", num_envs=64)`` is the same as ``stable_envs.CartPole(num_envs=64)``.
+
+    Args:
+        name: Class name from ``list_envs``, not a ``reference_id`` such as ``"CartPole-v1"``.
+        **kwargs: Forwarded to the constructor, such as ``num_envs``, ``size``, ``device`` and ``seed``.
+
+    Raises:
+        KeyError: If ``name`` is not registered. ``import_errors`` shows families that didn't import.
     """
     return _make(name, **kwargs)
 
 
 def tune(env: Env, *, knobs=(), repeats: int = 5, write: bool = True, verbose: bool = True) -> dict[str, int]:
-    """Time the tuning knobs ``env`` reads on this machine and cache the fastest values.
-
-    Each knob is swept alone over a few powers of two around its default, with the others at their
-    best so far. Values are saved for the environment's render path, resolution and batch range on
-    this device, so later runs of any environment on the same path use them.
+    """Time the tuning knobs ``env`` reads and cache the fastest values.
 
     Args:
-        env: A constructed environment; its device, ``size`` and ``num_envs`` are the workload.
-        knobs: Names of the knobs to sweep; empty sweeps every knob ``env`` reads.
-        repeats: Timed calls per value, after one warm-up call; the median counts.
-        write: Whether to save the values to the tuning cache.
-        verbose: Whether to print the result table.
+        env: Environment whose device, ``size`` and ``num_envs`` define the workload.
+        knobs: Knobs to sweep (all that ``env`` reads if empty).
+        repeats: Timed calls per value.
+        write: Save the results to the tuning cache.
+        verbose: Print the result table.
 
     Returns:
-        The chosen value of each swept knob.
+        A dict mapping each swept knob to its chosen value.
 
     Raises:
-        RuntimeError: A knob value changed frames or State, which is a bug to report.
+        ValueError: If ``knobs`` names an unknown knob.
     """
     from ._tune import tune as _tune
 

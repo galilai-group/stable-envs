@@ -3,7 +3,7 @@
 The protocol is tested against a fake backend whose frees are observable, since a real warp array's
 free is not visible from Python: released once, before reuse, never twice, never by the collector.
 
-The backend classes are checked by shape (they honour the protocol and declare what they own) rather
+The backend classes are checked by shape (they honor the protocol and declare what they own) rather
 than by construction, which needs a GPU; the GPU resource-lifetime suite covers construction.
 """
 

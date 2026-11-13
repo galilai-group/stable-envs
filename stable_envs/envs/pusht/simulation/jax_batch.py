@@ -23,7 +23,7 @@ def from_torch(value):
 
 
 class PushTJaxAdapter(PushTBatchAdapter):
-    """Step PushT lanes with batched JAX physics on the device of the State."""
+    """Step PushT lanes with batched JAX physics on the device of the state."""
 
     def __init__(self, batch, device="cpu", seed=0, **kwargs):
         device = torch.device(device)

@@ -1,7 +1,7 @@
 """Procedural MJCF of the world: the jet Roadster, the loop / ring / landing-pad course and the scenarios.
 
 The car is a sprung, steerable four-wheel chassis carrying nine cold-gas jets that are
-modelled as site-attached force actuators:
+modeled as site-attached force actuators:
 
     lift_fl, lift_fr, lift_rl, lift_rr   downward nozzles -> +z body force (hover, roll, pitch)
     boost_l, boost_r                     rear nozzles     -> +x body force (forward thrust)
@@ -57,7 +57,7 @@ TAIL = "1 0.05 0.05 1"
 CALIPER = "0.85 0.08 0.08 1"
 PLUME_CORE = (0.92, 0.97, 1.0)
 PLUME_HALO = (0.45, 0.72, 1.0)
-GLOW = (0.95, 0.95, 1.0)  # nozzle colour at full throttle
+GLOW = (0.95, 0.95, 1.0)  # nozzle color at full throttle
 
 
 def _cam_xyaxes(pos, target) -> str:
@@ -183,15 +183,15 @@ def _car_xml(c: Course) -> str:
 
 
 def _wheel_face(side: int, vis: str) -> list[str]:
-    # light aero disc behind a black split six-spoke star, dark lip and centre cap
-    # faces just proud of the tyre's outer face (y = 0.14), up to y = 1.027: the body side over the
+    # light aero disc behind a black split six-spoke star, dark lip and center cap
+    # faces just proud of the tire's outer face (y = 0.14), up to y = 1.027: the body side over the
     # arches is flared to 1.03-1.08 so no part of the wheel reaches it
     out = [
         f'<geom type="cylinder" size="0.325 0.006" pos="0 {0.138 * side} 0" euler="90 0 0" '
         f'rgba="0.08 0.08 0.09 1" {vis}/>',
         f'<geom type="cylinder" size="0.31 0.01" pos="0 {0.142 * side} 0" euler="90 0 0" '
         f'rgba="0.6 0.62 0.65 1" material="metal" {vis}/>',
-    ]  # low-profile tyre: 2.5 cm black ring
+    ]  # low-profile tire: 2.5 cm black ring
     for a in range(0, 360, 60):
         for da in (-5, 5):
             ang = np.deg2rad(a + da)
@@ -219,7 +219,7 @@ def _details(vis: str) -> list[str]:
     door_y, door_lean = body_mesh.side_point(0.95, 0.0)
     door_lo, door_hi = float(np.interp(0.95, keys[:, 0], keys[:, 3])), float(np.interp(0.95, keys[:, 0], keys[:, 5]))
     tail, foot = keys[0], keys[1]  # tail-edge station and the station at the foot of the undercut diffuser face
-    dif_x, dif_z = 0.5 * (tail[0] + foot[0]), 0.5 * (tail[2] + foot[2])  # centre of the diffuser face
+    dif_x, dif_z = 0.5 * (tail[0] + foot[0]), 0.5 * (tail[2] + foot[2])  # center of the diffuser face
     dif_tilt = float(np.degrees(np.arctan2(tail[0] - foot[0], tail[2] - foot[2])))  # its lean (deg about y)
     out = [
         f'<geom type="mesh" mesh="car_body" rgba="{PAINT}" material="car_paint" {vis}/>',
@@ -230,7 +230,7 @@ def _details(vis: str) -> list[str]:
         # thin splitter lip at the foot of the fascia
         f'<geom type="box" size="0.04 {0.9 * nose[1] - 0.03} 0.005" pos="{nose[0] - 0.03} 0 {nose[2] - 0.006}" rgba="{dark}" {vis}/>',
         # rear: two thin red light lines just under the sharp tail edge (the upper one wraps the corners),
-        # plate centred in the silver band below; the black diffuser is the shell's undercut lower face
+        # plate centered in the silver band below; the black diffuser is the shell's undercut lower face
         f'<geom type="box" size="0.006 {tail[4] - 0.015} 0.005" pos="{tail[0] - 0.006} 0 {tail[5] - 0.006}" rgba="{TAIL}" material="lamp" {vis}/>',
         f'<geom type="box" size="0.005 {tail[4] - 0.09} 0.0035" pos="{tail[0] - 0.005} 0 {tail[5] - 0.03}" rgba="{TAIL}" material="lamp" {vis}/>',
         f'<geom type="box" size="0.005 0.17 0.04" pos="{tail[0] - 0.005} 0 {0.5 * (tail[2] + tail[5])}" rgba="0.94 0.94 0.92 1" {vis}/>',

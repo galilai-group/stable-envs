@@ -15,7 +15,7 @@ class MassRows:
 
     The same arithmetic as ``PhysicsKnobs``: a leaf scales its geoms' contribution to their body,
     and a model compiled with settotalmass rescales every body. A tracking camera sits at its
-    body's subtree centre of mass plus an offset taken at qpos0, so both move with the masses."""
+    body's subtree center of mass plus an offset taken at qpos0, so both move with the masses."""
 
     def __init__(self, key: str, model):
         import mujoco
@@ -102,7 +102,7 @@ class MassRows:
 
     @staticmethod
     def _com0(c, mass, ipos, subtree):
-        """Subtree centres of mass at qpos0, ``(B, nbody, 3)``."""
+        """Subtree centers of mass at qpos0, ``(B, nbody, 3)``."""
         xipos = c["xpos0"] + torch.einsum("nij,bnj->bni", c["xmat0"], ipos)
         weighted = torch.einsum("cn,bnk->bck", c["ancestor"], mass[..., None] * xipos)
         return weighted / subtree.clamp_min(1e-300)[..., None]

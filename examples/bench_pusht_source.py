@@ -1,8 +1,8 @@
 """Paired PushT render timing: ``env.render(state)`` against the pinned stable-worldmodel source.
 
-Both sides render the same saved States on one CPU thread. The source side sets each State with
+Both sides render the same saved states on one CPU thread. The source side sets each state with
 ``_set_state`` and calls ``render()`` on one source env. ``first`` is the first ``env.render`` of
-each State batch on a fresh env (it builds one pymunk scene per lane); ``warm`` repeats them.
+each state batch on a fresh env (it builds one pymunk scene per lane); ``warm`` repeats them.
 
     PYTHONPATH=/path/to/stable-worldmodel python examples/bench_pusht_source.py --batches 1,64,1024
 """

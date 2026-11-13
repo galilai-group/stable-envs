@@ -1,4 +1,4 @@
-"""OGBench locomotion mazes and Cube/Scene manipulation environments."""
+"""OGBench locomotion mazes and Cube/Scene manipulation (``ogbench`` and ``ogbench-manipulation`` extras)."""
 
 from __future__ import annotations
 

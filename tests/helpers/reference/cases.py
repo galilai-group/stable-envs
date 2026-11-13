@@ -71,8 +71,8 @@ _MAZES = tuple(
     for task in tasks
 )
 
-#: Registered env -> the CPU test comparing it with the library it ports, or with a corpus recorded from
-#: its source. None of these tests imports stable_worldmodel.
+#: Registered env -> the CPU test comparing it with the upstream library it reproduces, or with a corpus
+#: recorded from its source. None of these tests imports stable_worldmodel.
 ORIGINAL_GATES: dict[str, str] = {
     **dict.fromkeys(("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous"), _CLASSIC),
     **dict.fromkeys(("TwoRoom", "Piecewise", "SimplePointMaze"), _NAVIGATION),
@@ -129,7 +129,7 @@ _DMC_SWM = "tests/integration/test_dmc_swm_semantics.py::test_dmc_full_state_sem
 _DMC_ALIGNED = "tests/integration/test_dmc_aligned_semantics.py::test_aligned_full_state_specs_and_gate"
 _PUSHT = "tests/integration/test_variation_pusht.py::test_leaf_matches_swm_per_lane"
 
-#: Registered env with a stable-worldmodel registration -> the CPU test comparing it with live SWM
+#: Registered env with a stable-worldmodel registration -> the CPU test comparing it with live stable-worldmodel
 #: (marked ``swm``).
 SWM_GATES: dict[str, str] = {
     **dict.fromkeys(

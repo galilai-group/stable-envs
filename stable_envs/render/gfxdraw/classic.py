@@ -25,10 +25,9 @@ SOLID = G.SOLID
 
 
 def disc_table(r: int) -> np.ndarray:
-    """Return integer disc spans and two ordered fringe-weight maps for radius r.
+    """Return integer disc spans and two ordered fringe-weight maps for radius ``r``.
 
-    Layout: r+1 row half-widths, followed by two flattened (2r+1)² weight maps.
-    Duplicate writes within a pass or unsupported fringe weights are rejected.
+    The layout is ``r + 1`` row half-widths, then two flattened ``(2r+1, 2r+1)`` weight maps.
     """
     r = int(r)
     d = 2 * r + 1
@@ -69,11 +68,7 @@ class DiscTables:
 
 
 class Ops:
-    """Batched classic-control draw operations in painter order.
-
-    Geometry, colors and disc radii vary per environment; canvas dimensions are
-    fixed. Call finish() before rendering.
-    """
+    """Batched classic-control draw operations in painter order; call ``finish()`` before rendering."""
 
     def __init__(self, B, H, W, device):
         self.B, self.H, self.W, self.device = B, H, W, device
@@ -374,7 +369,7 @@ TILE = (1, 128)
 
 @torch.no_grad()
 def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
-    """Render operations to (B, H, W, 3) uint8 RGB, with the final vertical flip.
+    """Render operations to ``(B, H, W, 3)`` uint8 RGB, with the final vertical flip.
 
     Requires CUDA and Triton. A supplied output buffer is overwritten and returned.
     """

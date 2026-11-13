@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "examples"
 
 #: Directories under ``examples/`` that are outputs or vendored, not scripts to check.
-SKIP_DIRS = {"results", "media", "logs", "tables", "figures", "config", "__pycache__", ".hydra"}
+SKIP_DIRS = {"results", "media", "logs", "tables", "figures", "config", "__pycache__", ".hydra", ".venv"}
 
 
 def _scripts() -> list[Path]:

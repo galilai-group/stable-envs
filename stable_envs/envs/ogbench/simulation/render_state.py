@@ -19,8 +19,8 @@ AGENT_MATERIALS = ("ur5e/robotiq/black", "ur5e/robotiq/pad_gray")
 class _RenderScene(CompatibleScene):
     """Give each button its own render material while preserving source material parameters.
 
-    MuJoCo honours geom RGB overrides; MJWarp reads material RGB. Independent
-    materials let the two button-state bits select different colours.
+    MuJoCo honors geom RGB overrides; MJWarp reads material RGB. Independent
+    materials let the two button-state bits select different colors.
     """
 
     def modify_mjcf_model(self, model):
@@ -102,7 +102,7 @@ def sources(family):
 
 
 def projected_keys(family):
-    """The State leaves ``project`` reads."""
+    """The state leaves ``project`` reads."""
     return list(sources(family).values())
 
 
@@ -116,7 +116,7 @@ def require_leaves(family, state):
 
 
 def state_columns(family, columns, size, supersample):
-    """NumPy RenderState columns from trusted stacked State leaves, as ``project`` would fill them."""
+    """NumPy RenderState columns from trusted stacked state leaves, as ``project`` would fill them."""
     b = len(columns["physics", "qpos"])
     values = {
         ("renderer", "size"): np.full((b, 1), size, np.int64),
@@ -280,7 +280,7 @@ def build_model(family, row=None, names=None):
                 env.variation_space._walk(name).set_value(value)
             else:
                 env.variation_space._walk(name)._value = value
-        # Floor, cube and agent RGB use the renderer’s per-world colour paths.
+        # Floor, cube and agent RGB use the renderer’s per-world color paths.
         env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
         env.compile_model_and_data()
         env._cube_colors_from_variation()

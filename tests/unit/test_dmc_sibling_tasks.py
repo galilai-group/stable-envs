@@ -17,8 +17,9 @@ CELLS = {
     "DMCPointMassEasy": ("point_mass", "easy"),
     "DMCSwimmerSwimmer6": ("swimmer", "swimmer6"),
 }
-#: SWM-registered cells against the suite task each simulates. The aligned cells (SWM's MJCF round
-#: trip) and walker (SWM's task reward) replay corpora instead, in test_dmc_oracle_replay.py.
+#: stable-worldmodel-registered cells against the suite task each simulates. The aligned cells
+#: (stable-worldmodel's MJCF round trip) and walker (stable-worldmodel's task reward) replay corpora instead,
+#: in test_dmc_oracle_replay.py.
 SWM_CELLS = {
     "DMCAcrobotBalance": ("acrobot", "swingup_sparse"),
     "DMCPendulumSwingup": ("pendulum", "swingup"),

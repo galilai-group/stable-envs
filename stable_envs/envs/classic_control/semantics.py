@@ -91,7 +91,7 @@ class ClassicControlSemantics:
         self._simulator.configure(values)
 
     def _adopt_physics_state(self, state):
-        """Show a restored State's physics in the Variation for this episode; defaults stay."""
+        """Show a restored state's physics in the variation for this episode; defaults stay."""
         values = self._style.values.clone()
         offsets = {path: off for path, off, _ in self.variation_space.flat_layout()}
         for name in _PHYSICS_SPACES[self.CLASSIC_DOMAIN]:

@@ -34,7 +34,7 @@ from .base import _DMCModel
 class DMControlSuite(_DMCModel):
     """Render fixed-camera domains using static plates and analytic moving geometry.
 
-    Plates store the lit background, its shadowed colour, and its unreflected
+    Plates store the lit background, its shadowed color, and its unreflected
     surface. Subclasses declare the domain, task and camera. Shared model mutation
     during baking and kinematics requires serialized access.
     """
@@ -49,7 +49,7 @@ class DMControlSuite(_DMCModel):
 
     @classmethod
     def _grid_slots(cls):
-        """Cache checker texel positions from canonical masks, independent of recolouring."""
+        """Cache checker texel positions from canonical masks, independent of recoloring."""
         key = (cls.DOMAIN, cls.TASK, int(cls.default_size))
         if key in _GRID_SLOTS:
             return _GRID_SLOTS[key]
@@ -64,7 +64,7 @@ class DMControlSuite(_DMCModel):
         return _GRID_SLOTS[key]
 
     def make_variation_space(self) -> Dict:
-        """Add the checker’s two RGB colours to the model-derived appearance space.
+        """Add the checker’s two RGB colors to the model-derived appearance space.
 
         The source material file supplies their defaults. Texture substitution uploads
         into the existing GL context rather than creating another renderer.
@@ -87,7 +87,7 @@ class DMControlSuite(_DMCModel):
         return tuple(p for p, _, _ in self.variation_space.flat_layout() if p not in self._physics_paths)
 
     def _plate_key(self, size, variation):
-        """Key texture colours by their stored uint8 bytes and other leaves to six decimals."""
+        """Key texture colors by their stored uint8 bytes and other leaves to six decimals."""
         out = [(self.DOMAIN, self.TASK, int(self.CAMERA), int(size), str(self.device))]
         for p in self.PLATE_PATHS:
             if p == "floor.color":
@@ -183,7 +183,7 @@ class DMControlSuite(_DMCModel):
     def _apply_floor(self, m, r, variation) -> None:
         """Assign floor texels absolutely and upload with the renderer’s GL context current.
 
-        Both model and context retain the previous bake’s colours, so every bake
+        Both model and context retain the previous bake’s colors, so every bake
         must assign its own texture, including the default.
         """
         slots = self._grid_slots()
@@ -224,8 +224,8 @@ class DMControlSuite(_DMCModel):
         lights = _Lights(r.scene)
         sl = lights.shadow_light()
 
-        # plate 2: the shadow-casting light contributing only its ambient. This is the colour of a
-        # static surface the light does not reach, so MuJoCo's shadow map need not be modelled.
+        # plate 2: the shadow-casting light contributing only its ambient. This is the color of a
+        # static surface the light does not reach, so MuJoCo's shadow map need not be modeled.
         if sl >= 0:
             head = 1 if int(m.vis.headlight.active) else 0
             mi = sl - head
@@ -291,7 +291,7 @@ class DMControlSuite(_DMCModel):
         """Build primitive attributes and poses from geoms, sites and tendon segments.
 
         Tendon count is fixed at bake time; kinematics replaces its placeholder poses,
-        half-lengths and colours for each row.
+        half-lengths and colors for each row.
         """
         kind, size, rgb, tex, spec, shin, pos, mat = [], [], [], [], [], [], [], []
         for i in geoms:
@@ -365,7 +365,7 @@ class DMControlSuite(_DMCModel):
         return hit
 
     def _floor_rays(self, sc: _Scene, ss: int):
-        """Cache reflected rays and unreflected colours at samples that hit the mirror."""
+        """Cache reflected rays and unreflected colors at samples that hit the mirror."""
         key = ("floor", int(ss))
         hit = sc.const.get(key)
         if hit is not None:
@@ -503,10 +503,10 @@ class DMControlSuite(_DMCModel):
         return out
 
     def _fk(self, states: torch.Tensor, sc: _Scene, rows=None):
-        """Return per-row mover positions, rotations, sizes and colours as device tensors.
+        """Return per-row mover positions, rotations, sizes and colors as device tensors.
 
         Source kinematics runs on CPU. Tendons need mj_forward for constraint-dependent
-        colour; their polylines are grouped by length for batched capsule construction.
+        color; their polylines are grouped by length for batched capsule construction.
         Restore episode model entries before returning, including on failure.
         """
         import mujoco
@@ -689,7 +689,7 @@ class DMControlSuite(_DMCModel):
         return None
 
     def _per_chunk_constants(self, sc: _Scene, ss: int):
-        """Cache rays, plate colours, material parameters and lights per supersampling grid."""
+        """Cache rays, plate colors, material parameters and lights per supersampling grid."""
         hit = sc.const.get(int(ss))
         if hit is None:
             dev = self.device
@@ -742,7 +742,7 @@ class DMControlSuite(_DMCModel):
         P = xpos.shape[1]
         sl = sc.shadow_light
         st = self._static_t(sc, ss).view(1, N).expand(B, N)
-        # Tendon colour varies by row, so material lookup needs both row and primitive indices.
+        # Tendon color varies by row, so material lookup needs both row and primitive indices.
         bi = torch.arange(B, device=dev).unsqueeze(1)
 
         # Conservative windows exclude only rays movers cannot hit; fall back to a full
@@ -801,7 +801,7 @@ class DMControlSuite(_DMCModel):
         return hit
 
     def _reflect(self, sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi):
-        """Replace mirror hits using ``r * mover_colour + (1-r) * unreflected_surface``.
+        """Replace mirror hits using ``r * mover_color + (1-r) * unreflected_surface``.
 
         Blending onto the reflected plate would keep the plate's own reflection underneath.
         Only hit samples are shaded; other pixels keep the existing background.

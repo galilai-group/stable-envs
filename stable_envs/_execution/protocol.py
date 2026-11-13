@@ -26,7 +26,7 @@ class SimulatorAdapter(Protocol):
 
     @abstractmethod
     def reset(self, seed: int | None = None) -> TensorDict:
-        """Reset the batch and return an owned full-State snapshot."""
+        """Reset the batch and return an owned full-state snapshot."""
         ...
 
     @abstractmethod
@@ -49,7 +49,7 @@ class SimulatorAdapter(Protocol):
         self._staged_restore = state
 
     def commit_restore(self) -> None:
-        """Restore the State that ``prepare_restore`` accepted."""
+        """Restore the state that ``prepare_restore`` accepted."""
         state = self._staged_restore
         if state is None:
             raise RuntimeError("No restore is prepared")
@@ -74,7 +74,7 @@ class SimulatorAdapter(Protocol):
 
     @abstractmethod
     def step(self, actions: Tensor | np.ndarray) -> TensorDict:
-        """Advance one action per lane and return State and the defined task outputs."""
+        """Advance one action per lane and return state and the defined task outputs."""
         ...
 
     @abstractmethod

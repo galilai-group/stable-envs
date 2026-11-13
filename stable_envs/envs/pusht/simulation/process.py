@@ -23,7 +23,7 @@ class PushTProcessAdapter(ProcessAdapter):
     """Run PushT replay owners in worker processes.
 
     The parent records each lane's action history, so the shared buffers hold
-    only fixed-size State fields. Restore replays the history in the workers.
+    only fixed-size state fields. Restore replays the history in the workers.
     """
 
     name = "PushT"
@@ -45,12 +45,12 @@ class PushTProcessAdapter(ProcessAdapter):
 
         resolution = self._metadata.template.config["resolution"]
         if self.device.type == "cuda" and raster.HAVE_TRITON and raster.resize_supported(resolution):
-            # Workers write the State leaves a step changes; the parent rasterizes them on the GPU.
+            # Workers write the state leaves a step changes; the parent rasterizes them on the GPU.
             self.frame_mode = FRAME_FIELDS
 
     @property
     def template(self):
-        """A lane whose configuration, Variation space and State fields describe the batch."""
+        """A lane whose configuration, variation space and state fields describe the batch."""
         self._check_open()
         return self._metadata.template
 

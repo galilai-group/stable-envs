@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stable-envs"
-description = "A batched research-environment library with explicit state, dynamics, variation spaces, and fast state-driven CPU/GPU rendering"
+description = "Fast and Reproducible Environments with Controllable Variations"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = "MIT"
@@ -17,7 +17,8 @@ keywords = ["reinforcement-learning", "environments", "rendering", "pytorch", "g
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
-  "Operating System :: OS Independent",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -49,8 +50,9 @@ Source = "https://github.com/galilai-group/stable-envs"
 # the versions parity is certified under live in the pin-* dependency groups below.
 # Backends remain separate so users do not install CUDA extensions merely to compare
 # against an official CPU renderer.
-# Classic control needs no package to render; numba adds the compiled CPU renderer (the 2D families share it).
-classic = ["numba>=0.60"]
+# MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame; numba adds the compiled
+# CPU renderer (the 2D families share it).
+classic = ["pygame>=2.5", "numba>=0.60"]
 # PushT replay checks this exact Pymunk at construction.
 pusht = ["pygame>=2.5", "pymunk==7.2.0", "opencv-python-headless", "shapely", "numba>=0.60"]
 pusht-gpu = [
@@ -118,7 +120,7 @@ craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
 # pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
 miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2", "numba>=0.60"]
 hf = ["datasets>=2.14"]
-examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
+examples = ["imageio", "imageio-ffmpeg", "opencv-python-headless"]
 # No `all` extra: Fetch needs mujoco<3.12, and nvdiffrast cannot be expressed
 # as PyPI metadata.
 # docs and dev repeat the dependency groups of the same name for pip installs.

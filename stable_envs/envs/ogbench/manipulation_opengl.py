@@ -360,7 +360,7 @@ def frames(family, columns, device):
 
 
 def prepare(family, state, device, chunk_size=None, validated=False):
-    """Validate a render State unless ``validated``; return its host copy, the torch device and the frame size."""
+    """Validate a render state unless ``validated``; return its host copy, the torch device and the frame size."""
     host = state.cpu()
     if any(value.requires_grad for value in host.values(True, True)):
         host = host.detach()
@@ -428,7 +428,7 @@ def draw(family, host, device_type, images):
             for index in indices:
                 for name, values in poses.items():
                     getattr(env.data, name)[:] = values[index]
-                # Colours this loop writes stay in the private model, so an unchanged appearance is not rewritten.
+                # Colors this loop writes stay in the private model, so an unchanged appearance is not rewritten.
                 look = (cube_colors[index].tobytes(), agent_colors[index].tobytes())
                 if _APPLIED.get(id(env)) != look:
                     env.variation_space._walk("cube.color")._value = cube_colors[index].copy()

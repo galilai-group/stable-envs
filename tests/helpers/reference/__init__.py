@@ -1,7 +1,7 @@
 """Test-only reference tables that tie stable-envs classes to stable-worldmodel.
 
-They map the 38 SWM ids in the frozen cell matrix to registered classes, hold the Gymnasium
-ids used to build reference envs, and map SWM variation spaces onto stable-envs styles. The
+They map the 38 stable-worldmodel ids in the frozen cell matrix to registered classes, hold the Gymnasium
+ids used to build reference envs, and map stable-worldmodel variation spaces onto stable-envs styles. The
 installed package does not use them.
 """
 

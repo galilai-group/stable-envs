@@ -77,10 +77,9 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
 def bin_primitives(
     box: torch.Tensor, H: int, W: int, bin_h: int, bin_w: int
 ) -> tuple[torch.Tensor, torch.Tensor, int]:
-    """Return primitive lists (B, NB, K), counts (B, NB), and horizontal bin count.
+    """Return primitive lists ``(B, NB, K)``, counts ``(B, NB)`` and the horizontal bin count.
 
-    Input boxes (B, P, 4) use output coordinates (x0, y0, x1, y1).
-    A stable prefix sum preserves painter order where primitives overlap.
+    Input boxes ``(B, P, 4)`` are ``(x0, y0, x1, y1)`` in output coordinates.
     """
     B, P, _ = box.shape
     nby, nbx = -(-H // bin_h), -(-W // bin_w)
@@ -391,12 +390,10 @@ def render_surface(
     PPOST: int,
     out: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Render polygon lists to (B, H, W, 3) uint8 RGB, with the final vertical flip.
+    """Render polygon lists to ``(B, H, W, 3)`` uint8 RGB with the final vertical flip (CUDA and Triton).
 
-    Vertices are (B, P, VMAX, 2) int32; metadata is (B, P, PM_W).
-    The first PG polygons are gfxdraw quads with edge tables (B, PG, 4, EG_W).
-    The remainder use pygame.draw fill rules. Polygons from PPOST onward
-    already use flipped coordinates. Requires CUDA and Triton.
+    Vertices are ``(B, P, VMAX, 2)`` int32 and metadata ``(B, P, PM_W)``. The first ``PG`` polygons are gfxdraw
+    quads with edge tables ``(B, PG, 4, EG_W)``, and polygons from ``PPOST`` on use flipped coordinates.
     """
     if not vert.is_cuda:
         raise ValueError("render_surface requires CUDA; CarRacing has no CPU renderer")

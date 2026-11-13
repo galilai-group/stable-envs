@@ -1,6 +1,6 @@
 """OGBench family: registration, declarations and the 25 maze cells on the CPU ray-caster.
 
-The structural half needs no MuJoCo or ogbench. The behavioural half constructs maze cells and
+The structural half needs no MuJoCo or ogbench. The behavioral half constructs maze cells and
 skips without ``ogbench``. The manipulation cells are CUDA-only, so only their CPU refusal,
 declarations and variation space are checked here.
 """
@@ -25,7 +25,7 @@ pytestmark = pytest.mark.unit
 MAZE_CELLS = tuple(f"{lo.capitalize()}Maze{mz.capitalize()}{ds.capitalize()}" for lo, mz, ds in MAZE.CELLS)
 MANIP_CELLS = ("OGBCube", "OGBScene")
 
-#: A representative maze cell per BODY, so the behavioural half exercises all three state shapes and
+#: A representative maze cell per BODY, so the behavioral half exercises all three state shapes and
 #: both forward-kinematics paths (the closed-form point one and ``mj_kinematics`` for the legged
 #: bodies) without paying for 25 MuJoCo bakes in a unit run.
 BODY_SAMPLE = ("PointMazeMediumNavigate", "AntMazeMediumExplore", "HumanoidMazeMediumNavigate")
@@ -160,7 +160,7 @@ def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
         assert space["floor"]["color"].shape == (2, 3)
 
 
-# ===================================================================== behavioural: the maze cells
+# ===================================================================== behavioral: the maze cells
 
 
 @pytest.fixture(scope="module")
@@ -289,7 +289,7 @@ def test_the_numba_lit_pass_draws_the_bytes_of_the_torch_lit_pass(_ogbench, monk
 @pytest.mark.nightly
 @pytest.mark.parametrize("cell", ["PointMazeLargeNavigate", "AntMazeMediumNavigate"])
 def test_a_recoloured_floor_and_dimmed_light_leave_the_default_plate_unchanged(_ogbench, cell):
-    """Recoloured checkers upload texels into a shared renderer; the default bake must not see them."""
+    """Recolored checkers upload texels into a shared renderer; the default bake must not see them."""
     with R.REGISTRY[cell](num_envs=1, device="cpu") as env:
         default = env._bake(env.size, None).plate
         varied = {"floor.color": [0.9, 0.1, 0.1, 0.1, 0.1, 0.9], "floor.pixel_encoding": [0], "light.intensity": [0.4]}

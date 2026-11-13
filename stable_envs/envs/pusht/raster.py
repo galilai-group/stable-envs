@@ -1,6 +1,6 @@
-"""Batched PushT frames equal to the pygame frames: integer ports of the pygame 2.6.1 draw calls and cv2 resize.
+"""Batched PushT frames equal to the pygame frames: the pygame 2.6.1 draw calls and cv2 resize in integer arithmetic.
 
-The host turns render State into a list of primitives per frame in pygame's painter order: polygon
+The host turns render state into a list of primitives per frame in pygame's painter order: polygon
 fills (``draw_fillpoly``), filled circles (``draw_circle_filled``), width-4 lines (``draw_line_width``)
 and antialiased contact lines (``draw_aaline``). The device evaluates the primitives only at the 512 px
 canvas pixels that ``cv2.resize(INTER_LINEAR)`` reads, then applies the fixed-point resize.
@@ -24,18 +24,18 @@ POLY, CIRCLE, LINE = 1, 2, 3
 ROWS = 4
 #: ROWS: offset of the first row of intervals (four ``lo, hi`` pairs per row).
 ROFF = 6
-#: Record layout: kind, packed colour, inclusive bounding box, then kind-specific integers.
+#: Record layout: kind, packed color, inclusive bounding box, then kind-specific integers.
 KIND, COLOR, BX0, BY0, BX1, BY1 = range(6)
 #: POLY: point count, then up to five x and five y values.
 PN, PX, PY = 6, 7, 12
-#: CIRCLE: centre and radius.
+#: CIRCLE: center and radius.
 CX, CY, CR = 6, 7, 8
 #: LINE: start, direction signs, extents, initial error, step count, and 1 when spans are horizontal.
 LX, LY, LSX, LSY, LDX, LDY, LERR, LN, LXINC = range(6, 15)
-#: 1 for primitives that only the Variation and goal place (goal, walls).
+#: 1 for primitives that only the variation and goal place (goal, walls).
 STATIC = 17
 RECORD = 18
-#: Most contact segments a State holds.
+#: Most contact segments a state holds.
 SEGMENTS = 90
 WALL_COLOR = (211, 211, 211)
 AALINE_COLOR = (231, 76, 60)
@@ -175,7 +175,7 @@ def template_key(fields, lane):
 
 
 def _light(color):
-    """``light_color(c).as_int()`` on ``[..., 3]`` integer colours: float32 ``min(1.2 * c, 255)``, rounded half to even."""
+    """``light_color(c).as_int()`` on ``[..., 3]`` integer colors: float32 ``min(1.2 * c, 255)``, rounded half to even."""
     scaled = np.minimum(np.float32(1.2) * np.asarray(color, np.float32), np.float32(255))
     return np.rint(scaled).astype(np.int64)
 
@@ -323,7 +323,7 @@ def _scene(fields, count):
 
 
 def contact_writes(fields):
-    """Return ``(x, y, brightness, colour, count)`` blend writes per frame ``[N, W]`` in drawing order."""
+    """Return ``(x, y, brightness, color, count)`` blend writes per frame ``[N, W]`` in drawing order."""
     from . import raster_cpu as cpu
 
     segments = fields["current/render_segments"]
@@ -571,7 +571,7 @@ if HAVE_TRITON:
 
     @triton.jit
     def _aaline(c00, c01, c10, c11, y0, y1, x0, x1, ylo, yhi, xlo, xhi, fx, fy, tx, ty, color):
-        """Port of pygame 2.6.1 ``draw_aaline`` (blend on) in float32 with explicit roundings."""
+        """Matches pygame 2.6.1 ``draw_aaline`` (blend on) in float32 with explicit roundings."""
         dx = libdevice.sub_rn(tx, fx)
         dy = libdevice.sub_rn(ty, fy)
         adx = tl.abs(dx.to(tl.float64))
@@ -901,7 +901,7 @@ if HAVE_TRITON:
                         c00, c01 = _paint(y0, x0, x1, c00, c01, base, color, kind, table, max_radius, BIG, intervals)
                         c10, c11 = _paint(y1, x0, x1, c10, c11, base, color, kind, table, max_radius, BIG, intervals)
                 if SEGMENTS > 0:
-                    # Contact lines from the State: (x0, y0, x1, y1, r, g, b, a) per segment, drawn in order.
+                    # Contact lines from the state: (x0, y0, x1, y1, r, g, b, a) per segment, drawn in order.
                     ns = tl.load(segment_counts + f)
                     for k in range(0, ns):
                         sb = segments + (f * SEGMENTS + k) * 8
@@ -1008,7 +1008,7 @@ def launch_segments(
     bins=None,
     warps=4,
 ):
-    """Draw device ``records`` with the State contact lines ``segments [N, S, 8]``, all on the device.
+    """Draw device ``records`` with the state contact lines ``segments [N, S, 8]``, all on the device.
 
     ``static`` is ``(index [N], frames [K, size, size, 3], dynamic boxes [N, 4])``: frames of the background,
     goal and walls alone, with index −1 for frames that draw them;
@@ -1109,7 +1109,7 @@ def tile_bins(records, counts, size, tile, segments=None, segment_counts=None, w
 @cache
 def _device_tables(size, device):
     s, a0, a1 = resize_coefficients(CANVAS, size)
-    # Agent discs reach a radius of 0.375 * 60; the table covers every Variation scale.
+    # Agent discs reach a radius of 0.375 * 60; the table covers every variation scale.
     max_radius = 32
     t = lambda a: torch.as_tensor(np.ascontiguousarray(a), dtype=torch.int32, device=device)  # noqa: E731
     return dict(taps=t(s), w0=t(a0), w1=t(a1), table=t(circle_table(max_radius)), max_radius=max_radius)
@@ -1119,7 +1119,7 @@ def draw_cuda(records, counts, background, writes, size, device, tile=32):
     """Return ``[N, size, size, 3]`` uint8 frames of host ``records`` and ``writes`` (see ``contact_writes``) on CUDA.
 
     Tiles that no agent, block or contact primitive reaches copy the frame that the background,
-    goal and walls draw alone, which frames with the same goal and colours share.
+    goal and walls draw alone, which frames with the same goal and colors share.
     """
     n = len(records)
     static = (records[..., STATIC] != 0) & (records[..., KIND] != 0)

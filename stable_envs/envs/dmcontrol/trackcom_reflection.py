@@ -11,9 +11,9 @@ from ...render.texture_mip import plane_grid, plane_texgen
 class Reflection:
     """Reuse the primary renderer's segmentation, BVH and lighting on floor hits.
 
-    ``palette`` (texel slots of the floor checker) lets each world recolour those
+    ``palette`` (texel slots of the floor checker) lets each world recolor those
     texels: the floor samples a texture of per-texel palette weights instead, and
-    the texels outside the slots keep their one shared colour.
+    the texels outside the slots keep their one shared color.
     """
 
     def __init__(self, model, data, context, source_model, palette=None):

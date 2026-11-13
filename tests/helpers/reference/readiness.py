@@ -15,7 +15,7 @@ from collections import Counter
 from .crosswalk import SWM_IDS, canonical_from_frozen
 from .variation import VARIATION_MAPS
 
-#: SWM ids whose stable-envs port implements the step itself.
+#: stable-worldmodel ids whose stable-envs class implements the step itself.
 NATIVE_SWM_IDS = frozenset(
     {
         "swm/Piecewise-v0",

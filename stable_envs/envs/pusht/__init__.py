@@ -1,3 +1,5 @@
+"""PushT: push a T-shaped block into a target pose, with continuous or discrete actions (``pusht`` extra)."""
+
 import sys
 
 from ...registry import _import_env_module

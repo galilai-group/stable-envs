@@ -69,7 +69,7 @@ def test_texgen_matches_the_measured_law(gtype, size, rep, uni, du_dx, dv_dy):
 
 
 def test_cube_texture_is_a_direction_not_a_uv():
-    """A cube map is indexed by a direction; the 0.5 offset that centres a 2D map would tilt it."""
+    """A cube map is indexed by a direction; the 0.5 offset that centers a 2D map would tilt it."""
     m, g = _geom("sphere", "0.4", ttype="cube")
     A, b = ND.texgen(m, g, cube=True)
     assert np.allclose(A, np.eye(3)) and np.allclose(b, 0.0)

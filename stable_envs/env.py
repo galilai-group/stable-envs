@@ -1,20 +1,4 @@
-"""Batched environments with explicit simulator State and state-driven rendering.
-
-``reset`` and ``get_state`` return an owned TensorDict snapshot. ``set_state``
-restores that snapshot under the environment's current Variation. State includes
-hidden simulator fields and preserves their declared precision.
-
-``render(state)`` draws a snapshot without advancing simulation. Renderers use a
-private float32 projection that may omit dynamics fields; compact renderer rows
-cannot replace a full State checkpoint.
-
-``step`` accepts one action or a sequence per environment. Independent slices
-select which post-action States and frames to return. The final State is always
-returned, and validity masks distinguish executed transitions from held endpoints.
-
-Variation configures persistent appearance and environment parameters. The output
-device does not determine where physics runs; execution depends on the family.
-"""
+"""The ``Env`` base class: batched simulators with restorable state and state-driven rendering."""
 
 from __future__ import annotations
 
@@ -37,10 +21,10 @@ from .specs import CompositeSpec, Spec
 if TYPE_CHECKING:
     from .render.scene import Scene2D
 
-#: Full simulator State is a TensorDict with entity-grouped keys and batch size [num_envs].
+#: Full simulator state is a TensorDict with entity-grouped keys and batch size [num_envs].
 State = TensorDict
 
-#: Step results always contain final State; task outputs exist only where the family defines them.
+#: Step results always contain final state; task outputs exist only where the family defines them.
 StepResult = TensorDict
 
 #: Variation accepts leaf overrides or a flat/batched compiled configuration row.
@@ -57,8 +41,9 @@ def _log_auto_cpu() -> None:
 def require_contiguous_out(owner: str, out) -> None:
     """Raise ValueError unless ``out`` is None or a contiguous uint8 buffer.
 
-    Render backends write through a flat view of ``out``, so a strided destination
-    would receive frames at the wrong locations.
+    Args:
+        owner: The caller named in the error message, such as ``"CartPole.render"``.
+        out: The buffer to check, or None.
     """
     if out is None:
         return
@@ -183,9 +168,13 @@ def check_drawn_fields(state, fields, dtypes: Mapping | None = None) -> None:
 def render_states_arg(env, states) -> torch.Tensor:
     """Resolve private renderer input to live rows or a validated compact projection.
 
-    CUDA tensors skip the nonfinite scan to avoid a host synchronization. Array
-    inputs are scanned before transfer; full State inputs use the layout projection.
-    Rows that ``Env.render`` checked for this call pass through unchanged.
+    CUDA tensors skip the nonfinite scan to avoid a host synchronization. Array inputs are scanned
+    before transfer; full state inputs use the layout projection. Rows that ``Env.render`` checked
+    for this call pass through unchanged.
+
+    Args:
+        env: The environment that renders.
+        states: Compact rows, a full state, or None for the live state.
     """
     env._check_open("render")
     if states is not None and states is env._checked_rows:
@@ -217,14 +206,20 @@ def _names_phrase(names: tuple[str, ...], limit: int = 8) -> str:
 def check_states(
     env, states, owner: str | None = None, leading: bool = False, scan: bool = True, move: bool = True
 ) -> torch.Tensor:
-    """Validate compact renderer rows and convert them to float32.
+    """Validate compact renderer rows and return them as float32 with the input's shape.
 
-    Accept ``(B, state_dim)`` or flat input containing a whole number of rows;
-    ``leading=True`` also permits extra leading axes. Reject image-shaped input
-    before casting and, when ``scan=True``, nonfinite values. Preserve input shape.
+    Args:
+        env: Environment whose ``state_dim`` and ``state_names`` describe a row.
+        states: ``(B, state_dim)`` rows, or a flat array of whole rows.
+        owner: Name used in error messages (``"<Class>.set_state"`` if None).
+        leading: Accept extra leading axes.
+        scan: Refuse NaN and infinite values.
+        move: Move the result to ``env.device``.
 
-    ``move=False`` preserves the input device for callers that stream chunks.
-    This helper does not impose an environment batch-size limit.
+    Raises:
+        TypeError: If ``states`` is a mapping or can't be read as an array.
+        ValueError: If ``states`` has the wrong shape, looks like image pixels, is empty, or holds
+            non-finite values while ``scan`` is set.
     """
     owner = owner or f"{type(env).__name__}.set_state"
     D = int(env.state_dim)
@@ -331,7 +326,7 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 
 @dataclass(frozen=True)
 class ResetLeaf:
-    """A State value ``reset`` samples, takes from ``variation_values``, or leaves at ``default``.
+    """A state value ``reset`` samples, takes from ``variation_values``, or leaves at ``default``.
 
     ``sampled`` leaves are drawn when the options name no ``"variation"`` list.
     """
@@ -353,10 +348,11 @@ def _lane_value(value, lane: int, batch: int, width: int) -> np.ndarray:
 
 
 class Env:
-    """Base class for a batch of simulators with restorable State and state-driven rendering.
+    """Base class for a batch of simulators with restorable state and state-driven rendering.
 
-    Concrete environments are registered by class name and built with ``stable_envs.make``
-    or their constructor. One instance owns ``num_envs`` lanes.
+    One instance runs ``num_envs`` environments, one per batch row, and the tensors it returns
+    live on ``device``. Use it as a context manager, or call ``close``, to release workers and
+    GPU buffers.
     """
 
     name: str = ""
@@ -374,9 +370,9 @@ class Env:
     dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Variation leaves the source declares but never draws; appearance checks skip them too.
     undrawn_variation_leaves: frozenset[str] = frozenset()
-    #: Measured agreement with the source renderer and its measurement setup; empty when not measured.
+    #: Measured agreement with the upstream renderer and its measurement setup; empty when not measured.
     visual_fidelity: dict[str, Any] = {}
-    #: Where and why frames differ from the source renderer when ``visual_fidelity`` is declared.
+    #: Where and why frames differ from the upstream renderer when ``visual_fidelity`` is declared.
     visual_note: str = ""
     #: Source package versions the comparison with the source used; ``visual_fidelity`` can also carry them.
     reference_versions: dict[str, str] = {}
@@ -404,16 +400,22 @@ class Env:
         backend: str = "auto",
         seed: int = 0,
     ):
-        """Create ``num_envs`` lanes.
+        """Create a batch of ``num_envs`` environments.
+
+        Families add their own keywords, such as ``simulation_backend``.
 
         Args:
-            num_envs: Number of lanes.
-            size: Frame height and width in pixels; None uses ``default_size``.
+            num_envs: Batch size ``B``.
+            size: Frame height and width in pixels (``default_size`` if None). Some families draw a
+                fixed frame, so ``frame_spec`` has the exact shape.
             supersample: Samples per pixel along each axis.
-            device: Output device. None uses the global ``default_device``; ``"auto"`` selects
-                CUDA when available, otherwise CPU. Where physics runs depends on the family.
+            device: Output device (the global ``default_device`` if None); ``"auto"`` picks CUDA when
+                available. Where physics runs depends on the family.
             backend: Renderer backend; ``"auto"`` lets the family choose.
-            seed: Seed for the environment's sampler.
+            seed: Seed of the environment's sampler.
+
+        Raises:
+            ValueError: If the class requires CUDA and ``device`` is not a CUDA device.
         """
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
@@ -446,7 +448,14 @@ class Env:
 
     @staticmethod
     def resolve_device(device: str | None) -> str:
-        """Resolve None to the global default device and ``"auto"`` to ``"cuda"`` or ``"cpu"``."""
+        """Resolve None to the global default device and ``"auto"`` to ``"cuda"`` or ``"cpu"``.
+
+        Args:
+            device: A device string, ``"auto"``, or None for the global ``default_device``.
+
+        Returns:
+            The device string to use, such as ``"cpu"`` or ``"cuda:0"``.
+        """
         if device is None:
             device = _get_config()["default_device"] or "auto"
         device = str(device)
@@ -486,19 +495,30 @@ class Env:
             cls._render = _guard_render_out(fn)
 
     def make_variation_space(self) -> VariationDict:
-        """Declare persistent configuration leaves; an empty space exposes no variation."""
+        """Return the family's ``spaces.Dict`` of variation leaves; the constructor calls this hook once."""
         raise NotImplementedError
 
     def scene(self, states: torch.Tensor, variation: VariationLike | None = None, style=None) -> Scene2D:
-        """Build a Scene2D from ``(B, render_state_dim)`` compact rows.
+        """Build a ``Scene2D`` from ``(B, render_state_dim)`` compact rows.
 
         Primitive renderers implement this hook; other backends override ``_render``.
-        Families whose field of view depends on output resolution also accept ``size``.
+
+        Args:
+            states: Compact float32 rows.
+            variation: Leaf overrides or a compiled variation row for this call.
+            style: Internal form of a compiled row; pass ``variation`` instead.
         """
         raise NotImplementedError(f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Sample ``(batch, state_dim)`` compact renderer rows using the family sampler."""
+        """Sample ``(batch, state_dim)`` compact renderer rows as a NumPy array.
+
+        The rows feed renderer tests and benchmarks. They aren't full state, so ``set_state`` rejects them.
+
+        Args:
+            batch: Number of rows.
+            rng: NumPy generator (the environment's own if None).
+        """
         raise NotImplementedError
 
     def _require_state(self, operation: str) -> None:
@@ -520,7 +540,7 @@ class Env:
             if value.shape != (*state.batch_size, width):
                 raise ValueError(f"State field {'.'.join(key)} has invalid shape {tuple(value.shape)}")
             values.append((key, value))
-        # One host synchronization for the whole State; the per-field pass only names the culprit.
+        # One host synchronization for the whole state; the per-field pass only names the culprit.
         if values and not bool(torch.stack([torch.isfinite(v).all() for _, v in values]).all()):
             for key, value in values:
                 if not torch.isfinite(value).all():
@@ -547,7 +567,20 @@ class Env:
         check_drawn_fields(state, self._drawn_fields())
 
     def set_state(self, state: State) -> None:
-        """Restore a full State with exactly ``num_envs`` lanes under the current Variation."""
+        """Restore a full state with ``num_envs`` rows under the current variation.
+
+        The state is copied in, so later changes to ``state`` don't reach the environment.
+
+        Args:
+            state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(num_envs,)``.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the environment has no dynamics.
+            TypeError: If ``state`` is not a TensorDict, such as compact renderer rows.
+            ValueError: If the batch size is not ``(num_envs,)`` or a field is missing, misshaped or
+                non-finite.
+        """
         self._require_state("set_state")
         self._validate_state(state, batch=self.B)
         self._restore_state(state)
@@ -560,22 +593,34 @@ class Env:
 
     @property
     def state(self) -> State:
-        """Return an independent full snapshot, as with :meth:`get_state`."""
+        """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
     def render(self, x=None, **kwargs) -> torch.Tensor:
-        """Draw uint8 RGB frames ``(..., H, W, 3)`` on ``device`` without advancing simulation.
+        """Draw uint8 RGB frames without advancing the simulation.
 
-        ``x`` takes one of these forms:
+        A full state draws with its own appearance. Compact rows draw with the current variation,
+        or with ``variation=`` for this call only. A form that the family cannot draw raises an
+        error that names the forms it accepts.
 
-        - None: the frames of the live environments.
-        - A full State (from ``get_state``, ``reset`` or ``step``), of any batch size.
-        - Compact rows ``(B, state_dim)``, numpy or torch, as ``sample_states`` returns them.
+        Args:
+            x: None for the frames of the live environments; a full state from ``get_state``,
+                ``reset`` or ``step``, with batch size ``(N,)``; compact rows ``(N, state_dim)``, NumPy
+                or Torch, as ``sample_states`` returns them; or a RenderState from ``to_render_state``,
+                for families that have it.
+            **kwargs: Renderer options. Most families accept ``size``, ``supersample``, ``variation``
+                and ``out``, a contiguous ``(N, H, W, 3)`` uint8 buffer to fill.
 
-        Families with ``to_render_state`` also accept the RenderState it returns. A State draws
-        with its own appearance; sampled rows draw with the env's current Variation, or with
-        ``variation=``. Other options (``size``, ``out`` and family options) go to the renderer.
-        A form that the family cannot draw raises an error that names the accepted forms.
+        Returns:
+            ``(N, H, W, 3)`` uint8 frames on ``device``; ``(H, W)`` follows ``frame_spec`` unless
+            ``size`` is passed.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If ``x`` is None and the environment has no dynamics.
+            TypeError: If the family cannot draw the form of ``x``.
+            ValueError: If a state field or row is missing, misshaped or non-finite, or ``out`` is
+                not a contiguous uint8 buffer.
         """
         self._check_open("render")
         if x is None or isinstance(x, TensorDict):
@@ -625,7 +670,7 @@ class Env:
         return self._render_state if self._live_rows == self.B else self._render_state[: self._live_rows]
 
     def _set_render_state(self, states, variation: VariationLike | None = None, style=None) -> Env:
-        """Load compact rows for renderer tests; this does not restore full simulator State."""
+        """Load compact rows for renderer tests; this does not restore full simulator state."""
         s = check_states(self, states, f"{type(self).__name__}.set_state").reshape(-1, self.state_dim)
         n = int(s.shape[0])
         if n > self.B:
@@ -657,7 +702,7 @@ class Env:
         """Render ``(..., render_state_dim)`` rows to ``(..., H, W, 3)`` uint8 frames.
 
         ``variation`` accepts leaf overrides or a flat/batched compiled row. ``style``
-        is the internal name for the compiled appearance; public callers use Variation.
+        is the internal name for the compiled appearance; public callers use variation.
         """
         require_contiguous_out(f"{type(self).__name__}.render", out)
         # The base implementation validates directly; subclass overrides use the wrapper.
@@ -679,7 +724,7 @@ class Env:
 
     @property
     def variation_dim(self) -> int:
-        """Number of columns in a compiled Variation row."""
+        """Number of columns in a compiled variation row."""
         return self.variation_space.flat_dim
 
     @property
@@ -688,19 +733,32 @@ class Env:
         return [p for p, _, _ in self.variation_space.flat_layout()]
 
     def default_variation(self) -> np.ndarray:
-        """Return the declared default configuration as a ``(variation_dim,)`` NumPy row."""
+        """Return the declared default variation as a ``(variation_dim,)`` float32 NumPy row."""
         return self.variation_space.pack()
 
     def get_variation(self) -> torch.Tensor:
-        """Return the installed compiled Variation as a ``(rows, variation_dim)`` float32 tensor."""
+        """Return the installed variation, one float32 row per environment.
+
+        This is the live buffer, so clone it before you change it.
+        """
         return self._style.values
 
     def set_variation(self, variation: VariationLike | None = None, **overrides) -> torch.Tensor:
-        """Install a configuration row or mapping of overrides and return the compiled tensor.
+        """Install a variation and return it as ``get_variation`` does.
 
-        The result is also the default that every later ``reset`` restores for leaves its
-        options do not name. Keyword overrides take precedence over mapping entries.
-        Per-lane configuration is built for the number of live renderer rows.
+        Later ``reset`` calls restore it for every leaf their options don't name.
+
+        Args:
+            variation: A ``{dotted leaf path: value}`` dict, a compiled ``(variation_dim,)`` row for
+                every environment or ``(num_envs, variation_dim)`` rows, or None for the defaults.
+            **overrides: More ``{leaf path: value}`` entries, applied last.
+
+        Returns:
+            The installed ``(num_envs, variation_dim)`` float32 rows.
+
+        Raises:
+            KeyError: If a leaf path is unknown.
+            ValueError: If a row or value has the wrong width or number of rows.
         """
         if isinstance(variation, dict):
             overrides = {**variation, **overrides}
@@ -719,7 +777,7 @@ class Env:
         self._configure_variation(exact)
 
     def _configure_variation(self, exact: Mapping[str, Any] | None = None) -> None:
-        """Push the installed Variation into the simulator; ``exact`` holds float64 physics values."""
+        """Push the installed variation into the simulator; ``exact`` holds float64 physics values."""
         self._configure_physics(exact)
 
     def _restore_variation(self, overrides: Mapping[str, Any] | None = None) -> None:
@@ -739,10 +797,20 @@ class Env:
     def sample_variation(
         self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None
     ) -> np.ndarray:
-        """Sample ``(batch, variation_dim)`` independent configurations as float32 NumPy rows.
+        """Sample ``(batch, variation_dim)`` float32 variation rows without installing them.
 
-        ``paths`` restricts sampling to named leaves; other leaves retain their defaults.
-        Unknown paths raise KeyError. The default batch size is ``num_envs``.
+        Box leaves are uniform between their bounds and Discrete leaves uniform over ``0`` to ``n - 1``.
+
+        Args:
+            batch: Number of rows (``num_envs`` if None).
+            paths: Dotted leaf paths to sample (all if None); other leaves keep their defaults.
+            rng: NumPy generator (the environment's own if None).
+
+        Returns:
+            A ``(batch, variation_dim)`` float32 array; pass it to ``set_variation`` or ``render``.
+
+        Raises:
+            KeyError: If ``paths`` names an unknown leaf.
         """
         rng = rng or self.rng
         B = int(batch or self.B)
@@ -771,28 +839,28 @@ class Env:
 
     @property
     def style_dim(self) -> int:
-        """Internal appearance width; public callers use :attr:`variation_dim`."""
+        """Internal appearance width; public callers use ``variation_dim``."""
         return self.variation_dim
 
     @property
     def style_names(self) -> list[str]:
-        """Internal appearance paths; public callers use :attr:`variation_names`."""
+        """Internal appearance paths; public callers use ``variation_names``."""
         return self.variation_names
 
     def default_style(self) -> np.ndarray:
-        """Internal alias for default appearance; prefer :meth:`default_variation`."""
+        """Internal alias for default appearance; prefer ``default_variation``."""
         return self.default_variation()
 
     def get_style(self) -> torch.Tensor:
-        """Internal appearance tensor; prefer :meth:`get_variation`."""
+        """Internal appearance tensor; prefer ``get_variation``."""
         return self.get_variation()
 
     def set_style(self, style=None, **overrides) -> torch.Tensor:
-        """Internal appearance setter; prefer :meth:`set_variation`."""
+        """Internal appearance setter; prefer ``set_variation``."""
         return self.set_variation(style, **overrides)
 
     def sample_style(self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Internal appearance sampler; prefer :meth:`sample_variation`."""
+        """Internal appearance sampler; prefer ``sample_variation``."""
         return self.sample_variation(batch=batch, paths=paths, rng=rng)
 
     def resolve_style(
@@ -800,8 +868,13 @@ class Env:
     ) -> StyleTensor:
         """Compile appearance for a renderer batch.
 
-        Shared appearance broadcasts; per-lane appearance must match the batch size.
+        Shared appearance broadcasts; per-row appearance must match the batch size.
         Mapping overrides apply to the stored appearance without collapsing its rows.
+
+        Args:
+            style: Internal form of ``variation``; pass one or the other.
+            variation: Leaf overrides or compiled rows (the installed variation if both are None).
+            batch: Number of renderer rows (``num_envs`` if None).
         """
         B = int(self.B if batch is None else batch)
         variation, style = _split_appearance(variation, style)
@@ -813,7 +886,11 @@ class Env:
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def variation_values(self) -> dict:
-        """Return the current values of the variation space as a nested dict."""
+        """Return the values the variation space holds, as a nested dict.
+
+        These are the defaults the family declares for each leaf, and only an edit of ``variation_space`` itself
+        changes them. The variation that frames are drawn with is per environment; read it with ``get_variation``.
+        """
         return self.variation_space.value
 
     def _reset_value_ok(self, path: str, value, lane: int) -> bool:
@@ -877,12 +954,22 @@ class Env:
         return np.stack(rows)
 
     def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
-        """Resolve SWM-style reset options into ``{path: (num_envs, ...)}`` values.
+        """Resolve stable-worldmodel-style reset options into ``{path: (num_envs, ...)}`` arrays.
 
-        Every ``reset`` goes through here. Variation leaves the options do not name return
-        to their defaults (the registered values, or the last ``set_variation``); named
-        leaves are sampled or set for this episode. Variation is installed before reset
-        leaves are drawn, so their rejection tests see it.
+        Every ``reset`` calls this. Leaves the options don't name return to their defaults (the
+        registered values, or the last ``set_variation``); named leaves are sampled or set for this episode.
+
+        Args:
+            seed: Seed of this reset; each environment derives its own from it and its index.
+            options: ``"variation"``, the dotted paths to sample (the family's default reset leaves if
+                absent), and ``"variation_values"``, ``{dotted path: value}`` for the batch or per row.
+
+        Returns:
+            ``{dotted path: (num_envs, ...) array}`` for every reset leaf.
+
+        Raises:
+            ValueError: If ``options["variation"]`` is not a list or tuple, or a value has the wrong shape.
+            NotImplementedError: If ``options`` names a leaf the family can't set at reset.
         """
         sampled, values = self._reset_request(options)
         reset_paths = {leaf.path for leaf in self.reset_leaves}
@@ -909,6 +996,7 @@ class Env:
 
     @property
     def physics_variation_leaves(self) -> tuple[str, ...]:
+        """Variation leaves the simulator reads as physics parameters; empty without a physics layout."""
         layout = self._physics_layout()
         return () if layout is None else tuple(layout.leaves)
 
@@ -916,7 +1004,7 @@ class Env:
         return getattr(getattr(self, "_simulator", None), "physics_layout", None)
 
     def _physics_rows(self, exact: Mapping[str, Any] | None = None) -> np.ndarray:
-        """Float64 rows for the current Variation.
+        """Float64 rows for the current variation.
 
         Style columns are float32, so a column that still encodes the installed or
         registered value keeps that float64 value; ``exact`` entries replace it.
@@ -965,9 +1053,10 @@ class Env:
         self._variation_is_default = False
 
     def describe(self) -> dict[str, Any]:
-        """Return environment specs and the declared comparison with the source.
+        """Return a JSON-friendly dict of the environment's specs and its comparison with the upstream library.
 
-        ``state_fields`` maps each State leaf, as a ``/``-joined key path, to its per-lane shape and dtype.
+        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``visual_fidelity``,
+        ``visual_note`` and ``reference_versions`` appear only when the class declares them.
         """
         d = {
             "class_name": type(self).__name__,
@@ -996,7 +1085,7 @@ class Env:
 
     @property
     def num_envs(self) -> int:
-        """Number of simulation lanes owned by this environment."""
+        """Number of environments in the batch, ``B``."""
         return self.B
 
     def __len__(self) -> int:
@@ -1004,13 +1093,13 @@ class Env:
 
     @property
     def closed(self) -> bool:
-        """Whether :meth:`close` has been called."""
+        """Whether ``close`` has been called."""
         return self._closed
 
     def _layout(self) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
         """Resolve ``(key_path, width, render_offset)`` entries for this instance.
 
-        An empty declaration uses a single State field spanning the compact row.
+        An empty declaration uses a single state field spanning the compact row.
         An offset of None denotes a simulator field absent from the renderer projection.
         """
         if self.state_layout:
@@ -1025,7 +1114,7 @@ class Env:
         return ((("state",), int(self.state_dim), 0),)
 
     def _layout_dtypes(self) -> dict[tuple[str, ...], torch.dtype]:
-        """Return explicitly declared public dtypes by State key path."""
+        """Return explicitly declared public dtypes by state key path."""
         out = {}
         for e in self.state_layout or ():
             if len(e) >= 4 and e[3] is not None:
@@ -1045,7 +1134,7 @@ class Env:
         return lay
 
     def _pack_render_state(self, state: TensorDict) -> torch.Tensor:
-        """Project State to float32 renderer rows, omitting fields without render offsets."""
+        """Project state to float32 renderer rows, omitting fields without render offsets."""
         if not isinstance(state, TensorDict):
             return check_states(self, state, f"{type(self).__name__}.pack", leading=True)
         lay = self._check_layout()
@@ -1067,7 +1156,7 @@ class Env:
     def _unpack_render_state(self, rows) -> TensorDict:
         """Copy fields represented in compact rows into a TensorDict.
 
-        Hidden simulator fields remain absent; this cannot reconstruct full State.
+        Hidden simulator fields remain absent; this cannot reconstruct full state.
         """
         lay = self._check_layout()
         dtypes = self._layout_dtypes()
@@ -1115,7 +1204,15 @@ class Env:
         return plan
 
     def get_state(self) -> State:
-        """Return an independent full simulator snapshot, including hidden fields and native precision."""
+        """Return an independent copy of the full simulator state, laid out as ``state_spec``.
+
+        It includes hidden fields an agent shouldn't see, so it isn't an observation.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the environment has no dynamics.
+            ValueError: If a rendered field of the live state holds NaN or infinite values.
+        """
         self._require_state("get_state")
         plan = self._state_plan()
         if sum(w for _, w, off, _ in plan if off is not None) != int(self.state_dim):
@@ -1154,7 +1251,7 @@ class Env:
         return TensorDict(tree, batch_size=[n], device=self.device)
 
     def _step_result(self, state: TensorDict, **extras) -> TensorDict:
-        """Build a result with State and only the task outputs supplied by the family."""
+        """Build a result with state and only the task outputs supplied by the family."""
         td = {"state": state}
         for k, v in extras.items():
             if v is None:
@@ -1163,7 +1260,14 @@ class Env:
         return StepResult(td, batch_size=[int(state.batch_size[0])], device=self.device)
 
     def state_names_of(self, key) -> list[str]:
-        """Return renderer column names for a State field; hidden fields have no columns."""
+        """Return the renderer column names of a state key or key path (empty for hidden fields).
+
+        Args:
+            key: A top-level state key or a key path such as ``("agent", "position")``.
+
+        Raises:
+            KeyError: If ``key`` is not a state field.
+        """
         key = tuple(key) if isinstance(key, (tuple, list)) else (key,)
         for k, w, off in self._layout():
             if k == key:
@@ -1179,7 +1283,10 @@ class Env:
 
     @property
     def state_spec(self) -> CompositeSpec:
-        """Describe public State fields per lane, including declared dtypes and bounds."""
+        """Specs of the state fields, without the batch axis.
+
+        A ``(num_envs, 2)`` field has a spec of shape ``(2,)``.
+        """
         bounds = dict(getattr(self, "state_bounds", {}) or {})
         out: dict = {}
         for key, w, _ in self._layout():
@@ -1201,7 +1308,11 @@ class Env:
 
     @property
     def action_spec(self) -> Spec:
-        """Describe one lane's action; raise NotImplementedError when no action is declared."""
+        """Spec of one environment's action.
+
+        ``step`` takes ``(B, *shape)`` or ``(B, T, *shape)`` actions. Raises NotImplementedError when
+        the environment declares no action.
+        """
         dim = getattr(self, "action_dim", None)
         if dim is None:
             _dynamics.no_dynamics(self, "action_spec")
@@ -1215,13 +1326,13 @@ class Env:
 
     @property
     def frame_spec(self) -> Spec:
-        """Describe one uint8 RGB frame, with shape ``(H, W, 3)``."""
+        """Spec of one ``(H, W, 3)`` uint8 RGB frame."""
         h, w = getattr(self, "frame_shape", (self.size, self.size))
         return Spec(shape=(int(h), int(w), 3), dtype=torch.uint8, low=0, high=255, device=self.device)
 
     @property
     def variation_spec(self) -> Spec:
-        """Describe compiled Variation columns, expanding vector leaves into individual names."""
+        """Spec of a compiled variation row, with one name per column such as ``"agent.color[0]"``."""
         lo, hi, names = [], [], []
         for path, off, w in self.variation_space.flat_layout():
             # Vector leaves need one label per compiled column.
@@ -1247,13 +1358,24 @@ class Env:
         )
 
     def _reseed(self, seed: int | None) -> None:
-        """Restart the State sampler from an explicit seed; ``None`` keeps the current stream."""
+        """Restart the state sampler from an explicit seed; ``None`` keeps the current stream."""
         if seed is not None:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
 
     def reset(self, seed: int | None = None) -> TensorDict:
-        """Reset the environment and return full State; an explicit seed restarts its sampler."""
+        """Start a new episode in every environment and return the full state.
+
+        Most families also accept ``options``; see ``draw_reset_values``.
+
+        Args:
+            seed: Restarts the sampler, so the same seed gives the same state. With None, seeding follows the
+                upstream library.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the environment has no dynamics.
+        """
         self._require_state("reset")
         self._reseed(seed)
         self.draw_reset_values(seed)
@@ -1261,22 +1383,34 @@ class Env:
         return self.state
 
     def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
-        """Advance ``[B, A]`` or ``[B, T, A]`` actions and select post-action outputs.
+        """Advance one action or a sequence of actions per environment.
 
-        ``states`` and ``frames`` accept slices or None. Defaults retain every State and
-        render the final endpoint. Selected outputs keep a time axis, even for one action.
-        The final State is always returned under ``state``.
+        An environment that finishes mid-sequence holds its last state, and its later task outputs are zero.
 
-        Within a sequence, finished lanes hold their endpoint without resetting.
-        ``valid``, ``state_valid``, and ``frame_valid`` mark executed transitions;
-        task outputs at unexecuted slots are zero.
+        Args:
+            actions: ``(B, *action_shape)`` for one step or ``(B, T, *action_shape)`` for ``T`` steps.
+                Discrete ``(1,)`` actions also accept ``(B,)``.
+            states: Slice over the steps that selects which states to return, or None.
+            frames: Slice over the steps that selects which frames to render, or None.
+
+        Returns:
+            A TensorDict with batch size ``(B,)``: ``state`` (the final state), the family's task
+                outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
+                mask, and the selected ``(B, S)`` ``states`` and ``(B, F, H, W, 3)`` uint8 ``frames``
+                with their ``state_valid`` and ``frame_valid`` masks.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the environment has no dynamics.
+            ValueError: If ``actions`` has the wrong shape, or ``frames`` is set without RGB output.
+            TypeError: If ``states`` or ``frames`` is neither a slice nor None.
         """
         from ._core.stepping import step
 
         return step(self, actions, states=states, frames=frames)
 
     def _step(self, actions) -> TensorDict:
-        """Advance one transition per lane without rendering or sequence dispatch."""
+        """Advance one transition per environment without rendering or sequence dispatch."""
         _dynamics.no_dynamics(self, "step")
 
     @property
@@ -1292,7 +1426,11 @@ class Env:
             )
 
     def close(self) -> None:
-        """Release instance-owned resources; repeated calls have no effect."""
+        """Release worker processes and GPU buffers; repeated calls do nothing.
+
+        Leaving a ``with`` block calls this. Afterward, ``reset``, ``step``, ``get_state``,
+        ``set_state`` and ``render`` raise RuntimeError.
+        """
         if self._closed:
             return
         self._closed = True

@@ -45,7 +45,7 @@ def test_floor_leaf_frames_match_swm(cell, case):
     device = os.environ.get("SE_DMC_APPEARANCE_DEVICE", "cpu")
     cfg = FLOOR_CASES[cell][case]
     if "floor.color" in cfg:
-        # The recolour is the substituted texture; what remains against swm is the sampler's.
+        # The recolor is the substituted texture; what remains against swm is the sampler's.
         got = floor_gate(cell, cfg, device=device)
         assert got["max_abs_vs_substituted"] <= 1, got
         if device == "cuda" and cell == "DMCHumanoidWalk" and cfg["floor.color"] == FLOOR_COLORS[0]:

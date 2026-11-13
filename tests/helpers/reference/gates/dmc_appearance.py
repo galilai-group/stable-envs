@@ -1,9 +1,9 @@
 """DM Control appearance leaves rendered against the pinned stable_worldmodel wrappers.
 
 Both sides reset with the same seed and the same leaf values (ours through the variation map),
-step the same actions, and render every State: SWM through MuJoCo's renderer on its own model,
+step the same actions, and render every State: stable-worldmodel through MuJoCo's renderer on its own model,
 ours through the cell. The residual is reported as normalized MSE (pixels in [0, 1]) next to the
-residual at SWM's registered default, and next to what ignoring the leaf would cost.
+residual at stable-worldmodel's registered default, and next to what ignoring the leaf would cost.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ CASES = {
     },
 }
 TRACKCOM = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk", "DMCQuadrupedWalk")
-#: Checker colours for the trackcom floor: a saturated pair and a dim one.
+#: Checker colors for the trackcom floor: a saturated pair and a dim one.
 FLOOR_COLORS = ([[0.9, 0.1, 0.1], [0.1, 0.8, 0.2]], [[0.3, 0.25, 0.05], [0.05, 0.1, 0.35]])
 #: The trackcom floor leaves. Walker's floor turns about x = 248, so a fraction of a degree already
 #: lifts or sinks it under the walker.
@@ -76,7 +76,7 @@ FLOOR_CASES["DMCWalkerWalk"] += [{"floor.rotation_y": 0.125}, {"floor.rotation_y
 
 
 def _swm_value(path, value):
-    # SWM's float32 leaves refuse float64 values.
+    # stable-worldmodel's float32 leaves refuse float64 values.
     wide = path.startswith("gravity.") or path.endswith("color") or path == "floor.rotation_y"
     dtype = np.float64 if wide else np.float32
     if isinstance(value, int):
@@ -86,8 +86,8 @@ def _swm_value(path, value):
 
 
 class _Renderer:
-    """MuJoCo's renderer on SWM's live model. It and SWM's wrapper stay open for the process:
-    tearing a GL context down corrupts the contexts the cells' renderers bake from."""
+    """MuJoCo's renderer on stable-worldmodel's live model. It and stable-worldmodel's wrapper stay open for the
+    process: tearing a GL context down corrupts the contexts the cells' renderers bake from."""
 
     _alive: list = []
 
@@ -110,7 +110,7 @@ def _mse(a, b):
 
 
 def _swm_texture_frames(env, ref, states, default_row):
-    """Render ``states`` at the default style on our model compiled with SWM's grid texture."""
+    """Render ``states`` at the default style on our model compiled with stable-worldmodel's grid texture."""
     import mujoco
 
     from stable_envs.envs.dmcontrol._model import _SCENE_CACHE, _TC_CACHE
@@ -143,9 +143,10 @@ def _swm_texture_frames(env, ref, states, default_row):
 
 
 def frames(cell, cfg, seed=13, steps=8, device="cpu", substituted=False):
-    """Render both sides along one trajectory; return SWM's frames and ours with and without ``cfg``.
+    """Render both sides along one trajectory; return stable-worldmodel's frames and ours with and without ``cfg``.
 
-    With ``substituted``, also return our default-style frames on a model carrying SWM's compiled grid texture."""
+    With ``substituted``, also return our default-style frames on a model carrying stable-worldmodel's compiled
+    grid texture."""
     domain = DOMAINS[cell]
     swm_cfg = {k: _swm_value(k, v) for k, v in cfg.items()}
     ref = DMCReference(domain, 1, options={"variation_values": swm_cfg})
@@ -154,7 +155,7 @@ def frames(cell, cfg, seed=13, steps=8, device="cpu", substituted=False):
         default_row = style_from_variation(env, swm_defaults(SWM_IDS[domain]))
         env.set_variation(row)
         ref.reset(seed=seed)
-        # SWM compiles a new model on reset when the options change it.
+        # stable-worldmodel compiles a new model on reset when the options change it.
         renderer = _Renderer(ref, env.size, env.CAMERA)
         env.reset(seed=seed)
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 1, env.action_dim))
@@ -182,7 +183,8 @@ def leaf_gate(cell, cfg, **kw):
 
 
 def floor_gate(cell, cfg, **kw):
-    """Our recolour against our renderer on SWM's substituted texture, and against SWM's frames."""
+    """Our recolor against our renderer on stable-worldmodel's substituted texture, and against
+    stable-worldmodel's frames."""
     theirs, ours, _, built = frames(cell, cfg, substituted=True, **kw)
     return {
         "values": {k: np.asarray(v).tolist() for k, v in cfg.items()},

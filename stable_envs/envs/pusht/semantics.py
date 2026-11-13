@@ -9,7 +9,7 @@ from tensordict import TensorDict, TensorDictBase
 from ... import tuning
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
-from ...registry import REGISTRY, register
+from ...registry import REGISTRY, _require_extra, register
 from ...spaces import Box, Dict, Discrete
 from ...specs import CompositeSpec, Spec
 from . import legacy
@@ -105,7 +105,7 @@ def _drawn(key):
 
 
 class PushT(Env):
-    """Source-aligned continuous PushT with complete, replayable numeric State.
+    """Source-aligned continuous PushT with complete, replayable numeric state.
 
     Actions are relative controls in [-1, 1], not absolute pixel targets.
     Physics is a port of the source Pymunk contact solver: Triton (or JAX) on CUDA, Numba on CPU. They run
@@ -157,6 +157,7 @@ class PushT(Env):
         ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
         CPU and returns CUDA tensors. ``"auto"`` steps CUDA batches smaller than ``triton_min_envs`` with Numba.
         """
+        _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
         from .simulation.execution import TRITON_MIN_ENVS, make_pusht_adapter, pusht_backend
 
@@ -355,7 +356,7 @@ class PushT(Env):
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
-        """Return an owned, history-free copy of the State fields the CPU renderer reads."""
+        """Return an owned, history-free copy of the state fields the CPU renderer reads."""
         state = self.get_state() if state is None else state
         self._render_fields_of(state)
         return state.select(*(key for key, _, _ in self._render_fields)).clone()

@@ -20,9 +20,9 @@ def variation_values(row, prefix):
 
 
 class PushTProjection:
-    """Render numeric State through a separate CPU Pygame scene per lane.
+    """Render numeric state through a separate CPU Pygame scene per lane.
 
-    Geometry changes rebuild the scene; other frames install poses, colours and
+    Geometry changes rebuild the scene; other frames install poses, colors and
     captured contact segments. Rendering never steps the physics owner or replays
     action history. CUDA output placement does not make this a GPU renderer.
     """
@@ -32,7 +32,7 @@ class PushTProjection:
 
     def _scene(self, lane, row):
         # Only body shapes and scales are baked into the pymunk scene; poses,
-        # colours and the goal pose are installed on every render.
+        # colors and the goal pose are installed on every render.
         key = tuple(
             row[f"anchor/variation/{body}/{leaf}/current/{part}"].tobytes()
             for body in ("agent", "block")

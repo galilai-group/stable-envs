@@ -8,6 +8,7 @@ from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
+from ...registry import _require_extra
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import VISUAL_LEAVES
 from .simulation.execution import MJWARP_MIN_ENVS, fetch_backend, make_fetch_adapter
@@ -17,7 +18,7 @@ from .simulation.execution import make_fetch_adapter as FetchAdapter
 class FetchSemantics:
     """Compose Fetch CPU simulation with lazily constructed render backends.
 
-    Public State includes controller, lifecycle and RNG fields; the qpos/goal
+    Public state includes controller, lifecycle and RNG fields; the qpos/goal
     projection is for rendering only and cannot restore the simulator.
     """
 
@@ -61,6 +62,7 @@ class FetchSemantics:
         ``"default"`` steps on MuJoCo Warp on CUDA and on the CPU batch, bit-exact with gymnasium-robotics, on
         CPU. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` on the CPU batch.
         """
+        _require_extra(type(self).__name__, "robotics", "mujoco", "gymnasium_robotics")
         device = Env.resolve_device(device)
         self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
@@ -81,7 +83,7 @@ class FetchSemantics:
         self._reset_keys.add("table.color")
         self._registered_mass = self._simulator.object_mass
         self._colors_detached = False
-        self.state_dim = self._nq + 3  # Private renderer width, not full State width.
+        self.state_dim = self._nq + 3  # Private renderer width, not full state width.
         from .envs import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
         self.state_names = (*ROBOT_JOINTS, *(OBJECT_JOINT if self._has_object else ()), *GOAL_NAMES)
@@ -167,7 +169,7 @@ class FetchSemantics:
         if (set(sampled) | set(explicit)) - self._reset_keys:
             raise ValueError("Unsupported Fetch reset Variation")
         # Variation reset uses its own Gymnasium space tree and reseeds even
-        # for seed=None, as SWM does. It never consumes simulator PCG64.
+        # for seed=None, as stable-worldmodel does. It never consumes simulator PCG64.
         leaves = _source_sampling_tree(self._has_object)
         values = []
         for lane in range(self.B):
@@ -194,10 +196,10 @@ class FetchSemantics:
         return state
 
     def _reset_appearance(self, values):
-        """Copy this episode's appearance into the installed Variation.
+        """Copy this episode's appearance into the installed variation.
 
         Any source visual leaf detaches the table, floor and object materials, revealing
-        their geom colors (grey 0.5 instead of the material colors). ``background.color``
+        their geom colors (gray 0.5 instead of the material colors). ``background.color``
         colors the floor and fills the sky; ``light.intensity`` is absolute where
         ``light.diffuse`` scales the registered light. The next reset restores the
         registered materials first.
@@ -240,7 +242,7 @@ class FetchSemantics:
         return self._simulator.step(actions, active=active)
 
     def _advance_without_snapshot(self, actions, *, active=None):
-        """Advance without State capture for sequences needing only a final checkpoint."""
+        """Advance without state capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
 
     def _stack_states(self, values):

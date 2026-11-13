@@ -1,4 +1,4 @@
-"""PushT primitive records built on the device from State tensors, equal to ``raster.primitives``."""
+"""PushT primitive records built on the device from state tensors, equal to ``raster.primitives``."""
 
 from __future__ import annotations
 
@@ -454,7 +454,7 @@ class StaticFrames:
 
 
 class DeviceRenderer:
-    """Render PushT State tensors on CUDA with Triton, with primitives built on the device.
+    """Render PushT state tensors on CUDA with Triton, with primitives built on the device.
 
     A call reads one small flag tensor back to the host; templates, clipped lines, static frames and
     host fallbacks that it reports take extra work only when they occur.
@@ -656,7 +656,7 @@ if R.HAVE_TRITON:
 
     @triton.jit
     def _k_transform(px, py, c, s, gx_, gy_):
-        """Chipmunk body transform ``(tx, ty)`` for position, cos/sin and centre of gravity."""
+        """Chipmunk body transform ``(tx, ty)`` for position, cos/sin and center of gravity."""
         gx = libdevice.add_rn(libdevice.add_rn(libdevice.mul_rn(c, gx_), libdevice.mul_rn(-s, gy_)), px)
         gy = libdevice.add_rn(libdevice.add_rn(libdevice.mul_rn(s, gx_), libdevice.mul_rn(c, gy_)), py)
         tx = libdevice.sub_rn(gx, libdevice.sub_rn(libdevice.mul_rn(gx_, c), libdevice.mul_rn(gy_, s)))

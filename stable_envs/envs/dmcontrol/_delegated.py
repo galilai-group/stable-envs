@@ -14,7 +14,7 @@ from .simulation.physics import LEAVES
 class DelegatedSemantics:
     """Select native DMC or CUDA Warp physics; ``backend`` still selects rendering.
 
-    The physics Variation leaves of the simulator are reset-time leaves and travel in State."""
+    The physics variation leaves of the simulator are reset-time leaves and travel in state."""
 
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0

@@ -1,10 +1,10 @@
 """Miniworld's MovingBlockWorld, the 3D Dynamic Blockworld of Flow Equivariant World Models.
 
-Each environment is the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in one room of coloured boxes
+Each environment is the hlillemark/Miniworld fork's ``MovingBlockWorld``: an agent in one room of colored boxes
 and balls that each move by a fixed velocity every step and bounce off walls. All environments step together
 in a Numba kernel (CPU) or a Triton kernel (CUDA) that follow the fork's step rules; resets sample the fork's reset
 distribution from a counter-based generator. The default ``preset="flowm"`` is the FloWM dynamic
-dataset: plain coloured boxes, each moving one cell per step in a cardinal direction through the agent and
+dataset: plain colored boxes, each moving one cell per step in a cardinal direction through the agent and
 each other, in a 16 x 16 grid room with 90 degree turns, unit forward steps and 500 steps.
 Each environment draws 6 to 10 blocks per episode, as the dataset script does.
 ``preset="flowm-textured"`` is the paper's textured split (random wall, floor and block textures, and balls);
@@ -55,9 +55,9 @@ def _require_fork() -> None:
 
 @register
 class MiniWorldMovingBlockWorld(Env):
-    """MovingBlockWorld environments stepped in one batch, with complete restorable State and Miniworld's own frames.
+    """MovingBlockWorld environments stepped in one batch, with complete restorable state and Miniworld's own frames.
 
-    State: the agent pose and carried block, the room textures, each block's kind, colour, texture, size,
+    State: the agent pose and carried block, the room textures, each block's kind, color, texture, size,
     pose and velocity, the reset generator's seed and episode, and the step count.
     """
 
@@ -130,12 +130,13 @@ class MiniWorldMovingBlockWorld(Env):
     def _validate_state(self, state, *, batch=None):
         self._simulator.validate(state, batch=batch)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
         """Reset every environment; environment ``i`` of ``reset(seed)`` draws from seed ``seed + i``.
 
         ``reset()`` draws each environment's next episode from its own seed.
         """
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):
@@ -143,7 +144,7 @@ class MiniWorldMovingBlockWorld(Env):
         return self._simulator.get_state()
 
     def set_state(self, state):
-        """Restore every environment from a State with ``num_envs`` rows; the State is copied."""
+        """Restore every environment from a state with ``num_envs`` rows; the state is copied."""
         self._check_open("set_state")
         self._simulator.set_state(state)
 
@@ -157,11 +158,11 @@ class MiniWorldMovingBlockWorld(Env):
         return self._simulator.step(actions, active=active)
 
     def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
-        """Draw ``(N, size, size, 3)`` uint8 frames from a State of any batch, or from the live environments.
+        """Draw ``(N, size, size, 3)`` uint8 frames from a state of any batch, or from the live environments.
 
         ``size`` defaults to the env's; ``out`` takes a contiguous uint8 buffer of the frames' shape. Miniworld
-        has no supersampling and no Variation, so ``supersample`` other than 1, ``variation`` and ``style``
-        raise. A State batch of at least ``render_worker_min_rows`` rows draws in render workers
+        has no supersampling and no variation, so ``supersample`` other than 1, ``variation`` and ``style``
+        raise. A state batch of at least ``render_worker_min_rows`` rows draws in render workers
         (``miniworld-render`` tuning path); the frames are the same as drawn in this process.
         """
         self._check_open("render")

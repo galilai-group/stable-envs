@@ -11,8 +11,8 @@
  "frame_shape": [200, 200, 3],
  "physics": "source simulator on CPU",
  "renderers": {
-  "cpu": "opengl (MuJoCo)",
-  "cuda": "mjwarp"
+  "cpu": "MuJoCo rasterizer (Numba); opengl (MuJoCo, software) without Numba",
+  "cuda": "MuJoCo rasterizer (nvdiffrast and Triton) at supersample 1; mjwarp at 2 or more"
  },
  "action": {
   "shape": [5],

@@ -1,8 +1,8 @@
-"""Render one State under many Variations in a single call.
+"""Render one state under many variations in a single call.
 
 ``env.sample_variation(B)`` draws ``(B, variation_dim)`` rows; ``env.render(state, variation=rows)``
 gives each lane its own appearance. The script counts distinct frames and times the batched call
-against a loop of one-lane renders. Envs whose Variation lives in the State (PushT, Rocket, OGBench
+against a loop of one-lane renders. Envs whose variation lives in the state (PushT, Rocket, OGBench
 Cube/Scene) take it through ``reset(options={"variation": [...]})`` instead.
 
     python examples/domain_randomization.py
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     n = args.num_envs
     with snv.make(args.env, num_envs=n, device=args.device) as env:
         state = env.reset(seed=args.seed)
-        # One State for every lane, so differences between frames come from the Variation.
+        # One state for every lane, so differences between frames come from the variation.
         shared = state[torch.zeros(n, dtype=torch.long)]
         appearance = [p for p in env.variation_names if p not in env.dynamics_variation_leaves]
         rng = np.random.default_rng(args.seed)

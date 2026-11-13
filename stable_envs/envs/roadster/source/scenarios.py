@@ -18,7 +18,7 @@ from . import decor
 
 TRAFFIC_Y = 200.0
 CITY_Y = -200.0
-HOP_X0, HOP_Y = 262.0, 0.0  # car-hop plaza: start line x and centre line (past the landing pad)
+HOP_X0, HOP_Y = 262.0, 0.0  # car-hop plaza: start line x and center line (past the landing pad)
 N_HOP = 14  # mocap slots for the lane of parked cars
 N_TRAFFIC = 10  # mocap car slots
 CAR_SIZE = (2.2, 0.9, 0.7)  # half extents of a parked car's collision box
@@ -36,7 +36,7 @@ CAR_COLORS = [
     "0.3 0.3 0.35 1",
 ]
 
-# rooftop city: (name, centre x, centre y offset, half size x, half size y, height)
+# rooftop city: (name, center x, center y offset, half size x, half size y, height)
 TOWERS = (
     ("roof_start", 0.0, 0.0, 12.0, 12.0, 24.0),
     ("roof_goal", 78.0, 14.0, 12.0, 12.0, 34.0),
@@ -194,7 +194,7 @@ def mocap_id(model, name: str) -> int:
 
 
 def place_hop(model, data, rng: np.random.Generator) -> list[tuple[float, float]]:
-    """A long lane packed with 10-14 parked cars nose to tail (0.4-1.2 m apart) along the plaza's centre line.
+    """A long lane packed with 10-14 parked cars nose to tail (0.4-1.2 m apart) along the plaza's center line.
 
     Returns each car's (x_rear, x_front).
     """

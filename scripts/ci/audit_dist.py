@@ -92,6 +92,8 @@ def audit_sdist(path: Path, expected_sources: set[str]) -> None:
         names = {name.removeprefix(f"{root}/") for name in raw_names if name != root}
         required = {"README.md", "pyproject.toml", *REQUIRED_LICENSES, *expected_sources}
         assert required <= names, sorted(required - names)
+        examples = sorted(name for name in names if name == "examples" or name.startswith("examples/"))
+        assert examples == [], examples
         pkg_info = archive.extractfile(f"{root}/PKG-INFO")
         assert pkg_info is not None
         _audit_metadata(pkg_info.read().decode())

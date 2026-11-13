@@ -3,7 +3,7 @@
 The camera and visible links have different update times in PyFlyt. TinyRenderer
 also forms projection*(view*model) with float32 reverse-order dot products; at
 large world coordinates an equivalent double-precision expression draws a
-different image. These are family-local rendering details, not simulator State.
+different image. These are family-local rendering details, not simulator state.
 """
 
 import math
@@ -363,7 +363,7 @@ def tiny_scene():
 
 
 def draw_tiny(scene, body, links, colors, size, ss, out=None):
-    """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colours to uint8 frames."""
+    """Draw ``(B, 3, 7)`` body poses, ``(B, 7)`` camera link poses and ``(B, 6, 4)`` colors to uint8 frames."""
     import pybullet as bullet
 
     client, bodies, painted = scene

@@ -164,7 +164,7 @@ def check_variations_do_something(env) -> dict:
 
 
 def check_colors_apply_exactly(env) -> dict:
-    """RGB leaves whose requested colour is on no pixel; the result has the conformance check's keys."""
+    """RGB leaves whose requested color is on no pixel; the result has the conformance check's keys."""
     wrong, best = [], {}
     drawn = set(C._frame_variation_paths(env))
     with fresh(env) as other:

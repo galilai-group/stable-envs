@@ -1,6 +1,6 @@
-"""Per-lane MuJoCo model parameters driven by Variation leaves.
+"""Per-lane MuJoCo model parameters driven by variation leaves.
 
-Values travel in State under ``("physics", *leaf.split("."))``.
+Values travel in state under ``("physics", *leaf.split("."))``.
 """
 
 from __future__ import annotations
@@ -71,9 +71,9 @@ class GeomMass:
 
     ``per="density"`` reads the leaf as a density and ``per="mass"`` as the
     geom's explicit mass; both scale the geom's contribution to its body
-    linearly. The body's mass, centre of mass and principal inertia are
+    linearly. The body's mass, center of mass and principal inertia are
     recombined from that contribution and the rest of the body, so a body with
-    several geoms moves its centre of mass as a recompile would.
+    several geoms moves its center of mass as a recompile would.
     """
 
     leaf: str
@@ -97,7 +97,7 @@ class PhysicsLayout:
 
 
 def state_key(leaf: str) -> tuple[str, ...]:
-    """Return the State key path that stores ``leaf``."""
+    """Return the state key path that stores ``leaf``."""
     return (PHYSICS_KEY, *leaf.split("."))
 
 
@@ -474,7 +474,7 @@ class PhysicsLanes:
         }
 
     def rows_from_state(self, state) -> np.ndarray:
-        """Read ``(num_envs, dim)`` physics rows from State; every physics field must be present."""
+        """Read ``(num_envs, dim)`` physics rows from state; every physics field must be present."""
         keys = set(state.keys(True, True))
         missing = [".".join(k) for k in self.state_fields() if k not in keys]
         if missing:

@@ -1,3 +1,5 @@
+"""Roadster: five planning tasks for a car with cold-gas jets, simulated with MuJoCo (``roadster`` extra)."""
+
 from ..._core.mujoco_gl import configure_mujoco_gl
 from ...registry import _import_env_module
 

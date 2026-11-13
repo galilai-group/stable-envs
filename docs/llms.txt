@@ -1,0 +1,88 @@
+# stable-envs
+
+> Fast and Reproducible Environments with Controllable Variations. Batched environments whose full state you can store, restore and render later (`import stable_envs as snv`).
+
+```python
+import torch
+import stable_envs as snv
+
+env = snv.make("CartPole", num_envs=4, device="cpu")  # same as snv.CartPole(num_envs=4, device="cpu")
+state = env.reset(seed=0)                  # the full simulator state: a TensorDict with batch size (4,)
+out = env.step(env.action_spec.sample(4, env.rng))  # one action per batch row: (B, *action_shape)
+print(out["reward"].shape, out["frames"].shape)     # torch.Size([4]) torch.Size([4, 1, 400, 600, 3])
+
+actions = torch.randint(0, 2, (4, 16, 1))  # a sequence of 16 actions: (B, T, *action_shape)
+out = env.step(actions, states=slice(None), frames=None)  # keep every state, render nothing
+stored = out["states"]                     # batch size (4, 16); out["state_valid"] marks real ones
+frames = env.render(stored[:, 7])          # draw any stored state later: (4, 400, 600, 3) uint8
+rows = env.sample_states(4)                # compact renderer rows: render(rows) also draws them
+
+saved = env.get_state()                    # independent copy of the live state
+env.set_state(saved)                       # restore it exactly (needs num_envs rows)
+
+env.set_variation({"pole.color": [220, 40, 40]})  # installed until you change it
+state = env.reset(seed=1, options={"variation": ["physics.gravity"]})  # sample per row, this episode
+frames = env.render(state, variation=torch.as_tensor(env.sample_variation(4)))  # one look per row
+env.close()                                # or use `with snv.CartPole(...) as env:`
+```
+
+Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `"auto"` (CUDA when torch sees a GPU), to `"cuda"` for DM Control and the OGBench mazes, and to `"cpu"` for Fetch, OGBCube, OGBScene and PyFlytRocketLanding. Every family runs on CPU.
+
+- `classic_control`, `navigation`: core install (`classic` for MountainCar, MountainCarContinuous and Pendulum, `navigation` for SimplePointMaze); CUDA needs CUDA torch, plus `navigation-gpu` for TwoRoom.
+- `pusht`: `pusht`; CUDA needs CUDA torch with Triton, and `pusht-gpu` only for `simulation_backend="jax"`. `craftax`: `craftax`; CUDA needs `craftax-gpu`.
+- `dmcontrol`: `dmcontrol`; CUDA physics and the body-tracking renderer need MuJoCo Warp (`dmcontrol-gpu`).
+- `ogbench`: `ogbench` (mazes) or `ogbench-manipulation` (Cube, Scene); on CUDA, the mazes also need `mjwarp`, and Cube and Scene need `ogbench-manipulation-gpu` for MuJoCo Warp physics and for `supersample` 2 or more.
+- `fetch`: `robotics`, in its own environment (MuJoCo < 3.12); CUDA needs Triton and nvdiffrast for the default MuJoCo rasterizer, and `mjwarp` for MuJoCo Warp physics.
+- `pyflyt`: `rocket`; CUDA needs nvdiffrast built from source. `roadster`: `roadster`; CUDA physics needs `roadster-gpu`. `mshuman`: `mshuman`. `miniworld`: the hlillemark/Miniworld fork plus `miniworld`.
+
+## Get started
+
+- [Home](https://galilai-group.github.io/stable-envs/): what stable-envs is, a minimal example, and where to go next.
+- [Quickstart](https://galilai-group.github.io/stable-envs/quickstart/): one CartPole environment from construction to close: specs, state, rendering, steps and action sequences, save and restore, variation.
+- [Install](https://galilai-group.github.io/stable-envs/install/): the extra each family needs, MuJoCo version conflicts, and NVIDIA driver, EGL/OSMesa, Docker and macOS setup.
+- [Terms](https://galilai-group.github.io/stable-envs/terms/): definitions of environment, batch row, family, state, action, variation, frame, step result, spec, upstream library, observation and the shape letters.
+
+## Environments
+
+- [Overview](https://galilai-group.github.io/stable-envs/environments/): all 80 classes in 11 families, how to list the installed ones, and how each family compares with its upstream library.
+- [Classic control](https://galilai-group.github.io/stable-envs/environments/classic-control/): CartPole, Acrobot, MountainCar, MountainCarContinuous and Pendulum from Gymnasium; core install (`classic` extra for three of them), CPU and CUDA.
+- [Craftax](https://galilai-group.github.io/stable-envs/environments/craftax/): Craftax and Craftax-Classic with pixel or symbolic observations; `craftax` extra, CPU, and CUDA with `craftax-gpu`.
+- [DM Control](https://galilai-group.github.io/stable-envs/environments/dmcontrol/): 17 DeepMind Control Suite tasks; `dmcontrol` extra, CPU and CUDA, default `device="cuda"`.
+- [Fetch](https://galilai-group.github.io/stable-envs/environments/fetch/): 12 Gymnasium-Robotics Fetch arm tasks (Reach, Push, Slide, PickAndPlace); `robotics` extra, CPU, and CUDA with `mjwarp`, default `device="cpu"`.
+- [Miniworld](https://galilai-group.github.io/stable-envs/environments/miniworld/): `MiniWorldMovingBlockWorld`, the 3D moving-block world of Flow Equivariant World Models; Miniworld fork plus `miniworld` extra, CPU and CUDA.
+- [MS-Human-700](https://galilai-group.github.io/stable-envs/environments/mshuman/): `MSHumanLocomotion`, a musculoskeletal human with 100 muscle actuators and no task reward; `mshuman` extra, CPU and CUDA.
+- [Navigation](https://galilai-group.github.io/stable-envs/environments/navigation/): TwoRoom, TwoRoomTarget, Piecewise, PiecewiseZones and SimplePointMaze from stable-worldmodel; core install (`navigation` for SimplePointMaze), CPU and CUDA.
+- [OGBench](https://galilai-group.github.io/stable-envs/environments/ogbench/): 25 locomotion mazes plus Cube and Scene manipulation; `ogbench` or `ogbench-manipulation` extra, CPU and CUDA, mazes default to `device="cuda"`.
+- [PushT](https://galilai-group.github.io/stable-envs/environments/pusht/): `PushT` and `PushTDiscrete`, pushing a T block into a target pose, with frames byte-identical to gym-pusht; `pusht` extra, CPU and CUDA.
+- [PyFlyt](https://galilai-group.github.io/stable-envs/environments/pyflyt/): `PyFlytRocketLanding`, landing a falling rocket on a pad; `rocket` extra, CPU, and CUDA with nvdiffrast.
+- [Roadster](https://galilai-group.github.io/stable-envs/environments/roadster/): five planning tasks for a car with cold-gas jets in MuJoCo, with wind and rain variation; `roadster` extra, CPU and CUDA.
+- [Benchmarks](https://galilai-group.github.io/stable-envs/benchmarks/): measured state-to-frame rendering speed against the upstream renderers, with the commands to reproduce it.
+
+## Tutorials
+
+- [Store states, render later](https://galilai-group.github.io/stable-envs/tutorials/store-and-render/): collect states without rendering, save them, render them later under any variation, resume from one, and build a model batch.
+- [Randomize appearance and physics](https://galilai-group.github.io/stable-envs/tutorials/variation/): inspect a variation space, render one state in many looks, install a variation, and randomize physics per batch row at reset.
+- [Write your own environment](https://galilai-group.github.io/stable-envs/tutorials/custom-env/): subclass `snv.Env` with a state layout, start states, a step and a 2D scene, register it, and check that save and restore are exact.
+- [Train a world model (LeWM)](https://galilai-group.github.io/stable-envs/tutorials/lewm/): make a state-only LeWM PushT dataset, train stable-worldmodel's LeWM with frames that `env.render` draws on the training device, and evaluate it with CEM planning (`examples/lewm`).
+
+## Tuning and CLI
+
+- [Performance tuning](https://galilai-group.github.io/stable-envs/performance-tuning/): which knobs to change when rendering or stepping is slow or a batch runs out of GPU memory, worker processes, physics backends, and the tuning hint and autotune.
+- [CLI](https://galilai-group.github.io/stable-envs/api/cli/): `stable-envs doctor` (what works on this machine) and `stable-envs tune` (measure the fastest tuning knobs, how it picks values and where it caches them).
+
+## API
+
+- [stable_envs](https://galilai-group.github.io/stable-envs/api/): package-level functions: `make`, `list_envs`, `list_families`, `info`, `import_errors`, global settings and `tune`.
+- [Env](https://galilai-group.github.io/stable-envs/api/env/): the `snv.Env` base class: construction and default devices, `reset`, `step` and its `states`/`frames` selectors, `get_state`/`set_state`, specs, variation and `render`.
+- [Specs and spaces](https://galilai-group.github.io/stable-envs/api/specs/): `Spec`, `CompositeSpec` and the variation spaces that describe one batch row.
+- [Tuning](https://galilai-group.github.io/stable-envs/api/tuning/): every tuning knob (chunk sizes, Triton blocks, worker counts, memory budgets) with its type and default, and how a value is chosen.
+- [Environment variables](https://galilai-group.github.io/stable-envs/environment-variables/): every `STABLE_ENVS_*` variable and what it sets.
+
+## Optional
+
+- [Adding an environment](https://galilai-group.github.io/stable-envs/contributing/environment/): where a new simulator, task or renderer goes, the save-and-restore check every layer passes, and what a registration needs before review.
+- [Matching the upstream library](https://galilai-group.github.io/stable-envs/contributing/upstream/): reading the upstream source, measuring rendering constants against it, testing physics and pixels separately, source contracts and final acceptance.
+- [Renderers](https://galilai-group.github.io/stable-envs/contributing/renderers/): the shared renderers in `stable_envs.render`, which families use them, their backends, exactness and cost, the `Scene2D` layout and `StyleTensor`.
+- [Bit-exact Triton kernels](https://galilai-group.github.io/stable-envs/contributing/bit-exact-triton/): which Triton defaults break bit-exact rendering and what to use instead.
+- [Tests](https://galilai-group.github.io/stable-envs/contributing/testing/): test layout, profiles, registry rules, GPU conformance and frame records, running native renderers safely, and the `stable_envs.testing.conformance` helpers.
+- [Changelog](https://galilai-group.github.io/stable-envs/changelog/): changes in each release.

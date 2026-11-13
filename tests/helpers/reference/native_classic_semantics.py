@@ -1,4 +1,4 @@
-"""Pinned-SWM State and task oracle for the five classic-control envs."""
+"""Pinned stable-worldmodel State and task oracle for the five classic-control envs."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ PHYSICAL = {
     "mountain_car": ("position", "velocity"),
     "mountain_car_continuous": ("position", "velocity"),
 }
-# SWM's physics leaves and the Gymnasium attribute each one writes.
+# stable-worldmodel's physics leaves and the Gymnasium attribute each one writes.
 PHYSICS = {
     "cartpole": {name: name for name in ("gravity", "masscart", "masspole", "length", "force_mag", "tau")},
     "pendulum": {name: name for name in ("g", "m", "l", "max_torque", "max_speed", "dt")},

@@ -119,7 +119,7 @@ def _frames(meta, vert, edge, disc, bg, plate, plate_idx, sprite, aa, out, H, W)
 
 
 def render_classic_cpu(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
-    """Render CPU ``ops`` to (B, H, W, 3) uint8 RGB, byte-identical to the Triton kernel.
+    """Render CPU ``ops`` to ``(B, H, W, 3)`` uint8 RGB, byte-identical to the Triton kernel.
 
     A supplied output buffer is overwritten and returned.
     """

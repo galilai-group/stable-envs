@@ -8,7 +8,7 @@ together are the whole selection, with or without xdist. ``--record-durations PA
 run's per-test times into PATH (how ``ci/durations.json`` is refreshed).
 
 ``--env-affinity`` widens a group to every test whose parameters name the env (the first CamelCase
-name, as in ``[2-17-Scene]``) or another env porting the same source (one ``reference_id``, as the
+name, as in ``[2-17-Scene]``) or another env reproducing the same source (one ``reference_id``, as the
 dataset variants of one OGBench maze do), and under xdist's ``load`` mode keeps each group on one
 worker, longest groups first. Each worker then holds the caches of its own envs rather than of
 every env, at the price of running a group serially: it suits a profile of many short tests over

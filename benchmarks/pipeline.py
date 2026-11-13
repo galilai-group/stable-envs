@@ -1,7 +1,7 @@
 """Measure host-state-to-frame throughput, with an optional real-JPEG decode comparison.
 
 The stable-envs arm includes the copy of a host State to the device and the public ``env.render`` call. Supplying
-``--jpeg-dir`` adds a separately labelled, single-process Pillow baseline over real files. Neither
+``--jpeg-dir`` adds a separately labeled, single-process Pillow baseline over real files. Neither
 arm imports or requires stable_worldmodel.
 """
 

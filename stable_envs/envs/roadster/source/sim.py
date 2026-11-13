@@ -33,7 +33,7 @@ class RoadsterSim:
 
     ``xml_patch`` rewrites the model XML before compiling (``cinematic.patch_space``); visual only.
     ``template`` (another sim) shares its compiled model instead of compiling one: the only physics a lane
-    writes into the model is its tyre grip, which it applies before each step.
+    writes into the model is its tire grip, which it applies before each step.
     """
 
     def __init__(self, course: Course | None = None, xml_patch=None, template: RoadsterSim | None = None):
@@ -45,7 +45,7 @@ class RoadsterSim:
             self.model = mujoco.MjModel.from_xml_string(xml_patch(xml) if xml_patch else xml, assets())
         self.weather = Weather(self.model, base=None if template is None else template.weather)
         self.smoke = Smoke(self.model)
-        self.region_y = 0.0  # centre line of the active scenario (out-of-bounds check)
+        self.region_y = 0.0  # center line of the active scenario (out-of-bounds check)
         self.allow_ground_landing = False  # route scenarios: the road is the landing target
         self.data = mujoco.MjData(self.model)
         self.dt = self.model.opt.timestep * FRAME_SKIP
@@ -159,7 +159,7 @@ class RoadsterSim:
         self.obstacle_hit = False
         if n == 0:
             return wheels, None
-        g = self.data.contact.geom[:n]  # (n, 2), vectorised: iterating MjContact structs is slow
+        g = self.data.contact.geom[:n]  # (n, 2), vectorized: iterating MjContact structs is slow
         if self._obstacle_arr.size:
             self.obstacle_hit = bool(
                 (np.isin(g[:, 0], self._car_geoms) & np.isin(g[:, 1], self._obstacle_arr)).any()
@@ -182,7 +182,7 @@ class RoadsterSim:
         """Aerodynamic force and torque.
 
         Without wind: isotropic drag. With wind: drag on the airspeed (velocity minus wind) with per-axis
-        areas (front 0.6, side 2.4, top 4.0 m^2 Cd*A), acting at a centre of pressure behind and above the
+        areas (front 0.6, side 2.4, top 4.0 m^2 Cd*A), acting at a center of pressure behind and above the
         CoM, so a crosswind pushes the car sideways and turns its nose, and gusts rock it.
         """
         w = self.weather.wind
@@ -231,7 +231,7 @@ class RoadsterSim:
 
     # ------------------------------------------------------------------ visual effects
     def _refresh_fx_geoms(self):
-        """World poses of the effect geoms from the model values just written (what mj_kinematics would do)."""
+        """World poses of the effect geoms from the newly written model values (what mj_kinematics would do)."""
         m, d, g, b = self.model, self.data, self._fx_geoms, self._fx_bodies
         R = d.xmat[b].reshape(-1, 3, 3)
         d.geom_xpos[g] = d.xpos[b] + np.einsum("nij,nj->ni", R, m.geom_pos[g])

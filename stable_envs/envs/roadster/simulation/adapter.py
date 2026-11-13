@@ -36,7 +36,7 @@ MAX_SEED = (1 << 2 * SEED_BITS) - 1
 #: Bounds of the ``weather.wind`` leaf (mean speed, m/s) and the ``weather.rain`` leaf (strength).
 WIND_MAX = 20.0
 RAIN_MAX = 1.0
-#: The physics Variation leaves, their row layout and the source's defaults (calm, dry).
+#: The physics variation leaves, their row layout and the source's defaults (calm, dry).
 PHYSICS_LEAVES = ("weather.wind", "weather.rain")
 PHYSICS_LAYOUT = PhysicsLayout(leaves=PHYSICS_LEAVES, widths=(1, 1), offsets=(0, 1), nominal=(0.0, 0.0))
 MAX_TARGETS = 4  # three rings and the pad: ("task", "target_idx") is the next one
@@ -96,7 +96,7 @@ def integration_layout(model) -> dict[str, tuple[int, int]]:
 
 
 def state_fields(model) -> dict[tuple[str, str], tuple[int, torch.dtype]]:
-    """The State schema for ``model``: ``{(group, name): (width, dtype)}``."""
+    """The state schema for ``model``: ``{(group, name): (width, dtype)}``."""
     nq = int(model.nq)
     f64, i64, b = torch.float64, torch.int64, torch.bool
     fields: dict = {("sim", name): (width, f64) for name, (_, width) in integration_layout(model).items()}

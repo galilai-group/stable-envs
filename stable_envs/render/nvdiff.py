@@ -42,11 +42,7 @@ def QUANT(x, mode: str = "round"):
 
 @dataclass
 class TinyShading:
-    """Bullet TinyRenderer lighting parameters for a z-up world.
-
-    ``dir`` points toward the light. Specular uses the reflected direction's world-z
-    component, independent of camera orientation.
-    """
+    """Bullet TinyRenderer lighting parameters for a z-up world; ``dir`` points toward the light."""
 
     dir: tuple = (-50.0, 30.0, 100.0)
     ambient: float = 0.6
@@ -74,7 +70,7 @@ def shade_tiny(n, base, law: TinyShading):
 
 
 def gather_material(mat, gid):
-    """Gather (B, H, W, 3) colors from shared (G, 3) or per-row (B, G, 3) materials."""
+    """Gather ``(B, H, W, 3)`` colors from shared ``(G, 3)`` or per-row ``(B, G, 3)`` materials."""
     import torch
 
     if mat.dim() == 2:
@@ -98,10 +94,9 @@ def _mm4(a, b):
 
 
 def mvp_rows(proj, view, M):
-    """Compose projection, view, and model matrices with batch-invariant arithmetic.
+    """Compose projection, view and model matrices with batch-invariant arithmetic.
 
-    Accept proj (4, 4), view (B, 4, 4) or (4, 4), and M (B, G, 4, 4).
-    Compute in float64 with fixed operation order, then cast once to M.dtype.
+    ``proj`` is ``(4, 4)``, ``view`` ``(B, 4, 4)`` or ``(4, 4)`` and ``M`` ``(B, G, 4, 4)``, the result's dtype.
     """
     import torch
 
@@ -113,11 +108,7 @@ def mvp_rows(proj, view, M):
 
 
 def offset_clip(pos, R: int, offset) -> torch.Tensor:
-    """Translate (B, V, 4) clip vertices by a pixel offset at resolution R.
-
-    Positive offsets move right and up. Scale the shift by clip w so the translation
-    is uniform after perspective division; half-pixel offsets align corner sampling.
-    """
+    """Translate ``(B, V, 4)`` clip vertices by a pixel offset at resolution ``R``; positive moves right and up."""
     ox, oy = float(offset[0]), float(offset[1])
     if ox == 0.0 and oy == 0.0:
         return pos
@@ -268,7 +259,7 @@ def _is_cube(m, g: int) -> bool:
 
 
 def texture_array(m, tex: int) -> np.ndarray:
-    """Read texture ``tex`` of a compiled model as an (H, W, 3) uint8 array."""
+    """Read texture ``tex`` of a compiled model as an ``(H, W, 3)`` uint8 array."""
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     a0 = int(m.tex_adr[tex])
@@ -280,11 +271,7 @@ def texture_array(m, tex: int) -> np.ndarray:
 
 
 def half_extent(m, g: int, drawn_plane: float = 0.0) -> np.ndarray:
-    """Return per-axis texgen half-extents for a geom.
-
-    Capsules and cylinders use radius on both texture axes; planes use drawn_plane
-    for infinite axes. These are not uniformly equal to geom_size.
-    """
+    """Return per-axis texgen half-extents for a geom; capsules, cylinders and planes differ from ``geom_size``."""
     s = np.asarray(m.geom_size[g], np.float64)
     t = int(m.geom_type[g])
     if t == PLANE:
@@ -303,11 +290,9 @@ TEXGEN_OFFSET = 0.5
 
 
 def texgen(m, g: int, drawn_plane: float = 0.0, cube: bool = False) -> tuple[np.ndarray, np.ndarray]:
-    """Return (A, b) for geom-local texture coordinates A @ position + b.
+    """Return ``(A, b)`` for geom-local texture coordinates ``A @ position + b``.
 
-    For 2-D maps, project local x/y with signed half-repeat scales and offset 0.5.
-    ``texuniform`` uses world-length repeats; otherwise divide by half-extents.
-    Cube maps use the unshifted local direction, ignoring repeat and scale.
+    Cube maps use the unshifted local direction and ignore repeat and scale.
     """
     mid = int(m.geom_matid[g])
     rep = np.asarray(m.mat_texrepeat[mid], np.float64) if mid >= 0 else np.ones(2)
@@ -325,11 +310,7 @@ def texgen(m, g: int, drawn_plane: float = 0.0, cube: bool = False) -> tuple[np.
 
 @dataclass
 class Lights:
-    """Resolved mjvScene lights, including the camera headlight.
-
-    Directions point away from the lights. Read resolved scene values so inherited
-    model defaults and runtime environment edits are included.
-    """
+    """Resolved ``mjvScene`` lights, including the camera headlight; directions point away from the lights."""
 
     pos: np.ndarray  # (L,3)
     dir: np.ndarray  # (L,3) unit, direction the light travels
@@ -370,10 +351,9 @@ class Lights:
 
 @dataclass
 class Camera:
-    """Pinhole camera with matrix columns right, up, and backward.
+    """Pinhole camera looking along local -z, with matrix columns right, up and backward.
 
-    Position and orientation may carry a leading batch dimension; the camera looks
-    along local negative z.
+    Position and orientation may carry a leading batch dimension.
     """
 
     pos: np.ndarray
@@ -421,11 +401,9 @@ class Camera:
 
 
 class Scene(_resources.Closeable):
-    """Static triangle geometry, appearance, and textures on one device.
+    """Static triangle geometry, appearance and textures on one device.
 
-    Owns its device tensors but no rasterizer or EGL context. A renderer given this
-    Scene borrows it unless ownership is explicitly transferred. Close the Scene
-    only after all borrowers are finished.
+    A renderer given this Scene borrows it by default, so close the Scene only after every borrower is done.
     """
 
     resource_kind = "nvdiff.Scene"
@@ -558,14 +536,10 @@ class Scene(_resources.Closeable):
         device="cuda",
         tex_policy: str = "pot",
     ) -> Scene:
-        """Build a Scene from triangles expressed in each geom's local frame.
+        """Build a Scene from triangles in each geom's local frame.
 
-        Inputs are vert/norm (V, 3), face (F, 3), vert_geom (V,), and rgba (G, 4).
-        All three vertices of a face must belong to the same geom. Optional UVs have
-        shape (V, 2|3); material scalars have shape (G,). Textures map IDs to image
-        arrays, and tex_of_geom uses -1 for untextured geoms.
-
-        Render transforms must use the same geom order as these arrays.
+        Inputs are vert/norm ``(V, 3)``, face ``(F, 3)``, vert_geom ``(V,)`` and rgba ``(G, 4)``. Every face lies in
+        one geom, ``tex_of_geom`` is -1 for untextured geoms, and render transforms use the same geom order.
         """
         import torch
 
@@ -726,7 +700,7 @@ class Scene(_resources.Closeable):
             self.textures[t] = prepare_texture(m, t, dev, self.tex_policy)
 
     def clip(self, xpos, xmat, view, proj):
-        """Return clip vertices (B, V, 4), world normals (B, V, 3), and world positions."""
+        """Return clip vertices ``(B, V, 4)``, world normals ``(B, V, 3)``, and world positions."""
         import torch
 
         self._check_open("clip")
@@ -762,9 +736,8 @@ def prepare_texture(m, t: int, dev, policy: str = "pot") -> dict:
 def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = False) -> dict:
     """Prepare an RGB image and return its device tensor and sampling metadata.
 
-    Accept normalized floats or uint8 RGB/RGBA. Cube input may be a six-face vertical
-    strip or one square image reused on every face. ``policy="pot"`` resamples
-    non-power-of-two 2-D images; ``resampled`` records the resulting approximation.
+    Cube input is a six-face vertical strip or one square face. ``policy="pot"`` resamples non-power-of-two 2-D
+    images and records it in ``resampled``.
     """
     import torch
 
@@ -812,15 +785,9 @@ def close_cached_renderer(c) -> None:
 
 
 class BatchRenderer(_resources.Closeable):
-    """Render geom transforms to (B, H, W, 3) uint8 frames with nvdiffrast CUDA.
+    """Render geom transforms to ``(B, H, W, 3)`` uint8 frames with nvdiffrast on CUDA.
 
-    Owns the rasterizer context, skybox textures, and ray cache. Scenes built from
-    ``m`` are owned; ``scene=`` is borrowed by default. Set ``owns_scene=True`` only
-    when transferring sole responsibility for closing that Scene.
-
-    Close explicitly or use a context manager. This CUDA context is not an EGL/GL
-    context and can be released normally. Kinematics is supplied by the caller;
-    ``render_qpos`` provides a convenience path through CPU MuJoCo.
+    Close it or use it as a context manager. A ``scene=`` argument is borrowed unless ``owns_scene=True``.
     """
 
     resource_kind = "nvdiff.BatchRenderer"
@@ -948,11 +915,10 @@ class BatchRenderer(_resources.Closeable):
         )
 
     def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None):
-        """Render device-resident xpos (B, G, 3) and xmat (B, G, 3, 3).
+        """Render device-resident ``xpos`` ``(B, G, 3)`` and ``xmat`` ``(B, G, 3, 3)`` to uint8 RGB.
 
-        G includes only drawn geoms: select full-model arrays with scene.mjgeom first.
-        Optional mat_rgb (B, G, 3) overrides material colors for this call. Return
-        uint8 RGB on the renderer's device, or write into the supplied output tensor.
+        ``G`` counts drawn geoms only, so select full-model arrays with ``scene.mjgeom`` first. ``mat_rgb``
+        ``(B, G, 3)`` overrides material colors for this call.
         """
         import nvdiffrast.torch as dr
         import torch

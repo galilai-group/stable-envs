@@ -1,4 +1,4 @@
-"""Compiled appearance rows: a ``(B, style_dim)`` float32 tensor addressed by Variation path.
+"""Compiled appearance rows: a ``(B, style_dim)`` float32 tensor addressed by variation path.
 
 ``StyleTensor.for_batch`` is the only operation that changes the batch size of a compiled row.
 """
@@ -27,7 +27,7 @@ def _as_tensor(v, device, dtype=torch.float32) -> torch.Tensor:
 
 
 class StyleTensor:
-    """Appearance values of shape ``(B, style_dim)``, indexed by Variation path.
+    """Appearance values of shape ``(B, style_dim)``, indexed by variation path.
 
     ``layout`` lists ``(path, offset, width)`` for each leaf. ``shared`` records whether all
     rows are known to be equal; None defers the check until :attr:`shared` is read.
@@ -101,7 +101,7 @@ class StyleTensor:
         """Build float32 appearance rows from space defaults or supplied values.
 
         Values must contain one shared row or exactly ``batch`` rows. Overrides map
-        paths to either one leaf value or one value per lane; they apply last.
+        paths to either one leaf value or one value per batch row; they apply last.
         """
         layout = space.flat_layout()
         dim = space.flat_dim

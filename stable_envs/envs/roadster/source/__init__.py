@@ -1,6 +1,6 @@
 """The Roadster simulator: a jet-powered car in MuJoCo with five planning tasks.
 
-Ported from roadster-jets (its planning env with the autopilot, world and effects). Modules:
+Modules:
 
   tasks       RoadsterPlanEnv: the goal-conditioned tasks with the 4-D autopilot action
   sim         RoadsterSim: raw drive / steer / nine-jet control, aerodynamics, course bookkeeping, effects

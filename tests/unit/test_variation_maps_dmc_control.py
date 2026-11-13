@@ -164,7 +164,7 @@ def test_classic_default_matches_the_official_swm_render(cell):
 def test_mapped_leaves_are_isolated(cell):
     """Moving one swm leaf moves only its own style slots; one-to-many leaves move every slot the map names.
 
-    Asserted on the style row, where a wrong slot is distinguishable from two elements sharing a colour.
+    Asserted on the style row, where a wrong slot is distinguishable from two elements sharing a color.
     """
     with _env(cell) as env:
         m = variation_map(env)
@@ -231,7 +231,7 @@ def test_round_trip(cell):
                 want = np.asarray(cfg[path], np.float64).reshape(-1)
                 got = np.asarray(back[path], np.float64).reshape(-1)
                 if path in quantised:
-                    # 8-bit colours lose at most half a level (1/510) and must round-trip to the same uint8.
+                    # 8-bit colors lose at most half a level (1/510) and must round-trip to the same uint8.
                     assert np.allclose(got, want, atol=1.0 / 510.0), f"{cell}: {path} {got} != {want}"
                     assert np.array_equal(
                         (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)

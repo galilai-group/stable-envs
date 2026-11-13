@@ -13,6 +13,8 @@ from collections import OrderedDict
 
 import numpy as np
 
+from ...registry import _require_extra
+
 # Pixels between the agent disc and the frame edge below which the spines can overlap the disc.
 _EDGE_PX = 4
 # Pixels copied around the disc bounds; antialiasing reaches at most one pixel past them.
@@ -20,14 +22,11 @@ _AA_PX = 3
 
 
 def _imports():
-    try:
-        from matplotlib.backends.backend_agg import FigureCanvasAgg
-        from matplotlib.figure import Figure
-        from matplotlib.patches import Circle, Rectangle
-    except ImportError as exc:
-        raise ImportError(
-            "SimplePointMaze exact info.goal output requires matplotlib (validated with 3.10.9)"
-        ) from exc
+    _require_extra("SimplePointMaze", "navigation", "matplotlib")
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Circle, Rectangle
+
     return FigureCanvasAgg, Figure, Circle, Rectangle
 
 

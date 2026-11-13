@@ -3,7 +3,7 @@
 ``quantise``          truncates ``int(255 * v)`` as MuJoCo does.
 ``texel_slots``       takes masks from the pristine texture and refuses a mask that disagrees with it.
 ``substitute``        writes every masked texel, leaves the rest alone, and always uploads.
-``texel_key``         the quantised bytes, and ``None`` at the registered default.
+``texel_key``         the quantized bytes, and ``None`` at the registered default.
 
 The GL upload is checked where a render happens, in ``tests/unit/test_variation_maps_dmc_control.py``.
 """
@@ -66,7 +66,7 @@ def uploads(monkeypatch):
     return seen
 
 
-# ----------------------------------------------------------------------------- quantisation
+# ----------------------------------------------------------------------------- quantization
 
 
 @pytest.mark.parametrize(
@@ -108,13 +108,13 @@ def test_masks_default_to_equality_and_report_their_coverage():
 
 
 def test_an_empty_mask_is_refused():
-    """A colour the texture does not carry would make the leaf a no-op."""
+    """A color the texture does not carry would make the leaf a no-op."""
     with pytest.raises(AssertionError, match="none of default colour"):
         texel_slots(_checker(), 0, [A, [0.77, 0.77, 0.77]])
 
 
 def test_explicit_masks_are_checked_against_the_texture():
-    """Supplied masks (DM Control, where markrgb == rgb2) must select texels holding their colour."""
+    """Supplied masks (DM Control, where markrgb == rgb2) must select texels holding their color."""
     m = _checker()
     good = [np.array([1, 1, 1, 1, 0, 0, 0, 0, 0], bool), np.array([0, 0, 0, 0, 1, 1, 1, 0, 0], bool)]
     s = texel_slots(m, 0, [A, B], masks=good)
@@ -177,7 +177,7 @@ def test_substitute_restores_exactly_after_any_sequence(uploads):
 
 
 def test_two_colours_colliding_cannot_corrupt_the_masks(uploads):
-    """Painting both sets one colour, then two, must not merge the masks (they come from the pristine texture)."""
+    """Painting both sets one color, then two, must not merge the masks (they come from the pristine texture)."""
     m, r = _checker(), _Renderer()
     s = texel_slots(m, 0, [A, B])
     substitute(m, r, s, [[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]])

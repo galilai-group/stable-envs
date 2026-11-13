@@ -164,7 +164,7 @@ def _unavailable(why: str):
 
 
 def _need(module: str):
-    """``importorskip`` that honours ``REQUIRE_LIVE``."""
+    """``importorskip`` that honors ``REQUIRE_LIVE``."""
     try:
         return pytest.importorskip(module)
     except pytest.skip.Exception:
@@ -267,7 +267,7 @@ def test_registered_default_is_byte_identical_through_the_mapping(envs, scene):
 
 @pytest.mark.parametrize("scene", SCENES)
 def test_the_default_style_round_trips_to_swm_units_and_back(envs, scene):
-    """``style -> swm config -> style`` is the identity, except that the sky returns as the floor colour."""
+    """``style -> swm config -> style`` is the identity, except that the sky returns as the floor color."""
     env = envs[scene]
     default = np.asarray(env.default_style(), np.float32)
     cfg = WM.variation_from_style(env, default)

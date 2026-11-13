@@ -1,4 +1,4 @@
-"""DM Control classes combining renderers with simulation adapters."""
+"""The 17 DeepMind Control Suite tasks, with MuJoCo physics and batched renderers (``dmcontrol`` extra)."""
 
 import importlib
 

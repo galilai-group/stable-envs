@@ -190,7 +190,7 @@ def run_gate(device="cpu"):
                         env_and_legacy_rng_restored=True,
                     )
                 )
-                # The SWM registration exposes appearance leaves but no physical ones. A persistent
+                # The stable-worldmodel registration exposes appearance leaves but no physical ones. A persistent
                 # nondefault appearance still renders from the full State and leaves the physics untouched.
                 env.set_variation({"agent.color": [0.2, 0.8, 0.4]})
                 varied_state = env.get_state()

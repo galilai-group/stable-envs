@@ -19,7 +19,7 @@ class _ReacherSemantics(DelegatedSemantics):
     @classmethod
     def reference_env(cls, size: int | None = None):
         env = super().reference_env(size)
-        # The source frame is SWM's default, which makes the target material transparent.
+        # The source frame is stable-worldmodel's default, which makes the target material transparent.
         env.physics.named.model.mat_rgba["target", 3] = 0.0
         return env
 
@@ -36,7 +36,7 @@ class _ReacherSemantics(DelegatedSemantics):
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 4)
-        # This projection omits velocity, RNG, lifecycle, and target z; it is not restorable State.
+        # This projection omits velocity, RNG, lifecycle, and target z; it is not restorable state.
         return TensorDict(
             {"qpos": rows[:, :2].clone(), "target_xy": rows[:, 2:].clone()}, [len(rows)], device=self.device
         )

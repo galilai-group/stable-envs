@@ -397,7 +397,7 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
 #
 # These run the real `_cube_colours`, `_cube_geom_index` and `_upload_cube_colours` against a stub
 # bundle and a stub mujoco_warp context, so they need no GPU. The render context is reused across
-# renders, so every render must upload the cube colour, including the default.
+# renders, so every render must upload the cube color, including the default.
 
 _CUBE_DEFAULT = [0.96, 0.26, 0.33]
 _CUBE_GEOMS = [62, 63]
@@ -408,7 +408,7 @@ _FLOOR_DEFAULT = [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]]
 
 
 def _stub_env(device="cpu"):
-    """An `OGBManipBase` with only the attributes the colour helpers touch."""
+    """An `OGBManipBase` with only the attributes the color helpers touch."""
     import types
 
     from stable_envs.envs.ogbench.manipulation import OGBManipBase
@@ -487,7 +487,7 @@ def _expect(colours):
 
 
 def test_custom_then_default_restores_the_default_rgb():
-    """A default render after a custom one must not keep the previous colour, and returns the first default exactly."""
+    """A default render after a custom one must not keep the previous color, and returns the first default exactly."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(4, ngeom)
     _upload(env, c, _sty([_CUBE_DEFAULT] * 4), 4, 4)
@@ -520,7 +520,7 @@ def test_a_small_default_batch_after_a_large_custom_one_leaves_no_stale_world():
 
 
 def test_each_cube_geom_keeps_its_own_alpha():
-    """The opaque cube and the translucent goal marker are not flattened to one alpha by the colour write."""
+    """The opaque cube and the translucent goal marker are not flattened to one alpha by the color write."""
     env, ngeom = _stub_env()
     c, buf = _stub_context(1, ngeom)
     _upload(env, c, _sty([[0.2, 0.4, 0.6]]), 1, 1)
@@ -564,7 +564,7 @@ def test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(
 
 @pytest.mark.parametrize("cell,swm_id", [("Cube", "swm/OGBCube-v0"), ("Scene", "swm/OGBScene-v0")])
 def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(cell, swm_id):
-    """swm's `(1, 3)` cube colour lands in the width-3 style slot and comes back as the same three numbers."""
+    """swm's `(1, 3)` cube color lands in the width-3 style slot and comes back as the same three numbers."""
     import types
 
     from tests.helpers.reference import style_from_variation, variation_from_style

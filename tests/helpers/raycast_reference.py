@@ -183,7 +183,7 @@ def _prims(kinds, g):
 
 
 #: ``t`` of a mover at this scene's default placement, from ``_camera()``. The "band" ``plate_t``
-#: is centred on it so the threshold cuts through the movers.
+#: is centered on it so the threshold cuts through the movers.
 _MOVER_T = 2.72
 
 
@@ -305,7 +305,7 @@ def random_primitive_scene(
     # magnitude, so a bound that subtracts them can cancel away a true hit.
     o = ((r(B, N, 3) - 0.5) * 0.2 + torch.tensor([0.0, -2.0, 0.4])).contiguous()
     if far:
-        sizes = sizes * 0.05  # centimetre-scale primitives...
+        sizes = sizes * 0.05  # centimeter-scale primitives...
         pos = pos * 0.05
         o = o + torch.tensor([0.0, -float(far), 0.35 * float(far)])  # ...seen from far away
     if tangent:

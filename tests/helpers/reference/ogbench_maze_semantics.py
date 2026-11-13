@@ -1,4 +1,4 @@
-"""Pinned OGBMaze oracle over SWM's MazeEnv or the official ogbench registration.
+"""Pinned OGBMaze oracle over stable-worldmodel's MazeEnv or the official ogbench registration.
 
 Imports the source itself, never the candidate adapter."""
 

@@ -1,4 +1,4 @@
-"""Numba CPU step of the TwoRoom and Piecewise classes: physics, State and task outputs in one pass.
+"""Numba CPU step of the TwoRoom and Piecewise classes: physics, state and task outputs in one pass.
 
 Each float32 operation of the Torch path is computed in float64 and rounded to float32. A float64
 result of one float32 addition, subtraction, multiplication or square root rounds to the correctly
@@ -149,7 +149,7 @@ def state_step(kind, rows, action, style, cols, active, masked):
 
 @njit(cache=True)
 def task_step(kind, rows, action, style, cols, active, masked, target, doors):
-    """Advance ``rows`` and return State and task outputs of the classes with a hidden target.
+    """Advance ``rows`` and return state and task outputs of the classes with a hidden target.
 
     The tuple holds agent, target, observation, proprio, info state, goal state, distance and
     terminated. ``doors`` appends the TwoRoom door centers to the observation.

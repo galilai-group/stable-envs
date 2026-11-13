@@ -1,4 +1,4 @@
-"""Physics Variation leaves per simulator, with the ranges and defaults of the registered wrappers."""
+"""Physics variation leaves per simulator, with the ranges and defaults of the registered wrappers."""
 
 from __future__ import annotations
 

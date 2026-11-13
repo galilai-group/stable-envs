@@ -1,5 +1,5 @@
 site_name: stable-envs
-site_description: A batched environment library with explicit state, dynamics, variation, and fast state-driven rendering
+site_description: Fast and Reproducible Environments with Controllable Variations
 repo_url: https://github.com/galilai-group/stable-envs
 repo_name: galilai-group/stable-envs
 site_url: https://galilai-group.github.io/stable-envs/
@@ -27,11 +27,23 @@ theme:
         name: Light mode
   features:
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - navigation.instant
     - content.code.copy
+    - content.action.edit
+    - search.suggest
     - toc.follow
   font: false
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/galilai-group/stable-envs
+      name: stable-envs on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/stable-envs/
+      name: stable-envs on PyPI
 
 # Anchors and links are validated. omitted_files stays at its default (info).
 validation:
@@ -40,19 +52,14 @@ validation:
     unrecognized_links: warn
     absolute_links: warn
 
-# The hook reads the snapshots from disk; the site does not publish them.
+# The hook reads the snapshots from disk; the site publishes neither them nor the hook.
 exclude_docs: |
   environments/_data/
+  _hooks.py
+  __pycache__/
 
 extra_css:
   - assets/stylesheets/envs.css
-
-# Built, but not listed individually.
-not_in_nav: |
-  api/style.md
-  api/scene.md
-  api/gfxdraw.md
-  api/spaces.md
 
 markdown_extensions:
   - admonition
@@ -79,36 +86,37 @@ plugins:
       default_handler: python
       handlers:
         python:
+          inventories:
+          - https://docs.python.org/3/objects.inv
+          - https://numpy.org/doc/stable/objects.inv
+          - https://docs.pytorch.org/docs/stable/objects.inv
+          - https://docs.pytorch.org/tensordict/stable/objects.inv
           paths: [.]
           options:
             docstring_style: google
-            show_source: true
+            docstring_options:
+              ignore_init_summary: true
+              warn_missing_types: false
+            docstring_section_style: list
+            summary: true
+            show_source: false
             show_root_heading: true
-            show_root_full_path: true
+            show_root_full_path: false
+            show_signature_annotations: true
             show_symbol_type_heading: true
             show_symbol_type_toc: true
             members_order: source
             separate_signature: true
             signature_crossrefs: true
             merge_init_into_class: true
-            heading_level: 2
+            heading_level: 3
             filters: ["!^_"]
 
 nav:
   - Home: index.md
-  - Get started:
-      - Install: install.md
-      - System setup: system-setup.md
-      - Quickstart: quickstart.md
-      - Performance tuning: performance-tuning.md
-      - Environment variables: environment-variables.md
-  - Concepts:
-      - State, Action, Variation and Frame: concepts/state.md
-      - Stepping: concepts/dynamics.md
-      - Variations: concepts/variation-spaces.md
-      - Lifecycle: concepts/lifecycle.md
-      - Limitations: concepts/limitations.md
-      - Sibling projects: concepts/worldmodel.md
+  - Quickstart: quickstart.md
+  - Install: install.md
+  - Terms: terms.md
   - Environments:
       - Overview: environments.md
       - Classic control: environments/classic-control.md
@@ -122,26 +130,24 @@ nav:
       - PushT: environments/pusht.md
       - PyFlyt: environments/pyflyt.md
       - Roadster: environments/roadster.md
-  - Reference:
-      - Env: api/env.md
-      - Registered environments: api/envs.md
-      - Command line: api/cli.md
-      - Testing helpers: api/testing.md
-      - 2D raster rendering: api/raster2d.md
-      - Analytic raycast and CPU3D: api/raycast3d.md
-      - Triangle rendering with nvdiffrast: api/nvdiff.md
-      - MuJoCo rasterizer: api/mujoco-raster.md
-      - MJWarp rendering: api/mjwarp.md
   - Benchmarks: benchmarks.md
+  - Tutorials:
+      - Store states, render later: tutorials/store-and-render.md
+      - Randomize appearance and physics: tutorials/variation.md
+      - Write your own environment: tutorials/custom-env.md
+      - Train a world model (LeWM): tutorials/lewm.md
+  - Performance tuning: performance-tuning.md
+  - CLI: api/cli.md
+  - API:
+      - stable_envs: api/index.md
+      - Env: api/env.md
+      - Specs and spaces: api/specs.md
+      - Tuning: api/tuning.md
+      - Environment variables: environment-variables.md
   - Contributing:
-      - Adding a component: adding/index.md
-      - Adding an environment backend: adding/environment.md
-      - Adding a task: adding/task.md
-      - Adding a renderer: adding/renderer.md
-      - Writing a bit-exact Triton kernel: adding/bit-exact-triton.md
-      - Testing: testing.md
-      - Internals:
-          - Fidelity methodology: concepts/fidelity-methodology.md
-          - Why physics is separate: concepts/physics.md
-          - The Scene2D IR: concepts/scene-ir.md
+      - Adding an environment: contributing/environment.md
+      - Matching the upstream library: contributing/upstream.md
+      - Renderers: contributing/renderers.md
+      - Bit-exact Triton kernels: contributing/bit-exact-triton.md
+      - Tests: contributing/testing.md
   - Changelog: changelog.md

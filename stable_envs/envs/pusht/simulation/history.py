@@ -7,7 +7,7 @@ from .replay import HISTORY_KEYS
 
 
 def stack_states(states):
-    """Return owned ``[B, selected_time]`` States with a common history width.
+    """Return owned ``[B, selected_time]`` states with a common history width.
 
     Pad only the replay-history axis. Each snapshot retains its own valid mask
     and history length; the selected-time axis is independent.

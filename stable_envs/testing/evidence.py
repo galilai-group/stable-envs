@@ -34,8 +34,7 @@ def _artifact(root, name):
 class EvidenceRun:
     """Write artifacts once into a new directory, then seal their hashes.
 
-    A crash can leave an incomplete directory. Integrity checking requires the
-    seal itself to be trusted; it does not authenticate source or prove acceptance.
+    The seal checks integrity only; it doesn't authenticate the source or prove acceptance.
     """
 
     def __init__(self, directory):

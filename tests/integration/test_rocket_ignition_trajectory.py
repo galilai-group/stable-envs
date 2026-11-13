@@ -1,4 +1,4 @@
-"""Flame colour through ignition against the pinned source pixel env."""
+"""Flame color through ignition against the pinned source pixel env."""
 
 from pathlib import Path
 

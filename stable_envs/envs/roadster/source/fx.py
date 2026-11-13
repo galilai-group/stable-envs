@@ -1,4 +1,4 @@
-"""Exhaust smoke: vapour puffs of the cold-gas jets, drawn as a pure function of the exhaust history.
+"""Exhaust smoke: vapor puffs of the cold-gas jets, drawn as a pure function of the exhaust history.
 
 The sim records, for each 50 Hz step, where the car was and how hard each jet fired (`RoadsterSim` keeps
 the last `HISTORY` steps, 1.5 s, the longest a puff lives). `Smoke.draw` regenerates every puff from that
@@ -79,7 +79,7 @@ class Smoke:
         self.available = bool((self.ids >= 0).all())
         self.nozzles: list[tuple[int, int, np.ndarray, np.ndarray]] = []
         self.tint = np.ones(3)
-        self._draws: dict = {}  # memoised per-step random draws (see _emit)
+        self._draws: dict = {}  # memoized per-step random draws (see _emit)
         self._hide()
 
     def _hide(self):
@@ -111,7 +111,7 @@ class Smoke:
         cache = {}
         for i in range(E):
             # One generator per step, seeded by the step index only. The draws are a pure function of the
-            # entry, so they are memoised per (step, jet commands) while the entry stays in the history.
+            # entry, so they are memoized per (step, jet commands) while the entry stays in the history.
             key = (int(hist[i, 0]), hist[i, ENTRY["ctrl"][0] : ENTRY["ctrl"][0] + 9].tobytes())
             draws = self._draws.get(key)
             if draws is None:
@@ -161,7 +161,7 @@ class Smoke:
         k = RELAX
         decay = np.exp(-k * age)[:, None]
         v_inf = wind.copy()
-        v_inf[:, 2] += BUOYANCY / k  # steady-state rise of the warm-ish vapour
+        v_inf[:, 2] += BUOYANCY / k  # steady-state rise of the warm-ish vapor
         p = p0 + v_inf * age[:, None] + (v0 - v_inf) * (1 - decay) / k
         frac = np.clip(age / life, 0, 1)
         r = r0 * (1 + 7.0 * frac**0.7)
@@ -180,7 +180,7 @@ class Smoke:
 
     # ------------------------------------------------------------------ drawing
     def puffs(self, hist: np.ndarray, t_now: float):
-        """Live puffs at time `t_now`: (positions, radii, colours, alphas), youngest first, at most N_SMOKE."""
+        """Live puffs at time `t_now`: (positions, radii, colors, alphas), youngest first, at most N_SMOKE."""
         emitted = self._emit(np.asarray(hist, float))
         if emitted is None:
             return None

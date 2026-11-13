@@ -22,8 +22,8 @@ class _DMCModel(Env):
     """Share compiled models, appearance defaults and source rendering for DM Control.
 
     Compact render rows contain qpos and episode-specific model entries. They are
-    not restorable simulator State; registered environments compose a separate
-    simulation adapter that defines the full State schema.
+    not restorable simulator state; registered environments compose a separate
+    simulation adapter that defines the full state schema.
     """
 
     family = "dmcontrol"
@@ -310,7 +310,7 @@ class _DMCModel(Env):
                     used.append(mid)
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
-    #: Physics Variation leaves of the simulator; the renderer keys appearance on the others.
+    #: Physics variation leaves of the simulator; the renderer keys appearance on the others.
     _physics_paths: frozenset[str] = frozenset()
     #: Physics leaves that also move pixels at a fixed state.
     FRAME_PHYSICS: frozenset[str] = frozenset()
@@ -322,7 +322,7 @@ class _DMCModel(Env):
     def make_variation_space(self) -> Dict:
         """Derive supported appearance leaves and defaults from the pristine model.
 
-        Materials use float colours in [0, 1]. Visibility is binary because the
+        Materials use float colors in [0, 1]. Visibility is binary because the
         analytic renderer does not blend partial alpha. Shape choices must contain
         exactly one match for the compiled geometry, which becomes the default.
         """

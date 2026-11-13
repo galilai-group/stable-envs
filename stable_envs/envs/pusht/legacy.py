@@ -43,7 +43,7 @@ SUBSTEPS = 10  # int(1 / (dt * control_hz)), control_hz = 10
 K_P, K_V = 100.0, 20.0  # the agent's PD gains
 MASS = 1.0
 MOMENT = 3000.0  # Match gym_pusht: both inertia terms use BAR, including the stem term.
-COG = (0.0, 45.0)  # block centre of gravity, body-local
+COG = (0.0, 45.0)  # block center of gravity, body-local
 SLOP = 0.1  # space.collision_slop
 COLLISION_BIAS = 0.0017970074436457143  # space.collision_bias, == (1 - 0.1) ** 60
 BIAS_COEF = 1.0 - COLLISION_BIAS**DT  # ~0.06125, Chipmunk's per-substep correction gain
@@ -65,7 +65,7 @@ class PushT(Env):
 
     Packed render states contain agent position, block origin and block angle
     on a 512-unit board. Actions are absolute agent target positions.
-    Use ``pusht.semantics.PushT`` for source-aligned simulation and replay State.
+    Use ``pusht.semantics.PushT`` for source-aligned simulation and replay state.
     """
 
     family = "pusht"
@@ -242,7 +242,7 @@ class PushT(Env):
         Inside it, use the least-penetrating face. Normals push the block away
         from the agent.
         """
-        cc = (ap - c).unsqueeze(1)  # (B,1,2), disc centre rel CoG
+        cc = (ap - c).unsqueeze(1)  # (B,1,2), disc center rel CoG
         a = rel  # (B,2,4,2)
         b = torch.roll(rel, -1, dims=2)
         e = b - a
@@ -369,7 +369,7 @@ class PushT(Env):
             self.use_step_graph = False
             _warn_graph_fallback(self._step_graph_error)
 
-    # Agent velocity has no packed column; retain it separately for full-State continuation.
+    # Agent velocity has no packed column; retain it separately for full-state continuation.
     state_layout = (
         (("agent", "position"), 2, 0),
         (("agent", "velocity"), 2, None),
@@ -389,7 +389,7 @@ class PushT(Env):
         self._agent_v.copy_(state["agent", "velocity"])
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Supply live agent velocity when reconstructing full State from the compact pose."""
+        """Supply live agent velocity when reconstructing full state from the compact pose."""
         return {("agent", "velocity"): self._agent_v[: self._live_rows]}
 
     def _target(self, action) -> torch.Tensor:
@@ -398,7 +398,7 @@ class PushT(Env):
 
     @torch.no_grad()
     def _step(self, action) -> TensorDict:
-        """Advance absolute agent targets ``(B, 2)`` and return State.
+        """Advance absolute agent targets ``(B, 2)`` and return state.
 
         This approximate solver does not compute reward or termination. The
         source-aligned public PushT classes are defined in ``pusht.semantics``.

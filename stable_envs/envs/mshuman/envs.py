@@ -80,8 +80,9 @@ class MSHumanLocomotion(Env):
     def make_variation_space(self) -> Dict:
         return Dict({})
 
-    def reset(self, seed: int | None = None):
+    def reset(self, seed: int | None = None, options: dict | None = None):
         self._check_open("reset")
+        self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
     def get_state(self):
@@ -106,7 +107,6 @@ class MSHumanLocomotion(Env):
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         require_contiguous_out(f"{type(self).__name__}.render", out)
         size = int(size or self.size)
-        # TODO: render CUDA envs on the GPU with render/mjwarp once MuJoCo Warp draws tendons.
         rows = states.reshape(-1, self.state_dim).detach().cpu().numpy()
         frames = np.empty((len(rows), size, size, 3), np.uint8)
         with _LOCK:

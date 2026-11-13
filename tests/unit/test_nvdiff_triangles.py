@@ -120,7 +120,7 @@ def test_gather_material_shared_and_per_row():
 
 
 def _px(col):
-    """TinyRenderer's quantisation: int(255 * value), clamped."""
+    """TinyRenderer's quantization: int(255 * value), clamped."""
     return int(ND.QUANT(col, "trunc").reshape(-1)[0])
 
 

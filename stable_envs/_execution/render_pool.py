@@ -226,7 +226,7 @@ class EnvRows:
 
 
 class ReferenceRows:
-    """Picklable factory of a drawer that renders compact rows with the env class's reference renderer."""
+    """Picklable factory of a drawer that renders compact rows with the env class's upstream renderer."""
 
     def __init__(self, name: str):
         self.name = name

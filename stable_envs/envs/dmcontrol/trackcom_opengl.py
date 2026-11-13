@@ -66,7 +66,7 @@ def render(env, states, style, size, out):
                 getattr(model, name).reshape(-1)[k] = value
             if floors is not None:
                 colours = floors[i].reshape(2, 3)
-                # entry[5] keys the colours this context's texture holds; None is the compiled default.
+                # entry[5] keys the colors this context's texture holds; None is the compiled default.
                 if texel_key(slots, colours) != entry[5]:
                     substitute(model, renderer, slots, colours)
                     entry[5] = texel_key(slots, colours)

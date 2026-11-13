@@ -33,7 +33,7 @@ def _smooth_noise(rng, shape, cells):
 def terrain(seed: int = 7) -> Image.Image:
     """Non-repeating ground covering the whole ground once, so a pixel observation identifies the place.
 
-    Low-frequency colour variation, scattered landmark patches and a faint 10 m grid.
+    Low-frequency color variation, scattered landmark patches and a faint 10 m grid.
     """
     rng = np.random.default_rng(seed)
     W, H = TERRAIN_SIZE

@@ -7,7 +7,7 @@ import torch
 from tensordict import TensorDict
 
 from ...env import Env, _split_appearance
-from ...registry import register
+from ...registry import _require_extra, register
 from ...render import _resources as _RES
 from ...render import gfxdraw as G
 from ...spaces import Dict, Discrete, RGBBox
@@ -144,7 +144,7 @@ class _Classic(Env):
         return self._sim_columns(drawn=True)
 
     def _state_td(self, sim: torch.Tensor) -> TensorDict:
-        """Copy (n, sim_dim) float64 into named State fields without reducing precision."""
+        """Copy (n, sim_dim) float64 into named state fields without reducing precision."""
         n = int(sim.shape[0])
         return TensorDict(
             {nm: sim[:, i : i + 1].clone() for i, nm in enumerate(self.sim_state_names)},
@@ -153,7 +153,7 @@ class _Classic(Env):
         )
 
     def _sim_from_state(self, state) -> torch.Tensor:
-        """Validate State and concatenate named fields into an (n, sim_dim) float64 tensor."""
+        """Validate state and concatenate named fields into an (n, sim_dim) float64 tensor."""
         names = self.sim_state_names
         self._validate_state(state)
         n = int(state.batch_size[0]) if state.batch_size else 1
@@ -180,10 +180,11 @@ class _Classic(Env):
         """Render (..., state_dim) rows to native (..., H, W, 3) uint8 frames.
 
         ``backend`` is ``"auto"``, ``"source"`` (the Gymnasium renderer; CPU and the default appearance only)
-        or ``"port"`` (the gfxdraw port). On CPU, ``"auto"`` and ``"port"`` use the compiled Numba port when
+        or ``"port"`` (gfxdraw in Numba, Triton or Torch). On CPU, ``"auto"`` and ``"port"`` use Numba when
         numba is installed, except that ``"auto"`` draws batches of fewer than 8 rows of the default appearance with
-        the source. Without numba, ``"auto"`` uses the source for the default appearance when pygame is installed
-        and the Torch port otherwise. All give the same frames.
+        the source. Without numba, ``"port"`` uses Torch and ``"auto"`` uses the source for the default appearance
+        when pygame is installed and Torch otherwise. On CUDA, ``"auto"`` and ``"port"`` use Triton when triton is
+        installed and Torch otherwise. All give the same frames.
         """
         if backend not in ("auto", "source", "port"):
             raise ValueError(f"backend must be 'auto', 'source' or 'port', got {backend!r}")
@@ -285,7 +286,7 @@ class _Classic(Env):
     def _varied_geometry(self, sty, own: bool) -> np.ndarray | None:
         """Return host (n, k) float64 geometry-leaf values, or None when every lane draws the constant geometry.
 
-        The answer is cached per installed Variation, so rendering the env's own appearance reads
+        The answer is cached per installed variation, so rendering the env's own appearance reads
         nothing back from the device after the first frame.
         """
         if not self.geometry_leaves:
@@ -712,7 +713,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
         return radii, bounds
 
     def _varied(self, s, sty):
-        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centres.
+        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centers.
 
         The whole picture scales with 500 / (2 * (l1 + l2 + 0.2)), as AcrobotEnv.render draws it.
         """
@@ -1054,6 +1055,7 @@ def _bake_terrain(bg, terrain) -> np.ndarray:
         return hit
     import os
 
+    _require_extra("MountainCar", "classic", "pygame")
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     import pygame
 
@@ -1079,6 +1081,7 @@ def _torque_sprites(device) -> torch.Tensor:
     if key not in _SPRITE_CACHE:
         import os
 
+        _require_extra("Pendulum", "classic", "pygame")
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
         from os import path
 

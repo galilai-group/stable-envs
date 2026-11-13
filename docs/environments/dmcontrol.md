@@ -1,117 +1,45 @@
 # DM Control
 
-These 17 classes port tasks of the [DeepMind Control Suite](https://github.com/google-deepmind/dm_control)
-([Tassa et al., 2018](https://arxiv.org/abs/1801.00690)).
-
-The renderers come in two groups:
-
-- The fixed-camera tasks (Acrobot, Ball in cup, Cartpole, Finger, Manipulator, Pendulum, Point mass and
-  Reacher) use the analytic ray caster `raycast3d`. The tests compare their frames with MuJoCo's
-  frames pixel by pixel.
-- The body-tracking tasks (Cheetah, Hopper, Humanoid, Quadruped, Swimmer and Walker) use `cpu3d` on CPU
-  and MJWarp on CUDA. Their frames differ from MuJoCo's frames. `env.describe()["visual_fidelity"]`
-  gives the measured agreement.
-
-On CPU, one compiled Numba kernel draws the frames of each group. The `dmcontrol` extra installs Numba.
-The kernel divides each frame into tiles of 8 × 8 pixels. Each tile tests its rays only against the
-moving geometry that its bounds can reach. Shadow rays and mirror rays use the same test. The kernel
-then shades the pixels in the same order of float32 operations as the Torch renderer.
-`backend="torch"` selects the Torch renderers, and `backend="auto"` (the default) selects Numba when it
-imports. The two backends give the same frames, except for rare pixels. Torch's CPU square root can
-round differently from the IEEE square root that the kernels use.
-
-On CPU, all environments of a class step in one `mujoco.batch` call, which runs the MuJoCo steps on a
-pool of threads. `dmc_threads` sets the largest number of threads. A step with little MuJoCo work uses
-fewer threads, because each thread that the call wakes adds a delay. The class times one MuJoCo step when
-you construct it and gives each thread about 0.1 ms of work for each call, and at least two environments.
-The number of threads does not change State or outputs.
-
-Each action dimension drives one actuator of the model, in the order of the MuJoCo model. The bounds
-come from the actuator control range.
+The [DeepMind Control Suite](https://github.com/google-deepmind/dm_control) ([Tassa et al., 2018](https://arxiv.org/abs/1801.00690)) is a set of continuous control tasks, from a pendulum swing-up to a walking humanoid, and stable-envs has 17 of them as classes. dm_control builds, resets and restores each task. On CPU, MuJoCo steps the suite's own models in float64, and on CUDA, MuJoCo Warp steps them in float32. stable-envs ray casters draw the [frames](../terms.md#frame), except for the body-tracking tasks on CUDA, which MJWarp draws.
 
 ```python
+# needs the dmcontrol extra
 import stable_envs as snv
 
-env = snv.DMCReacher(num_envs=8)
-state = env.reset(seed=0)
-out = env.step(env.action_spec.sample(8))
+with snv.DMCReacher(num_envs=8, device="cpu") as env:
+    state = env.reset(seed=0)
+    out = env.step(env.action_spec.sample(8))
+    print(out["reward"].shape)     # torch.Size([8])
+    print(env.render().shape)      # torch.Size([8, 84, 84, 3])
 ```
 
-The reward of each source control step is in [0, 1]. Each public action repeats twice and returns
-the sum of both rewards. The suite does not define a success criterion. Ball
-in cup is the exception: its `success` value is 1 when the ball is in the cup.
+## Install
 
-## MuJoCo Warp renderer
+The classes need the `dmcontrol` extra, which also installs Numba for the CPU renderer. On CUDA, the default physics and the body-tracking renderer need MuJoCo Warp, and Reacher's MJX physics needs MJX. The `dmcontrol-gpu` extra installs both; see [what each family needs](../install.md#what-each-family-needs).
 
-`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it.
-`STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` selects it for environments with `backend="auto"` on CUDA. On CPU,
-`backend="mjwarp"` raises `ValueError`. The default backends do not change.
+These classes default to `device="cuda"`; pass `device="cpu"` on a machine without a GPU.
 
-The renderer draws the cell's geoms. MuJoCo Warp does not draw sites and tendons, so the fixed-camera
-cells add one geom for each site in groups 0-2 and one capsule for each segment of a drawn tendon.
-A kernel puts these geoms at the site poses and on the tendon's catenary each frame. The catenary uses
-the gravity of each row. A pass replaces the sky with the source frame for cameras that keep one
-orientation. A second pass draws the floor reflection and the floor colours of each row.
+## Task
 
-Material colours, the light scale, the geom colour leaves, the sphere radius leaves, gravity and the
-floor colours change per world. The field of view, visibility and shape leaves need a separate render
-model. The renderer groups the rows by these leaves and draws each group with its own context.
+Each action dimension drives one actuator of the model, in the order of the MuJoCo model. Actions lie in [-1, 1] and are rescaled to each actuator's control range. Each `step` applies the action for two control steps of the task and returns the sum of their rewards, each in [0, 1]. Only Ball in cup defines a success criterion: `success` is 1 when the ball is in the cup.
 
-When the physics runs on MuJoCo Warp, `env.render()` and the frames of `env.step` copy the physics poses
-on the device into the render data. They do not read the State back to the host and do not run
-kinematics again. The render kernels run on the current CUDA stream after the physics kernels.
+## Simulation
 
-`render_options` sets the speed and fidelity options. `STABLE_ENVS_DMC_WARP_OPTIONS` sets defaults as a
-JSON object.
+dm_control resets and restores each task. On CPU, every environment of a batch steps in one `mujoco.batch` call on a pool of threads. `dmc_threads` caps the number of threads, and a step with little MuJoCo work uses fewer: when you construct the environment, it times one MuJoCo step and gives each thread about 0.1 ms of work per call and at least two environments. The number of threads doesn't change the [state](../terms.md#state) or the outputs. Build the environment in the process that steps it: the `mujoco.batch` threads don't survive `fork()`.
 
-| option | default | effect |
-|---|---|---|
-| `shadows` | `"all"` | `"all"` lights that cast shadows do so, `"one"` only the first of them, `"none"` no shadow rays. |
-| `samples` | None | Sub-pixel samples per axis. None uses `supersample`. |
-| `groups` | `(0, 1, 2)` | The geom groups that the renderer draws. |
-| `bvh` | `"refit"` | `"refit"` updates the bounds of the scene BVH each frame. `"rebuild"` builds the BVH again. |
-| `graph` | True | Replays one captured CUDA graph per launch. False launches each kernel. |
-| `worlds` | None | Worlds per launch. None uses the `dmc_launch_rays` and `dmc_min_worlds` tuning knobs. |
-| `reflection` | True | The floor reflection pass. |
-| `sky` | True | The source sky for cameras that keep one orientation. False draws MuJoCo Warp's skybox. |
-| `segmentation`, `depth` | False | Keep the geom id and the planar depth of each pixel. |
+### Physics backends
 
-`graph`, `bvh` and `worlds` change only the speed. The other options can change the pixels.
-
-```python
-import stable_envs as snv
-
-env = snv.DMCCartpoleSwingup(num_envs=1024, device="cuda", backend="mjwarp", render_options={"shadows": "one"})
-```
-
-`env.render_semantic(rows)` returns the `(objid, objtype)` pair of each pixel in MuJoCo's `mjtObj`
-numbering and the planar depth along the optical axis, for compact render rows. Ids index the model of
-`reference_env`. The sky is -1.
-
-## GPU physics and backend selection
-
-On a CUDA device, all 17 classes step with MuJoCo Warp at every batch size. On CPU they step with
-MuJoCo's `mujoco.batch` backend and the `dmc_threads` tuning setting. Install
-`stable-envs[dmcontrol-gpu]` for the GPU backend; it uses MuJoCo/MuJoCo Warp 3.17 and dm-control 1.0.50.
-`backend` still selects rendering.
-
-`simulation_backend` selects physics when you construct the environment:
+`simulation_backend` picks the physics when you construct the environment:
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `None` (default) | Native | MuJoCo Warp at every batch size |
-| `"native"` | Native | Native physics on CPU; State and outputs on CUDA |
-| `"mjwarp"` | Error | MuJoCo Warp |
-| `"auto"` | Native | Native below `mjwarp_min_envs`, MuJoCo Warp from there |
+| `None` (default) | native MuJoCo | MuJoCo Warp at every batch size |
+| `"native"` | native MuJoCo | native MuJoCo on CPU, with state and outputs on CUDA |
+| `"mjwarp"` | error | MuJoCo Warp |
+| `"auto"` | native MuJoCo | native MuJoCo below `mjwarp_min_envs`, MuJoCo Warp from there |
+| `"mjx"` | error | JAX/MJX, `DMCReacher` only |
 
-`"auto"` is opt-in. `mjwarp_min_envs` defaults to the measured cutoff of the task in the table
-below. Pass an integer to change it. `"mjwarp"` raises an error if CUDA or the GPU dependencies are
-unavailable.
-
-The cutoff of a task is the smallest measured batch from which MuJoCo Warp steps faster than native
-physics at every larger measured batch. The measurement used public `env.step` calls with
-`states=None, frames=None` on an NVIDIA L40S with 8 CPU cores, and includes the episode reset
-(an episode is 500 public calls). Batches were 1, 8, 64, 256, 1024, 2048 and 4096.
+`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"`, `mjwarp_min_envs` defaults to the measured cutoff of each task: the smallest measured batch from which MuJoCo Warp stepped faster than native MuJoCo at every larger measured batch. The measurement timed public `step` calls with `states=None, frames=None`, including episode resets, at batches 1, 8, 64, 256, 1024, 2048 and 4096 on an NVIDIA L40S with 8 CPU cores. Pass an integer to change the cutoff.
 
 | Class | `mjwarp_min_envs` |
 |---|---:|
@@ -122,55 +50,21 @@ physics at every larger measured batch. The measurement used public `env.step` c
 | `DMCAcrobotBalance`, `DMCFingerSpin`, `DMCFingerTurnEasy`, `DMCManipulatorBringBall`, `DMCSwimmerSwimmer6`, `DMCWalkerWalk` | 1024 |
 
 ```python
-with snv.DMCFingerTurnHard(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
-    state = env.reset(seed=7)
-    result = env.step(env.action_spec.sample(256))
-    checkpoint = env.get_state()
-    env.set_state(checkpoint)
+# needs the dmcontrol-gpu extra; CUDA only
+with snv.DMCReacher(num_envs=1, device="cuda") as env:
+    print(env.simulation_backend)  # mjwarp
+
+with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="auto") as env:
+    print(env.simulation_backend)  # native
 ```
 
-The adapter owns the lifecycle, the two action repetitions, native reset sampling and checkpoints.
-The shared `WarpBatch` backend (`stable_envs/_execution/mjbatch.py`) owns the Warp buffers and
-steps each control round in one captured CUDA graph. Bound domain tasks compute observations,
-rewards and info on the device. Cartpole and Finger variants share formulas.
+On MuJoCo Warp, dm_control still resets the environments and owns their random streams, and the state keeps its shapes and dtypes, including the float64 physics columns. `set_state` followed by `get_state` returns the same state exactly. MuJoCo Warp does not repeat a contact solve bit for bit, so two rollouts from one state can differ after contacts. The shared `WarpBatch` backend (`stable_envs/_execution/mjbatch.py`) holds the Warp buffers and steps each control round in one captured CUDA graph. The adapter writes the model values of each environment into the per-environment model fields of MuJoCo Warp, and writes only the fields that changed. `CheetahRun` resets its environments on one dm_control owner per `dmc_threads` thread, and the other tasks on one owner.
 
-Warp physics uses float32. The public State keeps its shapes and dtypes, including the float64
-physical columns. `set_state(s); get_state()` gives back the checkpoint exactly, including
-warmstart, activation, lifecycle, cumulative reward, complete RNG, episode targets and variation.
-Snapshots own their memory. MuJoCo Warp does not repeat a contact solve bit for bit, so two
-rollouts from one State can differ after contacts. Rendering uses the State and does not depend on
-the stepping backend.
+Each control round follows dm_control's `legacy_step`: `mj_step2`, then `n - 1` calls of `mj_step`, then `mj_step1`. RK4 tasks use `n` calls of `mj_step`, then `mj_step1`. After a round, the data hold the position and velocity stages of the new state and the acceleration-stage sensor values of the last integration. Contacts, constraints and the solver are those of the MuJoCo Warp 3.17 step, with no changes.
 
-Each control round follows dm_control's `legacy_step`: `mj_step2`, then `n - 1` calls of
-`mj_step`, then `mj_step1`. RK4 tasks use `n` calls of `mj_step`, then `mj_step1`. After a round,
-the data hold the position and velocity stages of the new state and the acceleration-stage sensor
-values of the last integration. Contacts, constraints and the solver are those of the MuJoCo Warp
-3.17 step, with no changes.
+The step does not read values from the device. Nonfinite controls or physics raise `dm_control.rl.control.PhysicsError` one or two steps later. A contact or constraint buffer overflow raises `BufferOverflowError` in the same way. `check_buffers()` on the simulator raises the error immediately.
 
-Native environments own resets and RNG. Each environment keeps its complete RNG state, episode
-targets, physics values and compact model columns. The adapter writes the model values of each
-environment into the per-environment model fields of MuJoCo Warp, and writes only the fields that
-changed. For Cheetah, one native reset owner per `dmc_threads` thread resets a share
-of the environments in parallel. Other tasks use one reset owner. A pending reset uses one control
-round with zero reward. When only some environments reset, the full batch advances and the reset
-environments get their new State after the round.
-
-The step does not read values from the device. Nonfinite controls or physics raise
-`dm_control.rl.control.PhysicsError` one or two steps later. A contact or constraint buffer
-overflow raises `BufferOverflowError` in the same way. `check_buffers()` on the simulator raises
-the error immediately.
-
-### Validation status
-
-Run the focused CUDA checks with `python scripts/ci/run_dmc_mjwarp.py`. Missing CUDA or skipped
-required cases make this runner fail. It covers all 17 classes, checkpoint ownership, resets,
-targets, physics variation, rendering of captured States, stream ordering, the legacy step order
-and the sensor timing.
-
-The table compares MuJoCo Warp with native CPU physics over 300 public calls (600 control rounds)
-from the same reset (`seed=5`), on 16 environments with slow sinusoidal actions. It gives the
-median over environments of the absolute return difference, the mean over the rollout of the
-largest `qpos` difference of the median environment, and the largest `qpos` difference.
+The table compares MuJoCo Warp with native CPU physics over 300 public calls (600 control rounds) from the same reset (`seed=5`), on 16 environments with slow sinusoidal actions. It gives the median over environments of the absolute return difference, the mean over the rollout of the largest `qpos` difference of the median environment, and the largest `qpos` difference.
 
 | Class | Return, CPU (median) | Return difference | Mean `qpos` difference | Largest `qpos` difference |
 |---|---:|---:|---:|---:|
@@ -192,227 +86,192 @@ largest `qpos` difference of the median environment, and the largest `qpos` diff
 | `DMCSwimmerSwimmer6` | 11.3 | 6e-06 | 3.5e-06 | 2e-05 |
 | `DMCWalkerWalk` | 16.0 | 0.024 | 0.0098 | 2 |
 
-In tasks with contacts the float32 trajectories drift apart and the drift grows over the rollout, but
-the returns stay close. Humanoid falls under these actions on both backends. Many tasks give a zero
-return under these actions, so their return difference shows little; the `qpos` columns cover them.
+In tasks with contacts, the float32 trajectories move apart and the difference grows over the rollout, but the returns stay close. Humanoid falls under these actions on both backends. Many tasks give a zero return under these actions, so their return difference shows little; the `qpos` columns cover them.
 
-### Benchmarking
+`simulation_backend="mjx"` keeps Reacher's JAX/MJX physics. On an L40S, MuJoCo Warp stepped Reacher faster than MJX at every batch from 1 to 4096, for example 1,167,156 against 552,472 steps per second at 4096 environments, including resets.
 
-`python benchmarks/dmc_mjwarp.py --help` describes the configurable latency and memory benchmark.
-It separates construction, reset, restore, public stepping and rendering costs. It uses only the
-public API.
-The default matrix covers all 17 environments with native and MJWarp backends at batches
-1, 16, 64, 256 and 1024, with reset seeds 91000, 91010 and 91020 (510 records).
-`--seed` selects one seed; `--seeds` replaces the seed list. `--batches` selects arbitrary positive batch sizes;
-`--extended-batches` appends 2048, 4096 and 8192 without duplicating selected sizes.
-Preview a light/heavy task matrix without initializing CUDA, constructing environments or
-launching workers:
+## Rendering
 
-```bash
-python benchmarks/dmc_mjwarp.py --dry-run --pretty \
-  --envs DMCPendulumSwingup,DMCCheetahRun --batches 1024 --extended-batches
+The renderers come in two groups:
+
+- The fixed-camera tasks (Acrobot, Ball in cup, Cartpole, Finger, Manipulator, Pendulum, Point mass and Reacher) use the analytic ray caster `raycast3d`. The tests compare their frames with MuJoCo's frames pixel by pixel.
+- The body-tracking tasks (Cheetah, Hopper, Humanoid, Quadruped, Swimmer and Walker) use `cpu3d` on CPU and MJWarp on CUDA. Their frames differ from MuJoCo's; see [Limitations](#limitations).
+
+On CPU, one compiled Numba kernel draws the frames of each group, and the `dmcontrol` extra installs Numba. The kernel splits each frame into tiles of 8 × 8 pixels, and each tile tests its rays only against the moving geometry its bounds can reach, for shadow and mirror rays too. It then shades the pixels in the same order of float32 operations as the Torch renderer. `backend="auto"` (the default) picks Numba when it imports, and `backend="torch"` picks the Torch renderers. The two backends give the same frames except for rare pixels where Torch's CPU square root rounds differently from the IEEE square root the kernels use.
+
+### MuJoCo Warp renderer
+
+`backend="mjwarp"` draws the frames on CUDA with the MuJoCo Warp ray tracer. All 17 classes accept it. `STABLE_ENVS_DMC_CUDA_RENDER=mjwarp` selects it for environments with `backend="auto"` on CUDA. On CPU, `backend="mjwarp"` raises `ValueError`. The default backends do not change.
+
+The renderer draws the geoms of the task. MuJoCo Warp does not draw sites and tendons, so the fixed-camera tasks add one geom for each site in groups 0-2 and one capsule for each segment of a drawn tendon. A kernel puts these geoms at the site poses and on the catenary of the tendon each frame. The catenary uses the gravity of each batch row. A pass replaces the sky with the source frame for cameras that keep one orientation. A second pass draws the floor reflection and the floor colors of each batch row.
+
+Material colors, the light scale, the geom color leaves, the sphere radius leaves, gravity and the floor colors change per world. The field of view, visibility and shape leaves need a separate render model. The renderer groups the batch rows by these leaves and draws each group with its own context.
+
+When the physics runs on MuJoCo Warp, `env.render()` and the frames of `env.step` copy the physics poses on the device into the render data. They do not read the state back to the host and do not run kinematics again. The render kernels run on the current CUDA stream after the physics kernels.
+
+`render_options` sets the speed and fidelity options. `STABLE_ENVS_DMC_WARP_OPTIONS` sets defaults as a JSON object.
+
+| Option | Default | Effect |
+|---|---|---|
+| `shadows` | `"all"` | `"all"`: all lights that cast shadows do so. `"one"`: only the first of them. `"none"`: no shadow rays. |
+| `samples` | None | Sub-pixel samples per axis. None uses `supersample`. |
+| `groups` | `(0, 1, 2)` | The geom groups that the renderer draws. |
+| `bvh` | `"refit"` | `"refit"` updates the bounds of the scene BVH each frame. `"rebuild"` builds the BVH again. |
+| `graph` | True | Replays one captured CUDA graph per launch. False launches each kernel. |
+| `worlds` | None | Worlds per launch. None uses the `dmc_launch_rays` and `dmc_min_worlds` tuning knobs. |
+| `reflection` | True | The floor reflection pass. |
+| `sky` | True | The source sky for cameras that keep one orientation. False draws the MuJoCo Warp skybox. |
+| `segmentation`, `depth` | False | Keep the geom id and the planar depth of each pixel. |
+
+`graph`, `bvh` and `worlds` change only the speed. The other options can change the pixels.
+
+```python
+# needs the dmcontrol-gpu extra; CUDA only
+env = snv.DMCCartpoleSwingup(num_envs=1024, device="cuda", backend="mjwarp", render_options={"shadows": "one"})
 ```
 
-Remove `--dry-run` and supply `--output results/dmc-mjwarp.json` to measure that matrix.
-The script requires `psutil` and `nvidia-ml-py` for measurement, but not for the preview.
+`env.render_semantic(rows)` returns the `(objid, objtype)` pair of each pixel in MuJoCo's `mjtObj` numbering and the planar depth along the optical axis, for compact render rows. Ids index the model of `reference_env`. The sky is -1.
 
-For a focused stepping and memory baseline, add `--measurement-profile focused`. This retains
-construction, first public step, steady public stepping without pixels, and their memory
-measurements. It skips the repeated reset/restore and rendering phases; the seeded
-reset and checkpoint restores needed to initialize each rollout still run outside timing.
-The default `full` profile includes every phase. Select the same profile for both revisions.
+## Variation
 
-```bash
-python benchmarks/dmc_mjwarp.py --measurement-profile focused --dry-run --pretty \
-  --envs DMCPendulumSwingup,DMCCheetahRun,DMCHumanoidWalk --batches 1,256,1024
-```
+Every class has `material.*`, `floor.color` and `light.*` [variation leaves](../tutorials/variation.md). Eleven tasks have `camera.fovy_scale`, and most have `gravity.*` and `agent.*` leaves, such as body densities or the cart mass. Cheetah, Hopper, Humanoid, Quadruped and Walker also vary `floor.friction`. `env.physics_variation_leaves` lists the leaves the simulator reads as physics.
 
-This matrix has 54 records. Construction RSS and process-lifetime peak RSS help
-track host memory, with the scopes described below.
+## Classes
 
-The stepping workload follows the PR's random-action recipe. NumPy `default_rng(seed + 91717)`
-draws uniform `[-1, 1)` float64 actions in `[lane, call, component]` order, then transposes them
-to contiguous `[call, lane, component]` arrays. Both backends receive identical precomputed
-CUDA inputs, and smaller batches share the corresponding lane prefixes. By default, each
-stepping phase runs 20 warmup actions, restores its seeded native reset checkpoint, and replays
-the sequence from index zero for 100 timed calls. `--warmup` and `--repeats` override these counts;
-the sequence length is their maximum. Action generation, upload
-and checkpoint restoration stay outside the timed intervals. The headline metric is
-`public_step_no_pixels`: complete public State/task outputs with frames and history disabled.
-Rendering is a separate measurement. Memory profiling makes one additional
-call using action index zero after each timed rollout.
+### Acrobot
 
-Each environment/batch/seed/backend runs in a fresh process. Backend order alternates across
-seed indices. Results retain action and initial-checkpoint SHA-256 hashes; a pair with different
-inputs is marked as an error. The resolved protocol, Torch thread count and CPU affinity are
-recorded. The default render size is 32, as in the original harness.
+#### DMCAcrobotBalance
 
-Construction records include wall time and memory samples. On Linux/macOS,
-`memory_after.rss_peak_self_bytes` is the operating system's process-lifetime peak resident
-host RAM through construction, including startup; later memory samples retain the high-water
-mark through their phase. Each row also includes `worker_peak_rss_bytes` collected when its
-isolated worker exits, even if it is killed before writing a result. Unsupported platforms
-report `null`. These are absolute process high-water marks, not per-phase allocation deltas
-or peak concurrent RAM summed across worker processes. On Linux, the exit-time value can
-also include the largest reaped descendant. Existing RSS sums and NVML readings remain point
-samples. `worker_exit` records the exit code and signal; a `SIGKILL` alone does not prove OOM.
-Failed cells remain explicit error rows, and the sweep continues to the next cell.
-
-## Acrobot
-
-### DMCAcrobotBalance
-
-Acrobot is a chain of two links with one actuator at the elbow. The task is to keep the free end above
-the base. The episode starts near the upright pose.
+Acrobot is a chain of two links with one actuator at the elbow. The task is to swing the free end up above the base and keep it there, with a sparse reward. The episode starts from random joint angles.
 
 <!-- env: DMCAcrobotBalance -->
 
-## Ball in cup
+### Ball in cup
 
-### DMCBallInCupCatch
+#### DMCBallInCupCatch
 
 A cup on a planar arm holds a ball on a string. The agent swings the ball up and catches it in the cup.
 
 <!-- env: DMCBallInCupCatch -->
 
-## Cartpole
+### Cartpole
 
-### DMCCartpoleBalance
+#### DMCCartpoleBalance
 
 The pole starts near the upright pose. The agent moves the cart to keep it upright.
 
 <!-- env: DMCCartpoleBalance -->
 
-### DMCCartpoleSwingup
+#### DMCCartpoleSwingup
 
 The pole starts pointing down. The agent swings it up and keeps it upright.
 
 <!-- env: DMCCartpoleSwingup -->
 
-## Cheetah
+### Cheetah
 
-### DMCCheetahRun
+#### DMCCheetahRun
 
 A planar biped runs forward. The reward increases with the forward speed, up to 10 m/s.
 
 <!-- env: DMCCheetahRun -->
 
-## Finger
+### Finger
 
-### DMCFingerSpin
+#### DMCFingerSpin
 
 A planar finger with two joints spins a hinged body as fast as possible.
 
 <!-- env: DMCFingerSpin -->
 
-### DMCFingerTurnEasy
+#### DMCFingerTurnEasy
 
 The finger turns the body until its tip points at a target. The target is large.
 
 <!-- env: DMCFingerTurnEasy -->
 
-### DMCFingerTurnHard
+#### DMCFingerTurnHard
 
 This task is the same as DMCFingerTurnEasy with a smaller target.
 
 <!-- env: DMCFingerTurnHard -->
 
-## Hopper
+### Hopper
 
-### DMCHopperHop
+#### DMCHopperHop
 
 A planar one-legged body hops forward. The reward needs an upright torso and forward speed.
 
 <!-- env: DMCHopperHop -->
 
-## Humanoid
+### Humanoid
 
-### DMCHumanoidWalk
+#### DMCHumanoidWalk
 
 A humanoid with 21 joints walks forward at 1 m/s.
 
 <!-- env: DMCHumanoidWalk -->
 
-## Manipulator
+### Manipulator
 
-### DMCManipulatorBringBall
+#### DMCManipulatorBringBall
 
 A planar arm with a gripper picks up a ball and brings it to a target position.
 
 <!-- env: DMCManipulatorBringBall -->
 
-## Pendulum
+### Pendulum
 
-### DMCPendulumSwingup
+#### DMCPendulumSwingup
 
-The pendulum starts at a random angle. The agent swings it up and holds it upright with a limited
-torque.
+The pendulum starts at a random angle. The agent swings it up and holds it upright with a limited torque.
 
 <!-- env: DMCPendulumSwingup -->
 
-## Point mass
+### Point mass
 
-### DMCPointMassEasy
+#### DMCPointMassEasy
 
-A point mass moves on a plane. The agent drives it to a target at the centre.
+A point mass moves on a plane. The agent drives it to a target at the center.
 
 <!-- env: DMCPointMassEasy -->
 
-## Quadruped
+### Quadruped
 
-### DMCQuadrupedWalk
+#### DMCQuadrupedWalk
 
 A body with four legs walks forward.
 
 <!-- env: DMCQuadrupedWalk -->
 
-## Reacher
+### Reacher
 
-### DMCReacher
+#### DMCReacher
 
-A planar arm with two links moves its fingertip to a random target.
-
-On CUDA, Reacher steps with MuJoCo Warp by default, like the other tasks. See
-[GPU physics and backend selection](#gpu-physics-and-backend-selection) for `simulation_backend`
-and `mjwarp_min_envs`. Reacher's cutoff is 8 environments.
-
-```python
-with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # "mjwarp"
-
-with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="auto") as env:
-    print(env.simulation_backend)  # "native"
-```
-
-`simulation_backend="mjx"` selects JAX/MJX on CUDA. It needs `stable-envs[dmcontrol-gpu]`. On an
-NVIDIA L40S, MuJoCo Warp stepped Reacher faster than MJX at every batch from 1 to 4096 (for example
-1,167,156 and 552,472 steps per second at 4096 environments, including resets). Reacher's MJWarp path uses the same adapter as the
-other DMC tasks, including native reset sampling, per-environment targets, physics variation and full
-checkpoints.
-
-```python
-with snv.DMCReacher(num_envs=256, device="cuda", simulation_backend="mjwarp") as env:
-    state = env.reset(seed=7)
-    result = env.step(env.action_spec.sample(256), states=None, frames=None)
-```
-
-Native physics uses float64. MJX and MJWarp use float32 and can produce different trajectories and rewards.
-Select the same backend when comparing experiments.
+A planar arm with two links moves its fingertip to a random target. It also has an MJX backend; see [Physics backends](#physics-backends).
 
 <!-- env: DMCReacher -->
 
-## Swimmer
+### Swimmer
 
-### DMCSwimmerSwimmer6
+#### DMCSwimmerSwimmer6
 
 A planar swimmer with six links swims to a target in a viscous fluid.
 
 <!-- env: DMCSwimmerSwimmer6 -->
 
-## Walker
+### Walker
 
-### DMCWalkerWalk
+#### DMCWalkerWalk
 
 A planar biped walks forward at 1 m/s and keeps its torso upright.
 
 <!-- env: DMCWalkerWalk -->
+
+## Limitations
+
+- The body-tracking frames differ from MuJoCo's by a [measured amount](../environments.md#comparison-with-the-upstream-library).
+- The body-tracking classes draw `floor.color` from a per-texel palette texture, and `DMCWalkerWalk` `floor.rotation_y` tilts the floor per batch row.
+- Native physics uses float64, and MuJoCo Warp and MJX use float32. They can produce different trajectories and rewards, and the gap grows on contact-heavy tasks. Use the same backend for every run you compare.
+- MuJoCo Warp uses the contacts, constraints and solver of MuJoCo Warp 3.17 with no changes. [Physics backends](#physics-backends) gives the measured difference from native physics.
+- The tests compare against the upstream pins in `pin-dmc`: `mujoco==3.17.0` and `dm-control==1.0.50`. The `VISUAL_FIDELITY` declarations of the body-tracking classes record the versions they were measured with.

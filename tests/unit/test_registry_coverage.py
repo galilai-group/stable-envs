@@ -1,7 +1,7 @@
 """Every registered env has an owning family, source comparisons and, where its source varies, a variation map.
 
-Source comparisons come in two layers. ``ORIGINAL_GATES`` compare with the library an env ports (or a
-corpus recorded from it), import no stable_worldmodel and run on pull requests. ``SWM_GATES`` compare with
+Source comparisons come in two layers. ``ORIGINAL_GATES`` compare with the upstream library an env reproduces
+(or a corpus recorded from it), import no stable_worldmodel and run on pull requests. ``SWM_GATES`` compare with
 live stable-worldmodel and carry the ``swm`` mark. Every test file runs in a profile that installs
 what it imports. Waivers live only in ``tests/exemptions.toml``, and
 that file is checked here for stale entries.

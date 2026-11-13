@@ -82,20 +82,20 @@ class RocketLandingEnv(RocketBaseEnv):
                             init_value=np.array([255, 204, 0], dtype=np.uint8)  # yellow
                         ),
                         "fin_color": RGBBox(
-                            init_value=np.array([51, 51, 51], dtype=np.uint8)  # grey
+                            init_value=np.array([51, 51, 51], dtype=np.uint8)  # gray
                         ),
                         "leg_color": RGBBox(
                             init_value=np.array([0, 0, 0], dtype=np.uint8)  # black
                         ),
                         "booster_color": RGBBox(
-                            init_value=np.array([51, 51, 51], dtype=np.uint8)  # grey
+                            init_value=np.array([51, 51, 51], dtype=np.uint8)  # gray
                         ),
                     }
                 ),
                 "pad": Dict(
                     {
                         "color": RGBBox(
-                            init_value=np.array([200, 200, 200], dtype=np.uint8)  # light grey
+                            init_value=np.array([200, 200, 200], dtype=np.uint8)  # light gray
                         ),
                     }
                 ),
@@ -138,7 +138,7 @@ class RocketLandingEnv(RocketBaseEnv):
         self.modified_rocket_urdf = None
         self.modified_pad_urdf = None
         self._spawn_offset_limit = 2.0  # meters
-        self._entry_speed_limit = -30.0  # m/s (downwards)
+        self._entry_speed_limit = -30.0  # m/s (downward)
 
     def _modify_pad_urdf(self) -> str:
         """Modify landing pad URDF with current variation colors.
@@ -149,7 +149,6 @@ class RocketLandingEnv(RocketBaseEnv):
         tree = ET.parse(self.targ_obj_dir)
         root = tree.getroot()
 
-        # Get color from variation space (convert from 0-255 to 0-1)
         pad_color = self.variation_space["pad"]["color"].value / 255.0
 
         material = root.find(".//material[@name='pad_material']")
@@ -228,12 +227,10 @@ class RocketLandingEnv(RocketBaseEnv):
             for opt in variation_options
         )
 
-        # Apply start position variations
         start_height_ratio = self.variation_space["environment"]["start_height_ratio"].value
         start_offset = self.variation_space["environment"]["start_horizontal_offset"].value
         start_tilt = self.variation_space["environment"]["start_tilt"].value
 
-        # Update start position and orientation based on variations
         self.start_pos = np.array(
             [
                 [
@@ -268,7 +265,6 @@ class RocketLandingEnv(RocketBaseEnv):
         self.previous_lin_pos = np.zeros((3,))
         self.previous_ground_lin_vel = np.zeros((3,))
 
-        # Limit initial displacement and entry speed
         rocket_id = self.env.drones[0].Id
         limit = self._spawn_offset_limit
         if options["randomize_drop"] and not variation_controls_offset:
@@ -295,13 +291,11 @@ class RocketLandingEnv(RocketBaseEnv):
 
         self.compute_state()
 
-        # Apply color variations to rocket and pad
         if variation_options and (
             "all" in variation_options
             or any("rocket" in v for v in variation_options)
             or any("pad" in v for v in variation_options)
         ):
-            # Modify and load landing pad with variations
             if self.modified_pad_urdf:
                 try:
                     os.unlink(self.modified_pad_urdf)
@@ -320,7 +314,6 @@ class RocketLandingEnv(RocketBaseEnv):
 
         super().end_reset(seed, options)
 
-        # Apply rocket color variations using changeVisualShape
         if variation_options and ("all" in variation_options or any("rocket" in v for v in variation_options)):
             rocket_id = self.env.drones[0].Id
             body_color = self.variation_space["rocket"]["body_color"].value / 255.0
@@ -330,7 +323,6 @@ class RocketLandingEnv(RocketBaseEnv):
 
             num_joints = p.getNumJoints(rocket_id, physicsClientId=self.env._client)
 
-            # Change colors for each link based on joint names
             for i in range(-1, num_joints):
                 if i == -1:
                     # Base link (main rocket body)
@@ -383,7 +375,6 @@ class RocketLandingEnv(RocketBaseEnv):
             height, width = self.render_resolution
             self.current_goal = np.zeros((height, width, 3), dtype=np.uint8)
 
-        # Add goal to info dict
         self.info["goal"] = self.current_goal
 
         state = self.state.copy()
@@ -397,7 +388,7 @@ class RocketLandingEnv(RocketBaseEnv):
         return state, reward, terminated, truncated, dict(info)
 
     def render(self, mode: str = "rgb_array"):
-        return super().render()[..., :3]  # discard alpha channel if present
+        return super().render()[..., :3]
 
     def compute_state(self) -> None:
         """Computes the state of the current timestep.
@@ -424,13 +415,10 @@ class RocketLandingEnv(RocketBaseEnv):
         ) = super().compute_attitude()
         aux_state = super().compute_auxiliary()
 
-        # compute rotation matrices for converting things
         rotation = np.array(p.getMatrixFromQuaternion(quaternion)).reshape(3, 3)
 
-        # compute ground velocity for reward computation later
         self.ground_lin_vel = np.matmul(self.lin_vel, rotation.T)
 
-        # combine everything
         if self.angle_representation == 0:
             self.state = np.concatenate(
                 [
@@ -462,15 +450,12 @@ class RocketLandingEnv(RocketBaseEnv):
         """Computes the termination, truncation, and reward of the current timestep."""
         super().compute_base_term_trunc_reward(collision_ignore_mask=[self.env.drones[0].Id, self.landing_pad_id])
 
-        # compute reward
         if not self.sparse_reward:
-            # progress to the pad
             lateral_progress = float(  # noqa
                 np.linalg.norm(self.previous_lin_pos[:2]) - np.linalg.norm(self.lin_pos[:2])
             )
             vertical_progress = float(self.previous_lin_pos[-1] - self.lin_pos[-1])
 
-            # absolute distances to the pad
             lateral_distance = np.linalg.norm(self.lin_pos[:2]) + 0.1  # noqa
 
             # deceleration as long as we're still falling
@@ -483,9 +468,6 @@ class RocketLandingEnv(RocketBaseEnv):
                 * (1.0 if (self.ground_lin_vel[-1] < 0.0) else -1.0)
             )
 
-            # dictionarize reward components for debugging
-
-            # composite reward together
             self.reward += (
                 -0.3  # negative offset to discourage staying in the air
                 + (0.3 / lateral_distance)  # reward for staying over landing pad
@@ -496,11 +478,9 @@ class RocketLandingEnv(RocketBaseEnv):
                 - (1.0 * np.linalg.norm(self.ang_pos[:2]))  # minimize aggressive angles
             )
 
-        # check if we touched the landing pad
         if self.env.contact_array[self.env.drones[0].Id, self.landing_pad_id]:
             self.landing_pad_contact = 1.0
 
-            # the reward minus collision speed
             self.reward += 5.0 - (0.3 * abs(self.ground_lin_vel[-1]))
         else:
             self.landing_pad_contact = 0.0

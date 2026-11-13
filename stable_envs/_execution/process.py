@@ -19,7 +19,7 @@ from .shared_memory import allocate_buffers, buffer_views, key_path, owned_group
 from .state_columns import require_columns
 from .workers import pin_worker, send_failure, send_ready
 
-#: Step frame requests: workers draw the frame, or write the State leaves a step changes for the parent to draw.
+#: Step frame requests: workers draw the frame, or write the state leaves a step changes for the parent to draw.
 FRAME_DRAW, FRAME_FIELDS = 1, 2
 #: ``process_methods`` kinds: split the first argument by lane, or send every worker the same arguments.
 PER_LANE, BROADCAST = "per_lane", "broadcast"
@@ -170,7 +170,7 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
 
 
 class ProcessAdapter(ProcessRequests, SimulatorAdapter):
-    """Split a local adapter's lanes across spawned workers with shared State and task buffers.
+    """Split a local adapter's lanes across spawned workers with shared state and task buffers.
 
     ``factory(count, seed)`` builds the local adapter that one worker owns; it
     must be picklable. Lane ``i`` gets ``seed + i``, as in one local batch.
@@ -296,7 +296,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return owned_group(self._views, group, self.num_envs, self._output_device)
 
     def _state_leaves(self):
-        """Copy the shared State leaves to ``{key: tensor}``; leaves that only resets, restores and calls
+        """Copy the shared state leaves to ``{key: tensor}``; leaves that only resets, restores and calls
         change come from a cache."""
         if not self._static:
             return {
@@ -380,7 +380,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return self._reset(seed)
 
     def validate(self, state: TensorDict) -> object:
-        """Reject State that does not fit the shared buffers; families add their own checks."""
+        """Reject state that does not fit the shared buffers; families add their own checks."""
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError(f"{self.name} requires full TensorDict State with batch [num_envs]")
         require_columns(

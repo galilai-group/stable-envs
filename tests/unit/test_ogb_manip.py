@@ -119,7 +119,7 @@ def test_button_deltas_are_the_same_whatever_task_the_env_starts_in():
             for bits in want:
                 assert np.array_equal(got[bits][0], want[bits][0]), (start, bits, "geom_rgba delta")
                 assert np.array_equal(got[bits][1], want[bits][1]), (start, bits, "mat_rgba delta")
-        # the deltas must not all be zero, or the bits would not select colours
+        # the deltas must not all be zero, or the bits would not select colors
         assert any(np.any(g) or np.any(m) for g, m in want.values())
     finally:
         u._cur_button_states = list(saved) if saved else [0] * b.nbuttons
@@ -176,7 +176,7 @@ def test_split_cuts_the_row_and_supplies_an_identity_quaternion(cell):
 
 
 def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
-    """The texture bake and the button colour rule must write different material rows.
+    """The texture bake and the button color rule must write different material rows.
 
     Otherwise applying one as a delta over the other would undo it. Rows are measured against the
     all-zero-bits table, so the handle rows belong to the buttons and not to the bake.

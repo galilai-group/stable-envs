@@ -1,4 +1,4 @@
-"""Assemble and validate State columns from per-lane simulator rows."""
+"""Assemble and validate state columns from per-lane simulator rows."""
 
 import numpy as np
 import torch
@@ -8,7 +8,7 @@ from tensordict import TensorDict
 def owned_columns(rows, batch, device):
     """Collate nonempty NumPy rows into owned tensor columns on the requested device.
 
-    Rows must agree in keys, shapes and dtypes. Copies isolate returned State
+    Rows must agree in keys, shapes and dtypes. Copies isolate returned state
     from reused simulator buffers; each column transfers once.
     """
     rows = iter(rows)
@@ -33,7 +33,7 @@ def owned_columns(rows, batch, device):
 
 
 def require_columns(state, shapes):
-    """Check that State holds every ``{key: (shape, dtype)}`` column and that all are finite.
+    """Check that state holds every ``{key: (shape, dtype)}`` column and that all are finite.
 
     Finiteness is reduced over every column before a single host read.
     """

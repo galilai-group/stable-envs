@@ -251,9 +251,12 @@ def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
             fast.step(action)
             reference.step(action)
         values = {name: np.asarray(rows[::-1], np.float64) for name, rows in PHYSICS["cartpole"].items()}
+        held = fast.get_state()
         fast.configure(values)
         reference.configure(values)
-        assert_same_state(fast.get_state(), reference.get_state())
+        state = fast.get_state()
+        assert_same_state(state["physics"], reference.get_state()["physics"])
+        assert_same_state(state.exclude("physics"), held.exclude("physics"))
         for action in _actions("cartpole", 5, 4):
             _assert_agree("cartpole", fast.step(action), reference.step(action), _tol(backend, 5))
     finally:

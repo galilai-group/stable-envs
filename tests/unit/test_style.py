@@ -18,7 +18,7 @@ DEV = "cpu"
 
 
 def _space():
-    """A two-leaf tree: one 3-wide colour and one scalar. Flat width 4, layout sorted by path."""
+    """A two-leaf tree: one 3-wide color and one scalar. Flat width 4, layout sorted by path."""
     return spaces.Dict(
         {
             "block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))}),
@@ -212,7 +212,7 @@ def test_an_override_of_the_leaf_width_is_shared_by_the_batch():
 
 
 def test_an_override_of_batch_times_width_is_per_environment():
-    """Batched domain randomisation: ``shared`` is measured and is False, so ``for_batch`` refuses."""
+    """Batched domain randomization: ``shared`` is measured and is False, so ``for_batch`` refuses."""
     v = np.arange(12, dtype=np.float32).reshape(4, 3)
     s = StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": v})
     assert torch.equal(s["block.color"], torch.as_tensor(v))
@@ -255,7 +255,7 @@ def test_a_cuda_tensor_of_values_is_accepted_without_a_numpy_round_trip():
 
 
 def test_overrides_do_not_write_through_the_caller_s_array():
-    """``from_space`` clones before writing; otherwise randomising a knob mutates the caller's buffer."""
+    """``from_space`` clones before writing; otherwise randomizing a knob mutates the caller's buffer."""
     v = np.zeros((4, 3), np.float32)
     StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": v})
     assert not v.any(), "the override array was written through"

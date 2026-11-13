@@ -1,9 +1,9 @@
 """Every DM Control physics Variation leaf against the pinned stable_worldmodel wrappers.
 
-For each leaf, three lanes run the registered value, a low and a high value. SWM sets each
+For each leaf, three lanes run the registered value, a low and a high value. stable-worldmodel sets each
 lane's value through ``reset(options={"variation_values": ...})`` and recompiles or writes
 the model; ours writes the same value into each lane's compiled model. The reset State and a
-short rollout must agree within ``PHYSICS_TOL``, and the varied lanes must move SWM's own
+short rollout must agree within ``PHYSICS_TOL``, and the varied lanes must move stable-worldmodel's own
 trajectory far beyond it. Then every leaf is sampled per lane at once, and a restored State
 keeps the physics it was produced under.
 
@@ -24,7 +24,7 @@ import stable_envs as se
 from tests.helpers.reference.dmc_semantics import PHYSICS_LEAVES, DMCReference
 from tests.helpers.reference.semantics import compare_state
 
-#: stable-envs cell -> SWM domain.
+#: stable-envs cell -> stable-worldmodel domain.
 CELLS = {
     "DMCAcrobotBalance": "acrobot",
     "DMCPendulumSwingup": "pendulum",
@@ -42,11 +42,11 @@ CELLS = {
 }
 TRACKCOM = {"DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidWalk", "DMCQuadrupedWalk"}
 #: State tolerance over a rollout. Direct model writes (gravity, friction) are exact; an analytic mass
-#: change agrees with SWM's recompile to 1e-12 in the model, which contact-rich rollouts amplify.
+#: change agrees with stable-worldmodel's recompile to 1e-12 in the model, which contact-rich rollouts amplify.
 PHYSICS_TOL = 1e-6
-#: The leaf must move SWM's trajectory at least this many times the tolerance.
+#: The leaf must move stable-worldmodel's trajectory at least this many times the tolerance.
 SENSITIVITY_FACTOR = 1e3
-#: Leaves SWM itself never lets reach the trajectory, with the reason.
+#: Leaves stable-worldmodel itself never lets reach the trajectory, with the reason.
 INERT_UPSTREAM = {
     **{
         (cell, "gravity.y"): "planar model: every joint moves in the x-z plane, so y gravity does no work"
@@ -63,7 +63,7 @@ KICK = 8.0
 
 
 def _balance_wrapper():
-    """SWM's cartpole wrapper on dm_control's Balance task, which DMCCartpoleBalance simulates."""
+    """stable-worldmodel's cartpole wrapper on dm_control's Balance task, which DMCCartpoleBalance simulates."""
     import os
     import tempfile
 
@@ -91,13 +91,13 @@ def _make(name):
 
 
 def _swm_dtype(leaf, value):
-    # SWM holds gravity and the floor tilt in float64 and every other physics leaf in float32.
+    # stable-worldmodel holds gravity and the floor tilt in float64 and every other physics leaf in float32.
     wide = leaf.startswith("gravity.") or leaf == "floor.rotation_y"
     return np.asarray(value, np.float64 if wide else np.float32).reshape(-1)
 
 
 class _Lanes:
-    """One SWM wrapper per lane, each reset with its own explicit physics values."""
+    """One stable-worldmodel wrapper per lane, each reset with its own explicit physics values."""
 
     def __init__(self, name, values):
         wrapper = _balance_wrapper() if name == "DMCCartpoleBalance" else None
@@ -123,7 +123,8 @@ class _Lanes:
 
 
 def _swm_values(name, leaf):
-    """SWM's registered value and two interior values of its range, in SWM's dtype for the leaf."""
+    """stable-worldmodel's registered value and two interior values of its range, in stable-worldmodel's dtype
+    for the leaf."""
     ref = _Lanes(name, {}).refs
     try:
         node = ref[0].envs[0].variation_space
@@ -209,7 +210,7 @@ def leaf_gate(name, leaf, seed=11):
 
 
 def sampled_and_restored_gate(name, seed=29, steps=20):
-    """Sample every physics leaf per lane, step against SWM, then restore a mid-rollout State."""
+    """Sample every physics leaf per lane, step against stable-worldmodel, then restore a mid-rollout State."""
     with _make(name) as env:
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
         leaves = list(env.physics_variation_leaves)
@@ -218,7 +219,7 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
         for leaf, value in values.items():
             assert len(set(value.reshape(-1).tolist())) == 3, (leaf, value)
             if not (leaf.startswith("gravity.") or leaf == "floor.rotation_y"):
-                # SWM holds these leaves in float32; our draw is a float32 style value.
+                # stable-worldmodel holds these leaves in float32; our draw is a float32 style value.
                 assert np.array_equal(value, value.astype(np.float32).astype(np.float64)), (leaf, value)
         lanes = _Lanes(name, values)
         try:
@@ -237,8 +238,8 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
 def reset_rule_gate(name="DMCCartpoleSwingup", seed=23, steps=10) -> dict:
     """``reset(options)`` then ``reset()``: leaves the second reset does not name return to their defaults.
 
-    First the registered defaults, then defaults installed by ``set_variation``, which SWM
-    spells ``variation_space.set_init_value``. Gravity is read from each SWM model.
+    First the registered defaults, then defaults installed by ``set_variation``, which stable-worldmodel
+    spells ``variation_space.set_init_value``. Gravity is read from each stable-worldmodel model.
     """
     gz = np.asarray([[-3.25], [-17.5], [-9.81]])
     gx = np.asarray([[1.5], [0.0], [-2.0]])

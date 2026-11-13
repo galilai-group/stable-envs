@@ -68,7 +68,7 @@ def test_a_negative_cutoff_would_have_left_a_five_degree_cone():
 
 @pytest.mark.parametrize("ok", ["0", "45", "89", "90"])
 def test_a_legal_cutoff_is_left_exactly_alone(ok):
-    """The boundary matters: 90 is legal, 90.0001 is not. MuJoCo honours the former."""
+    """The boundary matters: 90 is legal, 90.0001 is not. MuJoCo honors the former."""
     m = mujoco.MjModel.from_xml_string(_XML.format(bad=ok))
     before = np.array(m.light_exponent, copy=True), np.array(m.light_cutoff, copy=True)
     hit, _ = neutralise_illegal_spots(m)
@@ -78,7 +78,7 @@ def test_a_legal_cutoff_is_left_exactly_alone(ok):
 
 
 def test_just_past_the_boundary_is_neutralised():
-    """90 is honoured and 90.0001 is not, so the rule is tested at the discontinuity itself."""
+    """90 is honored and 90.0001 is not, so the rule is tested at the discontinuity itself."""
     m = mujoco.MjModel.from_xml_string(_XML.format(bad="90.0001"))
     assert neutralise_illegal_spots(m)[0] == [0]
     assert float(m.light_cutoff[0]) == GL_SPOT_CUTOFF_OFF

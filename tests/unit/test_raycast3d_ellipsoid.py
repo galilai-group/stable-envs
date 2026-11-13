@@ -124,7 +124,7 @@ def test_fuzz_against_the_float64_reference(seed):
     ).view(3, 3)
     N = 20000
     o = (r(N, 3) - 0.5) * 0.4 + torch.tensor([0.0, -2.0, 0.4])
-    # a third of the rays aimed at the ellipsoid's neighbourhood so the hit set is not empty
+    # a third of the rays aimed at the ellipsoid's neighborhood so the hit set is not empty
     aim = pos + (r(N, 3) - 0.5) * 2 * size.max()
     d = torch.nn.functional.normalize(
         torch.where(r(N, 1) < 0.34, aim - o, r(N, 3) - 0.5 + torch.tensor([0.0, 1.0, 0.0])), dim=-1

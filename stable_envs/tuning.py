@@ -1,17 +1,6 @@
 """Tuning knobs: chunk sizes, block sizes, worker counts and memory budgets.
 
-A knob changes speed and memory use. Frames and State are the same for every valid value.
-The library reads a knob each time it does the work. A change applies to the next call.
-
-A lookup uses the first value it finds:
-
-1. :func:`override` (innermost first), then :func:`set`.
-2. The ``STABLE_ENVS_<KNOB>`` environment variable.
-3. A value that ``stable-envs tune`` measured on this device for the render path, frame size and
-   batch range.
-4. A value from a hardware rule.
-5. The call site's default.
-6. The knob's fallback.
+A knob changes speed and memory use, but frames and state are the same for every valid value.
 """
 
 from __future__ import annotations
@@ -86,11 +75,17 @@ _WARPS = (1, 2, 4, 8, 16, 32)
 class Knob:
     """One knob: its fallback, the render paths that read it, and how ``tune`` sweeps it.
 
-    ``kind`` is ``"n"`` (at least 1), ``"n0"`` (at least 0), ``"pow2"`` or ``"warps"``. ``unit`` tells
-    ``tune`` which values give the same work split: ``"rows"``, ``"rays"``, ``"cpus"``, ``"bytes"``,
-    ``""`` (none), or None for a knob ``tune`` does not sweep. ``step`` knobs are read when an
-    environment is built and are timed by stepping. Call sites of a ``per_path=False`` knob pass no
-    render path, so its measured value applies to the whole device. ``device`` is ``"cpu"``, ``"cuda"`` or ``"any"``.
+    Attributes:
+        name: Knob name, a key of ``KNOBS``.
+        fallback: Value used when nothing else sets the knob (the call site decides if None).
+        paths: Render or simulation paths that read the knob.
+        device: Device whose work the knob controls: ``"cpu"``, ``"cuda"`` or ``"any"``.
+        kind: Accepted values: ``"n"`` (at least 1), ``"n0"`` (at least 0), ``"pow2"`` or ``"warps"``.
+        unit: Work-split unit ``tune`` uses to skip equivalent values (not swept if None).
+        doc: One-line description.
+        derive: ``device -> value`` hardware rule.
+        step: Read at construction and timed by stepping.
+        per_path: Store measured values per render path instead of per device.
     """
 
     name: str
@@ -110,7 +105,14 @@ class Knob:
         return f"STABLE_ENVS_{self.name.upper()}"
 
     def check(self, value: Any) -> int | None:
-        """Return ``value`` as a valid int, or None for unset; raise ValueError otherwise."""
+        """Return ``value`` unchanged if it is None or valid for this knob's ``kind``.
+
+        Args:
+            value: The value to check.
+
+        Raises:
+            ValueError: If ``value`` is a bool, not an int, or outside the values ``kind`` allows.
+        """
         if value is None:
             return None
         ok = isinstance(value, int) and not isinstance(value, bool) and value >= (self.kind != "n0")
@@ -192,7 +194,7 @@ _environ.register(
 
 
 def paths_of(cls) -> tuple[str, ...]:
-    """Return the render and simulation paths of environment class ``cls``."""
+    """Return the render and simulation paths of environment class ``cls`` (empty if unknown)."""
     for c in cls.__mro__:
         if c.__name__ in RENDER_PATHS:
             return RENDER_PATHS[c.__name__]
@@ -200,7 +202,14 @@ def paths_of(cls) -> tuple[str, ...]:
 
 
 def check(knobs: Mapping[str, Any]) -> dict[str, int | None]:
-    """Validate knob names and values; raise ValueError for an unknown name or invalid value."""
+    """Validate ``{knob name: value or None}`` and return the checked values.
+
+    Args:
+        knobs: The values to check.
+
+    Raises:
+        ValueError: If a name is not in ``KNOBS`` or a value is invalid.
+    """
     unknown = sorted(n for n in knobs if n not in KNOBS)
     if unknown:
         raise ValueError(f"unknown tuning knob(s) {unknown}; the knobs are {sorted(KNOBS)}")
@@ -266,7 +275,13 @@ def _driver() -> str:
 
 
 def cache_path(device="cpu") -> Path | None:
-    """Return ``$XDG_CACHE_HOME/stable-envs/tuning/<device name>.json``, or None without CUDA for a CUDA device."""
+    """Return the tuning cache file of ``device``, or None for a CUDA device without CUDA.
+
+    The file is ``$XDG_CACHE_HOME/stable-envs/tuning/<device name>.json`` (``~/.cache`` if unset).
+
+    Args:
+        device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
+    """
     where = _dev(device)
     if where is None:
         return None
@@ -281,7 +296,13 @@ def batch_range(batch: int) -> tuple[int, int]:
 
 
 def entry_key(path: str, size: int, batch: int) -> str:
-    """Return the cache key of a render path at one frame size and batch range."""
+    """Return the cache key of a render path at one frame size and batch range.
+
+    Args:
+        path: Render or simulation path.
+        size: Frame size in pixels (0 for simulation paths).
+        batch: Number of environments; it's rounded to its power-of-two range.
+    """
     return "{}|{}|{}-{}".format(path, int(size), *batch_range(batch))
 
 
@@ -289,7 +310,11 @@ _files: dict[Path, tuple[float, dict, bool]] = {}
 
 
 def read_cache(device="cpu") -> tuple[dict, bool]:
-    """Return the cache file of ``device`` and whether it is current (same device, driver, CPU and version)."""
+    """Return the cache file of ``device`` and whether it is current (same device, driver, CPU and version).
+
+    Args:
+        device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
+    """
     path = cache_path(device)
     try:
         mtime = path.stat().st_mtime
@@ -309,7 +334,17 @@ def read_cache(device="cpu") -> tuple[dict, bool]:
 
 
 def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
-    """Merge ``{key: {knob: value}}`` into the cache file of ``device`` and return its path."""
+    """Merge ``{entry key: {knob: value}}`` into the cache file of ``device`` and return its path.
+
+    Entries of a file that isn't current for this machine are dropped first.
+
+    Args:
+        entries: ``{entry key: {knob: value}}``, with keys from ``entry_key`` or ``"*"`` for the whole device.
+        device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
+
+    Raises:
+        RuntimeError: If ``device`` is a CUDA device and CUDA is unavailable.
+    """
     path = cache_path(device)
     if path is None:
         raise RuntimeError("CUDA is unavailable, so there is no CUDA device to write tuning for")
@@ -337,7 +372,23 @@ _MISSING = object()
 
 
 def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISSING, measured=True):
-    """Return ``(value, source)`` for knob ``name``; see :func:`get`."""
+    """Return ``(value, source)`` for knob ``name``; the arguments are those of ``get``.
+
+    ``source`` is ``"override"``, ``"set"``, ``"env"``, ``"cache"``, ``"derived"``, ``"default"`` or
+    ``"fallback"``.
+
+    Args:
+        name: A key of ``KNOBS``.
+        path: Render path of the call.
+        size: Frame size in pixels.
+        batch: Number of environments in the call.
+        device: Device the work runs on.
+        default: The call site's value.
+        measured: Read the tuning cache; False skips it.
+
+    Raises:
+        ValueError: If ``name`` is not a knob or its environment variable is invalid.
+    """
     if name not in KNOBS:
         check({name: None})
     knob = KNOBS[name]
@@ -374,25 +425,27 @@ def get(
     device: Any = None,
     default: Any = _MISSING,
 ) -> int | None:
-    """Return the current value of knob ``name``.
+    """Return the current value of knob ``name``; ``lookup`` also returns where it came from.
 
     Args:
-        name: A key of :data:`KNOBS`.
-        path: The render path of the call, which selects measured values together with ``size`` and
-            ``batch``. None uses values measured for the whole device.
-        size: Frame size in pixels; 0 for simulation paths.
-        batch: Number of lanes.
-        device: The device the work runs on; None uses the knob's own device.
-        default: The call site's value, used instead of the fallback when nothing else sets the knob.
-
-    Raises:
-        ValueError: ``name`` is not a knob, or its environment variable is invalid.
+        name: A key of ``KNOBS``.
+        path: Render path of the call; with ``size`` and ``batch`` it selects measured values.
+        size: Frame size in pixels (0 for simulation paths).
+        batch: Number of environments in the call.
+        device: Device the work runs on (the knob's own device if None).
+        default: The call site's value, used instead of the knob's fallback.
     """
     return lookup(name, path=path, size=size, batch=batch, device=device, default=default)[0]
 
 
 def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.set``
-    """Set knobs for the process; None clears a knob. Return every knob set this way."""
+    """Set knobs for the process and return every knob set this way; None clears a knob.
+
+    Values set here sit below ``override`` blocks and above everything else.
+
+    Args:
+        **knobs: ``{knob name: value or None}``.
+    """
     for name, value in check(knobs).items():
         if value is None:
             _set.pop(name, None)
@@ -402,13 +455,19 @@ def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.se
 
 
 def reset() -> None:
-    """Clear every knob set with :func:`set`."""
+    """Clear every knob set with ``set``."""
     _set.clear()
 
 
 @contextlib.contextmanager
 def override(**knobs: int) -> Iterator[None]:
-    """Set knobs inside a ``with`` block, above :func:`set`."""
+    """Set knobs inside a ``with`` block, above ``set``.
+
+    Blocks nest and the innermost wins. Other threads don't see the values, and None values are ignored.
+
+    Args:
+        **knobs: ``{knob name: value}``.
+    """
     values = {k: v for k, v in check(knobs).items() if v is not None}
     token = _scopes.set((*_scopes.get(), values))
     try:
@@ -418,7 +477,11 @@ def override(**knobs: int) -> Iterator[None]:
 
 
 def describe(**where) -> dict[str, tuple[int | None, str]]:
-    """Return ``{name: (value, source)}`` for every knob; keywords are those of :func:`get`."""
+    """Return ``{name: (value, source)}`` for every knob.
+
+    Args:
+        **where: ``path``, ``size``, ``batch`` and ``device``, as for ``get``.
+    """
     return {name: lookup(name, **where) for name in KNOBS}
 
 
@@ -430,7 +493,13 @@ _noticed: dict[tuple[str, str], None] = {}
 def on_render(path: str, size: int, batch: int, env) -> None:
     """Log a one-time ``stable-envs tune`` hint, or autotune, the first time a large untuned path renders.
 
-    Runs once per process, path and device, from 256 lanes. Never raises.
+    Runs once per process, path and device, with a batch of 256 or more. Never raises.
+
+    Args:
+        path: Render path that just ran.
+        size: Frame size in pixels.
+        batch: Number of rendered rows.
+        env: The environment that rendered.
     """
     try:
         key = (path, str(env.device))
@@ -458,7 +527,14 @@ def on_render(path: str, size: int, batch: int, env) -> None:
 
 
 def autotune(name: str, size: int, batch: int, device: str) -> None:
-    """Tune a fresh ``name`` environment once, under a lock beside the cache file; keep the defaults on contention."""
+    """Tune a fresh ``name`` environment once, under a lock beside the cache file; keep the defaults on contention.
+
+    Args:
+        name: Registered class name.
+        size: Frame size in pixels.
+        batch: Number of environments.
+        device: Device to tune.
+    """
     lock = cache_path(device).with_suffix(".lock")
     lock.parent.mkdir(parents=True, exist_ok=True)
     try:

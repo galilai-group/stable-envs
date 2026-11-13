@@ -1,12 +1,34 @@
 # Roadster
 
-The Roadster classes are five planning tasks for a Roadster-style car with nine cold-gas jets in MuJoCo,
-ported from roadster-jets. The car drives on its wheels and flies on its jets: around a half-pipe loop, along
-the full course (loop, three rings, pad landing), over a traffic jam, between rooftops, and sideways over a
-parked car with a barrel roll. Each class fixes one task of the source env
-(`stable_envs/envs/roadster/source/`), whose autopilot, reward, success rule and horizon apply unchanged.
+Roadster is five planning tasks for a car with nine cold-gas jets, simulated in MuJoCo. The car drives on its wheels and flies on its jets, and each class fixes one task of the simulator in `stable_envs.envs.roadster.source`. The [state](../terms.md#state) holds everything that determines the future, the [variation](../terms.md#variation) sets wind and rain, and MuJoCo OpenGL draws the [frames](../terms.md#frame) from a world-model camera.
 
-The action has four values in [-1, 1], applied at 10 Hz by a 50 Hz autopilot:
+```python
+# needs the roadster extra
+import stable_envs as snv
+
+with snv.RoadsterTrafficJam(num_envs=4, device="cpu") as env:
+    options = {"variation_values": {"weather.wind": [8.0], "weather.rain": [0.5]}}
+    state = env.reset(seed=0, options=options)
+    print(env.render(state).shape)  # torch.Size([4, 96, 96, 3])
+    out = env.step(env.action_spec.sample(4, env.rng))
+    print(out["success"].shape)     # torch.Size([4])
+```
+
+## Install
+
+The classes need the `roadster` extra (MuJoCo 3.17 and Pillow): install `stable-envs[roadster]`. MuJoCo Warp physics on CUDA needs the `roadster-gpu` extra, which adds MuJoCo Warp 3.17 and Warp.
+
+## Task
+
+| Class | Task | Horizon (steps) |
+|---|---|---:|
+| `RoadsterLoop` | drive the half-pipe loop, leave it inverted and roll upright | 60 |
+| `RoadsterMission` | the full course: loop, three rings, pad landing | 450 |
+| `RoadsterTrafficJam` | hop a traffic jam and land on the road beyond | 150 |
+| `RoadsterRooftop` | fly from a tower roof around a taller tower to a helipad | 200 |
+| `RoadsterCarHop` | jump sideways over a parked car with a barrel roll | 120 |
+
+The action has four values in [-1, 1]. The environment applies each action at 10 Hz through a 50 Hz autopilot:
 
 | Index | Control |
 |---|---|
@@ -15,111 +37,84 @@ The action has four values in [-1, 1], applied at 10 Hz by a 50 Hz autopilot:
 | 2 | vertical acceleration relative to hover; on the ground a positive value lights the lift jets |
 | 3 | yaw rate |
 
-**Reward** is the decrease of the source's cost (distance to the current subgoal plus the path through the
-remaining ones), +10 on success and −10 on failure. The step output carries `success`, `failed`,
-`terminated`, `truncated` and the current `cost`. A lane terminates on success or failure and truncates at
-the task's horizon; the elapsed steps are part of State.
+The task's cost is the distance to the current subgoal plus the path through the remaining ones. The reward is the decrease of that cost, plus 10 on success and minus 10 on failure. The step output carries `success`, `failed`, `terminated`, `truncated` and the current `cost`. A [batch row](../terms.md#batch-row) terminates on success or failure and truncates at the task's horizon, and the elapsed steps are part of the state.
 
-**State** holds everything that determines the future: MuJoCo's integration state split into its
-components (`sim.time`, `sim.qpos`, `sim.qvel`, `sim.warmstart`, `sim.ctrl`, `sim.qfrc_applied`,
-`sim.xfrc_applied`, `sim.mocap_pos`, `sim.mocap_quat`, the last two placing the traffic and the parked
-cars), the pose MuJoCo's derived quantities refer to after a step (`sim.qpos_pre`), the autopilot commands, the task bookkeeping (status, target and route index, fuel, counters, flags, the
-previous cost), the goal, the route waypoints, the traffic jam, the weather with its gust RNG, the exhaust
-history the smoke is drawn from (`fx.count`, `fx.history`: the last 75 steps of pose, velocity, jet commands
-and wind), `lifecycle.elapsed_steps`, and the physics leaves the episode was reset with
-(`physics.weather.wind`, `physics.weather.rain`). `set_state` validates the whole batch before changing any
-lane and refuses render rows, partial dictionaries and States of another task.
+`stable_envs.envs.roadster.source.GoalExpert` is a scripted expert that reads the simulator, for demos and data collection.
 
-**Variation**: `weather.wind` (mean wind speed in m/s, gusts of 30 % of it) and `weather.rain` (0-1:
-drops, haze and tyre grip down to 0.55×) are physics leaves. The source sets the weather at reset, so
-`set_variation` and the reset options apply from the next reset. The defaults (0, 0) give the source's
-original physics. The weather of a restored State shows in `get_variation()` for that episode.
+## Simulation
 
-**Rendering**: `render(state)` draws the source's `wm` camera, which follows the car with a fixed world
-orientation, at 96 px by default, with MuJoCo's OpenGL renderer (`MUJOCO_GL=egl` or `osmesa`). It
-rasterizes on the GPU when the EGL driver is a GPU's (for example NVIDIA's) and on the CPU otherwise
-(Mesa). Frames show the car, its jet flames, exhaust smoke and blob shadow, the scenery and the rain,
-exactly as MuJoCo draws the live simulation at the same State (the smoke is regenerated from the exhaust
-history, not simulated). The pose drawn is the one MuJoCo's derived quantities refer to (one substep behind
-`sim.qpos` after a step).
+`simulation_backend` selects the physics:
 
-Large batches draw frames in render workers (`roadster-render` tuning path); they give the frames of one
-process. A step that needs a frame but no State builds no snapshot: the frame is drawn from the render-row
-fields of the live environments and equals what `render(state)` draws.
-
-The visual Variation leaf `rendering.cinematic` (0 or 1; use a larger `size`, e.g. 512) draws the same State
-and the same `wm` camera on a dark-space scene: 8x MSAA, real shadows, fog to black, and post-processing
-(bloom, filmic grade, vignette) without grain or motion blur, so a State always gives the same pixels. Set it
-per lane with `set_variation({"rendering.cinematic": [1]})`, or per call with
-`render(state, variation={"rendering.cinematic": [1]})`; the installed Variation records which look drew a
-frame. The default, 0, is the raw world-model frame.
-
-The classes need the `roadster` extra (MuJoCo and Pillow): `pip install "stable-envs[roadster]"`.
-`stable_envs.envs.roadster.source.GoalExpert` is a scripted expert that reads the simulator, for demos and
-data collection.
-
-```python
-import stable_envs as snv
-
-env = snv.RoadsterTrafficJam(num_envs=4)
-state = env.reset(seed=0, options={"variation_values": {"weather.wind": [8.0], "weather.rain": [0.5]}})
-frames = env.render(state)                       # (4, 96, 96, 3) uint8
-out = env.step(env.action_spec.sample(4, env.rng))
-```
-
-## Physics backends
-
-| `simulation_backend` | CPU env | CUDA env |
+| Value | CPU device | CUDA device |
 |---|---|---|
 | `"default"` (default) | CPU batch | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
-| `"auto"` | CPU batch | CPU batch below `mjwarp_min_envs` (64) environments, MuJoCo Warp from 64 |
+| `"auto"` | CPU batch | CPU batch below `mjwarp_min_envs` (64) environments, MuJoCo Warp from there |
 | `"native"` | CPU batch | CPU batch |
-| `"mjwarp"` | not supported | MuJoCo Warp |
+| `"mjwarp"` | error | MuJoCo Warp |
 
-Both backends step every environment in one batch. The source's autopilot, drag and wind forces, fuel, ring
-and route bookkeeping, crash checks, cost, reward and success run on arrays of environments. MuJoCo steps the
-10 substeps of each 50 Hz step one at a time, because the drag and wind force of a substep depends on the
-velocity after the previous one. The physics model is the source's world with MuJoCo contact sensors for the
-contacts that the task reads (tyres on anything, on the pad, on the ground and on the goal roof, the hull on
-anything, the car on each obstacle). The visual geoms outside the car are not in it. Sensors and these geoms
-do not change the dynamics.
+Both backends step every environment in one batch. The source's autopilot, drag and wind forces, fuel, ring and route bookkeeping, crash checks, cost, reward and success run on arrays of environments. MuJoCo steps the 10 substeps of each 50 Hz step one at a time, because the drag and wind force of a substep depends on the velocity after the previous one. The physics model is the source's world with MuJoCo contact sensors for the contacts that the task reads (tires on anything, on the pad, on the ground and on the goal roof, the hull on anything, the car on each obstacle). The visual geoms outside the car are not in it. Sensors and these geoms do not change the dynamics.
 
-The CPU batch runs the task logic in NumPy and MuJoCo in one native `mujoco.batch` in float64. It steps bit
-for bit as the source env: the same `mj_step` calls with the same applied forces, and the same float64
-operations in the same order (NumPy computes a stack of small matrix products and least-squares solves with
-the same BLAS and LAPACK routines as one). A `device="cuda"` env with the CPU batch returns State on the GPU.
+The CPU batch runs the task logic in NumPy and MuJoCo in one native `mujoco.batch` in float64. It steps bit for bit as the source environment: the same `mj_step` calls with the same applied forces, and the same float64 operations in the same order. NumPy computes a stack of small matrix products and least-squares solves with the same BLAS and LAPACK routines as one. A `device="cuda"` environment with the CPU batch returns its state on the GPU.
 
-The MuJoCo Warp backend runs the task logic in float64 Torch on the GPU, without host reads in a step, and
-MuJoCo in float32, so a rollout follows the source approximately. Each 50 Hz step is three CUDA graph
-launches: the Torch phase before the substeps, one MuJoCo Warp graph of the 10 substeps with a Warp kernel for
-the drag and wind force before each substep, and the Torch phase after them. The autopilot's bounded least-squares jet
-allocation uses a precomputed pseudo-inverse for each set of free jets. With wind, the gusts of an action are
-drawn on the host from each environment's generator, as the source does; an environment that ends within an
-action has then drawn the gusts of the whole action. Replays of the source's scripted expert under wind and
-rain (`tests/gpu/test_roadster_mjwarp.py`, 8 environments, 300 steps) keep the outcome of every environment
-and end within 3 steps of the source. The car stays within 0.01 m of the source's path in TrafficJam and
-CarHop, 0.3 m in Rooftop and 3.4 m in Loop until the episode ends. In Mission the paths separate after the
-loop, where the source itself moves 13 m by step 300 when its start velocity changes by 1e-9 m/s.
+The MuJoCo Warp backend runs the task logic in float64 Torch on the GPU, without host reads in a step, and MuJoCo in float32, so a rollout follows the source approximately. Each 50 Hz step is three CUDA graph launches: the Torch phase before the substeps, one MuJoCo Warp graph of the 10 substeps with a Warp kernel for the drag and wind force before each substep, and the Torch phase after them. The autopilot's bounded least-squares jet allocation uses a precomputed pseudo-inverse for each set of free jets. With wind, the gusts of an action are drawn on the host from the generator of each environment, as the source does. An environment that ends within an action has then drawn the gusts of the whole action. Replays of the source's scripted expert under wind and rain (`tests/gpu/test_roadster_mjwarp.py`, 8 environments, 300 steps) keep the outcome of every environment and end within 3 steps of the source. The car stays within 0.01 m of the source's path in TrafficJam and CarHop, 0.3 m in Rooftop and 3.4 m in Loop until the episode ends. In Mission the paths separate after the loop, where the source itself moves 13 m by step 300 when its start velocity changes by 1e-9 m/s.
 
-Resets draw each environment's start, goal, traffic and parked cars with the source's random draws on the host
-and write all environments to the physics batch in one call.
+Resets draw the start, goal, traffic and parked cars of each environment with the source's random draws on the host, and write all environments to the physics batch in one call.
 
-## RoadsterLoop
+### State
+
+The state is made of:
+
+- MuJoCo's integration state, split into `sim.time`, `sim.qpos`, `sim.qvel`, `sim.warmstart`, `sim.ctrl`, `sim.qfrc_applied`, `sim.xfrc_applied`, `sim.mocap_pos` and `sim.mocap_quat`. The two mocap fields place the traffic and the parked cars.
+- `sim.qpos_pre`, the pose that MuJoCo's derived quantities refer to after a step.
+- The autopilot commands and the task bookkeeping: status, target and route index, fuel, counters, flags and the previous cost.
+- The goal, the route waypoints, the traffic jam, and the weather with its gust RNG.
+- The exhaust history that the smoke is drawn from (`fx.count` and `fx.history`, the last 75 steps of pose, velocity, jet commands and wind).
+- `lifecycle.elapsed_steps`, and the physics leaves the episode was reset with (`physics.weather.wind` and `physics.weather.rain`).
+
+`set_state` validates the whole batch before it changes any environment, and it refuses render rows, partial dictionaries and states of another task.
+
+Large batches draw frames in render [worker processes](../performance-tuning.md#worker-processes), with the same frames as one process. The [knobs](../api/tuning.md#knobs) of the `roadster-render` path set the batch size that starts workers and the number of workers. A step that needs a frame but no state draws it from the render-row fields of the live environments, and the frame equals what `render(state)` draws.
+
+## Rendering
+
+`render(state)` draws the `wm` camera, which follows the car with a fixed world orientation, at 96 px by default, with MuJoCo's OpenGL renderer (`MUJOCO_GL=egl` or `osmesa`). It rasterizes on the GPU when the EGL driver is a GPU's (NVIDIA's, for example) and on the CPU otherwise (Mesa). `render` also accepts compact render rows `(N, state_dim)` from `sample_states`, on each device.
+
+Frames show the car, its jet flames, exhaust smoke and blob shadow, the scenery and the rain, exactly as MuJoCo draws the live simulation at the same state. The smoke is regenerated from the exhaust history rather than simulated.
+
+`rendering.cinematic=1` draws the same state from the same `wm` camera on a dark-space scene, with 8× MSAA, real shadows, fog to black and post-processing (bloom, filmic grade, vignette). It leaves out grain and motion blur, and a state always gives the same pixels. It looks best at a larger `size` such as 512. Set it per environment with `set_variation({"rendering.cinematic": [1]})`, or per call with `render(state, variation={"rendering.cinematic": [1]})`. The installed variation records which look drew a frame, and the default, 0, is the raw world-model frame.
+
+## Variation
+
+| Leaf | Kind | Values | Effect |
+|---|---|---|---|
+| `weather.wind` | physics | 0 to 20 m/s | mean wind speed, with gusts of about 30% of it |
+| `weather.rain` | physics | 0 to 1 | drops, haze, and tire grip down to 0.55× in the heaviest rain |
+| `rendering.cinematic` | visual | 0 or 1 | draws the dark-space look instead of the world-model frame |
+
+The [variation](../tutorials/variation.md) has two physics leaves and one visual leaf. The simulator sets the weather at reset, and `set_variation` and the reset options for the two physics leaves apply from the next reset. The defaults (0, 0) give the simulator's physics without weather, and the weather of a restored state shows in `get_variation()` for that episode.
+
+## Classes
+
+### RoadsterLoop
 
 <!-- env: RoadsterLoop -->
 
-## RoadsterMission
+### RoadsterMission
 
 <!-- env: RoadsterMission -->
 
-## RoadsterTrafficJam
+### RoadsterTrafficJam
 
 <!-- env: RoadsterTrafficJam -->
 
-## RoadsterRooftop
+### RoadsterRooftop
 
 <!-- env: RoadsterRooftop -->
 
-## RoadsterCarHop
+### RoadsterCarHop
 
 <!-- env: RoadsterCarHop -->
+
+## Limitations
+
+The drawn pose is the one MuJoCo's derived quantities refer to, which is one substep behind `sim.qpos` after a step.

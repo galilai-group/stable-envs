@@ -121,7 +121,7 @@ def test_the_specs_describe_the_state_the_actions_the_frames_and_the_style(env):
 
     v = env.variation_spec
     assert v.shape == (env.variation_dim,)
-    # one name per COLUMN: a width-3 colour leaf contributes three of them, and the set of paths is
+    # one name per COLUMN: a width-3 color leaf contributes three of them, and the set of paths is
     # still exactly ``variation_names``.
     assert len(v.names) == env.variation_dim
     assert sorted({n.split("[")[0] for n in v.names}) == sorted(env.variation_names)

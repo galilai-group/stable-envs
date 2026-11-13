@@ -1,7 +1,6 @@
-"""MJWarp model preparation, texture uploads, and batched CUDA rendering.
+"""MJWarp model preparation, texture uploads and batched CUDA rendering.
 
-Import sets WARP_CACHE_PATH to ~/.cache/warp only when the caller has not set it.
-Optional CUDA dependencies are loaded when a render context is requested.
+Importing it sets ``WARP_CACHE_PATH`` to ``~/.cache/warp`` unless you've set it.
 """
 
 from __future__ import annotations
@@ -32,12 +31,9 @@ GL_SPOT_CUTOFF_OFF = 180.0
 
 
 def effective_alpha(m, kind: str = "geom", rgba=None, mat_rgba=None) -> np.ndarray:
-    """Resolve geom or site alpha using MuJoCo's material precedence.
+    """Return the alpha of each geom or site, using MuJoCo's material precedence.
 
-    The element's RGBA wins unless it matches the compiler default; then its
-    material supplies the alpha. Return one value per element. ``rgba`` and
-    ``mat_rgba`` replace the model's arrays, e.g. with pristine snapshots when a
-    shared live model may carry another render's visibility overrides.
+    ``rgba`` and ``mat_rgba`` replace the model's arrays, for example with snapshots taken before visibility overrides.
     """
     if rgba is None:
         rgba = m.geom_rgba if kind == "geom" else m.site_rgba
@@ -77,12 +73,9 @@ class Prepared:
 
 
 def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
-    """Disable angular attenuation for invalid spot cutoffs, in place.
+    """Disable angular attenuation of spot lights with invalid cutoffs, in place.
 
-    OpenGL rejects cutoffs outside [0, 90] except the non-spot sentinel 180.
-    Set both exponent=0 and cutoff=180: changing only the exponent leaves a hard
-    cone in MJWarp. Keep the light type unchanged; MuJoCo's classic renderer
-    handles point lights differently. Return affected light IDs and original arrays.
+    Returns the affected light IDs and the original arrays.
     """
     hit, restore = (
         [],
@@ -104,11 +97,9 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
 
 
 def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0, spot_semantics: bool = True) -> Prepared:
-    """Prepare a model for MJWarp, in place, and return restoration data.
+    """Prepare a model for MJWarp in place and return restoration data.
 
-    Hide geoms and sites whose effective alpha is at most ``alpha_eps`` by moving
-    them from enabled groups to HIDDEN_GROUP. Optionally normalize spot cutoffs.
-    The caller must exclude HIDDEN_GROUP from rendering.
+    Geoms and sites with alpha at most ``alpha_eps`` move to ``HIDDEN_GROUP``, which the caller must not render.
     """
     ga = effective_alpha(m, "geom")
     sa = effective_alpha(m, "site")
@@ -152,11 +143,7 @@ def _textured_geoms(m, groups):
 
 
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
-    """List visible textured geoms with unsupported UVs or texture kinds.
-
-    Return (geom ID, name, geom type) tuples. Missing mesh UVs or non-2-D maps
-    cannot be sampled safely; unsupported primitive UVs instead produce a flat texel.
-    """
+    """Return ``(geom ID, name, geom type)`` for visible textured geoms with unsupported UVs or texture kinds."""
     import mujoco
 
     return [
@@ -188,14 +175,10 @@ def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[in
 
 
 def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
-    """Replace unsupported texture materials with a mean RGB color, in place.
+    """Replace unsupported texture materials with their mean RGB color, in place.
 
-    Prefer the RGB texture role for the mean; otherwise use the first texture.
-    Remove every texture role on each selected material, including roles that are
-    individually supported. Return restoration arrays and records of all removals.
-
-    This changes the image. Callers must declare and measure the approximation;
-    it is not an exact texture conversion.
+    Returns restoration arrays and records of the removals. This changes the image, so callers must declare and
+    measure the approximation.
     """
     import mujoco
 
@@ -253,9 +236,8 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
 def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
     """Replace primitive-only 2-D texture materials with their mean color, in place.
 
-    Skip materials also worn by planes or meshes so their valid texturing remains
-    intact. Return baked, mixed, and skipped material IDs plus restoration arrays.
-    Use only for a declared visual approximation, not an exact-parity path.
+    Materials also worn by planes or meshes are skipped. Returns baked, mixed and skipped material IDs plus
+    restoration arrays.
     """
     import mujoco
 
@@ -306,10 +288,9 @@ TEX_KEEP_REASON = "mjwarp tex_lod texture handed to wp.from_torch (no ownership 
 
 
 def release_render_context(rc) -> None:
-    """Drop texture tensor keepalives attached to an MJWarp render context.
+    """Drop texture tensor keepalives attached to an MJWarp render context; repeated calls are safe.
 
-    The caller must also drop the context to release its device arrays. No EGL
-    context is owned here, and repeated calls are safe.
+    The caller must also drop the context to release its device arrays.
     """
     try:
         rc._se_tex_lod_keep = None
@@ -334,12 +315,8 @@ def _patch_target(module, name):
 def create_render_context(m, tex_lod: int = 1, **kw):
     """Create an MJWarp context with one upload of the model's texture blob.
 
-    ``tex_lod > 1`` area-downsamples textures before upload to the sampler. This is
-    a visual approximation, not automatic mip selection; it needs its own fidelity
-    measurement. Downsampled tensor storage stays alive with the context.
-
-    Temporarily patches a process-global MJWarp helper. Do not overlap this call
-    with other threads constructing contexts; the original helper is restored on exit.
+    ``tex_lod > 1`` area-downsamples textures before upload, which is a visual approximation. Don't create
+    contexts from several threads at once, because this patches a process-global MJWarp helper.
     """
     import mujoco_warp as mjw
     import warp as wp
@@ -395,9 +372,8 @@ def create_render_context(m, tex_lod: int = 1, **kw):
 def gl_rounding():
     """Temporarily round RGB channels before MJWarp packs them to uint8.
 
-    Enclose graph capture as well as warmup: each render call generates a kernel
-    using the current packer, so a capture outside this block retains truncation.
-    This patches process-global MJWarp internals; concurrent rendering must be excluded.
+    Enclose graph capture as well as warmup. This patches process-global MJWarp internals, so don't render
+    concurrently.
     """
     import warp as wp
     from mujoco_warp._src import render as R
@@ -418,12 +394,8 @@ def gl_rounding():
 class BatchRenderer(_resources.Closeable):
     """Render ``(B, nq)`` joint positions to ``(B, H, W, 3)`` uint8 RGB on CUDA.
 
-    Owns batch-sized MJWarp model/data, render buffers, and an optional captured
-    graph. Close explicitly or use a context manager to release those resources.
-
-    With ``prepare=True``, the caller's MuJoCo model is modified and left modified.
-    Use ``restore_model`` with ``prepared`` when that model must be reused elsewhere.
-    Texture gaps are reported on the instance; they are not automatically baked.
+    Close it or use it as a context manager. With ``prepare=True`` the caller's MuJoCo model stays modified;
+    ``restore_model`` with ``prepared`` undoes that.
     """
 
     resource_kind = "mjwarp.BatchRenderer"

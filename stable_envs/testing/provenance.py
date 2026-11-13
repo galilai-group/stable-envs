@@ -21,8 +21,7 @@ class CodeIdentity(TypedDict):
 def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision: str | None = None) -> CodeIdentity:
     """Verify recorded file hashes against the worktree or, with ``revision``, a Git commit.
 
-    A commit is read from Git objects without checking out or executing its code.
-    A hash match does not by itself establish acceptance.
+    A commit is read from Git objects, without checking out or running its code.
     """
     root = Path(root).resolve(strict=True)
     if not files:
@@ -53,7 +52,7 @@ def verify_recorded_code(files: Mapping[str, str], root: str | Path, *, revision
 # Unknown recorded versions cannot establish a declared match.
 UNKNOWN = (None, "", "present")
 
-# These checks depend on a versioned source renderer; self-consistency checks do not.
+# These checks depend on a versioned upstream renderer; self-consistency checks do not.
 REFERENCE_JUDGED_CHECKS = ("check_source_mse",)
 
 
@@ -64,8 +63,7 @@ def normalize_package(name: str) -> str:
 def pinned_source_identity(root, commit, versions) -> dict:
     """Hash a clean source checkout after verifying its commit and installed package pins.
 
-    Record platform and math-library settings for replay diagnostics; matching
-    versions alone do not establish cross-platform numerical equivalence.
+    Platform and math-library settings are recorded for replay diagnostics.
     """
     if not commit or not versions or any(value in UNKNOWN for value in versions.values()):
         raise ValueError("Source comparisons require a commit and explicit package pins")
@@ -115,11 +113,7 @@ def pinned_source_identity(root, commit, versions) -> dict:
 
 
 def reference_version_mismatch(declared: dict | None, recorded: dict | None) -> list[str]:
-    """List missing, unknown, or unequal declared reference versions.
-
-    An empty declaration imposes no version requirement. A declared version
-    that was not recorded cannot confirm a match.
-    """
+    """List missing, unknown or unequal declared reference versions; an empty declaration requires none."""
     if not declared:
         return []
     rec = {normalize_package(k): v for k, v in (recorded or {}).items()}

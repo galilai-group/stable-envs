@@ -31,7 +31,7 @@ class DMCLanes(SimulatorAdapter):
     """Independent CPU dm_control lanes; each action advances the source twice.
 
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
-    task RNG, episode-drawn model entries and the lane's physics Variation.
+    task RNG, episode-drawn model entries and the lane's physics variation.
     """
 
     def __init__(self, key, num_envs, device, seed, make, fields):
@@ -85,7 +85,7 @@ class DMCLanes(SimulatorAdapter):
         return export_state(self.envs, self._cumulative, self.fields, self.device, extra)
 
     def validate(self, state):
-        """Check every lane of ``state`` and return its physics rows, or None without physics Variation."""
+        """Check every lane of ``state`` and return its physics rows, or None without physics variation."""
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")

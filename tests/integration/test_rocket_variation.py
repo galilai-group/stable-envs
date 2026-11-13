@@ -1,4 +1,4 @@
-"""PyFlyt Rocket start leaves and reset colours against pinned stable_worldmodel."""
+"""PyFlyt Rocket start leaves and reset colors against pinned stable_worldmodel."""
 
 import pytest
 

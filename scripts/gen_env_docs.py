@@ -35,18 +35,30 @@ RENDER_SIZE = 160
 
 #: Render backend that ``backend="auto"`` selects on each device, by family or renderer cell.
 RENDERERS = {
-    "classic_control": {"cpu": "gfxdraw port (torch)", "cuda": "gfxdraw port (fused Triton kernel)"},
+    "classic_control": {
+        "cpu": "gfxdraw port (Numba; Torch or Gymnasium without Numba)",
+        "cuda": "gfxdraw port (fused Triton kernel)",
+    },
     "craftax": {"cpu": "Craftax pixel renderer (JAX)", "cuda": "Craftax pixel renderer (JAX)"},
     "dmcontrol-suite": {"cpu": "raycast3d (Numba)", "cuda": "raycast3d (torch)"},
     "dmcontrol-trackcom": {"cpu": "cpu3d (Numba)", "cuda": "mjwarp"},
-    "fetch": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
+    "fetch": {
+        "cpu": "MuJoCo rasterizer (Numba); opengl (MuJoCo) without Numba",
+        "cuda": "MuJoCo rasterizer (nvdiffrast and Triton); mjwarp without them",
+    },
     "miniworld": {"cpu": "opengl (Miniworld, pyglet)", "cuda": "opengl (Miniworld) on CPU, frames copied to CUDA"},
     "mshuman": {"cpu": "opengl (MuJoCo)", "cuda": "host-side serial MuJoCo OpenGL, frames copied to CUDA"},
     "navigation": {"cpu": "raster2d (torch)", "cuda": "raster2d (torch) with the Triton dot compositor"},
     "navigation-dots": {"cpu": "Numba dot compositor", "cuda": "Triton dot compositor"},
     "ogbench-maze": {"cpu": "raycast3d (torch)", "cuda": "raycast3d (torch)"},
-    "ogbench-manipulation": {"cpu": "opengl (MuJoCo)", "cuda": "mjwarp"},
-    "pusht": {"cpu": "pygame (source renderer)", "cuda": "pygame on CPU, frames copied to CUDA"},
+    "ogbench-manipulation": {
+        "cpu": "MuJoCo rasterizer (Numba); opengl (MuJoCo, software) without Numba",
+        "cuda": "MuJoCo rasterizer (nvdiffrast and Triton) at supersample 1; mjwarp at 2 or more",
+    },
+    "pusht": {
+        "cpu": "Numba rasterizer (pygame bytes); pygame without Numba",
+        "cuda": "Triton rasterizer (pygame bytes); pygame on CPU, frames copied to CUDA, without Triton",
+    },
     "pyflyt": {"cpu": "numba (TinyRenderer port)", "cuda": "nvdiffrast"},
     "roadster": {"cpu": "opengl (MuJoCo)", "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"},
 }
@@ -351,7 +363,7 @@ def _variation_rows(env, seed: int, mode: str) -> np.ndarray:
 
 
 def media(name: str, ffmpeg: str, device: str | None) -> dict:
-    """Render the rollout clip and the Variation grid of ``name``."""
+    """Render the rollout clip and the variation grid of ``name``."""
     import stable_envs as snv
 
     cls = snv.info(name)["class"]
@@ -368,7 +380,7 @@ def media(name: str, ffmpeg: str, device: str | None) -> dict:
         env.close()
     if not varied:
         result["variation"] = None
-        result["variation_note"] = "no Variation leaves"
+        result["variation_note"] = "no variation leaves"
         return result
     errors = []
     for mode in ("all", "color"):

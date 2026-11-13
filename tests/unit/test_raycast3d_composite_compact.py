@@ -164,7 +164,7 @@ CLAMPED_IDS = (
 
 @pytest.mark.parametrize("cid", CLAMPED_IDS)
 def test_the_edge_cases_actually_clamp(cid):
-    """A case named for the origin clamp must reach it; a centred mover makes ``x0.clamp(0, W - t)`` the identity."""
+    """A case named for the origin clamp must reach it; a centered mover makes ``x0.clamp(0, W - t)`` the identity."""
     skw = dict(next(c[1] for c in CASES if c[0] == cid))
     ckw = next(c[2] for c in CASES if c[0] == cid)
     cx, cy, t = _clamp_counts(scene(**skw), ckw["tile"])

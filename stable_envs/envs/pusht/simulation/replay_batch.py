@@ -41,7 +41,7 @@ def lane_options(space, options, num_envs, lane):
 def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
     """Return each lane's checked ``{leaf: value}`` overrides; a value shaped ``(num_envs, *leaf)`` is per lane.
 
-    ``flat_keys`` names values that come from flat Variation rows and must convert exactly to the leaf dtype.
+    ``flat_keys`` names values that come from flat variation rows and must convert exactly to the leaf dtype.
     """
     leaves = _leaves(space)
     lanes = []
@@ -83,7 +83,7 @@ def reject_jax_state(state):
 
 
 def state_columns(state, template, num_envs):
-    """Check State keys, dtypes and batch against one lane's ``template`` row; return host columns."""
+    """Check state keys, dtypes and batch against one lane's ``template`` row; return host columns."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
         raise ValueError("PushT full State requires batch [num_envs]")
     if set(state.keys(True, True)) != {tuple(key.split("/")) for key in template}:
@@ -109,11 +109,11 @@ def validate_actions(actions, discrete):
 
 
 class PushTReplayAdapter(SimulatorAdapter):
-    """Batch CPU PushT owners with CPU/CUDA State storage.
+    """Batch CPU PushT owners with CPU/CUDA state storage.
 
-    Stage every lane before installing a reset or restored State. Export pads
+    Stage every lane before installing a reset or restored state. Export pads
     histories to the longest lane with zero, invalid entries; padding adds no
-    episode time limit. Fields that only reset, restore or a Variation change
+    episode time limit. Fields that only reset, restore or a variation change
     can change are kept as batch columns and copied on export.
     """
 
@@ -156,7 +156,7 @@ class PushTReplayAdapter(SimulatorAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration, Variation space and State fields describe the batch."""
+        """A lane whose configuration, variation space and state fields describe the batch."""
         return self.envs[0]
 
     def _current_columns(self):
@@ -183,7 +183,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         return values
 
     def process_step_state(self):
-        """Return ``{key tuple: host array}`` for the State leaves in the process buffers that a step changes."""
+        """Return ``{key tuple: host array}`` for the state leaves in the process buffers that a step changes."""
         values = self._current_columns()
         values["history/lengths"] = np.array([env.length for env in self.envs], np.int64)
         return {tuple(key.split("/")): value for key, value in values.items()}
@@ -209,7 +209,7 @@ class PushTReplayAdapter(SimulatorAdapter):
             "history/valid": np.arange(width) < lengths[:, None],
         }
         values.update(self._current_columns())
-        # Host columns are copied so that the State owns them; a CUDA transfer already copies.
+        # Host columns are copied so that the state owns them; a CUDA transfer already copies.
         cuda = self.device.type == "cuda"
         for key, value in self._static_columns().items():
             values[key] = value if cuda else value.copy()
@@ -308,7 +308,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         self.variation_changed()
 
     def variation_rows(self, attribute, keys):
-        """Return each lane's Variation leaves ``keys`` as one flat row of ``attribute`` values."""
+        """Return each lane's variation leaves ``keys`` as one flat row of ``attribute`` values."""
         rows = []
         for replay in self.envs:
             leaves = _leaves(replay.env.variation_space)
@@ -366,17 +366,17 @@ class PushTReplayAdapter(SimulatorAdapter):
         return (resolution, resolution, 3)
 
     def render_fields(self):
-        """Return host State columns of the running lanes for drawing; the fixed columns are not copied."""
+        """Return host state columns of the running lanes for drawing; the fixed columns are not copied."""
         fields = dict(self._static_columns())
         fields.update(self._current_columns())
         return fields
 
     def render_live(self):
-        """Draw every lane's running scene at the configured resolution, as ``render`` draws its State."""
+        """Draw every lane's running scene at the configured resolution, as ``render`` draws its state."""
         return np.stack([env.env.render() for env in self.envs])
 
     def variation_changed(self):
-        """Drop cached Variation fields after the lanes' Variation spaces change."""
+        """Drop cached variation fields after the lanes' variation spaces change."""
         for env in self.envs:
             env.changed()
 

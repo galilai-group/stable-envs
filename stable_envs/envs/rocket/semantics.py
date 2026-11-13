@@ -54,7 +54,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         {"environment.start_height_ratio", "environment.start_horizontal_offset", "environment.start_tilt"}
     )
     undrawn_variation_leaves = frozenset({"environment.sky_color"})
-    #: The source loads its original white pad unless reset options ask for colour variations.
+    #: The source loads its original white pad unless reset options ask for color variations.
     DRAWN_PAD_DEFAULT = (255.0, 255.0, 255.0)
     _render_style = None
 
@@ -322,7 +322,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self._render_state_of(state, size, supersample)
 
     def _render_state_of(self, state, size, supersample):
-        """The RenderState of a full State, without the checks of ``to_render_state``."""
+        """The RenderState of a full state, without the checks of ``to_render_state``."""
         style = self._style_of(state["render", "rgba"])
         result = TensorDict(
             {
@@ -353,11 +353,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device, dtype=torch.float32).reshape(-1, 13)
         # Appearance and all simulator leaves remain absent. This incomplete
-        # projection cannot be passed to set_state or impersonate full State.
+        # projection cannot be passed to set_state or impersonate full state.
         return TensorDict({("renderer", "pose"): rows.clone()}, [len(rows)], device=self.device)
 
     def default_style(self):
-        """The default Variation row with the pad colour the source actually draws by default."""
+        """The default variation row with the pad color the source actually draws by default."""
         row = np.array(super().default_style(), np.float32)
         off, width = next((o, w) for p, o, w in self.variation_space.flat_layout() if p == "pad.color")
         row[off : off + width] = self.DRAWN_PAD_DEFAULT
@@ -369,7 +369,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return torch.as_tensor(np.asarray(value, np.float32), device=self.device)
 
     def _renderer_rows(self, rows):
-        """Variation-layout rows -> renderer style rows (flame off; ignition is State, not appearance)."""
+        """Variation-layout rows -> renderer style rows (flame off; ignition is state, not appearance)."""
         rows = self._as_rows(rows).reshape(-1, self.variation_dim)
         source = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
         out = torch.zeros((len(rows), frozen.style_dim()), dtype=torch.float32, device=self.device)
@@ -380,9 +380,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return out
 
     def resolve_style(self, style=None, variation=None, batch=None):
-        """Renderer appearance: an explicit style, else one set for rendering, else the State's.
+        """Renderer appearance: an explicit style, else one set for rendering, else the state's.
 
-        Supplied pose rows carry no ignition, so the State's appearance applies to them with the flame off.
+        Supplied pose rows carry no ignition, so the state's appearance applies to them with the flame off.
         """
         overrides, style = _split_appearance(variation, style)
         if isinstance(style, StyleTensor):
@@ -397,7 +397,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         elif self._render_style is not None:
             rows = self._render_style
         else:
-            # The live colours alone; exporting and validating the whole State is not needed for them.
+            # The live colors alone; exporting and validating the whole state is not needed for them.
             rows = self._style_of(self._simulator.rgba())
             rows[:, frozen.style_layout()["flame.ignited"][0]] = 0
         if overrides:
@@ -416,7 +416,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return style if batch is None else style.for_batch(int(batch), owner=f"{type(self).__name__}.render")
 
     def set_style(self, style=None, **overrides):
-        """Set the appearance used when rendering supplied rows; None returns to the State's."""
+        """Set the appearance used when rendering supplied rows; None returns to the state's."""
         if style is None and not overrides:
             self._render_style = None
             return self.to_render_state()["renderer", "style"]

@@ -1,4 +1,4 @@
-"""Applicability readers in ``stable_envs.testing.conformance`` and the Rocket colour declaration."""
+"""Applicability readers in ``stable_envs.testing.conformance`` and the Rocket color declaration."""
 
 from pathlib import Path
 

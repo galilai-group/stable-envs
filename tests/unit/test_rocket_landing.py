@@ -1,4 +1,4 @@
-"""CPU checks of ``envs.rocket.legacy``: state layout, colour law, tessellation, camera and link lag.
+"""CPU checks of ``envs.rocket.legacy``: state layout, color law, tessellation, camera and link lag.
 
 Nothing here renders (nvdiffrast is CUDA-only); these cover everything between a state and a clip-space triangle.
 """

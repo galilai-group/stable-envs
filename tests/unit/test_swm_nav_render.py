@@ -5,10 +5,10 @@ Two shortcuts sit behind ``render()`` for TwoRoom, TwoRoomTarget, Piecewise and 
   * ``_base_image`` builds the background, walls, doors, zones and border once per distinct style
     row and expands or gathers it back. The base image must be a function of the style alone.
   * ``_blend_dot`` evaluates the Gaussian and the alpha blend only inside ``_dot_window``. Outside it
-    the normalised alpha must be below ``_ALPHA_FLOOR``, where the blend is the identity.
+    the normalized alpha must be below ``_ALPHA_FLOOR``, where the blend is the identity.
 
-Both are checked against the full-frame ``_alpha_blend(img, _gaussian_dot(whole grid), colour)``
-composition. ``_gaussian_dot`` divides by the frame's own maximum, so a dot centred outside the frame
+Both are checked against the full-frame ``_alpha_blend(img, _gaussian_dot(whole grid), color)``
+composition. ``_gaussian_dot`` divides by the frame's own maximum, so a dot centered outside the frame
 is rescaled until its largest in-frame sample is 1.0; the window must not crop it.
 """
 
@@ -61,14 +61,14 @@ def test_matches_the_full_frame_composition_on_sampled_states(cfg, B):
 
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_matches_on_states_the_env_would_never_sample(cfg):
-    """Agents outside the frame, on the border, on and between pixel centres.
+    """Agents outside the frame, on the border, on and between pixel centers.
 
     Only ``step`` clamps, so a state outside the picture is a legal ``render`` input.
     """
     with se.make(cfg, num_envs=1, device="cpu") as env:
-        # A centre 400 px away underflows exp() to zero, so every window agrees on a blank dot. A centre
+        # A center 400 px away underflows exp() to zero, so every window agrees on a blank dot. A center
         # 20-60 px outside still paints at full strength on the edge, so the window has to include the
-        # distance from the centre to the nearest in-frame sample.
+        # distance from the center to the nearest in-frame sample.
         pos = [
             (112.0, 112.0),
             (112.5, 112.5),

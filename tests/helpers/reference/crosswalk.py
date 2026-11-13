@@ -1,8 +1,8 @@
-"""SWM id -> stable-envs cell correspondence.
+"""stable-worldmodel id -> stable-envs cell correspondence.
 
 Read from ``tests/fixtures/swm/frozen_cells.json`` (38 rows). The
 matrix spells some cells differently from the registered class names; the mapping lives
-here because ``snv.make`` resolves neither SWM ids nor matrix spellings.
+here because ``snv.make`` resolves neither stable-worldmodel ids nor matrix spellings.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def _swm_ids_from_matrix() -> dict[str, tuple[str, ...]]:
     return {r["swm_id"]: tuple(r["stable_envs_cells"]) for r in rows}
 
 
-#: SWM id -> frozen cell spelling(s), as recorded in the frozen mapping.
+#: stable-worldmodel id -> frozen cell spelling(s), as recorded in the frozen mapping.
 SWM_IDS: dict[str, tuple[str, ...]] = _swm_ids_from_matrix()
 
 #: Cell spelling in the frozen matrix -> registered class name.
@@ -91,7 +91,7 @@ def class_for_frozen_cell(name: str) -> type[Env] | None:
 
 
 def canonical_names(name: str) -> tuple[str, ...]:
-    """The class name(s) ``name`` refers to: itself if registered, else its SWM cells."""
+    """The class name(s) ``name`` refers to: itself if registered, else its stable-worldmodel cells."""
     from stable_envs.registry import REGISTRY
 
     if name in REGISTRY:
@@ -103,6 +103,6 @@ def canonical_names(name: str) -> tuple[str, ...]:
 
 
 def swm_ids_for_class(name: str) -> tuple[str, ...]:
-    """SWM ids whose frozen cells name this class, under either spelling."""
+    """stable-worldmodel ids whose frozen cells name this class, under either spelling."""
     frozen = frozen_from_canonical(name)
     return tuple(sorted(i for i, cells in SWM_IDS.items() if name in cells or frozen in cells))

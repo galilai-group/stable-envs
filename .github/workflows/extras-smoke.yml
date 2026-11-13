@@ -4,7 +4,7 @@ name: extras-smoke
 # and nvdiffrast is not PyPI metadata.
 on:
   pull_request:
-    branches: [main, v1-dev]
+    branches: [main]
     types: [opened, reopened, synchronize, ready_for_review]
   push:
     branches: [main]

@@ -1,4 +1,4 @@
-"""MS-Human-700 musculoskeletal environments on native MuJoCo (CPU) and MuJoCo Warp (CUDA)."""
+"""MS-Human-700 musculoskeletal locomotion on native MuJoCo (CPU) and MuJoCo Warp (CUDA) (``mshuman`` extra)."""
 
 from .envs import MSHumanLocomotion
 

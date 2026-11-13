@@ -83,7 +83,7 @@ def test_the_windows_and_kmax_are_bounds_on_extreme_states(name, unbounded, monk
     )
 
 
-#: Envs whose extreme states reach the surface border, and why. Pendulum's 114 px rod about the centre
+#: Envs whose extreme states reach the surface border, and why. Pendulum's 114 px rod about the center
 #: of a 500 px canvas never does.
 LEAVES_SURFACE = {
     "CartPole": "|x| > 2.5 drives the cart off a 600 px surface, engaging clipLine",

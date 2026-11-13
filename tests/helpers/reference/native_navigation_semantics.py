@@ -1,4 +1,4 @@
-"""Pinned-SWM State and task oracle for TwoRoom, Piecewise and SimplePointMaze."""
+"""Pinned stable-worldmodel State and task oracle for TwoRoom, Piecewise and SimplePointMaze."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ SOURCES = {
 
 
 class NativeNavigationReference:
-    """One independent pinned SWM environment per batch lane."""
+    """One independent pinned stable-worldmodel environment per batch lane."""
 
     def __init__(self, domain, num_envs=1, options=None, persistent_values=None):
         module_name, class_name, kwargs = SOURCES[domain]

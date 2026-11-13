@@ -298,7 +298,7 @@ def test_restored_state_renders_the_same_smoke():
         with pytest.raises(ValueError, match="fx"):
             source.set_state(bad)
         bad = state.clone()
-        bad["fx", "history"][0, 0] = 5.0  # step indices no longer increase
+        bad["fx", "history"][0, 0] = 5.0  # step indices stop increasing
         with pytest.raises(ValueError, match="increasing"):
             source.set_state(bad)
 
@@ -394,7 +394,7 @@ def test_the_weather_seed_survives_the_render_row_exactly():
 
 
 def test_lanes_with_different_weather_match_lanes_simulated_alone():
-    """The environments share one physics batch; each one's tyre grip must still apply only to it."""
+    """The environments share one physics batch; each one's tire grip must still apply only to it."""
     weather = np.array([[0.0, 0.0], [9.0, 1.0], [4.0, 0.5]])
     batch = RoadsterNativeAdapter("traffic", 3)
     alone = [RoadsterNativeAdapter("traffic", 1) for _ in range(3)]

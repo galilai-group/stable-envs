@@ -354,7 +354,7 @@ class FetchAdapter(SimulatorAdapter):
         return out
 
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
-        """Advance active lanes without capturing State; retain inactive lane outputs."""
+        """Advance active lanes without capturing state; retain inactive lane outputs."""
         self._check_open()
         active = host_active(active, self.num_envs)
         actions = host_actions(actions, self.num_envs)

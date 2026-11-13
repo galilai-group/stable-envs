@@ -38,11 +38,10 @@ _MAINTAINED = (
     "tests/packaging",
     "tests/conftest.py",
     "scripts",
-    "docs/testing.md",
+    "docs/contributing/testing.md",
     "docs/quickstart.md",
     "docs/install.md",
     "docs/index.md",
-    "docs/gallery.md",
     "docs/environments.md",
     "docs/benchmarks.md",
     "README.md",
@@ -105,18 +104,6 @@ def test_every_page_in_the_mkdocs_nav_exists():
     assert not missing, f"mkdocs.yaml lists pages that are not there: {missing}"
 
 
-# Internal API pages linked from the contributor docs rather than listed in the nav.
-_NAV_OPTIONAL = {
-    "api/style.md",
-    "api/scene.md",
-    "api/raster2d.md",
-    "api/gfxdraw.md",
-    "api/raycast3d.md",
-    "api/mjwarp.md",
-    "api/spaces.md",
-}
-
-
 def test_every_docs_page_is_reachable_from_the_nav():
     """User-guide and contributor pages must be in the nav."""
     yaml = pytest.importorskip("yaml")
@@ -127,8 +114,7 @@ def test_every_docs_page_is_reachable_from_the_nav():
     pages = {
         name.removeprefix("docs/") for name in MAINTAINED_PATHS if name.startswith("docs/") and name.endswith(".md")
     }
-    allowed_orphans = pages & _NAV_OPTIONAL
-    orphans = sorted(pages - targets - allowed_orphans)
+    orphans = sorted(pages - targets)
     assert not orphans, (
         f"these pages exist under docs/ and are in no nav section, so the site builds them and nothing "
         f"links to them: {orphans}"
