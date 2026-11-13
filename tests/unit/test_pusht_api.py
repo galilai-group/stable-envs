@@ -64,7 +64,7 @@ def test_snapshot_branch_equals_step_to_the_bit_on_the_same_state(env):
 
 
 def test_the_velocity_is_real_state_and_carrying_it_is_what_makes_transition_pure(env):
-    """Two transitions from states that differ ONLY in the hidden field must differ."""
+    """Two transitions from states that differ only in the hidden field must differ."""
     st = env.reset(seed=3)
     moving = st.clone()
     moving["agent", "velocity"] = torch.full_like(moving["agent", "velocity"], 25.0)

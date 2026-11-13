@@ -206,9 +206,9 @@ def scene(
 
     ``plate_t`` selects the occlusion threshold:
 
-    * ``"floor"`` -- the analytic depth of a ground plane through the origin, behind the movers.
-    * ``"inf"`` -- nothing static in the way, so ``INF < INF`` has to stay False.
-    * ``"band"`` -- a finite per-pixel field that cuts through the movers, so a sample's coverage
+    * ``"floor"``: the analytic depth of a ground plane through the origin, behind the movers.
+    * ``"inf"``: nothing static in the way, so ``INF < INF`` has to stay False.
+    * ``"band"``: a finite per-pixel field that cuts through the movers, so a sample's coverage
       depends on which pixel's ``plate_t`` it reads. Only this mode exercises the ``bt`` gather, which
       must map ``(ty, a, tx, b) -> (y0+ty, x0+tx)``; a transposition is invisible under the other
       modes. ``y`` and ``x`` have different periods so a transposition cannot alias onto itself, and

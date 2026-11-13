@@ -98,7 +98,7 @@ def test_slots_are_none_when_the_texture_is_absent():
 def test_masks_default_to_equality_and_report_their_coverage():
     s = texel_slots(_checker(), 0, [A, B])
     assert [int(m.sum()) for m in s["masks"]] == [4, 3]
-    assert (s["covered"], s["texels"]) == (7, 9)  # the two mark texels are NOT covered
+    assert (s["covered"], s["texels"]) == (7, 9)  # the two mark texels are not covered
 
 
 def test_an_empty_mask_is_refused():

@@ -321,7 +321,7 @@ class Lights:
     attenuation: np.ndarray  # (L,3)
     cutoff: np.ndarray  # (L,)
     exponent: np.ndarray  # (L,)
-    headlight: np.ndarray  # (L,) bool -- pos/dir follow the camera, per frame
+    headlight: np.ndarray  # (L,) bool: pos/dir follow the camera, per frame
 
     @staticmethod
     def from_scene(scn) -> Lights:

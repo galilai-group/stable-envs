@@ -43,7 +43,7 @@ def test_registering_the_new_maps_did_not_disturb_the_pre_existing_ones():
 
 @pytest.mark.parametrize("swm_id", IDS)
 def test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map(swm_id):
-    """The invariant `check_mapping` looks for: no leaf in NEITHER, no leaf in BOTH."""
+    """The invariant `check_mapping` looks for: no leaf in neither, no leaf in both."""
     m = _map_for(swm_id)
     leaves = set(RECORDED_SWM_LEAVES[swm_id])
     mapped = {t for t, _ in m.pairs().values()}
@@ -300,7 +300,7 @@ def test_every_own_side_leaf_is_mapped_or_carries_an_ours_only_reason(cell):
 
 @pytest.mark.parametrize("cell", sorted(RECORDED_OURS_LEAVES))
 def test_no_ours_only_leaf_is_secretly_offered_by_swm(cell):
-    """An `ours_only` leaf swm ALSO offers is a mapping we failed to make, not a leaf they lack."""
+    """An `ours_only` leaf swm also offers is a mapping we failed to make, not a leaf they lack."""
     m = NEWCELL_VARIATION_MAPS[cell]
     theirs = set(RECORDED_SWM_LEAVES[m.swm_id])
     for leaf in m.ours_only:

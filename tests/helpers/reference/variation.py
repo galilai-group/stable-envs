@@ -501,7 +501,7 @@ def variation_from_style(env, style) -> dict[str, Any]:
 
 
 def style_from_swm_env(env, swm_env, base=None) -> np.ndarray:
-    """Read a LIVE swm env's variation space and produce our style row for it."""
+    """Read a live swm env's variation space and produce our style row for it."""
     return style_from_variation(env, swm_variation_space(swm_env).value, base=base)
 
 

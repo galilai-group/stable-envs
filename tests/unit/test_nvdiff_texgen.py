@@ -49,7 +49,7 @@ def _geom(gtype, size, rx=1.0, ry=1.0, uni=False, ttype="2d"):
         # a capsule and a cylinder use their RADIUS on both axes, not their half-length
         ("capsule", "0.3 0.4", 0.5, False, 0.5 * 0.5 / 0.3, -0.5 * 0.5 / 0.3),
         ("cylinder", "0.4 0.6", 0.5, False, 0.5 * 0.5 / 0.4, -0.5 * 0.5 / 0.4),
-        # a plane is NOT special: same law, same size term. mujoco_warp's rule omits the size term,
+        # a plane is not special: same law, same size term. mujoco_warp's rule omits the size term,
         # which is right only when texuniform is true.
         ("plane", "16 16 0.2", 1.0, False, 0.5 / 16.0, -0.5 / 16.0),
         ("plane", "0.5 0.5 0.1", 1.0, False, 0.5 / 0.5, -0.5 / 0.5),

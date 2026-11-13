@@ -171,7 +171,7 @@ def test_eviction_is_least_recently_used_and_one_entry_at_a_time():
     c.put("a", 1)
     c.put("b", 2)
     c.put("c", 3)
-    assert c.get("a") == 1  # a is now the most recently USED
+    assert c.get("a") == 1  # a is now the most recently used
     c.put("d", 4)  # so b, the coldest, is what goes
     assert sorted(c.keys()) == ["a", "c", "d"]
     assert c.get("b") is None
