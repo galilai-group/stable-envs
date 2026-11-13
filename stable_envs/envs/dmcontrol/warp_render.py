@@ -546,21 +546,30 @@ _SHARED_ARRAYS = (
 
 def _proxy_model(cls, m, pr, count: int):
     """Compile the cell's XML with ``count`` proxy geoms on one extra body, the last body of the tree."""
+    import tempfile
+    from pathlib import Path
+
     import mujoco
 
     xml, assets = _source_xml(cls)
-    spec = mujoco.MjSpec.from_string(xml, assets=assets)
-    body = spec.worldbody.add_body(name=PROXY_BODY)
-    for k in range(count):
-        body.add_geom(
-            name=f"{PROXY_BODY}_{k}",
-            type=mujoco.mjtGeom.mjGEOM_SPHERE,
-            size=[0.01, 0.0, 0.0],
-            contype=0,
-            conaffinity=0,
-            group=0,
-        )
-    m2 = spec.compile()
+    # MjSpec.from_string does not read <include> files from the assets dict; files on disk resolve.
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, data in {**assets, "model.xml": xml}.items():
+            path = Path(tmp, name)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data if isinstance(data, bytes) else data.encode())
+        spec = mujoco.MjSpec.from_file(str(Path(tmp, "model.xml")))
+        body = spec.worldbody.add_body(name=PROXY_BODY)
+        for k in range(count):
+            body.add_geom(
+                name=f"{PROXY_BODY}_{k}",
+                type=mujoco.mjtGeom.mjGEOM_SPHERE,
+                size=[0.01, 0.0, 0.0],
+                contype=0,
+                conaffinity=0,
+                group=0,
+            )
+        m2 = spec.compile()
     same = (
         m2.ngeom == m.ngeom + count
         and m2.nbody == m.nbody + 1
