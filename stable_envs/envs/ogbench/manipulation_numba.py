@@ -76,7 +76,6 @@ class _Rig:
         if view_cell:
             cluster_meshes(m, view_cell)
         s = ms.extract(m, d, "front_pixels")
-        G = len(s.objid)
         self.objid = s.objid
         if any(light["castshadow"] and light["type"] != ms.DIRECTIONAL for light in s.lights):
             raise NotImplementedError("Cube/Scene CPU rasterizer draws shadows of directional lights only")
@@ -153,7 +152,15 @@ class _Rig:
         if hit is None:
             smap = np.zeros((self.nshadow, self.nshadow), np.float32)
             _shadow_dense(
-                self.cpos, self.tris, self.cstarts, self.starts, geoms, self.static_pos, self.static_mat, self.smat, smap
+                self.cpos,
+                self.tris,
+                self.cstarts,
+                self.starts,
+                geoms,
+                self.static_pos,
+                self.static_mat,
+                self.smat,
+                smap,
             )
             hit = _SHADOWS.put(key, smap)
         return hit
@@ -165,7 +172,9 @@ class _Rig:
             return hit
         env, m = self.env, self.env.model
         cube, agent, lock, buttons = look
-        env.variation_space._walk("cube.color")._value = np.frombuffer(cube, np.float32).reshape(1, 3).astype(np.float64)
+        env.variation_space._walk("cube.color")._value = (
+            np.frombuffer(cube, np.float32).reshape(1, 3).astype(np.float64)
+        )
         for material in pixels.AGENT_MATERIALS:
             m.material(material).rgba[:3] = np.frombuffer(agent, np.float32)
         env._cube_colors_from_variation()
@@ -282,8 +291,10 @@ class _Rig:
 
 
 def _pack(s):
-    """Corners and triangles of every drawn geom; corners that share a position, normal and texture coordinate
-    are transformed and lit once per frame."""
+    """Corners and triangles of every drawn geom.
+
+    Corners that share a position, normal and texture coordinate are transformed and lit once per frame.
+    """
     cpos, cnor, ctex, tris, cstarts, starts = [], [], [], [], [0], [0]
     for v, n, t in zip(s.verts, s.normals, s.texcoords):
         key = np.concatenate([v.reshape(-1, 3), n.reshape(-1, 3), t.reshape(-1, 3)], 1)
@@ -326,8 +337,11 @@ def _pack_textures(textures):
 
 
 def _lights(s, shadow):
-    """Rows: type, role (0 first pass, 1 shadow light), direction or position, ambient, diffuse, specular,
-    attenuation, spot direction, spot cutoff cosine (-2 for none) and exponent."""
+    """Light rows of the lights of ``s``.
+
+    Columns: type, role (0 first pass, 1 shadow light), direction or position, ambient, diffuse, specular,
+    attenuation, spot direction, spot cutoff cosine (-2 for none) and exponent.
+    """
     out = np.zeros((len(s.lights), 22))
     for i, light in enumerate(s.lights):
         out[i, 0] = light["type"]
@@ -427,8 +441,11 @@ def frames(family, columns, device):
 
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)
 def _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, lights, which, out, o):
-    """Fixed-function lighting of one vertex; ``which`` 0: first-pass lights and emission, 1: the shadow light,
-    2: every light and emission. Writes the clamped RGB into ``out[o, :3]``."""
+    """Fixed-function lighting of one vertex.
+
+    ``which`` 0: first-pass lights and emission, 1: the shadow light, 2: every light and emission. Writes the
+    clamped RGB into ``out[o, :3]``.
+    """
     vx, vy, vz = cam[0] - wx, cam[1] - wy, cam[2] - wz
     vn = math.sqrt(vx * vx + vy * vy + vz * vz)
     if vn > 0:
@@ -492,8 +509,11 @@ def _shade(wx, wy, wz, nx, ny, nz, cam, r, g, bb, spec, lut, emis, ambient, ligh
 
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)
 def _light_corner(k, ctx, cc, ca, cl, done):
-    """Light corner ``k`` of the geom in ``ctx``: first-pass colour into ``cc``, shadow light into ``ca`` and the
-    shadow texture coordinates into ``cl`` for an opaque geom; every light into ``cc`` for a translucent one."""
+    """Light corner ``k`` of the geom in ``ctx``.
+
+    An opaque geom gets its first-pass colour in ``cc``, the shadow light in ``ca`` and the shadow texture
+    coordinates in ``cl``; a translucent one gets every light in ``cc``.
+    """
     ex, ey, ew, cnor, gm, cam, r, g, bb, a, spec, lut, emis, ambient, lights, blend, slook = ctx
     nlx, nly, nlz = cnor[k, 0], cnor[k, 1], cnor[k, 2]
     nx = gm[0] * nlx + gm[1] * nly + gm[2] * nlz
@@ -537,8 +557,10 @@ def _bilinear(data, off, w, h, u, v, wrap, out):
 
 @njit(cache=True, error_model="numpy", fastmath=True)
 def _trilinear(data, levels, first, nlev, u, v, rho, wrap, out, tmp):
-    """Trilinear (``LINEAR_MIPMAP_LINEAR``) lookup at level-0 normalized ``(u, v)``; ``rho`` is the level-0 texel
-    footprint of one pixel."""
+    """Trilinear (``LINEAR_MIPMAP_LINEAR``) lookup at level-0 normalized ``(u, v)``.
+
+    ``rho`` is the level-0 texel footprint of one pixel.
+    """
     w0, h0 = levels[first, 1], levels[first, 2]
     lam = math.log2(rho) if rho > 0 else -1.0
     if lam <= 0.0:
@@ -599,7 +621,7 @@ def _cube_coords(f, dx, dy, dz):
 def _sample(tex, slot, mode, t0, t1, t2, dx0, dx1, dx2, dy0, dy1, dy2, out, tmp):
     """Texture colour of texture coordinate ``t`` whose neighbours one pixel right and down are ``dx`` and ``dy``."""
     data, levels, info = tex
-    first, nfaces, nlev = info[slot, 0], info[slot, 1], info[slot, 2]
+    first, _nfaces, nlev = info[slot, 0], info[slot, 1], info[slot, 2]
     if mode == 1:
         w0, h0 = levels[first, 1], levels[first, 2]
         ax, ay = (dx0 - t0) * w0, (dx1 - t1) * h0
@@ -622,8 +644,34 @@ def _q8(x):
 
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)
 def _tri(
-    x0, y0, q0, x1, y1, q1, x2, y2, q2, k0, k1, k2, ctx, cc, ca, cl, done, tc, texmode, texslot, tex, smap,
-    res, y0b, y1b, buf, blend, tmp,
+    x0,
+    y0,
+    q0,
+    x1,
+    y1,
+    q1,
+    x2,
+    y2,
+    q2,
+    k0,
+    k1,
+    k2,
+    ctx,
+    cc,
+    ca,
+    cl,
+    done,
+    tc,
+    texmode,
+    texslot,
+    tex,
+    smap,
+    res,
+    y0b,
+    y1b,
+    buf,
+    blend,
+    tmp,
 ):
     """Fill one screen triangle with vertices ``(x, y, 1/w)`` in pixel rows ``[y0b, y1b)`` of the sample buffers.
 
@@ -926,8 +974,34 @@ def _geom(gi, geo, tex, gp, gm, col4, cam, lights, ambient, tanh, near, slook, s
             surv[t0 + ns] = t
             ns += 1
         _tri(
-            x0, y0, 1.0 / ew[k0], x1, y1, 1.0 / ew[k1], x2, y2, 1.0 / ew[k2], k0, k1, k2, ctx, cc, ca, cl, done, ctex,
-            texmode, texslot, tex, smap, res, y0b, y1b, buf, blend, tmp,
+            x0,
+            y0,
+            1.0 / ew[k0],
+            x1,
+            y1,
+            1.0 / ew[k1],
+            x2,
+            y2,
+            1.0 / ew[k2],
+            k0,
+            k1,
+            k2,
+            ctx,
+            cc,
+            ca,
+            cl,
+            done,
+            ctex,
+            texmode,
+            texslot,
+            tex,
+            smap,
+            res,
+            y0b,
+            y1b,
+            buf,
+            blend,
+            tmp,
         )
     if first:
         nsurv[gi] = ns
@@ -958,7 +1032,27 @@ def _plate(geo, tex, geoms, gpos, gmat, rgba, cam, lights, ambient, tanh, near, 
     cstarts = geo[4]
     work = _work_nb(cstarts[-1], cstarts.shape[0] - 1, geo[5][-1])
     for gi in geoms:
-        _geom(gi, geo, tex, gpos[gi], gmat[gi], rgba[gi], cam, lights, ambient, tanh, near, slook, smap, res, 0, res, buf, False, work)
+        _geom(
+            gi,
+            geo,
+            tex,
+            gpos[gi],
+            gmat[gi],
+            rgba[gi],
+            cam,
+            lights,
+            ambient,
+            tanh,
+            near,
+            slook,
+            smap,
+            res,
+            0,
+            res,
+            buf,
+            False,
+            work,
+        )
 
 
 @njit(cache=True, inline="always", error_model="numpy", fastmath=True)
@@ -1050,7 +1144,29 @@ def _sky_plate(levels_data, info, cam, tanh, out):
 
 
 @njit(parallel=True, cache=True, error_model="numpy", fastmath=True)
-def _render(geo, tex, sets, gpos, gmat, rgba, cam, lights, ambient, tanh, near, headpos, sort_rbound, smat, slook, smap, plate, cast, ss, bands, out):
+def _render(
+    geo,
+    tex,
+    sets,
+    gpos,
+    gmat,
+    rgba,
+    cam,
+    lights,
+    ambient,
+    tanh,
+    near,
+    headpos,
+    sort_rbound,
+    smat,
+    slook,
+    smap,
+    plate,
+    cast,
+    ss,
+    bands,
+    out,
+):
     """Draw ``out`` (B, size, size, 3); each frame splits into ``bands`` row bands drawn as separate tasks."""
     B = gpos.shape[0]
     size = out.shape[1]
@@ -1085,13 +1201,71 @@ def _render(geo, tex, sets, gpos, gmat, rgba, cam, lights, ambient, tanh, near, 
         nc = cast[2][-1]
         lwork = (np.empty(nc), np.empty(nc), np.empty(nc))
         for job in range(task, jobs, nthr):
-            _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam, lights, ambient, tanh, near,
-                   headpos, sort_rbound, smat, slook, smap, plate, cast, out, buf, qbuf, work, lwork)
+            _frame(
+                job,
+                bands,
+                per,
+                size,
+                ss,
+                res,
+                geo,
+                tex,
+                sets,
+                gpos,
+                gmat,
+                rgba,
+                cam,
+                lights,
+                ambient,
+                tanh,
+                near,
+                headpos,
+                sort_rbound,
+                smat,
+                slook,
+                smap,
+                plate,
+                cast,
+                out,
+                buf,
+                qbuf,
+                work,
+                lwork,
+            )
 
 
 @njit(cache=True, error_model="numpy", fastmath=True)
-def _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam, lights, ambient, tanh, near, headpos,
-           sort_rbound, smat, slook, smap, plate, cast, out, buf, qbuf, work, lwork):
+def _frame(
+    job,
+    bands,
+    per,
+    size,
+    ss,
+    res,
+    geo,
+    tex,
+    sets,
+    gpos,
+    gmat,
+    rgba,
+    cam,
+    lights,
+    ambient,
+    tanh,
+    near,
+    headpos,
+    sort_rbound,
+    smat,
+    slook,
+    smap,
+    plate,
+    cast,
+    out,
+    buf,
+    qbuf,
+    work,
+    lwork,
+):
     movers, glass, casters = sets
     pdepth, pcol, plit, pkind, pkey, prr, sky = plate
     depth, col, add, kind, key, rr, mv = buf
@@ -1118,11 +1292,32 @@ def _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam
         nsurv[gi] = -1
     bufn = (depth, col, add, kind, key, rr, mv)
     for gi in movers:
-        _geom(gi, geo, tex, gpos[b, gi], gmat[b, gi], rgba[b, gi], cam, lights, ambient, tanh, near, slook, smap, res,
-              y0b, y1b, bufn, False, work)
+        _geom(
+            gi,
+            geo,
+            tex,
+            gpos[b, gi],
+            gmat[b, gi],
+            rgba[b, gi],
+            cam,
+            lights,
+            ambient,
+            tanh,
+            near,
+            slook,
+            smap,
+            res,
+            y0b,
+            y1b,
+            bufn,
+            False,
+            work,
+        )
     qd = qbuf[4]
     qid = qbuf[6]
-    _mover_shadows(cast, casters, gpos[b], gmat[b], smat, smap.shape[0], n, s0, mv, kind, key, pkind, pkey, qbuf, lwork)
+    _mover_shadows(
+        cast, casters, gpos[b], gmat[b], smat, smap.shape[0], n, s0, mv, kind, key, pkind, pkey, qbuf, lwork
+    )
     for i in range(n):
         if mv[i]:
             if kind[i] == 1 and (qid[i] < 0 or rr[i] >= qd[qid[i]]):
@@ -1151,8 +1346,27 @@ def _frame(job, bands, per, size, ss, res, geo, tex, sets, gpos, gmat, rgba, cam
         idx = np.argsort(dist, kind="mergesort")
         for p in range(2 * nt):
             gi = glass[idx[p]] if p < nt else glass[idx[2 * nt - 1 - p]]
-            _geom(gi, geo, tex, gpos[b, gi], gmat[b, gi], rgba[b, gi], cam, lights, ambient, tanh, near, slook, smap,
-                  res, y0b, y1b, bufn, True, work)
+            _geom(
+                gi,
+                geo,
+                tex,
+                gpos[b, gi],
+                gmat[b, gi],
+                rgba[b, gi],
+                cam,
+                lights,
+                ambient,
+                tanh,
+                near,
+                slook,
+                smap,
+                res,
+                y0b,
+                y1b,
+                bufn,
+                True,
+                work,
+            )
     if ss == 1:
         for oy in range(o0, o1):
             for ox in range(size):
