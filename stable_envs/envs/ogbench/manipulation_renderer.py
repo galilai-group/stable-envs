@@ -13,7 +13,7 @@ from .manipulation_opengl import check_versions
 from .simulation import render_state as pixels
 
 _LOCK = threading.RLock()
-OPENGL = ("opengl", "opengl_fast")
+OPENGL = ("opengl",)
 # Backends that draw from host RenderState columns.
 HOST = (*OPENGL, "raster")
 
@@ -246,16 +246,15 @@ def draws_on_host(backend, device, supersample):
 
 
 def host_backend(backend, device):
-    """The host backend that ``backend`` draws with on ``device``: raster, opengl or opengl_fast.
+    """The host backend that ``backend`` draws with on ``device``: raster or opengl.
 
-    ``auto`` draws with the rasterizer when it is installed for the device; else with opengl_fast on CPU and
-    with opengl on CUDA.
+    ``auto`` draws with the rasterizer when it is installed for the device, else with opengl.
     """
     if backend in HOST:
         return backend
     if rasterizer_available(device):
         return "raster"
-    return "opengl_fast" if torch.device(device).type == "cpu" else "opengl"
+    return "opengl"
 
 
 def _supersample(state):
@@ -277,16 +276,14 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
 
             host, device, _ = manipulation_opengl.prepare(family, state, device, chunk_size, validated)
             return manipulation_raster.frames(family, manipulation_opengl.columns(host), device, chunk_size)
-        return manipulation_opengl.render(family, state, device, chunk_size, validated, chosen == "opengl_fast")
+        return manipulation_opengl.render(family, state, device, chunk_size, validated)
     if backend == "auto":
         backend = "mjwarp_fidelity"
         log("DEBUG", f"Renderer backend 'auto' chose {backend} on {device}.")
     host = state.detach().cpu()
     pixels.validate(family, host)
     if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
-        raise ValueError(
-            "Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl, opengl_fast or raster backends"
-        )
+        raise ValueError("Cube/Scene rendering supports mjwarp, mjwarp_fidelity, opengl or raster backends")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
     check_versions("unified", warp=True)

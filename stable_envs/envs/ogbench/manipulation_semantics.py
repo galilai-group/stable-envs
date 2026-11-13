@@ -296,7 +296,7 @@ class ManipulationSemantics:
             from . import manipulation_raster
 
             return self._into(manipulation_raster.frames(self.CELL, columns, self.device, chunk_size), out)
-        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device, chosen == "opengl_fast"), out)
+        return self._into(manipulation_opengl.frames(self.CELL, columns, self.device), out)
 
     def _into(self, result, out):
         if out is None:
