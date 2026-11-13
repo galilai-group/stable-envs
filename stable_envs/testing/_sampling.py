@@ -64,12 +64,12 @@ def draw_states(env, n: int, rng: np.random.Generator):
 
 
 def render_any(env, states, **kw) -> torch.Tensor:
-    """Render render rows with ``env._render`` or full States with ``env.render``.
+    """Render render rows or full States with ``env.render``.
 
     A full State carries its own Variation, so ``style`` and ``variation`` must be None for one.
     """
     if not isinstance(states, TensorDict):
-        return env._render(states, **kw)
+        return env.render(states, **kw)
     style, variation = kw.pop("style", None), kw.pop("variation", None)
     if style is not None or variation:
         raise TypeError(f"{type(env).__name__}: a full State carries its Variation; render it without style")

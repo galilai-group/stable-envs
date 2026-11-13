@@ -203,7 +203,7 @@ def check_source_mse(env, n: int = 64, seed: int = 0) -> dict:
     cls = type(env)
     ref = reference_env(cls, env.size)
     states = sample_render_rows(env, int(n), rng=np.random.default_rng(int(seed)))
-    ours = env._render(states).cpu().numpy()
+    ours = env.render(states).cpu().numpy()
     if "return_flags" in inspect.signature(cls.reference_render).parameters:
         official, flags = cls.reference_render(ref, states, return_flags=True)
         keep = ~np.asarray(flags, bool)
@@ -257,7 +257,7 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
     """
     shown = _objects_shown(env)
     st = sample_render_rows(env, env.B)
-    base = env._render(st, variation=shown).cpu().numpy()
+    base = env.render(st, variation=shown).cpu().numpy()
     pool = [sample_render_rows(env, env.B) for _ in range(max(1, donors))]
     candidates = set(_render_invariant_candidates(env))
     dead, excluded, refused = [], {}, {}
@@ -268,14 +268,14 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
             pert[:, d] = donor[:, d]
             if np.array_equal(pert[:, d], st[:, d]):
                 continue  # donor happened to match; proves nothing either way
-            if not np.array_equal(env._render(pert, variation=shown).cpu().numpy(), base):
+            if not np.array_equal(env.render(pert, variation=shown).cpu().numpy(), base):
                 alive = True
                 break
         if not alive:  # fall back to an additive nudge
             for step in (eps, -eps, 1.0, 0.5):
                 pert = st.copy()
                 pert[:, d] = pert[:, d] + step
-                if not np.array_equal(env._render(pert, variation=shown).cpu().numpy(), base):
+                if not np.array_equal(env.render(pert, variation=shown).cpu().numpy(), base):
                     alive = True
                     break
         if alive:
@@ -415,10 +415,10 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
 def check_batch_invariance(env, n: int = 8) -> dict:
     """Compare sampled batch rows against their singleton renders."""
     st = sample_render_rows(env, env.B)
-    batched = env._render(st).cpu().numpy()
+    batched = env.render(st).cpu().numpy()
     worst = 0
     for i in range(min(n, env.B)):
-        one = env._render(st[i : i + 1]).cpu().numpy()[0]
+        one = env.render(st[i : i + 1]).cpu().numpy()[0]
         worst = max(worst, int(np.abs(one.astype(np.int16) - batched[i].astype(np.int16)).max()))
     return {"max_abs_diff": worst}
 
@@ -467,7 +467,7 @@ def check_variations_do_something(env) -> dict:
     """
     shown = _objects_shown(env) or {}
     st = sample_render_rows(env, env.B)
-    base = env._render(st, variation=shown or None).cpu().numpy()
+    base = env.render(st, variation=shown or None).cpu().numpy()
     inert = []
     for path in _frame_variation_paths(env):
         node = env.variation_space
@@ -482,7 +482,7 @@ def check_variations_do_something(env) -> dict:
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
                 d = np.asarray(default, np.float64)
                 alt = np.where(np.abs(d - lo) > np.abs(d - hi), lo, hi).astype(node.dtype)
-            frames = env._render(st, variation={**shown, path: alt}).cpu().numpy()
+            frames = env.render(st, variation={**shown, path: alt}).cpu().numpy()
             if np.array_equal(frames, base):
                 inert.append(path)
         except Exception as e:  # a variation that cannot be set is inert too
@@ -512,7 +512,7 @@ def check_per_env_variation(env) -> dict:
         half[env.B // 2 :] = 1.0
         ramp = half * (hi - lo).reshape(1, -1) + lo.reshape(1, -1)
         try:
-            f = env._render(st, variation={path: ramp.astype(node.dtype)}).cpu().numpy()
+            f = env.render(st, variation={path: ramp.astype(node.dtype)}).cpu().numpy()
         except Exception:
             continue  # env may not accept a per-env form for this leaf
         if len(np.unique(f.reshape(env.B, -1), axis=0)) < 2:
@@ -526,7 +526,7 @@ def check_style_is_state(env) -> dict:
         return {"skipped": "env declares no style"}
     st = sample_render_rows(env, env.B)
     sty = env.sample_style(env.B)
-    a = env._render(st, style=sty).cpu().numpy()
+    a = env.render(st, style=sty).cpu().numpy()
     fresh = type(env)(num_envs=env.B, size=env.size, supersample=env.ss, device=str(env.device))
     fresh._set_render_state(st, style=sty)
     b = fresh._render().cpu().numpy()
@@ -538,8 +538,8 @@ def check_default_style_is_official(env) -> dict:
     if env.style_dim == 0:
         return {"skipped": "env declares no style"}
     st = sample_render_rows(env, env.B)
-    a = env._render(st).cpu().numpy()
-    b = env._render(st, style=env.default_style()).cpu().numpy()
+    a = env.render(st).cpu().numpy()
+    b = env.render(st, style=env.default_style()).cpu().numpy()
     return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
 
 
@@ -664,7 +664,7 @@ def check_colors_apply_exactly(env) -> dict:
         for target in ([17, 33, 200], [200, 17, 33]):  # two, so a channel swap cannot pass both
             sty = np.tile(env.default_style(), (env.B, 1))
             sty[:, off : off + w] = np.asarray(target, np.float32)
-            f = env._render(st, style=sty).cpu().numpy()
+            f = env.render(st, style=sty).cpu().numpy()
             d = np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1)
             # Retain nearest-color error even for probes whose literal bound is inapplicable.
             best[f"{path}->{target}"] = int(d.min())
@@ -715,8 +715,8 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, r
             node = node[part]
         declared = int(np.asarray(node.value).reshape(-1)[0])
         other = 1 - declared
-        a = env._render(states, variation={path: declared}).cpu().numpy()
-        b = env._render(states, variation={path: other}).cpu().numpy()
+        a = env.render(states, variation={path: declared}).cpu().numpy()
+        b = env.render(states, variation={path: other}).cpu().numpy()
         M = (a != b).any(-1)  # the object's own pixels, exactly
 
         # Alternate style rows exercise the stored per-environment representation.
@@ -725,7 +725,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, r
         odd = np.arange(len(states)) % 2 == 1
         sty[:, off : off + w] = float(declared)
         sty[odd, off : off + w] = float(other)
-        mix = env._render(states, style=sty).cpu().numpy()
+        mix = env.render(states, style=sty).cpu().numpy()
         per_row = int(
             max(
                 np.abs(mix[~odd].astype(np.int16) - a[~odd].astype(np.int16)).max(initial=0),
@@ -767,7 +767,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0, r
 
 def check_determinism(env) -> dict:
     st = sample_render_rows(env, env.B)
-    return {"identical": bool(np.array_equal(env._render(st).cpu().numpy(), env._render(st).cpu().numpy()))}
+    return {"identical": bool(np.array_equal(env.render(st).cpu().numpy(), env.render(st).cpu().numpy()))}
 
 
 # Diagnostic reference-hook contract; reference_sim_state is required.
@@ -1186,7 +1186,7 @@ def check_input_form_invariance(env, states, style=None) -> dict:
 
     Forms labeled cuda use env.device, so they exercise CUDA only for a CUDA env.
     """
-    ref = env._render(states, style=style).detach().cpu().numpy()
+    ref = env.render(states, style=style).detach().cpu().numpy()
     dev = env.device
     st32 = np.ascontiguousarray(np.asarray(states, np.float32))
     n, D = st32.shape
@@ -1214,7 +1214,7 @@ def check_input_form_invariance(env, states, style=None) -> dict:
     bad = {}
     for name, s in forms.items():
         try:
-            got = env._render(s, style=style).detach().cpu().numpy()
+            got = env.render(s, style=style).detach().cpu().numpy()
         except Exception as e:  # noqa: BLE001
             bad[name] = f"{type(e).__name__}: {e}"
             continue
@@ -1229,9 +1229,9 @@ def check_order_independence(env, states, style=None, seed: int = 0) -> dict:
     n = len(states)
     rng = np.random.default_rng(seed)
     perm = rng.permutation(n)
-    base = env._render(states, style=style).detach().cpu().numpy()
+    base = env.render(states, style=style).detach().cpu().numpy()
     permuted = (
-        env._render(np.asarray(states)[perm], style=None if style is None else np.asarray(style)[perm])
+        env.render(np.asarray(states)[perm], style=None if style is None else np.asarray(style)[perm])
         .detach()
         .cpu()
         .numpy()
@@ -1240,7 +1240,7 @@ def check_order_independence(env, states, style=None, seed: int = 0) -> dict:
 
     dup = np.concatenate([np.asarray(states)[:1], np.asarray(states)[:1]], 0)
     kdup = None if style is None else np.concatenate([np.asarray(style)[:1]] * 2, 0)
-    f = env._render(dup, style=kdup).detach().cpu().numpy()
+    f = env.render(dup, style=kdup).detach().cpu().numpy()
     d_dup = int(np.abs(f[0].astype(np.int16) - f[1].astype(np.int16)).max())
     return {"permutation_max_abs_diff": d_perm, "duplicate_max_abs_diff": d_dup}
 
@@ -1260,7 +1260,7 @@ def check_render_is_pure(env, states, style=None) -> dict:
     k0 = env.get_style().detach().cpu().numpy().copy()
     f0 = env._render().detach().cpu().numpy()
 
-    env._render(states, style=style)  # an unrelated render, with explicit arguments
+    env.render(states, style=style)  # an unrelated render, with explicit arguments
     s1 = env._get_render_state().detach().cpu().numpy().copy()
     k1 = env.get_style().detach().cpu().numpy().copy()
 
