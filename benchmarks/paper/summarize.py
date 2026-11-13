@@ -1,4 +1,4 @@
-"""Turn one run.sh results directory into Markdown tables: offline and online speed, MSE, and Craftax."""
+"""Turn one run.sh results directory into Markdown tables: offline and online speed, and MSE."""
 
 from __future__ import annotations
 
@@ -170,28 +170,13 @@ def _pair(r, k):
     return " / ".join(_fmt(r.get(f"{k}_T{t}")) for t in TS)
 
 
-def craftax(root: Path):
-    out = []
-    for dev in ("gpu", "cpu"):
-        d = _load(root / "craftax" / f"{dev}.json")
-        for name, rows in (d or {}).get("envs", {}).items():
-            by = {}
-            for r in rows:
-                if r.get("status") == "ok":
-                    by.setdefault(r["batch"], {})[r["arm"]] = r["steps_per_s"]
-            for b, arms in sorted(by.items()):
-                out.append({"device": dev, "env": name, "batch": b, **arms})
-    return out
-
-
 def markdown(roots: list[Path]) -> str:
-    off, on, cx, prov = [], [], [], []
+    off, on, prov = [], [], []
     for root in roots:
         run = _load(root / "run.json") or {}
         names = sorted({p.name for p in (root / "offline").glob("*")} | {p.name for p in (root / "online").glob("*")})
         off += offline(root, names)
         on += online(root, names)
-        cx += craftax(root)
         prov.append(
             f"| {root.name} | `{str(run.get('commit'))[:8]}` | `{str(run.get('main'))[:8]}` | {run.get('host')} | "
             f"{run.get('job')} | {run.get('gpu')} | {run.get('cores')} | {run.get('start')} | "
@@ -258,19 +243,6 @@ def markdown(roots: list[Path]) -> str:
             f"| {_ratio(r['snv_render_cpu'], r['src_render_cpu'])} | {_fmt(r['rollout_mse_gpu'], 2)} | {_fmt(r['rollout_mse_cpu'], 2)} "
             f"| {'ok' if bad and not any(bad) else ('MISMATCH' if any(bad) else '–')} |"
         )
-    if cx:
-        lines += [
-            "",
-            "## Craftax (steps/s): upstream jit(vmap(step)) vs SNV",
-            "",
-            "| Device | Env | B | Upstream | SNV step | SNV step + frames | Step / upstream |",
-            "|---|---|---|---|---|---|---|",
-        ]
-        for r in cx:
-            lines.append(
-                f"| {r['device']} | {r['env']} | {r['batch']} | {_fmt(r.get('upstream'))} | {_fmt(r.get('snv-step'))} "
-                f"| {_fmt(r.get('snv-step-render'))} | {_ratio(r.get('snv-step'), r.get('upstream'))} |"
-            )
     return "\n".join(lines) + "\n"
 
 

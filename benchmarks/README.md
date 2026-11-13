@@ -80,8 +80,6 @@ Facts about the source libraries, such as which source draws on a GPU, are in
 | `draw.py` | The one call that draws stable-envs frames from stored inputs (`env.render`) |
 | `paper/summarize.py` | Writes Markdown tables from one results directory |
 | `paper/sanity.py` | Checks the spread and the status of each cell before you use its numbers |
-| `gifs.py` | Writes one side-by-side GIF per env |
-| `craftax_bench.py` | Times Craftax against the upstream `jit(vmap(step))` |
 
 ### Run
 
