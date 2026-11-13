@@ -39,7 +39,7 @@ jobs:
 
   deploy:
     # Set the repository variable DEPLOY_DOCS=true once GitHub Pages is enabled.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_DOCS == 'true'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.DEPLOY_DOCS == 'true'
     needs: build
     runs-on: ubuntu-latest
     permissions:
