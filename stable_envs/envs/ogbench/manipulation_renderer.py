@@ -248,11 +248,12 @@ def draws_on_host(backend, device, supersample):
 def host_backend(backend, device):
     """The host backend that ``backend`` draws with on ``device``: raster or opengl.
 
-    ``auto`` draws with the rasterizer when it is installed for the device, else with opengl.
+    ``auto`` draws with the rasterizer on CPU when Numba is installed, else with opengl. On CUDA, NVIDIA OpenGL
+    is faster than the rasterizer's CUDA backend.
     """
     if backend in HOST:
         return backend
-    if rasterizer_available(device):
+    if torch.device(device).type == "cpu" and rasterizer_available(device):
         return "raster"
     return "opengl"
 

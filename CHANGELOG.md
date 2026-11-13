@@ -158,9 +158,9 @@ All notable changes to this project are listed here. The format follows
   reference env. `stable_envs/render/mujoco_scene.py` reads the drawn geoms, materials, textures, lights, camera
   and shadow settings of a MuJoCo model, and refuses scene features that were not compared with the OpenGL
   renderer of the installed MuJoCo version. Fetch keeps its default backends.
-- `OGBCube` and `OGBScene`: `backend="auto"` draws with the shared MuJoCo rasterizer (`backend="raster"`) on CPU
-  and on CUDA at 1x sampling. On CPU without Numba it uses software OpenGL; on CUDA without nvdiffrast or Triton
-  it uses NVIDIA OpenGL. `backend="opengl"` stays the exact reference. `backend="opengl_fast"` (OpenGL with
+- `OGBCube` and `OGBScene`: `backend="auto"` draws CPU frames with the shared MuJoCo rasterizer
+  (`backend="raster"`), and with software OpenGL without Numba. CUDA frames stay on NVIDIA OpenGL, which is faster
+  than the rasterizer's CUDA backend. `backend="opengl"` stays the exact reference. `backend="opengl_fast"` (OpenGL with
   simplified arm meshes and a 2048 shadow map) is removed.
 - DM Control, `OGBCube` and `OGBScene`: `render(state)` checks only the State leaves that the frame reads.
   DM Control gives `Env.render` the drawn fields: `qpos`, the episode model entries of the task (Reacher:

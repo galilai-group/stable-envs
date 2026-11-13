@@ -18,7 +18,7 @@ snv.import_errors()     # families this interpreter could not import
 | PushT, PushTDiscrete | Numba physics and Numba rendering | JAX physics and Triton rendering |
 | classic control, navigation, OGBench mazes | yes | yes |
 | Fetch (12 classes) | Fetch rasterizer (Numba) | MJWarp, explicit MuJoCo rasterizer or explicit NVIDIA OpenGL |
-| OGBCube, OGBScene | MuJoCo rasterizer (Numba) | MuJoCo rasterizer (nvdiffrast and Triton), NVIDIA OpenGL, or MJWarp with `supersample` 2 or more |
+| OGBCube, OGBScene | MuJoCo rasterizer (Numba) | NVIDIA OpenGL, explicit MuJoCo rasterizer, or MJWarp with `supersample` 2 or more |
 | PyFlytRocketLanding | TinyRenderer | CUDA rendering |
 | DM Control body-tracking | CPU3D | MJWarp |
 
@@ -34,8 +34,8 @@ software OpenGL, configured before the first MuJoCo import. See [System setup](.
   [Frame regression checks](../testing.md#frame-regression-checks).
 - These classes draw with a different rasterizer from the source:
   - Fetch with the default backend: the Fetch Numba rasterizer on CPU and MJWarp on CUDA.
-  - OGBCube and OGBScene with the default backend: the stable-envs MuJoCo rasterizer
-    (`backend="raster"`) on CPU, and on CUDA at `supersample=1`.
+  - OGBCube and OGBScene with the default backend on CPU: the stable-envs MuJoCo rasterizer
+    (`backend="raster"`).
   - The DM Control body-tracking classes.
   - PyFlytRocketLanding on CUDA.
 
