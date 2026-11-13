@@ -257,6 +257,10 @@ conflicts = [
   [{ extra = "dmcontrol" }, { group = "pin-fetch" }],
   [{ group = "gpu-mjwarp" }, { group = "pin-fetch" }],
 ]
+# Build pybullet from its sdist without fused multiply-adds, as its PyPI wheels are built. Compilers
+# that target FMA hardware by default (GCC 15 on Ubuntu 26.04, Clang on arm64) otherwise contract
+# its float arithmetic and change its matrices and frames by 1 ulp.
+extra-build-variables = { pybullet = { CFLAGS = "-ffp-contract=off", CXXFLAGS = "-ffp-contract=off" } }
 
 # PyFlyt 0.29.0 declares numpy<2 but runs on 2.5.3 in the rocket reference profile. This
 # replaces its metadata for uv only; pip still resolves the rocket extra to numpy<2.
