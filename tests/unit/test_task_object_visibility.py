@@ -73,6 +73,9 @@ class FakeEnv:
             col = np.full(n, float(self.variation_space["visibility"]["target"].value), np.float32)
         return torch.as_tensor(np.stack([_frame(c >= 0.5, self.jitter) for c in col]))
 
+    def render(self, states, **kwargs):
+        return self._render(states, **kwargs)
+
     @classmethod
     def reference_env(cls, size):
         return None
