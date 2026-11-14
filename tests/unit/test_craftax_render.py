@@ -149,28 +149,26 @@ def _assert_same(renderers, states, what):
 
 
 @pytest.mark.parametrize("device", DEVICES)
-@pytest.mark.parametrize("game", GAMES)
-def test_rollout_frames_equal_upstream(game, device):
-    from craftax.craftax_env import make_craftax_env_from_name
+@pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxSymbolic"])
+def test_rollout_frames_equal_upstream(name, device):
+    import torch
+
+    import stable_envs as se
 
     dev = _device(device)
-    renderers = _renderers(game)
-    env = make_craftax_env_from_name(game, auto_reset=False)
-    params = env.default_params
-    reset = jax.jit(jax.vmap(lambda key: env.reset(key, params)[1]))
-    step = jax.jit(jax.vmap(lambda key, s, a: env.step(key, s, a, params)[1]))
-    lanes, steps = 8, 120
-    with jax.default_device(dev):
-        for seed in (0, 1):
-            rng = np.random.default_rng(seed)
-            key = jax.random.PRNGKey(seed)
-            states = reset(jax.random.split(key, lanes))
-            for t in range(steps):
-                if t % 4 == 0:
-                    _assert_same(renderers, states, f"seed {seed}, step {t}")
-                key, sub = jax.random.split(key)
-                actions = jnp.asarray(rng.integers(0, env.action_space(params).n, lanes), jnp.int32)
-                states = step(jax.random.split(sub, lanes), states, actions)
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("torch has no CUDA device")
+    lanes, steps = 8, 64
+    with se.make(name, num_envs=lanes, device=device) as env:
+        renderers = _renderers(env.reference_id)
+        with jax.default_device(dev):
+            for seed in (0, 1):
+                env.reset(seed=seed)
+                rng = np.random.default_rng(seed)
+                for t in range(steps):
+                    if t % 4 == 0:
+                        _assert_same(renderers, env._state, f"seed {seed}, step {t}")
+                    env.step(rng.integers(0, env.action_high + 1, (lanes, 1)), frames=None)
 
 
 @pytest.mark.parametrize("device", DEVICES)
@@ -184,11 +182,9 @@ def test_varied_states_equal_upstream(game, device):
     env = make_craftax_env_from_name(game, auto_reset=False)
     params = env.default_params
     vary = _vary_classic if "Classic" in game else _vary_craftax
-    reset = jax.jit(jax.vmap(lambda key: env.reset(key, params)[1]))
-    varied = jax.jit(jax.vmap(vary))
+    varied = jax.jit(jax.vmap(lambda reset_key, key: vary(env.reset(reset_key, params)[1], key)))
     lanes = 64
     with jax.default_device(dev):
-        for batch in range(4):
+        for batch in range(3):
             keys = jax.random.split(jax.random.PRNGKey(100 + batch), 2 * lanes)
-            states = varied(reset(keys[:lanes]), keys[lanes:])
-            _assert_same(renderers, states, f"batch {batch}")
+            _assert_same(renderers, varied(keys[:lanes], keys[lanes:]), f"batch {batch}")

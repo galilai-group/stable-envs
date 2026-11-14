@@ -71,6 +71,15 @@ def _cell_gather(table, view, size: int):
     return table.at[index, ys, xs].get(mode="fill", fill_value=0.0)
 
 
+def _materialized(x):
+    """``x`` written out before later ops read it, as upstream's scan writes its result.
+
+    XLA would otherwise fuse the next blend with the lookup, and XLA:CPU rounds that fused blend
+    differently from upstream's.
+    """
+    return jax.lax.optimization_barrier(x)
+
+
 def _scale(look: Look | None):
     if look is None:
         return None
@@ -116,6 +125,7 @@ def classic_renderer(tex: dict) -> Callable[..., jax.Array]:
         scale = _scale(look)
         if scale is not None:
             map_pixels = map_pixels * scale
+        map_pixels = _materialized(map_pixels)
 
         player_texture_index = jax.lax.select(state.is_sleeping, 4, state.player_direction - 1)
         map_pixels = (
@@ -255,8 +265,9 @@ def craftax_renderer(tex: dict, do_night_noise: bool = True) -> Callable[..., ja
         if scale is not None:
             map_pixels = map_pixels * scale
             item_rgb = item_rgb * scale
+        map_pixels, item_rgb, item_alpha = _materialized((map_pixels, item_rgb, item_alpha))
         map_pixels = map_pixels * (1 - item_alpha)[:, :, None]
-        map_pixels = map_pixels + item_rgb * item_alpha[:, :, None]
+        map_pixels = _materialized(map_pixels + item_rgb * item_alpha[:, :, None])
 
         player_texture_index = jax.lax.select(state.is_sleeping, 4, state.player_direction - 1)
         map_pixels = (
