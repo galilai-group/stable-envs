@@ -1,8 +1,8 @@
 """Craftax and Craftax-Classic: the whole batch in one stacked JAX pytree, advanced by one jitted vmap.
 
 Batch row ``i`` follows stable-worldmodel's ``CraftaxWrapper`` built with ``seed + i``. State holds each
-leaf of the upstream ``EnvState`` under ``engine`` and the wrapper's PRNG key under ``key``, one row
-per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
+leaf of the upstream ``EnvState`` under ``engine``, the lane's ``EnvParams`` variation values under
+``physics`` and the wrapper's PRNG key under ``key``, one row per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
 scaled to uint8 as stable-worldmodel renders it. The symbolic tasks render the same frames from their
 state with the pixel renderer of their game, and return the symbolic vector as ``observation``.
 """

@@ -31,7 +31,7 @@ The whole batch is one stacked JAX pytree that one jitted `vmap` steps. [Batch r
 
 Actions from the host are checked before the step. Actions in a CUDA tensor are checked on the device, so that the host does not wait for the step. A step with an action outside the range leaves every environment unchanged, and the next `step`, `reset` or `set_state` raises `ValueError`.
 
-The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
+The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine`, the variation values of the environment under `physics` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
 
 ## Rendering
 
