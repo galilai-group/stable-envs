@@ -81,19 +81,36 @@ class Lanes:
     sharding: jax.sharding.Sharding | None
 
     def put(self, x):
-        """Send a host or ``device`` array of ``count`` rows (or a tuple of them) to the lanes' devices."""
-        if self.sharding is None:
-            return x
-        if self.rows != self.count:
-            x = jax.tree.map(lambda a: jnp.concatenate([a, jnp.repeat(a[:1], self.rows - self.count, 0)]), x)
-        return jax.device_put(x, self.sharding)
+        """Place ``count`` rows (a torch tensor, a host array, or a tuple of them) on the lanes' devices.
 
-    def take(self, x):
-        """Gather lane-major outputs (or a tuple of them) on ``device``, without the padding rows."""
+        Padding rows copy the first row. A torch tensor on ``device`` crosses through DLPack.
+        """
+        return jax.tree.map(self._put, x)
+
+    def _put(self, a):
         if self.sharding is None:
-            return x
-        x = jax.device_put(x, self.device)
-        return x if self.rows == self.count else jax.tree.map(lambda a: a[: self.count], x)
+            return jnp.from_dlpack(a) if torch.is_tensor(a) else jax.device_put(a, self.device)
+        a = np.asarray(a)
+        if self.rows != self.count:
+            a = np.concatenate([a, np.repeat(a[:1], self.rows - self.count, 0)])
+        return jax.make_array_from_callback(a.shape, self.sharding, lambda index: a[index])
+
+    def torch(self, x):
+        """Lane-major outputs (or a tuple of them, with None kept) as torch tensors of ``count`` rows.
+
+        Split outputs are joined on the host in one copy; the shards are in lane order.
+        """
+        return jax.tree.map(self._torch, x)
+
+    def _torch(self, a):
+        if self.sharding is None:
+            return torch.from_dlpack(a)
+        rows = torch.cat([torch.from_dlpack(a.addressable_data(i)) for i in range(self.parts)])
+        return rows if self.rows == self.count else rows[: self.count]
+
+    @property
+    def parts(self) -> int:
+        return 1 if self.sharding is None else len(self.sharding.device_set)
 
 
 @dataclass(frozen=True)
@@ -277,11 +294,11 @@ class Kernel:
         else:
             with jax.default_device(lanes.device):
                 keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
-        return lanes.put(jax.device_put(keys, lanes.device))
+        return lanes.put(np.asarray(keys))
 
-    def views(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:
-        """``(lanes, width)`` views of each leaf in freshly written blocks, which nothing else holds."""
-        return self.split([torch.from_dlpack(b) for b in blocks])
+    def views(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
+        """``(lanes, width)`` views of each leaf in freshly written torch blocks, which nothing else holds."""
+        return self.split(list(blocks))
 
     def split(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
         """``(..., width)`` views of each leaf in torch blocks of shape ``(..., columns)``."""
@@ -300,13 +317,13 @@ class Kernel:
 
     def reset(self, keys, lanes: Lanes):
         state, keys, blocks = self._reset(keys)
-        return state, keys, self.views(lanes.take(blocks))
+        return state, keys, self.views(lanes.torch(blocks))
 
     def everyone(self, lanes: Lanes):
         """An all-true lane mask, made once per placement."""
         mask = self._everyone.get(lanes)
         if mask is None:
-            mask = self._everyone[lanes] = lanes.put(jax.device_put(np.ones(lanes.count, np.bool_), lanes.device))
+            mask = self._everyone[lanes] = lanes.put(np.ones(lanes.count, np.bool_))
         return mask
 
     def step(
@@ -325,18 +342,16 @@ class Kernel:
         Every lane keeps its state when any action is outside the game's range, and the last output is
         that flag on the device.
         """
-        actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
+        actions = actions.to(torch.int32).contiguous()
         if active is None:
             actions, active = lanes.put(actions), self.everyone(lanes)
         else:
-            actions, active = lanes.put((actions, jnp.from_dlpack(active.to(torch.bool).contiguous())))
+            actions, active = lanes.put((actions, active.to(torch.bool).contiguous()))
         out = self._programs[(snapshot, frame)](keys, state, actions, active)
         state, keys, reward, done, obs, invalid, blocks, frames = out
-        reward, done, obs, blocks, frames = lanes.take((reward, done, obs, blocks, frames))
-        obs = None if obs is None else torch.from_dlpack(obs)
+        reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
         views = None if blocks is None else self.views(blocks)
-        frames = None if frames is None else torch.from_dlpack(frames)
-        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, frames, invalid
+        return state, keys, reward, done, obs, views, frames, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:
@@ -344,7 +359,7 @@ class Kernel:
         return bool(jax.device_get(flag))
 
     def export(self, state, keys, lanes: Lanes) -> dict[tuple[str, ...], torch.Tensor]:
-        return self.views(lanes.take(self._pack(state, keys)))
+        return self.views(lanes.torch(self._pack(state, keys)))
 
     def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
         """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
@@ -365,10 +380,10 @@ class Kernel:
 
     def restore(self, td, device: torch.device, lanes: Lanes):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
-        return self._unpack(lanes.put(tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))))
+        return self._unpack(lanes.put(tuple(self._torch_blocks(td, device))))
 
     def render(self, state, lanes: Lanes) -> torch.Tensor:
-        return torch.from_dlpack(lanes.take(self._frames(state)))
+        return lanes.torch(self._frames(state))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
@@ -378,8 +393,7 @@ class Kernel:
         if rows != n:
             blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
         lanes = self.lanes(rows, self.device(device))
-        frames = lanes.take(self._render_blocks(lanes.put(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks))))
-        frames = torch.from_dlpack(frames)
+        frames = lanes.torch(self._render_blocks(lanes.put(tuple(b.contiguous() for b in blocks))))
         return frames if rows == n else frames[:n]
 
 
