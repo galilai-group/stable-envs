@@ -10,11 +10,13 @@ state with the pixel renderer of their game, and return the symbolic vector as `
 from __future__ import annotations
 
 import importlib.util
+import os
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.config import get_config, log
 from ..._core.stepping import _stack_states
 from ..._core.tensordicts import build_tensordict
 from ...env import Env
@@ -24,6 +26,10 @@ from ...spaces import Dict
 if importlib.util.find_spec("craftax") is None or importlib.util.find_spec("jax") is None:
     raise ImportError("Craftax needs the craftax extra: pip install 'stable-envs[craftax]'")
 
+# JAX reserves most of the GPU when its GPU backend starts and leaves torch little of it. Importing
+# stable_envs sets this before the caller's own JAX code can start the backend.
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+
 
 class CraftaxEnv(Env):
     """Batched Craftax lanes over the upstream JAX simulator."""
@@ -32,6 +38,10 @@ class CraftaxEnv(Env):
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
+    # XLA steps on threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
+    native_step_threads = True
+    _step_outputs_owned = True
+    _frames_owned = True
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
         from .kernel import kernel
@@ -47,6 +57,32 @@ class CraftaxEnv(Env):
         self._device = self._k.device(self.device)
         self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state = None
+        #: The device flag of the last step with device actions, read by the next step, reset or set_state.
+        self._pending = None
+
+    @staticmethod
+    def resolve_device(device: str | None) -> str:
+        """Resolve the device as ``Env`` does, but let ``"auto"`` pick the CPU when JAX has no GPU backend.
+
+        Args:
+            device: A device string, ``"auto"``, or None for the global ``default_device``.
+
+        Returns:
+            The device string to use.
+        """
+        requested = device if device is not None else (get_config()["default_device"] or "auto")
+        resolved = Env.resolve_device(device)
+        if str(requested) == "auto" and resolved.startswith("cuda"):
+            from .kernel import has_gpu
+
+            if not has_gpu():
+                log(
+                    "INFO",
+                    "JAX has no GPU backend, so device='auto' chose the CPU for Craftax. "
+                    "Install the craftax-gpu extra to step Craftax on CUDA.",
+                )
+                return "cpu"
+        return resolved
 
     def make_variation_space(self):
         return Dict({})
@@ -96,11 +132,13 @@ class CraftaxEnv(Env):
 
     def set_state(self, state):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
+        self._check_pending()
         self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
 
     def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
         self._check_open("reset")
+        self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
             self._keys = self._k.seed_keys(int(seed), self.B, self._device)
@@ -108,42 +146,64 @@ class CraftaxEnv(Env):
         return self._snapshot(views)
 
     def _actions(self, actions):
-        """Device actions, and for device inputs a pending flag that is true when any is out of range."""
+        """Device actions, and whether only the step itself can check their range.
+
+        Host actions are checked here. Device actions outside the range are clamped to one step past
+        it, so int32 cannot wrap them into the range, and the step rejects them on the device.
+        """
         if torch.is_tensor(actions) and actions.device.type != "cpu" and self.device.type != "cpu":
             a = actions.to(self.device).reshape(self.B)
             if a.is_floating_point():
                 raise self._invalid_actions()
-            # Read after the step is queued, so the check does not stall the host before dispatch.
-            return a, ((a < 0) | (a > self.action_high)).any()
+            return a.to(torch.int64).clamp(-1, self.action_high + 1), True
         host = actions.cpu() if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
         host = host.reshape(self.B)
         if host.is_floating_point() or bool(((host < 0) | (host > self.action_high)).any()):
             raise self._invalid_actions()
         if self.device.type == "cpu":
-            return host, None
+            return host, False
         # Pageable host memory is staged before the call returns, so the copy need not wait for the stream.
-        return host.to(self.device, non_blocking=not host.is_pinned()), None
+        return host.to(self.device, non_blocking=not host.is_pinned()), False
 
     def _invalid_actions(self):
         return ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
 
-    def _step(self, actions, *, active=None):
+    def _check_pending(self):
+        """Raise for a step whose device actions were out of range; that step left every lane unchanged."""
+        pending, self._pending = self._pending, None
+        if pending is not None and self._k.read_flag(pending):
+            raise ValueError(
+                f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]; "
+                "the last step got others and left every environment unchanged"
+            )
+
+    def _advance(self, actions, active, snapshot: bool):
+        self._check_open("step")
+        self._check_pending()
         state = self._live("step")
-        a, invalid = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active)
-        # A rejected step leaves the live lanes as they were: JAX arrays are immutable.
-        if invalid is not None and bool(invalid):
-            raise self._invalid_actions()
-        self._state, self._keys, reward, done, observation, views = out
+        a, deferred = self._actions(actions)
+        out = self._k.step(self._keys, state, a, active, self._device, snapshot)
+        self._state, self._keys, reward, done, observation, views, invalid = out
+        if deferred:
+            # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
+            invalid.copy_to_host_async()
+            self._pending = invalid
         result = {
-            "state": self._snapshot(views),
             "reward": reward,
             "terminated": done,
             "truncated": torch.zeros(self.B, dtype=torch.bool, device=self.device),
         }
+        if views is not None:
+            result["state"] = self._snapshot(views)
         if observation is not None:
             result["observation"] = observation
         return build_tensordict(result, [self.B], self.device)
+
+    def _step(self, actions, *, active=None):
+        return self._advance(actions, active, snapshot=True)
+
+    def _advance_without_snapshot(self, actions, *, active=None):
+        return self._advance(actions, active, snapshot=False)
 
     def _render_state_input(self, state):
         """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
@@ -156,6 +216,7 @@ class CraftaxEnv(Env):
 
     def _close(self):
         self._state = None
+        self._pending = None
 
 
 @register
