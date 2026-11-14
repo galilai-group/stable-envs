@@ -166,9 +166,15 @@ def test_rollout_frames_equal_upstream(name, device):
                 env.reset(seed=seed)
                 rng = np.random.default_rng(seed)
                 for t in range(steps):
-                    if t % 4 == 0:
-                        _assert_same(renderers, env._state, f"seed {seed}, step {t}")
-                    env.step(rng.integers(0, env.action_high + 1, (lanes, 1)), frames=None)
+                    action = rng.integers(0, env.action_high + 1, (lanes, 1))
+                    if t % 4:
+                        env.step(action, frames=None)
+                        continue
+                    _assert_same(renderers, env._state, f"seed {seed}, step {t}")
+                    # A frame the step returns comes from the same jitted call as the step.
+                    frame = env.step(action)["frames"][:, -1].cpu().numpy()
+                    expected = (jnp.clip(renderers[0](env._state) / 255.0, 0.0, 1.0) * 255.0).astype(jnp.uint8)
+                    np.testing.assert_array_equal(frame, np.asarray(expected), err_msg=f"seed {seed}, step {t}")
 
 
 @pytest.mark.parametrize("device", DEVICES)
