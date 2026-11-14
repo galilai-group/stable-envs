@@ -1,8 +1,8 @@
 """Craftax on CUDA against upstream Craftax on the same GPU, one jitted lane at a time.
 
 Every lane steps for one long rollout, past the episode ends, as upstream steps without auto-reset.
-States, rewards, ends, observations and frames must be equal bit for bit. The CPU tests make the same
-comparison on the CPU.
+States, rewards, ends and observations must be equal bit for bit, on CUDA and on the CPU. The frame
+MSE against upstream frames on the same device is recorded in ``tests/fixtures/source_mse.json``.
 """
 
 from __future__ import annotations
@@ -12,6 +12,8 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs.testing import conformance as C
+from tests.helpers import source_mse as SM
 from tests.helpers.reference.semantics import assert_same_state
 
 jax = pytest.importorskip("jax")
@@ -38,11 +40,15 @@ STEPS = 256
 SEED = 20260811
 
 
-@pytest.mark.parametrize("name", NAMES)
-def test_every_lane_matches_upstream_on_the_gpu_over_a_long_rollout(name):
+def _rollout(name: str, device: str) -> np.ndarray:
+    """Step every lane beside its upstream lane on ``device``; check states, rewards, ends and observations.
+
+    Returns the per-frame MSE of the frames against upstream frames, on the 0-255 scale.
+    """
     from craftax.craftax_env import make_craftax_env_from_name
 
-    with se.make(name, num_envs=LANES, device="cuda") as env, jax.default_device(GPU):
+    jax_device = GPU if device == "cuda" else jax.devices("cpu")[0]
+    with se.make(name, num_envs=LANES, device=device) as env, jax.default_device(jax_device):
         reset, step = upstream(env.reference_id)
         pixels = make_craftax_env_from_name(env.reference_id.replace("Symbolic", "Pixels"), auto_reset=False)
         draw = jax.jit(pixels.get_obs)
@@ -51,11 +57,11 @@ def test_every_lane_matches_upstream_on_the_gpu_over_a_long_rollout(name):
         for lane, (engine, key) in enumerate(lanes):
             assert_lane(state, lane, engine, key)
         rng = np.random.default_rng(SEED)
-        ends = 0
+        ends, mse = 0, []
         for t in range(STEPS):
-            action = torch.as_tensor(rng.integers(0, env.action_high + 1, (LANES, 1)), device="cuda")
+            action = torch.as_tensor(rng.integers(0, env.action_high + 1, (LANES, 1)), device=device)
             result = env.step(action)
-            frames = result["frames"][:, -1].cpu().numpy()
+            frames = result["frames"][:, -1].cpu().numpy().astype(np.float64)
             for lane in range(LANES):
                 obs, engine, reward, done, key = step(lanes[lane][1], lanes[lane][0], int(action[lane, 0]))
                 lanes[lane] = [engine, key]
@@ -63,21 +69,40 @@ def test_every_lane_matches_upstream_on_the_gpu_over_a_long_rollout(name):
                 assert result["reward"][lane].item() == float(reward), (t, lane)
                 assert result["terminated"][lane].item() == bool(done), (t, lane)
                 ends += bool(done)
-                np.testing.assert_array_equal(frames[lane], frame(draw(engine)), err_msg=f"step {t} lane {lane}")
+                mse.append(float(((frames[lane] - frame(draw(engine))) ** 2).mean()))
                 if name.endswith("Symbolic"):
                     np.testing.assert_array_equal(result["observation"][lane].cpu().numpy(), np.asarray(obs))
         assert ends, "no lane reached the end of an episode"
+    return np.asarray(mse)
+
+
+@pytest.mark.parametrize("name", NAMES)
+@pytest.mark.parametrize("device", ["cuda", "cpu"])
+def test_every_lane_matches_upstream_over_a_long_rollout(name, device):
+    """States match bit for bit on both devices; frame MSE stays at the record of ``source_mse.json``."""
+    mse = _rollout(name, device)
+    got = C.mse_summary(mse)
+    print(f"\n{name} {device}: " + ", ".join(f"{k} {got[k]:.6f}" for k in SM.KEYS))
+    rec = SM.record(name)
+    assert rec is not None, f"{name} has no record in {SM.PATH}"
+    rec = rec if device == "cuda" else rec["cpu"]
+    assert rec["n"] == mse.size and rec["seed"] == SEED
+    problems = SM.problems(name, got, rec, rerecord="update the record from this test's output")
+    assert not problems, "\n".join(problems)
+    if device == "cuda":
+        assert not mse.any(), f"CUDA frames differ from upstream frames on the GPU in {int((mse > 0).sum())} frames"
 
 
 @pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxPixels"])
-def test_a_cuda_step_reads_nothing_back_to_the_host(name):
+def test_a_cuda_step_with_host_actions_reads_nothing_back_to_the_host(name):
+    """Host actions are checked on the host, so the step needs no flag from the device."""
     with se.make(name, num_envs=LANES, device="cuda") as env:
         env.reset(seed=SEED)
-        action = torch.zeros((LANES, 1), dtype=torch.int64, device="cuda")
-        env.step(action, frames=None)
+        action = np.zeros((LANES, 1), dtype=np.int64)
+        env.step(action)
         with jax.transfer_guard_device_to_host("disallow"):
             for _ in range(3):
-                env.step(action, frames=None)
+                env.step(action)
 
 
 def test_temporary_device_inputs_live_until_the_step_has_read_them():
