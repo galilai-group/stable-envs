@@ -148,19 +148,20 @@ class CraftaxEnv(Env):
         self._state, self._keys, views = self._k.reset(self._keys, self._lanes)
         return self._snapshot(views)
 
-    def _actions(self, actions):
-        """Device actions, and whether only the step itself can check their range.
+    def _actions(self, actions, shape: tuple[int, ...] | None = None):
+        """Device actions of ``shape`` (default ``(B,)``), and whether only the step itself can check their range.
 
         Host actions are checked here. Device actions outside the range are clamped to one step past
         it, so int32 cannot wrap them into the range, and the step rejects them on the device.
         """
+        shape = (self.B,) if shape is None else shape
         if torch.is_tensor(actions) and actions.device.type != "cpu" and self.device.type != "cpu":
-            a = actions.to(self.device).reshape(self.B)
+            a = actions.to(self.device).reshape(shape)
             if a.is_floating_point():
                 raise self._invalid_actions()
             return a.to(torch.int64).clamp(-1, self.action_high + 1), True
         host = actions.cpu() if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
-        host = host.reshape(self.B)
+        host = host.reshape(shape)
         if host.is_floating_point() or bool(((host < 0) | (host > self.action_high)).any()):
             raise self._invalid_actions()
         if self.device.type == "cpu":
@@ -206,6 +207,75 @@ class CraftaxEnv(Env):
 
     def _step(self, actions, *, active=None):
         return self._advance(actions, active, snapshot=True)
+
+    def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
+        """Advance one action or a sequence of actions per environment, as :meth:`Env.step` does.
+
+        A sequence whose ``states`` and ``frames`` each select no step, the last step or every step runs
+        in one jitted call. Its results are equal to those of the same steps one at a time. When a CUDA
+        tensor holds an action outside the range, every environment stays as it was for the whole
+        sequence, and the next call raises ``ValueError``.
+
+        Args:
+            actions: ``(B, 1)`` or ``(B,)`` for one step, or ``(B, T, 1)`` for ``T`` steps.
+            states: Slice over the steps that selects which states to return, or None.
+            frames: Slice over the steps that selects which frames to render, or None.
+
+        Returns:
+            The TensorDict that :meth:`Env.step` returns.
+        """
+        fused = self._fused_sequence(actions, states, frames)
+        return super().step(actions, states=states, frames=frames) if fused is None else fused
+
+    def _fused_sequence(self, actions, states, frames) -> TensorDict | None:
+        from ..._core.stepping import _actions, _selection
+
+        self._check_open("step")
+        acts, sequence = _actions(self, actions)
+        length = acts.shape[1] if sequence else 1
+        if length == 1:
+            return None
+        picks = []
+        for value, name in ((states, "states"), (frames, "frames")):
+            indices = _selection(value, length, name)
+            if indices is None:
+                picks.append("none")
+            elif indices == (length - 1,):
+                picks.append("last")
+            elif indices == tuple(range(length)):
+                picks.append("all")
+            else:
+                return None
+        self._check_pending()
+        state = self._live("step")
+        a, deferred = self._actions(acts, (self.B, length))
+        out = self._k.sequence(self._keys, state, a, self._lanes, *picks)
+        self._state, self._keys, valid, reward, done, observation, blocks, every, views, last, invalid = out
+        if deferred:
+            invalid.copy_to_host_async()
+            self._pending = invalid
+        result = {
+            "state": self._snapshot(views),
+            "reward": reward,
+            "terminated": done,
+            "truncated": torch.zeros((self.B, length), dtype=torch.bool, device=self.device),
+        }
+        if observation is not None:
+            result["observation"] = observation
+        result["valid"] = valid
+        if picks[0] == "all":
+            result["states"] = self._snapshot(self._k.split(blocks), [self.B, length])
+            result["state_valid"] = valid.clone()
+        elif picks[0] == "last":
+            result["states"] = result["state"].unsqueeze(1).clone()
+            result["state_valid"] = valid[:, -1:].clone()
+        if picks[1] == "all":
+            result["frames"] = every
+            result["frame_valid"] = valid.clone()
+        elif picks[1] == "last":
+            result["frames"] = last.unsqueeze(1)
+            result["frame_valid"] = valid[:, -1:].clone()
+        return build_tensordict(result, [self.B], self.device)
 
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._advance(actions, active, snapshot=False)
