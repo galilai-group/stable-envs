@@ -79,6 +79,7 @@ Facts about the source libraries, such as which source draws on a GPU, are in
 | `offline_sweep.py` | Saves frame inputs, and times stable-envs and the source on the same inputs. Also writes the frame MSE |
 | `online_ladder.py` | Times seeded episodes with fixed actions: steps, and steps with frames |
 | `draw.py` | The one call that draws stable-envs frames from stored inputs (`env.render`) |
+| `jax_source.py` | The batched JAX source of the Craftax classes: upstream Craftax under one `jit(vmap(...))` |
 | `paper/summarize.py` | Writes Markdown tables from one results directory |
 | `paper/sanity.py` | Checks the spread and the status of each cell before you use its numbers |
 
@@ -140,6 +141,13 @@ measures only the cells that are missing.
 - `step`: physics steps with L lanes for each L of the sweep, and the source stepping L envs on CPU.
 - `frames`: steps with a frame after each step. The source steps and draws in worker processes, one core each.
   The parent sends step t+1 before it reads step t.
+- The Craftax classes have two sources. The stable-worldmodel `CraftaxWrapper` runs in the worker processes as
+  above. It draws no frames for the Symbolic classes. The batched JAX source runs upstream Craftax with
+  `auto_reset=False` as one jitted, vmapped call over all lanes, on the device of the cell. It splits the keys inside
+  the call, and the actions are on the device before timing. Without frames, the Pixels step drops its observation,
+  as stable-envs does, and the Symbolic step keeps it. With frames, each step returns uint8 frames; the Symbolic
+  classes draw them with the pixel env of their game. Offline, this source draws the stored States at each batch.
+  It is also the reference of the Craftax frame MSE. Each cell compares stable-envs with the faster of the two sources.
 
 ### Output
 
@@ -148,6 +156,9 @@ measures only the cells that are missing.
 - `offline/<Env>/src-{cpu,gpu}-<P>p.json`: source frames/s in P processes.
 - `offline/<Env>/mse-{cpu,gpu}.json`: frame MSE against the source (mean, 95th percentile, maximum).
 - `online/<Env>/{snv,src}-{step,render}-*-L<L>.json`: steps/s at L lanes.
+- `offline/<Env>/src-jax-{cpu,gpu}.json` and `online/<Env>/src-jax-{step,render}-{cpu,gpu}-L<L>.json`: the batched
+  JAX source (Craftax).
+- Each timed cell records `cpu_util`: CPU seconds of the timing process, all threads, per wall second.
 
 Each timed cell keeps the median rate and the rate of each window (`rates`). A cell whose rates spread by more
 than 10% is not reliable. Measure it again before you use it.

@@ -7,7 +7,8 @@
   "dmc": 1500,
   "fetch": 1800,
   "ogbench": 1800,
-  "rocket": 2400
+  "rocket": 2400,
+  "craftax": 1800
  },
  "env_s": {
   "Acrobot": 973,
@@ -149,7 +150,11 @@
   "PointMazeMediumStitch": "ogbench",
   "PointMazeTeleportNavigate": "ogbench",
   "PointMazeTeleportStitch": "ogbench",
-  "PyFlytRocketLanding": "rocket"
+  "PyFlytRocketLanding": "rocket",
+  "CraftaxClassicPixels": "craftax",
+  "CraftaxClassicSymbolic": "craftax",
+  "CraftaxPixels": "craftax",
+  "CraftaxSymbolic": "craftax"
  },
  "min_mem_gib": {
   "PyFlytRocketLanding": 110
@@ -369,6 +374,10 @@
   "PyFlytRocketLanding": "pybullet-egl",
   "SimplePointMaze": "",
   "TwoRoom": "",
-  "TwoRoomTarget": ""
+  "TwoRoomTarget": "",
+  "CraftaxClassicPixels": "",
+  "CraftaxClassicSymbolic": "",
+  "CraftaxPixels": "",
+  "CraftaxSymbolic": ""
  }
 }

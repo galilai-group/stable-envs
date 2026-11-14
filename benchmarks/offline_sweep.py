@@ -20,6 +20,7 @@ import numpy as np
 import torch
 
 from benchmarks.draw import draw
+from benchmarks.jax_source import CraftaxSource, is_jax_source
 
 ROOT = Path(__file__).resolve().parents[1]
 #: Seconds of untimed work before the first timed window of an arm.
@@ -85,6 +86,7 @@ def _timed(
     while time.perf_counter() < end:
         next(units)
     rates, windows, items = [], [], []
+    cpu0 = time.process_time()
     for _ in range(repeats):
         if windows and sum(windows) >= budget_s:
             break
@@ -106,6 +108,8 @@ def _timed(
         "window_s": windows,
         "items": items,
         "repeats": len(rates),
+        # CPU seconds of this process (all its threads) per wall second of the windows.
+        "cpu_util": (time.process_time() - cpu0) / sum(windows),
     }
 
 
@@ -481,6 +485,62 @@ def cmd_source(args) -> None:
     Path(args.output).write_text(json.dumps(results, indent=1))
 
 
+def cmd_source_jax(args) -> None:
+    """Sweep the stored States through the batched JAX source (``benchmarks/jax_source.py``) at each batch size."""
+    import jax
+
+    _snv()
+    tag = "gpu" if args.device.startswith("cuda") else "cpu"
+    results = {
+        "arm": f"source-jax-{tag}",
+        "host": _host(),
+        "envs": {},
+        "budget_s": args.budget,
+        "repeats_max": args.repeats,
+    }
+    for name in args.envs:
+        path = Path(args.states) / f"{name}.pt"
+        if not path.exists() or not is_jax_source(name):
+            results["envs"][name] = {"status": "skipped", "reason": "no state file or no batched JAX source"}
+            continue
+        blob = _load_states(path)
+        rows = []
+        try:
+            src = CraftaxSource(name, args.device)
+            states = src.state_from(blob["states"])
+            n = int(blob["states"].batch_size[0])
+        except Exception as e:  # noqa: BLE001
+            results["envs"][name] = {"status": "error", "error": f"{type(e).__name__}: {e}"[:500]}
+            continue
+        for b in args.batches:
+            try:
+                spans = _chunks(n, b)
+                # Each batch is sliced before timing; the source keeps its states on its device.
+                parts = [jax.tree.map(lambda x, s=s, e=e: x[s:e], states) for s, e in spans]
+                shape = list(jax.block_until_ready(src.render(parts[0])).shape[1:])
+
+                def sweep(parts=parts, spans=spans):
+                    for part, (s, e) in zip(parts, spans):
+                        jax.block_until_ready(src.render(part))
+                        yield e - s
+
+                t = _timed(_cycle(sweep), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+                row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": t["rate"], **t}
+                del parts
+            except Exception as e:  # noqa: BLE001
+                msg = f"{type(e).__name__}: {e}"
+                row = {"batch": b, "status": "oom" if "out of memory" in msg.lower() else "error", "error": msg[:500]}
+            print(f"{name} {results['arm']} b={b} {row['status']} {row.get('fps', 0):.0f} fps", flush=True)
+            rows.append(row)
+        results["envs"][name] = {
+            "size": blob["size"],
+            "source": src.upstream_id,
+            "device": str(src.device),
+            "points": rows,
+        }
+    Path(args.output).write_text(json.dumps(results, indent=1))
+
+
 def cmd_mse(args) -> None:
     """Per-frame MSE of stable-envs frames against the source's for the first ``n`` stored inputs, on the 0-255 scale."""
     snv = _snv()
@@ -490,17 +550,25 @@ def cmd_mse(args) -> None:
     for name in args.envs:
         blob = _load_states(Path(args.states) / f"{name}.pt")
         cls = _class(name)
-        reason = _source_skip(cls, blob, gpu=False)
+        jax_source = is_jax_source(name)
+        reason = None if jax_source else _source_skip(cls, blob, gpu=False)
         if reason:
             results["envs"][name] = {"status": "skipped", "reason": reason}
             continue
         try:
             kind, data = _frames_of(blob, args.device)
-            inputs = _source_inputs(blob, kind)
-            n = min(args.n, len(inputs))
-            # The source draws before any stable-envs env exists in this process (see online_ladder).
-            ref = _sources().reference_env(cls, blob["size"])
-            theirs, keep = source_frames(cls, ref, inputs[:n])
+            if jax_source:
+                # The upstream renderer on CPU draws the same States.
+                n = min(args.n, len(data))
+                src = CraftaxSource(name, "cpu")
+                theirs = np.asarray(src.render(src.state_from(data[:n])))
+                keep = np.ones(n, bool)
+            else:
+                inputs = _source_inputs(blob, kind)
+                n = min(args.n, len(inputs))
+                # The source draws before any stable-envs env exists in this process (see online_ladder).
+                ref = _sources().reference_env(cls, blob["size"])
+                theirs, keep = source_frames(cls, ref, inputs[:n])
             with snv.make(name, num_envs=n, size=blob["size"], device=args.device) as env:
                 ours = draw(env, _on_device(kind, data[:n], env.device)).cpu().numpy()
             per_frame = C.frame_mse(ours[keep], theirs[keep])
@@ -602,7 +670,7 @@ def cmd_codec(args) -> None:
 
 def cmd_list(args) -> None:
     snv = _snv()
-    names = [n for n in snv.list_envs() if not n.startswith("Craftax")]
+    names = list(snv.list_envs())
     if args.family:
         names = [n for n in names if (snv.info(n)["family"] or "") in args.family]
     print(" ".join(names))
@@ -642,6 +710,10 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=256)
     c.add_argument("--device", default="cuda")
     c.add_argument("--output", required=True)
+    j = sub.add_parser("source-jax", parents=[common])
+    j.add_argument("--device", default="cpu")
+    j.add_argument("--batches", type=int, nargs="+", default=[1, 256, 512, 1024, 2048])
+    j.add_argument("--output", required=True)
     m = sub.add_parser("mse", parents=[common])
     m.add_argument("--device", default="cuda")
     m.add_argument("--n", type=int, default=256)
@@ -654,6 +726,7 @@ def main() -> None:
         "states": cmd_states,
         "ours": cmd_ours,
         "source": cmd_source,
+        "source-jax": cmd_source_jax,
         "codec": cmd_codec,
         "mse": cmd_mse,
         "list": cmd_list,

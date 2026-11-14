@@ -10,6 +10,11 @@
 #              tests/helpers/reference/sources.py);
 #     step     physics steps with L lanes for each L of the sweep, and the source stepping L envs on CPU;
 #     frames   steps with frames, and the source drawing on CPU, plus on the GPU where the source has a GPU renderer.
+#   A class with a batched JAX source (Craftax, benchmarks/jax_source.py) also gets the source cells of that source on
+#   each device (src-jax-*.json): offline at each batch, steps and frames at each L. It has no offline source in
+#   processes. Its stable-worldmodel source runs in the process pool as usual; the Symbolic classes draw no frames there.
+#   The pool cells of such a class stop at POOL_CAP_L (default 64) lanes: the wrapper compiles its jitted calls once per
+#   env (seconds and about 140 MB each for Classic), and a worker steps its envs one after the other, so its rate stops growing.
 #   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
 #   CPU_SOURCES=0 leaves out the source arms that run on CPU (for GPU jobs whose CPU source cells come from a CPU job).
 #   An output file that exists is kept, so a rerun with the same OUT fills in only what is missing.
@@ -68,7 +73,7 @@ egl() { env MUJOCO_GL=egl PYOPENGL_PLATFORM=egl "$@"; }
 MESA_EGL=/usr/share/glvnd/egl_vendor.d/50_mesa.json
 sw() {
   local x=(); command -v xvfb-run >/dev/null && x=(xvfb-run -a)
-  env $([ -f $MESA_EGL ] && echo __EGL_VENDOR_LIBRARY_FILENAMES=$MESA_EGL) LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw "${x[@]}" "$@"
+  env $([ -f $MESA_EGL ] && echo __EGL_VENDOR_LIBRARY_FILENAMES=$MESA_EGL) JAX_PLATFORMS=cpu LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw "${x[@]}" "$@"
 }
 
 {
@@ -92,6 +97,7 @@ venv() {  # venv FAMILY -> python path of a fresh family venv in $WORK
     ogbench) extras="ogbench ogbench-manipulation ogbench-manipulation-gpu"; groups="pin-ogbench";;
     fetch) extras="robotics mjwarp"; groups="pin-fetch";;
     rocket) extras="rocket"; groups="pin-rocket";;
+    craftax) extras="craftax craftax-gpu"; groups="pin-craftax";;
     *) echo "unknown family $fam" >&2; return 1;;
   esac
   local v=$WORK/venv-$fam
@@ -195,12 +201,16 @@ for spec in "$@"; do
       for f in "$SRC_FROM"/online/"$E"/src-*.json; do [ -s "$f" ] && cp -n "$f" $n/; done
     fi
     GPUSRC=$($P -c "import stable_envs as s; from tests.helpers.reference.sources import reference_gpu_render as r; print(r(s.info('$E')['class']) or '')")
+    JAXSRC=$($P -c "from benchmarks.jax_source import is_jax_source as j; print('1' if j('$E') else '')")
+    # The stable-worldmodel wrapper of the Symbolic Craftax classes draws no frames.
+    POOLFRAMES=$([[ $E == Craftax*Symbolic ]] || echo 1)
     for dev in $DEVICES; do
       tag=$([ $dev = cpu ] && echo cpu || echo gpu)
       if has offline; then
         once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/snv-$tag.json
         once $o/mse-$tag.json gl $dev $OFF mse --envs $E --states $S --device $dev --output $o/mse-$tag.json
-        for p in 1 $NCORES; do
+        [ -n "$JAXSRC" ] && once $o/src-jax-$tag.json gl $dev $OFF source-jax --envs $E --states $S --device $dev --batches $(sweep $dev) --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/src-jax-$tag.json
+        for p in $([ -z "$JAXSRC" ] && echo 1 $NCORES); do
           [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/src-cpu-${p}p.json
           [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/src-gpu-${p}p.json
         done
@@ -215,15 +225,18 @@ for spec in "$@"; do
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1
+        [ -n "$JAXSRC" ] && [ $L -gt ${POOL_CAP_L:-64} ] && srcok=0
         [ -n "${SRC_CAP_FILE:-}" ] && grep -qx "$E" "$SRC_CAP_FILE" && [ $L -gt ${SRC_CAP_L:-256} ] && srcok=0
         if has step; then
           [ $CPU_SOURCES = 1 ] && [ $srcok = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
           arm=$([ $dev = cpu ] && echo snv-step || echo snv-step-gpu)
           once $n/snv-step-$tag-L$L.json gl $dev $ON run $COMMON --arms $arm --output $n/snv-step-$tag-L$L.json
+          [ -n "$JAXSRC" ] && once $n/src-jax-step-$tag-L$L.json gl $dev $ON run $COMMON --arms src-jax-step --jax-device $dev --output $n/src-jax-step-$tag-L$L.json
           [ -n "$slice" ] && [ $srcok = 1 ] && once $n/snv-step-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms $arm --chunks 1 8 $slice --output $n/snv-step-$tag-L$L-s8.json
         fi
         if has frames; then
-          [ $CPU_SOURCES = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
+          [ -n "$JAXSRC" ] && once $n/src-jax-render-$tag-L$L.json gl $dev $ON run $COMMON --arms src-jax-render --jax-device $dev --ours-device $dev --output $n/src-jax-render-$tag-L$L.json
+          [ $CPU_SOURCES = 1 ] && [ -n "$POOLFRAMES" ] && { [ -z "$JAXSRC" ] || [ $srcok = 1 ]; } && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
           [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda $slice --output $n/src-render-gpu-L$L.json
           once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
           [ -n "$slice" ] && once $n/snv-render-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms snv-render-$tag --chunks 1 8 $slice --output $n/snv-render-$tag-L$L-s8.json
