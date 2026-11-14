@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import torch
 from tensordict import TensorDict
 
@@ -134,3 +135,79 @@ def stack_leaves(values) -> TensorDict:
         except (_Irregular, KeyError):
             pass
     return first.apply(lambda *leaves: torch.stack(leaves, dim=1), *values[1:], batch_size=batch)
+
+
+
+#: Byte alignment of each dtype group in the packed transfer buffer; a multiple of every dtype's size.
+_ALIGN = 16
+_NUMPY = {
+    torch.bool: np.bool_,
+    torch.uint8: np.uint8,
+    torch.int8: np.int8,
+    torch.int16: np.int16,
+    torch.int32: np.int32,
+    torch.int64: np.int64,
+    torch.float16: np.float16,
+    torch.float32: np.float32,
+    torch.float64: np.float64,
+}
+
+
+def _leaves(node, prefix, out, batch):
+    if node.batch_size != batch:
+        raise _Irregular
+    for key, value in node._tensordict.items():
+        if type(value) is torch.Tensor:
+            if value.dtype not in _NUMPY or value.device.type != "cpu" or value.requires_grad:
+                raise _Irregular
+            out.append(((*prefix, key), value))
+        elif _dense(value) and value._tensordict:
+            _leaves(value, (*prefix, key), out, batch)
+        else:
+            raise _Irregular
+    return out
+
+
+def to_device(td: TensorDict, device) -> TensorDict:
+    """``td.to(device)`` for a CPU TensorDict, with one host-to-device copy for all its leaves.
+
+    The leaves are packed by dtype into one pinned buffer, which moves in one asynchronous copy; each returned leaf
+    is a view of the device copy. A TensorDict that isn't dense, or that has a leaf NumPy can't hold, moves leaf by
+    leaf.
+    """
+    device = _device(device)
+    if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu"):
+        return td.to(device)
+    try:
+        leaves = _leaves(td, (), [], td.batch_size)
+    except _Irregular:
+        return td.to(device)
+    groups: dict = {}
+    for index, (_, value) in enumerate(leaves):
+        groups.setdefault(value.dtype, []).append(index)
+    layout, total = [], 0
+    for dtype, indices in groups.items():
+        sizes = [leaves[i][1].numel() for i in indices]
+        nbytes = sum(sizes) * leaves[indices[0]][1].element_size()
+        layout.append((dtype, indices, sizes, total, nbytes))
+        total += -(-nbytes // _ALIGN) * _ALIGN
+    host = torch.empty(max(total, _ALIGN), dtype=torch.uint8, pin_memory=True)
+    packed = host.numpy()
+    for dtype, indices, sizes, start, nbytes in layout:
+        segment, position = packed[start : start + nbytes].view(_NUMPY[dtype]), 0
+        for i, size in zip(indices, sizes):
+            segment[position : position + size] = leaves[i][1].numpy().reshape(-1)
+            position += size
+    # The pinned block isn't reused before this copy ends: the host allocator records the copy's stream.
+    moved = host.to(device, non_blocking=True)
+    parts: list = [None] * len(leaves)
+    for dtype, indices, sizes, start, nbytes in layout:
+        for i, part in zip(indices, moved[start : start + nbytes].view(dtype).split_with_sizes(sizes)):
+            parts[i] = part
+    tree: dict = {}
+    for (key, value), part in zip(leaves, parts):
+        node = tree
+        for name in key[:-1]:
+            node = node.setdefault(name, {})
+        node[key[-1]] = part if value.dim() == 1 else part.view(value.shape)
+    return TensorDict._new_unsafe(tree, batch_size=td.batch_size, device=device)

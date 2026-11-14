@@ -10,7 +10,7 @@ import time
 import numpy as np
 import torch
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from .state import model_columns, new_columns, write_task_row
 
@@ -214,6 +214,10 @@ class DMCBatchAdapter(SimulatorAdapter):
         return self.get_state()
 
     def get_state(self):
+        state = self._host_state()
+        return state if self.device.type == "cpu" else to_device(state, self.device)
+
+    def _host_state(self):
         self.lanes._check_open()
         live = {
             **self._live,
@@ -228,8 +232,7 @@ class DMCBatchAdapter(SimulatorAdapter):
             _put(state, key, torch.from_numpy(np.array(live.get(key, column))))
         for key, value in ({} if self.lanes.physics is None else self.lanes.physics.export()).items():
             _put(state, key, torch.from_numpy(value))
-        state = build_tensordict(state, [self.num_envs], "cpu")
-        return state if self.device.type == "cpu" else state.to(self.device)
+        return build_tensordict(state, [self.num_envs], "cpu")
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -262,7 +265,7 @@ class DMCBatchAdapter(SimulatorAdapter):
             self._reset_next = self._count >= self._limit
         self._cumulative += reward
         out = {
-            **({"state": self.get_state()} if capture_state else {}),
+            **({"state": self._host_state()} if capture_state else {}),
             "reward": torch.from_numpy(reward),
             "terminated": torch.zeros(self.num_envs, dtype=torch.bool),
             "truncated": torch.zeros(self.num_envs, dtype=torch.bool),
@@ -273,7 +276,7 @@ class DMCBatchAdapter(SimulatorAdapter):
             out["success"] = torch.from_numpy(np.array(info[0], np.float64))
             out["info"] = {k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}
         out = build_tensordict(out, [self.num_envs], "cpu")
-        return out if self.device.type == "cpu" else out.to(self.device)
+        return out if self.device.type == "cpu" else to_device(out, self.device)
 
     def close(self):
         self.lanes.close()

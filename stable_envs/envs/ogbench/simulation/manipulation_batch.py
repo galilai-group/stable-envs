@@ -8,7 +8,7 @@ import torch
 from ogbench.manipspace import lie, mjcf_utils
 from tensordict import TensorDict
 
-from ...._core.tensordicts import _device, build_tensordict
+from ...._core.tensordicts import _device, build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, native_threads
 from ...._execution.policy import cpu_affinity, process_count
 from .compatibility import COMPILED_FIELDS, MODEL_VALUES, CompatibleCube, CompatibleScene, compiled_fields, values_key
@@ -19,6 +19,7 @@ from .pcg import pcg_decode, pcg_encode
 #: MjData fields of the integration State, in State order, as ``mujoco.batch`` names them.
 _BATCH_NAMES = {name: "qacc_warmstart" if name == "warmstart" else name for name in FLAGS}
 _BATCH_NAMES["plugin"] = "plugin_state"
+_CPU = torch.device("cpu")
 
 
 class Snapshot:
@@ -309,11 +310,15 @@ class OGBManipulationBatchAdapter:
     # State.
 
     def get_state(self):
+        state = self._host_state()
+        return state if self.device.type == "cpu" else to_device(state, self.device)
+
+    def _host_state(self):
         self._check_open()
         columns = dict(self._columns)
         for name, value in self._views.items():
             columns["physics", name] = (value != 0) if name == "eq_active" else value
-        return self._snapshot.build(columns, self.device)
+        return self._snapshot.build(columns, _CPU)
 
     def render_columns(self):
         from .render_state import projected_keys
@@ -392,10 +397,11 @@ class OGBManipulationBatchAdapter:
         if len(ids):
             self._advance(actions if active is None else actions[ids], ids)
             self._stale = True
-        result = {key: torch.from_numpy(value.copy()).to(self.device) for key, value in self._outputs.items()}
+        result = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
         if capture_state:
-            result["state"] = self.get_state()
-        return build_tensordict(result, [self.num_envs], self.device)
+            result["state"] = self._host_state()
+        result = build_tensordict(result, [self.num_envs], _CPU)
+        return result if self.device.type == "cpu" else to_device(result, self.device)
 
     def _advance(self, actions, ids):
         c = self._columns
