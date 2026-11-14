@@ -1,0 +1,161 @@
+"""Select the simulation backend of a batch from the device, the batch size and a measured switch point.
+
+A family declares, per device type, the backend it uses for small batches and the one it uses for large batches.
+With ``simulation_backend="auto"``, a batch of ``large_backend_min_envs`` or more rows uses the large-batch backend.
+Without a set or cached value, the first batch of each power-of-two batch range times both backends once and stores
+the result in the tuning cache of the device.
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Mapping, Sequence
+
+import torch
+
+from .. import tuning
+from .._core.config import log
+from .._core.stepping import _threads
+
+#: The knob that holds the switch point.
+KNOB = "large_backend_min_envs"
+#: Request that selects a backend from the device and the batch size.
+AUTO = "auto"
+
+#: ``measure(backend, num_envs)`` builds ``backend`` with ``num_envs`` rows and returns ``(step, close)``:
+#: ``step()`` advances every row once, and ``close()`` releases the backend.
+Measure = Callable[[str, int], tuple[Callable[[], object], Callable[[], None]]]
+
+
+def _seconds_per_step(step: Callable[[], object], device: torch.device) -> float:
+    """Return the mean seconds of one ``step()`` call after two warm-up calls, over at least 0.1 s and 5 calls."""
+    sync = torch.cuda.synchronize if device.type == "cuda" else (lambda: None)
+    # Steps keep torch on one thread while a native pool advances the batch; the timing does the same.
+    with _threads(1):
+        for _ in range(2):
+            step()
+        sync()
+        calls, start = 0, time.perf_counter()
+        while calls < 5 or time.perf_counter() - start < 0.1:
+            step()
+            calls += 1
+            if calls % 5 == 0:
+                sync()
+        sync()
+        return (time.perf_counter() - start) / calls
+
+
+def _time(measure: Measure, backend: str, num_envs: int, device: torch.device) -> float:
+    step, close = measure(backend, num_envs)
+    try:
+        return _seconds_per_step(step, device)
+    finally:
+        close()
+
+
+def _cached_neighbours(path: str, device, num_envs: int) -> str | None:
+    """Return ``"large"`` or ``"small"`` when a cached range of ``path`` decides ``num_envs``.
+
+    The small-batch backend steps rows with a cost that grows with the batch, and the large-batch backend has a
+    per-call cost that is close to constant at small batches. So a smaller range that chose the large-batch backend
+    also decides larger batches, and a larger range that chose the small-batch backend decides smaller ones.
+    """
+    data, current = tuning.read_cache(device)
+    if not current:
+        return None
+    lo, _ = tuning.batch_range(num_envs)
+    for key, knobs in data.get("entries", {}).items():
+        parts = key.split("|")
+        if len(parts) != 3 or parts[0] != path or KNOB not in knobs:
+            continue
+        a, b = (int(x) for x in parts[2].split("-"))
+        large = knobs[KNOB] <= a
+        if large and b < lo:
+            return "large"
+        if not large and a > num_envs:
+            return "small"
+    return None
+
+
+def _calibrate(path: str, num_envs: int, device: torch.device, small: str, large: str, measure: Measure) -> bool:
+    """Time both backends and return True when the large-batch backend is faster at ``num_envs`` rows.
+
+    The small-batch backend is timed at 1, 2, 4, ... rows up to ``num_envs``. Its step time doesn't fall as the
+    batch grows, so the search stops as soon as it is slower than the large-batch backend at ``num_envs``.
+    """
+    start = time.perf_counter()
+    try:
+        large_s = _time(measure, large, num_envs, device)
+    except Exception as e:  # noqa: BLE001 - a backend that can't run loses
+        log("WARNING", f"{path}: timing the {large} backend failed ({type(e).__name__}: {e}); using {small}.")
+        return False
+    rows, small_s = 1, 0.0
+    while True:
+        rows = min(rows, num_envs)
+        small_s = _time(measure, small, rows, device)
+        if small_s > large_s or rows == num_envs:
+            break
+        rows *= 2
+    wins = small_s > large_s
+    log(
+        "INFO",
+        f"{path}: {large} steps {num_envs} rows in {large_s * 1e6:.0f} us, {small} steps {rows} rows in "
+        f"{small_s * 1e6:.0f} us; using {large if wins else small} "
+        f"(measured in {time.perf_counter() - start:.1f} s, cached).",
+    )
+    return wins
+
+
+def select_backend(
+    path: str,
+    num_envs: int,
+    device: str | torch.device,
+    requested: str | None,
+    backends: Mapping[str, tuple[str, str]],
+    *,
+    choices: Sequence[str],
+    measure: Measure | None = None,
+) -> str:
+    """Return the simulation backend of a batch.
+
+    Args:
+        path: Simulation path of the family and task, for example ``"dmc-sim/reacher"``. It keys the cache.
+        num_envs: Number of rows in the batch.
+        device: Device of the outputs.
+        requested: ``"auto"`` (or None) to select from ``backends``, else one of ``choices``.
+        backends: ``{device type: (small-batch backend, large-batch backend)}``. A device type that isn't a key uses
+            the ``"cpu"`` entry.
+        choices: Backends that ``requested`` may name.
+        measure: Builds and steps one backend for the calibration; without it the large-batch backend is used when
+            no value is set or cached.
+
+    Raises:
+        ValueError: If ``requested`` is neither ``"auto"``, None nor one of ``choices``.
+    """
+    if requested is None:
+        requested = AUTO
+    if requested != AUTO:
+        if requested not in choices:
+            names = ", ".join(repr(c) for c in (AUTO, *choices))
+            raise ValueError(f"simulation_backend must be one of {names}; got {requested!r}")
+        return requested
+    device = torch.device(device)
+    small, large = backends.get(device.type, backends["cpu"])
+    if small == large:
+        return small
+    value = tuning.get(KNOB, path=path, size=0, batch=num_envs, device=device)
+    if value is not None:
+        return large if num_envs >= value else small
+    side = _cached_neighbours(path, device, num_envs)
+    if side is not None:
+        return large if side == "large" else small
+    if measure is None:
+        return large
+    wins = _calibrate(path, num_envs, device, small, large, measure)
+    lo, hi = tuning.batch_range(num_envs)
+    try:
+        tuning.write_cache({tuning.entry_key(path, 0, num_envs): {KNOB: lo if wins else hi + 1}}, device)
+    except OSError as e:
+        log("WARNING", f"{path}: could not cache the backend choice ({e}).")
+    return large if wins else small
+

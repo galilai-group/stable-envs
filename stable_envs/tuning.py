@@ -140,6 +140,7 @@ KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
+        Knob("large_backend_min_envs", None, ("dmc-sim", "ogb-sim", "pusht-sim", "navigation"), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; measured per simulation path and batch range when unset."),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),

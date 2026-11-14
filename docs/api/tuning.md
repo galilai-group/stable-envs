@@ -16,7 +16,7 @@ print(snv.tuning.describe()["nav_render_chunk"])        # (256, 'fallback')
 
 ## How a value is chosen
 
-The library reads a knob each time it does the work, and a change applies to the next call. `workers`, `worker_min_lanes`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
+The library reads a knob each time it does the work, and a change applies to the next call. `large_backend_min_envs` is read when the environment selects its physics backend. `workers`, `worker_min_lanes`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
 
 | Source | Set by |
 |---|---|
@@ -46,6 +46,7 @@ Values are ints, and "batch rows" means the batch rows of one call. Each hardwar
 | Knob | Type | Fallback | Derived default | What it controls |
 |---|---|---|---|---|
 | `workers` | int (0 or more) | 8 | min(value, CPUs in the process affinity, batch rows) | Most worker processes of a CPU simulator batch, of a PushT, `OGBCube` or `OGBScene` reset, or of a PushT render, on Linux. The value 0 steps and resets every batch row, and draws every PushT frame, in the main process, except that a `PyFlytRocketLanding` batch of more than 1022 environments always uses processes. |
+| `large_backend_min_envs` | int | none | measured | Smallest batch that steps on the large-batch simulation backend with `simulation_backend="auto"`, for the classes that select their backend with it (see [Physics backends](../performance-tuning.md#physics-backends)). When no value is set, the first construction of each simulation path and power-of-two batch range times both backends and caches the result. |
 | `worker_min_lanes` | int | 64 | none | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered states that uses render workers. |
 | `worker_timeout` | int | 120 | none | Seconds that a CPU simulator worker can take to answer one request before the batch fails. A worker can take up to the larger of this value and 300 seconds to start. Set a larger value for environments whose reset or step takes minutes in one worker, for example with `snv.tuning.set(worker_timeout=600)`. |
 | `fetch_threads` | int | 4 | min(value, CPUs in the process affinity, batch rows) | Most simulator threads of an in-process Fetch batch with `simulation_backend="source"`. |
