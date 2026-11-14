@@ -224,18 +224,23 @@ class Kernel:
         high = int(upstream.action_space(params).n) - 1
 
         # One program serves full, masked and rejected steps, so no variant compiles in the middle of a run.
-        def advance(keys, state, actions, active):
-            invalid = jnp.any((actions < 0) | (actions > high))
+        def rejected(actions):
+            return jnp.any((actions < 0) | (actions > high))
+
+        def transition(keys, state, actions, live):
             new = jax.vmap(step)(keys, state, actions)
-            live = active & ~invalid
 
             def keep(fresh, old):
                 return jnp.where(live.reshape(live.shape + (1,) * (fresh.ndim - 1)), fresh, old)
 
             state, keys = jax.tree.map(keep, (new[0], new[1]), (state, keys))
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
-            # The flag is repeated per lane, so every output has the lane axis first.
-            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, jnp.broadcast_to(invalid, live.shape)
+            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs
+
+        # The flag is repeated per lane, so every output has the lane axis first.
+        def advance(keys, state, actions, active):
+            invalid = rejected(actions)
+            return *transition(keys, state, actions, active & ~invalid), jnp.broadcast_to(invalid, active.shape)
 
         # Upstream's pixel observation, scaled to uint8 as stable-worldmodel scales it on the host. The
         # barrier keeps XLA from folding the division into the scaling, which would round differently.
@@ -251,11 +256,33 @@ class Kernel:
 
             return run
 
+        # ``T`` steps in one call, as ``T`` calls of ``advance`` make them: a lane that ends stops. ``states``
+        # and ``frame`` are "none", "last" or "all": the steps whose packed state or frames are returned.
+        # Every lane keeps its state when any action of the sequence is outside the game's range.
+        def sequence(states: str, frame: str):
+            def run(keys, state, actions):
+                invalid = rejected(actions)
+
+                def body(carry, a):
+                    keys, state, active = carry
+                    state, keys, reward, done, obs = transition(keys, state, a, active & ~invalid)
+                    extra = (pack(state, keys) if states == "all" else None, frames(state) if frame == "all" else None)
+                    return (keys, state, active & ~done), (active, reward, done, obs, *extra)
+
+                active = jnp.ones(actions.shape[0], jnp.bool_)
+                (keys, state, _), out = jax.lax.scan(body, (keys, state, active), actions.T)
+                out = jax.tree.map(lambda x: jnp.swapaxes(x, 0, 1), out)
+                last = frames(state) if frame == "last" else None
+                return state, keys, *out, pack(state, keys), last, jnp.broadcast_to(invalid, active.shape)
+
+            return run
+
         def render_blocks(blocks):
             return frames(unpack(blocks)[0])
 
         #: Each function and its donated arguments. The step and the reset donate the live lanes: each
         #: call writes the next state over the last one.
+        picks = ("none", "last", "all")
         self._functions = {
             "reset": (reset_all, (0,)),
             "pack": (pack, ()),
@@ -263,6 +290,7 @@ class Kernel:
             "frames": (frames, ()),
             "render_blocks": (render_blocks, ()),
             **{("step", s, f): (program(s, f), (0, 1)) for s in (False, True) for f in (False, True)},
+            **{("sequence", s, f): (sequence(s, f), (0, 1)) for s in picks for f in picks},
         }
         self._jitted: dict = {}
         self._everyone: dict = {}
@@ -367,6 +395,18 @@ class Kernel:
         reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
         views = None if blocks is None else self.views(blocks)
         return state, keys, reward, done, obs, views, frames, invalid
+
+    def sequence(self, keys, state, actions: torch.Tensor, lanes: Lanes, states: str, frames: str):
+        """Advance ``(lanes, T)`` actions in one call and donate ``keys`` and ``state``.
+
+        ``states`` and ``frames`` are "none", "last" or "all". Returns the state, the keys, then
+        ``(lanes, T)`` valid flags, rewards and ends, the observations, the packed states of every step,
+        the frames of every step, views of the last state, the last frames, and the range flag.
+        """
+        actions = lanes.put(actions.to(torch.int32).contiguous())
+        state, keys, *out, invalid = self._jit(("sequence", states, frames), lanes)(keys, state, actions)
+        valid, reward, done, obs, blocks, every, packed, last = lanes.torch(tuple(out))
+        return state, keys, valid, reward, done, obs, blocks, every, self.views(packed), last, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:
