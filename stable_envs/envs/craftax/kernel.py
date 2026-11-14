@@ -8,17 +8,13 @@ from __future__ import annotations
 import contextlib
 import functools
 import importlib
-import os
 from dataclasses import dataclass
 
+import jax
+import jax.numpy as jnp
+import numpy as np
 import torch
-
-# JAX otherwise reserves most of the GPU at first use and leaves torch little of it.
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
-
-import jax  # noqa: E402
-import jax.numpy as jnp  # noqa: E402
-from craftax.craftax_env import make_craftax_env_from_name  # noqa: E402
+from craftax.craftax_env import make_craftax_env_from_name
 
 
 @contextlib.contextmanager
@@ -128,10 +124,15 @@ class Kernel:
                 columns[f.block].append(jax.lax.bitcast_convert_type(leaf, jnp.int32) if f.words else leaf)
             return tuple(jnp.concatenate(c, axis=1) for c in columns)
 
+        whole = {f.key for f in fields if f.width == sum(g.width for g in fields if g.block == f.block)}
+
         def unpack(blocks):
             leaves = []
             for f in fields:
                 leaf = blocks[f.block][:, f.start : f.start + f.width].reshape(-1, *f.shape)
+                if f.key in whole:
+                    # A whole block would come back as the input buffer, which the next step cannot donate.
+                    leaf = jnp.copy(leaf)
                 leaves.append(jax.lax.bitcast_convert_type(leaf, jnp.uint32) if f.words else leaf)
             return jax.tree_util.tree_unflatten(treedef, leaves[:-1]), leaves[-1]
 
@@ -149,29 +150,40 @@ class Kernel:
             state, keys = jax.vmap(reset)(keys)
             return state, keys, pack(state, keys)
 
-        def step_all(keys, state, actions):
-            state, keys, *outputs = jax.vmap(step)(keys, state, actions)
-            return state, keys, *outputs, pack(state, keys)
+        high = int(upstream.action_space(params).n) - 1
 
-        def masked_step_all(keys, state, actions, active):
+        # One program serves full, masked and rejected steps, so no variant compiles in the middle of a run.
+        def advance(keys, state, actions, active):
+            invalid = jnp.any((actions < 0) | (actions > high))
             new = jax.vmap(step)(keys, state, actions)
+            live = active & ~invalid
 
             def keep(fresh, old):
-                return jnp.where(active.reshape(active.shape + (1,) * (fresh.ndim - 1)), fresh, old)
+                return jnp.where(live.reshape(live.shape + (1,) * (fresh.ndim - 1)), fresh, old)
 
             state, keys = jax.tree.map(keep, (new[0], new[1]), (state, keys))
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
-            return state, keys, jnp.where(active, new[2], 0), new[3] & active, obs, pack(state, keys)
+            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, invalid
+
+        def step_all(keys, state, actions, active):
+            state, keys, *outputs = advance(keys, state, actions, active)
+            return state, keys, *outputs, pack(state, keys)
 
         def frames(state):
             return (jnp.clip(jax.vmap(pixels.get_obs)(state), 0.0, 1.0) * 255.0).astype(jnp.uint8)
 
-        self._reset = jax.jit(reset_all)
-        self._step = jax.jit(step_all)
-        self._masked_step = jax.jit(masked_step_all)
+        def render_blocks(blocks):
+            return frames(unpack(blocks)[0])
+
+        # The live lanes are donated: each call writes the next state over the last one.
+        self._reset = jax.jit(reset_all, donate_argnums=0)
+        self._step = jax.jit(step_all, donate_argnums=(0, 1))
+        self._advance = jax.jit(advance, donate_argnums=(0, 1))
         self._pack = jax.jit(pack)
         self._unpack = jax.jit(unpack)
         self._frames = jax.jit(frames)
+        self._render_blocks = jax.jit(render_blocks)
+        self._everyone: dict = {}
 
     @staticmethod
     def device(device: torch.device):
@@ -186,6 +198,11 @@ class Kernel:
 
     @staticmethod
     def seed_keys(seed: int, num_envs: int, device):
+        """The keys ``PRNGKey(seed + i)``; threefry keys of seeds in ``[0, 2**31)`` are ``[0, seed + i]``."""
+        if 0 <= seed and seed + num_envs <= 2**31 and jax.config.jax_default_prng_impl == "threefry2x32":
+            keys = np.zeros((num_envs, 2), np.uint32)
+            keys[:, 1] = np.arange(seed, seed + num_envs, dtype=np.uint32)
+            return jax.device_put(keys, device)
         with jax.default_device(device):
             keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
         return jax.device_put(keys, device)
@@ -213,20 +230,42 @@ class Kernel:
         state, keys, blocks = self._reset(keys)
         return state, keys, self.views(blocks)
 
-    def step(self, keys, state, actions: torch.Tensor, active: torch.Tensor | None):
+    def everyone(self, num_envs: int, device):
+        """An all-true lane mask, made once per batch size and device."""
+        mask = self._everyone.get((num_envs, device))
+        if mask is None:
+            mask = self._everyone[(num_envs, device)] = jax.device_put(np.ones(num_envs, np.bool_), device)
+        return mask
+
+    def step(self, keys, state, actions: torch.Tensor, active: torch.Tensor | None, device, snapshot: bool = True):
+        """Advance the lanes and donate ``keys`` and ``state``.
+
+        Every lane keeps its state when any action is outside the game's range, and the last output is
+        that flag on the device.
+        """
         actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
         if active is None:
-            out = self._step(keys, state, actions)
+            active = self.everyone(actions.shape[0], device)
         else:
-            out = self._masked_step(keys, state, actions, jnp.from_dlpack(active.contiguous()))
-        state, keys, reward, done, obs, blocks = out
+            active = jnp.from_dlpack(active.to(torch.bool).contiguous())
+        if snapshot:
+            state, keys, reward, done, obs, invalid, blocks = self._step(keys, state, actions, active)
+            views = self.views(blocks)
+        else:
+            state, keys, reward, done, obs, invalid = self._advance(keys, state, actions, active)
+            views = None
         obs = None if obs is None else torch.from_dlpack(obs)
-        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, self.views(blocks)
+        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, invalid
+
+    @staticmethod
+    def read_flag(flag) -> bool:
+        """Read a device flag with an explicit transfer, which waits only for the call that wrote it."""
+        return bool(jax.device_get(flag))
 
     def export(self, state, keys) -> dict[tuple[str, ...], torch.Tensor]:
         return self.views(self._pack(state, keys))
 
-    def _blocks(self, td, device: torch.device):
+    def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
         """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
         n = int(td.batch_size[0])
         columns = [[] for _ in self.blocks]
@@ -241,7 +280,10 @@ class Kernel:
         blocks = [torch.cat(c, dim=1) for c in columns]
         if not all(bool(torch.isfinite(b).all()) for b in blocks if b.is_floating_point()):
             raise ValueError("State contains non-finite values")
-        return tuple(jnp.from_dlpack(b) for b in blocks)
+        return blocks
+
+    def _blocks(self, td, device: torch.device):
+        return tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))
 
     def restore(self, td, device: torch.device):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
@@ -251,7 +293,22 @@ class Kernel:
         return torch.from_dlpack(self._frames(state))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
-        return self.render(self.restore(td, device)[0])
+        """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
+        n = int(td.batch_size[0])
+        blocks = self._torch_blocks(td, device)
+        rows = 1 << max(n - 1, 0).bit_length()
+        if rows != n:
+            blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
+        frames = torch.from_dlpack(self._render_blocks(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks)))
+        return frames if rows == n else frames[:n]
+
+
+def has_gpu() -> bool:
+    """Whether JAX has a GPU backend."""
+    try:
+        return bool(jax.devices("gpu"))
+    except RuntimeError:
+        return False
 
 
 @functools.cache
