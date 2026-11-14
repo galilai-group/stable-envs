@@ -13,6 +13,8 @@
 #   A class with a batched JAX source (Craftax, benchmarks/jax_source.py) also gets the source cells of that source on
 #   each device (src-jax-*.json): offline at each batch, steps and frames at each L. It has no offline source in
 #   processes. Its stable-worldmodel source runs in the process pool as usual; the Symbolic classes draw no frames there.
+#   The pool cells of such a class stop at POOL_CAP_L (default 64) lanes: the wrapper compiles its jitted calls once per
+#   env (seconds and about 140 MB each for Classic), and a worker steps its envs one after the other, so its rate stops growing.
 #   SWEEP_CPU (1:8:64:256:1024) and SWEEP_CUDA (1:256:512:1024:2048) are the batches and lane counts, colon-separated.
 #   CPU_SOURCES=0 leaves out the source arms that run on CPU (for GPU jobs whose CPU source cells come from a CPU job).
 #   An output file that exists is kept, so a rerun with the same OUT fills in only what is missing.
@@ -223,6 +225,7 @@ for spec in "$@"; do
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1
+        [ -n "$JAXSRC" ] && [ $L -gt ${POOL_CAP_L:-64} ] && srcok=0
         [ -n "${SRC_CAP_FILE:-}" ] && grep -qx "$E" "$SRC_CAP_FILE" && [ $L -gt ${SRC_CAP_L:-256} ] && srcok=0
         if has step; then
           [ $CPU_SOURCES = 1 ] && [ $srcok = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
@@ -233,7 +236,7 @@ for spec in "$@"; do
         fi
         if has frames; then
           [ -n "$JAXSRC" ] && once $n/src-jax-render-$tag-L$L.json gl $dev $ON run $COMMON --arms src-jax-render --jax-device $dev --ours-device $dev --output $n/src-jax-render-$tag-L$L.json
-          [ $CPU_SOURCES = 1 ] && [ -n "$POOLFRAMES" ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
+          [ $CPU_SOURCES = 1 ] && [ -n "$POOLFRAMES" ] && { [ -z "$JAXSRC" ] || [ $srcok = 1 ]; } && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
           [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda $slice --output $n/src-render-gpu-L$L.json
           once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
           [ -n "$slice" ] && once $n/snv-render-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms snv-render-$tag --chunks 1 8 $slice --output $n/snv-render-$tag-L$L-s8.json
