@@ -143,6 +143,86 @@
    "gpu": "NVIDIA GeForce RTX 3090",
    "torch": "2.14.1+cu126"
   },
+  "CraftaxClassicPixels": {
+   "seed": 20260811,
+   "n": 2048,
+   "size": 63,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
+   "reference_versions": {
+    "craftax": "1.6.1"
+   },
+   "gpu": "NVIDIA RTX A5000",
+   "torch": "2.14.1+cu126",
+   "cpu": {
+    "seed": 20260811,
+    "n": 2048,
+    "mse_mean": 0.0,
+    "mse_p95": 0.0,
+    "mse_max": 0.0
+   }
+  },
+  "CraftaxClassicSymbolic": {
+   "seed": 20260811,
+   "n": 2048,
+   "size": 63,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
+   "reference_versions": {
+    "craftax": "1.6.1"
+   },
+   "gpu": "NVIDIA RTX A5000",
+   "torch": "2.14.1+cu126",
+   "cpu": {
+    "seed": 20260811,
+    "n": 2048,
+    "mse_mean": 0.0,
+    "mse_p95": 0.0,
+    "mse_max": 0.0
+   }
+  },
+  "CraftaxPixels": {
+   "seed": 20260811,
+   "n": 2048,
+   "size": 130,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
+   "reference_versions": {
+    "craftax": "1.6.1"
+   },
+   "gpu": "NVIDIA RTX A5000",
+   "torch": "2.14.1+cu126",
+   "cpu": {
+    "seed": 20260811,
+    "n": 2048,
+    "mse_mean": 0.0,
+    "mse_p95": 0.0,
+    "mse_max": 0.0
+   }
+  },
+  "CraftaxSymbolic": {
+   "seed": 20260811,
+   "n": 2048,
+   "size": 130,
+   "mse_mean": 0.0,
+   "mse_p95": 0.0,
+   "mse_max": 0.0,
+   "reference_versions": {
+    "craftax": "1.6.1"
+   },
+   "gpu": "NVIDIA RTX A5000",
+   "torch": "2.14.1+cu126",
+   "cpu": {
+    "seed": 20260811,
+    "n": 2048,
+    "mse_mean": 0.0,
+    "mse_p95": 0.0,
+    "mse_max": 0.0
+   }
+  },
   "DMCAcrobotBalance": {
    "seed": 20260811,
    "n": 64,
