@@ -104,8 +104,8 @@ def _stack_outputs(history, valid, shared=(), spares=None):
     only when a lane finished, to zero the slots after the end.
     """
     if not shared:
-        return torch.stack(history, dim=1)
-    out = torch.stack([entry.exclude(*shared) for entry in history], dim=1)
+        return stack_leaves(history)
+    out = stack_leaves([entry.exclude(*shared) for entry in history])
     ended = (~valid).nonzero(as_tuple=True)
     padded = bool(ended[0].numel())
     for key in shared:
@@ -183,8 +183,8 @@ def _host_pipeline(env, pipeline) -> bool:
 
 
 def _native_cpu_step(env) -> bool:
-    """Whether a CPU step advances on a thread pool of its own (``mujoco.batch``, Numba), not on torch threads."""
-    return env.device.type == "cpu" and getattr(env, "native_step_threads", False)
+    """Whether a step advances on a CPU thread pool of its own (``mujoco.batch``, Numba), not on torch threads."""
+    return getattr(env, "native_step_threads", False)
 
 
 @torch.no_grad()
@@ -266,7 +266,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
-                result = advance(acts[:, t] if sequence else acts)
+                # A step whose State is returned exports it with the outputs, in one call.
+                captured = t == length - 1 or t in state_times or (t in frame_times and not draws_live)
+                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
