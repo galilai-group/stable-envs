@@ -37,6 +37,8 @@ The number of host devices is a JAX setting for the whole process, and JAX reads
 - If JAX code ran before you made the first Craftax environment, JAX has one CPU device. Then the CPU environments step on one device, and Craftax logs a warning. To prevent this, make the first Craftax environment before other JAX code runs, or set the number before you start Python.
 - Other JAX code in the process also sees the extra CPU devices. Code that does not place its arrays on them still runs on the first CPU device.
 
+A sequence of actions, `step` with actions of shape `(B, T, 1)`, runs in one jitted call when `states` and `frames` each select no step, the last step or every step. The call steps the game `T` times with `lax.scan`, and the results are equal to `T` single steps. Other selections step one action at a time. In a sequence with a CUDA tensor action outside the range, no step is applied.
+
 Actions from the host are checked before the step. Actions in a CUDA tensor are checked on the device, so that the host does not wait for the step. A step with an action outside the range leaves every environment unchanged, and the next `step`, `reset` or `set_state` raises `ValueError`.
 
 The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
