@@ -71,6 +71,49 @@ def _cell_gather(table, view, size: int):
     return table.at[index, ys, xs].get(mode="fill", fill_value=0.0)
 
 
+class _Panel:
+    """An inventory panel kept as one ``(size, size, 3)`` tile per cell.
+
+    ``panel[ys, xs]`` and ``panel.update((ys, xs), op, value)`` act as the same jnp ops on the whole
+    panel. Each upstream write stays inside one cell, so a write copies one tile, not the panel.
+    """
+
+    def __init__(self, tiles: dict, size: int, shape: tuple[int, int]):
+        self._tiles, self._size, self._shape = tiles, size, shape
+
+    @classmethod
+    def zeros(cls, rows: int, cols: int, size: int) -> _Panel:
+        tile = jnp.zeros((size, size, 3), dtype=jnp.float32)
+        return cls({(r, c): tile for r in range(rows) for c in range(cols)}, size, (rows, cols))
+
+    def _local(self, index: tuple[slice, slice]):
+        cell, local = [], []
+        for part in index:
+            start = part.start // self._size
+            offset = start * self._size
+            if not (part.stop - offset <= self._size and part.step is None):
+                raise ValueError(f"{part} crosses an inventory cell")
+            cell.append(start)
+            local.append(slice(part.start - offset, part.stop - offset))
+        return tuple(cell), tuple(local)
+
+    def __getitem__(self, index: tuple[slice, slice]) -> jax.Array:
+        cell, local = self._local(index)
+        return self._tiles[cell][local]
+
+    def update(self, index: tuple[slice, slice], op: str, value) -> _Panel:
+        cell, local = self._local(index)
+        tiles = dict(self._tiles)
+        tiles[cell] = getattr(tiles[cell].at[local], op)(value)
+        return _Panel(tiles, self._size, self._shape)
+
+    def pixels(self) -> jax.Array:
+        rows, cols = self._shape
+        return jnp.concatenate(
+            [jnp.concatenate([self._tiles[r, c] for c in range(cols)], axis=1) for r in range(rows)], axis=0
+        )
+
+
 def _materialized(x):
     """``x`` written out before later ops read it, as upstream's scan writes its result.
 
@@ -180,14 +223,14 @@ def classic_renderer(tex: dict) -> Callable[..., jax.Array]:
 
         left = (size - int(0.8 * size)) // 2 - 1
         right = size - int(0.8 * size) - left
-        inv_pixels = jnp.zeros((c.INVENTORY_OBS_HEIGHT * size, obs[1] * size, 3), dtype=jnp.float32)
+        inv_pixels = _Panel.zeros(c.INVENTORY_OBS_HEIGHT, obs[1], size)
         number_offset = size - int(size * 0.6)
 
         def render_number(pixels, number, x, y):
             rows = slice(y * size + number_offset - 1, (y + 1) * size - 1)
             cols = slice(x * size + number_offset - 1, (x + 1) * size - 1)
-            pixels = pixels.at[rows, cols].mul(1 - tex["number_textures_alpha"][number])
-            return pixels.at[rows, cols].add(tex["number_textures"][number])
+            pixels = pixels.update((rows, cols), "mul", 1 - tex["number_textures_alpha"][number])
+            return pixels.update((rows, cols), "add", tex["number_textures"][number])
 
         inv = state.inventory
         block = tex["smaller_block_textures"]
@@ -211,12 +254,11 @@ def classic_renderer(tex: dict) -> Callable[..., jax.Array]:
         )
         for value, texture, x, y in entries:
             icon = jax.lax.select(value > 0, texture, tex["smaller_empty_texture"])
-            inv_pixels = inv_pixels.at[
-                y * size + left : (y + 1) * size - right, x * size + left : (x + 1) * size - right
-            ].set(icon)
+            cell = (slice(y * size + left, (y + 1) * size - right), slice(x * size + left, (x + 1) * size - right))
+            inv_pixels = inv_pixels.update(cell, "set", icon)
             inv_pixels = render_number(inv_pixels, value, x, y)
 
-        return jnp.concatenate([map_pixels, inv_pixels], axis=0)
+        return jnp.concatenate([map_pixels, inv_pixels.pixels()], axis=0)
 
     return render
 
@@ -359,7 +401,7 @@ def _craftax_inventory(state, tex: dict, c) -> jax.Array:
     size = c.BLOCK_PIXEL_SIZE_AGENT
     left = (size - int(0.8 * size)) // 2
     right = size - int(0.8 * size) - left
-    pixels = jnp.zeros((c.INVENTORY_OBS_HEIGHT * size, c.OBS_DIM[1] * size, 3), dtype=jnp.float32)
+    pixels = _Panel.zeros(c.INVENTORY_OBS_HEIGHT, c.OBS_DIM[1], size)
     number_size = int(size * 0.4)
     number_offset = size - number_size
     number_double_offset = size - 2 * number_size
@@ -368,8 +410,8 @@ def _craftax_inventory(state, tex: dict, c) -> jax.Array:
     def digit(pixels, number, x, y):
         rows = slice(y * size + number_offset, (y + 1) * size)
         cols = slice(x * size + number_offset, (x + 1) * size)
-        pixels = pixels.at[rows, cols].mul(1 - tex["number_textures_alpha"][number])
-        return pixels.at[rows, cols].add(tex["number_textures"][number])
+        pixels = pixels.update((rows, cols), "mul", 1 - tex["number_textures_alpha"][number])
+        return pixels.update((rows, cols), "add", tex["number_textures"][number])
 
     def two_digits(pixels, number, x, y):
         tens = number // 10
@@ -378,22 +420,22 @@ def _craftax_inventory(state, tex: dict, c) -> jax.Array:
         ones_alpha = jax.lax.select(number == 0, tex["number_textures_alpha"], tex["number_textures_alpha_with_zero"])
         rows = slice(y * size + number_offset, (y + 1) * size)
         cols = slice(x * size + number_offset, (x + 1) * size)
-        pixels = pixels.at[rows, cols].mul(1 - ones_alpha[ones])
-        pixels = pixels.at[rows, cols].add(ones_textures[ones])
+        pixels = pixels.update((rows, cols), "mul", 1 - ones_alpha[ones])
+        pixels = pixels.update((rows, cols), "add", ones_textures[ones])
         cols = slice(x * size + number_double_offset, x * size + number_offset)
-        pixels = pixels.at[rows, cols].mul(1 - tex["number_textures_alpha"][tens])
-        return pixels.at[rows, cols].add(tex["number_textures"][tens])
+        pixels = pixels.update((rows, cols), "mul", 1 - tex["number_textures_alpha"][tens])
+        return pixels.update((rows, cols), "add", tex["number_textures"][tens])
 
     def cell(x, y):
         return slice(size * y + left, size * (y + 1) - right), slice(size * x + left, size * (x + 1) - right)
 
     def icon(pixels, texture, x, y):
-        return pixels.at[cell(x, y)].set(texture)
+        return pixels.update(cell(x, y), "set", texture)
 
     def icon_with_alpha(pixels, texture, x, y):
         existing = pixels[cell(x, y)]
         new = existing * (1 - texture[:, :, 3][:, :, None]) + texture[:, :, :3] * texture[:, :, 3][:, :, None]
-        return pixels.at[cell(x, y)].set(new)
+        return pixels.update(cell(x, y), "set", new)
 
     def counted(pixels, value, texture, x, y):
         pixels = icon(pixels, jax.lax.select(value > 0, texture, empty), x, y)
@@ -448,7 +490,7 @@ def _craftax_inventory(state, tex: dict, c) -> jax.Array:
     ):
         pixels = icon(pixels, tex[texture], 9, y)
         pixels = digit(pixels, value, 9, y)
-    return pixels
+    return pixels.pixels()
 
 
 def renderer(classic: bool, upstream_renderer: Callable | None = None) -> Callable[..., jax.Array]:
