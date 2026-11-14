@@ -1,6 +1,7 @@
 """The upstream Craftax simulator, vmapped over lanes and jitted, with state conversion to and from torch.
 
-Arrays move between JAX and torch through DLPack, so they stay on their device.
+Arrays move between JAX and torch through DLPack, so they stay on their device. On the CPU, the lanes
+are split over one XLA host device per usable CPU, because one XLA:CPU program uses only a few cores.
 """
 
 from __future__ import annotations
@@ -8,15 +9,44 @@ from __future__ import annotations
 import contextlib
 import functools
 import importlib
+import os
 from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import torch
-from craftax.craftax_env import make_craftax_env_from_name
 
-from .render import renderer
+from ..._core.config import log
+from ..._core.cpus import cpu_limit
+
+
+def _ask_for_host_devices() -> bool:
+    """Ask JAX for one CPU device per CPU that this process can use; False when JAX started before.
+
+    JAX reads the count once, when it starts its CPU backend, and the count holds for the whole process.
+    A count that the user set (``jax_num_cpu_devices``, ``JAX_NUM_CPU_DEVICES`` or
+    ``--xla_force_host_platform_device_count`` in ``XLA_FLAGS``) is kept.
+    """
+    try:
+        if jax.config.read("jax_num_cpu_devices") >= 0:
+            return True
+        if "xla_force_host_platform_device_count" in os.environ.get("XLA_FLAGS", ""):
+            return True
+        jax.config.update("jax_num_cpu_devices", cpu_limit())
+    except AttributeError:
+        return True
+    except RuntimeError:
+        return False
+    return True
+
+
+# Craftax makes JAX arrays when it is imported, which starts the backends, so this comes first.
+_HOST_DEVICES_ASKED = _ask_for_host_devices()
+
+from craftax.craftax_env import make_craftax_env_from_name  # noqa: E402
+
+from .render import renderer  # noqa: E402
 
 
 @contextlib.contextmanager
@@ -38,6 +68,35 @@ def texture_lock(classic: bool):
     with handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         yield
+
+
+@dataclass(frozen=True)
+class Lanes:
+    """Where the lanes of one env live: ``count`` lanes, padded to ``rows``, split evenly over ``sharding``.
+
+    Without a sharding, the rows are the lanes and they live on ``device``. Outputs that go to torch are
+    gathered on ``device`` and the padding rows are dropped.
+    """
+
+    count: int
+    rows: int
+    device: jax.Device
+    sharding: jax.sharding.Sharding | None
+
+    def put(self, x):
+        """Send a host or ``device`` array of ``count`` rows (or a tuple of them) to the lanes' devices."""
+        if self.sharding is None:
+            return x
+        if self.rows != self.count:
+            x = jax.tree.map(lambda a: jnp.concatenate([a, jnp.repeat(a[:1], self.rows - self.count, 0)]), x)
+        return jax.device_put(x, self.sharding)
+
+    def take(self, x):
+        """Gather lane-major outputs (or a tuple of them) on ``device``, without the padding rows."""
+        if self.sharding is None:
+            return x
+        x = jax.device_put(x, self.device)
+        return x if self.rows == self.count else jax.tree.map(lambda a: a[: self.count], x)
 
 
 @dataclass(frozen=True)
@@ -201,15 +260,27 @@ class Kernel:
             ) from e
 
     @staticmethod
-    def seed_keys(seed: int, num_envs: int, device):
+    def lanes(count: int, device) -> Lanes:
+        """The placement of ``count`` lanes on ``device``; CPU lanes are split evenly over the host devices."""
+        devices = [device, *(d for d in jax.devices("cpu") if d != device)] if device.platform == "cpu" else [device]
+        per = -(-count // len(devices))
+        used = -(-count // per)
+        if used == 1:
+            return Lanes(count, count, device, None)
+        mesh = jax.sharding.Mesh(np.array(devices[:used]), ("lanes",))
+        return Lanes(count, used * per, device, jax.sharding.NamedSharding(mesh, jax.sharding.PartitionSpec("lanes")))
+
+    @staticmethod
+    def seed_keys(seed: int, lanes: Lanes):
         """The keys ``PRNGKey(seed + i)``; threefry keys of seeds in ``[0, 2**31)`` are ``[0, seed + i]``."""
+        num_envs = lanes.count
         if 0 <= seed and seed + num_envs <= 2**31 and jax.config.jax_default_prng_impl == "threefry2x32":
             keys = np.zeros((num_envs, 2), np.uint32)
             keys[:, 1] = np.arange(seed, seed + num_envs, dtype=np.uint32)
-            return jax.device_put(keys, device)
-        with jax.default_device(device):
-            keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
-        return jax.device_put(keys, device)
+        else:
+            with jax.default_device(lanes.device):
+                keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
+        return lanes.put(jax.device_put(keys, lanes.device))
 
     def views(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:
         """``(lanes, width)`` views of each leaf in freshly written blocks, which nothing else holds."""
@@ -230,15 +301,15 @@ class Kernel:
             out.append(base)
         return out
 
-    def reset(self, keys):
+    def reset(self, keys, lanes: Lanes):
         state, keys, blocks = self._reset(keys)
-        return state, keys, self.views(blocks)
+        return state, keys, self.views(lanes.take(blocks))
 
-    def everyone(self, num_envs: int, device):
-        """An all-true lane mask, made once per batch size and device."""
-        mask = self._everyone.get((num_envs, device))
+    def everyone(self, lanes: Lanes):
+        """An all-true lane mask, made once per placement."""
+        mask = self._everyone.get(lanes)
         if mask is None:
-            mask = self._everyone[(num_envs, device)] = jax.device_put(np.ones(num_envs, np.bool_), device)
+            mask = self._everyone[lanes] = lanes.put(jax.device_put(np.ones(lanes.count, np.bool_), lanes.device))
         return mask
 
     def step(
@@ -247,7 +318,7 @@ class Kernel:
         state,
         actions: torch.Tensor,
         active: torch.Tensor | None,
-        device,
+        lanes: Lanes,
         snapshot: bool = True,
         frame: bool = False,
     ):
@@ -259,11 +330,12 @@ class Kernel:
         """
         actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
         if active is None:
-            active = self.everyone(actions.shape[0], device)
+            actions, active = lanes.put(actions), self.everyone(lanes)
         else:
-            active = jnp.from_dlpack(active.to(torch.bool).contiguous())
+            actions, active = lanes.put((actions, jnp.from_dlpack(active.to(torch.bool).contiguous())))
         out = self._programs[(snapshot, frame)](keys, state, actions, active)
         state, keys, reward, done, obs, invalid, blocks, frames = out
+        reward, done, obs, blocks, frames = lanes.take((reward, done, obs, blocks, frames))
         obs = None if obs is None else torch.from_dlpack(obs)
         views = None if blocks is None else self.views(blocks)
         frames = None if frames is None else torch.from_dlpack(frames)
@@ -274,8 +346,8 @@ class Kernel:
         """Read a device flag with an explicit transfer, which waits only for the call that wrote it."""
         return bool(jax.device_get(flag))
 
-    def export(self, state, keys) -> dict[tuple[str, ...], torch.Tensor]:
-        return self.views(self._pack(state, keys))
+    def export(self, state, keys, lanes: Lanes) -> dict[tuple[str, ...], torch.Tensor]:
+        return self.views(lanes.take(self._pack(state, keys)))
 
     def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
         """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
@@ -294,15 +366,12 @@ class Kernel:
             raise ValueError("State contains non-finite values")
         return blocks
 
-    def _blocks(self, td, device: torch.device):
-        return tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))
-
-    def restore(self, td, device: torch.device):
+    def restore(self, td, device: torch.device, lanes: Lanes):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
-        return self._unpack(self._blocks(td, device))
+        return self._unpack(lanes.put(tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))))
 
-    def render(self, state) -> torch.Tensor:
-        return torch.from_dlpack(self._frames(state))
+    def render(self, state, lanes: Lanes) -> torch.Tensor:
+        return torch.from_dlpack(lanes.take(self._frames(state)))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
@@ -311,8 +380,22 @@ class Kernel:
         rows = 1 << max(n - 1, 0).bit_length()
         if rows != n:
             blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
-        frames = torch.from_dlpack(self._render_blocks(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks)))
+        lanes = self.lanes(rows, self.device(device))
+        frames = lanes.take(self._render_blocks(lanes.put(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks))))
+        frames = torch.from_dlpack(frames)
         return frames if rows == n else frames[:n]
+
+
+@functools.cache
+def report_host_devices() -> None:
+    """Log once when the CPU lanes cannot be split, because JAX started before Craftax asked for host devices."""
+    if not _HOST_DEVICES_ASKED and len(jax.devices("cpu")) == 1 and cpu_limit() > 1:
+        log(
+            "WARNING",
+            f"JAX started with one CPU device, so Craftax steps its CPU lanes on 1 of {cpu_limit()} CPUs. "
+            "Make the first Craftax env before other JAX work, or set "
+            f"XLA_FLAGS=--xla_force_host_platform_device_count={cpu_limit()} before you start Python.",
+        )
 
 
 def has_gpu() -> bool:

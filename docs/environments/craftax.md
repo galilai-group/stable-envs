@@ -29,6 +29,14 @@ The `Pixels` and `Symbolic` classes use the same game, but a `Symbolic` class re
 
 The whole batch is one stacked JAX pytree that one jitted `vmap` steps. [Batch row](../terms.md#batch-row) `i` follows the stable-worldmodel `CraftaxWrapper` with seed `seed + i`.
 
+On the CPU, one XLA program uses only a few cores. So the batch rows are split evenly over XLA host devices, one device for each CPU that the process can use (its CPU affinity, limited by a cgroup CPU quota). Each device steps its rows in the same program. The results are equal bit for bit to the results on one device. When the rows do not divide evenly, the last device also steps copies of the first row, and their results are discarded.
+
+The number of host devices is a JAX setting for the whole process, and JAX reads it when it starts its CPU backend. Craftax sets it when you make the first Craftax environment, before Craftax imports its game code. Thus:
+
+- If you set the number (`XLA_FLAGS=--xla_force_host_platform_device_count=N`, `JAX_NUM_CPU_DEVICES=N` or `jax.config.update("jax_num_cpu_devices", N)`), Craftax keeps it and uses up to `N` devices.
+- If JAX code ran before you made the first Craftax environment, JAX has one CPU device. Then the CPU environments step on one device, and Craftax logs a warning. To prevent this, make the first Craftax environment before other JAX code runs, or set the number before you start Python.
+- Other JAX code in the process also sees the extra CPU devices. Code that does not place its arrays on them still runs on the first CPU device.
+
 Actions from the host are checked before the step. Actions in a CUDA tensor are checked on the device, so that the host does not wait for the step. A step with an action outside the range leaves every environment unchanged, and the next `step`, `reset` or `set_state` raises `ValueError`.
 
 The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.

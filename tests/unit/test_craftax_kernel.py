@@ -72,7 +72,7 @@ def test_seed_keys_equal_prng_keys(seed):
         expected = np.stack([np.asarray(jax.random.PRNGKey(seed + i)) for i in range(LANES)])
     except OverflowError:
         pytest.skip("JAX does not take this seed without 64-bit integers")
-    np.testing.assert_array_equal(np.asarray(Kernel.seed_keys(seed, LANES, device)), expected)
+    np.testing.assert_array_equal(np.asarray(Kernel.seed_keys(seed, Kernel.lanes(LANES, device))), expected)
 
 
 def test_render_of_any_batch_equals_render_of_each_row():
