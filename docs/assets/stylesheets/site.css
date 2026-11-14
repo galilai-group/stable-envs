@@ -113,11 +113,11 @@ article .tabbed-set.tabbed-alternate > input:nth-child(4):checked ~ .tabbed-labe
 /* Match the browser's color scheme to the theme, so text that inherits the
    default color (sidebar links, header icons) is light in dark mode. Some
    hosts, like an embedded preview, set color-scheme: light on the page. */
-   html { color-scheme: light; }
-   html.dark { color-scheme: dark; }
-   body { color: var(--foreground); }
-   
-   /* The theme caps the page summary at 450px, which wraps the tagline. */
-   #summary {
-     max-width: none;
-   }
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+body { color: var(--foreground); }
+
+/* The theme caps the page summary at 450px, which wraps the tagline. */
+#summary {
+  max-width: none;
+}
