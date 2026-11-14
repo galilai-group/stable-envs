@@ -4,7 +4,7 @@ usage: python3 benchmarks/paper/headline.py OUT [--batches 1024:2048] [--write]
 OUT holds one folder per env (run.sh output: offline/, online/). The multiple of a cell is ours / source on the same
 machine: the source at the same lane count, else the best source over the lane counts that were timed. Offline cells use
 the best source over 1 and N processes. GPU frames use the source's GPU renderer where it passed the frame check, else
-the CPU source. --batches keeps only the cells of ours at those batches and lane counts. Works on a partial OUT.
+the CPU source. Where a class also has a batched JAX source (Craftax), each cell takes the faster source. --batches keeps only the cells of ours at those batches and lane counts. Works on a partial OUT.
 """
 
 import argparse
@@ -68,16 +68,34 @@ def cells(folder, env):
             srcs = list(offline(folder, env, "src-cpu-1p").values()) + list(
                 offline(folder, env, "src-cpu-8p").values()
             )
-        if srcs:
-            out += [("offline", dev, b, "", v, max(srcs)) for b, v in ours.items()]
+        # A batched JAX source is timed at each batch; it counts at the same batch, with the other sources.
+        jax = offline(folder, env, f"src-jax-{dev}")
+        for b, v in ours.items():
+            options = srcs + ([jax[b]] if b in jax else [])
+            if options:
+                out.append(("offline", dev, b, "", v, max(options)))
     step_src = {L: v for (L, _), v in online(folder, env, "src-step").items()}
     rcpu = {L: v for (L, _), v in online(folder, env, "src-render-cpu").items()}
     rgpu = {L: v for (L, _), v in online(folder, env, "src-render-gpu", max_l=256).items()}
+
+    def best(*sources):
+        # Per lane count, the fastest of the sources timed there.
+        merged = {}
+        for src in sources:
+            for L, v in src.items():
+                merged[L] = max(merged.get(L, 0), v)
+        return merged
+
+    jax = {
+        (kind, dev): {L: v for (L, _), v in online(folder, env, f"src-jax-{kind}-{dev}").items()}
+        for kind in ("step", "render")
+        for dev in ("cpu", "gpu")
+    }
     for reg, dev, prefix, src in (
-        ("steps", "cpu", "snv-step-cpu", step_src),
-        ("steps", "gpu", "snv-step-gpu", step_src),
-        ("framesteps", "cpu", "snv-render-cpu", rcpu),
-        ("framesteps", "gpu", "snv-render-gpu", rgpu or rcpu),
+        ("steps", "cpu", "snv-step-cpu", best(step_src, jax["step", "cpu"])),
+        ("steps", "gpu", "snv-step-gpu", best(step_src, jax["step", "gpu"])),
+        ("framesteps", "cpu", "snv-render-cpu", best(rcpu, jax["render", "cpu"])),
+        ("framesteps", "gpu", "snv-render-gpu", best(rgpu or rcpu, jax["render", "gpu"])),
     ):
         if not src:
             continue
@@ -94,6 +112,10 @@ KIND = {
     "src-step": "steps (source)",
     "src-render-cpu": "frames+steps (CPU source)",
     "src-render-gpu": "frames+steps (GPU source)",
+    "src-jax-step-cpu": "steps (batched JAX source, CPU)",
+    "src-jax-step-gpu": "steps (batched JAX source, GPU)",
+    "src-jax-render-cpu": "frames+steps (batched JAX source, CPU)",
+    "src-jax-render-gpu": "frames+steps (batched JAX source, GPU)",
 }
 
 

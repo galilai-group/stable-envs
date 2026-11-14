@@ -15,6 +15,9 @@ Arms:
   src-single-render     one source env in this process: step, then draw, one action at a time.
   src-sync-render       ``--procs`` source envs in a Gymnasium ``SyncVectorEnv`` in this process; frames by ``call("render")``.
   src-async-render      as src-sync-render in an ``AsyncVectorEnv`` with one worker process per env.
+  src-jax-step          the batched JAX source of the class (``benchmarks/jax_source.py``) on ``--jax-device``: all
+                        lanes in one jitted, vmapped upstream step; the actions are on the device before timing.
+  src-jax-render        as src-jax-step, and each step also returns the lanes' uint8 frames.
 """
 
 from __future__ import annotations
@@ -65,6 +68,8 @@ def source_id(name: str) -> str:
 
     if name in OGB_PIXEL_SOURCES:
         return OGB_PIXEL_SOURCES[name][0]
+    if snv.info(name)["family"] == "craftax":
+        return f"swm/{name}-v1"
     ref = snv.info(name)["reference_id"]
     # The original library, where stable-worldmodel's wrapper changes the episode (Fetch samples colours at reset).
     if ref and ref.startswith(ORIGINAL_SOURCES):
@@ -579,6 +584,76 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     }
 
 
+def run_source_jax(args, name: str, render: bool) -> dict:
+    """Play every stored episode through the batched JAX source: one jitted call steps all lanes.
+
+    Each step waits for its outputs, as a caller that reads them would. The frame check compares the source's
+    frames of a few lanes with a one-lane stable-envs rollout of the same episode.
+    """
+    import jax
+
+    from benchmarks.jax_source import CraftaxSource
+
+    data = np.load(Path(args.data) / f"{name}.npz")
+    seeds, actions = data["seeds"][: args.episodes], data["actions"][: args.episodes]
+    n, length = actions.shape[:2]
+    if args.source_steps:
+        length = min(length, args.source_steps)
+    lanes = min(args.lanes, n)
+    src = CraftaxSource(name, args.jax_device)
+    groups = list(range(0, n - lanes + 1, lanes))
+    acts = {
+        s: [src.put(np.ascontiguousarray(actions[s : s + lanes, t].reshape(lanes), np.int32)) for t in range(length)]
+        for s in groups
+    }
+
+    def play(groups):
+        for s in groups:
+            state, keys = src.reset(int(seeds[s]), lanes)
+            for a in acts[s]:
+                state, keys, *out = src.step(keys, state, a, render)
+                jax.block_until_ready(out)
+            yield lanes * length
+
+    shape = check = None
+    state, keys = src.reset(int(seeds[0]), lanes)
+    first = src.step(keys, state, acts[0][0], render)
+    if render:
+        shape = list(first[-1].shape[1:])
+    jax.block_until_ready(first)
+    t = _timed(_cycle(lambda: play(groups)), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+    if render and args.frame_check:
+        from stable_envs.testing import conformance as C
+
+        check_lanes = sorted({0, lanes // 2, lanes - 1})
+        state, keys = src.reset(int(seeds[0]), lanes)
+        frames = []
+        for a in acts[0]:
+            state, keys, *out = src.step(keys, state, a, True)
+            frames.append(np.asarray(out[-1])[check_lanes])
+        frames = np.stack(frames, 1)
+        per_frame, compared = [], []
+        for i, lane in enumerate(check_lanes):
+            ours, our_end = _ours_frames(name, args.size, args.ours_device, int(seeds[lane]), actions[lane, :length])
+            # The source keeps stepping a lane whose episode ended; stable-envs resets it.
+            stop = (length - 1 if our_end is None else our_end) + 1
+            compared.append(stop)
+            per_frame.append(C.frame_mse(ours[:stop], frames[i, :stop]))
+        check = {"lanes": check_lanes, "steps_compared": compared, "ours_device": args.ours_device}
+        check.update(C.mse_summary(np.concatenate(per_frame)))
+    return {
+        "source": f"{src.upstream_id} jit(vmap(step)) auto_reset=False",
+        "jax_device": str(src.device),
+        "frame_shape": shape,
+        "lanes": lanes,
+        "actions_per_call": 1,
+        "steps_per_episode": length,
+        "steps_per_s": t["rate"],
+        **t,
+        "rollout_mse": check,
+    }
+
+
 def _gym_lane(name, size, action_dim, threads=None):
     """A source env as a ``gymnasium.Env`` for the vector-env arms: observations are dropped, frames come from render.
 
@@ -688,6 +763,8 @@ ARMS = (
     "src-single-render",
     "src-sync-render",
     "src-async-render",
+    "src-jax-step",
+    "src-jax-render",
 )
 #: Arms that take one action per call; the others run once per ``--chunks`` value.
 SINGLE_CALL = ("src-",)
@@ -714,6 +791,8 @@ def cmd_run(args) -> None:
                     r = run_source(args, args.env, False)
                 elif arm == "src-single-render":
                     r = run_source_single(args, args.env)
+                elif arm in ("src-jax-step", "src-jax-render"):
+                    r = run_source_jax(args, args.env, arm == "src-jax-render")
                 elif arm in ("src-sync-render", "src-async-render"):
                     r = run_source_vector(args, args.env, arm == "src-async-render")
                 else:
@@ -746,6 +825,7 @@ def main() -> None:
     r.add_argument(
         "--ours-device", default="cpu", help="device of the stable-envs lane the source rollout is compared with"
     )
+    r.add_argument("--jax-device", default="cpu", help="device of the batched JAX source arms")
     r.add_argument("--data", required=True)
     r.add_argument("--output", required=True)
     r.add_argument("--procs", type=int, default=8)

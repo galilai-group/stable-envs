@@ -13,6 +13,7 @@ case $fam in
   ogbench) extras="ogbench ogbench-manipulation ogbench-manipulation-gpu"; groups="pin-ogbench";;
   fetch) extras="robotics mjwarp"; groups="pin-fetch";;
   rocket) extras="rocket"; groups="pin-rocket";;
+  craftax) extras="craftax craftax-gpu"; groups="pin-craftax";;
   *) echo "unknown family $fam" >&2; exit 1;;
 esac
 [ -s $v.ok ] && { echo $v/bin/python; exit 0; }
