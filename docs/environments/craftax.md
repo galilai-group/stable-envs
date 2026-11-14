@@ -43,7 +43,23 @@ When `step` returns a frame, the same jitted call steps the game and draws the f
 
 ## Variation
 
-These classes have no [variation](../terms.md#variation) leaves.
+The [variation](../terms.md#variation) leaves set fields of the upstream `EnvParams` for each environment. All of them change the game, not the frames. A lane takes its values at `reset`, and its state keeps them under `physics`, so `set_state` restores them with the rest of the game. A change with `set_variation` takes effect at the next `reset`. `reset(options={"variation_values": {...}})` sets values for one episode, and `reset(options={"variation": [...]})` samples them for each environment.
+
+| Leaf | `EnvParams` field | Classic default | Craftax default | Range |
+| --- | --- | --- | --- | --- |
+| `world.day_length` | `day_length` | 300 | 300 | 50 to 1000 |
+| `world.always_diamond` | `always_diamond` | 1 | 0 | 0 or 1 |
+| `mobs.despawn_distance` | `mob_despawn_distance` | 14 | 14 | 6 to 30 |
+| `zombie.health` | `zombie_health` | 5 | | 1 to 9 |
+| `cow.health` | `cow_health` | 3 | | 1 to 9 |
+| `skeleton.health` | `skeleton_health` | 3 | | 1 to 9 |
+| `spawn.cow` | `spawn_cow_chance` | 0.1 | | 0 to 1 |
+| `spawn.zombie_base` | `spawn_zombie_base_chance` | 0.02 | | 0 to 1 |
+| `spawn.zombie_night` | `spawn_zombie_night_chance` | 0.1 | | 0 to 1 |
+| `spawn.skeleton` | `spawn_skeleton_chance` | 0.05 | | 0 to 1 |
+| `player.max_attribute` | `max_attribute` | | 5 | 1 to 10 |
+
+When every environment has the default values, the step uses the upstream defaults as constants, as upstream does, and the states are the same as upstream's bit for bit. Other values go to upstream's `step` as arguments.
 
 ## Classes
 
