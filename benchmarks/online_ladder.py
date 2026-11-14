@@ -217,6 +217,9 @@ def cmd_dataset(args) -> None:
         shape = (args.episodes, args.length, *spec.shape[-1:])
         if getattr(spec, "discrete_n", None):
             actions = rng.integers(0, spec.discrete_n, size=shape).astype(np.int64)
+        elif not spec.dtype.is_floating_point:
+            # Integer actions in [low, high] (Craftax).
+            actions = rng.integers(int(spec.low), int(spec.high) + 1, size=shape).astype(np.int64)
         else:
             low = np.broadcast_to(np.asarray(spec.low, np.float32), spec.shape[-1:])
             high = np.broadcast_to(np.asarray(spec.high, np.float32), spec.shape[-1:])
