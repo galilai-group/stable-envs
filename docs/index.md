@@ -1,8 +1,8 @@
-![](assets/brand/mark.svg){ width="76" }
-
-# stable-envs
-
-**Fast and Reproducible Environments with Controllable Variations**
+---
+title: Stable-Envs
+summary: Fast and Reproducible Environments with Controllable Variations
+sidebar_title: Home
+---
 
 stable-envs is a library of batched simulation environments that keep the full simulator state, so you can restore any step exactly and render images from it later, on CPU or GPU.
 

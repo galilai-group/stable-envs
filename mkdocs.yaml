@@ -7,34 +7,15 @@ edit_uri: edit/main/docs/
 use_directory_urls: true
 
 theme:
-  name: material
-  logo: assets/brand/mark.svg
-  favicon: assets/brand/mark.svg
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      accent: indigo
-      toggle:
-        icon: material/weather-night
-        name: Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Light mode
-  features:
-    - navigation.sections
-    - navigation.indexes
-    - navigation.top
-    - navigation.instant
-    - content.code.copy
-    - content.action.edit
-    - search.suggest
-    - toc.follow
-  font: false
+  name: shadcn
+  show_title: true
+  show_stargazers: false
+  pygments_style:
+    light: shadcn-light
+    dark: github-dark
+  topbar_sections: false
+  show_datetime: false
+  custom_dir: overrides
 
 extra:
   social:
@@ -60,6 +41,10 @@ exclude_docs: |
 
 extra_css:
   - assets/stylesheets/envs.css
+  - assets/stylesheets/site.css
+
+extra_javascript:
+  - assets/javascript/menu.js
 
 markdown_extensions:
   - admonition
@@ -72,8 +57,12 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.superfences
+  # shadcn styles, copy buttons, and pygments_style all target codehilite.
+  # highlight still renders the fences; the class name is what the theme matches.
+  - codehilite
   - pymdownx.highlight:
       anchor_linenums: true
+      css_class: codehilite
   - pymdownx.inlinehilite
   - pymdownx.snippets
 
@@ -117,6 +106,9 @@ nav:
   - Quickstart: quickstart.md
   - Install: install.md
   - Terms: terms.md
+  - Benchmarks: benchmarks.md
+  - Performance tuning: performance-tuning.md
+  - CLI: api/cli.md
   - Environments:
       - Overview: environments.md
       - Classic control: environments/classic-control.md
@@ -130,14 +122,11 @@ nav:
       - PushT: environments/pusht.md
       - PyFlyt: environments/pyflyt.md
       - Roadster: environments/roadster.md
-  - Benchmarks: benchmarks.md
   - Tutorials:
       - Store states, render later: tutorials/store-and-render.md
       - Randomize appearance and physics: tutorials/variation.md
       - Write your own environment: tutorials/custom-env.md
       - Train a world model (LeWM): tutorials/lewm.md
-  - Performance tuning: performance-tuning.md
-  - CLI: api/cli.md
   - API:
       - stable_envs: api/index.md
       - Env: api/env.md
@@ -150,4 +139,5 @@ nav:
       - Renderers: contributing/renderers.md
       - Bit-exact Triton kernels: contributing/bit-exact-triton.md
       - Tests: contributing/testing.md
-  - Changelog: changelog.md
+  - Project:
+      - Changelog: changelog.md

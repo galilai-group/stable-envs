@@ -1,0 +1,123 @@
+/* API permalinks sit in a nowrap row and widen a phone page. */
+article .doc-heading {
+  flex-wrap: wrap;
+}
+
+/* 0.12 always shows the layout toggle. There is no theme option to hide it. */
+header [data-slot="separator"]:has(+ button[onclick="toggleLayout(event)"]),
+header button[onclick="toggleLayout(event)"] {
+  display: none;
+}
+
+/* 0.12 only sets max-height, so the sidebar list runs past the viewport. */
+@media (min-width: 64rem) {
+  [data-slot="sidebar"] {
+    height: calc(100svh - 10rem);
+    max-height: calc(100svh - 10rem);
+  }
+}
+
+/* Sticky blurred gradients cover the links at the edges of the sidebar. */
+[data-slot="sidebar"] .blur-xs {
+  display: none;
+}
+
+/* The title shares a row with the buttons, and the theme breaks words. */
+#page-header {
+  flex-wrap: wrap;
+  row-gap: 0.75rem;
+}
+
+#page-header > div {
+  margin-left: auto;
+}
+
+article #page-header h1 {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* A 30px row forces a wrapped sidebar label onto the next item. */
+[data-slot="sidebar-menu-button"] {
+  height: auto;
+  min-height: 30px;
+  line-height: 1.65;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+/* The phone menu is hardcoded to 857px, so the last links sit off screen. */
+#bottom-sidebar {
+  top: var(--header-height) !important;
+  left: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: calc(100svh - var(--header-height)) !important;
+  max-height: calc(100svh - var(--header-height)) !important;
+}
+
+#bottom-sidebar > [data-slot="popover-content"] {
+  height: 100% !important;
+  max-height: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-y: auto !important;
+}
+
+/* The theme reveals tabs with input + label + content. alternate_style
+   groups the labels, so that selector never matches and the panel stays hidden. */
+article .tabbed-set.tabbed-alternate > .tabbed-content {
+  display: block;
+}
+
+article .tabbed-set.tabbed-alternate > .tabbed-content > .tabbed-block {
+  display: none;
+}
+
+article .tabbed-set.tabbed-alternate > input:nth-child(1):checked ~ .tabbed-content > .tabbed-block:nth-child(1),
+article .tabbed-set.tabbed-alternate > input:nth-child(2):checked ~ .tabbed-content > .tabbed-block:nth-child(2),
+article .tabbed-set.tabbed-alternate > input:nth-child(3):checked ~ .tabbed-content > .tabbed-block:nth-child(3),
+article .tabbed-set.tabbed-alternate > input:nth-child(4):checked ~ .tabbed-content > .tabbed-block:nth-child(4) {
+  display: block;
+}
+
+article .tabbed-set.tabbed-alternate > input:nth-child(1):checked ~ .tabbed-labels > label:nth-child(1),
+article .tabbed-set.tabbed-alternate > input:nth-child(2):checked ~ .tabbed-labels > label:nth-child(2),
+article .tabbed-set.tabbed-alternate > input:nth-child(3):checked ~ .tabbed-labels > label:nth-child(3),
+article .tabbed-set.tabbed-alternate > input:nth-child(4):checked ~ .tabbed-labels > label:nth-child(4) {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-foreground);
+}
+
+/* 0.12 comments out the burger classes, including the desktop hide. */
+#burger-button {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+@media (min-width: 64rem) {
+  #burger-button {
+    display: none;
+  }
+}
+
+/* Match the browser's color scheme to the theme, so text that inherits the
+   default color (sidebar links, header icons) is light in dark mode. Some
+   hosts, like an embedded preview, set color-scheme: light on the page. */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+body { color: var(--foreground); }
+
+/* The theme caps the page summary at 450px, which wraps the tagline. */
+#summary {
+  max-width: none;
+}
