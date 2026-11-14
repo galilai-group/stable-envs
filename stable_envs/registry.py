@@ -6,6 +6,7 @@ import importlib
 import importlib.util
 import math
 import pkgutil
+import traceback
 from typing import Any
 
 from ._core.config import log as _log
@@ -127,10 +128,59 @@ def format_registry(width: int = 34) -> str:
     return "\n".join(out)
 
 
+#: Class-name prefix -> (the import_errors key of the module that registers the class, the extra that installs it).
+_FAMILY_PREFIXES = (
+    ("DMC", "dmcontrol", "dmcontrol"),
+    ("Fetch", "fetch", "robotics"),
+    ("OGBCube", "ogbench", "ogbench-manipulation"),
+    ("OGBScene", "ogbench", "ogbench-manipulation"),
+    ("AntMaze", "ogbench", "ogbench"),
+    ("HumanoidMaze", "ogbench", "ogbench"),
+    ("PointMaze", "ogbench", "ogbench"),
+    ("PyFlyt", "rocket_semantics", "rocket"),
+    ("Craftax", "craftax", "craftax"),
+    ("MiniWorld", "miniworld", "miniworld"),
+    ("Roadster", "roadster", "roadster"),
+    ("MSHuman", "mshuman", "mshuman"),
+    ("PushT", "pusht_semantics", "pusht"),
+)
+
+#: Class name or family -> (extra, top-level modules the class imports when it is constructed). Only classes
+#: that register without their extra are listed.
+_EXTRA_MODULES = {
+    "MountainCar": ("classic", ("pygame",)),
+    "MountainCarContinuous": ("classic", ("pygame",)),
+    "Pendulum": ("classic", ("pygame",)),
+    "SimplePointMaze": ("navigation", ("matplotlib",)),
+    "pusht": ("pusht", ("pymunk", "pygame", "cv2", "numba")),
+    "fetch": ("robotics", ("gymnasium_robotics", "mujoco")),
+    "OGBCube": ("ogbench-manipulation", ("ogbench", "mujoco", "dm_control")),
+    "OGBScene": ("ogbench-manipulation", ("ogbench", "mujoco", "dm_control")),
+    "ogbench": ("ogbench", ("ogbench", "mujoco")),
+    "pyflyt": ("rocket", ("PyFlyt", "pybullet", "numba", "scipy")),
+}
+
+
+def missing_extra(name: str) -> str | None:
+    """Return the extra that the registered class ``name`` needs and that is not installed, or None."""
+    cls = _resolve(name)
+    need = _EXTRA_MODULES.get(name) or _EXTRA_MODULES.get(getattr(cls, "family", "") or "")
+    if need is None:
+        return None
+    extra, modules = need
+    return extra if any(importlib.util.find_spec(m) is None for m in modules) else None
+
+
 def _resolve(name: str) -> type[Env]:
     cls = REGISTRY.get(name)
     if cls is not None:
         return cls
+    for prefix, module, extra in _FAMILY_PREFIXES:
+        if name.startswith(prefix) and module in _IMPORT_ERRORS:
+            raise KeyError(
+                f"{name} is not registered: its family did not import ({_IMPORT_ERRORS[module]}). "
+                f"Install it with: pip install 'stable-envs[{extra}]'. `stable-envs doctor` checks every family."
+            )
     raise KeyError(f"unknown env {name!r}; known: {sorted(REGISTRY)}")
 
 
@@ -205,6 +255,33 @@ def list_families() -> list[str]:
 #: module name -> the exception that stopped it importing
 _IMPORT_ERRORS: dict[str, str] = {}
 _DISCOVERED = False
+_DISCOVERING = False
+#: (module, message) pairs already logged.
+_LOGGED: set[tuple[str, str]] = set()
+
+_GL_PATHS = ("/OpenGL/", "/mujoco/egl/", "/mujoco/osmesa/", "/pyglet/")
+
+
+def _log_once(level: str, mod_name: str, message: str) -> None:
+    if (mod_name, message) not in _LOGGED:
+        _LOGGED.add((mod_name, message))
+        _log(level, message)
+
+
+def _gl_library_error(e: BaseException) -> bool:
+    """Whether ``e`` was raised inside PyOpenGL, MuJoCo's GL backends or pyglet: a missing GL library."""
+    files = [frame.f_code.co_filename.replace("\\", "/") for frame, _ in traceback.walk_tb(e.__traceback__)]
+    return any(part in name for name in files for part in _GL_PATHS)
+
+
+def _extra_not_installed(error_key: str) -> str | None:
+    """The extra of the family under ``error_key`` when some of its distributions are not installed."""
+    from .doctor import FAMILIES, missing_requirements
+
+    fam = next((f for f in FAMILIES if error_key in f.modules), None)
+    if fam is None or not fam.extra:
+        return None
+    return fam.extra if missing_requirements(fam.extra) else None
 
 
 def _import_env_module(mod_name: str, error_key: str) -> None:
@@ -213,14 +290,35 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
         importlib.import_module(f"stable_envs.envs.{mod_name}")
     except (ImportError, ModuleNotFoundError) as e:
         _IMPORT_ERRORS[error_key] = f"{type(e).__name__}: {e}"
-        _log("DEBUG", f"stable_envs.envs.{mod_name} did not import (missing extra): {type(e).__name__}: {e}")
-    except Exception as e:  # noqa: BLE001 — recorded, never fatal
-        _IMPORT_ERRORS[error_key] = f"{type(e).__name__}: {e} (unexpected; this is not an optional-dependency miss)"
-        _log(
-            "WARNING",
-            f"stable_envs.envs.{mod_name} did not import (unexpected, not an "
-            f"optional-dep miss): {type(e).__name__}: {e}",
+        _log_once(
+            "DEBUG", mod_name, f"stable_envs.envs.{mod_name} did not import (missing extra): {type(e).__name__}: {e}"
         )
+    except Exception as e:  # noqa: BLE001 — recorded, never fatal
+        error = f"{type(e).__name__}: {e}"
+        extra = _extra_not_installed(error_key)
+        if extra is not None:
+            _IMPORT_ERRORS[error_key] = error
+            _log_once(
+                "DEBUG",
+                mod_name,
+                f"stable_envs.envs.{mod_name} did not import (the {extra} extra is not installed): {error}",
+            )
+        elif _gl_library_error(e):
+            from ._core.mujoco_gl import NO_RENDERER_FIX
+
+            _IMPORT_ERRORS[error_key] = f"{error} (no usable OpenGL library)"
+            _log_once(
+                "INFO",
+                mod_name,
+                f"stable_envs.envs.{mod_name} did not import: no usable OpenGL library ({error}). {NO_RENDERER_FIX}",
+            )
+        else:
+            _IMPORT_ERRORS[error_key] = f"{error} (unexpected; this is not an optional-dependency miss)"
+            _log_once(
+                "WARNING",
+                mod_name,
+                f"stable_envs.envs.{mod_name} did not import (unexpected, not an optional-dep miss): {error}",
+            )
 
 
 def _require_extra(what: str, extra: str, *modules: str) -> None:
@@ -247,17 +345,22 @@ def discover(force: bool = False) -> dict[str, str]:
     Returns:
         ``{module name: "<ExceptionType>: <message>"}``, the same as ``import_errors``.
     """
-    global _DISCOVERED
-    if _DISCOVERED and not force:
+    global _DISCOVERED, _DISCOVERING
+    # Importing stable_envs.envs calls discover again; that inner call returns at once.
+    if _DISCOVERING or (_DISCOVERED and not force):
         return dict(_IMPORT_ERRORS)
     from ._core.mujoco_gl import configure_mujoco_gl
 
-    configure_mujoco_gl()
-    pkg = importlib.import_module("stable_envs.envs")
-    for mod in pkgutil.iter_modules(pkg.__path__):
-        if mod.name.startswith("_"):
-            continue
-        _import_env_module(mod.name, mod.name)
+    _DISCOVERING = True
+    try:
+        configure_mujoco_gl()
+        pkg = importlib.import_module("stable_envs.envs")
+        for mod in pkgutil.iter_modules(pkg.__path__):
+            if mod.name.startswith("_"):
+                continue
+            _import_env_module(mod.name, mod.name)
+    finally:
+        _DISCOVERING = False
     _DISCOVERED = True
     return dict(_IMPORT_ERRORS)
 

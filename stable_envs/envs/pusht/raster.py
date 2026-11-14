@@ -17,6 +17,7 @@ from functools import cache, lru_cache
 import numpy as np
 import torch
 
+from ..._core.cpus import numba_threads
 from .simulation.numeric import get_value
 
 CANVAS = 512
@@ -1335,7 +1336,7 @@ def render_cpu(fields, size, fallback, out=None):
     segments = np.ascontiguousarray(fields["current/render_segments"], np.float64)
     used = fields["current/render_segment_count"].astype(np.int64).reshape(-1)
     width = _LINE_WRITES * max(1, int(min(used.max(), segments.shape[1])))
-    threads = numba.get_num_threads()
+    threads = numba_threads()
     numba.set_num_threads(max(1, min(threads, count)))
     try:
         for key, layout, rows in groups:

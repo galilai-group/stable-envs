@@ -241,7 +241,10 @@ class Compatibility:
 
     def __init__(self, *, seed=0, reward_task_id=None, pool=None):
         if version("ogbench") != "1.2.1":
-            raise RuntimeError("Cube/Scene CPU semantics require unmodified ogbench==1.2.1")
+            raise RuntimeError(
+                f"Cube/Scene CPU semantics require unmodified ogbench==1.2.1, found {version('ogbench')}: "
+                "pip install 'stable-envs[ogbench-manipulation]'"
+            )
         if reward_task_id is not None and (type(reward_task_id) is not int or reward_task_id not in range(6)):
             raise ValueError("reward_task_id must be None or an integer in 0..5")
         self._action_box = None

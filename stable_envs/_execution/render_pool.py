@@ -18,6 +18,7 @@ import numpy as np
 
 from .. import tuning
 from .._core.config import log
+from .._core.cpus import cpu_limit
 from .requests import ProcessRequests, lane_slices
 from .workers import pin_worker, send_failure, send_ready
 
@@ -292,9 +293,7 @@ def worker_count(count: int, path: str, size: int, min_rows: int | None = None) 
         threshold = tuning.get("render_worker_min_rows", path=path, size=size, batch=count, default=min_rows)
     if count < int(threshold or 0):
         return 0
-    workers = min(
-        int(tuning.get("render_workers", path=path, size=size, batch=count) or 0), len(os.sched_getaffinity(0))
-    )
+    workers = min(int(tuning.get("render_workers", path=path, size=size, batch=count) or 0), cpu_limit())
     return workers if workers >= 2 else 0
 
 

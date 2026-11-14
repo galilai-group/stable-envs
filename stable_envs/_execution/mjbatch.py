@@ -61,7 +61,6 @@ The native batch's threads do not survive ``fork``: build backends after forking
 from __future__ import annotations
 
 import gc
-import os
 import threading
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -71,7 +70,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 
-from .policy import cpu_affinity
+from .._core.cpus import cpu_limit
 
 if TYPE_CHECKING:
     from .mjwarp_fused import TreeWalks
@@ -124,7 +123,7 @@ def resolve_backend(
 
 def native_threads(num_envs: int) -> int:
     """Native batch threads: one per CPU in the affinity and per environment, at most :data:`MAX_NATIVE_THREADS`."""
-    cpus = len(cpu_affinity() or ()) or os.cpu_count() or 1
+    cpus = cpu_limit()
     return max(1, min(MAX_NATIVE_THREADS, cpus, int(num_envs)))
 
 
@@ -478,7 +477,16 @@ class WarpBatch(MjBatch):
         **_native_options,
     ):
         import mujoco
-        import mujoco_warp as mjw
+
+        try:
+            import mujoco_warp as mjw
+        except ImportError as e:
+            raise ModuleNotFoundError(
+                f"MuJoCo Warp physics on CUDA needs mujoco-warp and warp-lang ({e}). The family's GPU extra installs "
+                "them: stable-envs[dmcontrol-gpu], [ogbench,mjwarp], [ogbench-manipulation-gpu], [robotics,mjwarp], "
+                "[roadster-gpu] or [mshuman]",
+                name="mujoco_warp",
+            ) from e
 
         from .._core.warp_cuda import require_warp_cuda
 

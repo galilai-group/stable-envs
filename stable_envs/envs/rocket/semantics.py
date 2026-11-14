@@ -11,7 +11,7 @@ from ..._core.tensordicts import stack_leaves
 from ..._execution.process import zeros
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
-from ...registry import REGISTRY, register
+from ...registry import REGISTRY, _require_extra, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
 from .simulation.execution import NUMBA_CUDA_MIN_ENVS, make_rocket_adapter, rocket_backend
@@ -73,6 +73,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     ):
         from .render import check_backend
 
+        _require_extra(type(self).__name__, "rocket", "PyFlyt", "pybullet", "numba", "scipy")
         device = Env.resolve_device(device)
         check_backend(backend, device)
         self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, numba_cuda_min_envs)

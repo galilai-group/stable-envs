@@ -14,6 +14,7 @@ first and the class-by-class comparison is skipped if this interpreter differs.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -170,6 +171,53 @@ def test_renamed_class_names_do_not_resolve():
     if "PointMazeLargeNavigate" in R.REGISTRY:
         with pytest.raises(KeyError, match="unknown env"):
             R.make("swm/OGBMaze-v0")
+
+
+def test_an_unregistered_family_class_names_its_extra(monkeypatch):
+    monkeypatch.setitem(R._IMPORT_ERRORS, "dmcontrol", "ModuleNotFoundError: No module named 'dm_control'")
+    with pytest.raises(KeyError, match=r"stable-envs\[dmcontrol\]"):
+        R.make("DMCNoSuchTask")
+
+
+def test_rocket_without_its_extra_names_it(monkeypatch):
+    if "PyFlytRocketLanding" not in R.REGISTRY:
+        pytest.skip("rocket does not import here")
+    real = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a: None if name == "pybullet" else real(name, *a))
+    assert R.missing_extra("PyFlytRocketLanding") == "rocket"
+    with pytest.raises(ModuleNotFoundError, match=r"stable-envs\[rocket\]"):
+        R.make("PyFlytRocketLanding", num_envs=1, device="cpu")
+
+
+def _raised_in(filename: str) -> AttributeError:
+    try:
+        exec(compile("raise AttributeError('no eglQueryString')", filename, "exec"), {})
+    except AttributeError as e:
+        return e
+    raise AssertionError
+
+
+@pytest.mark.parametrize(("extra", "level", "recorded"), [(None, "INFO", "OpenGL"), ("roadster", "DEBUG", "")])
+def test_a_gl_import_failure_logs_once_without_a_warning(monkeypatch, extra, level, recorded):
+    from loguru import logger
+
+    error = _raised_in("/site-packages/OpenGL/platform/egl.py")
+    monkeypatch.setattr(R.importlib, "import_module", lambda name: (_ for _ in ()).throw(error))
+    monkeypatch.setattr(R, "_extra_not_installed", lambda key: extra)
+    monkeypatch.setattr(R, "_LOGGED", set())
+    monkeypatch.setattr(R, "_IMPORT_ERRORS", {})
+    records = []
+    sink = logger.add(lambda m: records.append(m.record["level"].name), level="DEBUG")
+    saved = snv.get_config()["verbose"]
+    try:
+        snv.set(verbose="DEBUG")
+        R._import_env_module("probe", "probe")
+        R._import_env_module("probe", "probe")
+    finally:
+        logger.remove(sink)
+        snv.set(verbose=saved)
+    assert records == [level]
+    assert recorded in R._IMPORT_ERRORS["probe"] and "unexpected" not in R._IMPORT_ERRORS["probe"]
 
 
 def test_discovery_records_its_failures_rather_than_hiding_them():

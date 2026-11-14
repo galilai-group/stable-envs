@@ -162,3 +162,13 @@ def test_flat_sampled_variation_is_valid_and_restorable(name):
         env.step(actions(name, 2)[:, 0], frames=None)
         env.set_state(state)
         assert_same_state(state, env.get_state())
+
+
+def test_render_names_what_pusht_accepts_and_construction_does_not_warn(recwarn):
+    with se.make("PushT", num_envs=2, size=64, device="cpu") as env:
+        state = env.reset(seed=0)
+        with pytest.raises(TypeError, match="keeps its variation in the State"):
+            env.render(state, variation=env.sample_variation(2))
+        with pytest.raises(TypeError, match="accepts size= and out="):
+            env.render(state, supersample=2)
+    assert not [w for w in recwarn if "Casting input x" in str(w.message)]

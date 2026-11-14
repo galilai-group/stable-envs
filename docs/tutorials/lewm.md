@@ -14,10 +14,12 @@ The model, the loss, the optimizer, the data split and the planning values are t
 
 ## Prerequisites
 
-Use Linux with an NVIDIA GPU for training. A CPU is sufficient for the small check at the end. Install stable-envs with the `pusht` extra, then stable-worldmodel at the pinned commit:
+Use Linux with an NVIDIA GPU for training. A CPU is sufficient for the small check at the end. The scripts aren't part of the PyPI package, so clone the repository and run the commands on this page from its root. Install stable-envs with the `pusht` extra, then stable-worldmodel at the pinned commit:
 
 ```bash
-pip install -e ".[pusht]"        # from the stable-envs repository root
+git clone https://github.com/galilai-group/stable-envs
+cd stable-envs
+pip install "stable-envs[pusht]"
 pip install "stable-worldmodel[train,format] @ git+https://github.com/galilai-group/stable-worldmodel@21446f1ede6d5284e981bd7b47f432b994e6d812" \
     "stable-pretraining==0.1.8" scikit-learn
 ```
@@ -60,7 +62,7 @@ print(frames.shape, frames.dtype)  # torch.Size([2, 224, 224, 3]) torch.uint8
 
 ## Make the dataset
 
-Get the LeWM PushT dataset (46 GB after decompression):
+Get the LeWM PushT dataset (46 GB after decompression). The `hf` command comes with stable-worldmodel, and `zstd` is a system package (`sudo apt install zstd` on Ubuntu):
 
 ```bash
 hf download quentinll/lewm-pusht pusht_expert_train.h5.zst --repo-type dataset --local-dir data
@@ -100,19 +102,36 @@ Plan with the trained model on 50 start and goal pairs from the dataset:
 python examples/lewm/eval.py --data data/pusht_state.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_100.pt
 ```
 
-`--policy random` evaluates random actions. `--num-eval` sets the number of pairs, `--env-device` the device of the stable-envs environments and `--device` the device of the model and the planner. The script prints the success rate as JSON. `--out` also appends it as one JSON line to a file.
+`--policy random` evaluates random actions. `--num-eval` sets the number of pairs, `--env-device` the device of the stable-envs environments and `--device` the device of the model and the planner. The script prints the success rate as JSON. `--out` also appends it as one JSON line to a file. `--video DIR` writes one video per environment. It needs a dataset with a `pixels` column, for example from `make_dataset.py` without `--states-only`.
 
 ## Small check
 
-This runs a few hundred steps on a small part of the data:
+This runs a few hundred steps on a small part of the data. Make a state dataset from the first 200 episodes:
 
 ```bash
 python examples/lewm/make_dataset.py data/pusht_expert_train.h5 data/pusht_small.h5 --states-only --episodes 200
+```
+
+Train and evaluate on the CPU:
+
+```bash
 python examples/lewm/train.py --data data/pusht_small.h5 --half --max-steps 300 --precision 32 --accelerator cpu \
     loader.batch_size=16 loader.num_workers=2
 python examples/lewm/eval.py --data data/pusht_small.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_1.pt \
     --device cpu --num-eval 8 eval.eval_budget=20
 ```
+
+Train and evaluate on a GPU:
+
+```bash
+python examples/lewm/train.py --data data/pusht_small.h5 --half --compile --max-steps 300
+python examples/lewm/eval.py --data data/pusht_small.h5 --policy runs/checkpoints/lewm-pusht/weights_epoch_1.pt \
+    --num-eval 8 eval.eval_budget=20
+```
+
+`train.py` prints one JSON line with the losses at the end of each epoch. After 300 steps, the success rate is low.
+
+In a container with a CPU limit, set `OMP_NUM_THREADS` and `NUMBA_NUM_THREADS` to the number of CPUs in the limit. Without these variables, PyTorch and Numba start threads for all the CPUs of the host, and the CPU steps become much slower.
 
 The [README](https://github.com/galilai-group/stable-envs/blob/main/examples/lewm/README.md#epoch-time) tells how to compare the epoch time with stored frames, with the source renderer and with stable-envs on the GPU.
 

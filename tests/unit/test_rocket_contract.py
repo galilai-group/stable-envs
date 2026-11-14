@@ -90,7 +90,7 @@ def test_the_rocket_mse_and_reference_versions_survive():
     cls = RL.PyFlytRocketLanding
     v = cls.visual_fidelity
     assert v["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}
-    assert (v["mse_mean"], v["mse_p95"], v["mse_max"]) == (4.1989, 8.2096, 9.3401)
+    assert (v["mse_mean"], v["mse_p95"], v["mse_max"]) == (0.0091, 0.0772, 0.2354)
     assert cls.default_size == 480 and cls.default_supersample == 1
 
 

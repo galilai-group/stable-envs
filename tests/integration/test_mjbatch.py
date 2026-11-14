@@ -111,10 +111,10 @@ def test_routing_follows_device_and_cutoff():
             resolve_backend(1, "cpu", "auto", bad)
 
 
-def test_native_threads_follow_the_affinity(monkeypatch):
-    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: [0, 1])
+def test_native_threads_follow_the_cpu_limit(monkeypatch):
+    monkeypatch.setattr(mjbatch, "cpu_limit", lambda: 2)
     assert mjbatch.native_threads(64) == 2
-    monkeypatch.setattr(mjbatch, "cpu_affinity", lambda: list(range(32)))
+    monkeypatch.setattr(mjbatch, "cpu_limit", lambda: 32)
     assert mjbatch.native_threads(64) == 8
     assert mjbatch.native_threads(3) == 3
 

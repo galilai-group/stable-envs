@@ -5,15 +5,15 @@
     "mujoco-warp": "3.17.0",
     "warp-lang": "1.17.0"
   },
-  "gpu": "NVIDIA H200",
+  "gpu": "NVIDIA L40S",
   "torch": "2.15.0+cu132",
-  "source_commit": "7bc4bdaf1eb6fafba7729d0110c9fedbf313344a",
+  "source_commit": "2e4fcdf290c4ab501107209fef6ebf269aecb409",
   "size": 64,
   "batch": 257,
   "seed": 17,
   "files": {
-    "Cube-mjwarp.npz": "7b649b3c553c9ff6e0f346f9b6ecdd57df741698ba32e2f3dd8e6feba22b4e0f",
-    "Cube-mjwarp_fidelity.npz": "255ccaeabef1f7458ee759af279a0fbe0fd072a8aa29afaf8e778aa5e5615106",
-    "Scene-mjwarp.npz": "b97a9bcc0b9fa6884a2e650b8a271d460ecac5bc8b501d2dff09e55654f398e3"
+    "Cube-mjwarp.npz": "55639cbf1ecd3626f4b0ca9107a7810d774de668b75795b7b953deae5695be74",
+    "Cube-mjwarp_fidelity.npz": "1db21fe551ce5a8385ba16f4fdaf3304fd4908d0aba30a1647f9f74a2ff4e2b3",
+    "Scene-mjwarp.npz": "8614d0c0e15936a6e8bcafc0a417dc394456cb6023ec6bcee893f58752395164"
   }
 }

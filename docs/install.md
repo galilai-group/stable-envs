@@ -22,11 +22,11 @@ stable-envs supports CPython 3.10, 3.11 and 3.12. It runs on Linux and macOS, an
 
 ## Missing extras
 
-A missing extra affects only its own family. The core install registers 51 classes, and 6 of them run with nothing else installed: CartPole, Acrobot, TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones.
+A missing extra affects only its own family. The core install registers 52 classes, and 6 of them run with nothing else installed: CartPole, Acrobot, TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones.
 
-- The 27 OGBench, 12 Fetch and 2 PushT classes register without their extras and raise `ModuleNotFoundError` when you construct one.
+- The 27 OGBench, 12 Fetch and 2 PushT classes and `PyFlytRocketLanding` register without their extras and raise `ModuleNotFoundError` when you construct one.
 - SimplePointMaze needs the `navigation` extra, and MountainCar, MountainCarContinuous and Pendulum need the `classic` extra for pygame.
-- DM Control, Craftax, Miniworld, MS-Human, Roadster and `PyFlytRocketLanding` register only once you install their extra.
+- DM Control, Craftax, Miniworld, MS-Human and Roadster register only once you install their extra.
 
 `snv.import_errors()` says what's missing. With only the core installed:
 
@@ -34,7 +34,7 @@ A missing extra affects only its own family. The core install registers 51 class
 import stable_envs as snv
 
 print(snv.list_families())
-# ['classic_control', 'fetch', 'navigation', 'ogbench', 'pusht']
+# ['classic_control', 'fetch', 'navigation', 'ogbench', 'pusht', 'pyflyt']
 for module, error in snv.import_errors().items():
     print(module, "->", error)
 # craftax -> ImportError: Craftax needs the craftax extra: pip install 'stable-envs[craftax]'
@@ -42,7 +42,6 @@ for module, error in snv.import_errors().items():
 # miniworld -> ImportError: Miniworld needs the miniworld extra: pip install 'stable-envs[miniworld]'
 # mshuman -> ModuleNotFoundError: No module named 'mujoco'
 # roadster -> ImportError: Roadster needs the roadster extra: pip install 'stable-envs[roadster]'
-# rocket_semantics -> ModuleNotFoundError: No module named 'pybullet'
 ```
 
 The MuJoCo extras need conflicting MuJoCo versions, and there's no `[all]` extra. Fetch (`robotics`) needs `mujoco<3.12`, while `dmcontrol`, `mshuman`, `roadster` and `ogbench-manipulation` need 3.17. Install Fetch in its own environment; `ogbench` works with either. No single environment can run every class.
@@ -57,7 +56,7 @@ Every family runs on CPU, so you can try any of them without a GPU. For CUDA, so
 | navigation | none. `navigation` adds Matplotlib and Numba for SimplePointMaze (its exact `info.goal` image), Piecewise's `rendering.render_bias_field` and the compiled CPU renderer | nothing else | a CUDA build of torch. TwoRoom also needs `navigation-gpu`, JAX's CUDA 12 build (Linux) |
 | PushT | `pusht`: Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba | nothing else | CUDA torch. Triton, which comes with CUDA torch on Linux, steps the physics and draws the frames on the GPU. `pusht-gpu` adds JAX's CUDA 12 build (Linux) for `simulation_backend="jax"` |
 | Craftax | `craftax`: Craftax, JAX | nothing else | CUDA torch and `craftax-gpu`, which takes JAX's CUDA 12 build |
-| PyFlyt rocket | `rocket`: PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy, Numba for the default physics and CPU renderer | nothing else | CUDA torch, Triton and [nvdiffrast](#nvdiffrast) |
+| PyFlyt rocket | `rocket`: PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy, Numba for the default physics and CPU renderer | nothing else | CUDA torch, Triton, [nvdiffrast](#nvdiffrast) and a CUDA toolkit. Numba needs the toolkit's libNVVM to compile the CUDA physics |
 | DM Control | `dmcontrol`: `dm_control` 1.0.50 or later, MuJoCo 3.17, Numba for the compiled CPU renderer | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and `dmcontrol-gpu`: MuJoCo, MuJoCo Warp and MJX 3.17, Warp, JAX's CUDA 12 build (Linux). MuJoCo Warp steps the default CUDA physics and draws the TrackCom floor reflections |
 | OGBench mazes | `ogbench`: OGBench 1.2.1 or a later 1.2, MuJoCo 3.11 to 3.17, Numba for the compiled CPU light pass of `PointMazeLargeNavigate` | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and `mjwarp` for the default MuJoCo Warp physics |
 | OGBench Cube and Scene | `ogbench-manipulation`: OGBench 1.2.1, MuJoCo 3.17.0, `dm_control` 1.0.50 or later, Numba for the default MuJoCo rasterizer | nothing else; MuJoCo OpenGL for `backend="opengl"` | NVIDIA OpenGL and CUDA torch. `ogbench-manipulation-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 for the default MuJoCo Warp physics and for `supersample` 2 or more |
@@ -72,9 +71,15 @@ The `pusht-reference` extra (gym-pusht) installs only the [upstream library](ter
 - On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu` installs. With another MuJoCo Warp, they render without the reflection and log a warning.
 - The `rocket` extra resolves numpy < 2, the limit PyFlyt 0.29.0 declares in its metadata.
 
-The MuJoCo families draw some or all of their frames with MuJoCo's own OpenGL renderer, so they need an OpenGL backend on GPU machines too. MuJoCo picks the backend from `MUJOCO_GL`. If it's unset, stable-envs picks one: on Linux the backend that `PYOPENGL_PLATFORM` names (`egl` or `osmesa`), otherwise `egl` on Linux and `cgl` on macOS.
+The first construction, step or render of many classes compiles kernels: Numba on CPU, and Triton, Warp or JAX on CUDA. This can take from a few seconds to a few minutes for each class, and nothing shows progress during this time. Most compiled kernels stay in a cache on disk, so the next process starts faster. Do some warm-up calls before you measure speed.
 
-Miniworld draws through pyglet, which runs headless on EGL on Linux unless `PYGLET_HEADLESS` is set. It needs an EGL driver, and the EGL steps below apply to it as well. Without a GPU, Mesa's llvmpipe works.
+The MuJoCo families draw some or all of their frames with MuJoCo's own OpenGL renderer, so they need an OpenGL backend on GPU machines too. MuJoCo picks the backend from `MUJOCO_GL`. If it's unset, stable-envs picks one. On macOS, it is `cgl`. On Linux, it is the backend that `PYOPENGL_PLATFORM` names (`egl` or `osmesa`), otherwise `egl` when libEGL and libGL load, then `osmesa` when libOSMesa loads. When no GL library loads, stable-envs sets `MUJOCO_GL=disable`: physics and the CPU renderers of Fetch, `OGBCube` and `OGBScene` work, and a MuJoCo OpenGL renderer raises an error that gives the packages to install. stable-envs keeps a `MUJOCO_GL` that you set.
+
+Miniworld draws through pyglet, which runs headless on EGL on Linux unless `PYGLET_HEADLESS` is set. It needs an EGL driver, and the EGL steps below apply to it as well. Without a GPU, Mesa's llvmpipe works. pyglet also loads libGL and GLU, so on Debian and Ubuntu install these packages, with or without a GPU:
+
+```bash
+sudo apt install libegl1 libgl1 libglu1-mesa
+```
 
 ## Miniworld
 
@@ -106,6 +111,19 @@ CUDA_HOME=... CPATH=... TORCH_CUDA_ARCH_LIST=... \
   "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0"
 ```
 
+For example, the PyPI torch wheel for CUDA 13.2 on an L40S (compute capability 8.9) on Ubuntu, with NVIDIA's CUDA apt repository:
+
+```bash
+sudo apt install cuda-nvcc-13-2 cuda-cudart-dev-13-2 build-essential
+SITE=$(python -c "import site; print(site.getsitepackages()[0])")
+CUDA_HOME=/usr/local/cuda-13.2 PATH=/usr/local/cuda-13.2/bin:$PATH \
+  CPATH=$SITE/nvidia/cu13/include TORCH_CUDA_ARCH_LIST=8.9 \
+  pip install --no-build-isolation \
+  "git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0"
+```
+
+`python -c "import torch; print(torch.version.cuda)"` gives torch's CUDA version, and `nvidia-smi --query-gpu=compute_cap --format=csv` gives the compute capability.
+
 ## The NVIDIA driver
 
 torch and Warp wheels are built against a CUDA toolkit, and the driver has to support at least that CUDA version. With an older driver, `torch.cuda.is_available()` returns `False`, while Warp falls back to CPU arrays with only a printed warning. The GPU render paths stop on that fallback with an error that says why, and `stable-envs doctor` prints the driver's and Warp's CUDA versions side by side.
@@ -121,8 +139,10 @@ Install the NVIDIA driver from your distribution, which also installs its OpenGL
 On servers and clusters, keep `MUJOCO_GL=egl` and make sure EGL can reach the GPU:
 
 ```bash
-sudo apt install libegl1          # the GLVND EGL loader
+sudo apt install libegl1 libgl1   # the GLVND EGL loader and libGL
 ```
+
+PyOpenGL loads `libGL.so.1` (or `libOpenGL.so.0`) as well as `libEGL.so.1`. Without them, the MuJoCo families don't import, and `import stable_envs` logs a warning for each of them.
 
 The driver supplies `libEGL_nvidia.so.0`. Driver installs made with `--no-opengl-files` and some minimal cluster images leave it out. If yours is missing it, reinstall the driver with its GL libraries or use OSMesa as in the next section.
 
@@ -141,7 +161,7 @@ export MUJOCO_GL=osmesa PYOPENGL_PLATFORM=osmesa
 
 ## Docker
 
-With a GPU, start from an `nvidia/cuda` image, install `libegl1`, and give the container the graphics capability so the NVIDIA container toolkit mounts the driver's EGL library:
+With a GPU, start from an `nvidia/cuda` image, install `libegl1` and `libgl1`, and give the container the graphics capability so the NVIDIA container toolkit mounts the driver's EGL library:
 
 ```bash
 docker run --gpus all -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics ...

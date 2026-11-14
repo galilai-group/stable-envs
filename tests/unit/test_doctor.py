@@ -33,6 +33,30 @@ def test_selected_backend(environ, platform_name, expected):
 
 
 @pytest.mark.parametrize(
+    ("environ", "loading", "expected"),
+    [
+        ({}, {"egl", "osmesa"}, "egl"),
+        ({}, {"osmesa"}, "osmesa"),
+        ({}, set(), "disable"),
+        ({"PYOPENGL_PLATFORM": "egl"}, {"osmesa"}, "disable"),
+        ({"MUJOCO_GL": "egl"}, set(), "egl"),
+        ({"MUJOCO_GL": "glfw"}, set(), "glfw"),
+    ],
+)
+def test_an_unset_backend_needs_its_libraries_to_load(environ, loading, expected):
+    assert mujoco_gl.resolved_backend(environ, "linux", loads=lambda b: b in loading) == expected
+
+
+def test_an_unset_backend_without_gl_libraries_disables_mujoco_rendering(monkeypatch):
+    _fake_mujoco(monkeypatch, renderer=object)
+    monkeypatch.setenv("MUJOCO_GL", "disable")
+    monkeypatch.setitem(mujoco_gl.INITIAL_GL_ENV, "MUJOCO_GL", None)
+    with pytest.raises(RuntimeError, match="MUJOCO_GL=disable") as info:
+        mujoco_gl.mujoco_renderer(object(), height=8, width=8)
+    assert "apt install libegl1 libgl1" in str(info.value)
+
+
+@pytest.mark.parametrize(
     ("environ", "name", "status"),
     [
         ({"MUJOCO_GL": "glfw"}, "DISPLAY", doctor.FAIL),
@@ -182,6 +206,28 @@ def test_family_verdicts(monkeypatch, installed, errors, caps, has_gpu, expected
     row = doctor.family_report(DMC, errors, caps, has_gpu)
     assert (row.status, row.cpu, row.gpu) == expected[:3]
     assert any(expected[3] in fix for fix in row.fixes) or not expected[3]
+
+
+def _family(name):
+    return next(f for f in doctor.FAMILIES if f.name == name)
+
+
+def test_a_family_whose_extra_is_partly_installed_is_not_installed(monkeypatch):
+    monkeypatch.setattr(doctor, "_dist_version", lambda name: "1.0")
+    monkeypatch.setattr(doctor, "missing_requirements", lambda extra: ["pillow"])
+    row = doctor.family_report(_family("roadster"), {"roadster": "ModuleNotFoundError: PIL"}, _caps(), False)
+    assert row.status == doctor.SKIP and "pillow" in row.detail and "stable-envs[roadster]" in row.fixes[0]
+
+
+def test_jax_and_pyglet_gaps_show_in_the_family_columns(monkeypatch):
+    monkeypatch.setattr(doctor, "_dist_version", lambda name: "1.0")
+    jax = doctor.Check("jax_cuda", doctor.FAIL, "JAX has no CUDA plugin")
+    gl = doctor.Check("pyglet_gl", doctor.FAIL, "libGL, libGLU not found", "apt install libegl1 libgl1 libglu1-mesa")
+    caps = _caps(jax_cuda=jax, pyglet_gl=gl)
+    nav = doctor.family_report(_family("navigation"), {}, caps, True)
+    assert nav.gpu == doctor.WARN and 'pip install "stable-envs[navigation-gpu]"' in nav.fixes
+    mini = doctor.family_report(_family("miniworld"), {}, caps, True)
+    assert mini.cpu == doctor.FAIL and "libglu1-mesa" in " ".join(mini.fixes)
 
 
 @pytest.mark.parametrize(("family_status", "code"), [(doctor.WARN, 0), (doctor.FAIL, 1)])

@@ -51,6 +51,13 @@ class Family:
     gpu_extra: str | None = None
     #: Cells that need Warp on CUDA when the rest of the family does not.
     warp_cells: str = ""
+    #: The family's distribution comes with other extras too, so the family counts as installed only with its
+    #: whole extra.
+    full_extra: bool = False
+    #: The extra that installs the CUDA build of JAX for this family.
+    jax_extra: str | None = None
+    #: Classes that need the CUDA build of JAX on CUDA when the rest of the family does not.
+    jax_cells: str = ""
     #: (module, extra that installs it, which classes need it) for modules only some classes need.
     optional: tuple[tuple[str, str, str], ...] = ()
 
@@ -70,6 +77,8 @@ FAMILIES = (
         "navigation",
         None,
         ("navigation",),
+        jax_extra="navigation-gpu",
+        jax_cells="TwoRoom and TwoRoomTarget",
         optional=(
             (
                 "matplotlib",
@@ -114,14 +123,15 @@ FAMILIES = (
         ("rocket_landing", "rocket_render", "rocket_semantics"),
         gpu=("cuda", "triton", "nvdiffrast"),
     ),
-    Family("craftax", "craftax", "craftax", ("craftax",)),
-    Family("miniworld", "miniworld", "miniworld", ("miniworld",)),
-    Family("roadster", "roadster", "mujoco", ("roadster",), cpu=("gl",)),
+    Family("craftax", "craftax", "craftax", ("craftax",), jax_extra="craftax-gpu", jax_cells="The Craftax classes"),
+    Family("miniworld", "miniworld", "miniworld", ("miniworld",), cpu=("pyglet_gl",), gpu=("cuda", "pyglet_gl")),
+    Family("roadster", "roadster", "mujoco", ("roadster",), cpu=("gl",), full_extra=True),
     Family(
         "mshuman",
         "mshuman",
         "mujoco",
         ("mshuman",),
+        full_extra=True,
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="mshuman",
@@ -301,6 +311,49 @@ def check_warp(driver: tuple[int, int] | None) -> Check:
     return Check("warp", OK, detail + f"; sees {', '.join(str(d) for d in wp.get_cuda_devices())}")
 
 
+def check_jax_cuda() -> Check:
+    """Whether JAX has its CUDA plugin, which the JAX CUDA paths need."""
+    if importlib.util.find_spec("jax") is None:
+        return Check("jax_cuda", FAIL, "jax not installed")
+    for dist in ("jax-cuda13-plugin", "jax-cuda12-plugin"):
+        v = _dist_version(dist)
+        if v is not None:
+            return Check("jax_cuda", OK, f"{dist} {v}")
+    return Check("jax_cuda", FAIL, "JAX has no CUDA plugin")
+
+
+def check_pyglet_gl(environ, platform_name: str = sys.platform) -> Check:
+    """Whether the OpenGL libraries Miniworld draws with through pyglet load (Linux only)."""
+    if not platform_name.startswith("linux"):
+        return Check("pyglet_gl", OK, "system OpenGL")
+    needed = {"libGL": ("libGL.so.1", "libGL.so"), "libGLU": ("libGLU.so.1", "libGLU.so")}
+    if "PYGLET_HEADLESS" not in environ:
+        needed["libEGL"] = ("libEGL.so.1", "libEGL.so")
+    missing = [lib for lib, names in needed.items() if not any(mujoco_gl.library_loads(n) for n in names)]
+    if missing:
+        return Check("pyglet_gl", FAIL, f"{', '.join(missing)} not found", "apt install libegl1 libgl1 libglu1-mesa")
+    return Check("pyglet_gl", OK, ", ".join(needed) + " load")
+
+
+def missing_requirements(extra: str) -> list[str]:
+    """Distributions that the stable-envs ``extra`` requires and that are not installed."""
+    try:
+        requires = importlib.metadata.requires("stable-envs") or []
+    except importlib.metadata.PackageNotFoundError:
+        return []
+    missing = []
+    for req in requires:
+        spec, _, marker = req.partition(";")
+        if re.search(rf"""extra\s*==\s*["']{re.escape(extra)}["']""", marker) is None:
+            continue
+        if "sys_platform" in marker and sys.platform not in marker:
+            continue
+        name = re.match(r"[A-Za-z0-9_.\-]+", spec.strip())
+        if name and _dist_version(name.group(0)) is None and name.group(0) not in missing:
+            missing.append(name.group(0))
+    return missing
+
+
 def check_variables(environ=None) -> Check:
     """List the ``STABLE_ENVS_*`` variables that are set, and flag unknown names and invalid values."""
     from ._core import environ as variables
@@ -359,6 +412,17 @@ def gl_env_checks(environ, platform_name: str = sys.platform) -> list[Check]:
     valid = {"cgl", "glfw"} if platform_name == "darwin" else {"egl", "osmesa", "glfw"}
     if backend not in valid:
         out.append(Check("MUJOCO_GL", FAIL, f"{shown}: not a rendering backend", f"use one of {sorted(valid)}"))
+    elif (
+        raw is None
+        and platform_name.startswith("linux")
+        and (bound := mujoco_gl.resolved_backend(environ, platform_name)) != backend
+    ):
+        why = (
+            "no GL library loads, so MuJoCo imports without a renderer"
+            if bound == "disable"
+            else f"the {backend} libraries do not load"
+        )
+        out.append(Check("MUJOCO_GL", OK, f"{shown}; stable-envs sets MUJOCO_GL={bound}: {why}"))
     else:
         out.append(Check("MUJOCO_GL", OK, f"{shown}; MuJoCo binds {backend}"))
     pyopengl = environ.get("PYOPENGL_PLATFORM")
@@ -484,7 +548,10 @@ def gl_checks(environ, driver) -> tuple[list[Check], Check]:
         skipped = Check("gl", SKIP, "mujoco not installed; only the MuJoCo families need OpenGL")
         return [skipped], skipped
     checks = gl_env_checks(environ)
-    selected = mujoco_gl.selected_backend(environ)
+    selected = mujoco_gl.resolved_backend(environ)
+    if selected == "disable" and environ.get("MUJOCO_GL") is None:
+        # Nothing loads: the probe of the preferred backend shows why.
+        selected = mujoco_gl.selected_backend(environ)
     headless = sys.platform != "darwin" and not (environ.get("DISPLAY") or environ.get("WAYLAND_DISPLAY"))
     backends = [b for b in gl_candidates() if not (b == "glfw" and headless)]
     with ThreadPoolExecutor(len(backends)) as pool:
@@ -525,9 +592,14 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
     install = f'pip install "stable-envs[{fam.extra}]"' if fam.extra else ""
     if fam.dist is not None and _dist_version(fam.dist) is None:
         return FamilyReport(fam.name, SKIP, detail="not installed", fixes=[install])
+    if fam.full_extra and fam.extra and (absent := missing_requirements(fam.extra)):
+        return FamilyReport(fam.name, SKIP, detail=f"not installed ({', '.join(absent)} missing)", fixes=[install])
     failed = {m: errors[m] for m in fam.modules if m in errors}
     if len(failed) == len(fam.modules):
         first = next(iter(failed.values()))
+        absent = missing_requirements(fam.extra) if fam.extra else []
+        if absent:
+            return FamilyReport(fam.name, SKIP, detail=f"not installed ({', '.join(absent)} missing)", fixes=[install])
         return FamilyReport(fam.name, FAIL, FAIL, FAIL, f"does not import: {first}", [install] if install else [])
     notes, fixes = [], []
     if failed:
@@ -545,6 +617,8 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
         fix = caps[cap].fix
         if cap == "warp" and caps[cap].detail == "not installed" and fam.gpu_extra:
             fix = f'pip install "stable-envs[{fam.gpu_extra}]"'
+        if cap == "jax_cuda" and fam.jax_extra:
+            fix = f'pip install "stable-envs[{fam.jax_extra}]"'
         if fix and fix not in fixes:
             fixes.append(fix)
         return True
@@ -556,6 +630,9 @@ def family_report(fam: Family, errors: dict[str, str], caps: dict[str, Check], h
     gpu = path(fam.gpu) if has_gpu else SKIP
     if has_gpu and fam.warp_cells and broken("warp"):
         notes.append(f"{fam.warp_cells} need Warp on CUDA: {caps['warp'].detail}")
+        gpu = _worst([gpu, WARN])
+    if has_gpu and fam.jax_cells and broken("jax_cuda"):
+        notes.append(f"{fam.jax_cells} need the CUDA build of JAX on CUDA: {caps['jax_cuda'].detail}")
         gpu = _worst([gpu, WARN])
     status = _worst([cpu, gpu, WARN if failed or missing else OK])
     return FamilyReport(fam.name, status, cpu, gpu, "; ".join(notes), fixes)
@@ -594,6 +671,8 @@ def run(environ=None) -> Report:
         "nvdiffrast": _module_check(
             "nvdiffrast", "nvdiffrast", "build nvdiffrast from source: see docs/install.md#nvdiffrast"
         ),
+        "jax_cuda": check_jax_cuda(),
+        "pyglet_gl": check_pyglet_gl(environ),
     }
     errors = registry.discover()
     has_gpu = driver is not None

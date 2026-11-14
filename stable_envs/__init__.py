@@ -11,10 +11,14 @@ from . import registry as _registry
 from . import tuning
 from .__about__ import __version__  # noqa: F401
 from ._core.config import get_config, set  # noqa: A004,F401
+from ._core.cpus import limit_thread_defaults as _limit_thread_defaults
 from .env import Env, State, StepResult, VariationLike  # noqa: F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make
 from .specs import CompositeSpec, Spec  # noqa: F401
+
+# Size the Numba and Torch thread pools to the CPUs a container quota allows, before a family imports Numba.
+_limit_thread_defaults()
 
 # Discover available families; report missing optional dependencies through import_errors().
 _registry.discover()

@@ -131,25 +131,21 @@ def test_every_look_leaf_is_drawn(name, case):
         assert float(w.float().mean()) <= 0.005, (case, int(w.sum()))
 
 
-LIVE = ["DMCCartpoleSwingup", "DMCBallInCupCatch", "DMCFingerTurnHard", "DMCReacher", "DMCCheetahRun"]
+STEPPED = ["DMCCartpoleSwingup", "DMCBallInCupCatch", "DMCFingerTurnHard", "DMCReacher", "DMCCheetahRun"]
 
 
-@pytest.mark.parametrize("name", family_params([n for n in LIVE if n in DMC], family="dmc"))
-def test_live_frames_equal_state_frames(name):
+@pytest.mark.parametrize("name", family_params([n for n in STEPPED if n in DMC], family="dmc"))
+def test_step_frames_equal_state_frames(name):
     with _make(name, 6, backend="mjwarp", simulation_backend="mjwarp") as env:
-        assert env._render_live is not None
         env.reset(seed=3)
         rng = np.random.default_rng(5)
         for _ in range(3):
             actions = torch.as_tensor(rng.uniform(-1, 1, (6, env.action_dim)), device="cuda")
             out = env.step(actions, states=None, frames=slice(-1, None))
-            live = out["frames"][:, 0]
-            state = env.get_state()
-            drawn = env.render(state)
-            again = env.render()
-            for frames in (live, again):
-                diff = (frames.int() - drawn.int()).abs()
-                assert float((diff > 2).float().mean()) <= 0.005, (name, int(diff.max()))
+            stepped = out["frames"][:, 0]
+            drawn = env.render(env.get_state())
+            assert torch.equal(stepped, drawn), name
+            assert torch.equal(env.render(), drawn), name
 
 
 def test_speed_options_keep_the_frames_and_fidelity_options_draw():

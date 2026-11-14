@@ -8,6 +8,7 @@ import numba
 import numpy as np
 from numba import njit, prange
 
+from ..._core.cpus import numba_threads
 from ...render.cpu_raster.rays3d import _hit
 
 F32 = np.float32
@@ -20,7 +21,7 @@ _TINY = F32(1e-12)
 @contextlib.contextmanager
 def frame_threads(frames):
     """Run the kernels of a pass over ``frames`` frames on at most one Numba thread per frame."""
-    before = numba.get_num_threads()
+    before = numba_threads()
     numba.set_num_threads(max(1, min(before, frames)))
     try:
         yield

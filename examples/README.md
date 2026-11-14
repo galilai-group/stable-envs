@@ -1,6 +1,13 @@
 # Examples
 
-Each script runs on CPU with small defaults, and the scripts with options list them with `--help`. Run them from the repository root.
+Each script runs on CPU with small defaults, and the scripts with options list them with `--help`. The scripts aren't part of the PyPI package. Clone the repository and run them from its root:
+
+```bash
+git clone https://github.com/galilai-group/stable-envs
+cd stable-envs
+```
+
+`gallery.py` and `bench_gpu_vs_cpu.py` without `--envs` run every registered class and skip the classes whose extra is missing. `render.py --out` needs Pillow (`pip install pillow`).
 
 | Script | Shows |
 |---|---|

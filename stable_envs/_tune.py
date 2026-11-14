@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import statistics
 import sys
 import time
@@ -11,6 +10,7 @@ import numpy as np
 import torch
 
 from . import tuning
+from ._core.cpus import cpu_limit
 
 STEPS = 4
 
@@ -33,7 +33,7 @@ def candidates(knob: tuning.Knob, start: int, env) -> list[int]:
     raw = [start >> 2, start >> 1, start, start << 1, start << 2] + ([0] if knob.unit == "cpus" else [])
     free = tuning.free_cuda_bytes(env.device) if env.device.type == "cuda" else None
     frame = env.size * env.size * env.ss * env.ss
-    cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count() or 1
+    cpus = cpu_limit()
     split = {
         "rows": lambda v: min(v, env.num_envs),
         "rays": lambda v: min(env.num_envs, max(1, v // frame)),
@@ -178,20 +178,31 @@ def _save(env, rows, say) -> None:
             )
 
 
-def representatives(device: str) -> dict[str, str]:
-    """Return one registered environment per tunable render path on ``device``."""
+def representatives(device: str, skipped: dict[str, tuple[str, str]] | None = None) -> dict[str, str]:
+    """Return one registered environment per tunable render path on ``device``.
+
+    Classes whose extra is not installed are left out. ``skipped`` receives ``{path: (class, extra)}`` for the
+    paths that only such classes cover.
+    """
     from . import registry
 
     kind = torch.device(device).type
     wanted = {p for k in tuning.KNOBS.values() if k.unit is not None and k.device in ("any", kind) for p in k.paths}
     out: dict[str, str] = {}
+    missing: dict[str, tuple[str, str]] = {}
     for name in registry.list_envs():
         cls = registry.REGISTRY[name]
         if kind == "cpu" and getattr(cls, "requires_cuda", False):
             continue
+        extra = registry.missing_extra(name)
         for path in tuning.paths_of(cls):
             if path in wanted:
-                out.setdefault(path, name)
+                if extra is None:
+                    out.setdefault(path, name)
+                else:
+                    missing.setdefault(path, (name, extra))
+    if skipped is not None:
+        skipped.update({path: entry for path, entry in missing.items() if path not in out})
     return out
 
 
@@ -246,18 +257,45 @@ def main(args) -> int:
         return clear()
     device = Env.resolve_device(args.device)
     if args.all:
-        names = list(dict.fromkeys(representatives(device).values()))
+        skipped: dict[str, tuple[str, str]] = {}
+        names = list(dict.fromkeys(representatives(device, skipped).values()))
+        for name, extra in dict.fromkeys(skipped.values()):
+            print(f"skipping {name}: needs the {extra} extra (pip install 'stable-envs[{extra}]')")
         print(f"tuning {len(names)} environments on {device}, about {len(names)} min: {', '.join(names)}")
         if not args.yes and (not sys.stdin.isatty() or input("start? [y/N] ").strip().lower() not in ("y", "yes")):
             print("not started; pass --yes to start without a prompt")
             return 1
     elif args.env:
         names = [args.env]
+        try:
+            extra = registry.missing_extra(args.env)
+        except KeyError as e:
+            print(f"stable-envs tune: {e.args[0]}", file=sys.stderr)
+            return 2
+        if extra is not None:
+            print(
+                f"stable-envs tune: {args.env} needs the {extra} extra: pip install 'stable-envs[{extra}]'",
+                file=sys.stderr,
+            )
+            return 2
     else:
         print("name an environment, or pass --all, --show or --clear")
         return 2
+    failed = []
     for name in names:
         kwargs = dict(num_envs=args.batch, device=device) | ({"size": args.size} if args.size else {})
-        with registry.make(name, **kwargs) as env:
-            tune(env, knobs=args.knob or (), repeats=args.repeats)
+        try:
+            with registry.make(name, **kwargs) as env:
+                tune(env, knobs=args.knob or (), repeats=args.repeats)
+        except (ImportError, RuntimeError) as e:
+            if not args.all:
+                if not isinstance(e, ImportError):
+                    raise
+                print(f"stable-envs tune: {name} cannot run here: {type(e).__name__}: {e}", file=sys.stderr)
+                return 1
+            print(f"skipping {name}: {type(e).__name__}: {e}")
+            failed.append(name)
+    if failed:
+        print(f"not tuned: {', '.join(failed)}")
+        return 1
     return 0

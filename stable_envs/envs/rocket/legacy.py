@@ -574,15 +574,15 @@ class PyFlytRocketLanding(Env):
         "pos_z",
     )
     visual_fidelity = {
-        "mse_mean": 4.1989,
-        "mse_p95": 8.2096,
-        "mse_max": 9.3401,
+        "mse_mean": 0.0091,
+        "mse_p95": 0.0772,
+        "mse_max": 0.2354,
         "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
         "measured_at": (
             "480 px, supersample 1, default appearance, per-frame MSE over pixels and channels on the 0-255 "
             "scale, over the rows of sample_render_rows(default_rng(20260811)) (64 rows) that the reference "
             "bridge reaches, against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing "
-            "env with the camera at the lagged link pose; NVIDIA GeForce RTX 3090 / driver 575.57.08, "
+            "env with the camera at the lagged link pose; NVIDIA L40S / driver 595.91.07, "
             "torch 2.14.1+cu126, nvdiffrast 0.4.0"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},

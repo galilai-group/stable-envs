@@ -15,10 +15,9 @@ def available() -> bool:
         ok = importlib.util.find_spec("numba") is not None
         if ok:
             try:
-                import numba
+                from ..._core.cpus import numba_threads
 
-                if "NUMBA_NUM_THREADS" not in os.environ and hasattr(os, "sched_getaffinity"):
-                    numba.set_num_threads(max(1, min(numba.config.NUMBA_NUM_THREADS, len(os.sched_getaffinity(0)))))
+                numba_threads()
             except Exception:  # noqa: BLE001 - an unusable numba means the fallback paths draw
                 ok = False
         _STATE["ok"] = ok

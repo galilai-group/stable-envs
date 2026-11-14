@@ -2,12 +2,17 @@
 
 On macOS, bind MuJoCo to its native backend before importing dm_control with
 rendering disabled. This avoids GLFW initialization during discovery. Restore
-``glfw`` afterward for Gymnasium, which rejects ``cgl``. On other platforms,
-default to offscreen EGL and preserve explicit settings.
+``glfw`` afterward for Gymnasium, which rejects ``cgl``. On Linux, an unset
+``MUJOCO_GL`` becomes EGL when libEGL and libGL load, else OSMesa when libOSMesa
+loads, else ``disable``: MuJoCo then imports without a renderer, physics and the
+Numba renderers still work, and only a MuJoCo OpenGL renderer raises, with the fix.
+Explicit settings are kept.
 """
 
 from __future__ import annotations
 
+import ctypes
+import functools
 import importlib
 import importlib.util
 import os
@@ -19,8 +24,14 @@ GL_VARS = ("MUJOCO_GL", "PYOPENGL_PLATFORM", "MUJOCO_EGL_DEVICE_ID")
 #: The GL variables as the process received them, before configure_mujoco_gl fills defaults.
 INITIAL_GL_ENV = {name: os.environ.get(name) for name in GL_VARS}
 
+#: Libraries each Linux backend loads through PyOpenGL: one name of every group must load.
+GL_LIBRARIES = {
+    "egl": (("libEGL.so.1", "libEGL.so"), ("libOpenGL.so.0", "libGL.so.1", "libOpenGL.so", "libGL.so")),
+    "osmesa": (("libOSMesa.so.8", "libOSMesa.so.6", "libOSMesa.so"),),
+}
+
 NO_RENDERER_FIX = (
-    "Headless Linux: install EGL (apt install libegl1; NVIDIA machines also need the driver's "
+    "Headless Linux: install EGL (apt install libegl1 libgl1; NVIDIA machines also need the driver's "
     "libEGL_nvidia) and keep MUJOCO_GL=egl, or install OSMesa (apt install libosmesa6) and set "
     "MUJOCO_GL=osmesa PYOPENGL_PLATFORM=osmesa. With a display, MUJOCO_GL=glfw. "
     "`stable-envs doctor` tests each backend on this machine."
@@ -40,6 +51,39 @@ def selected_backend(environ=None, platform: str = sys.platform) -> str:
         return backend
     pyopengl = (environ.get("PYOPENGL_PLATFORM") or "").lower()
     return pyopengl if pyopengl in _LINUX_MUJOCO else "egl"
+
+
+@functools.cache
+def library_loads(name: str) -> bool:
+    """Whether the shared library ``name`` loads in this process."""
+    try:
+        ctypes.CDLL(name)
+    except OSError:
+        return False
+    return True
+
+
+def gl_libraries_load(backend: str) -> bool:
+    """Whether the shared libraries ``backend`` needs load in this process; True for backends without a list."""
+    groups = GL_LIBRARIES.get(backend)
+    return groups is None or all(any(library_loads(name) for name in group) for group in groups)
+
+
+def resolved_backend(environ=None, platform: str = sys.platform, loads=gl_libraries_load) -> str:
+    """Return the ``MUJOCO_GL`` value that ``configure_mujoco_gl`` sets.
+
+    An explicit ``MUJOCO_GL`` is kept. Unset on Linux, the backend from ``selected_backend`` is used when its
+    libraries load. Without ``PYOPENGL_PLATFORM``, EGL falls back to OSMesa, then to ``"disable"``.
+    """
+    environ = os.environ if environ is None else environ
+    backend = selected_backend(environ, platform)
+    if not platform.startswith("linux") or environ.get("MUJOCO_GL") is not None:
+        return backend
+    candidates = (backend,) if environ.get("PYOPENGL_PLATFORM") else (backend, "osmesa")
+    for candidate in dict.fromkeys(candidates):
+        if loads(candidate):
+            return candidate
+    return "disable"
 
 
 def configure_mujoco_gl() -> str:
@@ -62,7 +106,8 @@ def configure_mujoco_gl() -> str:
         # imported (or absent), so restoring glfw does not re-enter GLFW init in this process.
         os.environ["MUJOCO_GL"] = "glfw"
         return os.environ["MUJOCO_GL"]
-    os.environ.setdefault("MUJOCO_GL", selected_backend())
+    if "MUJOCO_GL" not in os.environ:
+        os.environ["MUJOCO_GL"] = resolved_backend()
     return os.environ["MUJOCO_GL"]
 
 
@@ -85,6 +130,11 @@ def mujoco_renderer(model, *, height: int, width: int):
 
     backend = os.environ.get("MUJOCO_GL", "<unset>")
     renderer = getattr(mujoco, "Renderer", None)
+    if backend == "disable" and INITIAL_GL_ENV["MUJOCO_GL"] is None:
+        raise RuntimeError(
+            "MuJoCo has no OpenGL renderer: neither libEGL with libGL nor libOSMesa loads on this machine, "
+            f"so stable-envs imported MuJoCo with MUJOCO_GL=disable. {NO_RENDERER_FIX}"
+        )
     if renderer is None:
         cause = _renderer_import_error()
         detail = f"MuJoCo has no OpenGL renderer with MUJOCO_GL={backend}"

@@ -78,6 +78,7 @@ def test_routing(monkeypatch, route, target, device, eligible, platform, batch, 
     else:
         monkeypatch.setattr(policy.os, "sched_getaffinity", lambda _: set(cpus), raising=False)
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
+    monkeypatch.setattr(policy, "cpu_limit", lambda: 1024)
     (kind, args, kwargs), expected_args, local_kwargs, process_kwargs = route(monkeypatch, target, batch, device)
     expected = count if eligible else 0
     assert kind == ("process" if expected else "local")
@@ -178,6 +179,18 @@ def test_dmc_auto_uses_the_task_cutoff_on_cuda(monkeypatch, key, batch, device, 
 
 
 @pytest.mark.family("dmc")
+def test_dmc_cuda_physics_without_warp_names_the_extra(monkeypatch):
+    import importlib.util
+
+    from stable_envs.envs.dmcontrol.simulation import mjwarp
+
+    real = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda n, *a: None if n == "mujoco_warp" else real(n, *a))
+    with pytest.raises(ModuleNotFoundError, match=r"stable-envs\[dmcontrol-gpu\]"):
+        mjwarp.DMCWarpAdapter("cheetah", 2, "cuda", 0)
+
+
+@pytest.mark.family("dmc")
 def test_dmc_default_is_gpu_physics_on_cuda_and_explicit_names_select(monkeypatch):
     execution = _fake_adapters(monkeypatch)
     for backend, kind in ((None, "mjwarp"), ("native", "batch"), ("mjwarp", "mjwarp")):
@@ -232,7 +245,6 @@ def dmc_factory(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.setattr(factory, "make_local", lambda *args: None)
     monkeypatch.setattr(factory, "DMCBatchAdapter", lambda lanes, task, threads, **_: threads)
-    monkeypatch.setattr(factory.os, "cpu_count", lambda: 6)
     tuning.reset()
     tuning._clear_caches()
     yield factory
@@ -254,14 +266,14 @@ def dmc_factory(monkeypatch, tmp_path):
 def test_dmc_batch_threads_follow_the_knob_within_cpus_and_lanes(
     monkeypatch, dmc_factory, knobs, cpus, batch, expected
 ):
-    monkeypatch.setattr(dmc_factory, "cpu_affinity", lambda: None if cpus is None else list(range(cpus)))
+    monkeypatch.setattr(dmc_factory, "cpu_limit", lambda: 6 if cpus is None else cpus)
     with tuning.override(**knobs):
         assert dmc_factory.make_batch("cartpole", batch) == expected
 
 
 @pytest.mark.family("dmc")
 def test_dmc_batch_threads_use_the_value_tuned_for_their_batch_range(monkeypatch, dmc_factory):
-    monkeypatch.setattr(dmc_factory, "cpu_affinity", lambda: list(range(32)))
+    monkeypatch.setattr(dmc_factory, "cpu_limit", lambda: 32)
     tuning.write_cache({tuning.entry_key("dmc-sim", 0, 1024): {"dmc_threads": 16}}, "cpu")
     assert dmc_factory.make_batch("cartpole", 1024) == 16
     assert dmc_factory.make_batch("cartpole", 512) == 8

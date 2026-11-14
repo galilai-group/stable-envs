@@ -42,7 +42,7 @@ print(frame.shape, frame.dtype)  # torch.Size([4, 400, 600, 3]) torch.uint8
 Rendering doesn't advance the simulation, so you can render a state you stored long ago. Classic control renders only at Gymnasium's native size (400 × 600 for CartPole), and most other families take a `size` argument when you construct them. To look at a frame, save it as an image:
 
 ```python
-# needs Pillow
+# needs Pillow: pip install pillow
 from PIL import Image
 
 Image.fromarray(frame[0].cpu().numpy()).save("cartpole.png")

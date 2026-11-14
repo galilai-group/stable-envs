@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=None, help="optional JSON path for the results")
     args = p.parse_args(argv)
 
-    names = [s for s in args.envs.split(",") if s] or snv.list_envs()
+    chosen = [s for s in args.envs.split(",") if s]
+    names = chosen or snv.list_envs()
     batches = [int(b) for b in args.batches.split(",") if b]
     devices = ["cpu", "cuda"] if torch.cuda.is_available() else ["cpu"]
 
@@ -65,9 +66,16 @@ def main(argv: list[str] | None = None) -> int:
     print("|---|---|" + "---|" * len(devices) + "---|")
     for name in names:
         cuda_only = snv.info(name)["requires_cuda"]
-        per_device = {
-            d: measure(name, d, batches, args.pool, args.reps) for d in devices if d == "cuda" or not cuda_only
-        }
+        try:
+            per_device = {
+                d: measure(name, d, batches, args.pool, args.reps) for d in devices if d == "cuda" or not cuda_only
+            }
+        except (ImportError, RuntimeError) as e:
+            # Without --envs, skip the classes whose extra is missing on this machine.
+            if chosen:
+                raise
+            print(f"skipped {name}: {e}")
+            continue
         results[name] = per_device
         for b in batches:
             cells = [f"{per_device[d][b]:,.0f}" if d in per_device else "-" for d in devices]

@@ -107,7 +107,7 @@ The renderer draws the geoms of the task. MuJoCo Warp does not draw sites and te
 
 Material colors, the light scale, the geom color leaves, the sphere radius leaves, gravity and the floor colors change per world. The field of view, visibility and shape leaves need a separate render model. The renderer groups the batch rows by these leaves and draws each group with its own context.
 
-When the physics runs on MuJoCo Warp, `env.render()` and the frames of `env.step` copy the physics poses on the device into the render data. They do not read the state back to the host and do not run kinematics again. The render kernels run on the current CUDA stream after the physics kernels.
+`env.render()`, `env.render(state)` and the frames of `env.step` run the same kinematics on the render rows of the State, so a frame is a function of the State.
 
 `render_options` sets the speed and fidelity options. `STABLE_ENVS_DMC_WARP_OPTIONS` sets defaults as a JSON object.
 

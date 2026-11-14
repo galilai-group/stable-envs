@@ -194,6 +194,21 @@ def test_cli_show_clear_and_all(monkeypatch, capsys):
     assert cli.main(["tune", "--all", "--device", "cpu"]) == 1 and "--yes" in capsys.readouterr().out
 
 
+def test_tune_names_the_missing_extra(monkeypatch, capsys):
+    reps = _tune.representatives("cpu")
+    path, name = next(iter(reps.items()))
+    real = registry.missing_extra
+    monkeypatch.setattr(registry, "missing_extra", lambda n: "classic" if n == name else real(n))
+    skipped = {}
+    after = _tune.representatives("cpu", skipped)
+    assert name not in after.values() and (path in after or skipped[path] == (name, "classic"))
+    assert cli.main(["tune", name]) == 2 and "stable-envs[classic]" in capsys.readouterr().err
+    monkeypatch.setitem(registry._IMPORT_ERRORS, "dmcontrol", "ModuleNotFoundError: No module named 'dm_control'")
+    assert cli.main(["tune", "DMCNoSuchTask"]) == 2
+    err = capsys.readouterr().err
+    assert "stable-envs[dmcontrol]" in err and "Traceback" not in err
+
+
 @pytest.mark.parametrize(
     ("knobs", "batch", "expected"),
     [({}, 64, 8), ({"workers": 0}, 64, 0), ({"workers": 3}, 64, 3), ({}, 32, 0), ({"worker_min_lanes": 8}, 8, 8)],
@@ -201,6 +216,7 @@ def test_cli_show_clear_and_all(monkeypatch, capsys):
 def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
+    monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
     with tuning.override(**knobs):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 

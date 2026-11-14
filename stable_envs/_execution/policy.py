@@ -6,6 +6,7 @@ import sys
 from collections.abc import Sequence
 
 from .. import tuning
+from .._core.cpus import cpu_limit
 
 
 def cpu_affinity() -> list[int] | None:
@@ -27,7 +28,7 @@ def process_count(
     and 4 CPUs, up to the ``workers`` knob. ``path`` is the simulation path whose measured values apply.
     A batch larger than ``lanes_per_process`` uses at least enough workers to hold it on any platform.
     """
-    available = len(cpus) if cpus is not None else 1
+    available = min(len(cpus), cpu_limit()) if cpus is not None else 1
     if not eligible or mp.current_process().daemon:
         return 0
     needed = -(-num_envs // lanes_per_process) if lanes_per_process and num_envs > lanes_per_process else 0

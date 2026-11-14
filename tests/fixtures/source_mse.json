@@ -715,14 +715,14 @@
    "seed": 20260811,
    "n": 64,
    "size": 480,
-   "mse_mean": 4.1989,
-   "mse_p95": 8.2096,
-   "mse_max": 9.3401,
+   "mse_mean": 0.0091,
+   "mse_p95": 0.0772,
+   "mse_max": 0.2354,
    "reference_versions": {
     "PyFlyt": "0.29.0",
     "pybullet": "3.2.7"
    },
-   "gpu": "NVIDIA GeForce RTX 3090",
+   "gpu": "NVIDIA L40S",
    "torch": "2.14.1+cu126"
   },
   "SimplePointMaze": {

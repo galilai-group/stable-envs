@@ -221,4 +221,3 @@ These are the mistakes that reviewers see most:
 - Frames that depend on batch order.
 - Releasing shared contexts.
 - Saying that the physics is correct because the pixels match.
-

@@ -55,6 +55,88 @@ The [Quickstart](https://galilai-group.github.io/stable-envs/quickstart/) covers
 
 ## Environments
 
+<div align="center">
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCBallInCupCatch.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCBallInCupCatch_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCCartpoleSwingup.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCCartpoleSwingup_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCCheetahRun.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCCheetahRun_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCFingerSpin.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCFingerSpin_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCHopperHop.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCHopperHop_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCPendulumSwingup.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCPendulumSwingup_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCQuadrupedWalk.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCQuadrupedWalk_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCReacher.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCReacher_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCWalkerWalk.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCWalkerWalk_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCHumanoidWalk.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCHumanoidWalk_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCAcrobotBalance.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCAcrobotBalance_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCManipulatorBringBall.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCManipulatorBringBall_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCPointMassEasy.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCPointMassEasy_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCSwimmerSwimmer6.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/DMCSwimmerSwimmer6_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/CartPole.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/CartPole_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MountainCar.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MountainCar_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Acrobot.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Acrobot_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Pendulum.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Pendulum_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/OGBCube.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/OGBCube_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/OGBScene.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/OGBScene_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PushT.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PushT_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/TwoRoom.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/TwoRoom_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/SimplePointMaze.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/SimplePointMaze_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchReach.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchReach_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchPush.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchPush_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchSlide.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchSlide_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchPickAndPlace.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/FetchPickAndPlace_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/CraftaxClassicPixels.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/CraftaxPixels.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PointMazeMediumNavigate.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PointMazeMediumNavigate_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/AntMazeMediumNavigate.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/AntMazeMediumNavigate_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/HumanoidMazeMediumNavigate.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/HumanoidMazeMediumNavigate_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Piecewise.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/Piecewise_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PyFlytRocketLanding.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/PyFlytRocketLanding_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/RoadsterLoop.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/RoadsterLoop_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MSHumanLocomotion.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MSHumanLocomotion_var.gif" width="120"/></td>
+<td align="center"><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MiniWorldMovingBlockWorld.gif" width="120"/><br><img src="https://raw.githubusercontent.com/galilai-group/stable-envs/main/docs/assets/media/envs/MiniWorldMovingBlockWorld_var.gif" width="120"/></td>
+</tr>
+</table>
+
+<em>Top row: default appearance &nbsp;·&nbsp; Bottom row: visual factor of variation</em>
+
+</div>
+
 | Family | Classes | Extra |
 |---|---:|---|
 | [`classic_control`](https://galilai-group.github.io/stable-envs/environments/classic-control/) | 5 | none (`classic` for MountainCar, MountainCarContinuous and Pendulum) |
