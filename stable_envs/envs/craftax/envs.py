@@ -44,7 +44,7 @@ class CraftaxEnv(Env):
     _frames_owned = True
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
-        from .kernel import kernel
+        from .kernel import kernel, report_host_devices
 
         if size not in (None, self.default_size) or supersample != 1:
             raise ValueError(
@@ -55,7 +55,10 @@ class CraftaxEnv(Env):
         self._k = kernel(self.reference_id)
         super().__init__(num_envs, size, supersample, device, backend, seed)
         self._device = self._k.device(self.device)
-        self._keys = self._k.seed_keys(int(seed), self.B, self._device)
+        self._lanes = self._k.lanes(self.B, self._device)
+        if self.device.type == "cpu":
+            report_host_devices()
+        self._keys = self._k.seed_keys(int(seed), self._lanes)
         self._state = None
         #: The device flag of the last step with device actions, read by the next step, reset or set_state.
         self._pending = None
@@ -128,12 +131,12 @@ class CraftaxEnv(Env):
 
     def get_state(self):
         """An independent snapshot: each leaf a ``(num_envs, width)`` view of blocks only it uses."""
-        return self._snapshot(self._k.export(self._live("get_state"), self._keys))
+        return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._lanes))
 
     def set_state(self, state):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._check_pending()
-        self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
+        self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device, self._lanes)
 
     def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
@@ -141,8 +144,8 @@ class CraftaxEnv(Env):
         self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
-            self._keys = self._k.seed_keys(int(seed), self.B, self._device)
-        self._state, self._keys, views = self._k.reset(self._keys)
+            self._keys = self._k.seed_keys(int(seed), self._lanes)
+        self._state, self._keys, views = self._k.reset(self._keys, self._lanes)
         return self._snapshot(views)
 
     def _actions(self, actions):
@@ -182,7 +185,7 @@ class CraftaxEnv(Env):
         self._check_pending()
         state = self._live("step")
         a, deferred = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active, self._device, snapshot, frame)
+        out = self._k.step(self._keys, state, a, active, self._lanes, snapshot, frame)
         self._state, self._keys, reward, done, observation, views, frames, invalid = out
         if deferred:
             # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
@@ -217,11 +220,11 @@ class CraftaxEnv(Env):
     def _render_state_input(self, state):
         """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
         if state is None:
-            return self._k.render(self._live("render"))
+            return self._k.render(self._live("render"), self._lanes)
         return self._k.render_state(self._checked(state, "render"), self.device)
 
     def _render_live(self):
-        return self._k.render(self._live("render"))
+        return self._k.render(self._live("render"), self._lanes)
 
     def _close(self):
         self._state = None
