@@ -55,12 +55,12 @@ def test_finished_lanes_reuse_the_compiled_step():
         state = env.reset(seed=SEED)
         sequence = torch.as_tensor(actions(env, 3, SEED)).permute(1, 0, 2)
         env.step(sequence, frames=None)
-        compiled = sum(program._cache_size() for program in env._k._programs.values())
+        compiled = sum(fn._cache_size() for fn in env._k._jitted.values())
         state["engine", "player_health"][0] = 0
         env.set_state(state)
         out = env.step(sequence, frames=None)
         assert not out["valid"][0, 1:].any()
-        assert sum(program._cache_size() for program in env._k._programs.values()) == compiled
+        assert sum(fn._cache_size() for fn in env._k._jitted.values()) == compiled
 
 
 @pytest.mark.parametrize("seed", [0, SEED, 2**31 - LANES, 2**31 - 1, 2**31, 2**33 + 5, -2])

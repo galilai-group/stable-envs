@@ -234,7 +234,8 @@ class Kernel:
 
             state, keys = jax.tree.map(keep, (new[0], new[1]), (state, keys))
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
-            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, invalid
+            # The flag is repeated per lane, so every output has the lane axis first.
+            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, jnp.broadcast_to(invalid, live.shape)
 
         # Upstream's pixel observation, scaled to uint8 as stable-worldmodel scales it on the host. The
         # barrier keeps XLA from folding the division into the scaling, which would round differently.
@@ -248,19 +249,33 @@ class Kernel:
                 out = advance(keys, state, actions, active)
                 return (*out, pack(out[0], out[1]) if snapshot else None, frames(out[0]) if frame else None)
 
-            # The live lanes are donated: each call writes the next state over the last one.
-            return jax.jit(run, donate_argnums=(0, 1))
+            return run
 
         def render_blocks(blocks):
             return frames(unpack(blocks)[0])
 
-        self._reset = jax.jit(reset_all, donate_argnums=0)
-        self._programs = {(s, f): program(s, f) for s in (False, True) for f in (False, True)}
-        self._pack = jax.jit(pack)
-        self._unpack = jax.jit(unpack)
-        self._frames = jax.jit(frames)
-        self._render_blocks = jax.jit(render_blocks)
+        #: Each function and its donated arguments. The step and the reset donate the live lanes: each
+        #: call writes the next state over the last one.
+        self._functions = {
+            "reset": (reset_all, (0,)),
+            "pack": (pack, ()),
+            "unpack": (unpack, ()),
+            "frames": (frames, ()),
+            "render_blocks": (render_blocks, ()),
+            **{("step", s, f): (program(s, f), (0, 1)) for s in (False, True) for f in (False, True)},
+        }
+        self._jitted: dict = {}
         self._everyone: dict = {}
+
+    def _jit(self, name, lanes: Lanes):
+        """The jitted function ``name``; on split lanes, every output keeps the lanes split as the inputs are."""
+        key = (name, lanes.sharding)
+        fn = self._jitted.get(key)
+        if fn is None:
+            function, donate = self._functions[name]
+            split = {} if lanes.sharding is None else {"out_shardings": lanes.sharding}
+            fn = self._jitted[key] = jax.jit(function, donate_argnums=donate, **split)
+        return fn
 
     @staticmethod
     def device(device: torch.device):
@@ -316,7 +331,7 @@ class Kernel:
         return out
 
     def reset(self, keys, lanes: Lanes):
-        state, keys, blocks = self._reset(keys)
+        state, keys, blocks = self._jit("reset", lanes)(keys)
         return state, keys, self.views(lanes.torch(blocks))
 
     def everyone(self, lanes: Lanes):
@@ -347,7 +362,7 @@ class Kernel:
             actions, active = lanes.put(actions), self.everyone(lanes)
         else:
             actions, active = lanes.put((actions, active.to(torch.bool).contiguous()))
-        out = self._programs[(snapshot, frame)](keys, state, actions, active)
+        out = self._jit(("step", snapshot, frame), lanes)(keys, state, actions, active)
         state, keys, reward, done, obs, invalid, blocks, frames = out
         reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
         views = None if blocks is None else self.views(blocks)
@@ -355,11 +370,11 @@ class Kernel:
 
     @staticmethod
     def read_flag(flag) -> bool:
-        """Read a device flag with an explicit transfer, which waits only for the call that wrote it."""
-        return bool(jax.device_get(flag))
+        """Read a per-lane device flag with an explicit transfer, which waits only for the call that wrote it."""
+        return bool(np.any(jax.device_get(flag)))
 
     def export(self, state, keys, lanes: Lanes) -> dict[tuple[str, ...], torch.Tensor]:
-        return self.views(lanes.torch(self._pack(state, keys)))
+        return self.views(lanes.torch(self._jit("pack", lanes)(state, keys)))
 
     def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
         """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
@@ -380,10 +395,10 @@ class Kernel:
 
     def restore(self, td, device: torch.device, lanes: Lanes):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
-        return self._unpack(lanes.put(tuple(self._torch_blocks(td, device))))
+        return self._jit("unpack", lanes)(lanes.put(tuple(self._torch_blocks(td, device))))
 
     def render(self, state, lanes: Lanes) -> torch.Tensor:
-        return lanes.torch(self._frames(state))
+        return lanes.torch(self._jit("frames", lanes)(state))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
@@ -393,7 +408,7 @@ class Kernel:
         if rows != n:
             blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
         lanes = self.lanes(rows, self.device(device))
-        frames = lanes.torch(self._render_blocks(lanes.put(tuple(b.contiguous() for b in blocks))))
+        frames = lanes.torch(self._jit("render_blocks", lanes)(lanes.put(tuple(b.contiguous() for b in blocks))))
         return frames if rows == n else frames[:n]
 
 
