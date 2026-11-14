@@ -172,10 +172,10 @@ def test_rollout_frames_equal_upstream(name, device):
                     if t % 4:
                         env.step(action, frames=None)
                         continue
-                    _assert_same(renderers, env._state, f"seed {seed}, step {t}")
+                    _assert_same(renderers, env._state[0], f"seed {seed}, step {t}")
                     # A frame the step returns comes from the same jitted call as the step.
                     frame = env.step(action)["frames"][:, -1].cpu().numpy()
-                    expected = frame_of(renderers[3](env._state))
+                    expected = frame_of(renderers[3](env._state[0]))
                     np.testing.assert_array_equal(frame, expected, err_msg=f"seed {seed}, step {t}")
 
 
