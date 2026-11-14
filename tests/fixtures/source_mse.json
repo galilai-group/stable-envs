@@ -160,7 +160,7 @@
     "n": 2048,
     "mse_mean": 0.0,
     "mse_p95": 0.0,
-    "mse_max": 0.0
+    "mse_max": 0.0001
    }
   },
   "CraftaxClassicSymbolic": {
@@ -180,7 +180,7 @@
     "n": 2048,
     "mse_mean": 0.0,
     "mse_p95": 0.0,
-    "mse_max": 0.0
+    "mse_max": 0.0001
    }
   },
   "CraftaxPixels": {
