@@ -8,6 +8,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import tuning
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import assert_same_state, compare_state
 
@@ -20,7 +21,8 @@ pytestmark = [
 @pytest.mark.parametrize("batch,expected", [(1, "torch"), (8, "jax")])
 def test_auto_cutoff_preserves_cuda_outputs(batch, expected):
     with (
-        se.TwoRoom(num_envs=batch, device="cuda", jax_min_envs=8) as env,
+        tuning.override(large_backend_min_envs=8),
+        se.TwoRoom(num_envs=batch, device="cuda") as env,
         se.TwoRoom(
             num_envs=batch,
             device="cuda",

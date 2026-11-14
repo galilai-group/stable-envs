@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import tuning
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
@@ -85,10 +86,13 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
 
 @pytest.mark.parametrize(
     "simulation_backend,batch,backend",
-    [(None, 1, "mjwarp"), (None, 32, "mjwarp"), ("auto", 1, "native"), ("auto", 7, "native"), ("auto", 8, "mjwarp")],
+    [("mjwarp", 1, "mjwarp"), (None, 32, "mjwarp"), ("auto", 1, "native"), ("auto", 7, "native"), ("auto", 8, "mjwarp")],
 )
 def test_reacher_routes_physics_and_preserves_cuda_outputs(simulation_backend, batch, backend):
-    with se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env:
+    with (
+        tuning.override(large_backend_min_envs=8),
+        se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env,
+    ):
         assert env.simulation_backend == backend
         assert env.execution_mode == ("MUJOCO_WARP" if backend == "mjwarp" else "DELEGATED_CPU")
         checkpoint = env.reset(seed=7)

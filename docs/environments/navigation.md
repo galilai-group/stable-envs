@@ -39,15 +39,9 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
 
 The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
 
-`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports. Without Numba, a CPU batch steps in JAX, or in Torch below `jax_min_envs`. On CUDA, it uses Torch below `jax_min_envs` environments and JAX at or above that cutoff. The default cutoff is 1: JAX was faster in our measurements even for a single environment. If Torch is faster for small CUDA batches on your machine, raise the cutoff:
+`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports, and JAX without Numba. On CUDA, a batch of `large_backend_min_envs` or more environments steps in JAX and a smaller batch steps in Torch. When the knob is not set, the first environment of each power-of-two batch range times both on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends).
 
-```python
-# needs the navigation-gpu extra; CUDA only
-with snv.TwoRoom(num_envs=4, device="cuda", jax_min_envs=8) as env:
-    print(env.simulation_backend)  # torch
-```
-
-The choice is fixed at construction and uses these defaults rather than a benchmark of your machine. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself at any batch size. Torch and JAX use the requested device, but Numba runs on CPU only. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
+The choice is fixed at construction. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself at any batch size. Torch and JAX use the requested device, but Numba runs on CPU only. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
 
 ## Rendering
 

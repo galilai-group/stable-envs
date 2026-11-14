@@ -56,7 +56,7 @@ DMCReacher = parity_cell(
 DMCReacher.name = "dmc-reacher"
 DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MuJoCo Warp/MJX CUDA physics.
 
-On CUDA the default ``simulation_backend=None`` uses MuJoCo Warp at every batch size. ``"auto"`` uses native
-physics below ``mjwarp_min_envs`` (8 by default) and MuJoCo Warp from there. ``"native"``, ``"mjwarp"`` and
-``"mjx"`` select explicitly. ``device`` controls output and rendering.
+On CUDA the default ``simulation_backend="auto"`` uses native physics for small batches and MuJoCo Warp for large
+ones, from the measured ``large_backend_min_envs`` switch point. ``"native"``, ``"mjwarp"`` and ``"mjx"`` select
+explicitly. ``device`` controls output and rendering.
 """

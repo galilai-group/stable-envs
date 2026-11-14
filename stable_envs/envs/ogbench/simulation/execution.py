@@ -13,11 +13,6 @@ if TYPE_CHECKING:
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
-#: With ``simulation_backend="auto"``, the smallest CUDA Cube/Scene batch that steps on MuJoCo Warp; smaller CUDA
-#: batches step on native ``mujoco.batch`` and return CUDA tensors (L40S, 8 cores).
-MJWARP_MIN_ENVS = 256
-
-
 #: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body: the smallest measured
 #: batch (of 1, 8, 64, 256, 1024, 4096; L40S, 8 cores) at which MuJoCo Warp steps faster than mujoco.batch.
 MAZE_MJWARP_MIN_ENVS = {"point": 4096, "ant": 256, "humanoid": 256}
@@ -56,19 +51,51 @@ def make_maze_adapter(
     return OGBMazeBatchAdapter(num_envs, device, seed, loco=loco, maze=maze)
 
 
+def _measure_manipulation(family: str, device: str | torch.device):
+    """Build and step Cube/Scene lanes on one backend, for the backend calibration."""
+
+    import torch
+
+    def measure(backend: str, num_envs: int):
+        adapter = make_manipulation_adapter(family, num_envs, device, 0, None, backend)
+        adapter.reset(0)
+        actions = torch.rand(num_envs, 5, device=device) * 2 - 1
+        return (lambda: adapter.step(actions)), adapter.close
+
+    return measure
+
+
+def manipulation_backend(
+    family: str, num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto"
+) -> str:
+    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a Cube/Scene batch; see ``select_backend``."""
+    import torch
+
+    from ...._execution.backends import select_backend
+
+    if simulation_backend == "mjwarp" and torch.device(device).type != "cuda":
+        raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
+    return select_backend(
+        f"ogb-sim/{family.lower()}",
+        num_envs,
+        device,
+        simulation_backend,
+        {"cpu": ("native", "native"), "cuda": ("native", "mjwarp")},
+        choices=("native", "mjwarp"),
+        measure=_measure_manipulation(family, device),
+    )
+
+
 def make_manipulation_adapter(
     family: str,
     num_envs: int,
     device: str | torch.device,
     seed: int | None,
     reward_task_id: int | None,
-    simulation_backend: str | None = "default",
-    mjwarp_min_envs: int = MJWARP_MIN_ENVS,
+    simulation_backend: str | None = "auto",
 ) -> OGBManipulationBatchAdapter | OGBManipulationWarpAdapter:
-    """Cube/Scene lanes on the backend that ``resolve_backend`` selects: MuJoCo Warp or native ``mujoco.batch``."""
-    from ...._execution.mjbatch import resolve_backend
-
-    backend = resolve_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
+    """Cube/Scene lanes on the backend that ``manipulation_backend`` selects: MuJoCo Warp or native ``mujoco.batch``."""
+    backend = manipulation_backend(family, num_envs, device, simulation_backend)
     if backend == "mjwarp":
         from .manipulation_warp import OGBManipulationWarpAdapter
 

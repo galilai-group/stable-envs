@@ -33,29 +33,20 @@ dm_control resets and restores each task. On CPU, every environment of a batch s
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `None` (default) | native MuJoCo | MuJoCo Warp at every batch size |
+| `"auto"` (default) | native MuJoCo | native MuJoCo for small batches, MuJoCo Warp for large ones |
 | `"native"` | native MuJoCo | native MuJoCo on CPU, with state and outputs on CUDA |
 | `"mjwarp"` | error | MuJoCo Warp |
-| `"auto"` | native MuJoCo | native MuJoCo below `mjwarp_min_envs`, MuJoCo Warp from there |
 | `"mjx"` | error | JAX/MJX, `DMCReacher` only |
 
-`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"`, `mjwarp_min_envs` defaults to the measured cutoff of each task: the smallest measured batch from which MuJoCo Warp stepped faster than native MuJoCo at every larger measured batch. The measurement timed public `step` calls with `states=None, frames=None`, including episode resets, at batches 1, 8, 64, 256, 1024, 2048 and 4096 on an NVIDIA L40S with 8 CPU cores. Pass an integer to change the cutoff.
-
-| Class | `mjwarp_min_envs` |
-|---|---:|
-| `DMCCheetahRun` | 1 |
-| `DMCFingerTurnHard`, `DMCPendulumSwingup`, `DMCPointMassEasy`, `DMCReacher` | 8 |
-| `DMCCartpoleBalance`, `DMCCartpoleSwingup`, `DMCHumanoidWalk`, `DMCQuadrupedWalk` | 64 |
-| `DMCBallInCupCatch`, `DMCHopperHop` | 256 |
-| `DMCAcrobotBalance`, `DMCFingerSpin`, `DMCFingerTurnEasy`, `DMCManipulatorBringBall`, `DMCSwimmerSwimmer6`, `DMCWalkerWalk` | 1024 |
+`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the knob is not set, the first environment of each task and power-of-two batch range times both backends on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
 
 ```python
 # needs the dmcontrol-gpu extra; CUDA only
 with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # mjwarp
+    print(env.simulation_backend)  # native on most machines
 
-with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="auto") as env:
-    print(env.simulation_backend)  # native
+with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="mjwarp") as env:
+    print(env.simulation_backend)  # mjwarp
 ```
 
 On MuJoCo Warp, dm_control still resets the environments and owns their random streams, and the state keeps its shapes and dtypes, including the float64 physics columns. `set_state` followed by `get_state` returns the same state exactly. MuJoCo Warp does not repeat a contact solve bit for bit, so two rollouts from one state can differ after contacts. The shared `WarpBatch` backend (`stable_envs/_execution/mjbatch.py`) holds the Warp buffers and steps each control round in one captured CUDA graph. The adapter writes the model values of each environment into the per-environment model fields of MuJoCo Warp, and writes only the fields that changed. `CheetahRun` resets its environments on one dm_control owner per `dmc_threads` thread, and the other tasks on one owner.

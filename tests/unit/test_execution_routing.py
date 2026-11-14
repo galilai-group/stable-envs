@@ -107,11 +107,11 @@ def _fake_adapters(monkeypatch):
 
 @pytest.mark.family("dmc")
 @pytest.mark.parametrize(
-    "batch,device,backend,warp_cutoff,expected",
+    "batch,device,backend,switch,expected",
     [
-        (1, "cuda", None, None, "mjwarp"),
+        (1, "cuda", "auto", 1, "mjwarp"),
         (4096, "cuda:1", None, 64, "mjwarp"),
-        (1, "cpu", None, None, "native"),
+        (1, "cpu", None, 1, "native"),
         (4096, "cpu", "auto", 64, "native"),
         (4096, "cuda", "native", 64, "native"),
         (1, "cuda", "mjwarp", 64, "mjwarp"),
@@ -122,60 +122,22 @@ def _fake_adapters(monkeypatch):
         (2, "cuda", "auto", 2, "mjwarp"),
     ],
 )
-def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, device, backend, warp_cutoff, expected):
+def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, device, backend, switch, expected):
     execution = _fake_adapters(monkeypatch)
-    assert execution.dmc_backend("reacher", batch, device, backend, mjwarp_min_envs=warp_cutoff) == expected
-    kind, args, _ = execution.make_dmc_adapter(
-        "reacher", batch, device, 17, simulation_backend=backend, mjwarp_min_envs=warp_cutoff
-    )
+    with tuning.override(large_backend_min_envs=switch):
+        assert execution.dmc_backend("reacher", batch, device, backend) == expected
+        kind, args, _ = execution.make_dmc_adapter("reacher", batch, device, 17, simulation_backend=backend)
     assert kind == (expected if expected in {"mjx", "mjwarp"} else "batch")
     assert args == ((batch, device, 17) if expected == "mjx" else ("reacher", batch, device, 17))
 
 
 @pytest.mark.family("dmc")
-@pytest.mark.parametrize(
-    "backend,device,warp_cutoff",
-    [
-        ("unknown", "cuda", None),
-        ("mjx", "cpu", None),
-        ("mjwarp", "cpu", None),
-        ("auto", "cuda", 0),
-        ("auto", "cuda", True),
-        ("auto", "cuda", 1.5),
-    ],
-)
-def test_dmc_rejects_invalid_simulation_selection(backend, device, warp_cutoff):
+@pytest.mark.parametrize("backend,device", [("unknown", "cuda"), ("mjx", "cpu"), ("mjwarp", "cpu"), ("default", "cuda")])
+def test_dmc_rejects_invalid_simulation_selection(backend, device):
     from stable_envs.envs.dmcontrol.simulation.execution import dmc_backend
 
     with pytest.raises(ValueError):
-        dmc_backend("reacher", 1, device, backend, mjwarp_min_envs=warp_cutoff)
-
-
-@pytest.mark.family("dmc")
-@pytest.mark.parametrize(
-    "key,batch,device,cutoff,expected",
-    [
-        ("walker", 1, "cuda", None, "native"),
-        ("walker", 255, "cuda", None, "native"),
-        ("walker", 256, "cuda", None, "mjwarp"),
-        ("walker", 4096, "cuda:1", None, "mjwarp"),
-        ("walker", 4096, "cpu", None, "native"),
-        ("cheetah", 8192, "cuda", None, "native"),
-        ("cheetah", 8192, "cuda", 2048, "mjwarp"),
-        ("walker", 256, "cuda", 512, "native"),
-        ("walker", 512, "cuda", 512, "mjwarp"),
-    ],
-)
-def test_dmc_auto_uses_the_task_cutoff_on_cuda(monkeypatch, key, batch, device, cutoff, expected):
-    """Auto is opt-in: native below the cutoff, MuJoCo Warp from it."""
-    execution = _fake_adapters(monkeypatch)
-    monkeypatch.setattr(execution, "MJWARP_MIN_ENVS", {"walker": 256, "cheetah": None})
-    assert execution.dmc_backend(key, batch, device, "auto", mjwarp_min_envs=cutoff) == expected
-    kind, args, _ = execution.make_dmc_adapter(
-        key, batch, device, 17, simulation_backend="auto", mjwarp_min_envs=cutoff
-    )
-    assert kind == ("mjwarp" if expected == "mjwarp" else "batch")
-    assert args == (key, batch, device, 17)
+        dmc_backend("reacher", 1, device, backend)
 
 
 @pytest.mark.family("dmc")
@@ -191,10 +153,11 @@ def test_dmc_cuda_physics_without_warp_names_the_extra(monkeypatch):
 
 
 @pytest.mark.family("dmc")
-def test_dmc_default_is_gpu_physics_on_cuda_and_explicit_names_select(monkeypatch):
+def test_dmc_explicit_names_select_and_auto_follows_the_switch_point(monkeypatch):
     execution = _fake_adapters(monkeypatch)
-    for backend, kind in ((None, "mjwarp"), ("native", "batch"), ("mjwarp", "mjwarp")):
-        result = execution.make_dmc_adapter("walker", 1, "cuda:1", 17, simulation_backend=backend)
+    for switch, backend, kind in ((1, None, "mjwarp"), (2, "auto", "batch"), (1, "native", "batch"), (2, "mjwarp", "mjwarp")):
+        with tuning.override(large_backend_min_envs=switch):
+            result = execution.make_dmc_adapter("walker", 1, "cuda:1", 17, simulation_backend=backend)
         assert result == (kind, ("walker", 1, "cuda:1", 17), {})
     assert execution.make_dmc_adapter("walker", 1, "cpu", 17) == ("batch", ("walker", 1, "cpu", 17), {})
     for domain, device, backend in (
@@ -205,15 +168,6 @@ def test_dmc_default_is_gpu_physics_on_cuda_and_explicit_names_select(monkeypatc
     ):
         with pytest.raises(ValueError):
             execution.make_dmc_adapter(domain, 3, device, 17, simulation_backend=backend)
-
-
-@pytest.mark.family("dmc")
-def test_dmc_cutoff_table_names_simulators_and_positive_cutoffs():
-    from stable_envs.envs.dmcontrol.simulation.execution import MJWARP_MIN_ENVS
-    from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES
-
-    assert set(MJWARP_MIN_ENVS) == set(FACTORIES)
-    assert all(cutoff is None or (isinstance(cutoff, int) and cutoff >= 1) for cutoff in MJWARP_MIN_ENVS.values())
 
 
 @pytest.mark.family("dmc")

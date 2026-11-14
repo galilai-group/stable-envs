@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import tuning
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.family("navigation")
@@ -58,12 +59,8 @@ def test_invalid_simulation_backend():
 )
 def test_batch_selection_matches_explicit_backend_and_restores(batch, threshold, backend, expected):
     with (
-        se.TwoRoom(
-            num_envs=batch,
-            device="cpu",
-            simulation_backend=backend,
-            jax_min_envs=threshold,
-        ) as env,
+        tuning.override(large_backend_min_envs=threshold),
+        se.TwoRoom(num_envs=batch, device="cpu", simulation_backend=backend) as env,
         se.TwoRoom(num_envs=batch, device="cpu", simulation_backend=expected) as reference,
     ):
         assert env.simulation_backend == expected
@@ -77,9 +74,9 @@ def test_batch_selection_matches_explicit_backend_and_restores(batch, threshold,
 
 
 @pytest.mark.parametrize("threshold", [0, -1, True, 1.5, "8"])
-def test_invalid_jax_cutoff(threshold):
-    with pytest.raises(ValueError, match="jax_min_envs"):
-        se.TwoRoom(jax_min_envs=threshold)
+def test_invalid_switch_point(threshold):
+    with pytest.raises(ValueError, match="large_backend_min_envs"), tuning.override(large_backend_min_envs=threshold):
+        pass
 
 
 @pytest.mark.parametrize("backend", ["torch", "jax", "numba"])

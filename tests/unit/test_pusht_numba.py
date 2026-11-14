@@ -9,7 +9,7 @@ import torch
 pytest.importorskip("numba")
 
 from stable_envs.envs.pusht.semantics import PushT  # noqa: E402
-from stable_envs.envs.pusht.simulation.execution import TRITON_MIN_ENVS, pusht_backend  # noqa: E402
+from stable_envs.envs.pusht.simulation.execution import pusht_backend  # noqa: E402
 from stable_envs.envs.pusht.simulation.numba_batch import PushTNumbaAdapter  # noqa: E402
 from stable_envs.envs.pusht.simulation.numba_physics import advance_batch  # noqa: E402
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter  # noqa: E402
@@ -17,15 +17,17 @@ from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 
 def test_backend_routing(monkeypatch):
+    from stable_envs import tuning
     from stable_envs.envs.pusht import raster
 
     monkeypatch.setattr(raster, "HAVE_TRITON", True)
     for count in (1, 7, 8, 4096):
         assert pusht_backend(count, "cpu") == "numba"
-        assert pusht_backend(count, "cuda") == "triton"
         assert pusht_backend(count, "cpu", "auto") == "numba"
-        assert pusht_backend(count, "cuda", "auto") == ("triton" if count >= TRITON_MIN_ENVS else "numba")
-        assert pusht_backend(count, "cuda", "auto", triton_min_envs=8) == ("triton" if count >= 8 else "numba")
+        with tuning.override(large_backend_min_envs=1):
+            assert pusht_backend(count, "cuda") == "triton"
+        with tuning.override(large_backend_min_envs=8):
+            assert pusht_backend(count, "cuda", "auto") == ("triton" if count >= 8 else "numba")
         assert pusht_backend(count, "cuda", "triton") == "triton"
         for device in ("cpu", "cuda"):
             assert pusht_backend(count, device, "jax") == "jax"
@@ -34,23 +36,23 @@ def test_backend_routing(monkeypatch):
         pusht_backend(1, "cpu", "triton")
     with pytest.raises(ValueError, match="simulation_backend"):
         pusht_backend(1, "cpu", "pymunk")
-    for bad in (0, True, 2.0):
-        with pytest.raises(ValueError, match="triton_min_envs"):
-            pusht_backend(1, "cuda", "auto", triton_min_envs=bad)
     # Without Triton, CUDA physics runs in JAX.
     monkeypatch.setattr(raster, "HAVE_TRITON", False)
-    assert pusht_backend(8, "cuda") == "jax"
-    assert pusht_backend(8, "cuda", "auto", triton_min_envs=4) == "jax"
+    with tuning.override(large_backend_min_envs=4):
+        assert pusht_backend(8, "cuda") == "jax"
+        assert pusht_backend(2, "cuda") == "numba"
 
 
 def test_public_env_records_its_backend():
+    from stable_envs import tuning
+
     with PushT(num_envs=2, device="cpu", size=32) as env:
         assert env.simulation_backend == "numba" and env.execution_mode == "NATIVE_NUMBA"
         assert isinstance(env._simulator, PushTNumbaAdapter)
     if torch.cuda.is_available():
-        with PushT(num_envs=2, device="cuda", size=32) as env:
+        with tuning.override(large_backend_min_envs=1), PushT(num_envs=2, device="cuda", size=32) as env:
             assert env.simulation_backend == "triton" and env.execution_mode == "NATIVE_TRITON"
-        with PushT(num_envs=2, device="cuda", size=32, simulation_backend="auto", triton_min_envs=4) as env:
+        with tuning.override(large_backend_min_envs=4), PushT(num_envs=2, device="cuda", size=32) as env:
             assert env.simulation_backend == "numba" and env.execution_mode == "NATIVE_NUMBA"
             out = env.step(torch.full((2, 2), 0.3, device="cuda"), frames=None)
             assert out["reward"].is_cuda and out["state"]["current", "observation"].is_cuda

@@ -9,6 +9,7 @@ from tensordict import TensorDict
 
 from ... import tuning
 from ..._core.tensordicts import build_tensordict
+from ..._execution.backends import select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -1024,17 +1025,14 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     simulation_backends = ("torch", "jax", "numba")
     _numba_doors = True
 
-    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation.
 
-        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Torch below
-        ``jax_min_envs`` and in JAX at or above it; the cutoff defaults to 1.
+        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Torch for small batches and
+        in JAX for large ones, from the measured ``large_backend_min_envs`` switch point.
         ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
         every batch size; Numba runs on CPU only.
         """
-        if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
-            raise ValueError("jax_min_envs must be an int >= 1")
-        self.jax_min_envs = jax_min_envs
         super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
@@ -1044,7 +1042,23 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def _auto_simulation_backend(self) -> str:
         if self.device.type == "cpu" and _numba_available():
             return "numba"
-        return "jax" if self.B >= self.jax_min_envs else "torch"
+        cls = type(self)
+
+        def measure(backend: str, num_envs: int):
+            env = cls(num_envs=num_envs, device=self.device, simulation_backend=backend)
+            env.reset(seed=0)
+            actions = torch.rand(num_envs, self.action_dim, device=self.device) * 2 - 1
+            return (lambda: env._step(actions)), env.close
+
+        return select_backend(
+            f"navigation-sim/{self.name}",
+            self.B,
+            self.device,
+            "auto",
+            {"cpu": ("jax", "jax"), "cuda": ("torch", "jax")},
+            choices=self.simulation_backends,
+            measure=measure,
+        )
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
