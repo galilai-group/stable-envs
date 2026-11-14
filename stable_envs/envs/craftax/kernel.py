@@ -20,6 +20,8 @@ import jax  # noqa: E402
 import jax.numpy as jnp  # noqa: E402
 from craftax.craftax_env import make_craftax_env_from_name  # noqa: E402
 
+from .render import renderer  # noqa: E402
+
 
 @contextlib.contextmanager
 def texture_lock(classic: bool):
@@ -96,15 +98,11 @@ class Kernel:
 
     def __init__(self, env_id: str):
         classic = "Classic" in env_id
+        symbolic = "Pixels" not in env_id
         with texture_lock(classic):
             upstream = make_craftax_env_from_name(env_id, auto_reset=False)
-            pixels = (
-                upstream
-                if "Pixels" in env_id
-                else make_craftax_env_from_name(env_id.replace("Symbolic", "Pixels"), auto_reset=False)
-            )
+            draw = renderer(classic, None if symbolic else upstream._render_fn)
         params = upstream.default_params
-        symbolic = pixels is not upstream
         template = jax.eval_shape(lambda k: upstream.reset(k, params)[1], jax.random.PRNGKey(0))
         paths, treedef = jax.tree_util.tree_flatten_with_path(template)
         self.fields, self.blocks = _fields(
@@ -163,12 +161,22 @@ class Kernel:
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
             return state, keys, jnp.where(active, new[2], 0), new[3] & active, obs, pack(state, keys)
 
+        # The pixel observation upstream returns, scaled to uint8 as stable-worldmodel does.
         def frames(state):
-            return (jnp.clip(jax.vmap(pixels.get_obs)(state), 0.0, 1.0) * 255.0).astype(jnp.uint8)
+            return (jnp.clip(jax.vmap(draw)(state) / 255.0, 0.0, 1.0) * 255.0).astype(jnp.uint8)
+
+        def with_frames(step_fn):
+            def fused(*args):
+                out = step_fn(*args)
+                return *out, frames(out[0])
+
+            return fused
 
         self._reset = jax.jit(reset_all)
         self._step = jax.jit(step_all)
         self._masked_step = jax.jit(masked_step_all)
+        self._step_frames = jax.jit(with_frames(step_all))
+        self._masked_step_frames = jax.jit(with_frames(masked_step_all))
         self._pack = jax.jit(pack)
         self._unpack = jax.jit(unpack)
         self._frames = jax.jit(frames)
@@ -213,15 +221,19 @@ class Kernel:
         state, keys, blocks = self._reset(keys)
         return state, keys, self.views(blocks)
 
-    def step(self, keys, state, actions: torch.Tensor, active: torch.Tensor | None):
+    def step(self, keys, state, actions: torch.Tensor, active: torch.Tensor | None, frames: bool = False):
+        """Advance every lane; with ``frames``, the same jitted call also draws the new frames."""
         actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
         if active is None:
-            out = self._step(keys, state, actions)
+            out = (self._step_frames if frames else self._step)(keys, state, actions)
         else:
-            out = self._masked_step(keys, state, actions, jnp.from_dlpack(active.contiguous()))
-        state, keys, reward, done, obs, blocks = out
+            mask = jnp.from_dlpack(active.contiguous())
+            out = (self._masked_step_frames if frames else self._masked_step)(keys, state, actions, mask)
+        state, keys, reward, done, obs, blocks, *frame = out
         obs = None if obs is None else torch.from_dlpack(obs)
-        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, self.views(blocks)
+        frame = torch.from_dlpack(frame[0]) if frame else None
+        views = self.views(blocks)
+        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, frame
 
     def export(self, state, keys) -> dict[tuple[str, ...], torch.Tensor]:
         return self.views(self._pack(state, keys))

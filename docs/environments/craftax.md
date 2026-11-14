@@ -29,7 +29,11 @@ The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under 
 
 ## Rendering
 
-Both the `Pixels` and the `Symbolic` classes draw the same [frames](../terms.md#frame) from their state with the game's pixel renderer. A frame is Craftax's pixel observation scaled to uint8, as stable-worldmodel renders it.
+Both the `Pixels` and the `Symbolic` classes draw the same [frames](../terms.md#frame) from their state. A frame is Craftax's pixel observation scaled to uint8, as stable-worldmodel renders it.
+
+The renderer is a port of the game's pixel renderer. The game paints each block type and each item type over the whole frame in turn. The port reads the block texture and the item texture of each pixel with one lookup each, and draws the player, creatures, light, night, sleep and inventory as the game does. The frames are equal to the game's frames bit for bit, on CPU and on CUDA.
+
+When `step` returns a frame, the same jitted call steps the game and draws the frame.
 
 ## Variation
 

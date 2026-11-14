@@ -127,14 +127,14 @@ class CraftaxEnv(Env):
     def _invalid_actions(self):
         return ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
 
-    def _step(self, actions, *, active=None):
+    def _step(self, actions, *, active=None, frame=False):
         state = self._live("step")
         a, invalid = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active)
+        out = self._k.step(self._keys, state, a, active, frame)
         # A rejected step leaves the live lanes as they were: JAX arrays are immutable.
         if invalid is not None and bool(invalid):
             raise self._invalid_actions()
-        self._state, self._keys, reward, done, observation, views = out
+        self._state, self._keys, reward, done, observation, views, frames = out
         result = {
             "state": self._snapshot(views),
             "reward": reward,
@@ -143,7 +143,16 @@ class CraftaxEnv(Env):
         }
         if observation is not None:
             result["observation"] = observation
+        if frames is not None:
+            result["frame"] = frames
         return build_tensordict(result, [self.B], self.device)
+
+    def _step_pipeline(self):
+        """Steps that draw their frame in the same jitted call when the caller selects that frame."""
+        pipeline = self.__dict__.get("_fused_steps")
+        if pipeline is None:
+            pipeline = self.__dict__["_fused_steps"] = _FusedSteps(self)
+        return pipeline
 
     def _render_state_input(self, state):
         """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
@@ -156,6 +165,29 @@ class CraftaxEnv(Env):
 
     def _close(self):
         self._state = None
+
+
+class _FusedSteps:
+    """The step pipeline of a Craftax env: each submitted step runs when it is received."""
+
+    live_frames = True
+
+    def __init__(self, env: CraftaxEnv):
+        self._env = env
+        self._pending: tuple | None = None
+
+    def submit_step(self, actions, *, active=None, capture_state=True, capture_frame=False) -> None:
+        self._pending = (actions, active, capture_frame)
+
+    def receive_step(self) -> TensorDict:
+        if self._pending is None:
+            raise RuntimeError("receive_step() without a submitted step")
+        actions, active, frame = self._pending
+        self._pending = None
+        return self._env._step(actions, active=active, frame=frame)
+
+    def abort_step(self) -> None:
+        self._pending = None
 
 
 @register
