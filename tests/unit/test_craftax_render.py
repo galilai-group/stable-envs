@@ -39,6 +39,7 @@ def _renderers(game):
         jax.jit(jax.vmap(upstream._render_fn)),
         jax.jit(jax.vmap(ours)),
         jax.jit(jax.vmap(lambda s: ours(s, Look()))),
+        jax.jit(jax.vmap(upstream.get_obs)),
     )
 
 
@@ -142,7 +143,7 @@ def _vary_craftax(state, key):
 
 
 def _assert_same(renderers, states, what):
-    upstream, ours, default_look = renderers
+    upstream, ours, default_look, _ = renderers
     expected = np.asarray(upstream(states))
     np.testing.assert_array_equal(np.asarray(ours(states)), expected, err_msg=what)
     np.testing.assert_array_equal(np.asarray(default_look(states)), expected, err_msg=f"{what}, default Look")
@@ -154,6 +155,7 @@ def test_rollout_frames_equal_upstream(name, device):
     import torch
 
     import stable_envs as se
+    from tests.helpers.reference.craftax import frame as frame_of
 
     dev = _device(device)
     if device == "cuda" and not torch.cuda.is_available():
@@ -173,8 +175,8 @@ def test_rollout_frames_equal_upstream(name, device):
                     _assert_same(renderers, env._state, f"seed {seed}, step {t}")
                     # A frame the step returns comes from the same jitted call as the step.
                     frame = env.step(action)["frames"][:, -1].cpu().numpy()
-                    expected = (jnp.clip(renderers[0](env._state) / 255.0, 0.0, 1.0) * 255.0).astype(jnp.uint8)
-                    np.testing.assert_array_equal(frame, np.asarray(expected), err_msg=f"seed {seed}, step {t}")
+                    expected = frame_of(renderers[3](env._state))
+                    np.testing.assert_array_equal(frame, expected, err_msg=f"seed {seed}, step {t}")
 
 
 @pytest.mark.parametrize("device", DEVICES)

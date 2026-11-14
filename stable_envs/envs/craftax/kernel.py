@@ -161,9 +161,11 @@ class Kernel:
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
             return state, keys, jnp.where(active, new[2], 0), new[3] & active, obs, pack(state, keys)
 
-        # The pixel observation upstream returns, scaled to uint8 as stable-worldmodel does.
+        # Upstream's pixel observation, scaled to uint8 as stable-worldmodel scales it on the host. The
+        # barrier keeps XLA from folding the division into the scaling, which would round differently.
         def frames(state):
-            return (jnp.clip(jax.vmap(draw)(state) / 255.0, 0.0, 1.0) * 255.0).astype(jnp.uint8)
+            obs = jax.lax.optimization_barrier(jax.vmap(draw)(state) / 255.0)
+            return (jnp.clip(obs, 0.0, 1.0) * 255.0).astype(jnp.uint8)
 
         def with_frames(step_fn):
             def fused(*args):
