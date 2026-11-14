@@ -16,6 +16,8 @@ import numpy as np
 import torch
 from craftax.craftax_env import make_craftax_env_from_name
 
+from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS  # noqa: E402
+
 
 @contextlib.contextmanager
 def texture_lock(classic: bool):
@@ -71,6 +73,12 @@ def _fields(leaves) -> tuple[tuple[Field, ...], tuple[torch.dtype, ...]]:
     return tuple(fields), tuple(blocks)
 
 
+def _dtype(value) -> np.dtype:
+    if isinstance(value, bool):
+        return np.dtype(np.bool_)
+    return np.dtype(np.int32 if isinstance(value, int) else np.float32)
+
+
 def _strong(tree):
     """Drop weak types, so a reset, stepped or restored state reuses one compiled step."""
     return jax.tree.map(lambda x: jax.lax.convert_element_type(x, x.dtype), tree)
@@ -101,13 +109,22 @@ class Kernel:
             )
         params = upstream.default_params
         symbolic = pixels is not upstream
-        template = jax.eval_shape(lambda k: upstream.reset(k, params)[1], jax.random.PRNGKey(0))
-        paths, treedef = jax.tree_util.tree_flatten_with_path(template)
+        #: ``(variation path, EnvParams field, dtype, default)`` of each per-lane parameter.
+        self.params = tuple(
+            (path, attr, _dtype(getattr(params, attr)), getattr(params, attr))
+            for path, attr in (CLASSIC_PARAMS if classic else CRAFTAX_PARAMS)
+        )
+        engine = jax.eval_shape(lambda k: upstream.reset(k, params)[1], jax.random.PRNGKey(0))
+        lane_params = {path: jax.ShapeDtypeStruct((), dtype) for path, _, dtype, _ in self.params}
+        paths, treedef = jax.tree_util.tree_flatten_with_path((engine, lane_params))
+
+        def key_of(path):
+            if path[0].idx == 0:
+                return ("engine", *map(_name, path[1:]))
+            return ("physics", *path[1].key.split("."))
+
         self.fields, self.blocks = _fields(
-            [
-                *((("engine", *map(_name, path)), leaf) for path, leaf in paths),
-                (("key",), jax.eval_shape(jax.random.PRNGKey, 0)),
-            ]
+            [*((key_of(path), leaf) for path, leaf in paths), (("key",), jax.eval_shape(jax.random.PRNGKey, 0))]
         )
         fields = self.fields
         self._slices = tuple((f.key, f.block, f.start, f.width) for f in fields)
@@ -136,26 +153,34 @@ class Kernel:
                 leaves.append(jax.lax.bitcast_convert_type(leaf, jnp.uint32) if f.words else leaf)
             return jax.tree_util.tree_unflatten(treedef, leaves[:-1]), leaves[-1]
 
+        # Default lanes take the default EnvParams as constants, as upstream and stable-worldmodel do, so
+        # XLA folds them the same way. Varied lanes take theirs from the state.
+        def lane(values, varied):
+            if not varied:
+                return params
+            return params.replace(**{attr: values[path] for path, attr, _, _ in self.params})
+
         # The key handling of stable-worldmodel's CraftaxWrapper: split, keep the first half, spend the second.
-        def reset(key):
+        def reset(key, values, varied):
             kept, used = jax.random.split(key)
-            return _strong(upstream.reset(used, params)[1]), kept
+            return (_strong(upstream.reset(used, lane(values, varied))[1]), values), kept
 
-        def step(key, state, action):
+        def step(key, state, action, varied):
+            engine, values = state
             kept, used = jax.random.split(key)
-            obs, state, reward, done, _ = upstream.step(used, state, action, params)
-            return _strong(state), kept, reward, done, obs if symbolic else None
+            obs, engine, reward, done, _ = upstream.step(used, engine, action, lane(values, varied))
+            return (_strong(engine), values), kept, reward, done, obs if symbolic else None
 
-        def reset_all(keys):
-            state, keys = jax.vmap(reset)(keys)
+        def reset_all(keys, values, varied):
+            state, keys = jax.vmap(functools.partial(reset, varied=varied))(keys, values)
             return state, keys, pack(state, keys)
 
         high = int(upstream.action_space(params).n) - 1
 
         # One program serves full, masked and rejected steps, so no variant compiles in the middle of a run.
-        def advance(keys, state, actions, active):
+        def advance(keys, state, actions, active, varied):
             invalid = jnp.any((actions < 0) | (actions > high))
-            new = jax.vmap(step)(keys, state, actions)
+            new = jax.vmap(functools.partial(step, varied=varied))(keys, state, actions)
             live = active & ~invalid
 
             def keep(fresh, old):
@@ -165,20 +190,20 @@ class Kernel:
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
             return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, invalid
 
-        def step_all(keys, state, actions, active):
-            state, keys, *outputs = advance(keys, state, actions, active)
+        def step_all(keys, state, actions, active, varied):
+            state, keys, *outputs = advance(keys, state, actions, active, varied)
             return state, keys, *outputs, pack(state, keys)
 
         def frames(state):
             return (jnp.clip(jax.vmap(pixels.get_obs)(state), 0.0, 1.0) * 255.0).astype(jnp.uint8)
 
         def render_blocks(blocks):
-            return frames(unpack(blocks)[0])
+            return frames(unpack(blocks)[0][0])
 
         # The live lanes are donated: each call writes the next state over the last one.
-        self._reset = jax.jit(reset_all, donate_argnums=0)
-        self._step = jax.jit(step_all, donate_argnums=(0, 1))
-        self._advance = jax.jit(advance, donate_argnums=(0, 1))
+        self._reset = jax.jit(reset_all, donate_argnums=0, static_argnames="varied")
+        self._step = jax.jit(step_all, donate_argnums=(0, 1), static_argnames="varied")
+        self._advance = jax.jit(advance, donate_argnums=(0, 1), static_argnames="varied")
         self._pack = jax.jit(pack)
         self._unpack = jax.jit(unpack)
         self._frames = jax.jit(frames)
@@ -226,8 +251,19 @@ class Kernel:
             out.append(base)
         return out
 
-    def reset(self, keys):
-        state, keys, blocks = self._reset(keys)
+    def defaults(self, num_envs: int) -> dict[str, np.ndarray]:
+        """The default parameter values of ``num_envs`` lanes."""
+        return {path: np.full(num_envs, default, dtype) for path, _, dtype, default in self.params}
+
+    def varied(self, values: dict[str, np.ndarray]) -> bool:
+        """Whether any lane has a parameter value other than the default."""
+        return any(bool((np.asarray(values[path]) != default).any()) for path, _, _, default in self.params)
+
+    def reset(self, keys, values: dict[str, np.ndarray], device):
+        """Reset every lane with its parameter values, which the state keeps for later steps."""
+        varied = self.varied(values)
+        values = {path: jax.device_put(np.asarray(values[path], dtype), device) for path, _, dtype, _ in self.params}
+        state, keys, blocks = self._reset(keys, values, varied=varied)
         return state, keys, self.views(blocks)
 
     def everyone(self, num_envs: int, device):
@@ -237,11 +273,21 @@ class Kernel:
             mask = self._everyone[(num_envs, device)] = jax.device_put(np.ones(num_envs, np.bool_), device)
         return mask
 
-    def step(self, keys, state, actions: torch.Tensor, active: torch.Tensor | None, device, snapshot: bool = True):
+    def step(
+        self,
+        keys,
+        state,
+        actions: torch.Tensor,
+        active: torch.Tensor | None,
+        device,
+        snapshot: bool = True,
+        varied: bool = False,
+    ):
         """Advance the lanes and donate ``keys`` and ``state``.
 
         Every lane keeps its state when any action is outside the game's range, and the last output is
-        that flag on the device.
+        that flag on the device. ``varied`` steps with the parameter values in the state instead of the
+        defaults.
         """
         actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
         if active is None:
@@ -249,10 +295,10 @@ class Kernel:
         else:
             active = jnp.from_dlpack(active.to(torch.bool).contiguous())
         if snapshot:
-            state, keys, reward, done, obs, invalid, blocks = self._step(keys, state, actions, active)
+            state, keys, reward, done, obs, invalid, blocks = self._step(keys, state, actions, active, varied=varied)
             views = self.views(blocks)
         else:
-            state, keys, reward, done, obs, invalid = self._advance(keys, state, actions, active)
+            state, keys, reward, done, obs, invalid = self._advance(keys, state, actions, active, varied=varied)
             views = None
         obs = None if obs is None else torch.from_dlpack(obs)
         return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, invalid
@@ -285,12 +331,19 @@ class Kernel:
     def _blocks(self, td, device: torch.device):
         return tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))
 
+    def values(self, td) -> dict[str, np.ndarray]:
+        """The per-lane parameter values that a state TensorDict holds, on the host."""
+        return {
+            path: td[("physics", *path.split("."))].detach().cpu().numpy().reshape(-1).astype(dtype)
+            for path, _, dtype, _ in self.params
+        }
+
     def restore(self, td, device: torch.device):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
         return self._unpack(self._blocks(td, device))
 
     def render(self, state) -> torch.Tensor:
-        return torch.from_dlpack(self._frames(state))
+        return torch.from_dlpack(self._frames(state[0]))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""

@@ -31,7 +31,7 @@ The whole batch is one stacked JAX pytree that one jitted `vmap` steps. [Batch r
 
 Actions from the host are checked before the step. Actions in a CUDA tensor are checked on the device, so that the host does not wait for the step. A step with an action outside the range leaves every environment unchanged, and the next `step`, `reset` or `set_state` raises `ValueError`.
 
-The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
+The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine`, the variation values of the environment under `physics` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
 
 ## Rendering
 
@@ -39,7 +39,23 @@ Both the `Pixels` and the `Symbolic` classes draw the same [frames](../terms.md#
 
 ## Variation
 
-These classes have no [variation](../terms.md#variation) leaves.
+The [variation](../terms.md#variation) leaves set fields of the upstream `EnvParams` for each environment. All of them change the game, not the frames. A lane takes its values at `reset`, and its state keeps them under `physics`, so `set_state` restores them with the rest of the game. A change with `set_variation` takes effect at the next `reset`. `reset(options={"variation_values": {...}})` sets values for one episode, and `reset(options={"variation": [...]})` samples them for each environment.
+
+| Leaf | `EnvParams` field | Classic default | Craftax default | Range |
+| --- | --- | --- | --- | --- |
+| `world.day_length` | `day_length` | 300 | 300 | 50 to 1000 |
+| `world.always_diamond` | `always_diamond` | 1 | 0 | 0 or 1 |
+| `mobs.despawn_distance` | `mob_despawn_distance` | 14 | 14 | 6 to 30 |
+| `zombie.health` | `zombie_health` | 5 | | 1 to 9 |
+| `cow.health` | `cow_health` | 3 | | 1 to 9 |
+| `skeleton.health` | `skeleton_health` | 3 | | 1 to 9 |
+| `spawn.cow` | `spawn_cow_chance` | 0.1 | | 0 to 1 |
+| `spawn.zombie_base` | `spawn_zombie_base_chance` | 0.02 | | 0 to 1 |
+| `spawn.zombie_night` | `spawn_zombie_night_chance` | 0.1 | | 0 to 1 |
+| `spawn.skeleton` | `spawn_skeleton_chance` | 0.05 | | 0 to 1 |
+| `player.max_attribute` | `max_attribute` | | 5 | 1 to 10 |
+
+When every environment has the default values, the step uses the upstream defaults as constants, as upstream does, and the states are the same as upstream's bit for bit. Other values go to upstream's `step` as arguments.
 
 ## Classes
 

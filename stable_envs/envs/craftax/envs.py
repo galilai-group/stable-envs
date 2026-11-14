@@ -1,8 +1,8 @@
 """Craftax and Craftax-Classic: the whole batch in one stacked JAX pytree, advanced by one jitted vmap.
 
 Batch row ``i`` follows stable-worldmodel's ``CraftaxWrapper`` built with ``seed + i``. State holds each
-leaf of the upstream ``EnvState`` under ``engine`` and the wrapper's PRNG key under ``key``, one row
-per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
+leaf of the upstream ``EnvState`` under ``engine``, the lane's ``EnvParams`` variation values under
+``physics`` and the wrapper's PRNG key under ``key``, one row per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
 scaled to uint8 as stable-worldmodel renders it. The symbolic tasks render the same frames from their
 state with the pixel renderer of their game, and return the symbolic vector as ``observation``.
 """
@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+from collections.abc import Mapping
 
 import numpy as np
 import torch
@@ -18,10 +19,12 @@ from tensordict import TensorDict
 
 from ..._core.config import get_config, log
 from ..._core.stepping import _stack_states
+from ..._core.style import StyleTensor
 from ..._core.tensordicts import build_tensordict
-from ...env import Env
+from ...env import Env, require_contiguous_out
 from ...registry import register
-from ...spaces import Dict
+from ...spaces import Box, Dict, Discrete
+from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS, INT_RANGES
 
 if importlib.util.find_spec("craftax") is None or importlib.util.find_spec("jax") is None:
     raise ImportError("Craftax needs the craftax extra: pip install 'stable-envs[craftax]'")
@@ -76,6 +79,7 @@ class CraftaxEnv(Env):
         self._device = self._k.device(self.device)
         self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state = None
+        self._varied = False
         #: The device flag of the last step with device actions, read by the next step, reset or set_state.
         self._pending = None
 
@@ -104,7 +108,47 @@ class CraftaxEnv(Env):
         return resolved
 
     def make_variation_space(self):
-        return Dict({})
+        """Upstream ``EnvParams`` fields as physics leaves; each lane takes its values at reset."""
+        leaves: dict[str, dict] = {}
+        for path, _, dtype, default in self._k.params:
+            group, name = path.split(".")
+            if dtype == np.bool_:
+                space = Discrete(2, init_value=int(default))
+            elif dtype == np.int32:
+                low, high = INT_RANGES[path]
+                space = Discrete(high - low + 1, start=low, init_value=int(default))
+            else:
+                space = Box(low=0.0, high=1.0, shape=(1,), init_value=[default])
+            leaves.setdefault(group, {})[name] = space
+        return Dict({group: Dict(spaces) for group, spaces in leaves.items()})
+
+    def sample_variation(self, batch=None, paths=None, rng=None):
+        """Sample variation rows as ``Env`` does, with integer leaves inside their ``[start, start + n)`` range."""
+        out = super().sample_variation(batch, paths, rng)
+        for path, offset, _ in self.variation_space.flat_layout():
+            node = self.variation_space._walk(path)
+            if hasattr(node, "n") and (paths is None or path in paths):
+                out[:, offset] += int(node.start)
+        return out
+
+    def _lane_values(self) -> dict[str, np.ndarray]:
+        """The installed variation as per-lane parameter values."""
+        rows = self.get_variation().detach().cpu().numpy()
+        columns = {path: offset for path, offset, _ in self.variation_space.flat_layout()}
+        out = {}
+        for path, _, dtype, _ in self._k.params:
+            column = rows[: self.B, columns[path]]
+            out[path] = np.rint(column).astype(dtype) if dtype != np.float32 else column.astype(np.float32)
+        return out
+
+    def _adopt_values(self, values: Mapping[str, np.ndarray]) -> None:
+        """Install the parameter values of a restored state as the variation."""
+        rows = self.get_variation().clone()
+        columns = {path: offset for path, offset, _ in self.variation_space.flat_layout()}
+        for path, value in values.items():
+            rows[:, columns[path]] = torch.as_tensor(value.astype(np.float32), device=rows.device)
+        self._style = StyleTensor(rows, self.variation_space.flat_layout())
+        self._variation_is_default = False
 
     def _layout(self):
         return tuple((f.key, f.width, None) for f in self._k.fields)
@@ -152,7 +196,16 @@ class CraftaxEnv(Env):
     def set_state(self, state):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._check_pending()
-        self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
+        state = self._checked(state, "set_state", self.B)
+        values = self._k.values(state)
+        for path, value in values.items():
+            space = self.variation_space._walk(path)
+            low, high = (space.start, space.start + space.n - 1) if hasattr(space, "n") else (space.low, space.high)
+            if not ((value >= low) & (value <= high)).all():
+                raise ValueError(f"State field physics.{path} is outside [{low}, {high}]")
+        self._state, self._keys = self._k.restore(state, self.device)
+        self._varied = self._k.varied(values)
+        self._adopt_values(values)
 
     def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
@@ -161,7 +214,9 @@ class CraftaxEnv(Env):
         self.draw_reset_values(seed, options)
         if seed is not None:
             self._keys = self._k.seed_keys(int(seed), self.B, self._device)
-        self._state, self._keys, views = self._k.reset(self._keys)
+        values = self._lane_values()
+        self._varied = self._k.varied(values)
+        self._state, self._keys, views = self._k.reset(self._keys, values, self._device)
         return self._snapshot(views)
 
     def _actions(self, actions):
@@ -201,7 +256,7 @@ class CraftaxEnv(Env):
         self._check_pending()
         state = self._live("step")
         a, deferred = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active, self._device, snapshot)
+        out = self._k.step(self._keys, state, a, active, self._device, snapshot, self._varied)
         self._state, self._keys, reward, done, observation, views, invalid = out
         if deferred:
             # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
@@ -224,11 +279,30 @@ class CraftaxEnv(Env):
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._advance(actions, active, snapshot=False)
 
-    def _render_state_input(self, state):
-        """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
+    def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
+        """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes.
+
+        Every leaf is physics, so ``variation`` is checked and does not change the frames.
+        """
+        name = type(self).__name__
+        if size not in (None, self.default_size) or supersample not in (None, 1):
+            raise ValueError(
+                f"{name}.render draws Craftax's own {self.frame_shape} frame; size and supersample are fixed"
+            )
+        require_contiguous_out(f"{name}.render", out)
         if state is None:
-            return self._k.render(self._live("render"))
-        return self._k.render_state(self._checked(state, "render"), self.device)
+            frames = self._k.render(self._live("render"))
+        else:
+            frames = self._k.render_state(self._checked(state, "render"), self.device)
+        if variation is not None or style is not None:
+            self.resolve_style(style, variation, batch=len(frames))
+        if out is None:
+            return frames
+        target = torch.as_tensor(out)
+        if tuple(target.shape) != tuple(frames.shape):
+            raise ValueError(f"{name}.render: out has shape {tuple(target.shape)}, the frames {tuple(frames.shape)}")
+        target.copy_(frames)
+        return out
 
     def _render_live(self):
         return self._k.render(self._live("render"))
@@ -236,6 +310,10 @@ class CraftaxEnv(Env):
     def _close(self):
         self._state = None
         self._pending = None
+
+
+_CLASSIC_LEAVES = frozenset(path for path, _ in CLASSIC_PARAMS)
+_CRAFTAX_LEAVES = frozenset(path for path, _ in CRAFTAX_PARAMS)
 
 
 @register
@@ -246,6 +324,7 @@ class CraftaxClassicPixels(CraftaxEnv):
     frame_shape = (63, 63)
     default_size = native_size = 63
     action_high = 16
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CLASSIC_LEAVES
 
 
 @register
@@ -256,6 +335,7 @@ class CraftaxClassicSymbolic(CraftaxEnv):
     frame_shape = (63, 63)
     default_size = native_size = 63
     action_high = 16
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CLASSIC_LEAVES
 
 
 @register
@@ -266,6 +346,7 @@ class CraftaxPixels(CraftaxEnv):
     frame_shape = (130, 110)
     default_size = native_size = 130
     action_high = 42
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CRAFTAX_LEAVES
 
 
 @register
@@ -276,3 +357,4 @@ class CraftaxSymbolic(CraftaxEnv):
     frame_shape = (130, 110)
     default_size = native_size = 130
     action_high = 42
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CRAFTAX_LEAVES
