@@ -132,13 +132,16 @@ A red run on `main` or the weekly schedule opens or updates the issue "ci: main 
 
 `.github/workflows/regression.yml` is manual only. Its GPU target needs a self-hosted runner with the `stable-envs-gpu` label, an NVIDIA GPU, EGL, a CUDA build of torch and nvdiffrast.
 
+### Pull requests from forks
+
+The jobs in `ci.yml`, the `docs.yml` build and `extras-smoke.yml` run on every pull request that is not a draft, also from forks. Fork workflows get a read-only token and no secrets. A maintainer approves the first run for a first-time contributor (Settings, Actions, General). `ci-ok` and the docs `build` are the required checks on `main`.
+
 ### Repository variables
 
-Two repository variables switch on the automatic workflows. Set them under Settings, Secrets and variables, Actions, Variables.
+Set it under Settings, Secrets and variables, Actions, Variables.
 
 | Variable | When it's `true` |
 |---|---|
-| `STABLE_ENVS_CI` | the jobs in `ci.yml`, the `docs.yml` build and `extras-smoke.yml` run on pull requests, pushes and the schedule. Without it, only manual runs from the Actions tab run. |
 | `DEPLOY_DOCS` | a push to `main` deploys the built site to GitHub Pages. Enable Pages with GitHub Actions as the source first. |
 
 ### Exemptions
