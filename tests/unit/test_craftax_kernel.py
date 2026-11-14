@@ -50,17 +50,21 @@ def test_a_lane_that_dies_and_a_lane_at_the_step_limit_end_as_upstream_ends_them
             assert not out["reward"][lane, 1:].any() and not out["terminated"][lane, 1:].any()
 
 
+def _compiled_steps(env) -> int:
+    return sum(fn._cache_size() for (name, _), fn in env._k._jitted.items() if name[0] in ("step", "sequence"))
+
+
 def test_finished_lanes_reuse_the_compiled_step():
     with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
         state = env.reset(seed=SEED)
         sequence = torch.as_tensor(actions(env, 3, SEED)).permute(1, 0, 2)
         env.step(sequence, frames=None)
-        compiled = sum(fn._cache_size() for fn in env._k._jitted.values())
+        compiled = _compiled_steps(env)
         state["engine", "player_health"][0] = 0
         env.set_state(state)
         out = env.step(sequence, frames=None)
         assert not out["valid"][0, 1:].any()
-        assert sum(fn._cache_size() for fn in env._k._jitted.values()) == compiled
+        assert _compiled_steps(env) == compiled
 
 
 @pytest.mark.parametrize("seed", [0, SEED, 2**31 - LANES, 2**31 - 1, 2**31, 2**33 + 5, -2])
