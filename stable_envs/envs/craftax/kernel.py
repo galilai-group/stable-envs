@@ -28,14 +28,11 @@ def _ask_for_host_devices() -> bool:
     A count that the user set (``jax_num_cpu_devices``, ``JAX_NUM_CPU_DEVICES`` or
     ``--xla_force_host_platform_device_count`` in ``XLA_FLAGS``) is kept.
     """
-    try:
-        if jax.config.read("jax_num_cpu_devices") >= 0:
-            return True
-        if "xla_force_host_platform_device_count" in os.environ.get("XLA_FLAGS", ""):
-            return True
-        jax.config.update("jax_num_cpu_devices", cpu_limit())
-    except AttributeError:
+    count = getattr(jax.config, "jax_num_cpu_devices", None)
+    if count is None or count >= 0 or "xla_force_host_platform_device_count" in os.environ.get("XLA_FLAGS", ""):
         return True
+    try:
+        jax.config.update("jax_num_cpu_devices", cpu_limit())
     except RuntimeError:
         return False
     return True
