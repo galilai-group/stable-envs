@@ -43,3 +43,27 @@ def test_lanes_match_stable_worldmodel(name):
                     np.testing.assert_array_equal(result["observation"][lane].numpy(), obs)
         for lane, w in enumerate(wrappers):
             assert_lane(state, lane, w._state, w._key)
+
+
+@pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxPixels"])
+def test_reset_without_a_seed_continues_the_keys_as_stable_worldmodel_does(name):
+    pytest.importorskip("stable_worldmodel")
+    from stable_worldmodel.envs.craftax import craftax as swm
+
+    wrappers = [getattr(swm, f"{name}Wrapper")(seed=0, render_mode="rgb_array") for _ in range(LANES)]
+    with se.make(name, num_envs=LANES, device="cpu", seed=SEED + 50) as env:
+        env.reset(seed=SEED)
+        for lane, w in enumerate(wrappers):
+            w.reset(seed=SEED + lane)
+        first, second = actions(env, 2, SEED)
+        env.step(first, frames=None)
+        for lane, w in enumerate(wrappers):
+            w.step(first[lane, 0])
+        state = env.reset()
+        for lane, w in enumerate(wrappers):
+            w.reset()
+            assert_lane(state, lane, w._state, w._key)
+        state = env.step(second, frames=None)["state"]
+        for lane, w in enumerate(wrappers):
+            w.step(second[lane, 0])
+            assert_lane(state, lane, w._state, w._key)

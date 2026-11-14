@@ -38,16 +38,21 @@ def test_an_out_of_range_action_raises_and_leaves_every_lane_unchanged(device, k
         env.reset(seed=7)
         before = env.get_state()
         # 2**32 wraps to 0 as int32, so the range check must see the caller's dtype.
+        good = actions(env, 1, 7)[0]
         for bad in (-1, env.action_high + 1, 2**32):
             values = np.zeros((LANES, 1), np.int64)
             values[1, 0] = bad
+            if kind == "cuda":
+                # Device actions are checked on the device; the next step raises without a sync on this one.
+                env.step(_as(values, kind))
+                assert_same_state(env.get_state(), before)
+                values = good
             with pytest.raises(ValueError, match="actions must be integers"):
                 env.step(_as(values, kind))
             assert_same_state(env.get_state(), before)
         with pytest.raises(ValueError, match="actions must be integers"):
             env.step(_as(np.zeros((LANES, 1), np.float32), kind))
         assert_same_state(env.get_state(), before)
-        good = actions(env, 1, 7)[0]
         stepped = env.step(_as(good, kind))
         with se.make("CraftaxClassicSymbolic", num_envs=LANES, device=device) as fresh:
             fresh.reset(seed=7)
