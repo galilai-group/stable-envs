@@ -212,6 +212,9 @@ class Kernel:
         self._frames = jax.jit(frames)
         self._render_blocks = jax.jit(render_blocks)
         self._everyone: dict = {}
+        one = jax.tree.map(lambda x: jax.ShapeDtypeStruct((1, *x.shape), x.dtype), engine)
+        #: The ``(H, W, 3)`` shape of one frame.
+        self.frame_shape = tuple(jax.eval_shape(frames, one).shape[1:])
 
     @staticmethod
     def device(device: torch.device):
@@ -262,12 +265,13 @@ class Kernel:
         """Whether any lane has a parameter value other than the default."""
         return any(bool((np.asarray(values[path]) != default).any()) for path, _, _, default in self.params)
 
-    def reset(self, keys, values: dict[str, np.ndarray], device):
-        """Reset every lane with its parameter values, which the state keeps for later steps."""
-        varied = self.varied(values)
+    def reset(self, keys, values: dict[str, np.ndarray], device, varied: bool):
+        """Reset every lane with its parameter values and donate ``keys``.
+
+        The state keeps the values for later steps. Returns the state, the keys and the packed state.
+        """
         values = {path: jax.device_put(np.asarray(values[path], dtype), device) for path, _, dtype, _ in self.params}
-        state, keys, blocks = self._reset(keys, values, varied=varied)
-        return state, keys, self.views(blocks)
+        return self._reset(keys, values, varied=varied)
 
     def everyone(self, num_envs: int, device):
         """An all-true lane mask, made once per batch size and device."""
@@ -287,24 +291,30 @@ class Kernel:
         frame: bool = False,
         varied: bool = False,
     ):
-        """Advance the lanes and donate ``keys`` and ``state``.
+        """Advance the lanes and donate ``keys`` and ``state``; returns the outputs of the jitted call.
 
-        With ``snapshot``, the call also packs the new state; with ``frame``, it also draws the new frames.
-        Every lane keeps its state when any action is outside the game's range, and the last output is
-        that flag on the device. ``varied`` steps with the parameter values in the state instead of the
-        defaults.
+        The new state and keys come first, so that the caller can hold them before ``outputs`` converts
+        the rest. With ``snapshot``, the call also packs the new state; with ``frame``, it also draws the
+        new frames. Every lane keeps its state when any action is outside the game's range. ``varied``
+        steps with the parameter values in the state instead of the defaults.
         """
         actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
         if active is None:
             active = self.everyone(actions.shape[0], device)
         else:
             active = jnp.from_dlpack(active.to(torch.bool).contiguous())
-        out = self._programs[(snapshot, frame)](keys, state, actions, active, varied=varied)
-        state, keys, reward, done, obs, invalid, blocks, frames = out
+        return self._programs[(snapshot, frame)](keys, state, actions, active, varied=varied)
+
+    def outputs(self, out):
+        """The reward, ends, observation, packed-state views and frames of a step in torch, and its range flag.
+
+        The flag stays on the device.
+        """
+        _, _, reward, done, obs, invalid, blocks, frames = out
         obs = None if obs is None else torch.from_dlpack(obs)
         views = None if blocks is None else self.views(blocks)
         frames = None if frames is None else torch.from_dlpack(frames)
-        return state, keys, torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, frames, invalid
+        return torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, frames, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:
@@ -352,7 +362,9 @@ class Kernel:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
         n = int(td.batch_size[0])
         blocks = self._torch_blocks(td, device)
-        rows = 1 << max(n - 1, 0).bit_length()
+        if n == 0:
+            return torch.empty((0, *self.frame_shape), dtype=torch.uint8, device=device)
+        rows = 1 << (n - 1).bit_length()
         if rows != n:
             blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
         frames = torch.from_dlpack(self._render_blocks(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks)))

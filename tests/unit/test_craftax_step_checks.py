@@ -44,7 +44,9 @@ def test_an_out_of_range_action_raises_and_leaves_every_lane_unchanged(device, k
             values[1, 0] = bad
             if kind == "cuda":
                 # Device actions are checked on the device; the next step raises without a sync on this one.
-                env.step(_as(values, kind))
+                rejected = env.step(_as(values, kind))
+                assert rejected["valid"].all() and not rejected["reward"].any() and not rejected["terminated"].any()
+                assert_same_state(rejected["state"], before)
                 assert_same_state(env.get_state(), before)
                 values = good
             with pytest.raises(ValueError, match="actions must be integers"):
@@ -57,6 +59,20 @@ def test_an_out_of_range_action_raises_and_leaves_every_lane_unchanged(device, k
         with se.make("CraftaxClassicSymbolic", num_envs=LANES, device=device) as fresh:
             fresh.reset(seed=7)
             assert_same_state(stepped, fresh.step(_as(good, kind)))
+
+
+@CUDA
+def test_close_raises_for_a_rejected_step_that_no_call_read():
+    env = se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cuda")
+    env.reset(seed=7)
+    values = torch.zeros((LANES, 1), dtype=torch.int64, device="cuda")
+    values[0, 0] = -1
+    env.step(values)
+    with pytest.raises(ValueError, match="actions must be integers"):
+        env.close()
+    with pytest.raises(RuntimeError, match="closed"):
+        env.reset(seed=7)
+    env.close()
 
 
 @pytest.mark.parametrize("name", NAMES)

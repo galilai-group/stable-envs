@@ -215,8 +215,8 @@ class CraftaxEnv(Env):
             self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         values = self._lane_values()
         self._varied = self._k.varied(values)
-        self._state, self._keys, views = self._k.reset(self._keys, values, self._device)
-        return self._snapshot(views)
+        self._state, self._keys, blocks = self._k.reset(self._keys, values, self._device, self._varied)
+        return self._snapshot(self._k.views(blocks))
 
     def _actions(self, actions):
         """Device actions, and whether only the step itself can check their range.
@@ -250,17 +250,23 @@ class CraftaxEnv(Env):
                 "the last step got others and left every environment unchanged"
             )
 
+    def _defer(self, invalid, deferred: bool) -> None:
+        """Keep the device range flag of a step with device actions for the next call to read."""
+        if deferred:
+            # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
+            invalid.copy_to_host_async()
+            self._pending = invalid
+
     def _advance(self, actions, active, snapshot: bool, frame: bool = False):
         self._check_open("step")
         self._check_pending()
         state = self._live("step")
         a, deferred = self._actions(actions)
         out = self._k.step(self._keys, state, a, active, self._device, snapshot, frame, self._varied)
-        self._state, self._keys, reward, done, observation, views, frames, invalid = out
-        if deferred:
-            # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
-            invalid.copy_to_host_async()
-            self._pending = invalid
+        # The call donated the old buffers, so the new ones are held before anything else can raise.
+        self._state, self._keys = out[0], out[1]
+        reward, done, observation, views, frames, invalid = self._k.outputs(out)
+        self._defer(invalid, deferred)
         result = {
             "reward": reward,
             "terminated": done,
@@ -280,12 +286,25 @@ class CraftaxEnv(Env):
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._advance(actions, active, snapshot=False)
 
-    def _step_pipeline(self):
-        """Steps that draw their frame in the same jitted call when the caller selects that frame."""
-        pipeline = self.__dict__.get("_fused_steps")
-        if pipeline is None:
-            pipeline = self.__dict__["_fused_steps"] = _FusedSteps(self)
-        return pipeline
+    def _step_sequence(self, actions, states, frames, final_state: bool):
+        """One action per environment in one jitted call, with its packed state and frame when asked for.
+
+        A sequence of more than one action returns None, so the shared step loop steps it.
+        """
+        if actions.shape[1] != 1:
+            return None
+        snapshot = final_state or states is not None
+        result = self._advance(actions[:, 0], None, snapshot=snapshot, frame=frames is not None)
+        out = {key: value.unsqueeze(1) for key, value in result.items() if key not in ("state", "frame")}
+        out["valid"] = torch.ones((self.B, 1), dtype=torch.bool, device=self.device)
+        if final_state:
+            out["state"] = result["state"]
+        if states is not None:
+            # The final state and the selected one are separate tensors, as in the step loop.
+            out["states"] = result["state"].unsqueeze(1).clone() if final_state else result["state"].unsqueeze(1)
+        if frames is not None:
+            out["frames"] = result["frame"].unsqueeze(1)
+        return out
 
     def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
         """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes.
@@ -317,30 +336,8 @@ class CraftaxEnv(Env):
 
     def _close(self):
         self._state = None
-        self._pending = None
-
-
-class _FusedSteps:
-    """The step pipeline of a Craftax env: each submitted step runs when it is received."""
-
-    live_frames = True
-
-    def __init__(self, env: CraftaxEnv):
-        self._env = env
-        self._pending: tuple | None = None
-
-    def submit_step(self, actions, *, active=None, capture_state=True, capture_frame=False) -> None:
-        self._pending = (actions, active, capture_state, capture_frame)
-
-    def receive_step(self) -> TensorDict:
-        if self._pending is None:
-            raise RuntimeError("receive_step() without a submitted step")
-        actions, active, snapshot, frame = self._pending
-        self._pending = None
-        return self._env._advance(actions, active, snapshot=snapshot, frame=frame)
-
-    def abort_step(self) -> None:
-        self._pending = None
+        # A step whose device actions were out of range still raises when nothing else reads its flag.
+        self._check_pending()
 
 
 _CLASSIC_LEAVES = frozenset(path for path, _ in CLASSIC_PARAMS)
