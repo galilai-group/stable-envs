@@ -105,3 +105,29 @@ def test_a_large_buffer_in_shared_memory_is_not_reused():
     del state
     for _ in range(3):
         assert shared not in _storages(layout.export(values, "cpu"))
+
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_a_layout_without_static_leaves_exports_in_state_order(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    layout = StateLayout(LEAVES, 2)
+    values = _values(2)
+    state = layout.export(values, device)
+    keys = [key if isinstance(key, tuple) else (key,) for key in state.keys(True, True)]
+    assert keys == [("qpos",), ("lifecycle", "step_count"), ("rng", "keys"), ("task", "done")]
+    values["qpos"] += 100
+    assert state["qpos"][0, 0].item() == 0
+
+
+def test_host_leaves_give_each_leaf_its_declared_shape_and_dtype():
+    layout = StateLayout(LEAVES, 2)
+    values = _values(2)
+    values[("lifecycle", "step_count")] = values[("lifecycle", "step_count")].reshape(2).astype(np.int32)
+    leaves = layout.host_leaves(values, ("state",))
+    paths = [("qpos",), ("lifecycle", "step_count"), ("rng", "keys"), ("task", "done")]
+    assert list(leaves) == [("state", *path) for path in paths]
+    assert leaves[("state", "lifecycle", "step_count")].shape == (2, 1)
+    assert leaves[("state", "lifecycle", "step_count")].dtype == np.int64
+    with pytest.raises(RuntimeError, match="static"):
+        StateLayout(LEAVES, 2, static=frozenset({"rng/keys"})).host_leaves(values)

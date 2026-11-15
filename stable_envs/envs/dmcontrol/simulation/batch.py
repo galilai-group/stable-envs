@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from ...._core.state_layout import StateLayout
-from ...._core.tensordicts import build_tensordict, to_device
+from ...._core.tensordicts import build_tensordict, leaf_tree, to_device
 from ...._execution.protocol import SimulatorAdapter
 from .state import model_columns, new_columns, write_task_row
 
@@ -212,6 +212,11 @@ class DMCBatchAdapter(SimulatorAdapter):
         return self._state_on(self.device)
 
     def _state_on(self, device):
+        values = self._state_values()
+        # The export copies every value: later steps and resets cannot change the returned snapshot.
+        return self._layout_of(values).export(values, device)
+
+    def _state_values(self):
         live = {
             **self._live,
             "time": self._live["time"][:, None],
@@ -222,13 +227,15 @@ class DMCBatchAdapter(SimulatorAdapter):
         values = {key: live.get(key, column) for key, column in self._columns.items()}
         if self.lanes.physics is not None:
             values.update(self.lanes.physics.export())
+        return values
+
+    def _layout_of(self, values):
         if self._layout is None:
             self._layout = StateLayout(
                 [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in values.items()],
                 self.num_envs,
             )
-        # The export copies every value: later steps and resets cannot change the returned snapshot.
-        return self._layout.export(values, device)
+        return self._layout
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -243,6 +250,24 @@ class DMCBatchAdapter(SimulatorAdapter):
         return self.lanes.check_step(actions, active)
 
     def step(self, actions, *, active=None, capture_state=True):
+        out = leaf_tree(self._advance(actions, active))
+        if capture_state:
+            out = {"state": self._state_on(_CPU), **out}
+        out = build_tensordict(out, [self.num_envs], _CPU)
+        # The State and the outputs move to the device in one copy.
+        return out if self.device.type == "cpu" else to_device(out, self.device)
+
+    def step_leaves(self, actions):
+        """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
+
+        The arrays may be live buffers: the caller copies them before the next call.
+        """
+        outputs = self._advance(actions, None)
+        values = self._state_values()
+        return {**self._layout_of(values).host_leaves(values, ("state",)), **outputs}
+
+    def _advance(self, actions, active):
+        """Advance the lanes; the task outputs as ``{key path: array}``."""
         self.lanes._check_open()
         actions, _ = self.lanes.check_step(actions, active)
         ctrl, reward = self._transform(actions), np.zeros(self.num_envs)
@@ -261,20 +286,16 @@ class DMCBatchAdapter(SimulatorAdapter):
             self._reset_next = self._count >= self._limit
         self._cumulative += reward
         out = {
-            "reward": torch.from_numpy(reward),
-            "terminated": torch.zeros(self.num_envs, dtype=torch.bool),
-            "truncated": torch.zeros(self.num_envs, dtype=torch.bool),
-            "observation": torch.from_numpy(self.task.observation()),
-            "score": torch.from_numpy(self._cumulative / 1000.0),
+            ("reward",): reward,
+            ("terminated",): np.zeros(self.num_envs, np.bool_),
+            ("truncated",): np.zeros(self.num_envs, np.bool_),
+            ("observation",): self.task.observation(),
+            ("score",): self._cumulative / 1000.0,
         }
         if (info := self.task.info()) is not None:
-            out["success"] = torch.from_numpy(np.array(info[0], np.float64))
-            out["info"] = {k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}
-        if capture_state:
-            out = {"state": self._state_on(_CPU), **out}
-        out = build_tensordict(out, [self.num_envs], _CPU)
-        # The State and the outputs move to the device in one copy.
-        return out if self.device.type == "cpu" else to_device(out, self.device)
+            out["success",] = np.array(info[0], np.float64)
+            out.update({("info", k): np.array(v) for k, v in info[1].items()})
+        return out
 
     def close(self):
         self.lanes.close()

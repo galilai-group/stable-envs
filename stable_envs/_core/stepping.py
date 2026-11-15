@@ -279,7 +279,7 @@ def _moved_leaves(env, leaves, sequence, state_indices, final_state):
                 batches.append((key[:1], (n, 1)))
         else:
             out.append((key, value))
-    out += state
+    out = state + out
     out.append((("valid",), ones))
     if state_indices is not None:
         width = len(state_indices)

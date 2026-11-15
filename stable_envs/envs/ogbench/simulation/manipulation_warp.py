@@ -377,6 +377,8 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     """
 
     execution_mode = "NATIVE_MJWARP"
+    #: The lanes step on the device, so a step has no host arrays to move.
+    step_leaves = None
 
     def __init__(
         self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None, exclude_contacts=True

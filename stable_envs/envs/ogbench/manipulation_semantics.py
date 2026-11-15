@@ -172,6 +172,16 @@ class ManipulationSemantics:
         self._rows_installed = False
         return self._simulator.step(actions, active=active, capture_state=False)
 
+    def _host_step(self, actions, move):
+        """One step on a host simulator for an accelerator: ``move`` copies its arrays over once."""
+        step = getattr(self._simulator, "step_leaves", None)
+        if step is None or self.device.type == "cpu":
+            return None
+        self._check_open("step")
+        self._rows_installed = False
+        result, self._own_state = move(step(actions))
+        return result
+
     def _step_pipeline(self) -> StepPipeline | None:
         pipeline = step_pipeline(self._simulator)
         return None if pipeline is None else _OwnStates(self, pipeline)

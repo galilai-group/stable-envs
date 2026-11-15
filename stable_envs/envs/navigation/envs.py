@@ -9,7 +9,7 @@ from tensordict import TensorDict
 
 from ... import tuning
 from ..._core.state_layout import StateLayout
-from ..._core.tensordicts import build_tensordict, pack_to_device, to_device
+from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution.backends import Rungs, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
@@ -500,7 +500,7 @@ class _HiddenTargetSemantics:
         leaves = [(("agent", "position"), agent.numpy()), (("target", "position"), np.stack(target_rows))]
         leaves = [(key, value.astype(np.float32, copy=False)) for key, value in leaves]
         if self.device.type == "cpu":
-            state = build_tensordict(_leaf_tree(dict(leaves)), [self.B], self.device)
+            state = build_tensordict(leaf_tree(dict(leaves)), [self.B], self.device)
         else:
             # The State moves in one copy; the live rows and target come from it, with no host wait.
             state = pack_to_device(leaves, (self.B,), self.device)
@@ -604,7 +604,7 @@ class _HiddenTargetSemantics:
             ("info", "distance_to_target"): distance,
         }
         if self.device.type == "cpu" or move is None:
-            result = _leaf_tree(leaves)
+            result = leaf_tree(leaves)
             result = build_tensordict(result, [n], "cpu")
             if self.device.type == "cpu":
                 return result
@@ -621,17 +621,6 @@ class _HiddenTargetSemantics:
         # The host rows already hold the new values: the next step reads them without a device copy.
         self._host_arrays["rows"] = (self._render_state, self._render_state._version, rows)
         return result
-
-
-def _leaf_tree(leaves: dict) -> dict:
-    """The nested dict of tensors of ``{key path: array}``."""
-    tree: dict = {}
-    for key, value in leaves.items():
-        node = tree
-        for part in key[:-1]:
-            node = node.setdefault(part, {})
-        node[key[-1]] = torch.from_numpy(value)
-    return tree
 
 
 class _TorchNavBase(_GymReferencePort):

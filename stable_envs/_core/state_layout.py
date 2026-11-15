@@ -60,6 +60,7 @@ class StateLayout:
         self.keys: tuple[Key, ...] = tuple(key for key, _, _ in leaves)
         self.shapes = {key: None if shape is None else (self.num_envs, *shape) for key, shape, _ in leaves}
         self.dtypes = {key: dtype for key, _, dtype in leaves}
+        self._kinds = {key: _numpy_dtype(dtype) for key, dtype in self.dtypes.items()}
         groups: dict[torch.dtype, tuple[list[int], list[int]]] = {}
         for index, (key, _, dtype) in enumerate(leaves):
             groups.setdefault(dtype, ([], []))[key not in static].append(index)
@@ -191,6 +192,21 @@ class StateLayout:
                         leaves[i] = leaf
         batch, where = self._batch, _recorded(flats, device)
         return self._build(leaves, lambda node: new_node(node, batch, where))
+
+    def host_leaves(self, values: Mapping[Key, torch.Tensor | np.ndarray], prefix: tuple[str, ...] = ()) -> dict:
+        """``{prefix + key path: array}`` of the current host ``values`` with the declared shapes and dtypes.
+
+        The arrays may share memory with ``values``; ``pack_to_device`` copies them at once. A layout with static
+        leaves has no such form.
+        """
+        if any(fixed for _, _, fixed, _, _ in self.groups):
+            raise RuntimeError("StateLayout.host_leaves needs a layout without static leaves")
+        out = {}
+        for key in self.keys:
+            value = values[key]
+            value = np.asarray(value.numpy() if torch.is_tensor(value) else value, self._kinds[key])
+            out[(*prefix, *_path(key))] = value.reshape(self.shapes[key] or value.shape)
+        return out
 
     def _buffer(self, dtype: torch.dtype, numel: int) -> torch.Tensor:
         """A flat host buffer that no earlier State still uses: a large new buffer costs page faults on each export."""

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import sys
 import threading
 
 import numpy as np
@@ -199,6 +200,25 @@ def _stack_node(nodes, batch, device, view):
     return TensorDict._new_unsafe(out, batch_size=batch, device=device)
 
 
+def _one_storage(td) -> bool:
+    """Whether every leaf of a dense ``td`` uses one storage; stops at the first leaf that doesn't."""
+    pointer = None
+    stack = [td._tensordict]
+    while stack:
+        for value in stack.pop().values():
+            if type(value) is torch.Tensor:
+                current = value.untyped_storage().data_ptr()
+                if pointer is None:
+                    pointer = current
+                elif current != pointer:
+                    return False
+            elif _dense(value):
+                stack.append(value._tensordict)
+            else:
+                return False
+    return pointer is not None
+
+
 def _clone_packed(slots) -> bool:
     """Replace each ``(parent, key, leaf)`` slot by a copy, in one copy; False when the leaves aren't packed.
 
@@ -218,9 +238,27 @@ def _clone_packed(slots) -> bool:
         if hi - lo <= 2 * sum(value.nbytes for _, value in spans):
             whole = torch.empty(0, dtype=torch.uint8, device=first.device).set_(storage)
             copy = whole[lo:hi].clone().untyped_storage()
-            for (parent, key, value), (start, _) in zip(slots, spans, strict=True):
-                leaf = torch.empty(0, dtype=value.dtype, device=value.device)
-                parent[key] = leaf.set_(copy, (start - lo) // value.element_size(), value.shape, value.stride())
+            # Leaves of one dtype, shape and stride at evenly spaced offsets come from one view and one unbind.
+            i = 0
+            while i < len(slots):
+                start, value = spans[i]
+                j, step = i + 1, None
+                while j < len(slots):
+                    after, other = spans[j]
+                    gap = after - spans[j - 1][0]
+                    like = other.dtype == value.dtype and other.shape == value.shape and other.stride() == value.stride()
+                    if not like or gap <= 0 or gap % value.element_size() or (step is not None and gap != step):
+                        break
+                    step, j = gap, j + 1
+                size = value.element_size()
+                base = torch.empty(0, dtype=value.dtype, device=value.device)
+                if j - i == 1:
+                    slots[i][0][slots[i][1]] = base.set_(copy, (start - lo) // size, value.shape, value.stride())
+                else:
+                    run = base.set_(copy, (start - lo) // size, (j - i, *value.shape), (step // size, *value.stride()))
+                    for (parent, key, _), leaf in zip(slots[i:j], run.unbind(0), strict=True):
+                        parent[key] = leaf
+                i = j
             return True
     return False
 
@@ -235,7 +273,7 @@ def stack_leaves(values, *, view: bool = False) -> TensorDict:
     batch = torch.Size([*first.batch_size, len(values)])
     if all(_dense(value) and value.device == first.device for value in values):
         try:
-            if len(values) == 1 and not view:
+            if len(values) == 1 and not view and _one_storage(first):
                 # One copy of packed leaves instead of a copy per leaf.
                 out = _stack_node(values, batch, first.device, True)
                 slots = _leaf_slots(out, [])
@@ -314,7 +352,10 @@ class _Transfer:
             self.groups.append((dtype, _NUMPY[dtype], order, total, total + nbytes, sizes, list(runs.items())))
             total += -(-nbytes // _ALIGN) * _ALIGN
         self.total = max(total, _ALIGN)
+        self.count = len(signature)
         self.buffers: dict[int, np.ndarray] = {}
+        #: Per thread: device blocks of earlier calls with their leaves and the counts that show them unused.
+        self.held: dict[int, list] = {}
         keys = [key for key, _, _ in signature] + list(kept_keys)
         self.build = nested_builder(keys, with_paths=True)
         #: Batch size of every node below the root whose batch size differs from the root's.
@@ -340,6 +381,28 @@ class _Transfer:
             buffer = self.buffers[thread] = np.empty(self.total, np.uint8)
         return buffer
 
+    def send(self, packed: np.ndarray, device: torch.device) -> list:
+        """The leaves of a device copy of ``packed``, in signature order.
+
+        The copy goes into the block of an earlier call when no tensor uses that block or its leaves any more, as
+        after the caller dropped that result: its leaves come back as they are, with no allocation and no new
+        tensor. Work on the device that read the block is queued before the copy.
+        """
+        source = torch.from_numpy(packed)
+        pool = self.held.setdefault(threading.get_ident(), [])
+        for block, parts, uses, refs in pool:
+            if block.device == device and _uses(block) == uses and _refs(parts) == refs:
+                block.copy_(source, non_blocking=True)
+                return parts
+        block = source.to(device, non_blocking=True)
+        parts = [None] * self.count
+        self.split(block, parts)
+        if _COUNTS_USES:
+            pool.append((block, parts, _uses(block), _refs(parts)))
+            if len(pool) > 2:
+                pool.pop(0)
+        return parts
+
     def node(self, batch, device):
         """``node(dict, path)`` for the builder: a node with the batch size of its path."""
         batches = self.batches
@@ -359,6 +422,18 @@ class _Transfer:
                         parts[i] = leaf
 
 
+def _uses(tensor) -> int:
+    return torch._C._storage_Use_Count(tensor.untyped_storage()._cdata)
+
+
+def _refs(parts) -> int:
+    return sum(sys.getrefcount(part) for part in parts)
+
+
+#: Whether this torch counts the users of a storage; without it, no device block is reused.
+_COUNTS_USES = hasattr(torch._C, "_storage_Use_Count")
+
+
 def _plan(signature) -> _Transfer:
     plan = _transfers.get(signature)
     if plan is None:
@@ -372,7 +447,7 @@ def to_device(td: TensorDict, device) -> TensorDict:
     """``td.to(device)`` for a CPU TensorDict, with one host-to-device copy for all its leaves.
 
     The leaves are packed by dtype into one host buffer, which moves in one copy; each returned leaf is a view of
-    the device copy. Leaves already on ``device`` stay as they are. A TensorDict that isn't dense, or
+    the device copy, which can be the block of an earlier result that nothing uses any more. Leaves already on ``device`` stay as they are. A TensorDict that isn't dense, or
     that has a leaf NumPy can't hold, moves leaf by leaf.
     """
     device = _device(device)
@@ -391,29 +466,40 @@ def to_device(td: TensorDict, device) -> TensorDict:
         tuple(batches),
     )
     plan = _plan(signature)
-    parts: list = [None] * len(leaves)
+    parts: list = []
     if leaves:
         packed = plan.staging()
         for _, kind, order, start, stop, _, _ in plan.groups:
             torch.cat([leaves[i][1].reshape(-1) for i in order], out=torch.from_numpy(packed[start:stop].view(kind)))
-        plan.split(torch.from_numpy(packed).to(device, non_blocking=True), parts)
-    parts.extend(value for _, value in kept)
+        parts = plan.send(packed, device)
+    if kept:
+        parts = [*parts, *(value for _, value in kept)]
     return plan.build(parts, plan.node(td.batch_size, device))
+
+
+def leaf_tree(leaves) -> dict:
+    """The nested dict of CPU tensors of ``{key path: array}``, for ``build_tensordict``."""
+    tree: dict = {}
+    for key, value in leaves.items():
+        node = tree
+        for part in key[:-1]:
+            node = node.setdefault(part, {})
+        node[key[-1]] = torch.from_numpy(value)
+    return tree
 
 
 def pack_to_device(leaves, batch, device, batches=()) -> TensorDict:
     """The TensorDict of host NumPy ``leaves``, ``[(key path, array)]``, on ``device`` in one copy.
 
     The arrays are packed by dtype straight into one host buffer, with no tensor per leaf on the host; each
-    returned leaf is a view of the device copy. ``batches`` holds ``(node path, batch size)`` of each node whose
+    returned leaf is a view of the device copy, which can be the block of an earlier result that nothing uses any
+    more. ``batches`` holds ``(node path, batch size)`` of each node whose
     batch size extends its parent's; the batch size of a node is its parent's unless listed.
     """
     device = _device(device)
     batch = torch.Size(batch)
     plan = _plan((tuple((key, value.shape, _TORCH[value.dtype]) for key, value in leaves), (), tuple(batches)))
-    parts: list = [None] * len(leaves)
     packed = plan.staging()
     for _, kind, order, start, stop, _, _ in plan.groups:
         np.concatenate([leaves[i][1].reshape(-1) for i in order], out=packed[start:stop].view(kind))
-    plan.split(torch.from_numpy(packed).to(device, non_blocking=True), parts)
-    return plan.build(parts, plan.node(batch, device))
+    return plan.build(plan.send(packed, device), plan.node(batch, device))
