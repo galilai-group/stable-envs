@@ -565,7 +565,8 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
             shape = list(env.step(acts[:lanes, :1], states=None, frames=slice(None))["frames"].shape[2:])
         units = _cycle(lambda: play(groups))
         warm = args.warmup_steps * lanes
-        t = _timed(units, seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup, warmup_items=warm)
+        timing = dict(seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup, warmup_items=warm)
+        t = _timed(units, **timing)
     finally:
         env.close()
     return {
@@ -633,7 +634,11 @@ def run_source_single(args, name: str) -> dict:
 
     try:
         t = _timed(
-            _cycle(play), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup, warmup_items=args.warmup_steps
+            _cycle(play),
+            seconds=args.seconds,
+            repeats=args.repeats,
+            warmup_s=args.warmup,
+            warmup_items=args.warmup_steps,
         )
     finally:
         env.close()
