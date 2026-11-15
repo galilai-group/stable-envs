@@ -133,10 +133,11 @@ def _compiled_step(layout, width):
         doors = jnp.where(live[..., None], doors, 0.0).reshape(n, -1)
         observation = jnp.concatenate((agent, target, doors), axis=1)
         # Torch's two-element CPU norm: round x*x to float32, add the exact y*y in float64, round, then sqrt.
+        # XLA may drop a float32 round trip as excess precision, so the roundings are explicit.
+        single = lambda x: jax.lax.reduce_precision(x, exponent_bits=8, mantissa_bits=23)
         delta = (agent - target).astype(jnp.float64)
-        first = jnp.square(delta[:, 0]).astype(jnp.float32).astype(jnp.float64)
-        squared = (first + delta[:, 1] * delta[:, 1]).astype(jnp.float32).astype(jnp.float64)
-        distance = jnp.sqrt(squared).astype(jnp.float32).astype(jnp.float64)
+        squared = single(single(jnp.square(delta[:, 0])) + delta[:, 1] * delta[:, 1])
+        distance = single(jnp.sqrt(squared))
         doubles = jnp.concatenate((jnp.zeros(n, jnp.float64), distance))
         flags = jnp.concatenate((distance < 16.0, jnp.zeros(-(-2 * n // 4) * 4 - n, jnp.bool_))).astype(jnp.uint8)
         words = (
