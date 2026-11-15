@@ -174,7 +174,7 @@ class ManipulationSemantics:
 
     def _steps_on_host(self) -> bool:
         """Whether a step of several actions runs on the host simulator and moves its result once."""
-        return self.device.type != "cpu" and hasattr(self._simulator, "step_host")
+        return self.device.type != "cpu" and getattr(self._simulator, "step_host", None) is not None
 
     def _host_advance(self, actions, *, active=None, capture_state=True):
         self._check_open("step")
