@@ -17,20 +17,20 @@ from ...specs import CompositeSpec, Spec
 from . import legacy
 
 
-def _to_host(tensors):
-    """Copy ``{key: tensor}`` to host tensors with one transfer per dtype."""
+def _host_arrays(tensors):
+    """``{key: NumPy array}`` of ``{key: tensor}``, with one transfer per dtype from a device."""
     if not any(value.device.type != "cpu" for value in tensors.values()):
-        return dict(tensors)
+        return {key: value.numpy() for key, value in tensors.items()}
     groups = {}
     for key, value in tensors.items():
         groups.setdefault(value.dtype, []).append(key)
     host = {}
     for keys in groups.values():
-        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu()
+        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu().numpy()
         offset = 0
         for key in keys:
             size = tensors[key].numel()
-            host[key] = flat[offset : offset + size].view(tensors[key].shape)
+            host[key] = flat[offset : offset + size].reshape(tensors[key].shape)
             offset += size
     return {key: host[key] for key in tensors}
 
@@ -278,7 +278,7 @@ class PushT(Env):
             live = self._simulator.render_fields()
             keys = ["/".join(key) for key, _, _ in self._render_fields]
             devices = {k: live[k] for k in keys if torch.is_tensor(live[k])}
-            host = {k: v.numpy() for k, v in _to_host(devices).items()}
+            host = _host_arrays(devices)
             return self._draw_cpu({k: host[k] if k in host else live[k] for k in keys}, self.size)
         if self._rasterizes(self.size):
             from . import raster
@@ -407,7 +407,7 @@ class PushT(Env):
                 key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
                 raise ValueError(f"Nonfinite PushT render field: {key}")
             return {"/".join(key): value for key, value in selected.items()}
-        fields = {"/".join(key): value.numpy() for key, value in _to_host(selected).items()}
+        fields = {"/".join(key): value for key, value in _host_arrays(selected).items()}
         if not _finite(fields.values()):
             # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
             for key, array in fields.items():

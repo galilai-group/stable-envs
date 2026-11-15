@@ -638,7 +638,7 @@ class DMControlSuite(_DMCModel):
             warp_render.render(self, s, sty, size, buf, ss)
             return buf.view(*lead, size, size, 3) if lead else buf
         if host_render.on_host(self, "dmc-suite", B, self.backend):
-            buf = host_render.draw_rows(self, s, sty.values, size, ss, buf)
+            buf = host_render.draw_rows(self, s, sty, size, ss, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
         tuning.on_render("dmc-suite", size, B, self)
 

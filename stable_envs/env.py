@@ -890,6 +890,8 @@ class Env:
         """
         B = int(self.B if batch is None else batch)
         variation, style = _split_appearance(variation, style)
+        if isinstance(style, StyleTensor) and not variation:
+            return style.for_batch(B, owner=f"{type(self).__name__}.render")
         if style is None:
             current = self._style.for_batch(B, owner=f"{type(self).__name__}.render")
             if not variation:

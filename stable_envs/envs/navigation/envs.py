@@ -766,7 +766,7 @@ class _TorchNavBase(_GymReferencePort):
         else:
             img = None
         if host_render.on_host(self, "navigation", n, self.backend):
-            img = host_render.draw_rows(self, s, sty.values, IMG, 1, img)
+            img = host_render.draw_rows(self, s, sty, IMG, 1, img)
             return img.view(*lead, IMG, IMG, 3) if lead else img
         if img is None:
             img = torch.empty((n, IMG, IMG, 3), dtype=torch.uint8, device=self.device)

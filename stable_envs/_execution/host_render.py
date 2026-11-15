@@ -14,6 +14,7 @@ from collections.abc import Callable
 import torch
 
 from .. import tuning
+from .._core.style import StyleTensor
 from .backends import RENDER_KNOB, Measure, select_renderer
 
 #: The rung that draws on the CPU.
@@ -89,20 +90,22 @@ def close(env) -> None:
 
 
 def draw_rows(
-    env, rows: torch.Tensor, style: torch.Tensor, size: int, supersample: int, out: torch.Tensor | None = None
+    env, rows: torch.Tensor, style: StyleTensor, size: int, supersample: int, out: torch.Tensor | None = None
 ) -> torch.Tensor:
-    """Draw compact ``rows`` with appearance rows ``style`` in a CPU copy of ``env`` and move the frames to its device.
+    """Draw compact ``rows`` with the appearance ``style`` in a CPU copy of ``env`` and move the frames to its device.
 
     Rows and appearance leave the device in one copy when their dtypes match.
     """
     n = int(rows.shape[0])
-    if rows.dtype == style.dtype and rows.device == style.device:
-        both = torch.cat((rows, style.reshape(n, -1)), 1).cpu()
-        rows, style = both[:, : rows.shape[1]], both[:, rows.shape[1] :]
+    values = style.values
+    if rows.dtype == values.dtype and rows.device == values.device:
+        both = torch.cat((rows, values.reshape(n, -1)), 1).cpu()
+        rows, values = both[:, : rows.shape[1]], both[:, rows.shape[1] :]
     else:
-        rows, style = rows.cpu(), style.cpu()
+        rows, values = rows.cpu(), values.cpu()
+    host = StyleTensor(values, style._layout_list(), shared=style._shared)
     frames = pinned((n, size, size, 3))
-    drawn = _twin(env)._render(rows, size=size, supersample=supersample, style=style, out=frames)
+    drawn = _twin(env)._render(rows, size=size, supersample=supersample, style=host, out=frames)
     if drawn is not frames and drawn.data_ptr() != frames.data_ptr():
         frames.copy_(drawn.reshape(frames.shape))
     return upload(frames, env.device, out)

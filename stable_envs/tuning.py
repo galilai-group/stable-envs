@@ -304,6 +304,15 @@ def cache_path(device="cpu") -> Path | None:
     where = _dev(device)
     if where is None:
         return None
+    return _cache_file(where, os.environ.get("XDG_CACHE_HOME", ""))
+
+
+@cache
+def _cache_file(where: str, base: str) -> Path:
+    """The cache file of ``where`` while ``$XDG_CACHE_HOME`` is ``base``.
+
+    One Path per pair, so that each ``read_cache`` call reuses its string form.
+    """
     slug = re.sub(r"[^a-z0-9._-]+", "-", stamp(where)["device"].lower()).strip("-") or "device"
     return _cache_dir() / "tuning" / f"{slug}.json"
 
@@ -581,6 +590,7 @@ def _clear_caches() -> None:
     _noticed.clear()
     _cuda.cache_clear()
     stamp.cache_clear()
+    _cache_file.cache_clear()
     _environ._parsed.cache_clear()
 
 
