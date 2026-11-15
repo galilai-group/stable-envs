@@ -134,7 +134,8 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             pipeline.abort_step()
         raise
 
-    out = TensorDict({"state": live_state}, [env.num_envs], device=env.device)
+    # states=None returns no State.
+    out = TensorDict({"state": live_state} if state_indices is not None else {}, [env.num_envs], device=env.device)
     out.update(torch.stack(history, dim=1) if sequence else history[0])
     out["valid"] = torch.stack(validity, dim=1)
     if state_indices is not None:
