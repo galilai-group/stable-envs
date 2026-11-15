@@ -10,22 +10,22 @@ import argparse
 import json
 
 import stable_envs as snv
-from stable_envs._execution import backends
+from stable_envs import tuning
 
 
 def sweep(name: str, largest: int) -> dict:
     """``{path: {"switch": batch or None, "rows": [(batch, small s, large s)]}}`` for class ``name`` on CUDA."""
-    before = {path for path, _, _ in backends.registered("cuda")}
+    before = {path for path, _, _ in tuning.simulation_paths("cuda")}
     snv.make(name, num_envs=1, device="cuda").close()
     out = {}
-    for path, rungs, measure in backends.registered("cuda"):
+    for path, rungs, measure in tuning.simulation_paths("cuda"):
         if path in before or rungs.small == rungs.large:
             continue
         rows, small_lost = [], 0
         for batch in [1 << k for k in range(largest.bit_length())]:
-            large = backends.time_backend(measure, rungs.large, batch, "cuda")
+            large = tuning.time_backend(measure, rungs.large, batch, "cuda")
             # The small-batch backend only gets slower with the batch; stop timing it after it lost twice.
-            small = backends.time_backend(measure, rungs.small, batch, "cuda") if small_lost < 2 else float("inf")
+            small = tuning.time_backend(measure, rungs.small, batch, "cuda") if small_lost < 2 else float("inf")
             small_lost = small_lost + 1 if small > large else 0
             rows.append((batch, small, large))
             times = f"{rungs.small}={small * 1e6:.0f}us {rungs.large}={large * 1e6:.0f}us"

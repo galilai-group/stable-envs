@@ -23,7 +23,19 @@ from ._core import environ as _environ
 from ._core.cache import cache_dir as _cache_dir
 from ._core.config import log as _log
 
-__all__ = ["Knob", "KNOBS", "RENDER_PATHS", "get", "set", "reset", "override", "describe", "cache_path"]
+__all__ = [
+    "Knob",
+    "KNOBS",
+    "RENDER_PATHS",
+    "get",
+    "set",
+    "reset",
+    "override",
+    "describe",
+    "cache_path",
+    "simulation_paths",
+    "time_backend",
+]
 
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
 HINT_LANES = 256
@@ -569,3 +581,30 @@ def _clear_caches() -> None:
     _cuda.cache_clear()
     stamp.cache_clear()
     _environ._parsed.cache_clear()
+
+
+def simulation_paths(device="cuda"):
+    """Return ``(path, backends, measure)`` of the simulation paths selected for in this process on ``device``.
+
+    Environments built in this process register them; ``backends`` has the ``small`` and ``large`` backend names.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import registered
+
+    return registered(device)
+
+
+def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:
+    """Seconds per step call of ``backend`` with ``num_envs`` environments, as ``stable-envs tune`` times it.
+
+    Args:
+        measure: The ``measure`` of a ``simulation_paths`` entry.
+        backend: A backend name of that entry.
+        num_envs: Number of environments.
+        device: Device of the outputs.
+    """
+    from ._execution.backends import time_backend as timed
+
+    return timed(measure, backend, num_envs, device)
