@@ -45,3 +45,18 @@ def assert_lane(state, lane: int, engine, key) -> None:
         if expected.dtype == np.uint32:
             expected = expected.view(np.int32)
         np.testing.assert_array_equal(state[name][lane].cpu().numpy(), expected, err_msg=".".join(name))
+
+
+def per_step(env):
+    """The env with its sequence hook turned off, so the shared step loop steps one action at a time."""
+    env._step_sequence = None
+    return env
+
+
+def assert_same_sequence(got, expected) -> None:
+    """Two step results have the same keys, and each value or State is equal bit for bit."""
+    from tests.helpers.reference.semantics import assert_same_state
+
+    assert set(got.keys()) == set(expected.keys())
+    for key in expected.keys():
+        assert_same_state(got[key], expected[key])

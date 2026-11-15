@@ -201,19 +201,21 @@ class CraftaxEnv(Env):
         self._state, self._keys, blocks = self._k.reset(self._keys, values, self._lanes, self._varied)
         return self._snapshot(self._k.views(blocks))
 
-    def _actions(self, actions):
-        """Device actions, and whether only the step itself can check their range.
+    def _actions(self, actions, shape: tuple[int, ...] | None = None):
+        """Device actions of ``shape`` (default ``(B,)``), and whether only the step itself can check their range.
 
-        Host actions are checked here. Device actions outside the range are clamped to one step past
-        it, so int32 cannot wrap them into the range, and the step rejects them on the device.
+        Host actions are checked here, all of them before any step. Device actions outside the range are
+        clamped to one step past it, so int32 cannot wrap them into the range, and the step rejects them on
+        the device.
         """
+        shape = (self.B,) if shape is None else shape
         if torch.is_tensor(actions) and actions.device.type != "cpu" and self.device.type != "cpu":
-            a = actions.to(self.device).reshape(self.B)
+            a = actions.to(self.device).reshape(shape)
             if a.is_floating_point():
                 raise self._invalid_actions()
             return a.to(torch.int64).clamp(-1, self.action_high + 1), True
         host = actions.cpu() if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
-        host = host.reshape(self.B)
+        host = host.reshape(shape)
         if host.is_floating_point() or bool(((host < 0) | (host > self.action_high)).any()):
             raise self._invalid_actions()
         if self.device.type == "cpu":
@@ -266,16 +268,16 @@ class CraftaxEnv(Env):
     def _step(self, actions, *, active=None):
         return self._advance(actions, active, snapshot=True)
 
-    def _advance_without_snapshot(self, actions, *, active=None):
-        return self._advance(actions, active, snapshot=False)
-
     def _step_sequence(self, actions, states, frames, final_state: bool):
-        """One action per environment in one jitted call, with its packed state and frame when asked for.
+        """Step ``(B, T, 1)`` actions in one jitted call, with the states and frames that are asked for.
 
-        A sequence of more than one action returns None, so the shared step loop steps it.
+        A sequence runs as one ``lax.scan``, padded to a power-of-two length so that few lengths compile.
+        Every selection of states or frames uses the same call: the last state and frame come from the
+        end of the scan, and other selections take their steps from the states or frames of every step.
         """
-        if actions.shape[1] != 1:
-            return None
+        length = actions.shape[1]
+        if length > 1:
+            return self._fused_sequence(actions, length, states, frames, final_state)
         snapshot = final_state or states is not None
         result = self._advance(actions[:, 0], None, snapshot=snapshot, frame=frames is not None)
         out = {key: value.unsqueeze(1) for key, value in result.items() if key not in ("state", "frame")}
@@ -288,6 +290,49 @@ class CraftaxEnv(Env):
         if frames is not None:
             out["frames"] = result["frame"].unsqueeze(1)
         return out
+
+    def _fused_sequence(self, actions, length: int, states, frames, final_state: bool):
+        self._check_open("step")
+        self._check_pending()
+        state = self._live("step")
+        a, deferred = self._actions(actions, (self.B, length))
+        last = (length - 1,)
+        every = states is not None and states != last
+        frame = "none" if frames is None else "last" if frames == last else "all"
+        padded = 1 << (length - 1).bit_length()
+        if padded != length:
+            a = torch.cat([a, a.new_full((self.B, padded - length), self._k.pad_action)], dim=1)
+        packed = final_state or states == last
+        out = self._k.sequence(self._keys, state, a, self._lanes, every, frame, packed, self._varied)
+        # The call donated the old buffers, so the new ones are held before anything else can raise.
+        self._state, self._keys = out[0], out[1]
+        valid, reward, done, observation, blocks, drawn, views, last_frames, invalid = self._k.sequence_outputs(
+            out, self._lanes
+        )
+        self._defer(invalid, deferred)
+        result = {
+            "reward": reward[:, :length],
+            "terminated": done[:, :length],
+            "truncated": torch.zeros((self.B, length), dtype=torch.bool, device=self.device),
+            "valid": valid[:, :length],
+        }
+        if observation is not None:
+            result["observation"] = observation[:, :length]
+        if final_state:
+            result["state"] = self._snapshot(views)
+        if every:
+            picked = self._k.split([_steps(b, states, length) for b in blocks])
+            result["states"] = self._snapshot(picked, [self.B, len(states)])
+        elif states is not None:
+            # The final state and the selected one are separate tensors, as in the step loop.
+            result["states"] = self._snapshot(views).unsqueeze(1)
+            if final_state:
+                result["states"] = result["states"].clone()
+        if frame == "last":
+            result["frames"] = last_frames.unsqueeze(1)
+        elif frame == "all":
+            result["frames"] = _steps(drawn, frames, length)
+        return result
 
     def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
         """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes.
@@ -321,6 +366,13 @@ class CraftaxEnv(Env):
         self._state = None
         # A step whose device actions were out of range still raises when nothing else reads its flag.
         self._check_pending()
+
+
+def _steps(x: torch.Tensor, indices: tuple[int, ...], length: int) -> torch.Tensor:
+    """The selected steps of a ``(B, P, ...)`` output of a sequence padded from ``length`` to ``P`` steps."""
+    if indices == tuple(range(length)):
+        return x[:, :length]
+    return x[:, list(indices)]
 
 
 class _ParamRows:

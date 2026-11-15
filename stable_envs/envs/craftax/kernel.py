@@ -239,19 +239,30 @@ class Kernel:
 
         high = int(upstream.action_space(params).n) - 1
 
-        # One program serves full, masked and rejected steps, so no variant compiles in the middle of a run.
-        def advance(keys, state, actions, active, varied):
-            invalid = jnp.any((actions < 0) | (actions > high))
+        #: The action that pads a sequence to its compiled length. It is outside the range that a device action
+        #: is clamped to, so it cannot be a caller's action.
+        self.pad_action = high + 2
+
+        def rejected(actions):
+            return jnp.any((actions < 0) | (actions > high))
+
+        # Lanes that are not live keep their state and keys, and give zero outputs.
+        def transition(keys, state, actions, live, varied):
             new = jax.vmap(functools.partial(step, varied=varied))(keys, state, actions)
-            live = active & ~invalid
 
             def keep(fresh, old):
                 return jnp.where(live.reshape(live.shape + (1,) * (fresh.ndim - 1)), fresh, old)
 
             state, keys = jax.tree.map(keep, (new[0], new[1]), (state, keys))
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
-            # The flag is repeated per lane, so every output has the lane axis first.
-            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, jnp.broadcast_to(invalid, live.shape)
+            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs
+
+        # One program serves full, masked and rejected steps, so no variant compiles in the middle of a run.
+        # The flag is repeated per lane, so every output has the lane axis first.
+        def advance(keys, state, actions, active, varied):
+            invalid = rejected(actions)
+            out = transition(keys, state, actions, active & ~invalid, varied)
+            return *out, jnp.broadcast_to(invalid, active.shape)
 
         # Upstream's pixel observation, scaled to uint8 as stable-worldmodel scales it on the host. The
         # barrier keeps XLA from folding the division into the scaling, which would round differently.
@@ -264,6 +275,33 @@ class Kernel:
             def run(keys, state, actions, active, varied):
                 out = advance(keys, state, actions, active, varied)
                 return (*out, pack(out[0], out[1]) if snapshot else None, frames(out[0][0]) if frame else None)
+
+            return run
+
+        # The steps of ``(lanes, P)`` actions in one call, as ``P`` calls of ``advance`` make them: a lane that
+        # ends stops. Steps whose action is ``pad_action`` pad the sequence and change nothing. ``states`` packs
+        # the state of every step, ``frame`` ("none", "last" or "all") draws the frames of the last or of every
+        # step, and ``packed`` packs the last state. Every lane keeps its state when any action is outside the
+        # game's range.
+        def sequence(states: bool, frame: str, packed: bool):
+            def run(keys, state, actions, varied):
+                pad = actions == self.pad_action
+                invalid = jnp.any(((actions < 0) | (actions > high)) & ~pad)
+
+                def body(carry, xs):
+                    keys, state, active = carry
+                    a, padding = xs
+                    live = active & ~invalid & ~padding
+                    state, keys, reward, done, obs = transition(keys, state, jnp.where(padding, 0, a), live, varied)
+                    extra = (pack(state, keys) if states else None, frames(state[0]) if frame == "all" else None)
+                    return (keys, state, active & ~done), (active, reward, done, obs, *extra)
+
+                active = jnp.ones(actions.shape[0], jnp.bool_)
+                (keys, state, _), out = jax.lax.scan(body, (keys, state, active), (actions.T, pad.T))
+                out = jax.tree.map(lambda x: jnp.swapaxes(x, 0, 1), out)
+                last = frames(state[0]) if frame == "last" else None
+                final = pack(state, keys) if packed else None
+                return state, keys, *out, final, last, jnp.broadcast_to(invalid, active.shape)
 
             return run
 
@@ -285,6 +323,11 @@ class Kernel:
                 for f in (False, True):
                     run = functools.partial(program(s, f), varied=varied)
                     self._functions[("step", s, f, varied)] = (run, (0, 1))
+            for s in (False, True):
+                for f in ("none", "last", "all"):
+                    for p in (False, True):
+                        run = functools.partial(sequence(s, f, p), varied=varied)
+                        self._functions[("sequence", s, f, p, varied)] = (run, (0, 1))
         self._jitted: dict = {}
         self._everyone: dict = {}
         one = jax.tree.map(lambda x: jax.ShapeDtypeStruct((1, *x.shape), x.dtype), engine)
@@ -412,6 +455,36 @@ class Kernel:
         reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
         views = None if blocks is None else self.views(blocks)
         return reward, done, obs, views, frames, invalid
+
+    def sequence(
+        self,
+        keys,
+        state,
+        actions: torch.Tensor,
+        lanes: Lanes,
+        states: bool,
+        frames: str,
+        packed: bool,
+        varied: bool = False,
+    ):
+        """Advance ``(lanes, P)`` actions in one call and donate ``keys`` and ``state``.
+
+        Returns the outputs of the jitted call, the new state and keys first. ``states`` packs the state of
+        every step, ``frames`` ("none", "last" or "all") draws the frames of the last or of every step, and
+        ``packed`` packs the last state. Steps whose action is ``pad_action`` change nothing.
+        """
+        actions = lanes.put(actions.to(torch.int32).contiguous())
+        return self._jit(("sequence", states, frames, packed, varied), lanes)(keys, state, actions)
+
+    def sequence_outputs(self, out, lanes: Lanes):
+        """The outputs of ``sequence`` in torch, with the range flag still on the device.
+
+        Returns the ``(lanes, P)`` valid flags, rewards and ends, the observations, the packed states of every
+        step, the frames of every step, views of the last state, the last frames, and the flag.
+        """
+        _, _, *rest, invalid = out
+        valid, reward, done, obs, blocks, every, final, last = lanes.torch(tuple(rest))
+        return valid, reward, done, obs, blocks, every, None if final is None else self.views(final), last, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:

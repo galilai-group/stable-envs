@@ -51,7 +51,7 @@ def test_a_lane_that_dies_and_a_lane_at_the_step_limit_end_as_upstream_ends_them
 
 
 def _compiled_steps(env) -> int:
-    return sum(fn._cache_size() for (name, _), fn in env._k._jitted.items() if name[0] == "step")
+    return sum(fn._cache_size() for (name, _), fn in env._k._jitted.items() if name[0] in ("step", "sequence"))
 
 
 def test_finished_lanes_reuse_the_compiled_step():

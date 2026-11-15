@@ -19,6 +19,7 @@ pytestmark = pytest.mark.unit
 ROOT = Path(__file__).resolve().parents[2]
 
 # Seven lanes with their own variation values over four devices: two lanes per device and one padding row.
+# The sequences step in one fused call each.
 ROLLOUT = """
 import sys
 import numpy as np
@@ -47,6 +48,10 @@ with se.make(name, num_envs=7, device="cpu") as env:
     masked = env.step(acts[:, :4], states=None, frames=slice(None))
     saved["masked_frames"] = masked["frames"].numpy()
     saved["masked_valid"] = masked["valid"].numpy()
+    strided = env.step(acts[:, 4:9], states=slice(None, None, -2), frames=slice(0, None, 3))
+    saved["strided_frames"] = strided["frames"].numpy()
+    for key, value in strided["states"].items(include_nested=True, leaves_only=True):
+        saved["strided/" + "/".join(key)] = value.numpy()
     saved["render"] = env.render(result["states"][:, 5]).numpy()
     for key, value in env.get_state().items(include_nested=True, leaves_only=True):
         saved["live/" + "/".join(key)] = value.numpy()
