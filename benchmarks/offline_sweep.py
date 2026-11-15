@@ -89,9 +89,12 @@ def _timed(
     its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
     slow source can take minutes, and one window of whole units is then enough."""
     # Warm up for at least warmup_s and warmup_items items: a kernel can still be compiling after the seconds.
-    end, warmed = time.perf_counter() + warmup_s, 0
-    while time.perf_counter() < end or warmed < warmup_items:
+    # WARMUP_MAX_S (seconds, 0 = no limit) stops the item count early for sources that take hours per item count.
+    t0 = time.perf_counter()
+    end, warmed, cap = t0 + warmup_s, 0, float(os.environ.get("WARMUP_MAX_S") or 0)
+    while time.perf_counter() < end or (warmed < warmup_items and not (cap and time.perf_counter() - t0 > cap)):
         warmed += next(units)
+    warm = {"warmup_items": warmed, "warmup_items_wanted": warmup_items, "warmup_s": time.perf_counter() - t0}
     rates, windows, items = [], [], []
     for _ in range(repeats):
         if windows and sum(windows) >= budget_s:
@@ -114,6 +117,7 @@ def _timed(
         "window_s": windows,
         "items": items,
         "repeats": len(rates),
+        **warm,
     }
 
 

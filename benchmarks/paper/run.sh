@@ -16,7 +16,9 @@
 #   SMOKE=1 uses small counts. QUICK=1 is a go/no-go check: 3 repeats of a WINDOW (default 5 s) timed window, so each
 #   cell keeps a median and a spread, and lane counts 8:256:1024 unless SWEEP_* are set; paper numbers use the default
 #   (3 repeats of 10 s). Decide near a threshold, or on a cell whose spread is over 10%, only with paper timing.
-#   WARMUP (default 2) is the seconds of untimed work before the timed windows of each arm. FRAME_CHECK=0 leaves out
+#   WARMUP (default 2) is the seconds of untimed work before the timed windows of each arm. WARMUP_STEPS (default 0)
+#   is the least number of untimed steps per lane of an online arm; WARMUP_MAX_S (default 0, no limit) stops that
+#   count after so many seconds. Each cell records the warm-up steps and seconds it took. FRAME_CHECK=0 leaves out
 #   the comparison of the source workers' frames with one-env source replays.
 #   VENV_PYTHON=path reuses an existing family venv (no build, no delete); STATES_DIR=dir keeps the stored States and
 #   episodes between runs; SRC_FROM=dir copies source cells (src-*.json) measured on the same machine into OUT first.
