@@ -576,11 +576,32 @@ class _HiddenTargetSemantics:
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         return self._numba_step(act, None, move)
 
-    def _numba_step(self, action, active, move=None):
+    def _steps_on_host(self) -> bool:
+        """Whether a step of several actions advances host copies of the lanes and moves its result once."""
+        return self.simulation_backend == "numba" and self.device.type != "cpu"
+
+    @torch.no_grad()
+    def _host_advance(self, action, *, active=None):
+        """``_step`` on the host copies of the lanes: the actions, the mask and the result stay on the CPU.
+
+        The device rows are behind until ``_end_host_steps``.
+        """
+        self._check_open("step")
+        act = torch.as_tensor(action, dtype=torch.float32).reshape(self.B, self.action_dim)
+        return self._numba_step(act, active, host=True)
+
+    def _end_host_steps(self):
+        """Put the rows that ``_host_advance`` advanced on the device."""
+        hit = self.__dict__.get("_host_arrays", {}).get("rows")
+        if hit is not None and hit[0] is self._render_state and hit[1] == self._render_state._version:
+            self._render_state.copy_(torch.from_numpy(hit[2]))
+            self._host_arrays["rows"] = (self._render_state, self._render_state._version, hit[2])
+
+    def _numba_step(self, action, active, move=None, host=False):
         """Advance the lanes and build state and task outputs in one Numba call.
 
         On an accelerator the call runs on host copies. ``move`` builds the result from the host arrays when it is
-        given.
+        given. With ``host``, the result stays on the CPU and the device rows are not updated.
         """
         from . import navstep_cpu
 
@@ -607,6 +628,8 @@ class _HiddenTargetSemantics:
             result, moved = move(leaves)
         else:
             result = build_tensordict(leaf_tree(leaves), [n], "cpu")
+            if host:
+                return result
             if self.device.type != "cpu":
                 result = to_device(result, self.device)
             moved = result["state"]
