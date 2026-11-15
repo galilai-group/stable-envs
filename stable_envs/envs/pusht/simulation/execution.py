@@ -16,8 +16,10 @@ SIMULATION_BACKENDS = ("triton", "jax", "numba")
 #: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
 #: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-#: Triton was faster from one environment on both GPU types, because a Numba step moves the whole State to CUDA.
-CUDA_MIN_ENVS: int | None = None
+#: Measured on 15 November 2026 with ``python -m benchmarks.backend_switch PushT`` on an RTX A5000 with an AMD EPYC 7532,
+#: an RTX A5000 with an AMD EPYC 7662 and an RTX A5500 with an AMD EPYC 7662, 8 cores each: Numba with one copy of
+#: the folded State to CUDA was faster up to 64 environments and Triton from 128 on all three.
+CUDA_MIN_ENVS: int | None = 128
 
 
 #: The ``select_backend`` path of the PushT physics backend choice.

@@ -38,11 +38,12 @@ def test_backend_routing(monkeypatch):
         pusht_backend(1, "cpu", "triton")
     with pytest.raises(ValueError, match="simulation_backend"):
         pusht_backend(1, "cpu", "pymunk")
-    # Untuned, CUDA batches step on the GPU from one environment.
+    # Untuned, CUDA batches step with Numba below the shipped switch point and on the GPU from it.
     from stable_envs.envs.pusht.simulation.execution import CUDA_MIN_ENVS
 
-    assert CUDA_MIN_ENVS is None
-    assert pusht_backend(1, "cuda") == "triton"
+    assert CUDA_MIN_ENVS == 128
+    assert pusht_backend(CUDA_MIN_ENVS - 1, "cuda") == "numba"
+    assert pusht_backend(CUDA_MIN_ENVS, "cuda") == "triton"
     # Without Triton, CUDA physics runs in JAX.
     monkeypatch.setattr(raster, "HAVE_TRITON", False)
     with tuning.override(large_backend_min_envs=4):
@@ -218,8 +219,12 @@ def test_triton_steps_like_numba(variety):
             gpu.set_state(cpu.get_state().to("cuda"))
             action = torch.as_tensor(rng.uniform(-1, 1, (count, 2)), dtype=torch.float32)
             got, want = gpu.step(action.cuda()), cpu.step(action)
-            observation = ("current", "observation")
-            torch.testing.assert_close(got["state"][observation].cpu(), want["state"][observation], rtol=0, atol=0.05)
+            torch.testing.assert_close(
+                get_field(got["state"], "current/observation").cpu(),
+                get_field(want["state"], "current/observation"),
+                rtol=0,
+                atol=0.05,
+            )
             torch.testing.assert_close(got["reward"].cpu(), want["reward"], rtol=0, atol=0.05)
 
 
