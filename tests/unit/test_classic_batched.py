@@ -16,6 +16,7 @@ from stable_envs.envs.classic_control.simulation.batched import (  # noqa: E402
     classic_backend,
 )
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
+from stable_envs.envs.classic_control.simulation.batched import COMPILED_HOST  # noqa: E402
 from stable_envs.envs.classic_control.simulation.numba_step import STEPS  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
@@ -296,7 +297,7 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
 
 
 def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path):
-    from stable_envs.envs.classic_control.simulation.batched import COMPILED_HOST, CPU_MIN_ENVS, CUDA_MIN_ENVS
+    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, CUDA_MIN_ENVS
 
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
@@ -319,7 +320,7 @@ def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path)
 def test_backend_selection():
     for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            small, large = ("numba", "numba") if domain == "cartpole" else ("gym", "numpy")
+            small, large = ("numba", "numba") if domain in COMPILED_HOST else ("gym", "numpy")
             with tuning.override(large_backend_min_envs=4):
                 assert classic_backend(domain, "cpu", 4, backend) == large
                 assert classic_backend(domain, "cpu", 3, backend) == small
@@ -332,7 +333,7 @@ def test_backend_selection():
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():
         with tuning.override(large_backend_min_envs=8), se.make(name, num_envs=8, device="cpu") as env:
-            want = "numba" if name == "CartPole" else "numpy"
+            want = "numba" if name in ("CartPole", "MountainCar") else "numpy"
             assert env.simulation_backend == want and env.execution_mode == f"NATIVE_{want.upper()}"
             assert isinstance(env._simulator, BatchedClassicAdapter) and env._simulator.backend == want
         with se.make(name, num_envs=2, device="cpu", simulation_backend="gym") as env:
@@ -401,6 +402,6 @@ def test_cuda_steps_match_gymnasium(domain):
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
     with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
-        want = ("numba", "NATIVE_NUMBA") if domain == "cartpole" else ("gym", "DELEGATED_CPU")
+        want = ("numba", "NATIVE_NUMBA") if domain in COMPILED_HOST else ("gym", "DELEGATED_CPU")
         assert (env.simulation_backend, env.execution_mode) == want
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"

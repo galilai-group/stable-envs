@@ -102,9 +102,10 @@ class PackedState:
         if any(copies is None for copies in per_state):
             return None
         steps, n = len(states), self.num_envs
-        stacked = [torch.from_numpy(np.stack([copies[group] for copies in per_state])) for group in range(len(_DTYPES))]
+        stacked = [np.stack([copies[group] for copies in per_state]) for group in range(len(_DTYPES))]
+        # NumPy slices and from_numpy cost less per leaf than tensor views.
         leaves = [
-            stacked[group].as_strided((n, steps, width), (width, stacked[group].shape[1], 1), start)
+            torch.from_numpy(stacked[group][:, start : start + n * width].reshape(steps, n, width).transpose(1, 0, 2))
             for group, start, width in self.places
         ]
         batch = torch.Size([n, steps])

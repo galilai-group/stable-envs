@@ -67,6 +67,49 @@ if HAVE_NUMBA:
             observation[i, 3] = np.float32(ntheta_dot)
 
 
+if HAVE_NUMBA:
+
+    @njit(cache=True, nogil=True)
+    def _mountain_car(position, velocity, elapsed, cosine, gravity, force, max_speed, action, live, max_steps, reward,
+                      terminated, truncated, observation):  # fmt: skip
+        for i in range(position.shape[0]):
+            if not live[i]:
+                reward[i] = 0.0
+                terminated[i] = False
+                truncated[i] = False
+                observation[i, 0] = 0.0
+                observation[i, 1] = 0.0
+                continue
+            v = velocity[i] + ((action[i] - 1) * force[i] + cosine[i] * (-gravity[i]))
+            v = min(max(v, -max_speed[i]), max_speed[i])
+            p = min(max(position[i] + v, -1.2), 0.6)
+            if p == -1.2 and v < 0:
+                v = 0.0
+            position[i], velocity[i] = p, v
+            reward[i] = -1.0
+            terminated[i] = p >= 0.5 and v >= 0
+            elapsed[i] += 1
+            truncated[i] = elapsed[i] >= max_steps
+            observation[i, 0] = np.float32(p)
+            observation[i, 1] = np.float32(v)
+
+
+def mountain_car_step(views, params, actions, live, max_steps):
+    """Step every MountainCar lane in place; return ``(reward, terminated, truncated, observation)``."""
+    n = actions.shape[0]
+    position = views["position"][:, 0]
+    cosine = np.cos(3 * position)
+    reward = np.empty(n, np.float64)
+    terminated = np.empty(n, np.bool_)
+    truncated = np.empty(n, np.bool_)
+    observation = np.empty((n, 2), np.float32)
+    _mountain_car(
+        position, views["velocity"][:, 0], views[("lifecycle", "elapsed_steps")][:, 0], cosine, params["gravity"],
+        params["force"], params["max_speed"], actions, live, max_steps, reward, terminated, truncated, observation,
+    )  # fmt: skip
+    return reward, terminated, truncated, observation
+
+
 def cartpole_step(views, params, actions, live, max_steps):
     """Step every CartPole lane in place; return ``(reward, terminated, truncated, observation)``."""
     n = actions.shape[0]
@@ -87,4 +130,4 @@ def cartpole_step(views, params, actions, live, max_steps):
 
 
 #: Domains with a compiled step.
-STEPS = {"cartpole": cartpole_step} if HAVE_NUMBA else {}
+STEPS = {"cartpole": cartpole_step, "mountain_car": mountain_car_step} if HAVE_NUMBA else {}

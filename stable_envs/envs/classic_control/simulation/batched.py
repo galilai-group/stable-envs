@@ -455,6 +455,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             self._params = {
                 name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]
             }
+            assert self._layout is not None
             self._layout.load_static(self._fixed)
         self._static_loaded = True
 
@@ -485,6 +486,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         values: dict = {key: value[:, None] for key, value in self._live.items()}
         values[_ELAPSED] = self._elapsed[:, None]
         # Steps keep the static fields; the layout holds them since the last ``_load``.
+        assert self._layout is not None
         return self._layout.export(values, self.device)
 
     def stack_states(self, states) -> TensorDict | None:
@@ -589,8 +591,9 @@ CUDA_MIN_ENVS: dict[str, int | None] = dict.fromkeys(CPU_MIN_ENVS)
 #: Tasks whose compiled step (``"numba"``) is the host backend at every batch size, in place of Gymnasium and NumPy.
 #: Measured 2026-11-15 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each) with
 #: ``python -m benchmarks.classic_switch cartpole``: the compiled CartPole step was the fastest host backend at every
-#: batch from 1 to 4096 on both (B=1: 162 us against Gymnasium 197 us and NumPy 252 us on the RTX 3090 node).
-COMPILED_HOST = frozenset({"cartpole"})
+#: batch from 1 to 4096 on both (B=1: 162 us against Gymnasium 197 us and NumPy 252 us on the RTX 3090 node), and so
+#: was the compiled MountainCar step (``classic_switch mountain_car``; B=1: 138 us against 180 us and 196 us).
+COMPILED_HOST = frozenset({"cartpole", "mountain_car"})
 
 
 def _measure(domain: str, device: torch.device):
