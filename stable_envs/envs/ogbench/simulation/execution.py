@@ -57,20 +57,21 @@ def make_maze_adapter(
 MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 64, "Scene": 128}
 
 
-def _measure_manipulation(family: str, device: str | torch.device):
-    """Build and step Cube/Scene lanes on one backend, for ``stable-envs tune``."""
-    import torch
+def _measure_manipulation(env_type, device):
+    """Build and step ``env_type`` on one backend, for ``stable-envs tune``; None when the caller has no class."""
+    from ...._execution.backends import measure_env
 
-    from ...._execution.backends import measure_adapter
-
-    return measure_adapter(
-        lambda backend, n: make_manipulation_adapter(family, n, device, 0, None, backend),
-        lambda n: torch.rand(n, 5, device=device) * 2 - 1,
-    )
+    if env_type is None:
+        return None
+    return measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend))
 
 
 def manipulation_backend(
-    family: str, num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto"
+    family: str,
+    num_envs: int,
+    device: str | torch.device,
+    simulation_backend: str | None = "auto",
+    env_type: type | None = None,
 ) -> str:
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a Cube/Scene batch; see ``select_backend``."""
     import torch
@@ -86,7 +87,7 @@ def manipulation_backend(
         simulation_backend,
         {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", MANIPULATION_CUDA_MIN_ENVS.get(family))},
         choices=("native", "mjwarp"),
-        measure=_measure_manipulation(family, device),
+        measure=_measure_manipulation(env_type, device),
     )
 
 

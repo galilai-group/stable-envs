@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from ...._execution.backends import Rungs, measure_adapter, select_backend
+from ...._execution.backends import Rungs, measure_env, select_backend
 from .batch import DMCBatchAdapter
-from .factory import ACTION_DIMS, make_batch
+from .factory import make_batch
 from .first_family import ReacherAdapter
 
 if TYPE_CHECKING:
@@ -38,15 +38,16 @@ CUDA_MIN_ENVS: dict[str, int] = {
 }
 
 
-def _measure(key: str, device: str | torch.device):
-    """Build and step ``key`` lanes on one backend, for ``stable-envs tune``."""
-    return measure_adapter(
-        lambda backend, n: make_dmc_adapter(key, n, device, 0, simulation_backend=backend),
-        lambda n: torch.rand(n, ACTION_DIMS[key], dtype=torch.float64, device=device) * 2 - 1,
-    )
+def _measure(env_type: type | None, device: str | torch.device):
+    """Build and step ``env_type`` on one backend, for ``stable-envs tune``; None when the caller has no class."""
+    if env_type is None:
+        return None
+    return measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend))
 
 
-def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: str | None = "auto") -> str:
+def dmc_backend(
+    key: str, num_envs: int, device: str | torch.device, backend: str | None = "auto", env_type: type | None = None
+) -> str:
     """Resolve ``backend`` to ``"native"``, ``"mjx"`` or ``"mjwarp"`` for simulator ``key``.
 
     ``"auto"`` uses native physics on CPU. On CUDA it uses native physics for small batches and MuJoCo Warp for large
@@ -64,7 +65,7 @@ def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: st
         backend,
         {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", CUDA_MIN_ENVS.get(key))},
         choices=choices,
-        measure=_measure(key, device),
+        measure=_measure(env_type, device),
     )
 
 

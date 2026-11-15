@@ -24,21 +24,12 @@ CUDA_MIN_ENVS: int | None = None
 PATH = "pusht-sim"
 
 
-def _measure(device, discrete: bool, config: dict):
-    """Build and step PushT lanes on one backend, for ``stable-envs tune``."""
-    import torch
+def _measure(env_type, device, config: dict):
+    """Build and step ``env_type`` on one backend with ``config``, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_env
 
-    from ...._execution.backends import measure_adapter
-
-    def actions(n):
-        if discrete:
-            return torch.randint(0, 16, (n, 2), device=device)
-        return torch.rand(n, 2, device=device) * 2 - 1
-
-    def make(backend, n):
-        return make_pusht_adapter(n, device, 0, discrete=discrete, config=config, simulation_backend=backend)
-
-    return measure_adapter(make, actions)
+    options = dict(size=config["resolution"], render_action=config["render_action"], with_target=config["with_target"])
+    return measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend, **options))
 
 
 def pusht_backend(
@@ -48,12 +39,13 @@ def pusht_backend(
     *,
     discrete: bool = False,
     config: dict | None = None,
+    env_type: type | None = None,
 ) -> str:
     """Return ``"triton"``, ``"jax"`` or ``"numba"``.
 
     ``"auto"`` selects Numba on CPU. On CUDA it selects Numba for small batches and Triton (JAX without Triton) for
-    large ones; ``select_backend`` measures the switch point. ``config`` is the adapter configuration that the
-    calibration builds.
+    large ones; ``select_backend`` measures the switch point. ``stable-envs tune`` builds ``env_type`` with ``config``
+    to calibrate it.
     """
     import torch
 
@@ -61,7 +53,7 @@ def pusht_backend(
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    measure = None if config is None else _measure(device, discrete, config)
+    measure = None if config is None or env_type is None else _measure(env_type, device, config)
     return select_backend(
         PATH,
         num_envs,

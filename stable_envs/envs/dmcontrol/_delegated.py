@@ -52,7 +52,9 @@ class DelegatedSemantics:
         ]
 
     def _make_simulator(self):
-        self.simulation_backend = dmc_backend(self._simulator_key(), self.B, self.device, self.simulation_backend)
+        self.simulation_backend = dmc_backend(
+            self._simulator_key(), self.B, self.device, self.simulation_backend, env_type=type(self)
+        )
         self.simulation_backend_path = dmc_path(self._simulator_key())
         return make_dmc_adapter(
             self._simulator_key(),

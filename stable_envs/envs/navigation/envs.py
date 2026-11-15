@@ -10,7 +10,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.state_layout import StateLayout
 from ..._core.tensordicts import build_tensordict, to_device
-from ..._execution.backends import Rungs, select_backend
+from ..._execution.backends import Rungs, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -1092,13 +1092,8 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def _auto_simulation_backend(self) -> str:
         if self.device.type == "cpu" and _numba_available():
             return "numba"
-        cls, device, width = type(self), self.device, self.action_dim
-
-        def measure(backend: str, num_envs: int):
-            env = cls(num_envs=num_envs, device=device, simulation_backend=backend)
-            env.reset(seed=0)
-            actions = torch.rand(num_envs, width, device=device) * 2 - 1
-            return (lambda: env._step(actions)), env.close
+        cls, device = type(self), self.device
+        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
 
         return select_backend(
             self.simulation_backend_path,

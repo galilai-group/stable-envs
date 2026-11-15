@@ -176,7 +176,7 @@ class PushT(Env):
         resolution = self.default_size if size is None else size
         config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
         self.simulation_backend = pusht_backend(
-            num_envs, device, simulation_backend, discrete=self.discrete, config=config
+            num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
         )
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
         self.simulation_backend_path = SIMULATION_PATH

@@ -67,7 +67,9 @@ class ManipulationSemantics:
         from .simulation.execution import make_manipulation_adapter, manipulation_backend, manipulation_path
 
         device = Env.resolve_device(device)
-        self.simulation_backend = manipulation_backend(self.CELL, num_envs, device, simulation_backend)
+        self.simulation_backend = manipulation_backend(
+            self.CELL, num_envs, device, simulation_backend, env_type=type(self)
+        )
         self.simulation_backend_path = manipulation_path(self.CELL)
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, self.simulation_backend
