@@ -1,6 +1,6 @@
 """Time the two CUDA simulation backends of each class at batches 1, 2, 4, ..., 4096, as stable-envs tune times them.
 
-usage: python -m benchmarks.backend_switch ENV [ENV ...]
+usage: python -m benchmarks.backend_switch [--max-batch N] ENV [ENV ...]
 
 Prints both per-call step times at each batch and the smallest batch from which the large-batch backend is faster at
 every larger measured batch: the value a class ships as its CUDA switch point.
@@ -15,8 +15,12 @@ from stable_envs._execution import backends as B
 
 
 def main():
+    args = sys.argv[1:]
+    largest = 4096
+    if args[:1] == ["--max-batch"]:
+        largest, args = int(args[1]), args[2:]
     out = {}
-    for name in sys.argv[1:]:
+    for name in args:
         B._REGISTERED.clear()
         try:
             snv.make(name, num_envs=1, device="cuda").close()
@@ -27,7 +31,7 @@ def main():
             if rungs.small == rungs.large:
                 continue
             rows, small_lost = [], 0
-            for b in [1 << k for k in range(13)]:
+            for b in [1 << k for k in range(largest.bit_length())]:
                 large = B._time(measure, rungs.large, b, torch.device("cuda"))
                 small = B._time(measure, rungs.small, b, torch.device("cuda")) if small_lost < 2 else float("inf")
                 small_lost = small_lost + 1 if small > large else 0
