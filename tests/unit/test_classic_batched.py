@@ -9,14 +9,15 @@ pytest.importorskip("pygame")
 torch = pytest.importorskip("torch")
 
 import stable_envs as se  # noqa: E402
-from stable_envs import tuning  # noqa: E402
+from stable_envs import get_field, schema_of, set_field, tuning  # noqa: E402
+from stable_envs._core.state_schema import unfold  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import (  # noqa: E402
+    COMPILED_HOST,  # noqa: E402
     MAX_EPISODE_STEPS,
     BatchedClassicAdapter,
     classic_backend,
 )
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
-from stable_envs.envs.classic_control.simulation.batched import COMPILED_HOST  # noqa: E402
 from stable_envs.envs.classic_control.simulation.numba_step import STEPS  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
@@ -68,11 +69,11 @@ CLASSES = {
 }
 #: State fields that no step computes with sin, cos, remainder or a power.
 EXACT = {
-    "cartpole": (("task", "steps_beyond_terminated"), ("task", "has_steps_beyond_terminated")),
-    "pendulum": ("torque", ("task", "has_last_u")),
+    "cartpole": ("task/steps_beyond_terminated", "task/has_steps_beyond_terminated"),
+    "pendulum": ("torque", "task/has_last_u"),
     "acrobot": (),
     "mountain_car": (),
-    "mountain_car_continuous": (("task", "state_is_float32"),),
+    "mountain_car_continuous": ("task/state_is_float32",),
 }
 BACKENDS = ["numpy", "numba", "torch"]
 
@@ -106,15 +107,15 @@ def _pair(domain, backend, device="cpu", seed=7):
 
 def _assert_agree(domain, actual, expected, atol=1e-9):
     actual, expected = actual.cpu(), expected.cpu()
-    ours, theirs = actual["state"], expected["state"]
+    ours, theirs = unfold(actual["state"]), unfold(expected["state"])
     assert set(ours.keys(True, True)) == set(theirs.keys(True, True))
     for key in theirs.keys(True, True):
-        path = key if isinstance(key, tuple) else (key,)
-        if key in EXACT[domain] or path[0] in ("rng", "physics", "lifecycle"):
+        name = key if isinstance(key, str) else "/".join(key)
+        if name in EXACT[domain] or name.startswith(("rng/", "physics/", "lifecycle/")):
             assert_same_state(ours[key], theirs[key])
         else:
             torch.testing.assert_close(ours[key], theirs[key], rtol=0, atol=atol, msg=lambda m, key=key: f"{key}: {m}")
-        assert ours[key].dtype == CLASSIC_FIELDS[domain][key][1]
+        assert ours[key].dtype == CLASSIC_FIELDS[domain][name][1]
     for key in ("observation", "info_state"):
         assert actual[key].dtype == expected[key].dtype == torch.float32
         loose = 1e-6 if atol else 0.0
@@ -198,9 +199,9 @@ def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
                 rows = [cases[(lane + shift) % len(cases)] for lane in range(LANES)]
                 # Float64 values in a float32 lane: set_state rounds them as Gymnasium does.
                 values = np.asarray(rows, np.float64)
-                state["position"] = torch.as_tensor(values[:, :1])
-                state["velocity"] = torch.as_tensor(values[:, 1:])
-                state["task", "state_is_float32"].fill_(is32)
+                set_field(state, "position", torch.as_tensor(values[:, :1]))
+                set_field(state, "velocity", torch.as_tensor(values[:, 1:]))
+                get_field(state, "task/state_is_float32").fill_(is32)
                 reference.set_state(state)
                 fast.set_state(state)
                 action = torch.as_tensor(
@@ -258,8 +259,10 @@ def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
         fast.configure(values)
         reference.configure(values)
         state = fast.get_state()
-        assert_same_state(state["physics"], reference.get_state()["physics"])
-        assert_same_state(state.exclude("physics"), held.exclude("physics"))
+        expected = reference.get_state()
+        for name in schema_of(state).names:
+            same = held if not name.startswith("physics/") else expected
+            assert torch.equal(get_field(state, name), get_field(same, name)), name
         for action in _actions("cartpole", 5, 4):
             _assert_agree("cartpole", fast.step(action), reference.step(action), _tol(backend, 5))
     finally:
@@ -281,8 +284,9 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
             with pytest.raises(AssertionError if domain != "acrobot" else IndexError):
                 fast.step(torch.tensor([[0], [3]]))
             fast.step(torch.tensor([[0], [7]]), active=torch.tensor([True, False]))
-            held["lifecycle", "elapsed_steps"][0] += 1
-            assert torch.equal(fast.get_state()["lifecycle", "elapsed_steps"], held["lifecycle", "elapsed_steps"])
+            get_field(held, "lifecycle/elapsed_steps")[0] += 1
+            elapsed = get_field(fast.get_state(), "lifecycle/elapsed_steps")
+            assert torch.equal(elapsed, get_field(held, "lifecycle/elapsed_steps"))
         finally:
             fast.close()
     if backend == "numba" and "acrobot" not in STEPS:
@@ -313,7 +317,9 @@ def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path)
                 host = "numba" if domain in COMPILED_HOST else host
                 assert classic_backend(domain, "cpu", lanes) == host
                 cutoff = CUDA_MIN_ENVS[domain]
-                assert classic_backend(domain, "cuda", lanes) == ("torch" if cutoff is None or lanes >= cutoff else host)
+                assert classic_backend(domain, "cuda", lanes) == (
+                    "torch" if cutoff is None or lanes >= cutoff else host
+                )
         assert classic_backend("cartpole", "cpu", 1) == "numba"
         assert classic_backend("acrobot", "cpu", 1) == "gym"
         assert classic_backend("pendulum", "cpu", 1) == "numpy"
@@ -415,9 +421,9 @@ def test_cuda_steps_match_gymnasium(domain):
             fast.close()
     with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
-        assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
+        assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"
     with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         modes = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
         host = _shipped_host(domain, 8)
         assert (env.simulation_backend, env.execution_mode) == (host, modes[host])
-        assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
+        assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"

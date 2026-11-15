@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
-from ...env import check_drawn_fields
 from ...spaces import Box, Dict
 from ...specs import Spec
 from .simulation.local import (
     _PHYSICS_SPACES,
     CLASSIC_FIELDS,
-    physics_state_key,
+    STATES,
+    physics_field,
     validate_classic_state,
 )
 
@@ -42,6 +43,11 @@ class ClassicControlSemantics:
         Gymnasium resets every backend, so a seed gives the same initial states on each.
         """
         super().__init__(*args, **kwargs)
+        self._group = (self.CLASSIC_DOMAIN, "float64")
+        sim = [self._schema.slices[name].start for name in self.sim_state_names]
+        if sim != list(range(len(sim))):
+            raise TypeError(f"{type(self).__name__}: the simulation variables must be the first float64 columns")
+        self._drawn = tuple(self.sim_state_names[i] for i in self.render_from_sim)
         from .simulation.batched import classic_backend
         from .simulation.execution import make_step_adapter
 
@@ -53,6 +59,10 @@ class ClassicControlSemantics:
         )
         self._configure_simulator()
         self.reset(seed=self._seed)
+
+    @property
+    def _schema(self):
+        return STATES[self.CLASSIC_DOMAIN]
 
     def _with_physics_variation(self, base):
         physics = {
@@ -88,7 +98,8 @@ class ClassicControlSemantics:
         offsets = {path: off for path, off, _ in self.variation_space.flat_layout()}
         for name in _PHYSICS_SPACES[self.CLASSIC_DOMAIN]:
             leaf = f"physics.{name}"
-            values[:, offsets[leaf]] = state[physics_state_key(leaf)].reshape(-1).to(values.device, values.dtype)
+            column = self._schema.get(state, physics_field(name))
+            values[:, offsets[leaf]] = column.reshape(-1).to(values.device, values.dtype)
         self._style = StyleTensor(values, self.variation_space.flat_layout())
         self._variation_is_default = False
 
@@ -100,25 +111,40 @@ class ClassicControlSemantics:
     def _layout(self):
         offsets = {self.sim_state_names[index]: packed for packed, index in enumerate(self.render_from_sim)}
         return tuple(
-            (
-                key if isinstance(key, tuple) else (key,),
-                width,
-                offsets.get(key) if isinstance(key, str) else None,
-            )
-            for key, (width, _) in CLASSIC_FIELDS[self.CLASSIC_DOMAIN].items()
+            (tuple(name.split("/")), width, offsets.get(name))
+            for name, (width, _) in CLASSIC_FIELDS[self.CLASSIC_DOMAIN].items()
         )
 
     def _layout_dtypes(self):
-        return {
-            key if isinstance(key, tuple) else (key,): dtype
-            for key, (_, dtype) in CLASSIC_FIELDS[self.CLASSIC_DOMAIN].items()
-        }
+        return {tuple(name.split("/")): dtype for name, (_, dtype) in CLASSIC_FIELDS[self.CLASSIC_DOMAIN].items()}
 
     def _validate_state(self, state, *, batch=None):
         validate_classic_state(self.CLASSIC_DOMAIN, state, batch=batch)
 
     def _validate_render_state(self, state):
-        check_drawn_fields(state, self._drawn_fields(), self._layout_dtypes())
+        """Check the structure of ``state`` and that the fields the renderer draws are finite."""
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1:
+            raise ValueError(f"Expected State batch [N], got {list(state.batch_size)}")
+        self._schema.validate(state)
+        drawn = [(name, self._schema.get(state, name)) for name in self._drawn]
+        if not bool(torch.stack([torch.isfinite(value).all() for _, value in drawn]).all()):
+            for name, value in drawn:
+                if not torch.isfinite(value).all():
+                    raise ValueError(f"State field {name} contains non-finite values")
+
+    def _pack_render_state(self, state):
+        if not isinstance(state, TensorDict):
+            return super()._pack_render_state(state)
+        group = state.get(self._group, None)
+        if not torch.is_tensor(group):
+            raise KeyError(f"{type(self).__name__}.pack: the state is missing the group {'/'.join(self._group)}")
+        return group[..., list(self.render_from_sim)].to(self.device, torch.float32)
+
+    @property
+    def state_spec(self):
+        return self._schema.spec(self.device)
 
     @property
     def action_spec(self):
@@ -131,9 +157,7 @@ class ClassicControlSemantics:
 
     def _sync_authoritative_state(self, state):
         self._rows_stale = False
-        sim = torch.cat(
-            [state[name].to(self.device, torch.float64).reshape(self.B, 1) for name in self.sim_state_names], dim=1
-        )
+        sim = state.get(self._group)[:, : len(self.sim_state_names)].to(self.device, torch.float64)
         super().set_sim_state(sim)
 
     def _sync_stale_rows(self):

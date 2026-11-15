@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 import numpy as np
 import pytest
 
@@ -14,7 +13,7 @@ if not torch.cuda.is_available():
     pytest.skip("CUDA required", allow_module_level=True)
 
 import stable_envs as se  # noqa: E402
-from stable_envs import tuning  # noqa: E402
+from stable_envs import get_field, tuning  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import MAX_EPISODE_STEPS  # noqa: E402
 from stable_envs.envs.classic_control.simulation.device import DeviceClassicAdapter  # noqa: E402
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
@@ -93,7 +92,8 @@ def test_resets_equal_the_gymnasium_resets(domain):
                 options = {"x_init": 1.0, "y_init": 0.5}
             first = fast.reset(seed, options)
             for key, (width, dtype) in CLASSIC_FIELDS[domain].items():
-                assert first[key].shape == (n, width) and first[key].dtype == dtype and first[key].device.type == "cuda"
+                field = get_field(first, key)
+                assert field.shape == (n, width) and field.dtype == dtype and field.device.type == "cuda"
             assert_same_state(first.cpu(), reference.reset(seed, options))
         # A restored State continues its PCG64 streams.
         saved = reference.get_state()
@@ -121,10 +121,11 @@ def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
         finally:
             torch.cuda.set_sync_debug_mode("default")
         state = result["state"]
-        assert state["lifecycle", "elapsed_steps"].device.type == "cuda"
-        assert torch.equal(state["lifecycle", "elapsed_steps"], torch.full((8, 1), 3, device="cuda"))
+        elapsed = get_field(state, "lifecycle/elapsed_steps")
+        assert elapsed.device.type == "cuda"
+        assert torch.equal(elapsed, torch.full((8, 1), 3, device="cuda"))
         # The step writes the render rows; they draw the returned State.
-        sim = torch.cat([state[name].reshape(8, 1) for name in env.sim_state_names], 1)
+        sim = torch.cat([get_field(state, name).reshape(8, 1) for name in env.sim_state_names], 1)
         torch.testing.assert_close(env._sim, sim, rtol=0, atol=0)
         assert torch.equal(env.render(), env.render(state))
 
@@ -183,7 +184,10 @@ def test_closed_loop_rollouts_keep_the_gymnasium_outcome(domain):
                 ended[name][done] = t
             if t < DEVIATION_STEPS.get(domain, 300):
                 state = ours["state"].cpu()
-                deviation = max(deviation, max(float((state[k] - theirs["state"][k]).abs().max()) for k in keys))
+                deviation = max(
+                    deviation,
+                    max(float((get_field(state, k) - get_field(theirs["state"], k)).abs().max()) for k in keys),
+                )
         assert torch.equal(ended["torch"] >= 0, ended["gym"] >= 0), ended
         if domain not in DEVIATION_STEPS:
             assert torch.equal(ended["torch"], ended["gym"]), ended

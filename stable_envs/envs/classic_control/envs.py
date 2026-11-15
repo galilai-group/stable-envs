@@ -4,7 +4,6 @@ import math
 
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from ...env import Env, _split_appearance
 from ...registry import _require_extra, register
@@ -84,9 +83,6 @@ class _Classic(Env):
         self._sim[:, self._cols] = self._render_state.to(torch.float64)
         return self
 
-    def _restore_state(self, state: TensorDict) -> None:
-        self.set_sim_state(self._sim_from_state(state))
-
     def sim_state(self) -> torch.Tensor:
         """Return the live (B, sim_dim) float64 numerical state, including velocities."""
         return self._sim
@@ -142,29 +138,6 @@ class _Classic(Env):
     def _live_state(self) -> dict:
         """Drawn variables at simulation precision, avoiding a float32 round trip."""
         return self._sim_columns(drawn=True)
-
-    def _state_td(self, sim: torch.Tensor) -> TensorDict:
-        """Copy (n, sim_dim) float64 into named state fields without reducing precision."""
-        n = int(sim.shape[0])
-        return TensorDict(
-            {nm: sim[:, i : i + 1].clone() for i, nm in enumerate(self.sim_state_names)},
-            batch_size=[n],
-            device=self.device,
-        )
-
-    def _sim_from_state(self, state) -> torch.Tensor:
-        """Validate state and concatenate named fields into an (n, sim_dim) float64 tensor."""
-        names = self.sim_state_names
-        self._validate_state(state)
-        n = int(state.batch_size[0]) if state.batch_size else 1
-        try:
-            cols = [torch.as_tensor(state[nm], device=self.device, dtype=torch.float64).reshape(n, 1) for nm in names]
-        except KeyError as e:
-            raise KeyError(
-                f"{type(self).__name__}.transition: the state is missing {e.args[0]!r}. "
-                f"This env's state keys are {list(names)}."
-            ) from e
-        return torch.cat(cols, dim=1)
 
     @torch.no_grad()
     def _render(

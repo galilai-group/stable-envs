@@ -12,6 +12,8 @@ import math
 
 import numpy as np
 
+from .local import BEYOND, ELAPSED, HAS_BEYOND
+
 try:
     from numba import njit
 
@@ -104,7 +106,7 @@ def mountain_car_step(views, params, actions, live, max_steps):
     truncated = np.empty(n, np.bool_)
     observation = np.empty((n, 2), np.float32)
     _mountain_car(
-        position, views["velocity"][:, 0], views[("lifecycle", "elapsed_steps")][:, 0], cosine, params["gravity"],
+        position, views["velocity"][:, 0], views[ELAPSED][:, 0], cosine, params["gravity"],
         params["force"], params["max_speed"], actions, live, max_steps, reward, terminated, truncated, observation,
     )  # fmt: skip
     return reward, terminated, truncated, observation
@@ -121,8 +123,8 @@ def cartpole_step(views, params, actions, live, max_steps):
     observation = np.empty((n, 4), np.float32)
     _cartpole(
         views["x"][:, 0], views["x_dot"][:, 0], theta, views["theta_dot"][:, 0],
-        views[("task", "steps_beyond_terminated")][:, 0], views[("task", "has_steps_beyond_terminated")][:, 0],
-        views[("lifecycle", "elapsed_steps")][:, 0], cos, sin, params["gravity"], params["masscart"],
+        views[BEYOND][:, 0], views[HAS_BEYOND][:, 0],
+        views[ELAPSED][:, 0], cos, sin, params["gravity"], params["masscart"],
         params["masspole"], params["length"], params["force_mag"], params["tau"], actions, live, max_steps,
         reward, terminated, truncated, observation,
     )  # fmt: skip

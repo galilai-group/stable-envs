@@ -24,7 +24,17 @@ from tensordict import TensorDict
 
 from .... import tuning
 from ...._core.tensordicts import build_tensordict
-from .local import _PHYSICS_SPACES, ClassicControlAdapter, physics_state_key, state_layout
+from .local import (
+    _PHYSICS_SPACES,
+    BEYOND,
+    ELAPSED,
+    HAS_BEYOND,
+    HAS_LAST_U,
+    IS_FLOAT32,
+    STATES,
+    ClassicControlAdapter,
+    physics_field,
+)
 
 #: Time limits that ``gymnasium.make`` adds for each registered id.
 MAX_EPISODE_STEPS = {
@@ -35,21 +45,16 @@ MAX_EPISODE_STEPS = {
     "mountain_car_continuous": 999,
 }
 
-_ELAPSED = ("lifecycle", "elapsed_steps")
+#: The State fields that steps change, by the name the kernels give them. The elapsed steps are separate.
 _DYNAMIC = {
-    "cartpole": (
-        "x",
-        "x_dot",
-        "theta",
-        "theta_dot",
-        ("task", "steps_beyond_terminated"),
-        ("task", "has_steps_beyond_terminated"),
-    ),
-    "pendulum": ("theta", "theta_dot", "torque", ("task", "has_last_u")),
+    "cartpole": ("x", "x_dot", "theta", "theta_dot", "beyond", "has_beyond"),
+    "pendulum": ("theta", "theta_dot", "torque", "has_last_u"),
     "acrobot": ("theta1", "theta2", "dtheta1", "dtheta2"),
     "mountain_car": ("position", "velocity"),
-    "mountain_car_continuous": ("position", "velocity", ("task", "state_is_float32")),
+    "mountain_car_continuous": ("position", "velocity", "is32"),
 }
+#: The State field of each kernel name that is not the field's own name.
+_FIELD = {"beyond": BEYOND, "has_beyond": HAS_BEYOND, "has_last_u": HAS_LAST_U, "is32": IS_FLOAT32}
 _DISCRETE = {"cartpole": 2, "acrobot": 3, "mountain_car": 3}
 
 
@@ -114,10 +119,6 @@ class _NumPy:
     @staticmethod
     def flags(like, value: bool):
         return np.full(like.shape, value, np.bool_)
-
-    @staticmethod
-    def load(tensor):
-        return tensor.detach().cpu().numpy().copy()
 
     @staticmethod
     def host(value):
@@ -196,9 +197,6 @@ class _Torch:
     def flags(like, value: bool):
         return torch.full_like(like, value, dtype=torch.bool)
 
-    def load(self, tensor):
-        return tensor.detach().to(self.device).clone()
-
     def host(self, value):
         return torch.as_tensor(value, device=self.device)
 
@@ -240,15 +238,15 @@ def _cartpole(xp, s, p, a, _):
     theta, theta_dot = theta + tau * theta_dot, theta_dot + tau * thetaacc
     limit = 12 * 2 * math.pi / 360
     terminated = (x < -2.4) | (x > 2.4) | (theta < -limit) | (theta > limit)
-    beyond, has_beyond = s["task", "steps_beyond_terminated"], s["task", "has_steps_beyond_terminated"]
+    beyond, has_beyond = s["beyond"], s["has_beyond"]
     again = terminated & has_beyond
     new = {
         "x": x,
         "x_dot": x_dot,
         "theta": theta,
         "theta_dot": theta_dot,
-        ("task", "steps_beyond_terminated"): xp.where(again, beyond + 1, xp.where(terminated, 0, beyond)),
-        ("task", "has_steps_beyond_terminated"): has_beyond | terminated,
+        "beyond": xp.where(again, beyond + 1, xp.where(terminated, 0, beyond)),
+        "has_beyond": has_beyond | terminated,
     }
     return new, [x, x_dot, theta, theta_dot], xp.where(again, 0.0, xp.full(x, 1.0)), terminated
 
@@ -268,7 +266,7 @@ def _pendulum(xp, s, p, u, dtype):
     newthdot = thdot + (3 * p["g"] / (2 * p["l"]) * xp.sin(th) + drive) * p["dt"]
     newthdot = xp.minimum(xp.maximum(newthdot, -p["max_speed"]), p["max_speed"])
     newth = th + newthdot * p["dt"]
-    new = {"theta": newth, "theta_dot": newthdot, "torque": u, ("task", "has_last_u"): xp.flags(u, True)}
+    new = {"theta": newth, "theta_dot": newthdot, "torque": u, "has_last_u": xp.flags(u, True)}
     return new, [xp.cos(newth), xp.sin(newth), newthdot], -costs, xp.flags(u, False)
 
 
@@ -363,7 +361,7 @@ def _mountain_car_continuous(xp, s, p, a, dtype):
     ``wide`` masks mark lanes whose source scalar is float64 or a Python float; the others hold float32
     values, which compare with the float32 rounding of a Python constant.
     """
-    position, velocity, is32 = s["position"], s["velocity"], s["task", "state_is_float32"]
+    position, velocity, is32 = s["position"], s["velocity"], s["is32"]
     r32, power, max_speed = xp.r32, p["power"], p["max_speed"]
     cosine = 0.0025 * xp.cos(xp.where(is32, r32(3 * position), 3 * position))
     low, high = a < -1.0, a > 1.0
@@ -395,7 +393,7 @@ def _mountain_car_continuous(xp, s, p, a, dtype):
     terminated = xp.where(wide, position >= 0.45, position >= _F32_GOAL) & (velocity >= 0)
     reward = xp.where(terminated, 100.0, xp.full(a, 0.0)) - xp.pow2(a) * 0.1
     position, velocity = r32(position), r32(velocity)
-    new = {"position": position, "velocity": velocity, ("task", "state_is_float32"): xp.flags(is32, True)}
+    new = {"position": position, "velocity": velocity, "is32": xp.flags(is32, True)}
     return new, [position, velocity], reward, terminated
 
 
@@ -430,43 +428,45 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._kernel = _KERNELS[domain]
         self._dynamic = _DYNAMIC[domain]
         self._max_steps = MAX_EPISODE_STEPS[domain]
-        self._fixed: dict | None = None
-        # NumPy steps the live fields in place in the packed State; Torch keeps its own tensors.
-        self._in_place = backend in ("numpy", "numba")
+        self._ready = False
         self._everyone = np.ones(int(num_envs), np.bool_)
-        self._layout = None if self._in_place else state_layout(domain, self.num_envs)
+        # The steps change the live fields in place: NumPy and Numba in the host group arrays of the packed State,
+        # Torch in the group tensors of its own State on ``device``.
+        self._in_place = backend in ("numpy", "numba")
+        schema = STATES[domain]
+        if self._in_place:
+            self._groups = self._packed.arrays
+            views = self._packed.views
+        else:
+            self._live_state = schema.new(self.num_envs, self.device)
+            self._groups = schema.buffers(self._live_state)
+            views = schema.views(self._groups)
+        self._paths = {key: tuple(key.split("/")) for key in self._groups}
+        self._live = {key: views[_FIELD.get(key, key)][:, 0] for key in self._dynamic}
+        self._elapsed = views[ELAPSED][:, 0]
+        self._params = {name: views[physics_field(name)][:, 0] for name in _PHYSICS_SPACES[domain]}
 
     def _load(self, state: TensorDict) -> None:
-        """Adopt ``state`` as the live lanes and keep the fields that steps do not change."""
-        xp = self._xp
-        moving = (*self._dynamic, _ELAPSED)
+        """Adopt ``state`` as the live lanes."""
         if self._in_place:
-            views = self._packed.views
             host = state.cpu()
-            for key in self.fields:
-                views[key][...] = host[key].numpy()
-            self._fixed = {}
-            self._live = {key: views[key][:, 0] for key in self._dynamic}
-            self._elapsed = views[_ELAPSED][:, 0]
-            self._params = {name: views[physics_state_key(name)][:, 0] for name in _PHYSICS_SPACES[self.domain]}
+            for key, array in self._groups.items():
+                array[...] = host.get(self._paths[key]).numpy()
         else:
-            self._fixed = {key: xp.load(state[key]) for key in self.fields if key not in moving}
-            self._live = {key: xp.load(state[key][:, 0]) for key in self._dynamic}
-            self._elapsed = xp.load(state[_ELAPSED][:, 0])
-            self._params = {
-                name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]
-            }
-            assert self._layout is not None
-            self._layout.load_static(self._fixed)
+            for key, group in self._groups.items():
+                group.copy_(state.get(self._paths[key]))
         self._static_loaded = True
+        self._ready = True
 
     def configure(self, values) -> None:
         super().configure(values)
-        if self._fixed is not None:
-            state = self.get_state()
-            for j, key in enumerate(self._physics_keys):
-                state[key] = torch.from_numpy(self._physics[:, j : j + 1].copy()).to(self.device)
-            self._load(state)
+        if self._ready:
+            for j, name in enumerate(self._physics_names):
+                column, rows = self._params[name], self._physics[:, j]
+                if isinstance(column, np.ndarray):
+                    column[...] = rows
+                else:
+                    column.copy_(torch.as_tensor(rows, device=column.device))
 
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
         state = super().reset(seed=seed, options=options)
@@ -480,15 +480,9 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        if self._fixed is None:
+        if not self._ready:
             return super().get_state()
-        if self._in_place:
-            return self._packed.export(self.device)
-        values: dict = {key: value[:, None] for key, value in self._live.items()}
-        values[_ELAPSED] = self._elapsed[:, None]
-        # Steps keep the static fields; the layout holds them since the last ``_load``.
-        assert self._layout is not None
-        return self._layout.export(values, self.device)
+        return self._packed.export(self.device) if self._in_place else self._live_state.clone()
 
     def stack_states(self, states) -> TensorDict | None:
         return self._packed.stack(states) if self._in_place else None
@@ -509,7 +503,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         self._check_open()
-        if self._fixed is None:
+        if not self._ready:
             raise RuntimeError("Call reset before step")
         xp = self._xp
         a = xp.host(actions)
@@ -533,14 +527,10 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         new, observation, reward, terminated = self._kernel(xp, old, self._params, a, dtype)
         if live is not None:
             new = {key: xp.where(live, new[key], old[key]) for key in self._dynamic}
-        if self._in_place:
-            # The live fields are views of the packed State.
-            for key in self._dynamic:
-                old[key][...] = new[key]
-            self._elapsed += 1 if live is None else live
-        else:
-            self._live = new
-            self._elapsed = self._elapsed + (1 if live is None else live)
+        # The live fields are views of the live State.
+        for key in self._dynamic:
+            old[key][...] = new[key]
+        self._elapsed += 1 if live is None else live
         if live is None:
             truncated = self._elapsed >= self._max_steps
         else:
@@ -566,7 +556,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         )
 
     def close(self) -> None:
-        self._fixed = None
+        self._ready = False
         super().close()
 
 

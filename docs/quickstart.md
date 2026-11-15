@@ -23,10 +23,12 @@ Every tensor the environment returns lives on `device`. The [specs](terms.md#spe
 ```python
 state = env.reset(seed=0)
 print(state.batch_size)  # torch.Size([4])
-print(list(state.keys()))
-# ['x', 'x_dot', 'theta', 'theta_dot', 'lifecycle', 'task', 'rng', 'physics']
-print(state["x"].shape)  # torch.Size([4, 1])
+print(list(state.keys(True, True)))
+# [('cartpole', 'float64'), ('cartpole', 'int64'), ('cartpole', 'bool')]
+print(snv.get_field(state, "x").shape)  # torch.Size([4, 1])
 ```
+
+CartPole folds its state fields into one array for each dtype. `snv.get_field(state, name)` reads one field by name, and `snv.schema_of(state).names` lists them.
 
 The state also holds things an agent shouldn't see, like TwoRoom's invisible target, so don't feed it to a model as-is. Picking what a model sees is stable-worldmodel's job. The keys differ from family to family, and `env.state_spec` lists them.
 
@@ -92,7 +94,7 @@ print(bool((red != frame).any()))  # True
 print(env.variation_dim)           # 22
 
 state = env.reset(seed=1, options={"variation": ["physics.gravity"]})
-print(state["physics", "gravity"].shape)  # torch.Size([4, 1]), one draw per environment
+print(snv.get_field(state, "physics/gravity").shape)  # torch.Size([4, 1]), one draw per environment
 ```
 
 [Randomize appearance and physics](tutorials/variation.md) covers sampling, installing and storing variation.

@@ -55,9 +55,20 @@ with snv.tuning.override(large_backend_min_envs=256), snv.Acrobot(num_envs=64, d
 
 The renderer reimplements Gymnasium's pygame `gfxdraw` drawing and gives Gymnasium's frame for the same state. A fused Triton kernel draws the [frames](../terms.md#frame) on CUDA, and on CPU a Numba kernel draws the same primitive records in parallel and gives the same frames as the Triton kernel. The `classic` extra installs Numba. With `backend="auto"`, a CPU batch of fewer than 8 states with the default appearance draws with Gymnasium's renderer instead, which is faster at that size. Without Numba, the CPU path draws with Gymnasium's renderer (default appearance, when pygame is installed) or with the Torch reimplementation.
 
+## State
+
+The [state](../terms.md#state) folds its fields into one array for each dtype: `float64`, `int64` and `bool`. The arrays are the leaves of the state, under the key of the class, for example `cartpole`. `snv.get_field(state, name)` reads one field by name, and `snv.schema_of(state).names` lists them. The simulation variables come first in the `float64` array, for example `x`, `x_dot`, `theta` and `theta_dot` of CartPole. The other fields are `lifecycle/elapsed_steps`, the task fields under `task/`, the random number generator under `rng/` and the physical constants under `physics/`.
+
+```python
+with snv.CartPole(num_envs=4, device="cpu") as env:
+    state = env.reset(seed=0)
+    print(list(state.keys(True, True)))  # [('cartpole', 'float64'), ('cartpole', 'int64'), ('cartpole', 'bool')]
+    print(snv.get_field(state, "theta").shape)  # torch.Size([4, 1])
+```
+
 ## Variation
 
-The `physics` key of the [state](../terms.md#state) holds the physical constants of each environment, for example gravity and masses, and the [variation](../terms.md#variation) can change them. Each class has `physics.*` leaves for these constants, a color leaf for each part of the scene and `rendering.antialias`.
+The `physics/` fields of the [state](../terms.md#state) hold the physical constants of each environment, for example gravity and masses, and the [variation](../terms.md#variation) can change them. Each class has `physics.*` leaves for these constants, a color leaf for each part of the scene and `rendering.antialias`.
 
 ## Classes
 

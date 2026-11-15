@@ -15,7 +15,31 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
-ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {}
+ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
+    "classic_control": (
+        ("lifecycle", "task", "rng", "physics"),
+        [
+            *(
+                ROOT / "tests" / "unit" / f"test_{name}.py"
+                for name in (
+                    "classic_batched",
+                    "classic_state_export",
+                    "classic_render_checks",
+                    "native_classic_semantics",
+                    "envs_classic_nav",
+                    "acrobot_process",
+                    "step_capture",
+                )
+            ),
+            ROOT / "tests" / "integration" / "test_acrobot_process_equivalence.py",
+            ROOT / "tests" / "integration" / "test_native_classic_gate.py",
+            ROOT / "tests" / "gpu" / "test_classic_device.py",
+            *sorted((ROOT / "tests" / "helpers" / "reference").glob("*classic*.py")),
+            ROOT / "tests" / "helpers" / "reference" / "native_acceptance.py",
+            ROOT / "tests" / "helpers" / "reference" / "gates" / "variation_classic.py",
+        ],
+    ),
+}
 
 FIELDS = [
     Field("t/pose", (3,), torch.float64, "t/float64"),

@@ -10,6 +10,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
 - The `torch_min_envs` argument of the classic-control classes, the `numba_cuda_min_envs` argument of `PyFlytRocketLanding` and the `triton_min_envs` argument of `MiniWorldMovingBlockWorld` are removed, with the `NUMPY_MIN_ENVS`, `TORCH_MIN_ENVS`, `NUMBA_CUDA_MIN_ENVS` and `TRITON_MIN_ENVS` constants. `simulation_backend="auto"` is the default of these classes. It uses the switch points that each class ships, or the `large_backend_min_envs` knob and `stable-envs tune`.
 - Classic control with `simulation_backend="torch"` on CUDA resets with Gymnasium on the host. A seed gives Gymnasium's initial states on every backend, and the `rng` state fields hold the PCG64 state instead of a key and a reset count.
+- The classic-control state has one leaf for each dtype, such as `("cartpole", "float64")`, in place of one leaf for each field. `snv.get_field(state, "physics/gravity")` reads a field by name.
 
 ### Added
 

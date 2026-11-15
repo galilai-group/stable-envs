@@ -19,6 +19,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as snv
+from stable_envs import get_field, schema_of
 
 pytestmark = pytest.mark.unit
 
@@ -88,6 +89,11 @@ for _name, _leaves in PHYSICS.items():
     FULL_KEYS[_name] = FULL_KEYS[_name] + [("physics", leaf) for leaf in _leaves]
 
 
+def _field(state, key):
+    """The field at State key ``key``, in a folded State and in a State with one leaf for each field."""
+    return get_field(state, ".".join(key))
+
+
 def _initialize(env, name, seed):
     if name in CLASSIC + NAV_TASK:
         env.reset(seed=seed)
@@ -141,7 +147,7 @@ def test_classic_velocities_are_full_state_and_absent_from_render_projection(nam
         assert velocities and velocities <= hidden
         projection = env._unpack_render_state(env._pack_render_state(state))
         for key in velocities:
-            assert key in state.keys(True, True)
+            assert key[0] in schema_of(state).names
             assert key not in projection.keys(True, True)
         with pytest.raises(ValueError, match="missing"):
             env.set_state(projection)
@@ -151,7 +157,7 @@ def test_classic_velocities_are_full_state_and_absent_from_render_projection(nam
 def test_classic_physical_state_is_lossless_and_projects_to_float32(name):
     with _env(name) as env:
         state = env.reset(seed=17)
-        assert all(state[key].dtype == torch.float64 for key in KEYS[name])
+        assert all(_field(state, key).dtype == torch.float64 for key in KEYS[name])
         rows = env._pack_render_state(state)
         assert rows.dtype == torch.float32
         assert torch.equal(rows, env._get_render_state())
@@ -171,7 +177,7 @@ def test_snapshot_branch_is_bit_identical_to_the_stateful_step(name):
     stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
-        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
+        assert torch.equal(_field(functional, k), _field(stateful, k)), f"{'.'.join(k)} differs"
     env.close()
 
 
@@ -194,13 +200,13 @@ def test_snapshot_branch_does_not_touch_the_env_and_unroll_is_repeated_transitio
     for t in range(4):
         cur = branch_step(env, cur, acts[t])
         for k in FULL_KEYS[name]:
-            assert torch.equal(traj[t][k], cur[k])
+            assert torch.equal(_field(traj[t], k), _field(cur, k))
 
     # Four stateful steps land on the same numbers.
     for t in range(4):
         env.step(acts[t], frames=None)
     for k in FULL_KEYS[name]:
-        assert torch.equal(traj[3][k], env.state[k]), f"{'.'.join(k)} drifted over four steps"
+        assert torch.equal(_field(traj[3], k), _field(env.state, k)), f"{'.'.join(k)} drifted over four steps"
     env.close()
 
 
@@ -237,9 +243,8 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert env.size == env.default_size
     assert tuple(env.action_spec.shape) == (env.action_dim,)
     spec = env.state_spec
-    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(
-        FULL_KEYS[name]
-    )
+    expected = [group.path for group in env._schema.groups.values()] if name in CLASSIC else FULL_KEYS[name]
+    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(expected)
     env.close()
 
 
@@ -345,7 +350,7 @@ def test_snapshot_branch_still_equals_step_after_the_env_has_been_stepped(name):
     stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
-        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
+        assert torch.equal(_field(functional, k), _field(stateful, k)), f"{'.'.join(k)} differs after five steps"
     env.close()
 
 
@@ -355,10 +360,10 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     env = _env(name)
     _initialize(env, name, 7)
     out = env.step(_actions(env, 4, seed=7), frames=None)
-    held = {k: out["state"][k].clone() for k in FULL_KEYS[name]}
+    held = {k: _field(out["state"], k).clone() for k in FULL_KEYS[name]}
     env.step(_actions(env, 4, seed=8), frames=None)
     for k in FULL_KEYS[name]:
-        assert torch.equal(out["state"][k], held[k]), (
+        assert torch.equal(_field(out["state"], k), held[k]), (
             f"{'.'.join(k)} in a StepResult changed when the env was stepped again"
         )
     env.close()
@@ -379,8 +384,8 @@ def test_step_returns_exactly_env_state(name):
     held = env.state
     assert sorted(out["state"].keys()) == sorted(held.keys())
     for k in FULL_KEYS[name]:
-        assert torch.equal(out["state"][k], held[k]), k
-        assert out["state"][k].dtype == held[k].dtype
+        assert torch.equal(_field(out["state"], k), _field(held, k)), k
+        assert _field(out["state"], k).dtype == _field(held, k).dtype
     env.close()
 
 
@@ -402,7 +407,9 @@ def test_classic_reports_authoritative_outputs_and_typed_state(name):
         assert result["reward"].dtype == torch.float64
         assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
         assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
-        assert set(result["state"].keys(True, True)) == {key[0] if len(key) == 1 else key for key in FULL_KEYS[name]}
+        schema = schema_of(result["state"])
+        assert sorted(schema.names) == sorted("/".join(key) for key in FULL_KEYS[name])
+        assert set(result["state"].keys(True, True)) == {tuple(group.path) for group in schema.groups.values()}
         for key in result["state"].keys(True, True):
             assert result["state"][key].dtype == env.state_spec[key].dtype
 
