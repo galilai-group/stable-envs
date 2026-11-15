@@ -37,7 +37,7 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
     result = env.step(actions, states=None, frames=None)
 ```
 
-The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
+The first step compiles the JAX kernel. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. One jitted call computes the physics, the observation, the reward and the termination flags. Each step gives JAX the actions and gets back one buffer that holds the state and the task outputs. The batch rows, the target and the variation stay on the JAX side between steps, and a reset, restore or variation change copies them again. Torch and JAX exchange these buffers through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
 
 `simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports, and JAX without Numba. On CUDA, a batch of `large_backend_min_envs` or more environments steps in JAX, and a smaller batch steps in Numba (Torch without Numba). When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
