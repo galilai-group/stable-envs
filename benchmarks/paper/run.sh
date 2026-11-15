@@ -18,7 +18,10 @@
 #   (3 repeats of 10 s). Decide near a threshold, or on a cell whose spread is over 10%, only with paper timing.
 #   WARMUP (default 2) is the seconds of untimed work before the timed windows of each arm. WARMUP_STEPS (default 0)
 #   is the least number of untimed steps per lane of an online arm; WARMUP_MAX_S (default 0, no limit) stops that
-#   count after so many seconds. Each cell records the warm-up steps and seconds it took. FRAME_CHECK=0 leaves out
+#   count after so many seconds. Each cell records the warm-up steps and seconds it took. In the offline arm,
+#   WARMUP_STEPS is the least number of untimed batches (8-row draws for the source) and TIMED_STEPS (default 0:
+#   WINDOW seconds) the batches of each timed window; ours times whole render-ahead chunks. PER_BATCH=1 draws ours
+#   with one env.render call per batch instead of snv.FrameLoader. FRAME_CHECK=0 leaves out
 #   the comparison of the source workers' frames with one-env source replays.
 #   VENV_PYTHON=path reuses an existing family venv (no build, no delete); STATES_DIR=dir keeps the stored States and
 #   episodes between runs; SRC_FROM=dir copies source cells (src-*.json) measured on the same machine into OUT first.
@@ -52,6 +55,7 @@ else
 fi
 DEVICES=${DEVICES:-cpu cuda}; ARMS=${ARMS:-offline step frames}; REPEATS=${REPEATS:-3}; WINDOW=${WINDOW:-10}; CPU_SOURCES=${CPU_SOURCES:-1}
 WARMUP=${WARMUP:-2}; CHECK=$([ "${FRAME_CHECK:-1}" = 0 ] && echo --no-frame-check)
+OFFSTEPS="--warmup-steps ${WARMUP_STEPS:-0} --timed-steps ${TIMED_STEPS:-0}"
 sweep() { [ $1 = cpu ] && echo $SWEEP_CPU | tr : " " || echo $SWEEP_CUDA | tr : " "; }
 # The stored States hold the largest offline batch; the episode set holds one episode per lane of the largest count.
 N=$(for d in $DEVICES; do sweep $d; done | tr " " "\n" | sort -n | tail -1)
@@ -200,11 +204,11 @@ for spec in "$@"; do
     for dev in $DEVICES; do
       tag=$([ $dev = cpu ] && echo cpu || echo gpu)
       if has offline; then
-        once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/snv-$tag.json
+        once $o/snv-$tag.json gl $dev $OFF ours --envs $E --states $S --device $dev --threads $NCORES --batches $(sweep $dev) --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP $OFFSTEPS $([ "${PER_BATCH:-0}" = 1 ] && echo --per-batch) --output $o/snv-$tag.json
         once $o/mse-$tag.json gl $dev $OFF mse --envs $E --states $S --device $dev --output $o/mse-$tag.json
         for p in 1 $NCORES; do
-          [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/src-cpu-${p}p.json
-          [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --output $o/src-gpu-${p}p.json
+          [ $CPU_SOURCES = 1 ] && once $o/src-cpu-${p}p.json sw $OFF source --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP $OFFSTEPS --output $o/src-cpu-${p}p.json
+          [ $dev = cuda ] && [ "$GPUSRC" = mujoco-egl ] && once $o/src-gpu-${p}p.json egl $OFF source --gpu --envs $E --states $S --procs $p --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP $OFFSTEPS --output $o/src-gpu-${p}p.json
         done
       fi
       # Online arms at every lane count L: ours with L lanes; the source with L envs over min(L, NCORES) workers.

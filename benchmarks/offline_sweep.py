@@ -84,9 +84,10 @@ def _timed(
     warmup_s: float = WARMUP_S,
     budget_s: float = 60.0,
     warmup_items: int = 0,
+    window_items: int = 0,
 ) -> dict:
-    """Items per second over up to ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns
-    its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
+    """Items per second over up to ``repeats`` windows of about ``seconds``, or of at least ``window_items`` items
+    when that is set; each ``next(units)`` does work and returns its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
     slow source can take minutes, and one window of whole units is then enough."""
     # Warm up for at least warmup_s and warmup_items items: a kernel can still be compiling after the seconds.
     # WARMUP_MAX_S (seconds, 0 = no limit) stops the item count early for sources that take hours per item count.
@@ -103,7 +104,7 @@ def _timed(
             sync()
         t = time.perf_counter()
         done = 0
-        while time.perf_counter() - t < seconds:
+        while (done < window_items) if window_items else (time.perf_counter() - t < seconds):
             done += next(units)
         if sync:
             sync()
@@ -128,24 +129,31 @@ def _cycle(make):
 
 
 def _worker_for(job) -> tuple[int, float]:
-    """Draw this worker's rows 8 at a time, wrapping around, for ``seconds``; return the frames and the elapsed time."""
-    (s, e), seconds, render = job
+    """Draw this worker's rows 8 at a time, wrapping around, for ``seconds`` or, when ``count`` is set, for at least
+    ``count`` frames; return the frames and the elapsed time."""
+    (s, e), seconds, render, count = job
     t = time.perf_counter()
     done, i = 0, s
-    while time.perf_counter() - t < seconds:
+    while (done < count) if count else (time.perf_counter() - t < seconds):
         j = min(i + 8, e)
         done += render((i, j))
         i = s if j >= e else j
     return done, time.perf_counter() - t
 
 
-def _pool_timed(pool, render, spans, *, seconds: float, repeats: int, warmup_s: float = WARMUP_S) -> dict:
-    """Frames per second of all workers together: one worker per span, every worker timed over the same window."""
-    if warmup_s > 0:
-        pool.map(_worker_for, [(sp, warmup_s, render) for sp in spans], chunksize=1)
+def _pool_timed(
+    pool, render, spans, *, seconds: float, repeats: int, warmup_s: float = WARMUP_S, warmup_items: int = 0,
+    window_items: int = 0,
+) -> dict:
+    """Frames per second of all workers together: one worker per span, every worker timed over the same window.
+
+    With ``window_items`` (and ``warmup_items``) each worker draws at least that many frames instead of drawing for
+    ``seconds``."""
+    if warmup_s > 0 or warmup_items:
+        pool.map(_worker_for, [(sp, warmup_s, render, warmup_items) for sp in spans], chunksize=1)
     rates = []
     for _ in range(repeats):
-        out = pool.map(_worker_for, [(sp, seconds, render) for sp in spans], chunksize=1)
+        out = pool.map(_worker_for, [(sp, seconds, render, window_items) for sp in spans], chunksize=1)
         rates.append(sum(d / dt for d, dt in out))
     return {"rate": statistics.median(rates), "rates": rates, "repeats": repeats}
 
@@ -380,24 +388,35 @@ def cmd_ours(args) -> None:
             env = None
             try:
                 env = snv.make(name, num_envs=b, size=blob["size"], device=args.device)
-                render = lambda s, e: draw(env, data[s:e])  # noqa: E731
                 n = len(data)
-                spans = _chunks(n, b)
-                frame = render(*spans[0])
+                # The stored inputs are sliced into batches before the timed windows: slicing a State is not drawing.
+                pieces = [data[s:e] for s, e in _chunks(n, b)]
+                frame = draw(env, pieces[0])
                 shape = list(frame.shape[1:])
                 del frame
                 loader = None if args.per_batch or loader_cls is None else loader_cls(env, data, b)
 
                 def sweep():
                     if loader is not None:
+                        # One unit is one render-ahead chunk handed out b frames at a time, so that every window
+                        # holds whole chunks and pays for every frame it receives.
+                        got, per = 0, loader.chunk_size
                         for frames in loader:
-                            yield int(frames.shape[0])
+                            got += int(frames.shape[0])
+                            if got >= per:
+                                yield got
+                                got = 0
+                        if got:
+                            yield got
                         return
-                    for s, e in spans:
-                        render(s, e)
-                        yield e - s
+                    for piece in pieces:
+                        draw(env, piece)
+                        yield len(piece)
 
-                t = _timed(_cycle(sweep), seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup)
+                t = _timed(
+                    _cycle(sweep), seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup,
+                    warmup_items=args.warmup_steps * b, window_items=args.timed_steps * b,
+                )
                 row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": t["rate"], **t}
                 row["draw"] = "per-batch" if loader is None else "FrameLoader"
                 row["render_rows"] = b if loader is None else loader.chunk_size
@@ -483,7 +502,10 @@ def cmd_source(args) -> None:
                 first = _sources().reference_render(_W["cls"], _W["ref"], _W["inputs"][:1])
                 shape = list(np.asarray(first).shape[1:])
                 rows8 = lambda: (_worker_render((i, min(i + 8, n))) for i in range(0, n, 8))  # noqa: E731
-                t = _timed(_cycle(rows8), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+                t = _timed(
+                    _cycle(rows8), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup,
+                    warmup_items=args.warmup_steps * 8, window_items=args.timed_steps * 8,
+                )
             else:
                 ctx = mp.get_context("spawn")
                 spans = [(n * k // args.procs, n * (k + 1) // args.procs) for k in range(args.procs)]
@@ -492,7 +514,9 @@ def cmd_source(args) -> None:
                 ) as pool:
                     shape = None
                     t = _pool_timed(
-                        pool, _worker_render, spans, seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup
+                        pool, _worker_render, spans, seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup,
+                        warmup_items=-(-args.warmup_steps * 8 // args.procs),
+                        window_items=-(-args.timed_steps * 8 // args.procs),
                     )
             row = {"status": "ok", "frames": n, "fps": t["rate"], "frame_shape": shape, **t}
         except Exception as e:  # noqa: BLE001
@@ -659,6 +683,9 @@ def main() -> None:
     r.add_argument("--procs", type=int, default=1)
     r.add_argument("--gpu", action="store_true", help="the source draws with MuJoCo EGL on the GPU")
     r.add_argument("--output", required=True)
+    for q in (o, r):
+        q.add_argument("--warmup-steps", type=int, default=0, help="least untimed batches (source: 8-row draws)")
+        q.add_argument("--timed-steps", type=int, default=0, help="batches per timed window instead of --seconds")
     c = sub.add_parser("codec", parents=[common])
     c.add_argument("--out", required=True)
     c.add_argument("--decode", nargs="*", default=[])
