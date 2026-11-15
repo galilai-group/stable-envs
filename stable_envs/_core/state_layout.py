@@ -27,7 +27,9 @@ def _path(key: Key) -> tuple[str, ...]:
 
 
 #: Size from which a new host buffer comes from fresh pages: glibc's default threshold for serving an allocation
-#: with ``mmap``. A buffer this large is reused once no earlier State holds it.
+#: with ``mmap``. A buffer this large is reused once no earlier State holds it. Smaller States don't pay page faults,
+#: and reuse costs them more than it saves: the reused buffer needs a ``reshape`` per leaf and tensor views instead
+#: of NumPy slices (measured on a PushT State of 239 leaves and a DMC Reacher State of 14 leaves).
 _FRESH_PAGES = 128 * 1024
 #: Byte alignment of each dtype's buffer inside the pinned transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
