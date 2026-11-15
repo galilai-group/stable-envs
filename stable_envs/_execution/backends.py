@@ -33,21 +33,25 @@ Measure = Callable[[str, int], tuple[Callable[[], object], Callable[[], None]]]
 
 
 def _seconds_per_step(step: Callable[[], object], device: torch.device) -> float:
-    """Return the mean seconds of one ``step()`` call after two warm-up calls, over at least 0.1 s and 5 calls."""
+    """Return the seconds of one ``step()`` call after two warm-up calls: the fastest mean of three windows of at
+    least 0.05 s and 3 calls each, so that a burst of other work on the host doesn't decide the choice."""
     sync = torch.cuda.synchronize if device.type == "cuda" else (lambda: None)
     # Steps keep torch on one thread while a native pool advances the batch; the timing does the same.
     with _threads(1):
         for _ in range(2):
             step()
         sync()
-        calls, start = 0, time.perf_counter()
-        while calls < 5 or time.perf_counter() - start < 0.1:
-            step()
-            calls += 1
-            if calls % 5 == 0:
-                sync()
-        sync()
-        return (time.perf_counter() - start) / calls
+        best = float("inf")
+        for _ in range(3):
+            calls, start = 0, time.perf_counter()
+            while calls < 3 or time.perf_counter() - start < 0.05:
+                step()
+                calls += 1
+                if calls % 5 == 0:
+                    sync()
+            sync()
+            best = min(best, (time.perf_counter() - start) / calls)
+        return best
 
 
 def time_backend(measure: Measure, backend: str, num_envs: int, device: str | torch.device) -> float:

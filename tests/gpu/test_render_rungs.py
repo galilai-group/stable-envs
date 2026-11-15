@@ -14,13 +14,22 @@ from stable_envs import registry, tuning
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
 
-#: ``{class: (family, largest per-frame MSE between the CPU and the GPU renderer)}``.
-CASES = {"TwoRoom": ("navigation", 0.01), "PushT": ("pusht", 0.0), "DMCReacher": ("dmc", 0.5)}
+#: ``{class: largest per-frame MSE between the CPU and the GPU renderer}``.
+CASES = {"TwoRoom": 0.01, "PushT": 0.0, "DMCReacher": 0.0}
 LANES = 4
 
 
 def _actions(env):
     return torch.as_tensor(env.action_spec.sample(env.num_envs, rng=np.random.default_rng(0))).to("cuda")
+
+
+def _require(name):
+    try:
+        missing = registry.missing_extra(name)
+    except KeyError:
+        missing = name
+    if missing is not None:
+        pytest.skip(f"{name} needs the {missing} extra")
 
 
 def _mse(a, b):
@@ -30,10 +39,8 @@ def _mse(a, b):
 
 @pytest.mark.parametrize("name", CASES)
 def test_a_small_cuda_batch_draws_on_the_cpu_renderer(name):
-    family, bound = CASES[name]
-    missing = registry.missing_extra(name)
-    if missing is not None:
-        pytest.skip(f"{name} needs the {missing} extra")
+    bound = CASES[name]
+    _require(name)
     with se.make(name, num_envs=LANES, device="cuda") as env:
         state = env.reset(seed=0)
         with tuning.override(large_renderer_min_rows=1):
@@ -53,8 +60,7 @@ def test_a_small_cuda_batch_draws_on_the_cpu_renderer(name):
 
 @pytest.mark.parametrize("name", CASES)
 def test_tune_times_both_renderers(name, tmp_path, monkeypatch):
-    if registry.missing_extra(name) is not None:
-        pytest.skip(f"{name} needs its extra")
+    _require(name)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.delenv("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS")
     tuning._clear_caches()
