@@ -266,9 +266,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
-                # A step whose State is returned exports it with the outputs, in one call.
-                captured = t == length - 1 or t in state_times or (t in frame_times and not draws_live)
-                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
+                # A single step returns its State: it exports the State with the outputs, in one call.
+                result = (env._step if length == 1 else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
