@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field
 from tests.helpers.reference.dmc_semantics import ReacherReference
 from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
@@ -22,6 +23,7 @@ from tests.helpers.reference.semantics import (
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    fold_for,
 )
 
 
@@ -90,8 +92,8 @@ def run_gate(device="cpu"):
                 ref.reset(seed=18)
                 reward_state = ref.get_state()
                 for i, wrapper in enumerate(ref.envs):
-                    reward_state["task", "target_pos"][i, :2] = torch.as_tensor(wrapper.info["finger_pos"])
-                env.set_state(reward_state)
+                    get_field(reward_state, "task/target_pos")[i, :2] = torch.as_tensor(wrapper.info["finger_pos"])
+                env.set_state(fold_for(env, reward_state))
                 ref.set_state(reward_state)
                 got, expected = (
                     env.step(np.zeros((batch, 2)), states=None, frames=None).exclude("valid"),
@@ -106,9 +108,9 @@ def run_gate(device="cpu"):
                 actions = np.zeros((502, batch, 2))
                 check_step_matches_reference(env, ref, actions[:499])
                 near_limit = env.get_state()
-                target_before = near_limit["task", "target_pos"].clone()
+                target_before = get_field(near_limit, "task/target_pos").clone()
                 check_step_matches_reference(env, ref, actions[499:])
-                assert not torch.equal(target_before, env.get_state()["task", "target_pos"])
+                assert not torch.equal(target_before, get_field(env.get_state(), "task/target_pos"))
                 other.reset(seed=77)
                 check_two_histories_same_state(env, other, near_limit, actions[:4])
                 evidence["cases"].append(

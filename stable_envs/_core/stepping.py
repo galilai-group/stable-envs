@@ -204,6 +204,10 @@ def _dispatch(env, actions, states, frames, state):
     if type(state) is not bool:
         raise TypeError(f"state must be a bool, got {state!r}")
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    if pipeline is None and frames is None:
+        out = _host_single_step(env, actions, states, state)
+        if out is not None:
+            return out
     if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
         return _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state)
     # Bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers or of the
@@ -276,6 +280,8 @@ def _moved_leaves(env, leaves, sequence, state_indices, final_state):
     State is packed even when the result leaves it out, so the family can read the moved State.
     """
     n = env.num_envs
+    if env.device.type == "cpu":
+        return _host_result(env, leaves, sequence, state_indices, final_state)
     ones = _HOST_TRUE.get(n)
     if ones is None:
         ones = _HOST_TRUE[n] = np.ones((n, 1), np.bool_)
@@ -302,6 +308,93 @@ def _moved_leaves(env, leaves, sequence, state_indices, final_state):
     if not final_state:
         moved = new_node({k: v for k, v in source.items() if k != "state"}, moved.batch_size, moved.device)
     return moved, live
+
+
+def _host_single_step(env, actions, states, final_state):
+    """``_step`` of one action without frames for a family with a host step (``_host_step``), or None.
+
+    The same result as ``_step`` and ``_single_step``, with fewer calls: a step of one environment costs tens of
+    microseconds, so the call path is a large part of it.
+    """
+    host_step = getattr(env, "_host_step", None)
+    if host_step is None or getattr(env, "_shared_outputs", ()):
+        return None
+    acts, sequence = _actions(env, actions)
+    if sequence:
+        if acts.shape[1] != 1:
+            return None
+        acts = acts[:, 0]
+    state_indices = _selection(states, 1, "states")
+    if torch.is_tensor(acts) and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
+        acts = acts.detach().cpu().numpy()
+    return host_step(acts, lambda leaves: _moved_leaves(env, leaves, sequence, state_indices, final_state))
+
+
+def _host_builder(keys, n, sequence, state_indices):
+    """``build(leaves)``: the step result of the host ``leaves`` (``{key path: array}`` with ``keys``) on the CPU.
+
+    Every leaf is a copy that the result owns. The leaves and nodes are those of ``pack_to_device`` in
+    ``_moved_leaves``: the State, the outputs (with a time axis for a ``sequence``), ``valid``, then the
+    ``states`` of ``state_indices`` and ``state_valid``. The builder is generated once per structure, so a call
+    runs no loop over the leaves.
+    """
+    state = [key for key in keys if key[0] == "state"]
+    outputs = [key for key in keys if key[0] != "state"]
+    width = None if state_indices is None else len(state_indices)
+    names: dict = {"F": torch.from_numpy, "N": new_node, "C": torch.device("cpu"), "T": torch.ones, "B": torch.bool}
+    names["R"] = lambda value: value.reshape(n, 1, *value.shape[1:])
+    leaves = []
+    for key in state:
+        leaves.append((key, f"F(V[K{len(names)}].copy())"))
+        names[f"K{len(names)}"] = key
+    for key in outputs:
+        copy = f"V[K{len(names)}].copy()"
+        leaves.append((key, f"F(R({copy}))" if sequence else f"F({copy})"))
+        names[f"K{len(names)}"] = key
+    leaves.append((("valid",), f"T(({n}, 1), dtype=B)"))
+    batches = {(): (n,)}
+    if sequence:
+        batches.update({key[:1]: (n, 1) for key in outputs if len(key) > 1})
+    if width is not None:
+        for key in state:
+            leaves.append((("states", *key[1:]), f"F(R(V[K{len(names)}].copy())[:, :{width}])"))
+            names[f"K{len(names)}"] = key
+        leaves.append((("state_valid",), f"T(({n}, 1), dtype=B)[:, :{width}]"))
+        batches[("states",)] = (n, width)
+    tree: dict = {}
+    for key, expression in leaves:
+        node = tree
+        for part in key[:-1]:
+            node = node.setdefault(part, {})
+        node[key[-1]] = expression
+
+    def source(node, path, batch):
+        batch = batches.get(path, batch)
+        size = f"S{len(names)}"
+        names[size] = torch.Size(batch)
+        items = ", ".join(
+            f"{name!r}: {source(c, (*path, name), batch) if type(c) is dict else c}" for name, c in node.items()
+        )
+        return f"N({{{items}}}, {size}, C)"
+
+    return eval("lambda V: " + source(tree, (), (n,)), names)  # noqa: S307 - the source holds only key literals
+
+
+def _host_result(env, leaves, sequence, state_indices, final_state):
+    """``_moved_leaves`` on the CPU: each leaf a copy that the result owns, without packing."""
+    cache = env.__dict__.setdefault("_host_builders", {})
+    plan_key = (tuple(leaves), sequence, state_indices)
+    build = cache.get(plan_key)
+    if build is None:
+        if len(cache) >= 16:
+            cache.clear()
+        build = cache[plan_key] = _host_builder(plan_key[0], env.num_envs, sequence, state_indices)
+    result = build(leaves)
+    source = result._tensordict
+    live = source["state"]
+    if not final_state:
+        result = new_node({k: v for k, v in source.items() if k != "state"}, result.batch_size, result.device)
+    return result, live
 
 
 def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):

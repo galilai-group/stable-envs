@@ -14,6 +14,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, set_field, unfold
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCAlignedReference
 from tests.helpers.reference.dmc_semantics import compare_models
 from tests.helpers.reference.saved import SWM_PIN
@@ -24,6 +25,7 @@ from tests.helpers.reference.semantics import (
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    fold_for,
     max_state_error,
 )
 
@@ -66,7 +68,8 @@ def _omission_experiments(domain, env, reference):
             for action in -actions[prefix : prefix + 9]:
                 env.step(action, states=None, frames=None).exclude("valid")
         omitted = saved.clone()
-        omitted[omitted_key] = env.get_state()[omitted_key]
+        name = "/".join(omitted_key)
+        set_field(omitted, name, get_field(env.get_state(), name))
         env.set_state(omitted)
         continuation = actions[prefix : prefix + 8]
         bad = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
@@ -184,8 +187,8 @@ def run_gate(device="cpu"):
                     for seed in (0, 17, 42):
                         check_reset_matches_reference(env, reference, seed=seed)
                         saved, live = env.get_state(), env.get_state()
-                        saved["qpos"].add_(1)
-                        saved["rng", "keys"].add_(1)
+                        get_field(saved, "qpos").add_(1)
+                        get_field(saved, "rng/keys").add_(1)
                         compare_state(env.get_state(), live)
                         actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, reference.action_dim))
                         check_state_roundtrip(env, actions=actions[:4])
@@ -220,9 +223,9 @@ def run_gate(device="cpu"):
                     boundary = np.zeros((502, batch, reference.action_dim))
                     check_step_matches_reference(env, reference, boundary[:499])
                     near_limit = env.get_state()
-                    rng_before = near_limit.select("rng").clone()
+                    rng_before = unfold(near_limit).select("rng").clone()
                     check_step_matches_reference(env, reference, boundary[499:])
-                    after = env.get_state()
+                    after = unfold(env.get_state())
                     assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, boundary[:4])
@@ -246,7 +249,7 @@ def run_gate(device="cpu"):
                         if domain in ("ball_in_cup", "finger"):
                             check_reset_matches_reference(env, reference, seed=13)
                             positive = _positive_sparse_state(domain, reference)
-                            env.set_state(positive)
+                            env.set_state(fold_for(env, positive))
                             reference.set_state(positive)
                             got = env.step(np.zeros((1, reference.action_dim)), states=None, frames=None).exclude(
                                 "valid"

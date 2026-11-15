@@ -9,6 +9,7 @@ import torch
 mjw = pytest.importorskip("mujoco_warp")
 pytest.importorskip("dm_control")
 
+from stable_envs._core.state_schema import get_field
 from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES, make_local
 from stable_envs.envs.dmcontrol.simulation.mjwarp_reset import WarpResetPool, warp_batch_fields
 from stable_envs.envs.dmcontrol.simulation.physics import LEAVES
@@ -45,9 +46,9 @@ def test_pool_matches_initial_seeded_unseeded_and_subset_resets(key):
             assert_same_state(pooled.reset(seed), native.reset(seed))
             assert_models_equal(pooled, native)
         saved = native.get_state()
-        saved["rng", "has_gauss"].fill_(True)
-        saved["rng", "cached_gaussian"][:, 0] = torch.tensor([0.125, -0.375, 0.75], dtype=torch.float64)
-        saved["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0], dtype=torch.float64)
+        get_field(saved, "rng/has_gauss").fill_(True)
+        get_field(saved, "rng/cached_gaussian")[:, 0] = torch.tensor([0.125, -0.375, 0.75], dtype=torch.float64)
+        get_field(saved, "task/cumulative_reward")[:, 0] = torch.tensor([11.0, 17.0, 23.0], dtype=torch.float64)
         pooled.set_state(saved)
         native.set_state(saved)
         assert_same_state(pooled.get_state(), native.get_state())
@@ -85,7 +86,7 @@ def test_invalid_later_row_keeps_installed_state_models_and_rng():
     ):
         before = pooled.get_state()
         bad = before.clone()
-        bad["physics", "agent", "cart_mass"][:, 0] = torch.tensor([1.25, 1.0, -1.0])
+        get_field(bad, "physics/agent/cart_mass")[:, 0] = torch.tensor([1.25, 1.0, -1.0])
         with pytest.raises(ValueError):
             pooled.set_state(bad)
         assert_same_state(pooled.get_state(), before)

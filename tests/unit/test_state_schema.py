@@ -48,6 +48,31 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
             ),
         ],
     ),
+    "dmcontrol": (
+        tuple(
+            f"dmc_{key}"
+            for key in (
+                "acrobot",
+                "ball_in_cup",
+                "cartpole",
+                "cartpole_balance",
+                "cheetah",
+                "finger",
+                "finger_spin",
+                "finger_turn_easy",
+                "hopper",
+                "humanoid",
+                "manipulator",
+                "pendulum",
+                "point_mass_easy",
+                "quadruped",
+                "reacher",
+                "swimmer_swimmer6",
+                "walker",
+            )
+        ),
+        [*sorted((ROOT / "tests").rglob("*dmc_*.py")), *sorted((ROOT / "tests").rglob("*reacher*.py"))],
+    ),
 }
 
 FIELDS = [

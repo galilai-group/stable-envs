@@ -1053,12 +1053,13 @@ class Env:
         if layout is None:
             return
         from ._core.physics import state_key
+        from ._core.state_schema import get_field
 
         values = self._style.values.clone()
         cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
         rows = np.empty((self.B, int(sum(layout.widths))))
         for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
-            v = state[state_key(leaf)].detach().to(torch.float64).cpu().reshape(self.B, width)
+            v = get_field(state, "/".join(state_key(leaf))).detach().to(torch.float64).cpu().reshape(self.B, width)
             rows[:, off : off + width] = v.numpy()
             o, _ = cols[leaf]
             values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
