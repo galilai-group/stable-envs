@@ -548,6 +548,12 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 columns["physics", name] = self.physics.data(field).to(torch.float64)
         return self._layout.export(columns, self.device)
 
+    def render_columns(self):
+        from .render_state import projected_keys
+
+        state = self.get_state()
+        return {key: state[key].detach().cpu().numpy() for key in projected_keys(self.family)}
+
     def configure(self, values):
         self._check_open()
         self._push()
