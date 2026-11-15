@@ -76,11 +76,14 @@ def test_selection_times_nothing_and_tune_calibrates_and_caches(monkeypatch):
     assert calls == [("large", 2), ("small", 1), ("small", 2)]
     calls.clear()
     assert _select(3, measure=measure) == "small"
+    assert calls == []
     # From a large batch, the search stops once the small-batch backend is slower.
     assert backends.calibrate(64, "cuda") == {"test-sim": "large"}
     assert calls == [("large", 64), ("small", 1), ("small", 2), ("small", 4), ("small", 8)]
+    calls.clear()
     # A larger range follows a smaller range that chose the large-batch backend.
     assert _select(1024, measure=measure) == "large"
+    assert calls == []
     data, current = tuning.read_cache("cuda")
     assert current
     assert data["entries"]["test-sim|0|2-3"] == {backends.KNOB: 4}

@@ -365,6 +365,9 @@ class Env:
     default_size: int = 96
     #: The only ``size`` the class draws, which is the size the source library draws; None draws any size.
     native_size: int | None = None
+    #: ``/``-joined State key prefixes of solver caches, such as contact warm starts, that each simulation backend
+    #: writes its own way: they seed the next solve and are not part of the comparable physical state.
+    state_solver_caches: tuple[str, ...] = ()
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()

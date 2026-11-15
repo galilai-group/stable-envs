@@ -238,3 +238,25 @@ def test_dmc_batch_threads_use_the_value_tuned_for_their_batch_range(monkeypatch
     tuning.write_cache({tuning.entry_key("dmc-sim", 0, 1024): {"dmc_threads": 16}}, "cpu")
     assert dmc_factory.make_batch("cartpole", 1024) == 16
     assert dmc_factory.make_batch("cartpole", 512) == 8
+
+
+@pytest.mark.family("dmc")
+def test_dmc_shipped_switch_points_name_simulators_and_positive_batches():
+    from stable_envs.envs.dmcontrol.simulation.execution import CUDA_MIN_ENVS
+    from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES
+
+    assert set(CUDA_MIN_ENVS) <= set(FACTORIES)
+    assert all(isinstance(v, int) and not isinstance(v, bool) and v >= 1 for v in CUDA_MIN_ENVS.values())
+
+
+@pytest.mark.family("dmc")
+def test_untuned_dmc_selection_uses_the_shipped_switch_point(monkeypatch, tmp_path):
+    from stable_envs.envs.dmcontrol.simulation import execution
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning._clear_caches()
+    switch = execution.CUDA_MIN_ENVS["reacher"]
+    assert execution.dmc_backend("reacher", switch - 1, "cuda") == "native"
+    assert execution.dmc_backend("reacher", switch, "cuda") == "mjwarp"
+    assert execution.dmc_backend("reacher", switch, "cpu") == "native"

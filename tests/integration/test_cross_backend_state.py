@@ -29,11 +29,8 @@ PROFILES = {
     "roadster": "roadster",
     "craftax": "craftax",
 }
+#: The step tolerance of the backend parity check, scaled per leaf to the magnitude of its values.
 STEP_ATOL = 1e-3
-#: A State from a float64 backend resumes in float32, so values carry a relative rounding error that contacts grow.
-STEP_RTOL = 1e-2
-#: Solver warm-start caches: each solver writes its own, and they don't change the next State beyond the tolerance.
-SOLVER_CACHES = ("warmstart",)
 
 
 def _cases():
@@ -94,8 +91,8 @@ def test_state_resumes_on_another_backend_or_is_refused(name, device, saved, loa
                 got,
                 want,
                 atol=STEP_ATOL,
-                rtol=STEP_RTOL,
-                exclude=SOLVER_CACHES,
+                scaled=True,
+                exclude=type(source).state_solver_caches,
                 what=f"{name} {saved} State on {loaded}, step {t}",
             )
     finally:

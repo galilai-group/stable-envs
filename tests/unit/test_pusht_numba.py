@@ -36,6 +36,11 @@ def test_backend_routing(monkeypatch):
         pusht_backend(1, "cpu", "triton")
     with pytest.raises(ValueError, match="simulation_backend"):
         pusht_backend(1, "cpu", "pymunk")
+    # Untuned, CUDA batches step on the GPU from one environment.
+    from stable_envs.envs.pusht.simulation.execution import CUDA_MIN_ENVS
+
+    assert CUDA_MIN_ENVS is None
+    assert pusht_backend(1, "cuda") == "triton"
     # Without Triton, CUDA physics runs in JAX.
     monkeypatch.setattr(raster, "HAVE_TRITON", False)
     with tuning.override(large_backend_min_envs=4):

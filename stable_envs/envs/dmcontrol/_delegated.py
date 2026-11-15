@@ -18,6 +18,7 @@ class DelegatedSemantics:
 
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    state_solver_caches = ("warmstart",)
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0
     execution_mode = "AUTO_NATIVE_MJWARP"
