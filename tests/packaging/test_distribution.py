@@ -89,7 +89,7 @@ def test_mkdocs_yaml_is_canonical() -> None:
     cfg = yaml.safe_load(canonical.read_text())
     assert cfg["site_name"] == "stable-envs"
     assert cfg["site_url"] == "https://galilai-group.github.io/stable-envs/"
-    assert cfg["theme"]["name"] == "material"
+    assert cfg["theme"]["name"] == "shadcn"
     assert "nav" in cfg
     assert not (ROOT / "mkdocs.yml").exists()
 
