@@ -22,7 +22,7 @@ This is a control sandbox with no task reward. The action has 100 values in `[0,
 
 ## Simulation
 
-The [state](../terms.md#state) holds `qpos` (36 values), `qvel` (36), the muscle activations `act` (100), `time` and the solver's `warmstart` (36), all in float32.
+The [state](../terms.md#state) holds `qpos` (36 values), `qvel` (36), the muscle activations `act` (100), `time` and the solver's `warmstart` (36), all in float32. They are fields of one tensor, `mshuman.float32`. Read a field by name with `snv.get_field(state, "qpos")`.
 
 `simulation_backend` picks the physics when you construct the environment:
 

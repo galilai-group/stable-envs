@@ -6,6 +6,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from stable_envs import get_field
+from stable_envs._core.state_schema import unfold
+from stable_envs.envs.ogbench.simulation.maze import maze_schema
+
 
 def _uint128_bytes(value: int) -> np.ndarray:
     return np.frombuffer(int(value).to_bytes(16, "little"), dtype=np.uint8).copy()
@@ -28,10 +32,13 @@ def _body(model, qpos, qvel):
 
 
 def _qpos_qvel(row):
-    if "orientation" not in row["root"].keys():
-        return row["root", "position"].numpy(), row["root", "velocity"].numpy()
-    qpos = np.concatenate([row["root", "position"], row["root", "orientation"], row["joints", "position"]])
-    return qpos, np.concatenate([row["root", "velocity"], row["joints", "velocity"]])
+    def field(name):
+        return get_field(row, name).numpy()
+
+    if "orientation" not in unfold(row)["root"].keys():
+        return field("root.position"), field("root.velocity")
+    qpos = np.concatenate([field("root.position"), field("root.orientation"), field("joints.position")])
+    return qpos, np.concatenate([field("root.velocity"), field("joints.velocity")])
 
 
 class _Official:
@@ -63,6 +70,7 @@ class OGBMazeReference:
     ):
         self.num_envs = int(num_envs)
         self.options = options
+        self.loco = loco
         if source == "swm":
             from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
 
@@ -137,37 +145,41 @@ class OGBMazeReference:
                     batch_size=[],
                 )
             )
-        return torch.stack(rows)
+        return maze_schema(self.loco).fold(torch.stack(rows), [self.num_envs])
 
     def set_state(self, state):
         import mujoco
 
-        for i, (wrapper, row) in enumerate(zip(self.envs, state.cpu().unbind(0), strict=True)):
+        for i, (wrapper, row) in enumerate(zip(self.envs, unfold(state.cpu()).unbind(0), strict=True)):
             env = wrapper.env
-            env.model.geom("target").pos[:] = row["task", "goal_pos"].numpy()
-            env.cur_goal_xy = row["task", "goal_pos"][:2].numpy().copy()
-            task_id = row["task", "id"].item()
+
+            def field(name, row=row):
+                return get_field(row, name)
+
+            env.model.geom("target").pos[:] = field("task.goal_pos").numpy()
+            env.cur_goal_xy = field("task.goal_pos")[:2].numpy().copy()
+            task_id = field("task.id").item()
             env.cur_task_id = task_id or None
             env.cur_task_info = None if task_id == 0 else env.task_infos[task_id - 1]
             wrapper.set_state(*_qpos_qvel(row))
-            env.data.time = row["simulator", "time"].item()
+            env.data.time = field("simulator.time").item()
             mujoco.mj_forward(env.model, env.data)
-            env.data.qacc_warmstart[:] = row["simulator", "warmstart"].numpy()
+            env.data.qacc_warmstart[:] = field("simulator.warmstart").numpy()
             env.np_random.bit_generator.state = {
                 "bit_generator": "PCG64",
                 "state": {
-                    "state": _bytes_uint128(row["rng", "env_state"]),
-                    "inc": _bytes_uint128(row["rng", "env_inc"]),
+                    "state": _bytes_uint128(field("rng.env_state")),
+                    "inc": _bytes_uint128(field("rng.env_inc")),
                 },
-                "has_uint32": row["rng", "env_has_uint32"].item(),
-                "uinteger": row["rng", "env_uinteger"].item(),
+                "has_uint32": field("rng.env_has_uint32").item(),
+                "uinteger": field("rng.env_uinteger").item(),
             }
             self._global_rng[i] = (
                 "MT19937",
-                row["rng", "global_keys"].numpy().astype(np.uint32),
-                row["rng", "global_position"].item(),
-                int(row["rng", "global_has_gauss"].item()),
-                row["rng", "global_cached_gaussian"].item(),
+                field("rng.global_keys").numpy().astype(np.uint32),
+                field("rng.global_position").item(),
+                int(field("rng.global_has_gauss").item()),
+                field("rng.global_cached_gaussian").item(),
             )
 
     def step(self, actions):

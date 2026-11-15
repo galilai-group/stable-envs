@@ -21,6 +21,7 @@ def _step_without_pixels(env, action):
 
 def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict:
     """Compare every leaf, including RNG/lifecycle fields, with explicit error evidence."""
+    actual, expected = unfold(actual), unfold(expected)
     ak = set(actual.keys(True, True))
     ek = set(expected.keys(True, True))
     assert ak == ek, f"State keys differ: {ak ^ ek}"

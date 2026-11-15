@@ -87,10 +87,12 @@ def test_environments_that_end_within_an_action_continue_as_the_source():
             for i, src in enumerate(sources):
                 reward, terminated, _, _ = src.step(actions[i])
                 ended[i] |= terminated
-                np.testing.assert_array_equal(state["sim", "qpos"][i].numpy(), src.data.qpos, err_msg=str(t))
-                np.testing.assert_array_equal(state["weather", "gust"][i].numpy(), src.sim.weather.gust)
+                np.testing.assert_array_equal(
+                    snv.get_field(state, "sim/qpos")[i].numpy(), src.data.qpos, err_msg=str(t)
+                )
+                np.testing.assert_array_equal(snv.get_field(state, "weather/gust")[i].numpy(), src.sim.weather.gust)
                 rng_state = src.sim.weather._wind_rng.bit_generator.state["state"]["state"]
-                assert _from_limbs(state["weather", "rng_state"][i].numpy()) == rng_state
+                assert _from_limbs(snv.get_field(state, "weather/rng_state")[i].numpy()) == rng_state
                 assert out["reward"][i].item() == reward and out["terminated"][i].item() == terminated
         assert ended[0], "the windy environment should crash under random commands"
     finally:

@@ -120,7 +120,7 @@ def _replay(adapter, actions):
     qpos, success = [], None
     for step in range(actions.shape[1]):
         out = adapter.step(actions[:, step])
-        qpos.append(out["state"]["qpos"].cpu().numpy())
+        qpos.append(snv.get_field(out["state"], "qpos").cpu().numpy())
         success = out["success"].cpu().numpy()
     return np.stack(qpos, 1), success
 
@@ -129,7 +129,7 @@ def _closed_loop(adapter, task, steps):
     """The controller closed loop on ``adapter``, from its sites; returns the final success per environment."""
     t = adapter.task
     adapter.reset(seed=0)
-    goal = adapter.get_state()["goal"].cpu().numpy()
+    goal = snv.get_field(adapter.get_state(), "goal").cpu().numpy()
     phase, count = np.zeros(adapter.num_envs, int), np.zeros(adapter.num_envs, int)
     for _ in range(steps):
         sites = adapter._site_xpos
@@ -199,17 +199,19 @@ def test_mjwarp_resets_masks_and_routing():
         reference = FetchBatchAdapter(6, seed=3, task="PickAndPlace")
         # Resets draw the same starts and goals as the CPU batch, up to float32 storage.
         expected = reference.get_state()
-        for key in ("goal", ("task", "initial_gripper_xpos"), ("rng", "state_words")):
-            assert torch.equal(start[key].cpu(), expected[key])
-        assert torch.allclose(start["qpos"].cpu(), expected["qpos"], atol=1e-6)
+        for name in ("goal", "task/initial_gripper_xpos", "rng/state_words"):
+            assert torch.equal(snv.get_field(start, name).cpu(), snv.get_field(expected, name))
+        assert torch.allclose(snv.get_field(start, "qpos").cpu(), snv.get_field(expected, "qpos"), atol=1e-6)
         reference.close()
         actions = torch.rand(6, 4, device="cuda") * 2 - 1
         active = torch.tensor([True, False, True, False, True, True], device="cuda")
         out = adapter.step(actions, active=active)
         held = ~active.cpu()
-        for key in ("qpos", "qvel", ("controller", "position"), ("lifecycle", "elapsed_steps")):
-            assert torch.equal(out["state"][key].cpu()[held], start[key].cpu()[held]), key
-        assert out["state"]["lifecycle", "elapsed_steps"].cpu()[~held].eq(1).all()
+        for name in ("qpos", "qvel", "controller/position", "lifecycle/elapsed_steps"):
+            assert torch.equal(
+                snv.get_field(out["state"], name).cpu()[held], snv.get_field(start, name).cpu()[held]
+            ), name
+        assert snv.get_field(out["state"], "lifecycle/elapsed_steps").cpu()[~held].eq(1).all()
     finally:
         adapter.close()
     with tuning.override(large_backend_min_envs=2), snv.make("FetchReach", num_envs=2, device="cuda") as env:
@@ -219,4 +221,4 @@ def test_mjwarp_resets_masks_and_routing():
     with env:
         assert env.simulation_backend == "native"
         out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
-        assert out["state"]["qpos"].device.type == "cuda" and out["reward"].device.type == "cuda"
+        assert snv.get_field(out["state"], "qpos").device.type == "cuda" and out["reward"].device.type == "cuda"

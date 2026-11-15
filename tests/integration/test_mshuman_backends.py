@@ -140,9 +140,10 @@ def test_state_and_step_outputs_are_float32_on_the_env_device(device):
     with _make(device=device) as env:
         assert env.action_spec.dtype == torch.float32
         for state in (env.reset(seed=SEED), env.get_state()):
-            assert set(state.keys()) == set(FIELDS)
+            assert se.schema_of(state) is not None and len(list(state.keys(True, True))) == 1
             for key in FIELDS:
-                assert state[key].dtype == torch.float32 and state[key].device.type == env.device.type, key
+                value = se.get_field(state, key)
+                assert value.dtype == torch.float32 and value.device.type == env.device.type, key
         out = env.step(_actions(env, steps=1)[0], frames=None)
         for key, value in out.items(True, True):
             assert value.dtype in (torch.float32, torch.bool), (key, value.dtype)
@@ -150,10 +151,12 @@ def test_state_and_step_outputs_are_float32_on_the_env_device(device):
 
 
 @pytest.mark.parametrize("device", DEVICES)
-def test_action_and_state_dtypes_are_cast_at_the_boundary(device):
+def test_action_dtypes_are_cast_and_state_dtypes_are_checked_at_the_boundary(device):
     with _make(device=device) as env:
         start = env.reset()
-        env.set_state(start.apply(lambda v: v.double()))
+        with pytest.raises(ValueError, match="float32"):
+            env.set_state(start.apply(lambda v: v.double()))
+        env.set_state(start)
         assert_same_state(env.get_state(), start)
         if device != "cpu":
             return
@@ -180,7 +183,7 @@ def test_native_batch_matches_single_env_mujoco_with_float32_rounding_bit_for_bi
         for action, want in zip(actions, _single_env_rollout(actions)):
             state = env.step(action, frames=None)["state"]
             for key in FIELDS:
-                assert torch.equal(state[key], want[key].to(torch.float32)), key
+                assert torch.equal(se.get_field(state, key), want[key].to(torch.float32)), key
 
 
 def test_native_batch_results_do_not_depend_on_the_thread_count(monkeypatch):
@@ -205,7 +208,7 @@ def test_reset_is_deterministic(device):
         for action in _actions(env, steps=3):
             env.step(action, frames=None)
         assert_same_state(env.reset(seed=SEED), first)
-        assert torch.equal(first["time"], torch.zeros_like(first["time"]))
+        assert torch.equal(se.get_field(first, "time"), torch.zeros_like(se.get_field(first, "time")))
 
 
 @pytest.mark.parametrize("device", DEVICES)
@@ -256,7 +259,7 @@ def test_a_diverging_lane_raises_until_the_state_is_restored(tmp_path, monkeypat
             start = env.reset()
             action = _actions(env, steps=1)[0]
             bad = start.clone()
-            bad["qvel"][1] = 1e12
+            se.get_field(bad, "qvel")[1] = 1e12
             env.set_state(bad)
             for _ in range(2):
                 with pytest.raises(RuntimeError, match=r"Physics state is invalid in lanes \[1\]"):

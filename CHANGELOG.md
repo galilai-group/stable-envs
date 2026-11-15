@@ -9,6 +9,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
 - The `mjwarp_min_envs` argument of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes is removed, with the `MJWARP_MIN_ENVS` and `MAZE_MJWARP_MIN_ENVS` constants. Their default `simulation_backend` is `"auto"`, which uses the `large_backend_min_envs` switch; `"default"` is no longer accepted. The internal `mjbatch.resolve_backend` is replaced by `mjbatch.mujoco_backend`.
+- The state of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes has one tensor for each group of fields instead of one tensor for each field. Read and write a field by name with `stable_envs.get_field(state, name)` and `stable_envs.set_field(state, name, value)`. `state_spec` and `describe()` list the groups.
 
 ### Added
 

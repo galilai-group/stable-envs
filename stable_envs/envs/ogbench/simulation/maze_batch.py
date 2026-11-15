@@ -12,7 +12,17 @@ from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
-from .maze import _REST_CLEARANCE, BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
+from .maze import (
+    _REST_CLEARANCE,
+    BODIES,
+    _make_maze,
+    _rest_walls,
+    decode_state,
+    group_path,
+    maze_schema,
+    numpy_dtype,
+    tree,
+)
 from .pcg import uint128_bytes
 
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
@@ -168,11 +178,10 @@ class MazeRandom:
         self.num_envs = num_envs
         self.pcg = [np.random.Generator(np.random.PCG64(0)) for _ in range(num_envs)]
         self.mt = LegacyMT(num_envs)
-        fields = maze_fields("point")
         self.columns = {
-            key: np.zeros((num_envs, width), dtype=np.dtype(str(dtype).removeprefix("torch.")))
-            for key, (width, dtype) in fields.items()
-            if key[0] == "rng"
+            name: np.zeros((num_envs, *where.shape), dtype=numpy_dtype(where.dtype))
+            for name, where in maze_schema("point").slices.items()
+            if name.startswith("rng/")
         }
 
     def seed(self, ids, seed):
@@ -185,18 +194,18 @@ class MazeRandom:
         c = self.columns
         for i in ids:
             pcg = self.pcg[i].bit_generator.state
-            c["rng", "env_state"][i] = uint128_bytes(pcg["state"]["state"])
-            c["rng", "env_inc"][i] = uint128_bytes(pcg["state"]["inc"])
-            c["rng", "env_has_uint32"][i] = pcg["has_uint32"]
-            c["rng", "env_uinteger"][i] = pcg["uinteger"]
+            c["rng/env_state"][i] = uint128_bytes(pcg["state"]["state"])
+            c["rng/env_inc"][i] = uint128_bytes(pcg["state"]["inc"])
+            c["rng/env_has_uint32"][i] = pcg["has_uint32"]
+            c["rng/env_uinteger"][i] = pcg["uinteger"]
         self.sync_legacy(ids)
 
     def sync_legacy(self, ids):
         c, mt = self.columns, self.mt
-        c["rng", "global_keys"][ids] = mt.key[ids]
-        c["rng", "global_position"][ids, 0] = mt.pos[ids]
-        c["rng", "global_has_gauss"][ids, 0] = mt.has_gauss[ids]
-        c["rng", "global_cached_gaussian"][ids, 0] = mt.gauss[ids]
+        c["rng/global_keys"][ids] = mt.key[ids]
+        c["rng/global_position"][ids, 0] = mt.pos[ids]
+        c["rng/global_has_gauss"][ids, 0] = mt.has_gauss[ids]
+        c["rng/global_cached_gaussian"][ids, 0] = mt.gauss[ids]
 
     def load(self, decoded):
         """Install generators decoded from State by ``decode_state``."""
@@ -385,7 +394,7 @@ class _MazeLanes(SimulatorAdapter):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
         self.loco, self.maze = loco, maze
-        self.fields = maze_fields(loco)
+        self.schema = maze_schema(loco)
         self._qpos, self._qvel, self.action_dim = BODIES[loco]
         self.task = MazeTask(loco, maze) if task is None else task
         self._random = MazeRandom(self.num_envs)
@@ -416,12 +425,12 @@ class _MazeLanes(SimulatorAdapter):
                 start += width
         return out
 
-    def _join(self, host, fields):
-        return np.concatenate([host[key].numpy() for key, _ in fields], 1)
+    def _join(self, v, fields):
+        return np.concatenate([v[name] for name, _ in fields], 1)
 
     def validate(self, state):
         self._check_open()
-        return decode_state(state, self.num_envs, self.fields, self.task.num_tasks)
+        return decode_state(state, self.num_envs, self.schema, self.task.num_tasks)
 
     def check_step(self, actions, active):
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
@@ -476,18 +485,20 @@ class OGBMazeBatchAdapter(_MazeLanes):
         return self.get_state()
 
     def _state_columns(self):
+        """The State groups, packed from the live arrays into new arrays."""
         b = self._live
-        return {
+        values = {
             **self._split(b.qpos, b.qvel),
-            ("simulator", "time"): b.time[:, None],
-            ("simulator", "warmstart"): b.qacc_warmstart,
-            ("task", "goal_pos"): self._goal,
-            ("task", "id"): self._task_id,
+            "simulator/time": b.time[:, None],
+            "simulator/warmstart": b.qacc_warmstart,
+            "task/goal_pos": self._goal,
+            "task/id": self._task_id,
             **self._random.columns,
         }
+        return {group_path(key): value for key, value in self.schema.pack(values).items()}
 
-    def _export(self, values, name):
-        """A TensorDict that owns copies of ``values``, on the env device.
+    def _export(self, values, name, owned=()):
+        """A TensorDict that owns copies of ``values``, on the env device; ``owned`` values are new arrays already.
 
         On CPU each leaf is copied on its own, which costs less than packing at these sizes. On an accelerator the
         values are packed into one buffer per dtype and move in one copy.
@@ -499,7 +510,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
                 node = tree
                 for part in path:
                     node = node.setdefault(part, {})
-                node[leaf] = torch.from_numpy(np.array(value))
+                node[leaf] = torch.from_numpy(value if key in owned else np.array(value))
             return build_tensordict(tree, [self.num_envs], self.device)
         layout = self._layouts.get(name)
         if layout is None:
@@ -511,20 +522,21 @@ class OGBMazeBatchAdapter(_MazeLanes):
 
     def get_state(self):
         self._check_open()
-        return self._export(self._state_columns(), "state")
+        columns = self._state_columns()
+        return self._export(columns, "state", owned=columns)
 
     def set_state(self, state):
-        host, decoded = self.validate(state)
+        v, decoded = self.validate(state)
         self.sim.set_physics(
             {
-                "qpos": self._join(host, self._qpos),
-                "qvel": self._join(host, self._qvel),
-                "time": host["simulator", "time"].numpy()[:, 0],
-                "qacc_warmstart": host["simulator", "warmstart"].numpy(),
+                "qpos": self._join(v, self._qpos),
+                "qvel": self._join(v, self._qvel),
+                "time": v["simulator/time"][:, 0],
+                "qacc_warmstart": v["simulator/warmstart"],
             }
         )
-        self._goal[:] = host["task", "goal_pos"].numpy()
-        self._task_id[:] = host["task", "id"].numpy()
+        self._goal[:] = v["task/goal_pos"]
+        self._task_id[:] = v["task/id"]
         self._random.load(decoded)
         self._last = None
 
@@ -596,10 +608,12 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._last = values
         result = {key: values[key] for key in values if key not in INFO_KEYS}
         result.update({("info", key): values[key] for key in INFO_KEYS})
+        owned = set()
         if capture_state:
             for key, value in self._state_columns().items():
-                result[("state", *((key,) if isinstance(key, str) else key))] = value
-        return self._export(result, "step+state" if capture_state else "step")
+                result[("state", *key)] = value
+                owned.add(("state", *key))
+        return self._export(result, "step+state" if capture_state else "step", owned)
 
     def close(self):
         if not self._closed:
@@ -650,7 +664,8 @@ class OGBMazeWarpAdapter(_MazeLanes):
             self._applied = np.zeros(self.num_envs, np.int64)
             self._steps_since_refill = 0
         self._rng_columns = {}
-        self._state_layout = None
+        self._state_layout = self._group_layout()
+        self._field_columns = [(w.group, w.start, w.stop) for w in self.schema.slices.values()]
         self._last = None
         self.reset(seed=seed)
 
@@ -714,30 +729,30 @@ class OGBMazeWarpAdapter(_MazeLanes):
         d = self.sim.data
         columns = {
             **self._split(self._qpos_v, self._qvel_v),
-            ("simulator", "time"): d("time")[:, None],
-            ("simulator", "warmstart"): d("qacc_warmstart"),
-            ("task", "goal_pos"): self._goal,
-            ("task", "id"): self._task_id,
+            "simulator/time": d("time")[:, None],
+            "simulator/warmstart": d("qacc_warmstart"),
+            "task/goal_pos": self._goal,
+            "task/id": self._task_id,
             **self._rng_columns,
         }
-        if self._state_layout is None:
-            self._state_layout = self._layout(columns)
         buffer = torch.empty(self._state_layout[1], dtype=torch.uint8, device=self.device)
-        views = self._state_views(buffer)
-        torch._foreach_copy_(list(views.values()), list(columns.values()))
-        return build_tensordict(tree(views), [self.num_envs], self.device)
+        groups = self._state_views(buffer)
+        torch._foreach_copy_(
+            [groups[key][:, start:stop] for key, start, stop in self._field_columns],
+            [columns[name] for name in self.schema.slices],
+        )
+        return build_tensordict(tree(groups), [self.num_envs], self.device)
 
-    def _layout(self, columns):
-        """Each State leaf's element offset in one byte buffer, and the buffer size; leaves start at 8-byte bounds."""
+    def _group_layout(self):
+        """Each State group's element offset in one byte buffer, and the buffer size; groups start at 8-byte bounds."""
         layout, offset = [], 0
-        for key in columns:
-            width, dtype = self.fields[key]
-            layout.append((key, dtype, width, offset // dtype.itemsize))
-            offset += -(-self.num_envs * width * dtype.itemsize // 8) * 8
+        for key, group in self.schema.groups.items():
+            layout.append((key, group.dtype, group.size, offset // group.dtype.itemsize))
+            offset += -(-self.num_envs * group.size * group.dtype.itemsize // 8) * 8
         return layout, offset
 
     def _state_views(self, buffer, steps=None):
-        """Views of every State leaf in one State buffer, or in ``steps`` State buffers stacked in time."""
+        """Views of every State group in one State buffer, or in ``steps`` State buffers stacked in time."""
         layout, nbytes = self._state_layout
         n, flats, out = self.num_envs, {}, {}
         for key, dtype, width, start in layout:
@@ -752,12 +767,10 @@ class OGBMazeWarpAdapter(_MazeLanes):
 
     def stack_states(self, states):
         """Stack States of this adapter along a new time axis with one copy; None for other States."""
-        if self._state_layout is None:
-            return None
         layout, nbytes = self._state_layout
         buffers = []
         for state in states:
-            storage = state[layout[0][0]].untyped_storage()
+            storage = state[group_path(layout[0][0])].untyped_storage()
             if storage.nbytes() != nbytes or storage.device.type != self.device.type:
                 return None
             buffers.append(torch.empty(0, dtype=torch.uint8, device=self.device).set_(storage))
@@ -765,17 +778,17 @@ class OGBMazeWarpAdapter(_MazeLanes):
         return build_tensordict(tree(views), [self.num_envs, len(buffers)], self.device)
 
     def set_state(self, state):
-        host, decoded = self.validate(state)
+        v, decoded = self.validate(state)
         self.sim.set_physics(
             {
-                "qpos": torch.from_numpy(self._join(host, self._qpos)),
-                "qvel": torch.from_numpy(self._join(host, self._qvel)),
-                "time": host["simulator", "time"][:, 0],
-                "qacc_warmstart": host["simulator", "warmstart"],
+                "qpos": torch.from_numpy(self._join(v, self._qpos)),
+                "qvel": torch.from_numpy(self._join(v, self._qvel)),
+                "time": torch.from_numpy(v["simulator/time"][:, 0]),
+                "qacc_warmstart": torch.from_numpy(v["simulator/warmstart"]),
             }
         )
-        self._goal.copy_(host["task", "goal_pos"])
-        self._task_id.copy_(host["task", "id"])
+        self._goal.copy_(torch.from_numpy(v["task/goal_pos"]))
+        self._task_id.copy_(torch.from_numpy(v["task/id"]))
         self._random.load(decoded)
         self._upload_rng()
         self._last = None

@@ -7,6 +7,7 @@ import torch
 pytest.importorskip("ogbench")
 pytest.importorskip("mujoco.batch")
 
+from stable_envs import get_field, set_field
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from stable_envs.envs.ogbench.simulation.maze_batch import OGBMazeBatchAdapter
 from tests.helpers.reference.semantics import assert_same_state
@@ -67,15 +68,15 @@ def test_teleport_lanes_teleport_as_the_source_does():
         state = batch.get_state()
         centre = torch.tensor(batch.task.teleport["teleport_in_xys"][0], dtype=torch.float64)
         offsets = torch.tensor([[0.0, 0.0], [1.0, 0.0], [1.1, 1.1], [-1.1, -1.1]], dtype=torch.float64)
-        state["root", "position"] = centre + offsets
+        set_field(state, "root/position", centre + offsets)
         for adapter in (batch, source):
             adapter.set_state(state)
         zero = np.zeros((lanes, 2), np.float32)
         out = batch.step(zero)
         assert_same_state(out, source.step(zero))
-        moved = (out["state"]["root", "position"] - state["root", "position"]).abs().sum(-1) > 0.5
+        moved = (get_field(out["state"], "root/position") - get_field(state, "root/position")).abs().sum(-1) > 0.5
         assert moved.tolist() == [True, True, False, False]
-        drew = (out["state"]["rng", "global_position"] != state["rng", "global_position"]).reshape(-1)
+        drew = (get_field(out["state"], "rng/global_position") != get_field(state, "rng/global_position")).reshape(-1)
         assert drew.tolist() == [True, True, False, False]
     finally:
         batch.close()

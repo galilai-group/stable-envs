@@ -29,7 +29,7 @@ Each maze class name has three parts:
 
 ## Simulation
 
-The maze [state](../terms.md#state) holds the joint positions (`qpos`) and velocities of the body.
+The maze [state](../terms.md#state) holds the joint positions and velocities of the body, the clock and the solver warm start, the task and goal, and the generators. It has one tensor for each group: `maze.physics.float64` changes on every step, and `maze.host.float64`, `maze.host.int64`, `maze.host.uint8` and `maze.host.bool` change only at reset, restore and teleport. The fields are `root.position`, `root.orientation` and `joints.position` (the point body has only `root.position`), `root.velocity`, `joints.velocity`, `simulator.time`, `simulator.warmstart`, `task.goal_pos`, `task.id` and `rng.*`. Read a field by name with `snv.get_field(state, "root.position")`.
 
 ### Maze physics
 

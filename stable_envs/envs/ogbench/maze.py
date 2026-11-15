@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import math
 
 import numpy as np
 import torch
@@ -21,7 +22,7 @@ from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter, maze_backend, maze_path
-from .simulation.maze import BODIES, maze_fields
+from .simulation.maze import BODIES, PHYSICS, group_path, maze_schema
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -1421,33 +1422,67 @@ class MazeSemantics:
     def _draws_goal(self):
         return getattr(self, "RENDER_OB_TYPE", "pixels") == "states"
 
+    @property
+    def _schema(self):
+        return maze_schema(self.LOCO)
+
     def _layout(self):
         offsets, start = {}, 0
-        for key, width in self._qpos_fields:
-            offsets[key] = start
+        for name, width in self._qpos_fields:
+            offsets[name] = start
             start += width
         if self._draws_goal():
-            offsets[("task", "goal_pos")] = start
-        return tuple((key, width, offsets.get(key)) for key, (width, _) in maze_fields(self.LOCO).items())
+            offsets["task/goal_pos"] = start
+        return tuple(
+            (tuple(name.split("/")), math.prod(where.shape), offsets.get(name))
+            for name, where in self._schema.slices.items()
+        )
 
     def _layout_dtypes(self):
-        return {key: dtype for key, (_, dtype) in maze_fields(self.LOCO).items()}
+        return {tuple(name.split("/")): where.dtype for name, where in self._schema.slices.items()}
 
     def _render_fields(self):
-        return self._qpos_fields + (((("task", "goal_pos"), 3),) if self._draws_goal() else ())
+        return self._qpos_fields + ((("task/goal_pos", 3),) if self._draws_goal() else ())
 
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
             raise TypeError("Expected full OGBMaze State")
-        return torch.cat([state[key] for key, _ in self._render_fields()], dim=-1).to(self.device, torch.float32)
+        names = [name for name, _ in self._render_fields()]
+        if state.get(group_path(PHYSICS), None) is None:
+            values = [state[tuple(name.split("/"))] for name in names]
+        else:
+            views = self._schema.views(state, names)
+            values = [views[name] for name in names]
+        return torch.cat(values, dim=-1).to(self.device, torch.float32)
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
         out, start = {}, 0
-        for key, width in self._render_fields():
-            out[key] = rows[:, start : start + width].clone()
+        for name, width in self._render_fields():
+            out[tuple(name.split("/"))] = rows[:, start : start + width].clone()
             start += width
         return TensorDict(out, [len(rows)], device=self.device)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self._schema.validate(state, finite=True)
+
+    def _validate_render_state(self, state):
+        if not isinstance(state, TensorDict) or len(state.batch_size) != 1:
+            raise ValueError(f"Expected State batch [N], got {list(getattr(state, 'batch_size', []))}")
+        self._schema.validate(state)
+        names = [name for name, _ in self._render_fields()]
+        drawn = self._schema.views(state, names)
+        if not bool(torch.stack([torch.isfinite(v).all() for v in drawn.values()]).all()):
+            bad = next(name for name, v in drawn.items() if not torch.isfinite(v).all())
+            raise ValueError(f"State field {bad.replace('/', '.')} contains non-finite values")
+
+    @property
+    def state_spec(self):
+        return self._schema.spec(self.device)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")

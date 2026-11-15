@@ -23,6 +23,7 @@ pytestmark = pytest.mark.unit
 NAMES = [name for name, _ in CELLS]
 LANES = 2
 SEED = 3
+FLOATS, BOOLS = ("roadster", "float64"), ("roadster", "bool")
 
 
 def _actions(env, steps: int, seed: int = 0) -> list[np.ndarray]:
@@ -42,8 +43,8 @@ def test_cell_builds_resets_steps_and_restores_state(name):
         assert env.family == "roadster" and env.TASK in A.TASKS
         state = env.reset(seed=SEED)
         env.state_spec.validate(state, owner="state")
-        assert state["task", "id"].flatten().tolist() == [A.TASKS.index(env.TASK)] * LANES
-        assert (state["lifecycle", "elapsed_steps"] == 0).all()
+        assert snv.get_field(state, "task/id").flatten().tolist() == [A.TASKS.index(env.TASK)] * LANES
+        assert (snv.get_field(state, "lifecycle/elapsed_steps") == 0).all()
         actions = _actions(env, 3)
         out = env.step(np.stack(actions, 1), frames=None)
         assert out["valid"].all()
@@ -51,8 +52,10 @@ def test_cell_builds_resets_steps_and_restores_state(name):
             assert out[key].dtype == torch.float64 and torch.isfinite(out[key]).all()
         for key in ("success", "failed", "terminated", "truncated"):
             assert out[key].dtype == torch.bool
-        assert (out["state"]["lifecycle", "elapsed_steps"] == 3).all()
-        assert not torch.equal(out["state"]["sim", "qpos"], state["sim", "qpos"]), "the car did not move"
+        assert (snv.get_field(out["state"], "lifecycle/elapsed_steps") == 3).all()
+        assert not torch.equal(snv.get_field(out["state"], "sim/qpos"), snv.get_field(state, "sim/qpos")), (
+            "the car did not move"
+        )
         env.set_state(state)
         again = env.step(np.stack(actions, 1), frames=None)
         assert_same_state(again["state"], out["state"])
@@ -74,7 +77,7 @@ def test_the_integration_state_is_split_in_mujoco_order(jam):
     mujoco.mj_getState(lane.model, lane.data, phys, mujoco.mjtState.mjSTATE_INTEGRATION)
     jam.reset(seed=SEED)
     row = jam.step(action, frames=None)["state"][0]
-    joined = np.concatenate([row["sim", name].numpy() for name in jam._simulator.layout])
+    joined = np.concatenate([snv.get_field(row, f"sim/{name}").numpy() for name in jam._simulator.layout])
     np.testing.assert_array_equal(joined, phys)
     assert set(jam._simulator.layout) == {
         "time",
@@ -99,28 +102,28 @@ def test_set_state_validates_everything_before_changing_any_lane(jam):
             jam.set_state(bad)
         assert_same_state(jam.get_state(), live)
 
-    refused(state.exclude(("task", "fuel")), "missing")
+    refused(state.exclude(BOOLS), "missing")
     extra = state.clone()
     extra["spare"] = torch.zeros(LANES, 1)
-    refused(extra, "unexpected")
+    refused(extra, "outside its schema")
     refused(state[:1], "batch")
     wrong_dtype = state.clone()
-    wrong_dtype["task", "fuel"] = wrong_dtype["task", "fuel"].to(torch.float32)
-    refused(wrong_dtype, "dtype")
+    wrong_dtype[FLOATS] = wrong_dtype[FLOATS].to(torch.float32)
+    refused(wrong_dtype, "float64")
     wrong_shape = state.clone()
-    wrong_shape["goal", "position"] = wrong_shape["goal", "position"][:, :2]
-    refused(wrong_shape, "shape")
+    wrong_shape[FLOATS] = wrong_shape[FLOATS][:, :-1]
+    refused(wrong_shape, "roadster/float64")
     nonfinite = state.clone()
-    nonfinite["sim", "qpos"][1, 0] = float("nan")
+    snv.get_field(nonfinite, "sim/qpos")[1, 0] = float("nan")
     refused(nonfinite, "non-finite")
     other_task = state.clone()
-    other_task["task", "id"][0] = A.TASKS.index("carhop")
+    snv.get_field(other_task, "task/id")[0] = A.TASKS.index("carhop")
     refused(other_task, "task")
     bad_route = state.clone()
-    bad_route["task", "route_idx"][0] = 7
+    snv.get_field(bad_route, "task/route_idx")[0] = 7
     refused(bad_route, "route_idx")
     bad_rng = state.clone()
-    bad_rng["weather", "rng_state"][0, 0] = 2**32
+    snv.get_field(bad_rng, "weather/rng_state")[0, 0] = 2**32
     refused(bad_rng, "rng_state")
     refused(jam._pack_render_state(state), "TensorDict")
     refused(jam._unpack_render_state(jam._pack_render_state(state)), "missing")
@@ -135,7 +138,7 @@ def test_snapshots_are_independent_of_each_other_and_of_the_simulator(jam):
     jam.step(_actions(jam, 1)[0], frames=None)
     second = jam.get_state()
     assert_same_state(first, frozen)
-    assert not torch.equal(first["sim", "qpos"], second["sim", "qpos"])
+    assert not torch.equal(snv.get_field(first, "sim/qpos"), snv.get_field(second, "sim/qpos"))
     for value in first.values(True, True):
         value.zero_()
     assert_same_state(jam.get_state(), second)
@@ -159,8 +162,8 @@ def test_restore_after_a_different_history_continues_bit_exactly(name):
         assert_same_state(target.get_state(), saved)
         wind = target.variation_names.index("weather.wind")
         torch.testing.assert_close(target.get_variation()[:, wind], torch.full((LANES,), 6.0), rtol=0, atol=0)
-        assert (saved["physics", "weather", "wind"] == 6.0).all() and (
-            saved["physics", "weather", "rain"] == 0.4
+        assert (snv.get_field(saved, "physics/weather/wind") == 6.0).all() and (
+            snv.get_field(saved, "physics/weather/rain") == 0.4
         ).all()
         actions = np.stack(_actions(source, 8, seed=7), 1)
         a, b = source.step(actions, frames=None), target.step(actions, frames=None)
@@ -200,30 +203,38 @@ def test_wind_and_rain_reach_the_physics_at_reset():
         assert env.dynamics_variation_leaves == {"weather.wind", "weather.rain"}
         assert env.physics_variation_leaves == ("weather.wind", "weather.rain")
         calm = env.reset(seed=SEED)
-        assert (calm["weather", "wind_mean"] == 0).all() and (calm["weather", "grip"] == 1).all()
+        assert (snv.get_field(calm, "weather/wind_mean") == 0).all() and (
+            snv.get_field(calm, "weather/grip") == 1
+        ).all()
         actions = np.stack(_actions(env, 10), 1)
         calm_end = env.step(actions, frames=None)["state"]
         windy = env.reset(seed=SEED, options={"variation_values": {"weather.wind": [10.0], "weather.rain": [0.3]}})
-        assert (windy["physics", "weather", "wind"] == 10.0).all() and (
-            windy["physics", "weather", "rain"] == 0.3
+        assert (snv.get_field(windy, "physics/weather/wind") == 10.0).all() and (
+            snv.get_field(windy, "physics/weather/rain") == 0.3
         ).all()
-        assert (windy["weather", "rain"] == 0.3).all(), "the float64 value reaches the source exactly"
+        assert (snv.get_field(windy, "weather/rain") == 0.3).all(), "the float64 value reaches the source exactly"
         torch.testing.assert_close(
-            windy["weather", "wind_mean"].norm(dim=-1), torch.full((LANES,), 10.0, dtype=torch.float64)
+            snv.get_field(windy, "weather/wind_mean").norm(dim=-1), torch.full((LANES,), 10.0, dtype=torch.float64)
         )
-        assert (windy["weather", "gust_std"] == 3.0).all() and (windy["weather", "grip"] == 1 - 0.45 * 0.3).all()
-        assert_same_state(windy["sim", "qpos"], calm["sim", "qpos"])  # the task draw does not depend on the weather
+        assert (snv.get_field(windy, "weather/gust_std") == 3.0).all() and (
+            snv.get_field(windy, "weather/grip") == 1 - 0.45 * 0.3
+        ).all()
+        assert_same_state(
+            snv.get_field(windy, "sim/qpos"), snv.get_field(calm, "sim/qpos")
+        )  # the task draw does not depend on the weather
         windy_end = env.step(actions, frames=None)["state"]
-        assert not torch.equal(windy_end["sim", "qpos"], calm_end["sim", "qpos"])
+        assert not torch.equal(snv.get_field(windy_end, "sim/qpos"), snv.get_field(calm_end, "sim/qpos"))
         again = env.reset(seed=SEED)  # a one-reset override does not persist
-        assert (again["weather", "wind_mean"] == 0).all()
+        assert (snv.get_field(again, "weather/wind_mean") == 0).all()
         env.set_variation({"weather.wind": [4.0]})
         state = env.reset(seed=SEED)
         torch.testing.assert_close(
-            state["weather", "wind_mean"].norm(dim=-1), torch.full((LANES,), 4.0, dtype=torch.float64)
+            snv.get_field(state, "weather/wind_mean").norm(dim=-1), torch.full((LANES,), 4.0, dtype=torch.float64)
         )
         sampled = env.reset(seed=SEED, options={"variation": ["weather.rain"]})
-        assert (sampled["weather", "rain"] > 0).all() and (sampled["weather", "grip"] < 1).all()
+        assert (snv.get_field(sampled, "weather/rain") > 0).all() and (
+            snv.get_field(sampled, "weather/grip") < 1
+        ).all()
 
 
 def test_render_draws_the_wm_camera_without_touching_the_simulation(jam):
@@ -272,21 +283,22 @@ def test_restored_state_renders_the_same_smoke():
             other.step(actions[1][None], frames=None)
         state = result["state"]
         assert (
-            state["fx", "count"].item() == 40 and state["fx", "history"].reshape(75, -1)[:40, 12:21].abs().max() > 0.05
+            snv.get_field(state, "fx/count").item() == 40
+            and snv.get_field(state, "fx/history").reshape(75, -1)[:40, 12:21].abs().max() > 0.05
         )
         frame = source.render(state)
         other.set_state(state)
         assert torch.equal(other.render(other.get_state()), frame)
         blank = state.clone()
-        blank["fx", "count"].zero_()
-        blank["fx", "history"].zero_()
+        snv.get_field(blank, "fx/count").zero_()
+        snv.get_field(blank, "fx/history").zero_()
         assert not torch.equal(source.render(blank), frame), "the smoke comes from the history"
         bad = state.clone()
-        bad["fx", "count"][0] = 76
+        snv.get_field(bad, "fx/count")[0] = 76
         with pytest.raises(ValueError, match="fx"):
             source.set_state(bad)
         bad = state.clone()
-        bad["fx", "history"][0, 0] = 5.0  # step indices stop increasing
+        snv.get_field(bad, "fx/history")[0, 0] = 5.0  # step indices stop increasing
         with pytest.raises(ValueError, match="increasing"):
             source.set_state(bad)
 
@@ -294,7 +306,7 @@ def test_restored_state_renders_the_same_smoke():
 def test_rendered_weather_follows_the_state(jam):
     dry = jam.reset(seed=SEED)
     wet = jam.reset(seed=SEED, options={"variation_values": {"weather.rain": [1.0]}})
-    assert_same_state(dry["sim", "qpos"], wet["sim", "qpos"])
+    assert_same_state(snv.get_field(dry, "sim/qpos"), snv.get_field(wet, "sim/qpos"))
     a, b = jam.render(dry), jam.render(wet)
     assert (a != b).float().mean() > 0.1, "rain changes the frame"
     assert torch.equal(jam.render(dry), a), "the dry look is restored after a wet frame"
@@ -366,7 +378,10 @@ def test_the_weather_seed_survives_the_render_row_exactly():
 
         def with_seed(seed):
             other = state.clone()
-            other["weather", "seed_hi"][0], other["weather", "seed_lo"][0] = seed >> 24, seed & 0xFFFFFF
+            snv.get_field(other, "weather/seed_hi")[0], snv.get_field(other, "weather/seed_lo")[0] = (
+                seed >> 24,
+                seed & 0xFFFFFF,
+            )
             return other
 
         big, neighbour = with_seed(2**40 + 2**24 + 3), with_seed(2**40 + 2**24 + 4)

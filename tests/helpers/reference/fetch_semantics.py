@@ -5,7 +5,6 @@ import copy
 import gymnasium as gym
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 
 def snapshot(env):
@@ -70,10 +69,10 @@ def source_state(rows):
         ("time", "time"),
         ("warmstart", "qacc_warmstart"),
         ("goal", "goal"),
-        (("task", "initial_gripper_xpos"), "initial_gripper_xpos"),
-        (("controller", "position"), "controller_position"),
-        (("controller", "quaternion"), "controller_quaternion"),
-        (("lifecycle", "elapsed_steps"), "elapsed"),
+        ("task/initial_gripper_xpos", "initial_gripper_xpos"),
+        ("controller/position", "controller_position"),
+        ("controller/quaternion", "controller_quaternion"),
+        ("lifecycle/elapsed_steps", "elapsed"),
     ]:
         columns[key] = torch.from_numpy(np.stack([np.atleast_1d(row[source]) for row in rows]))
     for key, field in [("state_words", "state"), ("increment_words", "inc")]:
@@ -81,8 +80,11 @@ def source_state(rows):
             np.frombuffer(int(row["rng"]["state"][field]).to_bytes(16, "little"), dtype="<u4").astype(np.int64)
             for row in rows
         ]
-        columns["rng", key] = torch.from_numpy(np.stack(words))
+        columns[f"rng/{key}"] = torch.from_numpy(np.stack(words))
     for field in ("has_uint32", "uinteger"):
-        columns["rng", field] = torch.tensor([[row["rng"][field]] for row in rows], dtype=torch.int64)
+        columns[f"rng/{field}"] = torch.tensor([[row["rng"][field]] for row in rows], dtype=torch.int64)
     assert all(row["rng"]["bit_generator"] == "PCG64" for row in rows)
-    return TensorDict(columns, batch_size=[len(rows)], device="cpu")
+    from stable_envs.envs.fetch.simulation.adapter import fetch_schema
+
+    schema = fetch_schema(columns["qpos"].shape[1], columns["qvel"].shape[1])
+    return schema.fold(columns, [len(rows)])

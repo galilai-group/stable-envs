@@ -41,10 +41,12 @@ def test_lanes_match_the_source_called_directly(name, task):
         sources = [RoadsterPlanEnv(task=task) for _ in range(LANES)]
         for lane, src in enumerate(sources):
             src.reset(seed=SEED + lane, wind=WIND, rain=RAIN)
-            np.testing.assert_array_equal(state["sim", "qpos"][lane].numpy(), src.data.qpos)
-            np.testing.assert_array_equal(state["goal", "position"][lane].numpy(), src.goal_pos)
-            np.testing.assert_array_equal(state["weather", "wind_mean"][lane].numpy(), src.sim.weather.wind_mean)
-            assert state["task", "status"][lane].item() == list(("drive", "flight")).index(src.sim.status)
+            np.testing.assert_array_equal(snv.get_field(state, "sim/qpos")[lane].numpy(), src.data.qpos)
+            np.testing.assert_array_equal(snv.get_field(state, "goal/position")[lane].numpy(), src.goal_pos)
+            np.testing.assert_array_equal(
+                snv.get_field(state, "weather/wind_mean")[lane].numpy(), src.sim.weather.wind_mean
+            )
+            assert snv.get_field(state, "task/status")[lane].item() == list(("drive", "flight")).index(src.sim.status)
         expert, rng = GoalExpert(), np.random.default_rng(SEED)
         for t in range(STEPS):
             actions = np.stack([_lane_actions(expert, src, rng) for src in sources])
@@ -52,19 +54,19 @@ def test_lanes_match_the_source_called_directly(name, task):
             for lane, src in enumerate(sources):
                 reward, terminated, truncated, info = src.step(actions[lane])
                 np.testing.assert_array_equal(
-                    result["state"]["sim", "qpos"][lane].numpy(), src.data.qpos, err_msg=str(t)
+                    snv.get_field(result["state"], "sim/qpos")[lane].numpy(), src.data.qpos, err_msg=str(t)
                 )
-                np.testing.assert_array_equal(result["state"]["sim", "qvel"][lane].numpy(), src.data.qvel)
+                np.testing.assert_array_equal(snv.get_field(result["state"], "sim/qvel")[lane].numpy(), src.data.qvel)
                 assert result["reward"][lane].item() == reward, t
                 assert result["success"][lane].item() == info["success"]
                 assert result["failed"][lane].item() == info["failed"]
                 assert result["terminated"][lane].item() == terminated
                 assert result["truncated"][lane].item() == truncated
                 assert result["cost"][lane].item() == info["cost"]
-                assert result["state"]["lifecycle", "elapsed_steps"][lane].item() == src.steps
-                assert result["state"]["task", "fuel"][lane].item() == src.sim.fuel
+                assert snv.get_field(result["state"], "lifecycle/elapsed_steps")[lane].item() == src.steps
+                assert snv.get_field(result["state"], "task/fuel")[lane].item() == src.sim.fuel
         np.testing.assert_array_equal(
-            result["state"]["sim", "mocap_pos"][0].numpy(), sources[0].data.mocap_pos.reshape(-1)
+            snv.get_field(result["state"], "sim/mocap_pos")[0].numpy(), sources[0].data.mocap_pos.reshape(-1)
         )
 
 
@@ -80,7 +82,7 @@ def test_frames_match_the_live_simulation_drawn_directly():
             action = expert(src).astype(np.float32)
             src.step(action)
             result = env.step(action[None], frames=None)
-        np.testing.assert_array_equal(result["state"]["sim", "qpos"][0].numpy(), src.data.qpos)
+        np.testing.assert_array_equal(snv.get_field(result["state"], "sim/qpos")[0].numpy(), src.data.qpos)
         src.model.vis.quality.offsamples = 0
         renderer = _SOURCE_RENDERERS.setdefault("traffic", mujoco_renderer(src.model, height=96, width=96))
         src.sim.draw_effects(np.random.default_rng(0))
@@ -90,4 +92,6 @@ def test_frames_match_the_live_simulation_drawn_directly():
         frame = env.render(result["state"])[0]
         differing = (frame != expected).any(-1).float().mean().item()
         assert differing < 0.01, f"{differing:.1%} of the pixels differ from the source frame"
-        assert (result["state"]["fx", "count"] == 60).all() and result["state"]["sim", "ctrl"].abs().max() > 0.05
+        assert (snv.get_field(result["state"], "fx/count") == 60).all() and snv.get_field(
+            result["state"], "sim/ctrl"
+        ).abs().max() > 0.05

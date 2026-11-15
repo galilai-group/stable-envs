@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs import get_field, set_field
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
@@ -34,7 +35,7 @@ def _plain_step(env, action):
 
 
 def _xy(state):
-    return state["root", "position"][:, :2].cpu().numpy()
+    return get_field(state, "root/position")[:, :2].cpu().numpy()
 
 
 def cell_gate(cell, *, batch=2, seeds=(0, 17), steps=50, source="ogbench"):
@@ -73,7 +74,7 @@ def cell_gate(cell, *, batch=2, seeds=(0, 17), steps=50, source="ogbench"):
                 for k, xy in enumerate(inbound):
                     check_reset_matches_reference(env, ref, seed=40 + k)
                     state = env.get_state()
-                    state["root", "position"][:, :2] = torch.as_tensor(xy, dtype=torch.float64)
+                    get_field(state, "root/position")[:, :2] = torch.as_tensor(xy, dtype=torch.float64)
                     env.set_state(state)
                     ref.set_state(state)
                     zero = np.zeros((batch, cls.action_dim), np.float32)
@@ -141,7 +142,7 @@ def run_gate(device="cpu"):
                     compare_state(snapshot, frozen_snapshot)
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                     # The goal is State: the adapter keeps it in its host columns and nowhere else.
-                    np.testing.assert_array_equal(env._simulator._goal, snapshot["task", "goal_pos"].numpy())
+                    np.testing.assert_array_equal(env._simulator._goal, get_field(snapshot, "task/goal_pos").numpy())
                     frame = env.render(snapshot)
                     assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
                     before = env.get_state()
@@ -209,8 +210,8 @@ def run_gate(device="cpu"):
                 # Positive reward and the default post-step success/termination boundary.
                 check_reset_matches_reference(env, ref, seed=18)
                 success_state = ref.get_state()
-                success_state["root", "position"] = success_state["task", "goal_pos"][:, :2].clone()
-                success_state["root", "velocity"].zero_()
+                set_field(success_state, "root/position", get_field(success_state, "task/goal_pos")[:, :2].clone())
+                get_field(success_state, "root/velocity").zero_()
                 env.set_state(success_state)
                 ref.set_state(success_state)
                 got, expected = (
@@ -244,7 +245,7 @@ def run_gate(device="cpu"):
                     got, expected = _plain_step(env, zeros), ref.step(zeros)
                     compare_state(got, expected)
                     assert not got["terminated"].any() and not got["truncated"].any()
-                elapsed = env.get_state()["simulator", "time"]
+                elapsed = get_field(env.get_state(), "simulator/time")
                 torch.testing.assert_close(elapsed, torch.full_like(elapsed, 100.1), atol=1e-10, rtol=0)
                 evidence["cases"].append(
                     dict(

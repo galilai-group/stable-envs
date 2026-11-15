@@ -17,11 +17,12 @@ from stable_envs.envs.ogbench.simulation.manipulation import (
     site_ids,
     task_values,
 )
-from stable_envs.envs.ogbench.simulation.maze import OGB_MAZE_FIELDS, _uint128_bytes
+from stable_envs.envs.ogbench.simulation.maze import _uint128_bytes, maze_schema
 
 
 def maze_state(self):
     self._check_open()
+    schema = maze_schema("point")
     rows = []
     for i, env in enumerate(self.envs):
         algorithm, keys, position, has_gauss, cached = self._global_rng[i]
@@ -29,26 +30,24 @@ def maze_state(self):
         pcg = env.np_random.bit_generator.state
         assert pcg["bit_generator"] == "PCG64"
         values = {
-            ("root", "position"): env.data.qpos.copy(),
-            ("root", "velocity"): env.data.qvel.copy(),
-            ("simulator", "time"): [env.data.time],
-            ("simulator", "warmstart"): env.data.qacc_warmstart.copy(),
-            ("task", "goal_pos"): env.model.geom("target").pos.copy(),
-            ("task", "id"): [0 if env.cur_task_id is None else env.cur_task_id],
-            ("rng", "env_state"): _uint128_bytes(pcg["state"]["state"]),
-            ("rng", "env_inc"): _uint128_bytes(pcg["state"]["inc"]),
-            ("rng", "env_has_uint32"): [pcg["has_uint32"]],
-            ("rng", "env_uinteger"): [pcg["uinteger"]],
-            ("rng", "global_keys"): keys.astype(np.int64),
-            ("rng", "global_position"): [position],
-            ("rng", "global_has_gauss"): [has_gauss],
-            ("rng", "global_cached_gaussian"): [cached],
+            "root/position": env.data.qpos.copy(),
+            "root/velocity": env.data.qvel.copy(),
+            "simulator/time": [env.data.time],
+            "simulator/warmstart": env.data.qacc_warmstart.copy(),
+            "task/goal_pos": env.model.geom("target").pos.copy(),
+            "task/id": [0 if env.cur_task_id is None else env.cur_task_id],
+            "rng/env_state": _uint128_bytes(pcg["state"]["state"]),
+            "rng/env_inc": _uint128_bytes(pcg["state"]["inc"]),
+            "rng/env_has_uint32": [pcg["has_uint32"]],
+            "rng/env_uinteger": [pcg["uinteger"]],
+            "rng/global_keys": keys.astype(np.int64),
+            "rng/global_position": [position],
+            "rng/global_has_gauss": [has_gauss],
+            "rng/global_cached_gaussian": [cached],
         }
-        row = TensorDict({}, batch_size=[], device=self.device)
-        for key, (_, dtype) in OGB_MAZE_FIELDS.items():
-            row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-        rows.append(row)
-    return torch.stack(rows)
+        rows.append({name: torch.as_tensor(values[name], dtype=where.dtype) for name, where in schema.slices.items()})
+    stacked = {name: torch.stack([row[name] for row in rows]) for name in schema.slices}
+    return schema.fold(stacked, [len(rows)], self.device)
 
 
 def manipulation_row(self, env):

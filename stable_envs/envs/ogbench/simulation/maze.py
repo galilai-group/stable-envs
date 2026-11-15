@@ -1,57 +1,76 @@
 from __future__ import annotations
 
+from functools import cache
+
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import Field, StateSchema
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.state_columns import owned_columns, require_columns
+from ...._execution.state_columns import owned_columns
 from .pcg import bytes_uint128, pcg_state
 from .pcg import uint128_bytes as _uint128_bytes
 
 #: body -> (qpos fields, qvel fields, action width). Legged qpos splits at the free joint.
 BODIES = {
-    "point": (((("root", "position"), 2),), ((("root", "velocity"), 2),), 2),
+    "point": ((("root/position", 2),), (("root/velocity", 2),), 2),
     "ant": (
-        ((("root", "position"), 3), (("root", "orientation"), 4), (("joints", "position"), 8)),
-        ((("root", "velocity"), 6), (("joints", "velocity"), 8)),
+        (("root/position", 3), ("root/orientation", 4), ("joints/position", 8)),
+        (("root/velocity", 6), ("joints/velocity", 8)),
         8,
     ),
     "humanoid": (
-        ((("root", "position"), 3), (("root", "orientation"), 4), (("joints", "position"), 21)),
-        ((("root", "velocity"), 6), (("joints", "velocity"), 21)),
+        (("root/position", 3), ("root/orientation", 4), ("joints/position", 21)),
+        (("root/velocity", 6), ("joints/velocity", 21)),
         21,
     ),
 }
 
+#: State groups. ``physics`` changes on every step; ``host`` holds the task and the RNGs, which change at reset,
+#: restore and teleport.
+PHYSICS = "maze/physics/float64"
+HOST_FLOAT, HOST_INT, HOST_BYTES, HOST_BOOL = (
+    "maze/host/float64",
+    "maze/host/int64",
+    "maze/host/uint8",
+    "maze/host/bool",
+)
+HOST_GROUPS = (HOST_FLOAT, HOST_INT, HOST_BYTES, HOST_BOOL)
 
-def maze_fields(loco: str) -> dict:
+
+@cache
+def maze_schema(loco: str) -> StateSchema:
+    """The State layout of a maze body: one leaf per dtype and role."""
     qpos, qvel, _ = BODIES[loco]
     nv = sum(width for _, width in qvel)
-    return {
-        **{key: (width, torch.float64) for key, width in qpos + qvel},
-        ("simulator", "time"): (1, torch.float64),
-        ("simulator", "warmstart"): (nv, torch.float64),
-        **_TASK_RNG_FIELDS,
-    }
+    f64, i64 = torch.float64, torch.int64
+    return StateSchema(
+        f"OGBMaze {loco}",
+        [
+            *(Field(name, (width,), f64, PHYSICS) for name, width in qpos + qvel),
+            Field("simulator/time", (1,), f64, PHYSICS),
+            Field("simulator/warmstart", (nv,), f64, PHYSICS),
+            Field("task/goal_pos", (3,), f64, HOST_FLOAT),
+            Field("task/id", (1,), i64, HOST_INT),
+            Field("rng/env_state", (16,), torch.uint8, HOST_BYTES),
+            Field("rng/env_inc", (16,), torch.uint8, HOST_BYTES),
+            Field("rng/env_has_uint32", (1,), i64, HOST_INT),
+            Field("rng/env_uinteger", (1,), i64, HOST_INT),
+            Field("rng/global_keys", (624,), i64, HOST_INT),
+            Field("rng/global_position", (1,), i64, HOST_INT),
+            Field("rng/global_has_gauss", (1,), torch.bool, HOST_BOOL),
+            Field("rng/global_cached_gaussian", (1,), f64, HOST_FLOAT),
+        ],
+    )
 
 
-_TASK_RNG_FIELDS = {
-    ("task", "goal_pos"): (3, torch.float64),
-    ("task", "id"): (1, torch.int64),
-    ("rng", "env_state"): (16, torch.uint8),
-    ("rng", "env_inc"): (16, torch.uint8),
-    ("rng", "env_has_uint32"): (1, torch.int64),
-    ("rng", "env_uinteger"): (1, torch.int64),
-    ("rng", "global_keys"): (624, torch.int64),
-    ("rng", "global_position"): (1, torch.int64),
-    ("rng", "global_has_gauss"): (1, torch.bool),
-    ("rng", "global_cached_gaussian"): (1, torch.float64),
-}
-OGB_MAZE_FIELDS = maze_fields("point")
+def numpy_dtype(dtype: torch.dtype) -> np.dtype:
+    return torch.empty((), dtype=dtype).numpy().dtype
 
 
-_NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_, torch.uint8: np.uint8}
+def group_path(key: str) -> tuple[str, ...]:
+    return tuple(key.split("/"))
 
 
 def _split(fields, values):
@@ -60,10 +79,6 @@ def _split(fields, values):
         out[key] = values[start : start + width].copy()
         start += width
     return out
-
-
-def _join(fields, row):
-    return np.concatenate([row[key].numpy() for key, _ in fields])
 
 
 def _make_maze(loco, maze):
@@ -161,45 +176,47 @@ def _resting_lanes(rest, envs, qpos):
     return clear & np.asarray(idle, bool)
 
 
-def tree(flat: dict) -> dict:
-    """Nest ``{(group, name): value}`` (or ``{name: value}``) as ``{group: {name: value}}``."""
+def tree(groups: dict) -> dict:
+    """Nest ``{"a/b/c": value}`` as ``{"a": {"b": {"c": value}}}``."""
     out: dict = {}
-    for key, value in flat.items():
-        if isinstance(key, str):
-            out[key] = value
-        else:
-            out.setdefault(key[0], {})[key[1]] = value
+    for key, value in groups.items():
+        *path, leaf = key.split("/")
+        node = out
+        for part in path:
+            node = node.setdefault(part, {})
+        node[leaf] = value
     return out
 
 
-def decode_state(state, num_envs, fields, num_tasks):
-    """Return ``(host State, [(task id, PCG64 state, legacy MT19937 state)] per lane)``, or raise."""
+def decode_state(state, num_envs, schema, num_tasks):
+    """Return ``(host State, field views, [(task id, PCG64 state, legacy MT19937 state)] per lane)``, or raise."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
         raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
-    require_columns(state, {key: ((num_envs, width), dtype) for key, (width, dtype) in fields.items()})
+    schema.validate(state, finite=True)
     host = state.cpu()
+    v = schema.views(host, numpy=True)
     decoded = []
-    for row in host.unbind(0):
-        task_id = row["task", "id"].item()
+    for i in range(num_envs):
+        task_id = int(v["task/id"][i, 0])
         if not 0 <= task_id <= num_tasks:
             raise ValueError(f"Invalid OGBench task id {task_id}")
         pcg = pcg_state(
-            bytes_uint128(row["rng", "env_state"].numpy()),
-            bytes_uint128(row["rng", "env_inc"].numpy()),
-            row["rng", "env_has_uint32"].item(),
-            row["rng", "env_uinteger"].item(),
+            bytes_uint128(v["rng/env_state"][i]),
+            bytes_uint128(v["rng/env_inc"][i]),
+            int(v["rng/env_has_uint32"][i, 0]),
+            int(v["rng/env_uinteger"][i, 0]),
         )
         np.random.PCG64().state = pcg
         legacy = (
             "MT19937",
-            row["rng", "global_keys"].numpy().astype(np.uint32),
-            row["rng", "global_position"].item(),
-            int(row["rng", "global_has_gauss"].item()),
-            row["rng", "global_cached_gaussian"].item(),
+            v["rng/global_keys"][i].astype(np.uint32),
+            int(v["rng/global_position"][i, 0]),
+            int(v["rng/global_has_gauss"][i, 0]),
+            float(v["rng/global_cached_gaussian"][i, 0]),
         )
         np.random.RandomState().set_state(legacy)
         decoded.append((task_id, pcg, legacy))
-    return host, decoded
+    return v, decoded
 
 
 class OGBMazeAdapter(SimulatorAdapter):
@@ -210,26 +227,27 @@ class OGBMazeAdapter(SimulatorAdapter):
     upstream draws from; calls must be serialized.
     """
 
-    process_attributes = ("action_dim", "fields")
+    process_attributes = ("action_dim",)
 
     def __init__(self, num_envs, device="cpu", seed=0, *, loco="point", maze="large"):
         self.num_envs = int(num_envs)
         self.device = torch.device(device)
         self.loco, self.maze = loco, maze
-        self.fields = maze_fields(loco)
+        self.schema = maze_schema(loco)
+        self._dtypes = {key: numpy_dtype(group.dtype) for key, group in self.schema.groups.items()}
         self._qpos, self._qvel, self.action_dim = BODIES[loco]
         self.envs = [_make_maze(loco, maze) for _ in range(self.num_envs)]
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
         # A point step outside the teleport maze draws no random numbers, so the lanes step in one loop.
         self._point = loco == "point" and all(env._teleport_info is None for env in self.envs)
         self._rest = _rest_walls(self.envs[0].model) if self._point else None
-        self._static_keys = tuple(key for key in self.fields if key[0] in ("task", "rng"))
+        self._static_keys = tuple(group_path(key) for key in HOST_GROUPS)
         self._closed = False
         self.reset(seed=seed)
 
     @property
     def process_static_leaves(self):
-        """State leaves that only reset and restore change, for point lanes."""
+        """State groups that only reset and restore change, for point lanes."""
         return self._static_keys if self._point else ()
 
     def _check_open(self):
@@ -262,20 +280,25 @@ class OGBMazeAdapter(SimulatorAdapter):
         values = {
             **_split(self._qpos, env.data.qpos),
             **_split(self._qvel, env.data.qvel),
-            ("simulator", "time"): [env.data.time],
-            ("simulator", "warmstart"): env.data.qacc_warmstart.copy(),
-            ("task", "goal_pos"): env.model.geom("target").pos.copy(),
-            ("task", "id"): [0 if env.cur_task_id is None else env.cur_task_id],
-            ("rng", "env_state"): _uint128_bytes(pcg["state"]["state"]),
-            ("rng", "env_inc"): _uint128_bytes(pcg["state"]["inc"]),
-            ("rng", "env_has_uint32"): [pcg["has_uint32"]],
-            ("rng", "env_uinteger"): [pcg["uinteger"]],
-            ("rng", "global_keys"): keys.astype(np.int64),
-            ("rng", "global_position"): [position],
-            ("rng", "global_has_gauss"): [has_gauss],
-            ("rng", "global_cached_gaussian"): [cached],
+            "simulator/time": [env.data.time],
+            "simulator/warmstart": env.data.qacc_warmstart.copy(),
+            "task/goal_pos": env.model.geom("target").pos.copy(),
+            "task/id": [0 if env.cur_task_id is None else env.cur_task_id],
+            "rng/env_state": _uint128_bytes(pcg["state"]["state"]),
+            "rng/env_inc": _uint128_bytes(pcg["state"]["inc"]),
+            "rng/env_has_uint32": [pcg["has_uint32"]],
+            "rng/env_uinteger": [pcg["uinteger"]],
+            "rng/global_keys": keys.astype(np.int64),
+            "rng/global_position": [position],
+            "rng/global_has_gauss": [has_gauss],
+            "rng/global_cached_gaussian": [cached],
         }
-        return {key: np.asarray(value, dtype=_NUMPY_DTYPES[self.fields[key][1]]) for key, value in values.items()}
+        return {
+            group_path(key): np.concatenate([np.asarray(values[f.name]) for f in group.fields]).astype(
+                self._dtypes[key]
+            )
+            for key, group in self.schema.groups.items()
+        }
 
     def get_state(self):
         self._check_open()
@@ -284,38 +307,29 @@ class OGBMazeAdapter(SimulatorAdapter):
     def process_step_state(self):
         """Return ``{key: (num_envs, width) array}`` for the state leaves a step changes."""
         data = [env.data for env in self.envs]
-        out = {}
-        for fields, values in (
-            (self._qpos, np.stack([d.qpos for d in data])),
-            (self._qvel, np.stack([d.qvel for d in data])),
-        ):
-            start = 0
-            for key, width in fields:
-                out[key] = np.ascontiguousarray(values[:, start : start + width])
-                start += width
-        out["simulator", "time"] = np.array([[d.time] for d in data], np.float64)
-        out["simulator", "warmstart"] = np.stack([d.qacc_warmstart for d in data])
-        return out
+        time = np.array([[d.time] for d in data], np.float64)
+        parts = [np.stack([d.qpos for d in data]), np.stack([d.qvel for d in data]), time]
+        parts.append(np.stack([d.qacc_warmstart for d in data]))
+        return {group_path(PHYSICS): np.concatenate(parts, 1)}
 
     def validate(self, state):
         self._check_open()
-        return decode_state(state, self.num_envs, self.fields, self.envs[0].num_tasks)
+        return decode_state(state, self.num_envs, self.schema, self.envs[0].num_tasks)
 
     def set_state(self, state):
-        host, decoded = self.validate(state)
+        v, decoded = self.validate(state)
         import mujoco
 
-        for i, (env, row) in enumerate(zip(self.envs, host.unbind(0), strict=True)):
-            task_id, pcg, legacy = decoded[i]
-            env.model.geom("target").pos[:] = row["task", "goal_pos"].numpy()
-            env.cur_goal_xy = row["task", "goal_pos"][:2].numpy().copy()
+        for i, (env, (task_id, pcg, legacy)) in enumerate(zip(self.envs, decoded, strict=True)):
+            env.model.geom("target").pos[:] = v["task/goal_pos"][i]
+            env.cur_goal_xy = v["task/goal_pos"][i, :2].copy()
             env.cur_task_id = task_id or None
             env.cur_task_info = None if task_id == 0 else env.task_infos[task_id - 1]
-            env.data.qpos[:] = _join(self._qpos, row)
-            env.data.qvel[:] = _join(self._qvel, row)
-            env.data.time = row["simulator", "time"].item()
+            env.data.qpos[:] = np.concatenate([v[name][i] for name, _ in self._qpos])
+            env.data.qvel[:] = np.concatenate([v[name][i] for name, _ in self._qvel])
+            env.data.time = float(v["simulator/time"][i, 0])
             mujoco.mj_forward(env.model, env.data)
-            env.data.qacc_warmstart[:] = row["simulator", "warmstart"].numpy()
+            env.data.qacc_warmstart[:] = v["simulator/warmstart"][i]
             env.np_random.bit_generator.state = pcg
             self._global_rng[i] = legacy
 

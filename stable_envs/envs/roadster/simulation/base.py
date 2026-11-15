@@ -16,7 +16,6 @@ from ...._core.tensordicts import to_device
 from ...._execution.protocol import SimulatorAdapter
 from ..source.sim import FUEL_CAPACITY
 from .adapter import (
-    _NUMPY_DTYPES,
     FX_ENTRY,
     FX_HISTORY,
     MAX_ROUTE,
@@ -35,11 +34,13 @@ from .adapter import (
     _limbs,
     host_actions,
     integration_layout,
+    name_of,
     physics_rows,
-    state_fields,
+    state_schema,
 )
 from .world import STATUS, Episode, Index, check_task, episode_base, physics_model
 
+_NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 #: MjData names of the integration-state components whose State name differs.
 DATA_NAMES = {"warmstart": "qacc_warmstart"}
 _RNG_KEYS = (
@@ -84,7 +85,7 @@ class RoadsterBatch(SimulatorAdapter):
         unknown -= {"mocap_pos", "mocap_quat"}
         if unknown:
             raise RuntimeError(f"Unexpected MuJoCo state components {sorted(unknown)}")
-        self.fields = state_fields(self.model)
+        self.schema = state_schema(self.model)
         self.physics_layout = PHYSICS_LAYOUT
         self._base = episode_base(task)
         self._physics = np.zeros((num_envs, 2))  # installed for the next reset: wind speed, rain
@@ -117,12 +118,14 @@ class RoadsterBatch(SimulatorAdapter):
     def _alloc(self, device: torch.device) -> None:
         n = self.num_envs
         self._compute = device
-        self._s = {
-            key: torch.zeros((n, width), dtype=dtype, device=device)
-            for key, (width, dtype) in self.fields.items()
-            if not (key[0] == "sim" and key[1] in self.layout) and key[0] != "physics" and key != ("fx", "history")
-        }
-        self._live: TensorDict | None = None
+        #: The live State. The task writes into its field views; the physics fields and the exhaust history are
+        #: copied in when the State is read (``_live_state``).
+        self._state = self.schema.new(n, device)
+        views = self.schema.views(self._state)
+        copied = {f"sim/{name}" for name in self.layout} | {"fx/history"}
+        copied |= {name_of(state_key(leaf)) for leaf in PHYSICS_LEAVES}
+        self._s = {tuple(name.split("/")): view for name, view in views.items() if name not in copied}
+        self._refresh: list | None = None
         self._ring = torch.zeros((n, FX_HISTORY, FX_ENTRY), dtype=torch.float64, device=device)
         self._head = torch.zeros(n, dtype=torch.int64, device=device)
         self._leaves = torch.zeros((n, 2), dtype=torch.float64, device=device)
@@ -183,10 +186,10 @@ class RoadsterBatch(SimulatorAdapter):
         rngs = [rng_columns(rng) for rng in self._rngs]
         for k, key in enumerate(_RNG_KEYS):
             host[key] = [r[k] for r in rngs]
-        for t in self._s.values():
-            t.zero_()
+        for buffer in self.schema.buffers(self._state).values():
+            buffer.zero_()
         for key, value in host.items():
-            dtype = _NUMPY_DTYPES[self.fields[key][1]]
+            dtype = _NUMPY_DTYPES[self.schema.slices[name_of(key)].dtype]
             self._s[key].copy_(torch.from_numpy(np.asarray(value, dtype).reshape(n, -1)))
         self._ring.zero_()
         self._head.zero_()
@@ -214,37 +217,23 @@ class RoadsterBatch(SimulatorAdapter):
         pass
 
     def _live_state(self) -> TensorDict:
-        """A TensorDict over the live storage of every State field, refreshed; not a snapshot."""
+        """The live State with its copied fields refreshed; not a snapshot."""
         n = self.num_envs
-        if self._live is None:
-            self._fx_out = torch.zeros((n, FX_HISTORY * FX_ENTRY), dtype=torch.float64, device=self._compute)
+        if self._refresh is None:
+            views = self.schema.views(self._state)
+            self._fx_out = views["fx/history"]
+            self._fx_scratch = torch.zeros((n, FX_HISTORY, FX_ENTRY), dtype=torch.float64, device=self._compute)
             self._fx_order = torch.arange(FX_HISTORY, device=self._compute)
-            self._casts = []
-            physics = [state_key(leaf) for leaf in PHYSICS_LEAVES]
-            leaves = {}
-            for key, (_, dtype) in self.fields.items():
-                if key[0] == "sim" and key[1] in self.layout:
-                    view = self._sim(key[1]).reshape(n, -1)
-                    if view.dtype != dtype:
-                        buffer = torch.zeros(view.shape, dtype=dtype, device=self._compute)
-                        self._casts.append((view, buffer))
-                        view = buffer
-                elif key == ("fx", "history"):
-                    view = self._fx_out
-                elif key in physics:
-                    j = physics.index(key)
-                    view = self._leaves[:, j : j + 1]
-                else:
-                    view = self._s[key]
-                leaves[key] = view
-            self._live = TensorDict(leaves, [n], device=self._compute)
+            self._refresh = [(name, views[f"sim/{name}"]) for name in self.layout]
+            self._leaf_views = [views[name_of(state_key(leaf))] for leaf in PHYSICS_LEAVES]
         order = (self._head[:, None] + self._fx_order) % FX_HISTORY
-        torch.gather(
-            self._ring, 1, order[:, :, None].expand(-1, -1, FX_ENTRY), out=self._fx_out.view(n, FX_HISTORY, FX_ENTRY)
-        )
-        for view, buffer in self._casts:
-            buffer.copy_(view)
-        return self._live
+        torch.gather(self._ring, 1, order[:, :, None].expand(-1, -1, FX_ENTRY), out=self._fx_scratch)
+        self._fx_out.copy_(self._fx_scratch.view(n, -1))
+        for name, view in self._refresh:
+            view.copy_(self._sim(name).reshape(view.shape))
+        for j, view in enumerate(self._leaf_views):
+            view.copy_(self._leaves[:, j : j + 1])
+        return self._state
 
     def get_state(self) -> TensorDict:
         self._check_open()
@@ -254,8 +243,8 @@ class RoadsterBatch(SimulatorAdapter):
     def render_fields(self) -> dict:
         """Host arrays of the State fields a render row is packed from; no snapshot."""
         self._check_open()
-        live = self._live_state()
-        return {key: live[key].cpu().numpy().copy() for key in RENDER_FIELDS}
+        views = self.schema.views(self._live_state(), [name_of(key) for key in RENDER_FIELDS])
+        return {key: views[name_of(key)].cpu().numpy().copy() for key in RENDER_FIELDS}
 
     def validate(self, state, *, batch: int | None = None) -> None:
         """Require the complete, typed resume schema with finite values and consistent task fields.
@@ -266,93 +255,80 @@ class RoadsterBatch(SimulatorAdapter):
             raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
         if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
             raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
-        have, want = set(state.keys(True, True)), set(self.fields)
-        if have != want:
-            missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
-            raise ValueError(
-                "Full State keys do not match the Roadster resume schema"
-                + (f"; missing {missing}" if missing else "")
-                + (f"; unexpected {extra}" if extra else "")
-            )
+        self.schema.validate(state, finite=True)
         n = int(state.batch_size[0])
-        for key, (width, dtype) in self.fields.items():
-            value = state[key]
-            if value.shape != (n, width):
-                raise ValueError(f"State field {key!r} has invalid shape {tuple(value.shape)}")
-            if value.dtype != dtype:
-                raise ValueError(f"State field {key!r} has dtype {value.dtype}; expected {dtype}")
-            if value.is_floating_point() and not bool(torch.isfinite(value).all()):
-                raise ValueError(f"State field {key!r} contains non-finite values")
-        host = state.cpu()
+        v = self.schema.views(state.cpu())
 
-        def within(key, lo, hi):
-            v = host[key]
-            if bool((v < lo).any() or (v > hi).any()):
-                raise ValueError(f"State field {key!r} must lie in [{lo}, {hi}]")
+        def within(name, lo, hi):
+            x = v[name]
+            if bool((x < lo).any() or (x > hi).any()):
+                raise ValueError(f"State field {name!r} must lie in [{lo}, {hi}]")
 
         task = TASKS.index(self.task)
-        within(("task", "id"), task, task)
-        within(("task", "status"), 0, len(STATUSES) - 1)
-        within(("task", "target_idx"), 0, MAX_TARGETS)
-        within(("task", "ground_hold"), 0, 3)
-        within(("task", "fuel"), 0.0, np.inf)
-        within(("task", "sim_steps"), 0, np.iinfo(np.int64).max)
-        within(("lifecycle", "elapsed_steps"), 0, np.iinfo(np.int64).max)
-        within(("route", "count"), 0, MAX_ROUTE)
-        count = host["route", "count"].reshape(-1)
-        idx = host["task", "route_idx"].reshape(-1)
+        within("task/id", task, task)
+        within("task/status", 0, len(STATUSES) - 1)
+        within("task/target_idx", 0, MAX_TARGETS)
+        within("task/ground_hold", 0, 3)
+        within("task/fuel", 0.0, np.inf)
+        within("task/sim_steps", 0, np.iinfo(np.int64).max)
+        within("lifecycle/elapsed_steps", 0, np.iinfo(np.int64).max)
+        within("route/count", 0, MAX_ROUTE)
+        count = v["route/count"].reshape(-1)
+        idx = v["task/route_idx"].reshape(-1)
         if bool((idx < 0).any() or (idx > torch.clamp(count - 1, min=0)).any()):
-            raise ValueError("State field ('task', 'route_idx') must index the route")
-        within(("weather", "rain"), 0.0, RAIN_MAX)
-        within(("weather", "seed_hi"), 0, SEED_MASK)
-        within(("weather", "seed_lo"), 0, SEED_MASK)
-        within(("weather", "grip"), 0.0, 1.0)
-        within(("weather", "gust_std"), 0.0, np.inf)
-        within(("weather", "rng_state"), 0, 0xFFFF_FFFF)
-        within(("weather", "rng_increment"), 0, 0xFFFF_FFFF)
-        within(("weather", "rng_has_uint32"), 0, 1)
-        within(("weather", "rng_uinteger"), 0, 0xFFFF_FFFF)
-        within(state_key("weather.wind"), 0.0, WIND_MAX)
-        within(state_key("weather.rain"), 0.0, RAIN_MAX)
-        within(("fx", "count"), 0, FX_HISTORY)
-        hist = host["fx", "history"].reshape(n, FX_HISTORY, FX_ENTRY)
-        counts = host["fx", "count"].reshape(-1)
+            raise ValueError("State field 'task/route_idx' must index the route")
+        within("weather/rain", 0.0, RAIN_MAX)
+        within("weather/seed_hi", 0, SEED_MASK)
+        within("weather/seed_lo", 0, SEED_MASK)
+        within("weather/grip", 0.0, 1.0)
+        within("weather/gust_std", 0.0, np.inf)
+        within("weather/rng_state", 0, 0xFFFF_FFFF)
+        within("weather/rng_increment", 0, 0xFFFF_FFFF)
+        within("weather/rng_has_uint32", 0, 1)
+        within("weather/rng_uinteger", 0, 0xFFFF_FFFF)
+        within(name_of(state_key("weather.wind")), 0.0, WIND_MAX)
+        within(name_of(state_key("weather.rain")), 0.0, RAIN_MAX)
+        within("fx/count", 0, FX_HISTORY)
+        hist = v["fx/history"].reshape(n, FX_HISTORY, FX_ENTRY)
+        counts = v["fx/count"].reshape(-1)
         steps = hist[:, :, 0]
         valid = torch.arange(FX_HISTORY)[None, :] < counts[:, None]
         ordered = (steps[:, 1:] > steps[:, :-1]) | ~valid[:, 1:]
         if bool(((steps < 0) & valid).any()) or not bool(ordered.all()):
-            raise ValueError("State field ('fx', 'history') must list steps in increasing order")
+            raise ValueError("State field 'fx/history' must list steps in increasing order")
 
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
         self.validate(state, batch=self.num_envs)
         n = self.num_envs
         src = state.to(self._compute)
-        for key, t in self._s.items():
-            t.copy_(src[key])
-        self._ring.copy_(src["fx", "history"].reshape(n, FX_HISTORY, FX_ENTRY))
+        incoming = self.schema.buffers(src)
+        for key, buffer in self.schema.buffers(self._state).items():
+            buffer.copy_(incoming[key])
+        v = self.schema.views(src)
+        self._ring.copy_(v["fx/history"].reshape(n, FX_HISTORY, FX_ENTRY))
         self._head.zero_()
-        host = state.cpu()
+        host = self.schema.views(state.cpu())
         self._rngs = []
         for i in range(n):
             rng = np.random.default_rng()
             rng.bit_generator.state = {
                 "bit_generator": "PCG64",
                 "state": {
-                    "state": _from_limbs(host["weather", "rng_state"][i].numpy()),
-                    "inc": _from_limbs(host["weather", "rng_increment"][i].numpy()),
+                    "state": _from_limbs(host["weather/rng_state"][i].numpy()),
+                    "inc": _from_limbs(host["weather/rng_increment"][i].numpy()),
                 },
-                "has_uint32": int(host["weather", "rng_has_uint32"][i].item()),
-                "uinteger": int(host["weather", "rng_uinteger"][i].item()),
+                "has_uint32": int(host["weather/rng_has_uint32"][i].item()),
+                "uinteger": int(host["weather/rng_uinteger"][i].item()),
             }
             self._rngs.append(rng)
-        values = {name: src["sim", name] for name in self.layout}
+        values = {name: v[f"sim/{name}"] for name in self.layout}
         self._apply_grip()
-        self._write_physics(values, src["sim", "qpos_pre"], src["sim", "has_qpos_pre"][:, 0])
+        self._write_physics(values, v["sim/qpos_pre"], v["sim/has_qpos_pre"][:, 0])
         # The restored episode's physics leaves become the installed ones; the next reset returns to the
         # Variation defaults.
         for j, leaf in enumerate(PHYSICS_LEAVES):
-            self._physics[:, j] = host[state_key(leaf)].numpy().reshape(-1)
+            self._physics[:, j] = host[name_of(state_key(leaf))].numpy().reshape(-1)
         self._episode = self._physics.copy()
         self._leaves.copy_(torch.from_numpy(self._episode))
 

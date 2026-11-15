@@ -7,8 +7,10 @@ import threading
 import mujoco
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from ..._core.mujoco_gl import mujoco_renderer
+from ..._core.state_schema import get_field
 from ..._core.stepping import _stack_states, _threads
 from ..._execution.backends import measure_env
 from ..._execution.mjbatch import mujoco_backend
@@ -18,9 +20,12 @@ from ...render._resources import retain_process_lifetime
 from ...spaces import Dict
 from .assets import _COMMIT, _XML
 from .assets import model as _model
-from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
+from .simulation.adapter import NA as _NA
+from .simulation.adapter import NQ as _NQ
+from .simulation.adapter import NU as _NU
+from .simulation.adapter import NV as _NV
+from .simulation.adapter import STATE, MSHumanBatchAdapter, MSHumanWarpAdapter
 
-_NQ, _NV, _NA, _NU = 36, 36, 100, 100
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
@@ -112,6 +117,24 @@ class MSHumanLocomotion(Env):
     def _step(self, actions):
         self._check_open("step")
         return self._simulator.step(actions)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        STATE.validate(state, finite=True)
+
+    def _pack_render_state(self, state):
+        if not isinstance(state, TensorDict):
+            return super()._pack_render_state(state)
+        n = int(state.batch_size[0]) if state.batch_size else 1
+        qpos = get_field(state, "qpos").reshape(n, _NQ)
+        return qpos.to(device=self.device, dtype=torch.float32, copy=True)
+
+    @property
+    def state_spec(self):
+        return STATE.spec(self.device)
 
     def _stack_states(self, values):
         # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from functools import cache
 
 import numpy as np
 import torch
@@ -8,24 +9,50 @@ from tensordict import TensorDict
 
 from .... import tuning
 from ...._core.cpus import cpu_limit
+from ...._core.state_schema import Field, StateSchema
+from ...._core.tensordicts import build_tensordict
 from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
-FIELDS = {
-    "qpos": (22, torch.float64),
-    "qvel": (21, torch.float64),
-    "time": (1, torch.float64),
-    ("task", "initial_gripper_xpos"): (3, torch.float64),
-    "warmstart": (21, torch.float64),
-    ("controller", "position"): (3, torch.float64),
-    ("controller", "quaternion"): (4, torch.float64),
-    "goal": (3, torch.float64),
-    ("lifecycle", "elapsed_steps"): (1, torch.int64),
-    ("rng", "state_words"): (4, torch.int64),
-    ("rng", "increment_words"): (4, torch.int64),
-    ("rng", "has_uint32"): (1, torch.int64),
-    ("rng", "uinteger"): (1, torch.int64),
-}
+#: State groups: ``physics`` changes on every step, ``task`` on reset and restore, ``host`` holds the step counter
+#: and the RNG words.
+PHYSICS, TASK, HOST = "fetch_state/physics/float64", "fetch_state/task/float64", "fetch_state/host/int64"
+
+
+@cache
+def fetch_schema(nq: int, nv: int) -> StateSchema:
+    """The State layout of a Fetch model with ``nq`` positions and ``nv`` velocities."""
+    f64, i64 = torch.float64, torch.int64
+    return StateSchema(
+        "Fetch",
+        [
+            Field("qpos", (nq,), f64, PHYSICS),
+            Field("qvel", (nv,), f64, PHYSICS),
+            Field("time", (1,), f64, PHYSICS),
+            Field("warmstart", (nv,), f64, PHYSICS),
+            Field("controller/position", (3,), f64, PHYSICS),
+            Field("controller/quaternion", (4,), f64, PHYSICS),
+            Field("task/initial_gripper_xpos", (3,), f64, TASK),
+            Field("goal", (3,), f64, TASK),
+            Field("lifecycle/elapsed_steps", (1,), i64, HOST),
+            Field("rng/state_words", (4,), i64, HOST),
+            Field("rng/increment_words", (4,), i64, HOST),
+            Field("rng/has_uint32", (1,), i64, HOST),
+            Field("rng/uinteger", (1,), i64, HOST),
+        ],
+    )
+
+
+def nest(groups: dict, batch: int, device) -> TensorDict:
+    """A State from ``{group key: (batch, size) tensor}``."""
+    tree: dict = {}
+    for key, value in groups.items():
+        *path, leaf = key.split("/")
+        node = tree
+        for part in path:
+            node = node.setdefault(part, {})
+        node[leaf] = value
+    return build_tensordict(tree, [batch], device)
 
 
 #: Source leaves that apply visual variations, and so detach the table, floor and object materials.
@@ -83,12 +110,6 @@ def episode_limits(limits, num_envs):
     return limits
 
 
-def state_fields(nq, nv):
-    fields = dict(FIELDS)
-    fields.update(qpos=(nq, torch.float64), qvel=(nv, torch.float64), warmstart=(nv, torch.float64))
-    return fields
-
-
 class FetchAdapter(SimulatorAdapter):
     """CPU Fetch simulators with a 50-step time limit and optional lane threads.
 
@@ -103,7 +124,7 @@ class FetchAdapter(SimulatorAdapter):
         "_set_episode_limits": PER_LANE,
         "object_mass": BROADCAST,
     }
-    process_attributes = ("fields", "has_object")
+    process_attributes = ("schema", "has_object")
     action_dim = 4
 
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
@@ -118,7 +139,7 @@ class FetchAdapter(SimulatorAdapter):
         self._mujoco = mujoco
         self.envs = [gym.wrappers.TimeLimit(cls(reward_type=reward_type), 50) for _ in range(self.num_envs)]
         model = self.envs[0].unwrapped.model
-        self.fields = state_fields(model.nq, model.nv)
+        self.schema = fetch_schema(model.nq, model.nv)
         self.has_object = self.envs[0].unwrapped.has_object
         self._gripper = [
             mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY, "robot0:gripper_link") for e in self.envs
@@ -257,10 +278,11 @@ class FetchAdapter(SimulatorAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        # Owned column arrays: one tensor conversion/transfer per field, not per lane.
+        # Owned column arrays: one tensor conversion/transfer per group, not per lane.
+        slices = self.schema.slices
         columns = {
-            key: np.empty((self.num_envs, width), dtype=(np.float64 if dtype == torch.float64 else np.int64))
-            for key, (width, dtype) in self.fields.items()
+            name: np.empty((self.num_envs, *where.shape), np.float64 if where.dtype == torch.float64 else np.int64)
+            for name, where in slices.items()
         }
         for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
             u = e.unwrapped
@@ -271,45 +293,34 @@ class FetchAdapter(SimulatorAdapter):
                 "qpos": u.data.qpos.copy(),
                 "qvel": u.data.qvel.copy(),
                 "time": [u.data.time],
-                ("task", "initial_gripper_xpos"): u.initial_gripper_xpos.copy(),
+                "task/initial_gripper_xpos": u.initial_gripper_xpos.copy(),
                 "warmstart": u.data.qacc_warmstart.copy(),
-                ("controller", "position"): u.data.xpos[i].copy(),
-                ("controller", "quaternion"): u.data.xquat[i].copy(),
+                "controller/position": u.data.xpos[i].copy(),
+                "controller/quaternion": u.data.xquat[i].copy(),
                 "goal": u.goal.copy(),
-                ("lifecycle", "elapsed_steps"): [e._elapsed_steps],
-                ("rng", "state_words"): _words(r["state"]["state"]),
-                ("rng", "increment_words"): _words(r["state"]["inc"]),
-                ("rng", "has_uint32"): [r["has_uint32"]],
-                ("rng", "uinteger"): [r["uinteger"]],
+                "lifecycle/elapsed_steps": [e._elapsed_steps],
+                "rng/state_words": _words(r["state"]["state"]),
+                "rng/increment_words": _words(r["state"]["inc"]),
+                "rng/has_uint32": [r["has_uint32"]],
+                "rng/uinteger": [r["uinteger"]],
             }
-            for key in self.fields:
-                columns[key][lane] = values[key]
-        return TensorDict(
-            {
-                key: torch.as_tensor(value, dtype=self.fields[key][1], device=self.device)
-                for key, value in columns.items()
-            },
-            [self.num_envs],
-            device=self.device,
-        )
+            for name in slices:
+                columns[name][lane] = values[name]
+        groups = {key: torch.from_numpy(value).to(self.device) for key, value in self.schema.pack(columns).items()}
+        return nest(groups, self.num_envs, self.device)
 
     def _validate_state(self, state):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("Fetch requires full TensorDict State with batch [num_envs]")
-        keys = state.keys(True, True)
-        for key, (width, dtype) in self.fields.items():
-            if key not in keys:
-                raise ValueError(f"Full State missing {key}")
-            value = state[key]
-            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():
-                raise ValueError(f"Invalid State field {key}")
-        for key in (("rng", "state_words"), ("rng", "increment_words"), ("rng", "uinteger")):
-            if ((state[key] < 0) | (state[key] > 0xFFFFFFFF)).any():
+        self.schema.validate(state, finite=True)
+        v = self.schema.views(state)
+        for key in ("rng/state_words", "rng/increment_words", "rng/uinteger"):
+            if ((v[key] < 0) | (v[key] > 0xFFFFFFFF)).any():
                 raise ValueError(f"Invalid PCG64 field {key}")
-        if ((state["rng", "has_uint32"] < 0) | (state["rng", "has_uint32"] > 1)).any():
+        if ((v["rng/has_uint32"] < 0) | (v["rng/has_uint32"] > 1)).any():
             raise ValueError("Invalid PCG64 has_uint32")
-        if (state["lifecycle", "elapsed_steps"] < 0).any():
+        if (v["lifecycle/elapsed_steps"] < 0).any():
             raise ValueError("Negative elapsed_steps")
 
     def validate(self, state: TensorDict) -> None:
@@ -317,31 +328,31 @@ class FetchAdapter(SimulatorAdapter):
 
     def set_state(self, state: TensorDict) -> None:
         self._validate_state(state)
-        host = state.cpu()
+        v = self.schema.views(state.cpu(), numpy=True)
         for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
-            row, u = host[lane], e.unwrapped
-            u.data.qpos[:] = row["qpos"].numpy()
-            u.data.qvel[:] = row["qvel"].numpy()
-            u.goal = row["goal"].numpy().copy()
-            u.data.time = row["time"].item()
-            u.initial_gripper_xpos[:] = row["task", "initial_gripper_xpos"].numpy()
+            u = e.unwrapped
+            u.data.qpos[:] = v["qpos"][lane]
+            u.data.qvel[:] = v["qvel"][lane]
+            u.goal = v["goal"][lane].copy()
+            u.data.time = float(v["time"][lane, 0])
+            u.initial_gripper_xpos[:] = v["task/initial_gripper_xpos"][lane]
             # Controller overwrites mocap and ctrl before every public step.
             # Applied-force arrays remain zero under this registration's API.
             u.data.qfrc_applied[:] = 0
             u.data.xfrc_applied[:] = 0
             self._mujoco.mj_forward(u.model, u.data)
-            u.data.qacc_warmstart[:] = row["warmstart"].numpy()
-            u.data.xpos[i] = row["controller", "position"].numpy()
-            u.data.xquat[i] = row["controller", "quaternion"].numpy()
-            e._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
+            u.data.qacc_warmstart[:] = v["warmstart"][lane]
+            u.data.xpos[i] = v["controller/position"][lane]
+            u.data.xquat[i] = v["controller/quaternion"][lane]
+            e._elapsed_steps = int(v["lifecycle/elapsed_steps"][lane, 0])
             u.np_random.bit_generator.state = {
                 "bit_generator": "PCG64",
                 "state": {
-                    "state": _integer(row["rng", "state_words"].tolist()),
-                    "inc": _integer(row["rng", "increment_words"].tolist()),
+                    "state": _integer(v["rng/state_words"][lane].tolist()),
+                    "inc": _integer(v["rng/increment_words"][lane].tolist()),
                 },
-                "has_uint32": row["rng", "has_uint32"].item(),
-                "uinteger": row["rng", "uinteger"].item(),
+                "has_uint32": int(v["rng/has_uint32"][lane, 0]),
+                "uinteger": int(v["rng/uinteger"][lane, 0]),
             }
 
     def check_step(self, actions, active):

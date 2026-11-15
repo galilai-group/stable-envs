@@ -10,9 +10,18 @@ from tensordict import TensorDict
 
 from ...._core.cpus import cpu_limit
 from ...._core.state_layout import StateLayout
+from ...._core.tensordicts import build_tensordict
 from ...._execution.protocol import SimulatorAdapter
-from .adapter import _VISUAL_GROUPS, VISUAL_LEAVES, _integer, _words, episode_limits, host_actions, host_active
-from .adapter import state_fields as _state_fields
+from .adapter import (
+    _VISUAL_GROUPS,
+    VISUAL_LEAVES,
+    _integer,
+    _words,
+    episode_limits,
+    fetch_schema,
+    host_actions,
+    host_active,
+)
 
 #: Most physics threads of one batch.
 MAX_THREADS = 8
@@ -293,7 +302,7 @@ class FetchLanes(SimulatorAdapter):
     def _init_lanes(self, num_envs, device, task, reward_type):
         self.num_envs, self.device = int(num_envs), torch.device(device)
         self.task = t = FetchTask(task, reward_type)
-        self.fields = _state_fields(t.nq, t.nv)
+        self.schema = fetch_schema(t.nq, t.nv)
         self.has_object = t.has_object
         self._closed = False
         B = self.num_envs
@@ -366,10 +375,9 @@ class FetchLanes(SimulatorAdapter):
             self._words = rng_words(self._rngs)
         return self._words
 
-    def _restore_rngs(self, host):
-        num = lambda key: host[key].numpy()  # noqa: E731
-        state_words, inc_words = num(("rng", "state_words")), num(("rng", "increment_words"))
-        has_uint32, uinteger = num(("rng", "has_uint32"))[:, 0], num(("rng", "uinteger"))[:, 0]
+    def _restore_rngs(self, v):
+        state_words, inc_words = v["rng/state_words"], v["rng/increment_words"]
+        has_uint32, uinteger = v["rng/has_uint32"][:, 0], v["rng/uinteger"][:, 0]
         for lane, rng in enumerate(self._rngs):
             rng.bit_generator.state = {
                 "bit_generator": "PCG64",
@@ -389,13 +397,6 @@ class FetchLanes(SimulatorAdapter):
         if capture_state:
             out["state"] = self.get_state()
         return out
-
-
-def _leaf_dtype(layout: str, key: str, value: np.ndarray) -> torch.dtype:
-    """State leaves are float64 or int64, as in gymnasium-robotics' State; step outputs keep their dtype."""
-    if layout == "state" or key.startswith("state/"):
-        return torch.int64 if value.dtype.kind in "iu" else torch.float64
-    return torch.from_numpy(value[:0]).dtype
 
 
 class FetchBatchAdapter(FetchLanes):
@@ -455,52 +456,67 @@ class FetchBatchAdapter(FetchLanes):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        return self._export(self._state_values(), "state")
+        return self._export(self._state_groups(), "state", owned=self.schema.groups)
 
-    def _state_values(self) -> dict[str, np.ndarray]:
+    def _state_groups(self) -> dict[str, np.ndarray]:
+        """The State groups, packed from the live arrays into new arrays."""
         words = self._rng_words()
-        return {
-            "qpos": self._qpos,
-            "qvel": self._qvel,
-            "time": self._time[:, None],
-            "task/initial_gripper_xpos": self._anchor,
-            "warmstart": self._qacc_warmstart,
-            "controller/position": self._grip_pos,
-            "controller/quaternion": self._grip_quat,
-            "goal": self._goal,
-            "lifecycle/elapsed_steps": self._elapsed[:, None],
-            "rng/state_words": words[:, 0:4],
-            "rng/increment_words": words[:, 4:8],
-            "rng/has_uint32": words[:, 8:9],
-            "rng/uinteger": words[:, 9:10],
-        }
+        return self.schema.pack(
+            {
+                "qpos": self._qpos,
+                "qvel": self._qvel,
+                "time": self._time[:, None],
+                "task/initial_gripper_xpos": self._anchor,
+                "warmstart": self._qacc_warmstart,
+                "controller/position": self._grip_pos,
+                "controller/quaternion": self._grip_quat,
+                "goal": self._goal,
+                "lifecycle/elapsed_steps": self._elapsed[:, None],
+                "rng/state_words": words[:, 0:4],
+                "rng/increment_words": words[:, 4:8],
+                "rng/has_uint32": words[:, 8:9],
+                "rng/uinteger": words[:, 9:10],
+            }
+        )
 
-    def _export(self, values: dict[str, np.ndarray], name: str) -> TensorDict:
-        """A TensorDict of ``values`` on the env device: one packed copy per dtype; the layout is built once."""
+    def _export(self, values: dict[str, np.ndarray], name: str, owned=()) -> TensorDict:
+        """A TensorDict of ``values`` on the env device; ``owned`` values are new arrays already.
+
+        On the host each value becomes a tensor. On an accelerator the values pack into one copy per dtype, with the
+        layout built once.
+        """
+        if self.device.type == "cpu":
+            tree: dict = {}
+            for key, value in values.items():
+                *path, leaf = key.split("/")
+                node = tree
+                for part in path:
+                    node = node.setdefault(part, {})
+                node[leaf] = torch.from_numpy(value if key in owned else np.array(value))
+            return build_tensordict(tree, [self.num_envs], self.device)
         layout = self._layouts.get(name)
         if layout is None:
-            leaves = [(key, value.shape[1:], _leaf_dtype(name, key, value)) for key, value in values.items()]
+            leaves = [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in values.items()]
             layout = self._layouts[name] = StateLayout(leaves, self.num_envs)
         # The export copies every value, so the result does not change with later steps.
         return layout.export(values, self.device)
 
     def set_state(self, state: TensorDict) -> None:
         self.validate(state)
-        host = state.cpu()
-        num = lambda key: host[key].numpy()  # noqa: E731
-        self._qpos[:] = num("qpos")
-        self._qvel[:] = num("qvel")
-        self._goal[:] = num("goal")
-        self._time[:] = num("time")[:, 0]
-        self._anchor[:] = num(("task", "initial_gripper_xpos"))
+        v = self.schema.views(state.cpu(), numpy=True)
+        self._qpos[:] = v["qpos"]
+        self._qvel[:] = v["qvel"]
+        self._goal[:] = v["goal"]
+        self._time[:] = v["time"][:, 0]
+        self._anchor[:] = v["task/initial_gripper_xpos"]
         self._qfrc[:] = 0
         self._xfrc[:] = 0
         self.b.forward()
-        self._qacc_warmstart[:] = num("warmstart")
-        self._grip_pos[:] = num(("controller", "position"))
-        self._grip_quat[:] = num(("controller", "quaternion"))
-        self._elapsed[:] = num(("lifecycle", "elapsed_steps"))[:, 0]
-        self._restore_rngs(host)
+        self._qacc_warmstart[:] = v["warmstart"]
+        self._grip_pos[:] = v["controller/position"]
+        self._grip_quat[:] = v["controller/quaternion"]
+        self._elapsed[:] = v["lifecycle/elapsed_steps"][:, 0]
+        self._restore_rngs(v)
 
     def check_step(self, actions, active):
         return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
@@ -510,8 +526,8 @@ class FetchBatchAdapter(FetchLanes):
         if not capture_state:
             return self._export(out, "step")
         self._check_open()
-        out.update({f"state/{key}": value for key, value in self._state_values().items()})
-        return self._export(out, "step+state")
+        groups = {f"state/{key}": value for key, value in self._state_groups().items()}
+        return self._export({**out, **groups}, "step+state", owned=groups)
 
     def advance(self, actions, *, active=None) -> TensorDict:
         return self._export(self._advance(actions, active), "step")

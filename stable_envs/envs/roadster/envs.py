@@ -12,9 +12,12 @@ history in state.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 
+import numpy as np
 import torch
+from tensordict import TensorDict
 
 try:
     import mujoco  # noqa: F401
@@ -22,6 +25,9 @@ try:
 except ImportError as e:  # registered only with the extra, so import_errors() names it
     raise ImportError("Roadster needs the roadster extra: pip install 'stable-envs[roadster]'") from e
 
+from ..._core.physics import state_key
+from ..._core.state_schema import get_field, schema_of
+from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import register
@@ -32,9 +38,10 @@ from .simulation.execution import make_roadster_adapter, roadster_backend, roads
 
 #: The visual variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
-#: State keys the render row carries, with the row column group each one fills.
+#: State field names the render row carries, with the row column group each one fills.
 _RENDER_KEYS = {
-    key: {("fx", "count"): "fx_count", ("fx", "history"): "fx_history"}.get(key, key[1]) for key in RENDER_FIELDS
+    "/".join(key): {("fx", "count"): "fx_count", ("fx", "history"): "fx_history"}.get(key, key[1])
+    for key in RENDER_FIELDS
 }
 
 
@@ -127,17 +134,61 @@ class RoadsterBase(Env):
             }
         )
 
+    @property
+    def _schema(self):
+        return self._simulator.schema
+
     def _layout(self):
         return tuple(
-            (key, width, self._row_layout[_RENDER_KEYS[key]][0] if key in _RENDER_KEYS else None)
-            for key, (width, _) in self._simulator.fields.items()
+            (
+                tuple(name.split("/")),
+                math.prod(where.shape),
+                self._row_layout[_RENDER_KEYS[name]][0] if name in _RENDER_KEYS else None,
+            )
+            for name, where in self._schema.slices.items()
         )
 
     def _layout_dtypes(self):
-        return {key: dtype for key, (_, dtype) in self._simulator.fields.items()}
+        return {tuple(name.split("/")): where.dtype for name, where in self._schema.slices.items()}
 
     def _validate_state(self, state, *, batch=None):
         self._simulator.validate(state, batch=batch)
+
+    def _pack_render_state(self, state):
+        if not isinstance(state, TensorDict):
+            return super()._pack_render_state(state)
+        n = int(state.batch_size[0]) if state.batch_size else 1
+        rows = torch.zeros(n, int(self.state_dim), device=self.device, dtype=torch.float32)
+        if schema_of(state) is None:
+            fields = {name: get_field(state, name) for name in _RENDER_KEYS}
+        else:
+            fields = self._schema.views(state, list(_RENDER_KEYS))
+        for name, column in _RENDER_KEYS.items():
+            off, width = self._row_layout[column]
+            rows[:, off : off + width] = torch.as_tensor(
+                fields[name], device=self.device, dtype=torch.float32
+            ).reshape(n, width)
+        return rows
+
+    @property
+    def state_spec(self):
+        return self._schema.spec(self.device)
+
+    def _adopt_physics_state(self, state):
+        layout = self._physics_layout()
+        if layout is None:
+            return
+        values = self._style.values.clone()
+        cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
+        rows = np.empty((self.B, int(sum(layout.widths))))
+        for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
+            v = get_field(state, "/".join(state_key(leaf))).detach().to(torch.float64).cpu().reshape(self.B, width)
+            rows[:, off : off + width] = v.numpy()
+            o, _ = cols[leaf]
+            values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
+        self._style = StyleTensor(values, self.variation_space.flat_layout())
+        self._physics_installed = rows
+        self._variation_is_default = False
 
     def reset(self, seed=None, options=None):
         """Reset every lane; ``options`` take ``variation`` / ``variation_values`` for the weather leaves."""
@@ -217,8 +268,8 @@ class RoadsterBase(Env):
         """
         n = len(fields[RENDER_FIELDS[0]])
         rows = torch.zeros((n, self.state_dim), dtype=torch.float32)
-        for key, name in _RENDER_KEYS.items():
-            off, width = self._row_layout[name]
+        for key in RENDER_FIELDS:
+            off, width = self._row_layout[_RENDER_KEYS["/".join(key)]]
             rows[:, off : off + width] = torch.as_tensor(fields[key]).reshape(n, width).to(torch.float32)
         return rows.to(self.device)
 

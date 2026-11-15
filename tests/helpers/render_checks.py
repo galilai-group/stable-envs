@@ -3,6 +3,8 @@
 import pytest
 import torch
 
+from stable_envs import get_field
+
 
 def assert_render_checks_drawn_fields_only(env, state):
     """A non-finite restore-only field renders the same frames and fails set_state; a drawn one fails render."""
@@ -11,12 +13,12 @@ def assert_render_checks_drawn_fields_only(env, state):
     assert hidden, "the State has no floating restore-only field"
     frames = env.render(state)
     bad = state.clone()
-    bad[hidden[0]][0, 0] = float("nan")
+    get_field(bad, ".".join(hidden[0]))[0, 0] = float("nan")
     assert torch.equal(env.render(bad), frames)
     with pytest.raises(ValueError):
         env.set_state(bad)
     for key in drawn:
         bad = state.clone()
-        bad[key][-1, 0] = float("nan")
+        get_field(bad, ".".join(key))[-1, 0] = float("nan")
         with pytest.raises(ValueError, match=f"{'.'.join(key)} contains non-finite"):
             env.render(bad)
