@@ -37,3 +37,32 @@ def test_fresh_env_redraws_stored_states_within_the_driver_variation(name):
     assert int(diff.max()) <= MAX_LEVEL
     assert int(pixels.max()) <= MAX_PIXELS
     assert int((pixels > 0).sum()) <= MAX_FRAMES * len(diff)
+
+
+#: Largest mean squared 0-255 difference between CUDA frames drawn by the OpenGL workers and by one process. Each
+#: worker has its own context, so only the driver variation above remains. An RTX A5500 measured 0 for Cube and
+#: 1.3e-3 for Scene at 8 states.
+WORKER_MSE = 2e-3
+
+
+@pytest.mark.parametrize(
+    "name", [pytest.param(n, marks=pytest.mark.family("ogbench")) for n in ("OGBCube", "OGBScene")]
+)
+def test_worker_frames_stay_within_the_measured_mse_of_one_process(name):
+    from stable_envs.envs.ogbench import manipulation_opengl_pool as pool
+
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA OpenGL rendering requires a GPU")
+    env = se.make(name, num_envs=1, device="cuda")
+    try:
+        rows = C.sample_render_rows(env, 8, rng=np.random.default_rng(20261115))
+        if pool.workers(len(rows), "cuda") < 2:
+            pytest.skip("OpenGL workers need Linux and at least two CPUs")
+        workers = env._render(rows).cpu().numpy().astype(np.float64)
+        with se.tuning.override(ogb_gl_workers=0):
+            alone = env._render(rows).cpu().numpy().astype(np.float64)
+    finally:
+        env.close()
+    mse = float(((workers - alone) ** 2).mean())
+    assert mse <= WORKER_MSE, f"{name}: worker vs one-process frames MSE {mse:.3g}"
+    assert int(np.abs(workers - alone).max()) <= MAX_LEVEL
