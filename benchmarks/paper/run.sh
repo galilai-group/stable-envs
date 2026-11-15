@@ -72,8 +72,11 @@ egl() { env MUJOCO_GL=egl PYOPENGL_PLATFORM=egl "$@"; }
 # Software OpenGL draws on a virtual X display where xvfb-run exists; sources that need no display run without it.
 # Xvfb loads the EGL vendor through glvnd; with NVIDIA's (H100 hosts) it crashes, so it gets Mesa's where present.
 MESA_EGL=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+# xvfb-run -a starts its search at display 99, so jobs that start on one node at the same time can take the same
+# display; each job starts its search at its own display number.
+XDISP=$(( ${SLURM_JOB_ID:-$$} % 20000 + 100 ))
 sw() {
-  local x=(); command -v xvfb-run >/dev/null && x=(xvfb-run -a)
+  local x=(); command -v xvfb-run >/dev/null && x=(xvfb-run -a -n $XDISP)
   env $([ -f $MESA_EGL ] && echo __EGL_VENDOR_LIBRARY_FILENAMES=$MESA_EGL) LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe PYOPENGL_PLATFORM=glx MUJOCO_GL=glfw "${x[@]}" "$@"
 }
 
