@@ -189,8 +189,11 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return self._layout
 
     def get_state(self):
+        return self._export(self._state_device)
+
+    def _export(self, device):
         fields = self._state_fields(self._history_width())
-        return self._state_layout(fields).export(fields, self._state_device)
+        return self._state_layout(fields).export(fields, device)
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.

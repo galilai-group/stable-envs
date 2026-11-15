@@ -222,16 +222,20 @@ _NUMPY = {
 }
 
 
-def _leaves(node, prefix, out, batch):
+def _leaves(node, prefix, out, batch, kept, device):
+    """Collect the CPU leaves of ``node`` in ``out`` and the leaves already on ``device`` in ``kept``."""
     if node.batch_size != batch:
         raise _Irregular
     for key, value in node._tensordict.items():
         if type(value) is torch.Tensor:
-            if value.dtype not in _NUMPY or value.device.type != "cpu" or value.requires_grad:
+            if value.device == device:
+                kept.append(((*prefix, key), value))
+            elif value.dtype not in _NUMPY or value.device.type != "cpu" or value.requires_grad:
                 raise _Irregular
-            out.append(((*prefix, key), value))
+            else:
+                out.append(((*prefix, key), value))
         elif _dense(value) and value._tensordict:
-            _leaves(value, (*prefix, key), out, batch)
+            _leaves(value, (*prefix, key), out, batch, kept, device)
         else:
             raise _Irregular
     return out
@@ -250,7 +254,7 @@ class _Transfer:
     Each dtype is one block; inside it, leaves of one shape sit next to each other, so one ``unbind`` splits them.
     """
 
-    def __init__(self, signature):
+    def __init__(self, signature, kept_keys=()):
         groups: dict = {}
         for index, (_, shape, dtype) in enumerate(signature):
             groups.setdefault(dtype, {}).setdefault(tuple(shape), []).append(index)
@@ -262,36 +266,41 @@ class _Transfer:
             self.groups.append((dtype, order, total, total + nbytes, sizes, list(runs.items())))
             total += -(-nbytes // _ALIGN) * _ALIGN
         self.total = max(total, _ALIGN)
-        self.build = nested_builder([key for key, _, _ in signature])
+        self.build = nested_builder([key for key, _, _ in signature] + list(kept_keys))
 
 
 def to_device(td: TensorDict, device) -> TensorDict:
     """``td.to(device)`` for a CPU TensorDict, with one host-to-device copy for all its leaves.
 
     The leaves are packed by dtype into one pinned buffer, which moves in one asynchronous copy; each returned leaf
-    is a view of the device copy. A TensorDict that isn't dense, or that has a leaf NumPy can't hold, moves leaf by
-    leaf.
+    is a view of the device copy. Leaves already on ``device`` stay as they are. A TensorDict that isn't dense, or
+    that has a leaf NumPy can't hold, moves leaf by leaf.
     """
     device = _device(device)
     if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu"):
         return td.to(device)
+    kept: list = []
     try:
-        leaves = _leaves(td, (), [], td.batch_size)
+        leaves = _leaves(td, (), [], td.batch_size, kept, device)
     except _Irregular:
         return td.to(device)
-    signature = tuple((key, value.shape, value.dtype) for key, value in leaves)
+    # Leaves already on the device stay as they are, as with ``td.to``; only their keys enter the plan.
+    signature = (tuple((key, value.shape, value.dtype) for key, value in leaves), tuple(key for key, _ in kept))
     plan = _transfers.get(signature)
     if plan is None:
         if len(_transfers) >= _TRANSFERS_HELD:
             _transfers.clear()
-        plan = _transfers[signature] = _Transfer(signature)
+        plan = _transfers[signature] = _Transfer(*signature)
+    parts: list = [None] * len(leaves)
+    batch = td.batch_size
+    if not leaves:
+        return plan.build([value for _, value in kept], lambda node: new_node(node, batch, device))
     host = torch.empty(plan.total, dtype=torch.uint8, pin_memory=True)
     packed = host.numpy()
     for _, order, start, stop, _, _ in plan.groups:
         packed[start:stop] = torch._C._nn.flatten_dense_tensors([leaves[i][1] for i in order]).numpy().view(np.uint8)
     # The pinned block isn't reused before this copy ends: the host allocator records the copy's stream.
     moved = host.to(device, non_blocking=True)
-    parts: list = [None] * len(leaves)
     for dtype, _, start, stop, sizes, runs in plan.groups:
         block = moved[start:stop].view(dtype)
         for (shape, indices), piece in zip(runs, block.split_with_sizes(sizes) if len(runs) > 1 else (block,)):
@@ -300,5 +309,5 @@ def to_device(td: TensorDict, device) -> TensorDict:
             else:
                 for i, leaf in zip(indices, piece.view(len(indices), *shape).unbind(0), strict=True):
                     parts[i] = leaf
-    batch = td.batch_size
+    parts.extend(value for _, value in kept)
     return plan.build(parts, lambda node: new_node(node, batch, device))

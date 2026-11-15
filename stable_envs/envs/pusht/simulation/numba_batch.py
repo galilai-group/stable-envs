@@ -19,6 +19,9 @@ class PushTNumbaAdapter(PushTBatchAdapter):
     for the step and the results move back.
     """
 
+    #: Where a step exports its State, when a ``HostAdapter`` runs this CPU adapter for an accelerator.
+    export_device: torch.device | None = None
+
     def _refresh_current(self):
         super()._refresh_current()
         self._host = None
@@ -163,7 +166,8 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             truncated=torch.zeros_like(success),
         )
         if capture_state:
-            outputs["state"] = self.get_state()
+            # For an accelerator, the State moves there in the export's own copy, with no plan per history width.
+            outputs["state"] = self._export(self.export_device or self._state_device)
         return TensorDict._new_unsafe(outputs, batch_size=torch.Size([self.num_envs]), device=self._state_device)
 
     def _record(self, host, actions, relative, active, everyone):

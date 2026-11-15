@@ -105,6 +105,17 @@ def test_a_backend_that_fails_to_build_loses(monkeypatch):
     assert backends.calibrate(16, "cuda", write=False) == {"test-sim": "small"}
 
 
+def test_calibrate_times_only_the_named_paths(monkeypatch):
+    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
+    monkeypatch.setattr(backends, "_REGISTERED", {})
+    calls = []
+    measure = _measure({"small": lambda rows: None, "large": lambda rows: None}, calls)
+    for path in ("test-sim/a", "test-sim/b"):
+        backends.select_backend(path, 4, "cuda", "auto", BACKENDS, choices=CHOICES, measure=measure)
+    assert set(backends.calibrate(4, "cuda", paths=("test-sim/b",), write=False)) == {"test-sim/b"}
+    assert set(backends.calibrate(4, "cuda", prefixes=("test-sim",), write=False)) == {"test-sim/a", "test-sim/b"}
+
+
 def test_to_device_keeps_cpu_tensordicts_and_their_values():
     td = TensorDict({"a": torch.ones(2, 3), "b": {"c": torch.tensor([True, False])}}, [2])
     assert to_device(td, "cpu") is not None
@@ -128,6 +139,21 @@ def test_to_device_moves_every_leaf_in_one_copy():
         assert torch.equal(moved[key].cpu(), td[key])
     td["a"].zero_()
     assert moved["a"].sum().item() == 15
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_to_device_keeps_the_leaves_already_on_the_device():
+    on_device = torch.arange(4, device="cuda").reshape(2, 2)
+    td = TensorDict._new_unsafe(
+        {"a": torch.ones(2, 3), "state": TensorDict._new_unsafe({"x": on_device}, batch_size=[2])},
+        batch_size=torch.Size([2]),
+        device=torch.device("cpu"),
+    )
+    moved = to_device(td, "cuda")
+    assert moved["state", "x"] is on_device
+    assert moved["a"].is_cuda and torch.equal(moved["a"].cpu(), td["a"])
+    only = TensorDict._new_unsafe({"x": on_device}, batch_size=torch.Size([2]), device=torch.device("cpu"))
+    assert to_device(only, "cuda")["x"] is on_device
 
 
 class _Adapter:

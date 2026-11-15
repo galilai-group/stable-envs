@@ -20,6 +20,10 @@ SIMULATION_BACKENDS = ("triton", "jax", "numba")
 CUDA_MIN_ENVS: int | None = None
 
 
+#: The ``select_backend`` path of the PushT physics backend choice.
+PATH = "pusht-sim"
+
+
 def _measure(device, discrete: bool, config: dict):
     """Build and step PushT lanes on one backend, for ``stable-envs tune``."""
     import torch
@@ -59,7 +63,7 @@ def pusht_backend(
         raise ValueError("simulation_backend='triton' requires device='cuda'")
     measure = None if config is None else _measure(device, discrete, config)
     return select_backend(
-        "pusht-sim",
+        PATH,
         num_envs,
         device,
         backend,
@@ -99,6 +103,9 @@ def make_pusht_adapter(
 
         # Numba steps the host State; only the results move to an accelerator.
         host = PushTNumbaAdapter(num_envs, "cpu", seed, discrete=discrete, config=config, processes=count, cpus=cpus)
-        return host if torch.device(device).type == "cpu" else HostAdapter(host, device)
+        if torch.device(device).type == "cpu":
+            return host
+        host.export_device = torch.device(device)
+        return HostAdapter(host, device)
     # Workers reset the lanes; one batched call steps them.
     return adapter(num_envs, device, seed, discrete=discrete, config=config, processes=count, cpus=cpus)
