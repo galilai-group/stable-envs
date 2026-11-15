@@ -40,7 +40,7 @@ def test_fresh_env_redraws_stored_states_within_the_driver_variation(name):
 
 
 #: Largest mean squared 0-255 difference between CUDA frames drawn by the OpenGL workers and by one process. Each
-#: worker has its own context, so only the driver variation above remains. An RTX A5500 measured 0 for Cube and
+#: worker has its own context, so only the driver variation above remains. RTX A5000 and A5500 hosts measured below 1e-4 for Cube and
 #: 1.3e-3 for Scene at 8 states.
 WORKER_MSE = 2e-3
 
