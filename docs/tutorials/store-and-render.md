@@ -49,6 +49,20 @@ print(frames.shape, frames.dtype)  # torch.Size([4, 32, 224, 224, 3]) torch.uint
 
 `PyFlytRocketLanding` needs exactly `num_envs` rows, as [Env](../api/env.md#rendering) says.
 
+## Render a dataset in small batches
+
+A training loop often takes a few frames at a time from many stored states. `snv.FrameLoader` gives you the frames of stored states `batch_size` at a time, in order. It draws many batches with one `render` call and hands out their slices, so a small batch costs the same per frame as a large one. It picks how many states to draw per call from the free memory of the device. You don't set it.
+
+```python
+loader = snv.FrameLoader(viewer, episodes["states"].reshape(-1), batch_size=8)
+print(len(loader), loader.chunk_size)  # 16 128
+for frames in loader:
+    print(frames.shape)                # torch.Size([8, 224, 224, 3])
+    break
+```
+
+Each batch has the same bytes as `viewer.render` of its 8 states. Pass `indices=` to draw the states in another order, for example a shuffled order that you draw before the epoch. Other keyword arguments, such as `size` and `variation`, go to every `render` call.
+
 ## Store the variation too
 
 A frame depends on the state and the variation, so store the variation rows you collected under and pass them back when you render. Each stored state needs the row of the batch row it came from, which `repeat_interleave` gives you after flattening:

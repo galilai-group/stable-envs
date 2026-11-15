@@ -21,6 +21,7 @@ print(snv.get_config())  # {'verbose': 'WARNING', 'default_device': 'auto'}
 | `snv.info(name)` | Read class metadata without building anything. |
 | `snv.import_errors()` | Say why a family didn't register. |
 | `snv.set(...)`, `snv.get_config()` | Change and read the log level and the default device. |
+| `snv.FrameLoader(env, states, batch_size)` | Give the frames of stored states a batch at a time, drawn ahead in large `render` calls. |
 | `snv.tune(env)` | Measure the fastest tuning knob values for an environment's render path. |
 | `snv.__version__` | The installed version. Put it in bug reports next to `stable-envs doctor --json`. |
 | `snv.Env`, `snv.State`, `snv.StepResult`, `snv.VariationLike` | The environment base class and its types; see [Env](env.md). |
@@ -52,6 +53,12 @@ A family registers only if its module imports. The extras you install decide whi
 ::: stable_envs.set
 
 ::: stable_envs.get_config
+
+## Draw stored states in batches
+
+`snv.FrameLoader` draws stored states ahead of the caller in large `env.render` calls and yields `batch_size` frames at a time, in order. The number of states per call comes from memory only: two calls' frames and a working buffer per state fit in a quarter of the free device memory, and one call's frames stay under 1 GiB. Building or iterating a loader times nothing. Frames that use a per-environment variation, or a per-state `variation=`, draw one batch per call. [Store states, render later](../tutorials/store-and-render.md#render-a-dataset-in-small-batches) shows an example.
+
+::: stable_envs.FrameLoader
 
 ## Tune a render path
 

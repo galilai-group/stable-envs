@@ -1,0 +1,75 @@
+"""FrameLoader frames equal ``env.render`` of each batch byte for byte, for full States and compact rows.
+
+Each family runs where its extra is installed; the CUDA cases need a CUDA device.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+import torch
+
+import stable_envs as snv
+
+NAMES = ("PushT", "TwoRoom", "DMCReacher", "OGBCube")
+DEVICES = ("cpu", pytest.param("cuda", marks=pytest.mark.gpu))
+ROWS = 37
+BATCHES = (1, 8, 16)
+
+
+def _states(name: str) -> snv.State:
+    """``ROWS`` full States along seeded random-action rollouts, on the CPU."""
+    with snv.make(name, num_envs=ROWS, device="cpu") as env:
+        env.reset(seed=3)
+        rng = np.random.default_rng(3)
+        for _ in range(6):
+            out = env.step(env.action_spec.sample(ROWS, rng), frames=None)
+        return out["state"].cpu()
+
+
+def _rows(name: str):
+    with snv.make(name, num_envs=1, device="cpu") as env:
+        try:
+            return env.sample_states(ROWS, rng=np.random.default_rng(4))
+        except NotImplementedError:
+            return None
+
+
+def _check(name, device, data):
+    data = data.to(device) if isinstance(data, snv.State) else torch.as_tensor(data, device=device)
+    for b in BATCHES:
+        with snv.make(name, num_envs=b, device=device) as env:
+            loader = snv.FrameLoader(env, data, b)
+            assert loader.chunk_size == ROWS
+            for got, start in zip(loader, range(0, ROWS, b), strict=True):
+                want = env.render(data[start : start + b])
+                assert got.device == want.device and got.dtype == torch.uint8
+                assert torch.equal(got, want), f"{name} {device} batch {b} rows {start}: frames differ"
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("name", NAMES)
+def test_state_frames_equal_render_per_batch(name, device):
+    if name not in snv.list_envs():
+        pytest.skip(f"{name} is not installed")
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("needs CUDA")
+    _check(name, device, _states(name))
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("name", NAMES)
+def test_row_frames_equal_render_per_batch(name, device):
+    if name not in snv.list_envs():
+        pytest.skip(f"{name} is not installed")
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("needs CUDA")
+    rows = _rows(name)
+    if rows is None:
+        pytest.skip(f"{name} has no sample_states")
+    try:
+        with snv.make(name, num_envs=1, device=device) as env:
+            env.render(torch.as_tensor(rows[:1], device=device))
+    except TypeError:
+        pytest.skip(f"{name} does not draw rows on {device}")
+    _check(name, device, rows)

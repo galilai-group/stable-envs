@@ -13,6 +13,7 @@ from .__about__ import __version__  # noqa: F401
 from ._core.config import get_config, set  # noqa: A004,F401
 from ._core.cpus import limit_thread_defaults as _limit_thread_defaults
 from .env import Env, State, StepResult, VariationLike  # noqa: F401
+from .frames import FrameLoader  # noqa: F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make
 from .specs import CompositeSpec, Spec  # noqa: F401
@@ -80,6 +81,7 @@ __all__ = [
     "State",
     "StepResult",
     "VariationLike",
+    "FrameLoader",
     "Spec",
     "CompositeSpec",
     "make",
