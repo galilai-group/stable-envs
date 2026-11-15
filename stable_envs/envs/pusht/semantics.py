@@ -109,7 +109,7 @@ def _drawn(key):
 #: Shipped CUDA render switch point of PushT and PushTDiscrete: the smallest batch that draws with the Triton
 #: rasterizer; smaller batches draw with the Numba rasterizer on the CPU and move the frames to CUDA in one copy. Both
 #: draw the same bytes as pygame. docs/performance-tuning.md (Renderers) says how the shipped value was measured.
-CUDA_RENDER_MIN_ROWS: int | None = 64  # RTX 3090 64, RTX A5000 32
+CUDA_RENDER_MIN_ROWS: int | None = 32  # RTX 3090 64, RTX A5000 32
 
 
 class PushT(Env):
