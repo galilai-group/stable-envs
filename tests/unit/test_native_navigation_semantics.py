@@ -37,4 +37,4 @@ def test_the_state_spec_keeps_bounds_and_samples_states_inside_them(name):
             assert leaf.low is not None and leaf.high is not None, key
             assert leaf.contains(leaf.sample(5, rng)), key
         if name.startswith("TwoRoom"):
-            assert spec["navigation", "float32"].names == ("agent_x", "agent_y", "target_x", "target_y")
+            assert [leaf.names for _, leaf in spec.items(nested=True)] == [("agent_x", "agent_y", "target_x", "target_y")]
