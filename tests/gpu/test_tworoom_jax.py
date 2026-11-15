@@ -59,8 +59,8 @@ def test_cuda_batched_steps_match_cpu_and_swm_with_arbitrary_actions(batch):
         for _ in range(32):
             action = (torch.rand(batch, 4, generator=generator, device="cuda") * 4 - 2)[:, ::2]
             assert not action.is_contiguous()
-            actual = env.step(action, frames=None, states=None).exclude("valid")
-            compare_state(actual, cpu.step(action.cpu(), frames=None, states=None).exclude("valid"))
+            actual = env.step(action, frames=None, states=slice(0, 0)).exclude("valid", "states", "state_valid")
+            compare_state(actual, cpu.step(action.cpu(), frames=None, states=slice(0, 0)).exclude("valid", "states", "state_valid"))
             compare_state(actual[lanes], source.step(action[lanes]))
 
 
@@ -86,7 +86,7 @@ def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatc
             patch.setattr(torch.Tensor, "item", forbidden)
             patch.setattr(torch.Tensor, "__bool__", forbidden)
             action.fill_(0.125)
-            result = env.step(action, states=None, frames=None)
+            result = env.step(action, states=slice(0, 0), frames=None)
             held = result.clone()
             action.fill_(-0.25)
             env.step(action, states=None, frames=None)
@@ -120,7 +120,7 @@ def test_cuda_success_boundary_matches_swm():
         source.set_state(state)
         action = torch.zeros(128, 2, device="cuda")
         expected = source.step(action)
-        actual = env.step(action, states=None, frames=None).exclude("valid")
+        actual = env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
         compare_state(actual, expected)
 
 

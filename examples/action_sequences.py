@@ -35,8 +35,8 @@ def main():
 
         env.set_state(final_state)
         endpoint_only = env.step(actions[:, 0], states=None, frames=None)
-        assert "states" not in endpoint_only and "frames" not in endpoint_only
-        print("Final State without histories:", endpoint_only["state"].batch_size)
+        assert "state" not in endpoint_only and "states" not in endpoint_only and "frames" not in endpoint_only
+        print("Final State on demand:", env.get_state().batch_size)
 
 
 if __name__ == "__main__":

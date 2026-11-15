@@ -53,7 +53,7 @@ def _assert_bad_actions_rejected(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action, states=None, frames=None).exclude("valid")
+            env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
         except ValueError:
             pass
         else:
@@ -69,19 +69,19 @@ def _warmstart_experiment(domain, env, reference):
     check_step_matches_reference(env, reference, actions[:prefix_steps])
     saved = env.get_state()
     for action in -actions[prefix_steps : prefix_steps + 9]:
-        env.step(action, states=None, frames=None).exclude("valid")
+        env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
     omitted = saved.clone()
     omitted["warmstart"] = env.get_state()["warmstart"]
     env.set_state(omitted)
     continuation = actions[prefix_steps : prefix_steps + 8]
-    bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
+    bad_outputs = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         max_state_error(actual, expected, exclude=(("state", "warmstart"),))
         for actual, expected in zip(bad_outputs, expected_outputs, strict=True)
     )
     env.set_state(saved)
-    good_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
+    good_outputs = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
     error_with_schema = max(
         max_state_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
     )
@@ -170,7 +170,7 @@ def run_gate(device="cpu"):
 
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action, states=None, frames=None).exclude("valid")
+                            other.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
                         # set_state reloads every lane's ctrl from dm_control, so the divergence is read before it.
                         control_diverged = not np.array_equal(env._simulator.b.ctrl, other._simulator.b.ctrl)
                         snapshot = env.get_state()
@@ -212,7 +212,7 @@ def run_gate(device="cpu"):
                     env.set_state(reward_state)
                     ref.set_state(reward_state)
                     got, expected = (
-                        env.step(np.zeros((batch, ref.action_dim)), states=None, frames=None).exclude("valid"),
+                        env.step(np.zeros((batch, ref.action_dim)), states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"),
                         ref.step(np.zeros((batch, ref.action_dim))),
                     )
                     compare_state(got, expected)
@@ -256,7 +256,7 @@ def run_gate(device="cpu"):
                         _assert_bad_actions_rejected(env, ref.action_dim)
                         check_reset_matches_reference(env, ref, seed=31)
                         outside = np.full((1, ref.action_dim), 1.1)
-                        compare_state(env.step(outside, states=None, frames=None).exclude("valid"), ref.step(outside))
+                        compare_state(env.step(outside, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), ref.step(outside))
                         evidence.setdefault("action_validation", {})[domain] = {
                             "shape_and_nonfinite_rejected": True,
                             "finite_out_of_bounds_matches_swm_passthrough": True,

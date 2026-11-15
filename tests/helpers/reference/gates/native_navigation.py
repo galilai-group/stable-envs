@@ -243,7 +243,7 @@ def _variation_case(domain, device):
 
 def _step(env, action):
     """One transition with only the outputs the source has."""
-    return env.step(action, states=None, frames=None).exclude("valid")
+    return env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
 
 
 def _boundary_case(domain, device):

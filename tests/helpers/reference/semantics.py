@@ -15,7 +15,7 @@ from stable_envs.testing.metrics import leaf_difference
 def _step_without_pixels(env, action):
     from stable_envs.env import Env
 
-    return env.step(action, states=None, frames=None).exclude("valid") if isinstance(env, Env) else env.step(action)
+    return env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") if isinstance(env, Env) else env.step(action)
 
 
 def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict:

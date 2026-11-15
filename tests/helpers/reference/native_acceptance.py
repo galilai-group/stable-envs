@@ -62,6 +62,11 @@ def _assert_independent_snapshot(env, snapshot):
     compare_state(env.get_state(), frozen)
 
 
+def _final(env, action):
+    """One step that returns the final State and no state history."""
+    return env.step(action, states=slice(0, 0), frames=None).exclude("states", "state_valid")
+
+
 def _candidate_restore_against_uninterrupted_reference(domain, env, ref, actions):
     saved = env.get_state()
     compare_state(saved, ref.get_state())
@@ -77,14 +82,14 @@ def _lifecycle_boundary(domain, env, ref, batch):
     action = _zero(domain, batch)
     limit = CASES[domain]["limit"]
     for _ in range(limit - 1):
-        got, expected = env.step(action, states=None, frames=None), ref.step(action)
+        got, expected = _final(env, action), ref.step(action)
         compare_state(got, expected)
         assert not bool(got["truncated"].any())
     near_limit = env.get_state()
-    got, expected = env.step(action, states=None, frames=None), ref.step(action)
+    got, expected = _final(env, action), ref.step(action)
     compare_state(got, expected)
     assert bool(got["truncated"].all())
-    post, expected_post = env.step(action, states=None, frames=None), ref.step(action)
+    post, expected_post = _final(env, action), ref.step(action)
     compare_state(post, expected_post)
     assert bool(post["truncated"].all())
     return {"time_limit": limit, "first_truncated_step": limit, "post_truncation_advances": True}, near_limit
@@ -108,11 +113,11 @@ def _terminal_and_reward(domain, env, ref, batch):
         expected_reward = -1.0 if domain == "mountain_car" else 100.0
     env.set_state(state)
     ref.set_state(state)
-    got, expected = env.step(action, states=None, frames=None), ref.step(action)
+    got, expected = _final(env, action), ref.step(action)
     compare_state(got, expected)
     assert bool(got["terminated"].all())
     assert (got["reward"] == expected_reward).all()
-    post, expected_post = env.step(action, states=None, frames=None), ref.step(action)
+    post, expected_post = _final(env, action), ref.step(action)
     compare_state(post, expected_post)
     return {
         "terminal_reward": float(got["reward"][0]),
@@ -145,7 +150,7 @@ def _continuous_dtype_flag_necessity(device):
             wrong = snapshot.clone()
             wrong["task", "state_is_float32"].fill_(True)
             env.set_state(wrong)
-            got_wrong, expected = env.step(action, states=None, frames=None), ref.step(action)
+            got_wrong, expected = _final(env, action), ref.step(action)
             position_error = float(
                 (got_wrong["state", "position"].detach().cpu() - expected["state", "position"].detach().cpu())
                 .abs()
@@ -157,7 +162,7 @@ def _continuous_dtype_flag_necessity(device):
             assert position_error > 0 or observation_error > 0
 
             env.set_state(snapshot)
-            got = env.step(action, states=None, frames=None)
+            got = _final(env, action)
             compare_state(got, expected)
             return {
                 "seed": 17,
@@ -184,7 +189,7 @@ def _cartpole_terminal(env, ref, batch):
     zero = np.zeros((batch, 1), np.int64)
     rewards = []
     for _ in range(3):
-        got, expected = env.step(zero, states=None, frames=None), ref.step(zero)
+        got, expected = _final(env, zero), ref.step(zero)
         compare_state(got, expected)
         assert bool(got["terminated"].all())
         rewards.append(float(got["reward"][0]))
@@ -202,7 +207,7 @@ def _pendulum_rewards(env, ref, batch):
     env.set_state(upright)
     ref.set_state(upright)
     zero = np.zeros((batch, 1), np.float32)
-    got, expected = env.step(zero, states=None, frames=None), ref.step(zero)
+    got, expected = _final(env, zero), ref.step(zero)
     compare_state(got, expected)
     assert (got["reward"] == 0).all()
 
@@ -210,7 +215,7 @@ def _pendulum_rewards(env, ref, batch):
     costly["theta"].fill_(1.0)
     env.set_state(costly)
     ref.set_state(costly)
-    got, expected = env.step(zero, states=None, frames=None), ref.step(zero)
+    got, expected = _final(env, zero), ref.step(zero)
     compare_state(got, expected)
     assert (got["reward"] < 0).all()
     return {"upright_reward": 0.0, "nonzero_cost_reward": float(got["reward"][0])}
@@ -234,13 +239,13 @@ def _action_semantics(domain, env, ref, batch):
 
     if domain == "pendulum":
         action = np.full((batch, 1), 3.25, np.float64)
-        got, expected = env.step(action, states=None, frames=None), ref.step(action)
+        got, expected = _final(env, action), ref.step(action)
         compare_state(got, expected)
         assert (got["state", "torque"] == 2.0).all()
 
     precise_value = 0.1234567890123
     precise = np.full((batch, 1), precise_value, np.float64)
-    got, expected = env.step(precise, states=None, frames=None), ref.step(precise)
+    got, expected = _final(env, precise), ref.step(precise)
     compare_state(got, expected)
     if domain == "pendulum":
         assert (got["state", "torque"] == precise_value).all()
@@ -251,7 +256,7 @@ def _action_semantics(domain, env, ref, batch):
     env.step(zero, states=None, frames=None)
     env.set_state(saved)
     compare_state(env.get_state(), ref.get_state())
-    got, expected = env.step(zero, states=None, frames=None), ref.step(zero)
+    got, expected = _final(env, zero), ref.step(zero)
     compare_state(got, expected)
     if domain == "pendulum":
         return {
@@ -263,7 +268,7 @@ def _action_semantics(domain, env, ref, batch):
 
     check_reset_matches_reference(env, ref, seed=82)
     out_of_range = np.full((batch, 1), 2.0, np.float64)
-    got, expected = env.step(out_of_range, states=None, frames=None), ref.step(out_of_range)
+    got, expected = _final(env, out_of_range), ref.step(out_of_range)
     compare_state(got, expected)
     assert (got["reward"] == -0.4).all()
     return {

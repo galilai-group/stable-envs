@@ -108,12 +108,12 @@ def test_save_restore_continue_is_exact(backend, device):
         for t in range(90):
             env.step(_smooth(batch, t), frames=None)
         saved = env.get_state()
-        first = [env.step(_smooth(batch, t), states=None, frames=None)["state"] for t in range(90, 160)]
+        first = [env.step(_smooth(batch, t), states=slice(0, 0), frames=None)["state"] for t in range(90, 160)]
         env.set_state(saved)
         other.set_state(saved)
         for t, expected in zip(range(90, 160), first, strict=True):
             for restored in (env, other):
-                out = restored.step(_smooth(batch, t), states=None, frames=None)["state"]
+                out = restored.step(_smooth(batch, t), states=slice(0, 0), frames=None)["state"]
                 for key, value in expected.items(True, True):
                     assert torch.equal(out[key], value), key
 

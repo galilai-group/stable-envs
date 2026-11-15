@@ -157,7 +157,7 @@ def test_task_snapshots_and_output_leaves_have_independent_storage(name, device)
     with se.make(name, num_envs=3, device=device) as env:
         env.reset(seed=0)
         action = torch.zeros(3, 2, device=device)
-        result = env.step(action, states=None, frames=None)
+        result = env.step(action, states=slice(0, 0), frames=None)
         held = result.clone()
         result["info", "proprio"].zero_()
         assert_same_state(result.exclude("info"), held.exclude("info"))

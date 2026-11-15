@@ -64,19 +64,19 @@ def _omission_experiments(domain, env, reference):
             env.reset(seed=991)
         else:
             for action in -actions[prefix : prefix + 9]:
-                env.step(action, states=None, frames=None).exclude("valid")
+                env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
         omitted = saved.clone()
         omitted[omitted_key] = env.get_state()[omitted_key]
         env.set_state(omitted)
         continuation = actions[prefix : prefix + 8]
-        bad = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
+        bad = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
         expected = [reference.step(action) for action in continuation]
         error_without = max(
             max_state_error(actual, wanted, exclude=(("state", *omitted_key),))
             for actual, wanted in zip(bad, expected, strict=True)
         )
         env.set_state(saved)
-        good = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
+        good = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
         error_with = max(max_state_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True))
         diagnostic = {
             "domain": domain,
@@ -109,7 +109,7 @@ def _assert_bad_actions(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action, states=None, frames=None).exclude("valid")
+            env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
         except ValueError:
             pass
         else:
@@ -194,7 +194,7 @@ def run_gate(device="cpu"):
                         snapshot = env.get_state()
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action, states=None, frames=None).exclude("valid")
+                            other.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
                         history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                         frame = env.render(snapshot)
                         assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
@@ -241,7 +241,7 @@ def run_gate(device="cpu"):
                         check_reset_matches_reference(env, reference, seed=31)
                         outside = np.full((1, reference.action_dim), 1.1)
                         compare_state(
-                            env.step(outside, states=None, frames=None).exclude("valid"), reference.step(outside)
+                            env.step(outside, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), reference.step(outside)
                         )
                         if domain in ("ball_in_cup", "finger"):
                             check_reset_matches_reference(env, reference, seed=13)

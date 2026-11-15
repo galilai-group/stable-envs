@@ -73,7 +73,8 @@ def _time(env, knob: tuning.Knob, repeats: int):
 
         def work():
             env.set_state(state)
-            return env.step(actions, states=None, frames=None)["state"]
+            env.step(actions, states=None, frames=None)
+            return env.get_state()
 
     elif env.has_dynamics:
         state = env.reset(seed=0)
