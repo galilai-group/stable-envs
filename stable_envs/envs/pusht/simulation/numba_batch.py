@@ -119,13 +119,46 @@ class PushTNumbaAdapter(PushTBatchAdapter):
     def _state_fields(self, width):
         if self.device.type != "cpu":
             return super()._state_fields(width)
-        fields = dict(self._views()["fields"])
+        return {**self._views()["fields"], **self._history_fields(width)}
+
+    def _history_fields(self, width):
         lengths = self._lengths.numpy()
-        fields["history/actions"] = self._actions.numpy()[:, :width]
-        fields["history/dtypes"] = self._codes.numpy()[:, :width]
-        fields["history/lengths"] = lengths
-        fields["history/valid"] = np.arange(width) < lengths[:, None]
-        return fields
+        return {
+            "history/actions": self._actions.numpy()[:, :width],
+            "history/dtypes": self._codes.numpy()[:, :width],
+            "history/lengths": lengths,
+            "history/valid": np.arange(width) < lengths[:, None],
+        }
+
+    def _export(self, device):
+        """On the host, gather each step-changed group from ``(num_envs, -1)`` views of its fields, cut at reset."""
+        if self.device.type != "cpu" or torch.device(device).type != "cpu":
+            return super()._export(device)
+        host = self._views()
+        width = self._history_width()
+        plan = host.get("export")
+        if plan is None or self._layout is None:
+            self._state_layout(self._state_fields(width))
+            plan = host["export"] = self._export_plan(host["fields"])
+        if not plan:
+            return super()._export(device)
+        moving = {key: np.concatenate(views, 1) for key, views in plan.items()}
+        history = self._history_fields(width)
+        return self._host_state(moving, {name: np.array(history[name]) for name in self._groups.kept})
+
+    def _export_plan(self, fields):
+        """``{group key: [(num_envs, -1) view of each field]}`` of the step-changed groups; empty if a view copies."""
+        n, plan = self.num_envs, {}
+        for key in self._moving:
+            views = []
+            for field in self._groups.groups[key].fields:
+                source = fields[field.name]
+                view = source.reshape(n, -1)
+                if not np.shares_memory(view, source):
+                    return {}
+                views.append(view)
+            plan[key] = views
+        return plan
 
     def _advance(self, target, single, active):
         host = {

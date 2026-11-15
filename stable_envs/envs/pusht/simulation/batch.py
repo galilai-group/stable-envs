@@ -226,7 +226,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
                 entry = layouts[leaves] = (StateLayout(declared, self.num_envs, static=static), groups, moving)
             self._layout, self._groups, self._moving = entry
             static = [key for key in self._groups.groups if not _changes_with_step(key)]
-            self._layout.load_static(self._groups.pack(fields, static))
+            self._static = self._groups.pack(fields, static)
+            self._layout.load_static(self._static)
         return self._layout
 
     def get_state(self):
@@ -236,9 +237,28 @@ class PushTBatchAdapter(PushTReplayAdapter):
         fields = self._state_fields(self._history_width())
         layout = self._state_layout(fields)
         groups = self._groups
-        return layout.export(
-            {**{name: fields[name] for name in groups.kept}, **groups.pack(fields, self._moving)}, device
-        )
+        moving = groups.pack(fields, self._moving)
+        kept = {name: fields[name] for name in groups.kept}
+        if torch.device(device).type == "cpu" and all(type(v) is np.ndarray for v in moving.values()):
+            return self._host_state(moving, {name: np.array(value) for name, value in kept.items()})
+        return layout.export({**kept, **moving}, device)
+
+    def _host_state(self, moving, kept):
+        """A host State that wraps new ``moving`` group arrays and ``kept`` field arrays, and copies the static groups.
+
+        Each array becomes a leaf without another copy.
+        """
+        leaves = {key: value.copy() for key, value in self._static.items()}
+        leaves.update(moving)
+        leaves.update(kept)
+        tree: dict = {}
+        for key in self._groups.order:
+            *parents, name = key.split("/")
+            node = tree
+            for part in parents:
+                node = node.setdefault(part, {})
+            node[name] = torch.from_numpy(leaves[key])
+        return build_tensordict(tree, [self.num_envs], "cpu")
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.

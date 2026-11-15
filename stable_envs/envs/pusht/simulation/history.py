@@ -15,9 +15,10 @@ def _with_time_axis(state):
     of every leaf. A State on the CPU, or whose leaves don't share storage or view a larger buffer, is copied leaf
     by leaf.
     """
-    if state.device.type == "cpu":
-        return stack_leaves([state])
     leaves = list(state.items(True, True))
+    if state.device.type == "cpu":
+        # On the host, a NumPy copy per leaf costs less than a torch.stack.
+        return _tree(((key, torch.from_numpy(leaf.numpy()[:, None].copy())) for key, leaf in leaves), state)
     used: dict = {}
     for _, leaf in leaves:
         storage = leaf.untyped_storage()
@@ -25,18 +26,27 @@ def _with_time_axis(state):
         used[source] = used.get(source, 0) + leaf.numel() * leaf.element_size()
     if len(used) == len(leaves) or any(nbytes > 2 * size for (_, nbytes), size in used.items()):
         return stack_leaves([state])
-    copies, tree = {}, {}
-    for key, leaf in leaves:
+    copies: dict = {}
+
+    def copy(leaf):
         storage = leaf.untyped_storage()
         source = (storage.data_ptr(), storage.nbytes())
         if source not in copies:
             copies[source] = storage.clone()
-        value = leaf.new_empty(0).set_(copies[source], leaf.storage_offset(), leaf.shape, leaf.stride())
+        return leaf.new_empty(0).set_(copies[source], leaf.storage_offset(), leaf.shape, leaf.stride()).unsqueeze(1)
+
+    return _tree(((key, copy(leaf)) for key, leaf in leaves), state)
+
+
+def _tree(items, state):
+    """A TensorDict with a time axis of length 1 from ``(key, value)`` pairs of ``state``'s leaves."""
+    tree: dict = {}
+    for key, value in items:
         *parents, name = (key,) if isinstance(key, str) else key
         node = tree
         for part in parents:
             node = node.setdefault(part, {})
-        node[name] = value.unsqueeze(1)
+        node[name] = value
     return build_tensordict(tree, [*state.batch_size, 1], state.device)
 
 
