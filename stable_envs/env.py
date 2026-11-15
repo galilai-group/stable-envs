@@ -371,6 +371,8 @@ class Env:
     #: ``(saved, loaded)`` simulation backend pairs whose States don't resume within tolerance on the other backend.
     #: ``set_state`` doesn't refuse them yet (issue #63); the cross-backend State check expects them to fail.
     state_backend_mismatches: frozenset[tuple[str, str]] = frozenset()
+    #: The ``select_backend`` path of this environment's physics backend choice; ``stable-envs tune`` times only it.
+    simulation_backend_path: str | None = None
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()

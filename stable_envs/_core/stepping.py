@@ -371,7 +371,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)
     frames = out.get("frames")
-    moved = to_device(build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device)
+    moved = to_device(
+        build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device
+    )
     return build_tensordict(
         {key: frames if key == "frames" else moved[key] for key in out}, [env.num_envs], env.device
     )

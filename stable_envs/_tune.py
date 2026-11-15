@@ -107,8 +107,10 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
     tuning.check(dict.fromkeys(knobs))
     if not knobs or backends.KNOB in knobs:
         # The simulation backends of the paths this env selected for: the one place that times them.
-        prefixes = tuning.paths_of(type(env))
-        for path, pick in backends.calibrate(env.num_envs, env.device, prefixes=prefixes, write=write).items():
+        # The env's own path when it names one: other environments built in this process keep their choices.
+        own = getattr(env, "simulation_backend_path", None)
+        scope = {"paths": (own,)} if own else {"prefixes": tuning.paths_of(type(env))}
+        for path, pick in backends.calibrate(env.num_envs, env.device, write=write, **scope).items():
             say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
     chosen = [k for k in knobs_for(env) if not knobs or k.name in knobs]
     if not chosen:

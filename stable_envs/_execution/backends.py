@@ -190,19 +190,26 @@ def select_backend(
     return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
 
 
-def registered(device: str | torch.device, prefixes: Sequence[str] = ()) -> list[tuple[str, Rungs, Measure]]:
-    """``(path, rungs, measure)`` of the paths selected for on the type of ``device``; with ``prefixes``, only the
-    paths whose first part is one of them."""
+def registered(
+    device: str | torch.device, prefixes: Sequence[str] = (), paths: Sequence[str] = ()
+) -> list[tuple[str, Rungs, Measure]]:
+    """``(path, rungs, measure)`` of the paths selected for on the type of ``device``; with ``paths``, only those
+    paths; with ``prefixes``, only the paths whose first part is one of them."""
     kind = torch.device(device).type
     return [
         (path, rungs, measure)
         for (path, where), (rungs, measure) in _REGISTERED.items()
-        if where == kind and (not prefixes or path.split("/")[0] in prefixes)
+        if where == kind and (not paths or path in paths) and (not prefixes or path.split("/")[0] in prefixes)
     ]
 
 
 def calibrate(
-    num_envs: int, device: str | torch.device, *, prefixes: Sequence[str] = (), write: bool = True
+    num_envs: int,
+    device: str | torch.device,
+    *,
+    prefixes: Sequence[str] = (),
+    paths: Sequence[str] = (),
+    write: bool = True,
 ) -> dict[str, str]:
     """Time both backends of the registered paths on ``device`` (see ``registered``) at ``num_envs`` rows.
 
@@ -211,7 +218,7 @@ def calibrate(
     """
     device = torch.device(device)
     chosen = {}
-    for path, rungs, measure in registered(device, prefixes):
+    for path, rungs, measure in registered(device, prefixes, paths):
         if rungs.small == rungs.large:
             continue
         wins = _calibrate(path, num_envs, device, rungs.small, rungs.large, measure)

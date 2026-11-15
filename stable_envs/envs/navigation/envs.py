@@ -1082,6 +1082,7 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
         ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
         every batch size. On CUDA, Numba steps host copies of the rows and moves the results to the device.
         """
+        self.simulation_backend_path = f"navigation/{self.name}"
         super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
@@ -1100,7 +1101,7 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             return (lambda: env._step(actions)), env.close
 
         return select_backend(
-            f"navigation/{self.name}",
+            self.simulation_backend_path,
             self.B,
             self.device,
             "auto",

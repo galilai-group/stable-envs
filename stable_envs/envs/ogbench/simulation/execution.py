@@ -80,7 +80,7 @@ def manipulation_backend(
     if simulation_backend == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
     return select_backend(
-        f"ogb-sim/{family.lower()}",
+        manipulation_path(family),
         num_envs,
         device,
         simulation_backend,
@@ -88,6 +88,11 @@ def manipulation_backend(
         choices=("native", "mjwarp"),
         measure=_measure_manipulation(family, device),
     )
+
+
+def manipulation_path(family: str) -> str:
+    """The ``select_backend`` path of a Cube or Scene batch."""
+    return f"ogb-sim/{family.lower()}"
 
 
 def make_manipulation_adapter(

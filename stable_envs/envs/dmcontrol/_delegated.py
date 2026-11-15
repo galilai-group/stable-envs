@@ -6,7 +6,7 @@ from tensordict import TensorDict
 from ..._core.physics import state_key
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict
-from .simulation.execution import dmc_backend, make_dmc_adapter
+from .simulation.execution import dmc_backend, dmc_path, make_dmc_adapter
 from .simulation.factory import ACTION_DIMS, FIELDS, RENDER_KEYS
 from .simulation.physics import LEAVES
 
@@ -53,6 +53,7 @@ class DelegatedSemantics:
 
     def _make_simulator(self):
         self.simulation_backend = dmc_backend(self._simulator_key(), self.B, self.device, self.simulation_backend)
+        self.simulation_backend_path = dmc_path(self._simulator_key())
         return make_dmc_adapter(
             self._simulator_key(),
             self.B,

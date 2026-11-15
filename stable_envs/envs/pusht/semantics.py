@@ -164,6 +164,7 @@ class PushT(Env):
         """
         _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
+        from .simulation.execution import PATH as SIMULATION_PATH
         from .simulation.execution import make_pusht_adapter, pusht_backend
 
         if backend not in ("auto", "source", "pygame"):
@@ -178,6 +179,7 @@ class PushT(Env):
             num_envs, device, simulation_backend, discrete=self.discrete, config=config
         )
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
+        self.simulation_backend_path = SIMULATION_PATH
         # CPU batches step on Numba threads.
         self.native_step_threads = self.simulation_backend == "numba"
         # CPU renders return new storage.

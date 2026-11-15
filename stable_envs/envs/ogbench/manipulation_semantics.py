@@ -64,10 +64,11 @@ class ManipulationSemantics:
         CUDA it steps small batches on native ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the
         measured ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        from .simulation.execution import make_manipulation_adapter, manipulation_backend
+        from .simulation.execution import make_manipulation_adapter, manipulation_backend, manipulation_path
 
         device = Env.resolve_device(device)
         self.simulation_backend = manipulation_backend(self.CELL, num_envs, device, simulation_backend)
+        self.simulation_backend_path = manipulation_path(self.CELL)
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, self.simulation_backend
         )

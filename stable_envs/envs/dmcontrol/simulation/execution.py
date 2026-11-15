@@ -58,7 +58,7 @@ def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: st
     if backend == "mjx" and key != "reacher":
         raise ValueError("DMC simulation_backend must be 'auto', 'native' or 'mjwarp'; 'mjx' is Reacher-only")
     return select_backend(
-        f"dmc-sim/{key}",
+        dmc_path(key),
         num_envs,
         device,
         backend,
@@ -66,6 +66,11 @@ def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: st
         choices=choices,
         measure=_measure(key, device),
     )
+
+
+def dmc_path(key: str) -> str:
+    """The ``select_backend`` path of simulator ``key``."""
+    return f"dmc-sim/{key}"
 
 
 def make_dmc_adapter(
