@@ -236,6 +236,7 @@ class BatchController:
         from ...._execution.mjbatch import NativeBatch
 
         ik = env._ik
+        self._source_ik = ik
         # A forward pass of the arm takes microseconds, so a thread pays off only for many lanes.
         threads = max(1, min(threads, num_envs // IK_LANES_PER_THREAD))
         # The IK reads kinematics only; without contacts and constraints the position stage skips collision.
@@ -258,12 +259,18 @@ class BatchController:
         self._workspace = env._workspace_bounds
         self._down = env._effector_down_rotation.wxyz
         self._t_pa = env._T_pa.wxyz_xyz
+        self._down_rotation, self._pinch_to_attach = env._effector_down_rotation, env._T_pa
         self._norm = np.linalg.norm
         self._errors = _NUMBA_IK_ERRORS or _ik_errors_numpy
 
     def control(self, actions, qpos, pinch_pos, pinch_mat, ctrl, ids):
         """Write the controls of lanes ``ids`` into ``ctrl`` from their actions and pinch site poses."""
         n = len(ids)
+        if n == 1:
+            arm, gripper = self._control_one(np.asarray(actions)[0], qpos[ids[0]], pinch_pos[0], pinch_mat[0])
+            ctrl[ids[0], self._arm_actuators] = arm
+            ctrl[ids[0], self._gripper_actuators] = gripper
+            return
         action = 0.5 * (np.asarray(actions) + 1) * (self._high - self._low) + self._low
         a_pos, a_ori, a_gripper = action[:, :3], action[:, 3], action[:, 4:5]
         effector_pos = np.array(pinch_pos, np.float64)
@@ -283,36 +290,74 @@ class BatchController:
         ctrl[ids[:, None], self._arm_actuators] = self.solve(pos, quat, qpos[ids][:, self._arm_qpos])
         ctrl[ids[:, None], self._gripper_actuators] = 255.0 * target_gripper
 
+    def _control_one(self, action, qpos, pinch_pos, pinch_mat):
+        """``ManipSpaceEnv.set_control`` of one lane, with OGBench's own pose types and controller.
+
+        Returns the arm and gripper controls.
+        """
+        from ogbench.manipspace import lie
+
+        action = 0.5 * (action + 1) * (self._high - self._low) + self._low
+        a_pos, a_ori, a_gripper = action[:3], action[3], action[4]
+        effector_pos = np.array(pinch_pos)
+        effector_yaw = lie.SO3.from_matrix(np.array(pinch_mat).reshape(3, 3)).compute_yaw_radians()
+        gripper_opening = np.array(np.clip([qpos[self._gripper_qpos] / 0.8], 0, 1))
+        translation = effector_pos + a_pos
+        down = self._down_rotation
+        orientation = lie.SO3.from_z_radians(a_ori) @ lie.SO3.from_z_radians(effector_yaw) @ down.inverse()
+        target_gripper = gripper_opening + a_gripper
+        np.clip(translation, *self._workspace, out=translation)
+        yaw = np.clip(orientation.compute_yaw_radians(), -np.pi, +np.pi)
+        orientation = lie.SO3.from_z_radians(yaw) @ down
+        target_gripper = np.clip(target_gripper, 0.0, 1.0)
+        pose = lie.SE3.from_rotation_and_translation(rotation=orientation, translation=translation)
+        attach = pose @ self._pinch_to_attach
+        arm = self._source_ik.solve(
+            pos=attach.translation(), quat=attach.rotation().wxyz, curr_qpos=qpos[self._arm_qpos]
+        )
+        return arm, 255.0 * target_gripper
+
     def solve(self, pos, quat, qpos, max_iters=20, pos_thresh=1e-4, ori_thresh=1e-4):
-        """``DiffIKController.solve`` per row, each row stopping at its own iteration."""
+        """``DiffIKController.solve`` per row, each row stopping at its own iteration.
+
+        While every row is still iterating, the arrays are used whole, without index copies; the arithmetic is
+        the same as on the active rows.
+        """
         n = len(pos)
         b = self._ik
         qpos = qpos.copy()
-        active = np.arange(n)
+        # The IK batch has a row per lane; a call for fewer lanes uses its first rows by index.
+        ids = None if n == len(self._ik_qpos) else np.arange(n)
+        site_xpos, site_xmat = self._ik_site_xpos[:, self._site], self._ik_site_xmat[:, self._site]
         for _ in range(max_iters):
-            ids = active
-            self._ik_qpos[ids] = qpos[ids]
-            b.forward(ids, mujoco.mjtStage.mjSTAGE_POS)
-            err, norms = self._errors(
-                pos[ids], quat[ids], self._ik_site_xpos[ids, self._site], self._ik_site_xmat[ids, self._site]
-            )
+            if ids is None:
+                self._ik_qpos[:] = qpos
+                b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
+                err, norms = self._errors(pos, quat, site_xpos, site_xmat)
+            else:
+                self._ik_qpos[ids] = qpos[ids]
+                b.forward(ids, mujoco.mjtStage.mjSTAGE_POS)
+                err, norms = self._errors(pos[ids], quat[ids], site_xpos[ids], site_xmat[ids])
             done = self._reached(err[:, :3], norms[:, 0], pos_thresh) & self._reached(
                 err[:, 3:], norms[:, 1], ori_thresh
             )
             if done.any():
                 keep = ~done
-                ids, err = ids[keep], err[keep]
-                active = ids
+                ids = (np.arange(n) if ids is None else ids)[keep]
+                err = err[keep]
                 if not len(ids):
                     break
-            jacp, jacr = b.jac(self._site_body, self._ik_site_xpos[ids, self._site], ids)
+            jacp, jacr = b.jac(self._site_body, site_xpos if ids is None else site_xpos[ids], ids)
             jac = np.concatenate([jacp, jacr], axis=1)
             h = jac @ jac.transpose(0, 2, 1) + self._damping
             update = (jac.transpose(0, 2, 1) @ np.linalg.solve(h, err[:, :, None]))[:, :, 0]
             update_max = np.max(np.abs(update), axis=1)
             over = update_max > self._max_angle
             update[over] *= (self._max_angle / update_max[over])[:, None]
-            qpos[ids] = qpos[ids] + 1.0 * update
+            if ids is None:
+                qpos = qpos + 1.0 * update
+            else:
+                qpos[ids] = qpos[ids] + 1.0 * update
         return qpos
 
     def _reached(self, err, norm, threshold):
