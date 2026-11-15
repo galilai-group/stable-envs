@@ -246,6 +246,10 @@ CELLS = tuple(
 )
 
 
+#: A State saved on one backend resumes on the other with different contact forces (issue #63).
+_CONTACT_MISMATCH = frozenset({("native", "mjwarp"), ("mjwarp", "native")})
+
+
 def _make_classes() -> dict[str, type]:
     made = {}
     for cname, task in CELLS:
@@ -255,6 +259,7 @@ def _make_classes() -> dict[str, type]:
                 (RoadsterBase,),
                 dict(
                     TASK=task,
+                    **({"state_backend_mismatches": _CONTACT_MISMATCH} if task == "rooftop" else {}),
                     name=f"roadster-{task}",
                     domain=task,
                     reference_id=f"roadster_jets/RoadsterPlan-v0:{task}",

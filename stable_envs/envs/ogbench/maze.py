@@ -1489,6 +1489,10 @@ class _StatesScene:
 _MODULE = "stable_envs.envs.ogbench"
 
 
+#: A State saved on one backend resumes on the other with different contact forces (issue #63).
+_CONTACT_MISMATCH = frozenset({("native", "mjwarp"), ("mjwarp", "native")})
+
+
 def _make_classes():
     """Register dataset-specific names; point/large/navigate renders the state-observation scene."""
     made = {}
@@ -1503,6 +1507,7 @@ def _make_classes():
                 bases,
                 dict(
                     LOCO=loco,
+                    **({"state_backend_mismatches": _CONTACT_MISMATCH} if loco == "ant" else {}),
                     MAZE=maze,
                     action_dim=BODIES[loco][2],
                     __module__=_MODULE,
