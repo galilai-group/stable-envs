@@ -47,12 +47,28 @@ def _seconds_per_step(step: Callable[[], object], device: torch.device) -> float
         return (time.perf_counter() - start) / calls
 
 
-def _time(measure: Measure, backend: str, num_envs: int, device: torch.device) -> float:
+def time_backend(measure: Measure, backend: str, num_envs: int, device: str | torch.device) -> float:
+    """Seconds per step call of ``backend`` with ``num_envs`` rows, as ``stable-envs tune`` times it."""
     step, close = measure(backend, num_envs)
     try:
-        return _seconds_per_step(step, device)
+        return _seconds_per_step(step, torch.device(device))
     finally:
         close()
+
+
+def measure_adapter(make: Callable[[str, int], object], actions: Callable[[int], object]) -> Measure:
+    """A ``Measure`` for adapters: ``make(backend, num_envs)`` builds one, ``actions(num_envs)`` gives its actions.
+
+    The adapter is reset with seed 0 and stepped with the same actions at every call.
+    """
+
+    def measure(backend: str, num_envs: int):
+        adapter = make(backend, num_envs)
+        adapter.reset(0)
+        batch = actions(num_envs)
+        return (lambda: adapter.step(batch)), adapter.close
+
+    return measure
 
 
 def _cached_neighbours(path: str, device, num_envs: int) -> str | None:
@@ -87,14 +103,14 @@ def _calibrate(path: str, num_envs: int, device: torch.device, small: str, large
     """
     start = time.perf_counter()
     try:
-        large_s = _time(measure, large, num_envs, device)
+        large_s = time_backend(measure, large, num_envs, device)
     except Exception as e:  # noqa: BLE001 - a backend that can't run loses
         log("WARNING", f"{path}: timing the {large} backend failed ({type(e).__name__}: {e}); using {small}.")
         return False
     rows, small_s = 1, 0.0
     while True:
         rows = min(rows, num_envs)
-        small_s = _time(measure, small, rows, device)
+        small_s = time_backend(measure, small, rows, device)
         if small_s > large_s or rows == num_envs:
             break
         rows *= 2
@@ -118,9 +134,9 @@ class Rungs(NamedTuple):
     min_envs: int | None = None
 
 
-#: ``path -> (rungs per device type, measure)`` of the simulation paths that this process selected for;
+#: ``(path, device type) -> (rungs, measure)`` of the simulation paths that this process selected for;
 #: ``stable-envs tune`` calibrates them.
-_REGISTERED: dict[str, tuple[Mapping[str, Rungs], Measure]] = {}
+_REGISTERED: dict[tuple[str, str], tuple[Rungs, Measure]] = {}
 
 
 def _rungs(backends: Mapping[str, tuple[str, ...]], device: torch.device) -> Rungs:
@@ -162,7 +178,7 @@ def select_backend(
     device = torch.device(device)
     rungs = _rungs(backends, device)
     if measure is not None:
-        _REGISTERED[path] = (backends, measure)
+        _REGISTERED[path, device.type] = (rungs, measure)
     if rungs.small == rungs.large:
         return rungs.small
     value = tuning.get(KNOB, path=path, size=0, batch=num_envs, device=device)
@@ -174,16 +190,28 @@ def select_backend(
     return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
 
 
-def calibrate(num_envs: int, device: str | torch.device, *, write: bool = True) -> dict[str, str]:
-    """Time both backends of every simulation path this process selected for, at ``num_envs`` rows on ``device``.
+def registered(device: str | torch.device, prefixes: Sequence[str] = ()) -> list[tuple[str, Rungs, Measure]]:
+    """``(path, rungs, measure)`` of the paths selected for on the type of ``device``; with ``prefixes``, only the
+    paths whose first part is one of them."""
+    kind = torch.device(device).type
+    return [
+        (path, rungs, measure)
+        for (path, where), (rungs, measure) in _REGISTERED.items()
+        if where == kind and (not prefixes or path.split("/")[0] in prefixes)
+    ]
 
-    ``stable-envs tune`` calls it. Each choice goes to the tuning cache of the device unless ``write`` is False.
-    Returns ``{path: chosen backend}``.
+
+def calibrate(
+    num_envs: int, device: str | torch.device, *, prefixes: Sequence[str] = (), write: bool = True
+) -> dict[str, str]:
+    """Time both backends of the registered paths on ``device`` (see ``registered``) at ``num_envs`` rows.
+
+    ``stable-envs tune`` calls it for the environment it tunes. Each choice goes to the tuning cache of the device
+    unless ``write`` is False. Returns ``{path: chosen backend}``.
     """
     device = torch.device(device)
     chosen = {}
-    for path, (backends, measure) in list(_REGISTERED.items()):
-        rungs = _rungs(backends, device)
+    for path, rungs, measure in registered(device, prefixes):
         if rungs.small == rungs.large:
             continue
         wins = _calibrate(path, num_envs, device, rungs.small, rungs.large, measure)

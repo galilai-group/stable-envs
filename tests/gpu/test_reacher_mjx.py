@@ -86,7 +86,13 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
 
 @pytest.mark.parametrize(
     "simulation_backend,batch,backend",
-    [("mjwarp", 1, "mjwarp"), (None, 32, "mjwarp"), ("auto", 1, "native"), ("auto", 7, "native"), ("auto", 8, "mjwarp")],
+    [
+        ("mjwarp", 1, "mjwarp"),
+        (None, 32, "mjwarp"),
+        ("auto", 1, "native"),
+        ("auto", 7, "native"),
+        ("auto", 8, "mjwarp"),
+    ],
 )
 def test_reacher_routes_physics_and_preserves_cuda_outputs(simulation_backend, batch, backend):
     with (

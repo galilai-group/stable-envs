@@ -1,6 +1,5 @@
 """PushT batches with array physics, source resets, solver-cache checkpoints and rendering metadata."""
 
-
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -170,8 +169,10 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return fields
 
     def _state_layout(self, fields):
-        """The State layout: the fields that only reset, restore or a Variation change are static, and the action
-        history has the width of the longest history. Leaves follow the CPU owners' State order, then the solver cache.
+        """The State layout; leaves follow the CPU owners' State order, then the solver cache.
+
+        The fields that only reset, restore or a Variation change are static, and the action history has the width
+        of the longest history.
         """
         if self._layout is None:
             rank = {key: index for index, key in enumerate(self._keys)}

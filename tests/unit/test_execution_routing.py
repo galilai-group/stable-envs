@@ -132,7 +132,9 @@ def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, d
 
 
 @pytest.mark.family("dmc")
-@pytest.mark.parametrize("backend,device", [("unknown", "cuda"), ("mjx", "cpu"), ("mjwarp", "cpu"), ("default", "cuda")])
+@pytest.mark.parametrize(
+    "backend,device", [("unknown", "cuda"), ("mjx", "cpu"), ("mjwarp", "cpu"), ("default", "cuda")]
+)
 def test_dmc_rejects_invalid_simulation_selection(backend, device):
     from stable_envs.envs.dmcontrol.simulation.execution import dmc_backend
 
@@ -155,7 +157,12 @@ def test_dmc_cuda_physics_without_warp_names_the_extra(monkeypatch):
 @pytest.mark.family("dmc")
 def test_dmc_explicit_names_select_and_auto_follows_the_switch_point(monkeypatch):
     execution = _fake_adapters(monkeypatch)
-    for switch, backend, kind in ((1, None, "mjwarp"), (2, "auto", "batch"), (1, "native", "batch"), (2, "mjwarp", "mjwarp")):
+    for switch, backend, kind in (
+        (1, None, "mjwarp"),
+        (2, "auto", "batch"),
+        (1, "native", "batch"),
+        (2, "mjwarp", "mjwarp"),
+    ):
         with tuning.override(large_backend_min_envs=switch):
             result = execution.make_dmc_adapter("walker", 1, "cuda:1", 17, simulation_backend=backend)
         assert result == (kind, ("walker", 1, "cuda:1", 17), {})

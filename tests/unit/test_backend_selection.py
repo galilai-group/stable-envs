@@ -36,9 +36,7 @@ def _measure(costs, calls):
 
 
 def _select(num_envs, device="cuda", requested="auto", measure=None):
-    return backends.select_backend(
-        "test-sim", num_envs, device, requested, BACKENDS, choices=CHOICES, measure=measure
-    )
+    return backends.select_backend("test-sim", num_envs, device, requested, BACKENDS, choices=CHOICES, measure=measure)
 
 
 def test_explicit_names_and_cpu_need_no_measurement():

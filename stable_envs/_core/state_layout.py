@@ -22,6 +22,7 @@ Key = tuple[str, ...] | str
 def _path(key: Key) -> tuple[str, ...]:
     return tuple(key.split("/")) if isinstance(key, str) else tuple(key)
 
+
 #: Byte alignment of each dtype's buffer inside the pinned transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
 
@@ -136,9 +137,7 @@ class StateLayout:
                 leaves[i] = torch.from_numpy(part) if isinstance(part, np.ndarray) else part
                 start = stop
         batch, where = self._batch, _recorded(flats, device)
-        return self._build(
-            leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where)
-        )
+        return self._build(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where))
 
     def _to_device(self, flats: list[torch.Tensor], device: torch.device) -> list[torch.Tensor]:
         """Move host buffers to ``device`` through one pinned buffer and one asynchronous copy."""

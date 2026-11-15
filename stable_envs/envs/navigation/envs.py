@@ -612,8 +612,11 @@ class _TorchNavBase(_GymReferencePort):
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation; ``"auto"`` uses Numba on CPU when it imports and Torch otherwise."""
         choices = ("auto", *self.simulation_backends)
+        simulation_backend = "auto" if simulation_backend is None else simulation_backend
         if simulation_backend not in choices:
-            raise ValueError(f"simulation_backend must be one of {', '.join(map(repr, choices))}")
+            raise ValueError(
+                f"simulation_backend must be one of {', '.join(map(repr, choices))}; got {simulation_backend!r}"
+            )
         super().__init__(*args, **kwargs)
         self._gy, self._gx = _grids(self.device)
         self._border = _border_mask(self.device)
@@ -1081,16 +1084,16 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def _auto_simulation_backend(self) -> str:
         if self.device.type == "cpu" and _numba_available():
             return "numba"
-        cls = type(self)
+        cls, device, width = type(self), self.device, self.action_dim
 
         def measure(backend: str, num_envs: int):
-            env = cls(num_envs=num_envs, device=self.device, simulation_backend=backend)
+            env = cls(num_envs=num_envs, device=device, simulation_backend=backend)
             env.reset(seed=0)
-            actions = torch.rand(num_envs, self.action_dim, device=self.device) * 2 - 1
+            actions = torch.rand(num_envs, width, device=device) * 2 - 1
             return (lambda: env._step(actions)), env.close
 
         return select_backend(
-            f"navigation-sim/{self.name}",
+            f"navigation/{self.name}",
             self.B,
             self.device,
             "auto",

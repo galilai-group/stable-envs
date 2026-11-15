@@ -24,21 +24,20 @@ CUDA_MIN_ENVS: int | None = None
 
 
 def _measure(device, discrete: bool, config: dict):
-    """Build and step PushT lanes on one backend, for the backend calibration."""
+    """Build and step PushT lanes on one backend, for ``stable-envs tune``."""
     import torch
 
-    def measure(backend: str, num_envs: int):
-        adapter = make_pusht_adapter(
-            num_envs, device, 0, discrete=discrete, config=config, simulation_backend=backend
-        )
-        adapter.reset(0)
-        if discrete:
-            actions = torch.randint(0, 16, (num_envs, 2), device=device)
-        else:
-            actions = torch.rand(num_envs, 2, device=device) * 2 - 1
-        return (lambda: adapter.step(actions)), adapter.close
+    from ...._execution.backends import measure_adapter
 
-    return measure
+    def actions(n):
+        if discrete:
+            return torch.randint(0, 16, (n, 2), device=device)
+        return torch.rand(n, 2, device=device) * 2 - 1
+
+    def make(backend, n):
+        return make_pusht_adapter(n, device, 0, discrete=discrete, config=config, simulation_backend=backend)
+
+    return measure_adapter(make, actions)
 
 
 def pusht_backend(

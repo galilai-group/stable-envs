@@ -61,17 +61,15 @@ MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 64, "Scene": 128}
 
 
 def _measure_manipulation(family: str, device: str | torch.device):
-    """Build and step Cube/Scene lanes on one backend, for the backend calibration."""
-
+    """Build and step Cube/Scene lanes on one backend, for ``stable-envs tune``."""
     import torch
 
-    def measure(backend: str, num_envs: int):
-        adapter = make_manipulation_adapter(family, num_envs, device, 0, None, backend)
-        adapter.reset(0)
-        actions = torch.rand(num_envs, 5, device=device) * 2 - 1
-        return (lambda: adapter.step(actions)), adapter.close
+    from ...._execution.backends import measure_adapter
 
-    return measure
+    return measure_adapter(
+        lambda backend, n: make_manipulation_adapter(family, n, device, 0, None, backend),
+        lambda n: torch.rand(n, 5, device=device) * 2 - 1,
+    )
 
 
 def manipulation_backend(

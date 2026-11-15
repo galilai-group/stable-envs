@@ -79,7 +79,10 @@ def check_backend_parity(
             want = reference.reset(seed=seed)
             for env in others:
                 compare_backend_states(
-                    env.reset(seed=seed), want, atol=reset_atol, exclude=exclude,
+                    env.reset(seed=seed),
+                    want,
+                    atol=reset_atol,
+                    exclude=exclude,
                     what=f"{name} reset seed={seed} {env.simulation_backend} vs {reference.simulation_backend}",
                 )
             rng = np.random.default_rng(seed)
@@ -89,7 +92,10 @@ def check_backend_parity(
                 for env in others:
                     got = env.step(actions.to(env.device), states=slice(0, 0), frames=None)["state"]
                     compare_backend_states(
-                        got, want, atol=step_atol, exclude=exclude,
+                        got,
+                        want,
+                        atol=step_atol,
+                        exclude=exclude,
                         what=f"{name} seed={seed} step {t} {env.simulation_backend} vs {reference.simulation_backend}",
                     )
     finally:

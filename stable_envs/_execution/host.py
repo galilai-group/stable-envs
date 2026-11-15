@@ -42,7 +42,9 @@ class HostAdapter:
             return value.to(self.device)
         if type(value) is dict and value:
             n = getattr(self._adapter, "num_envs", None)
-            if all(torch.is_tensor(v) and v.device.type == "cpu" and v.ndim and v.shape[0] == n for v in value.values()):
+            if all(
+                torch.is_tensor(v) and v.device.type == "cpu" and v.ndim and v.shape[0] == n for v in value.values()
+            ):
                 if all(type(k) is str for k in value):
                     return dict(to_device(build_tensordict(value, [n], _CPU), self.device).items())
             return {k: self._to_device(v) for k, v in value.items()}

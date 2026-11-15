@@ -143,7 +143,6 @@ def stack_leaves(values) -> TensorDict:
     return first.apply(lambda *leaves: torch.stack(leaves, dim=1), *values[1:], batch_size=batch)
 
 
-
 #: Byte alignment of each dtype group in the packed transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
 _NUMPY = {

@@ -153,8 +153,10 @@ class PushT(Env):
         with_target=True,
         simulation_backend="auto",
     ):
-        """``simulation_backend="auto"`` steps Numba physics on CPU. On CUDA it steps small batches with Numba and
-        large ones with Triton, from the measured ``large_backend_min_envs`` switch point.
+        """Select the physics backend.
+
+        ``simulation_backend="auto"`` steps Numba physics on CPU. On CUDA it steps small batches with Numba and
+        large ones with Triton, from the ``large_backend_min_envs`` switch point.
 
         ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
         CPU and returns CUDA tensors.

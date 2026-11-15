@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from ...._execution.backends import Rungs, select_backend
+from ...._execution.backends import Rungs, measure_adapter, select_backend
 from .batch import DMCBatchAdapter
 from .factory import ACTION_DIMS, make_batch
 from .first_family import ReacherAdapter
@@ -42,15 +42,11 @@ CUDA_MIN_ENVS: dict[str, int] = {
 
 
 def _measure(key: str, device: str | torch.device):
-    """Build and step ``key`` lanes on one backend, for the backend calibration."""
-
-    def measure(backend: str, num_envs: int):
-        adapter = make_dmc_adapter(key, num_envs, device, 0, simulation_backend=backend)
-        adapter.reset(0)
-        actions = torch.rand(num_envs, ACTION_DIMS[key], dtype=torch.float64, device=device) * 2 - 1
-        return (lambda: adapter.step(actions)), adapter.close
-
-    return measure
+    """Build and step ``key`` lanes on one backend, for ``stable-envs tune``."""
+    return measure_adapter(
+        lambda backend, n: make_dmc_adapter(key, n, device, 0, simulation_backend=backend),
+        lambda n: torch.rand(n, ACTION_DIMS[key], dtype=torch.float64, device=device) * 2 - 1,
+    )
 
 
 def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: str | None = "auto") -> str:

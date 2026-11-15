@@ -48,7 +48,9 @@ def _cases():
             if device == "cuda":
                 marks.append(pytest.mark.gpu)
             for saved, loaded in itertools.permutations(backends, 2):
-                cases.append(pytest.param(name, device, saved, loaded, id=f"{name}-{device}-{saved}-{loaded}", marks=marks))
+                cases.append(
+                    pytest.param(name, device, saved, loaded, id=f"{name}-{device}-{saved}-{loaded}", marks=marks)
+                )
     return cases
 
 
@@ -89,7 +91,11 @@ def test_state_resumes_on_another_backend_or_is_refused(name, device, saved, loa
             want = source.step(actions.to(source.device), states=slice(0, 0), frames=None)["state"]
             got = target.step(actions.to(target.device), states=slice(0, 0), frames=None)["state"]
             compare_backend_states(
-                got, want, atol=STEP_ATOL, rtol=STEP_RTOL, exclude=SOLVER_CACHES,
+                got,
+                want,
+                atol=STEP_ATOL,
+                rtol=STEP_RTOL,
+                exclude=SOLVER_CACHES,
                 what=f"{name} {saved} State on {loaded}, step {t}",
             )
     finally:
