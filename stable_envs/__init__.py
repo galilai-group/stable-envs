@@ -12,6 +12,7 @@ from . import tuning
 from .__about__ import __version__  # noqa: F401
 from ._core.config import get_config, set  # noqa: A004,F401
 from ._core.cpus import limit_thread_defaults as _limit_thread_defaults
+from ._core.state_schema import get_field, schema_of, set_field  # noqa: F401
 from .env import Env, State, StepResult, VariationLike  # noqa: F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make
@@ -83,6 +84,9 @@ __all__ = [
     "Spec",
     "CompositeSpec",
     "make",
+    "get_field",
+    "set_field",
+    "schema_of",
     "info",
     "list_envs",
     "list_families",

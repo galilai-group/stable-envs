@@ -9,6 +9,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from stable_envs._core.state_schema import unfold
 from stable_envs.testing.metrics import leaf_difference
 
 
@@ -108,6 +109,7 @@ def assert_lossy_projection_rejected(env, snapshot):
 
 def max_state_error(actual, expected, *, exclude=()):
     """Largest absolute leaf difference (any mismatch counts 1 for bools); keys, dtypes and shapes must agree."""
+    actual, expected = unfold(actual), unfold(expected)
     assert set(actual.keys(True, True)) == set(expected.keys(True, True))
     error = 0.0
     for key in actual.keys(True, True):
