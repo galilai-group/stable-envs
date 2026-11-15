@@ -267,9 +267,11 @@ def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
         fast.close()
 
 
-@pytest.mark.parametrize("backend", ["numpy", "torch"])
+@pytest.mark.parametrize("backend", BACKENDS)
 def test_invalid_discrete_actions_raise_like_gymnasium(backend):
     for domain, error in (("cartpole", AssertionError), ("mountain_car", AssertionError), ("acrobot", TypeError)):
+        if backend == "numba" and domain not in STEPS:
+            continue
         fast = BatchedClassicAdapter(domain, 2, "cpu", 0, backend)
         try:
             fast.reset(0)
@@ -283,6 +285,8 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
             assert torch.equal(fast.get_state()["lifecycle", "elapsed_steps"], held["lifecycle", "elapsed_steps"])
         finally:
             fast.close()
+    if backend == "numba" and "acrobot" not in STEPS:
+        return
     fast = BatchedClassicAdapter("acrobot", 3, "cpu", 0, backend)
     reference = ClassicControlAdapter("acrobot", 3, "cpu", 0)
     try:
@@ -317,15 +321,26 @@ def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path)
         tuning._clear_caches()
 
 
-def test_backend_selection():
+def _shipped_host(domain, lanes):
+    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS
+
+    if domain in COMPILED_HOST:
+        return "numba"
+    fewest = CPU_MIN_ENVS[domain]
+    return "numpy" if fewest is None or lanes >= fewest else "gym"
+
+
+def test_backend_selection(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    tuning._clear_caches()
     for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            small, large = ("numba", "numba") if domain in COMPILED_HOST else ("gym", "numpy")
+            # The knob moves the CUDA switch point and leaves the host choice to the shipped values.
             with tuning.override(large_backend_min_envs=4):
-                assert classic_backend(domain, "cpu", 4, backend) == large
-                assert classic_backend(domain, "cpu", 3, backend) == small
+                for lanes in (1, 3, 4, 64):
+                    assert classic_backend(domain, "cpu", lanes, backend) == _shipped_host(domain, lanes)
                 assert classic_backend(domain, "cuda", 4, backend) == "torch"
-                assert classic_backend(domain, "cuda", 3, backend) == small
+                assert classic_backend(domain, "cuda", 3, backend) == _shipped_host(domain, 3)
         for lanes in (1, 4096):
             assert classic_backend(domain, "cuda:0", lanes, "gym") == "gym"
             assert classic_backend(domain, "cpu", lanes, "torch") == "torch"
@@ -402,6 +417,7 @@ def test_cuda_steps_match_gymnasium(domain):
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
     with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
-        want = ("numba", "NATIVE_NUMBA") if domain in COMPILED_HOST else ("gym", "DELEGATED_CPU")
-        assert (env.simulation_backend, env.execution_mode) == want
+        modes = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
+        host = _shipped_host(domain, 8)
+        assert (env.simulation_backend, env.execution_mode) == (host, modes[host])
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"

@@ -13,8 +13,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._core.state_layout import _builder
-from ...._core.tensordicts import to_device
+from ...._core.tensordicts import nested_builder, to_device
 from .local import CLASSIC_FIELDS
 
 _DTYPES = (torch.float64, torch.int64, torch.bool)
@@ -55,7 +54,7 @@ class PackedState:
             key: self.buffers[group][start : start + n * width].reshape(n, width)
             for key, (group, start, width) in zip(self.keys, self.places, strict=True)
         }
-        self._build = _builder(self.keys)
+        self._build = nested_builder([(k,) if isinstance(k, str) else tuple(k) for k in self.keys])
         self._leaves = _getter(self.keys)
         self._batch = torch.Size([n])
         self._itemsizes = [buffer.itemsize for buffer in self.buffers]

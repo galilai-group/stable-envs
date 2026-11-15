@@ -19,9 +19,7 @@ PARALLEL_MIN_ENVS = 64
 _EXECUTION_MODES = {"numba": "NATIVE_NUMBA", "triton": "NATIVE_TRITON", "torch": "NATIVE_TORCH"}
 #: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on Triton; smaller batches step with Numba.
 #: None uses Triton at every batch size. The knob and the tuning cache take precedence.
-#: Measured 2026-11-14 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each): the per-call step time of
-#: both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096
-#: (``python -m benchmarks.backend_switch MiniWorldMovingBlockWorld``). Triton was faster from one environment on both.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
 CUDA_MIN_ENVS: int | None = None
 
 

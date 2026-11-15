@@ -22,6 +22,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .... import tuning
 from ...._core.tensordicts import build_tensordict
 from .local import _PHYSICS_SPACES, ClassicControlAdapter, physics_state_key, state_layout
 
@@ -576,10 +577,7 @@ SIMULATION_BACKENDS = ("gym", "numpy", "torch")
 #: ``CPU_MIN_ENVS``: the smallest batch that steps in NumPy rather than Gymnasium on the host, on every device; None
 #: steps in NumPy at every batch size. ``CUDA_MIN_ENVS``: the smallest CUDA batch that steps in Torch on the GPU
 #: rather than on the host; None steps in Torch at every batch size.
-#: Measured 2026-11-14 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each): the per-call step time of each
-#: backend, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096, on the CPU device and on CUDA
-#: (``python -m benchmarks.classic_switch``). Both GPU types gave the same values. Torch on CUDA was the fastest from one
-#: environment for every task.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.classic_switch`` (docs/performance-tuning.md).
 CPU_MIN_ENVS: dict[str, int | None] = {
     "cartpole": 2,
     "pendulum": None,
@@ -589,10 +587,7 @@ CPU_MIN_ENVS: dict[str, int | None] = {
 }
 CUDA_MIN_ENVS: dict[str, int | None] = dict.fromkeys(CPU_MIN_ENVS)
 #: Tasks whose compiled step (``"numba"``) is the host backend at every batch size, in place of Gymnasium and NumPy.
-#: Measured 2026-11-15 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each) with
-#: ``python -m benchmarks.classic_switch cartpole``: the compiled CartPole step was the fastest host backend at every
-#: batch from 1 to 4096 on both (B=1: 162 us against Gymnasium 197 us and NumPy 252 us on the RTX 3090 node), and so
-#: was the compiled MountainCar step (``classic_switch mountain_car``; B=1: 138 us against 180 us and 196 us).
+#: Measured as above: the compiled step was the fastest host backend from 1 to 4096 environments on both hosts.
 COMPILED_HOST = frozenset({"cartpole", "mountain_car"})
 
 
@@ -608,12 +603,33 @@ def _measure(domain: str, device: torch.device):
     )
 
 
+def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices, measure) -> str:
+    """The host backend. The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here:
+    the tuning cache that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point."""
+    from ...._execution import backends
+
+    cpu = torch.device("cpu")
+    if backend not in (None, "auto"):
+        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": rungs}, choices=choices)
+    backends._REGISTERED[path, cpu.type] = (rungs, measure)
+    if rungs.small == rungs.large:
+        return rungs.small
+    data, current = tuning.read_cache(cpu)
+    value = data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.KNOB) if current else None
+    if value is not None:
+        return rungs.large if num_envs >= value else rungs.small
+    side = backends._cached_neighbours(path, cpu, num_envs)
+    if side is not None:
+        return rungs.large if side == "large" else rungs.small
+    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
+
+
 def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
     """Return ``"gym"``, ``"numpy"``, ``"numba"`` or ``"torch"``.
 
     ``"auto"`` (or None) first selects the host backend: the compiled step for ``COMPILED_HOST`` tasks, else
     Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
-    ``CUDA_MIN_ENVS`` and Torch from it.
+    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` knob moves only the CUDA switch point.
     """
     from ...._execution.backends import Rungs, select_backend
     from .numba_step import STEPS
@@ -623,10 +639,7 @@ def classic_backend(domain: str, device: str | torch.device, num_envs: int, back
     cpu = torch.device("cpu")
     compiled = domain in COMPILED_HOST and domain in STEPS
     rungs = Rungs("numba", "numba") if compiled else Rungs("gym", "numpy", CPU_MIN_ENVS[domain])
-    host = select_backend(
-        f"classic-cpu/{domain}", num_envs, cpu, backend, {"cpu": rungs}, choices=choices,
-        measure=_measure(domain, cpu),
-    )  # fmt: skip
+    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, rungs, choices, _measure(domain, cpu))
     if device.type == "cpu" or backend not in (None, "auto"):
         return host
     return select_backend(
