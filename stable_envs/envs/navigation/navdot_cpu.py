@@ -1,9 +1,14 @@
-"""Numba CPU twin of the navigation dot compositor: the Torch path's rounding points, one frame per thread."""
+"""Numba CPU twin of the navigation dot compositor: the Torch path's rounding points.
+
+Each thread draws one frame. When that would leave at least half the threads idle, the threads split the rows of each
+frame instead; the window maximum is a maximum of row maxima, so the bytes are the same.
+"""
 
 from __future__ import annotations
 
 import math
 
+import numba
 import numpy as np
 import torch
 from numba import njit, prange
@@ -83,6 +88,70 @@ def _frames(plates, plate_idx, pos, sigma, colour, out):
             )
 
 
+@njit(cache=True)
+def _copy(dst, src):
+    for i in range(dst.shape[0]):
+        dst[i] = src[i]
+
+
+@njit(cache=True)
+def _dot_row(row, dy2, x, c0, den):
+    """Fill ``row`` with the dot values of one pixel row from column ``c0``; return their maximum.
+
+    ``dy2`` is the squared row distance to the center.
+    """
+    m = np.float32(-np.inf)
+    for i in range(row.shape[0]):
+        dx = np.float32(c0 + i) - x
+        v = np.float32(np.exp(np.float64(-(dx * dx + dy2) / den)))
+        row[i] = v
+        m = max(m, v)
+    return m
+
+
+@njit(cache=True)
+def _blend_row(px, row, m, cr, cg, cb):
+    """Blend the dot values ``row`` into the pixels ``px`` (W, 3) with the window maximum ``m``."""
+    for i in range(row.shape[0]):
+        v = row[i]
+        a = min(max(v / m if m > _F0 else v, _F0), _F1)
+        ia = _F1 - a
+        px[i, 0] = np.uint8(np.float32(px[i, 0]) * ia + cr * a)
+        px[i, 1] = np.uint8(np.float32(px[i, 1]) * ia + cg * a)
+        px[i, 2] = np.uint8(np.float32(px[i, 2]) * ia + cb * a)
+
+
+@njit(parallel=True, cache=True)
+def _frames_by_rows(plates, plate_idx, pos, sigma, colour, out):
+    """``_frames`` with the threads over the rows of each frame and dot window."""
+    H, W = out.shape[1], out.shape[2]
+    for b in range(out.shape[0]):
+        img = out[b]
+        src = plates[plate_idx[b]]
+        for r in prange(H):
+            _copy(img[r].reshape(-1), src[r].reshape(-1))
+        for d in range(pos.shape[1]):
+            x, y, sig = pos[b, d, 0], pos[b, d, 1], sigma[b, d]
+            r0, r1, c0, c1 = _window(x, y, sig, H, W)
+            if r1 <= r0 or c1 <= c0:
+                continue
+            std = max(np.float64(sig), 1e-6)
+            den = np.float32(2.0 * std * std)
+            dot = np.empty((r1 - r0, c1 - c0), np.float32)
+            peaks = np.empty(r1 - r0, np.float32)
+            for i in prange(r1 - r0):
+                dy = np.float32(r0 + i) - y
+                peaks[i] = _dot_row(dot[i], dy * dy, x, c0, den)
+            m = np.float32(-np.inf)
+            for i in range(r1 - r0):
+                m = max(m, peaks[i])
+            cr = np.float32(np.trunc(colour[b, d, 0]))
+            cg = np.float32(np.trunc(colour[b, d, 1]))
+            cb = np.float32(np.trunc(colour[b, d, 2]))
+            for i in prange(r1 - r0):
+                _blend_row(img[r0 + i, c0:c1], dot[i], m, cr, cg, cb)
+
+
 def _f32(t: torch.Tensor, shape: tuple[int, ...]) -> np.ndarray:
     return t.detach().reshape(shape).to(torch.float32).contiguous().numpy()
 
@@ -103,7 +172,8 @@ def blend_dots(
         plates, idx = base.contiguous(), np.arange(B, dtype=np.int64)
     if out is None:
         out = torch.empty((B, H, W, 3), dtype=torch.uint8)
-    _frames(
+    kernel = _frames_by_rows if 2 * B <= numba.get_num_threads() else _frames
+    kernel(
         plates.numpy(),
         idx,
         _f32(pos, (B, ND, 2)),
