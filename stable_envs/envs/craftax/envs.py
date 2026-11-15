@@ -10,12 +10,12 @@ state with the pixel renderer of their game, and return the symbolic vector as `
 from __future__ import annotations
 
 import importlib.util
-import os
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core import jax_runtime
 from ..._core.config import get_config, log
 from ..._core.stepping import _stack_states
 from ..._core.tensordicts import build_tensordict
@@ -25,10 +25,6 @@ from ...spaces import Dict
 
 if importlib.util.find_spec("craftax") is None or importlib.util.find_spec("jax") is None:
     raise ImportError("Craftax needs the craftax extra: pip install 'stable-envs[craftax]'")
-
-# JAX reserves most of the GPU when its GPU backend starts and leaves torch little of it. Importing
-# stable_envs sets this before the caller's own JAX code can start the backend.
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 
 class CraftaxEnv(Env):
@@ -60,6 +56,7 @@ class CraftaxEnv(Env):
     )
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
+        jax_runtime.prepare()
         from .kernel import kernel
 
         if size not in (None, self.default_size) or supersample != 1:
