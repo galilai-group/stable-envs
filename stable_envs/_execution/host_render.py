@@ -110,7 +110,8 @@ def draw_rows(
         rows, values = rows.cpu(), values.cpu()
     host = StyleTensor(values, style._layout_list(), shared=style._shared)
     frames = pinned((n, size, size, 3))
-    drawn = _twin(env)._render(rows, size=size, supersample=supersample, style=host, out=frames)
+    # The rows were checked by the call on the device; the CPU copy draws them without a second scan.
+    drawn = _twin(env)._render_checked(rows, size=size, supersample=supersample, style=host, out=frames)
     if drawn is not frames and drawn.data_ptr() != frames.data_ptr():
         frames.copy_(drawn.reshape(frames.shape))
     return upload(frames, env.device, out)
