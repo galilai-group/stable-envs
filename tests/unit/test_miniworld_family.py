@@ -12,6 +12,7 @@ configure_pyglet()  # before miniworld imports pyglet.gl
 pytest.importorskip("miniworld.envs.moving_blockworld")
 
 import stable_envs as snv  # noqa: E402
+from stable_envs import get_field, schema_of, set_field  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 pytestmark = pytest.mark.unit
@@ -38,7 +39,7 @@ def test_a_state_restores_into_an_env_with_another_world_and_history(preset):
         restored.reset(seed=SEED + 100)  # other rooms, block colors and textures
         for action in _actions(1, 3):
             restored.step(action, frames=None)
-        assert not torch.equal(restored.get_state()["blocks", "color"], saved["blocks", "color"])
+        assert not torch.equal(get_field(restored.get_state(), "blocks/color"), get_field(saved, "blocks/color"))
         assert restored.set_state(saved) is None
         assert_same_state(restored.get_state(), saved)
         torch.testing.assert_close(restored.render(), source.render(), rtol=0, atol=0)
@@ -53,17 +54,17 @@ def test_a_carried_block_is_restored():
         env.reset(seed=SEED)
         for _ in range(60):  # pick up a block once one is in reach, turning to find one
             state = env.step(np.array([[5]]), frames=None)["state"]
-            if state["agent", "carrying"].item() >= 0:
+            if get_field(state, "agent/carrying").item() >= 0:
                 break
             env.step(np.array([[0]]), frames=None)
-        index = state["agent", "carrying"].item()
+        index = get_field(state, "agent/carrying").item()
         assert index >= 0, "no block came within reach"
         saved = env.get_state()
         expected = [env.step(np.array([[a]]), frames=None) for a in (2, 1, 2)]  # the block moves with the agent
         env.step(np.array([[6]]), frames=None)  # drop it
-        assert env.get_state()["agent", "carrying"].item() == -1
+        assert get_field(env.get_state(), "agent/carrying").item() == -1
         env.set_state(saved)
-        assert env.get_state()["agent", "carrying"].item() == index
+        assert get_field(env.get_state(), "agent/carrying").item() == index
         for a, want in zip((2, 1, 2), expected):
             assert_same_state(env.step(np.array([[a]]), frames=None), want)
 
@@ -84,9 +85,9 @@ def test_render_of_a_state_matches_the_live_frames_and_leaves_the_lanes_alone():
         assert live.float().std() > 10  # a drawn scene, not a cleared buffer
 
 
-def _bad(state, key, value):
+def _bad(state, name, value):
     bad = state.clone()
-    bad[key] = value
+    set_field(bad, name, value)
     return bad
 
 
@@ -95,22 +96,23 @@ def test_invalid_states_are_rejected_before_any_lane_changes():
         env.reset(seed=SEED)
         good = env.get_state()
         before = env.get_state()
-        kind = good["blocks", "kind"].clone()
-        texture = good["blocks", "texture"].clone()
+        kind = get_field(good, "blocks/kind").clone()
+        texture = get_field(good, "blocks/texture").clone()
         kind[1, 0], texture[1, 0] = 1, 3  # a textured ball on the second lane
+        floats, _, flags = (group.path for group in schema_of(good).groups.values())
         cases = [
-            _bad(good, ("blocks", "color"), torch.full_like(good["blocks", "color"], 6)),
-            _bad(
-                good, ("agent", "carrying"), good["blocks", "present"].sum(-1, keepdim=True)
-            ),  # past the lane's blocks
-            _bad(good, ("blocks", "pos"), good["blocks", "pos"].float()),
-            _bad(good, ("agent", "dir"), torch.full_like(good["agent", "dir"], float("nan"))),
-            _bad(good, ("rng", "episode"), torch.full_like(good["rng", "episode"], -1)),
-            _bad(_bad(good, ("blocks", "kind"), kind), ("blocks", "texture"), texture),
+            _bad(good, "blocks/color", torch.full_like(get_field(good, "blocks/color"), 6)),
+            # past the lane's blocks
+            _bad(good, "agent/carrying", get_field(good, "blocks/present").sum(-1, keepdim=True)),
+            _bad(good, "agent/dir", torch.full_like(get_field(good, "agent/dir"), float("nan"))),
+            _bad(good, "rng/episode", torch.full_like(get_field(good, "rng/episode"), -1)),
+            _bad(_bad(good, "blocks/kind", kind), "blocks/texture", texture),
         ]
+        wrong_dtype = good.clone()
+        wrong_dtype[floats] = wrong_dtype[floats].float()
         missing = good.clone()
-        del missing["rng", "seed"]
-        cases.append(missing)
+        del missing[flags]
+        cases += [wrong_dtype, missing]
         for bad in cases:
             with pytest.raises((TypeError, ValueError)):
                 env.set_state(bad)
@@ -135,10 +137,10 @@ def test_options_are_checked_and_shape_state():
         _make(preset="flowm-v2")
     with _make(num_envs=1, num_blocks=3, blocks_static=True, box_and_ball=False) as env:
         state = env.reset(seed=SEED)
-        assert state["blocks", "kind"].shape == (1, 3) and not state["blocks", "kind"].any()
-        assert not state["blocks", "velocity"].any()
+        assert get_field(state, "blocks/kind").shape == (1, 3) and not get_field(state, "blocks/kind").any()
+        assert not get_field(state, "blocks/velocity").any()
         after = env.step(np.array([[4]]), frames=None)["state"]
-        assert torch.equal(after["blocks", "pos"], state["blocks", "pos"])
+        assert torch.equal(get_field(after, "blocks/pos"), get_field(state, "blocks/pos"))
 
 
 def test_close_is_idempotent_and_refuses_later_calls():
@@ -196,11 +198,11 @@ def test_inactive_environments_hold_their_state():
         with _make(2, preset="upstream", max_episode_steps=3, simulation_backend=backend) as env:
             env.reset(seed=SEED)
             state = env.get_state()
-            state["lifecycle", "elapsed_steps"][1] = 1  # the second environment truncates first
+            get_field(state, "lifecycle/elapsed_steps")[1] = 1  # the second environment truncates first
             env.set_state(state)
             out = env.step(np.full((2, 4, 1), 2), frames=None)
             assert out["valid"].tolist() == [[True, True, True, False], [True, True, False, False]]
-            assert out["state"]["lifecycle", "elapsed_steps"].tolist() == [[3], [3]]
+            assert get_field(out["state"], "lifecycle/elapsed_steps").tolist() == [[3], [3]]
 
 
 @pytest.mark.parametrize("k", [0, 7])
@@ -224,7 +226,7 @@ def test_each_environment_draws_its_block_count_at_reset():
         counts = set()
         for seed in range(0, 60, 10):  # 48 distinct lane seeds
             state = env.reset(seed=seed)
-            present = state["blocks", "present"]
+            present = get_field(state, "blocks/present")
             n = present.sum(-1)
             assert present.shape == (8, 10) and ((n >= 6) & (n <= 10)).all()
             assert torch.equal(present, torch.arange(10) < n[:, None])  # a lane's blocks come first

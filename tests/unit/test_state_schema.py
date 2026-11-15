@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
 ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
+    "miniworld": (("agent", "room", "blocks", "rng", "lifecycle"), []),
     "classic_control": (
         ("lifecycle", "task", "rng", "physics"),
         [

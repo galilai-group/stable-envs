@@ -126,10 +126,15 @@ class MiniWorldMovingBlockWorld(Env):
         return Dict({})
 
     def _layout(self):
-        return tuple((key, width, None) for key, (width, _) in self._simulator.fields.items())
+        slices = self._simulator.schema.slices.values()
+        return tuple((tuple(field.name.split("/")), field.stop - field.start, None) for field in slices)
 
     def _layout_dtypes(self):
-        return {key: dtype for key, (_, dtype) in self._simulator.fields.items()}
+        return {tuple(field.name.split("/")): field.dtype for field in self._simulator.schema.slices.values()}
+
+    @property
+    def state_spec(self):
+        return self._simulator.schema.spec(self.device)
 
     def _validate_state(self, state, *, batch=None):
         self._simulator.validate(state, batch=batch)
@@ -179,7 +184,7 @@ class MiniWorldMovingBlockWorld(Env):
             raise ValueError(f"size must be a positive int, got {size}")
         state = self._simulator.get_state() if state is None else state
         self._simulator.validate(state)
-        rows = pack_rows(state, self._simulator.fields)
+        rows = pack_rows(state, self._simulator.schema)
         frames = render_pool.render_rows(
             self,
             (type(self).__name__, repr(sorted(self.config.items())), size),

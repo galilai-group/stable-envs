@@ -60,6 +60,17 @@ Resets sample the fork's reset distribution: block count, colors, textures, kind
 
 Actions on the host are checked, and an id outside [0, 8] raises `ValueError`. Actions on CUDA aren't read back, and there an id out of range does nothing, as in the fork.
 
+## State
+
+The [state](../terms.md#state) folds its fields into one array for each dtype: `float64`, `int64` and `bool`. The arrays are the leaves of the state, under the key `moving_block_world`. `snv.get_field(state, "blocks/pos")` reads one field by name, and `snv.schema_of(state).names` lists them. The fields are `agent/pos`, `agent/dir`, `agent/carrying`, `room/textures`, the `blocks/` fields, `rng/seed`, `rng/episode` and `lifecycle/elapsed_steps`.
+
+```python
+with snv.MiniWorldMovingBlockWorld(num_envs=2, size=64, device="cpu") as env:
+    state = env.reset(seed=0)
+    print(list(state.keys(True, True)))  # three leaves, one for each dtype
+    print(snv.get_field(state, "blocks/present").shape)  # torch.Size([2, 10])
+```
+
 ## Rendering
 
 Frames are the agent view that Miniworld draws with OpenGL through pyglet. On Linux the family uses pyglet's headless EGL mode, which needs an EGL driver. Mesa's llvmpipe is one that works without a GPU.
