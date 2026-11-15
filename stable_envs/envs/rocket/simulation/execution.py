@@ -17,10 +17,7 @@ if TYPE_CHECKING:
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
 #: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on ``"numba_cuda"``; smaller batches step on
 #: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The knob and the tuning cache take precedence.
-#: Measured 2026-11-14 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each). The adapter step times of
-#: ``python -m benchmarks.backend_switch PyFlytRocketLanding`` put the CPU kernel at most 5 % ahead below 8
-#: environments on both GPU types. A full ``env.step`` at 1 environment was 15 % faster on ``"numba_cuda"`` on both,
-#: so the CUDA build steps every batch.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
 CUDA_MIN_ENVS: int | None = None
 
 
