@@ -26,6 +26,9 @@ def _path(key: Key) -> tuple[str, ...]:
     return tuple(key.split("/")) if isinstance(key, str) else tuple(key)
 
 
+#: Size from which a new host buffer comes from fresh pages: glibc's default threshold for serving an allocation
+#: with ``mmap``. A buffer this large is reused once no earlier State holds it.
+_FRESH_PAGES = 128 * 1024
 #: Byte alignment of each dtype's buffer inside the pinned transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
 
@@ -71,6 +74,7 @@ class StateLayout:
             for *_, runs in self.groups
         ]
         self._static: dict[torch.dtype, torch.Tensor | np.ndarray] = {}
+        self._buffers: dict[torch.dtype, list[torch.Tensor]] = {}
         self._build = nested_builder([_path(key) for key in self.keys])
         self._batch = torch.Size([self.num_envs])
 
@@ -122,24 +126,34 @@ class StateLayout:
         Values already on ``device`` are packed there.
         """
         device = torch.device(device)
-        flats = []
-        for (dtype, kind, fixed, _, _), keys in zip(self.groups, self._moving_keys, strict=True):
+        flats, layout = [], []
+        for (dtype, kind, fixed, _, runs), keys, sizes in zip(self.groups, self._moving_keys, self._sizes, strict=True):
             sources = [values[key] for key in keys]
             if fixed:
                 if dtype not in self._static:
                     raise RuntimeError("StateLayout.load_static must run before export")
                 sources.insert(0, self._static[dtype])
-            flats.append(self._pack(kind, sources))
+            widths = None
+            if sizes is None:
+                widths = {i[0]: tuple(values[self.keys[i[0]]].shape) for i, shape in runs if shape is None}
+                sizes = [len(i) * math.prod(shape) if shape else math.prod(widths[i[0]]) for i, shape in runs]
+            layout.append((runs, sizes, widths))
+            numel = sum(sizes)
+            if device.type == "cpu" and numel * dtype.itemsize >= _FRESH_PAGES:
+                buffer = self._buffer(dtype, numel)
+                if all(isinstance(v, np.ndarray) for v in sources):
+                    np.concatenate([v.reshape(-1) for v in sources], out=buffer.numpy())
+                else:
+                    torch.cat([torch.as_tensor(v).reshape(-1) for v in sources], out=buffer)
+                flats.append(buffer)
+            else:
+                flats.append(self._pack(kind, sources))
         if device.type != "cpu":
             flats = [torch.from_numpy(flat) if isinstance(flat, np.ndarray) else flat for flat in flats]
             if any(flat.device.type == "cpu" for flat in flats):
                 flats = self._to_device(flats, device)
         leaves: list = [None] * len(self.keys)
-        for (*_, runs), sizes, flat in zip(self.groups, self._sizes, flats, strict=True):
-            widths = None
-            if sizes is None:
-                widths = {i[0]: tuple(values[self.keys[i[0]]].shape) for i, shape in runs if shape is None}
-                sizes = [len(i) * math.prod(shape) if shape else math.prod(widths[i[0]]) for i, shape in runs]
+        for (runs, sizes, widths), flat in zip(layout, flats, strict=True):
             if isinstance(flat, np.ndarray):
                 # On the host, NumPy slices and from_numpy cost less per leaf than tensor views.
                 start = 0
@@ -163,6 +177,21 @@ class StateLayout:
                         leaves[i] = leaf
         batch, where = self._batch, _recorded(flats, device)
         return self._build(leaves, lambda node: new_node(node, batch, where))
+
+    def _buffer(self, dtype: torch.dtype, numel: int) -> torch.Tensor:
+        """A flat host buffer that no earlier State still uses: a large new buffer costs page faults on each export."""
+        if not hasattr(torch._C, "_storage_Use_Count"):
+            return torch.empty(numel, dtype=dtype)
+        pool = self._buffers.setdefault(dtype, [])
+        for buffer in pool:
+            # The pool's tensor and the temporary storage object are the only users of a free buffer.
+            if buffer.numel() >= numel and torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2:
+                return buffer[:numel]
+        buffer = torch.empty(numel + numel // 4, dtype=dtype)
+        pool.append(buffer)
+        if len(pool) > 2:
+            pool.pop(0)
+        return buffer[:numel]
 
     def _to_device(self, flats: list[torch.Tensor], device: torch.device) -> list[torch.Tensor]:
         """Move host buffers to ``device`` through one pinned buffer and one asynchronous copy."""
