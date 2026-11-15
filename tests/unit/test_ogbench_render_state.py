@@ -8,6 +8,7 @@ import torch
 from tensordict import TensorDict
 
 pytest.importorskip("ogbench")
+from stable_envs import get_field
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench import manipulation as core
 from stable_envs.envs.ogbench import manipulation_renderer as renderer
@@ -98,20 +99,24 @@ def test_render_of_state_checks_only_the_leaves_the_frame_reads(family, cls):
         full = env.get_state()
         frames = env.render(full)
         unread = full.clone()
-        unread["physics", "qvel"][0, 0] = float("nan")
-        unread["rng", "task", "position"].fill_(10**6)
+        get_field(unread, "physics/qvel")[0, 0] = float("nan")
+        get_field(unread, "rng/task/position").fill_(10**6)
         assert torch.equal(env.render(unread), frames)
         assert torch.equal(env.render(full[:2].clone()), frames[:2])
         with pytest.raises(ValueError):
             env.set_state(unread)
-        for key in pixels.projected_keys(family):
+        for key in pixels.projected_groups(family, full):
             bad = full.clone()
             del bad[key]
             with pytest.raises(ValueError, match="missing"):
                 env.render(bad)
+            bad = full.clone()
+            bad[key] = bad[key][:, :-1]
+            with pytest.raises(ValueError, match="missing"):
+                env.render(bad)
         bad = full.clone()
-        bad["physics", "qpos"][0, 0] = float("nan")
-        with pytest.raises(ValueError, match=r"\('physics', 'qpos'\)"):
+        get_field(bad, "physics/qpos")[0, 0] = float("nan")
+        with pytest.raises(ValueError, match="physics/qpos"):
             env.render(bad)
 
 
@@ -152,11 +157,11 @@ def test_named_render_state_boundary(family, cls):
         assert image_state.batch_size == torch.Size([3])
         assert set(image_state.keys(True, True)) == set(pixels.fields(family))
         assert not any(
-            k[0] in ["physics", "rng", "task", "lifecycle", "controller", "output"]
+            k[0] in ("physics", "rng", "task", "lifecycle", "controller", "output")
             for k in image_state.keys(True, True)
         )
         image_state["pose", "qpos"][0, 0] += 0.1
-        assert torch.equal(full["physics", "qpos"], saved["physics", "qpos"])
+        assert torch.equal(get_field(full, "physics/qpos"), get_field(saved, "physics/qpos"))
         with pytest.raises(ValueError):
             env.set_state(image_state)
         with pytest.raises(NotImplementedError, match="CPU mesh"):
@@ -236,7 +241,7 @@ def test_pending_agent_color_is_not_a_compiled_render_change(family, cls):
     with cls(seed=17) as env:
         env.reset(17, {"variation": [], "variation_values": {"agent.color": np.array([0.8, 0.2, 0.1])}})
         projected = env.to_render_state()["appearance", "agent.color"]
-        assert torch.equal(projected, env.get_state()["model", "compiled", "agent.color"])
+        assert torch.equal(projected, get_field(env.get_state(), "model/compiled/agent/color"))
 
 
 @pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])

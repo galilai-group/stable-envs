@@ -81,11 +81,26 @@ With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments 
 
 `mujoco.batch` steps every environment in one native call on up to 8 threads. The step does the operations of OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step` substeps, `mj_rnePostConstraint` and the task's `post_step`. The state and the outputs equal OGBench's bit for bit, and a CUDA environment on `mujoco.batch` returns its state on CUDA. The default model has the OGBench physics, with a cube size of 0.02.
 
-MuJoCo Warp steps the substeps of every environment in one captured CUDA graph, in float32, and one Warp kernel computes the controller and its inverse kinematics in float64. The state has the same leaves as on CPU, and its physics leaves hold the float32 values. On the scripted OGBench Cube oracle, each episode ends with the same success at the same first-success step as OGBench (see `tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions differ from OGBench.
+MuJoCo Warp steps the substeps of every environment in one captured CUDA graph, in float32, and one Warp kernel computes the controller and its inverse kinematics in float64. The state has the same fields as on CPU, and its physics fields hold the float32 values. On the scripted OGBench Cube oracle, each episode ends with the same success at the same first-success step as OGBench (see `tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions differ from OGBench.
 
 MuJoCo Warp doesn't test the links of the Robotiq gripper against each other for contact. The pads keep their contacts with each other and with all other geoms. The linkage has one degree of freedom and the pads touch before two links can, so these pairs make no contacts in OGBench either, and the step is faster without their mesh-mesh tests.
 
 The MuJoCo Warp step doesn't synchronize with the host. When a Scene cube leaves the workspace, OGBench puts it at a new position drawn from the environment's generator. The host draws the next two of these positions for each environment before the step, and the device uses them. The host draws again for an environment after it reads that the device used them, and then prints OGBench's message. If an environment needs a third position before that read, the device uses the second one again.
+
+### Cube and Scene state
+
+The Cube and Scene state has one leaf for each section and dtype, such as `physics/float64`. Each leaf holds the fields of its section side by side, for example `physics/qpos`, `physics/qvel` and `physics/mocap_pos`. Read and write a field by its name with `snv.get_field` and `snv.set_field`:
+
+```python
+import stable_envs as snv
+
+with snv.make("OGBCube", num_envs=2) as env:
+    state = env.reset(seed=0)
+    qpos = snv.get_field(state, "physics/qpos")  # (2, 21) float64
+    size = snv.get_field(state, "variation/current/cube/size")  # also "variation.current.cube.size"
+```
+
+A variation leaf name such as `cube.size` becomes the field path `cube/size`. `env.state_spec` and `describe()` list the leaves.
 
 ### Cube and Scene resets
 

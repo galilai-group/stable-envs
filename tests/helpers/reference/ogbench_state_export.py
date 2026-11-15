@@ -12,6 +12,7 @@ from tensordict import TensorDict
 from stable_envs.envs.ogbench.simulation.manipulation import (
     FLAGS,
     MODEL_VALUES,
+    field,
     pcg_encode,
     rngs,
     site_ids,
@@ -52,59 +53,55 @@ def maze_state(self):
 
 
 def manipulation_row(self, env):
-    values = {("compatibility", "signature"): self.signature}
+    values = {"compatibility/signature": self.signature}
     for name, flag in FLAGS.items():
         size = mujoco.mj_stateSize(env.model, flag)
         if size:
             value = np.empty(size, np.float64)
             mujoco.mj_getState(env.model, env.data, value, flag)
-            values["physics", name] = value.astype(bool) if name == "eq_active" else value
+            values[field("physics", name)] = value.astype(bool) if name == "eq_active" else value
     pos, rot = site_ids(env)
     values.update(
         {
-            ("controller", "site_xpos"): env.data.site_xpos[pos].copy(),
-            ("controller", "site_xmat"): env.data.site_xmat[rot].copy(),
-            ("output", "gripper_force"): env.data.body("ur5e/robotiq/right_pad").cfrc_ext.copy(),
-            ("output", "prev_qpos"): env._prev_qpos.copy(),
-            ("output", "prev_qvel"): env._prev_qvel.copy(),
-            ("task", "goal_observation"): env._cur_goal_ob.copy(),
-            ("task", "id"): np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
-            ("task", "reward_id"): np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
-            ("task", "success"): np.array([env._success], bool),
-            ("lifecycle", "reset_next_step"): np.array([env._reset_next_step], bool),
+            "controller/site_xpos": env.data.site_xpos[pos].copy(),
+            "controller/site_xmat": env.data.site_xmat[rot].copy(),
+            "output/gripper_force": env.data.body("ur5e/robotiq/right_pad").cfrc_ext.copy(),
+            "output/prev_qpos": env._prev_qpos.copy(),
+            "output/prev_qvel": env._prev_qvel.copy(),
+            "task/goal_observation": env._cur_goal_ob.copy(),
+            "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
+            "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
+            "task/success": np.array([env._success], bool),
+            "lifecycle/reset_next_step": np.array([env._reset_next_step], bool),
         }
     )
     for key, value in task_values(env).items():
-        values["task", "payload", key] = value
+        values[field("task", "payload", key)] = value
     if self.family == "Scene":
         for key in ("cur_button_states", "prev_button_states", "target_button_states"):
-            values["scene", key] = np.asarray(getattr(env, "_" + key), np.int64).copy()
+            values[field("scene", key)] = np.asarray(getattr(env, "_" + key), np.int64).copy()
         for key in ("target_drawer_pos", "target_window_pos"):
-            values["scene", key] = np.array([getattr(env, "_" + key)], np.float64)
+            values[field("scene", key)] = np.array([getattr(env, "_" + key)], np.float64)
     for name in sorted(env.supported_variations):
         node = env.variation_space._walk(name)
-        values["variation", "current", name] = np.asarray(node.value, np.float64).copy()
-        values["variation", "anchor", name] = np.asarray(node.init_value, np.float64).copy()
+        values[field("variation", "current", name)] = np.asarray(node.value, np.float64).copy()
+        values[field("variation", "anchor", name)] = np.asarray(node.init_value, np.float64).copy()
     for namespace, source in [("compiled", env._model_values), ("mjcf", env._mjcf_values)]:
         for key in MODEL_VALUES:
-            values["model", namespace, key] = source[key].copy()
+            values[field("model", namespace, key)] = source[key].copy()
     for name, rng in rngs(env).items():
         for key, value in pcg_encode(rng).items():
-            values["rng", name, key] = value
+            values[field("rng", name, key)] = value
     _, key, position, flag, cached = env.task_rng.get_state()
     values.update(
         {
-            ("rng", "task", "key"): key.astype(np.int64),
-            ("rng", "task", "position"): np.array([position], np.int64),
-            ("rng", "task", "has_gauss"): np.array([flag], np.int64),
-            ("rng", "task", "cached_gaussian"): np.array([cached], np.float64),
+            "rng/task/key": key.astype(np.int64),
+            "rng/task/position": np.array([position], np.int64),
+            "rng/task/has_gauss": np.array([flag], np.int64),
+            "rng/task/cached_gaussian": np.array([cached], np.float64),
         }
     )
-    return TensorDict(
-        {k: torch.as_tensor(v.copy(), device=self.device) for k, v in values.items()},
-        batch_size=[],
-        device=self.device,
-    )
+    return self.schema.fold({k: torch.as_tensor(v.copy()) for k, v in values.items()}, [], self.device)
 
 
 def manipulation_state(self):

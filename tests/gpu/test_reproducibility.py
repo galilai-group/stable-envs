@@ -945,10 +945,12 @@ ROLLOUT_QPOS_BOUNDS = {
 def _qpos(state):
     """The generalized positions of a State: a top-level ``qpos``, the ``physics`` or ``sim`` group, or the maze
     body parts."""
+    for name in ("qpos", "physics/qpos", "sim/qpos"):
+        try:
+            return se.get_field(state, name)
+        except KeyError:
+            pass
     keys = set(state.keys(True, True))
-    for key in ("qpos", ("physics", "qpos"), ("sim", "qpos")):
-        if key in keys:
-            return state[key]
     parts = [("root", "position"), ("root", "orientation"), ("joints", "position")]
     return torch.cat([state[k] for k in parts if k in keys], dim=-1)
 

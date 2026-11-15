@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs import get_field, schema_of
+
 pytest.importorskip("ogbench")
 pytest.importorskip("mujoco.batch")
 
@@ -108,6 +110,31 @@ def test_batch_with_worker_lanes_equals_ogbench_lanes(family):
     finally:
         ref.close()
         bat.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_state_has_one_leaf_per_section_and_dtype(family):
+    batch = OGBManipulationBatchAdapter(family, 2, seed=5)
+    try:
+        state = batch.step(np.zeros((2, 5)))["state"]
+        schema = batch.schema
+        assert schema_of(state) == schema and schema.name == "OGB" + family
+        assert [k if isinstance(k, str) else "/".join(k) for k in state.keys(True, True)] == list(schema.order)
+        assert all(
+            key == f"{key.split('/')[0]}/{str(g.dtype).removeprefix('torch.')}" for key, g in schema.groups.items()
+        )
+        assert set(schema.names) == set(batch.fields)
+        # The step writes its fields into the live groups through views cut once.
+        for name in ("output/prev_qpos", "controller/site_xpos", "task/success"):
+            assert np.shares_memory(schema.get(batch._live, name), batch._live[schema.slices[name].group])
+            assert np.array_equal(get_field(state, name).numpy(), schema.get(batch._live, name))
+        assert torch.equal(get_field(state, "physics.qpos"), torch.from_numpy(batch._qpos))
+        assert np.array_equal(get_field(state, "variation/current/cube/size").numpy(), [[0.02]] * 2)
+        before = state.clone()
+        batch.step(np.ones((2, 5)))
+        assert (state == before).all()
+    finally:
+        batch.close()
 
 
 @pytest.mark.parametrize("family", FAMILIES)

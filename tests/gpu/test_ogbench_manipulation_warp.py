@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs import get_field
+
 pytestmark = [pytest.mark.gpu]
 
 pytest.importorskip("ogbench")
@@ -95,10 +97,9 @@ def test_scene_smooth_actions_stay_near_ogbench():
             action = torch.as_tensor(0.6 * np.sin(phase), dtype=torch.float32)
             want = ref.step(action)["state"]
             got = gpu.step(action.cuda())["state"].cpu()
-            arm_gap = max(
-                arm_gap, float((got["physics", "qpos"][:, arm] - want["physics", "qpos"][:, arm]).abs().max())
-            )
-            effector = got["controller", "site_xpos"][:, 0] - want["controller", "site_xpos"][:, 0]
+            gap = get_field(got, "physics/qpos")[:, arm] - get_field(want, "physics/qpos")[:, arm]
+            arm_gap = max(arm_gap, float(gap.abs().max()))
+            effector = get_field(got, "controller/site_xpos")[:, 0] - get_field(want, "controller/site_xpos")[:, 0]
             effector_gap = max(effector_gap, float(effector.norm(dim=-1).max()))
         assert arm_gap <= SCENE_ARM_QPOS_BOUND
         assert effector_gap <= SCENE_EFFECTOR_BOUND
@@ -126,7 +127,7 @@ def test_warp_state_has_the_cpu_leaves(family):
         after = gpu.step(torch.full((3, 5), 0.3, device="cuda"))["state"]
         gpu.set_state(saved)
         again = gpu.step(torch.full((3, 5), 0.3, device="cuda"))["state"]
-        qpos = (after["physics", "qpos"] - again["physics", "qpos"]).abs().max()
+        qpos = (get_field(after, "physics/qpos") - get_field(again, "physics/qpos")).abs().max()
         assert float(qpos) < 1e-4
     finally:
         ref.close()
@@ -169,7 +170,7 @@ def test_scene_cube_repair_draws_from_the_lane_generator(capsys):
     ref = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
     gpu = OGBManipulationWarpAdapter("Scene", lanes, "cuda", seed=4)
     cube = slice(ref._cube, ref._cube + 7)
-    rng = [("rng", "environment", key) for key in ("state", "increment", "has_uint32", "uinteger")]
+    rng = [f"rng/environment/{key}" for key in ("state", "increment", "has_uint32", "uinteger")]
     try:
         for _ in range(repairs):
             # Lane 1's cube leaves the workspace; the step's post-step puts it back from the lane's generator.
@@ -177,9 +178,11 @@ def test_scene_cube_repair_draws_from_the_lane_generator(capsys):
             want = ref.step(np.zeros((lanes, 5)))["state"]
             got = gpu.step(torch.zeros(lanes, 5, device="cuda"))["state"].cpu()
             torch.cuda.synchronize()
-            for key in rng:
-                assert torch.equal(got[key], want[key]), key
-            np.testing.assert_allclose(got["physics", "qpos"][1, cube], want["physics", "qpos"][1, cube], atol=1e-6)
+            for name in rng:
+                assert torch.equal(get_field(got, name), get_field(want, name)), name
+            np.testing.assert_allclose(
+                get_field(got, "physics/qpos")[1, cube], get_field(want, "physics/qpos")[1, cube], atol=1e-6
+            )
         gpu.reset(seed=9)
         ref.reset(seed=9)
         printed = capsys.readouterr().out.count("Numerical instability detected")

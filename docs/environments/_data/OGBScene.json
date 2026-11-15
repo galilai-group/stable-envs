@@ -29,25 +29,25 @@
   },
   {
    "key": "physics",
-   "leaves": 10,
+   "leaves": 2,
    "numel": 343,
    "dtypes": ["bool", "float64"]
   },
   {
    "key": "controller",
-   "leaves": 2,
+   "leaves": 1,
    "numel": 42,
    "dtypes": ["float64"]
   },
   {
    "key": "output",
-   "leaves": 3,
+   "leaves": 1,
    "numel": 55,
    "dtypes": ["float64"]
   },
   {
    "key": "task",
-   "leaves": 12,
+   "leaves": 3,
    "numel": 57,
    "dtypes": ["bool", "float64", "int64"]
   },
@@ -59,25 +59,25 @@
   },
   {
    "key": "scene",
-   "leaves": 5,
+   "leaves": 2,
    "numel": 8,
    "dtypes": ["float64", "int64"]
   },
   {
    "key": "variation",
-   "leaves": 24,
+   "leaves": 1,
    "numel": 62,
    "dtypes": ["float64"]
   },
   {
    "key": "model",
-   "leaves": 10,
+   "leaves": 1,
    "numel": 26,
    "dtypes": ["float64"]
   },
   {
    "key": "rng",
-   "leaves": 88,
+   "leaves": 3,
    "numel": 1341,
    "dtypes": ["float64", "int64", "uint8"]
   }

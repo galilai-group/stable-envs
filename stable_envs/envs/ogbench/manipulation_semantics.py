@@ -5,10 +5,10 @@ import torch
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor, rows_are_equal
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
-from ...specs import CompositeSpec, Spec
 
 
 class _OwnStates:
@@ -122,27 +122,27 @@ class ManipulationSemantics:
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def _layout(self):
-        offsets = {
-            ("physics", "qpos"): 0,
-            ("physics", "mocap_pos"): self._nq,
-            ("scene", "cur_button_states"): self._nq + 3,
-        }
+        """``(field path, width, render offset)`` of each State field; State leaves are groups of these fields."""
+        offsets = {"physics/qpos": 0, "physics/mocap_pos": self._nq, "scene/cur_button_states": self._nq + 3}
         return tuple(
-            (key, int(np.prod(shape)), offsets.get(key)) for key, (shape, _) in self._simulator.fields.items()
+            (tuple(name.split("/")), int(np.prod(shape)), offsets.get(name))
+            for name, (shape, _) in self._simulator.fields.items()
         )
 
     def _layout_dtypes(self):
-        return {k: dtype for k, (_, dtype) in self._simulator.fields.items()}
+        return {tuple(name.split("/")): dtype for name, (_, dtype) in self._simulator.fields.items()}
 
     @property
     def state_spec(self):
-        fields = {}
-        for key, (shape, dtype) in self._simulator.fields.items():
-            node = fields
-            for part in key[:-1]:
-                node = node.setdefault(part, {})
-            node[key[-1]] = Spec(shape, dtype=dtype, device=self.device)
-        return CompositeSpec(fields, device=self.device)
+        """Specs of the State's group leaves, without the batch axis; ``describe()`` lists them."""
+        return self._simulator.schema.spec(self.device)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self._simulator.schema.validate(state, finite=True)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
@@ -221,19 +221,18 @@ class ManipulationSemantics:
         return self._simulator.variation_values(self.variation_space.flat_layout(), anchor=True)
 
     def _pack_render_state(self, state):
-        columns = [state["physics", "qpos"], state["physics", "mocap_pos"]]
-        if self.CELL == "Scene":
-            columns.append(state["scene", "cur_button_states"])
+        names = ("physics/qpos", "physics/mocap_pos", *(("scene/cur_button_states",) if self.CELL == "Scene" else ()))
+        columns = [get_field(state, name) for name in names]
         return torch.cat(columns, dim=-1).to(device=self.device, dtype=torch.float32)
 
     def _unpack_render_state(self, rows):
+        """The drawn fields of compact rows, one leaf per field; the other State fields stay absent."""
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
         values = {
             ("physics", "qpos"): rows[:, : self._nq].clone(),
             ("physics", "mocap_pos"): rows[:, self._nq : self._nq + 3].clone(),
+            **({("scene", "cur_button_states"): rows[:, -2:].clone()} if self.CELL == "Scene" else {}),
         }
-        if self.CELL == "Scene":
-            values["scene", "cur_button_states"] = rows[:, -2:].clone()
         return TensorDict(values, batch_size=[len(rows)], device=self.device)
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
@@ -253,7 +252,7 @@ class ManipulationSemantics:
             # The frame reads only the projected leaves; set_state checks the leaves that restore simulation.
             pixels.require_leaves(self.CELL, state)
         if host:
-            state = state.select(*pixels.projected_keys(self.CELL)).cpu()
+            state = state.select(*pixels.projected_groups(self.CELL, state)).cpu()
         return pixels.project(self.CELL, state, size, supersample, check=not trusted)
 
     def _render_state_input(self, state, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):

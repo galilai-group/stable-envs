@@ -12,7 +12,7 @@ from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, native_threads
 from ...._execution.policy import cpu_affinity, process_count
 from .compatibility import COMPILED_FIELDS, MODEL_VALUES, CompatibleCube, CompatibleScene, compiled_fields, values_key
-from .manipulation import FLAGS, OGBManipulationAdapter, site_ids
+from .manipulation import FLAGS, PCG_KEYS, OGBManipulationAdapter, field, groups_of, site_ids, state_schema
 from .manipulation_control import BatchController
 from .pcg import pcg_decode, pcg_encode
 
@@ -22,9 +22,22 @@ _BATCH_NAMES["plugin"] = "plugin_state"
 _CPU = torch.device("cpu")
 
 
-def state_layout(fields, num_envs):
-    """The ``StateLayout`` of Cube/Scene State ``fields``: ``{key: (per-row shape, dtype)}``."""
-    return StateLayout([(key, tuple(shape), dtype) for key, (shape, dtype) in fields.items()], num_envs)
+def state_layout(schema, num_envs):
+    """The ``StateLayout`` of the group leaves of a Cube/Scene ``StateSchema``."""
+    return StateLayout(schema.leaves(), num_envs)
+
+
+def live_view(schema, live, name):
+    """A view of the field ``name`` in the ``{group key: array}`` buffers ``live``; writes to it change ``live``."""
+    view = schema.get(live, name)
+    group = live[schema.slices[name].group]
+    if isinstance(group, np.ndarray):
+        shared = np.shares_memory(view, group)
+    else:
+        shared = view.untyped_storage().data_ptr() == group.untyped_storage().data_ptr()
+    if not shared:
+        raise RuntimeError(f"State field {name} is not a view of its group")
+    return view
 
 
 def physics_model(env):
@@ -86,34 +99,37 @@ def metadata_env(family):
 
 
 class LaneModels:
-    """The model fields that differ between lanes, from State: compiled Variation values, Scene locks and targets."""
+    """The model fields that differ between lanes, from State: compiled Variation values, Scene locks and targets.
 
-    def __init__(self, env, names):
-        self.family, self.model = env.family, env.model
+    The methods read ``{group key: (B, size) array}`` host groups of the State.
+    """
+
+    def __init__(self, env, names, schema):
+        self.family, self.model, self.schema = env.family, env.model, schema
         self.names = frozenset(names)
         self._base_key = values_key(env._model_values)
         if self.family == "Scene":
             self._lock_dofs = [int(env.model.joint(n).dofadr[0]) for n in ("drawer_slide", "window_slide")]
             self._targets = [int(env._drawer_target_site_id), int(env._window_target_site_id)]
 
-    def keys(self, columns):
-        """Each lane's compiled Variation values, as ``compatibility.values_key`` keys them."""
-        values = [columns["model", "compiled", name] for name in MODEL_VALUES]
-        return [values_key({k: v[i] for k, v in zip(MODEL_VALUES, values)}) for i in range(len(values[0]))]
+    def _compiled(self, columns):
+        return {name: self.schema.get(columns, field("model", "compiled", name)) for name in MODEL_VALUES}
 
     def variants(self, columns):
         """``{key: (compiled values, lane ids)}`` of the lanes whose compiled values differ from the model's."""
+        compiled = self._compiled(columns)
         groups = {}
-        for i, key in enumerate(self.keys(columns)):
+        for i in range(len(compiled[MODEL_VALUES[0]])):
+            values = {name: value[i] for name, value in compiled.items()}
+            key = values_key(values)
             if key != self._base_key:
-                groups.setdefault(key, ({k: columns["model", "compiled", k][i] for k in MODEL_VALUES}, []))[1].append(
-                    i
-                )
+                groups.setdefault(key, (values, []))[1].append(i)
         return groups
 
     def fields(self, columns):
         """``{name: (B, ...) values}`` of the per-lane model fields among ``names``."""
-        n = len(columns["model", "compiled", MODEL_VALUES[0]])
+        at = self.schema.get
+        n = len(at(columns, field("model", "compiled", MODEL_VALUES[0])))
         out = {}
         for values, lanes in self.variants(columns).values():
             fields, _ = compiled_fields(self.family, values)
@@ -125,11 +141,11 @@ class LaneModels:
                 out[name][lanes] = value
         if self.family == "Scene":
             damping = np.repeat(self.model.dof_damping[None], n, axis=0)
-            damping[:, self._lock_dofs] = np.where(columns["scene", "cur_button_states"] == 0, 1e6, 2.0)
+            damping[:, self._lock_dofs] = np.where(at(columns, "scene/cur_button_states") == 0, 1e6, 2.0)
             out["dof_damping"] = damping
             sites = np.repeat(self.model.site_pos[None], n, axis=0)
-            sites[:, self._targets[0], 1] = columns["scene", "target_drawer_pos"][:, 0]
-            sites[:, self._targets[1], 0] = columns["scene", "target_window_pos"][:, 0]
+            sites[:, self._targets[0], 1] = at(columns, "scene/target_drawer_pos")[:, 0]
+            sites[:, self._targets[1], 0] = at(columns, "scene/target_window_pos")[:, 0]
             out["site_pos"] = sites
         return out
 
@@ -170,11 +186,21 @@ class OGBManipulationBatchAdapter:
             raise
         self.b = self.physics.b
         self.fields, self.nq = self.lanes.fields, self.lanes.nq
-        self._order = tuple(self.fields)
-        self._views = {key[1]: self.b.bind(_BATCH_NAMES[key[1]]) for key in self._order if key[0] == "physics"}
-        self._layout = state_layout(self.fields, num_envs)
+        self.schema = schema = state_schema(family, self.fields)
+        #: Physics fields in State order, which is ``mjSTATE_INTEGRATION`` order, and their batch views.
+        self._physics = tuple(name for name in self.fields if name.startswith("physics/"))
+        self._physics_groups = tuple(dict.fromkeys(schema.slices[name].group for name in self._physics))
+        self._views = {name: self.b.bind(_BATCH_NAMES[name.split("/")[1]]) for name in self._physics}
+        # The other groups live here; the step writes their fields through views cut once.
+        self._live = {
+            key: np.zeros((num_envs, group.size), torch.empty(0, dtype=group.dtype).numpy().dtype)
+            for key, group in schema.groups.items()
+            if key not in self._physics_groups
+        }
+        self._cut_views()
+        self._layout = state_layout(schema, num_envs)
         self._all = np.arange(num_envs)
-        self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"})
+        self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"}, schema)
         self._expanded = {}
         p = self.physics
         self._qpos, self._qvel, self._ctrl = p.numpy("qpos"), p.numpy("qvel"), p.numpy("ctrl")
@@ -213,28 +239,39 @@ class OGBManipulationBatchAdapter:
             self._sync_envs(envs)
         return envs
 
+    def _cut_views(self):
+        """Views of the step's fields in the live groups, cut once."""
+        view = lambda name: live_view(self.schema, self._live, name)  # noqa: E731
+        self._site_xpos, self._site_xmat = view("controller/site_xpos"), view("controller/site_xmat")
+        self._gripper_force = view("output/gripper_force")
+        self._prev_qpos, self._prev_qvel = view("output/prev_qpos"), view("output/prev_qvel")
+        self._success = view("task/success")
+        self._env_rng = {key: view(field("rng", "environment", key)) for key in PCG_KEYS}
+        if self.family == "Scene":
+            self._buttons_now, self._buttons_before = view("scene/cur_button_states"), view("scene/prev_button_states")
+            self._buttons_goal = view("scene/target_button_states")
+            self._drawer_goal, self._window_goal = view("scene/target_drawer_pos"), view("scene/target_window_pos")
+
     def _sync_envs(self, envs):
         """Write the batch's lanes into their OGBench objects, as ``OGBManipulationAdapter`` restores them."""
         spec = mujoco.mjtState.mjSTATE_INTEGRATION
-        c = self._columns
         pad = "ur5e/robotiq/right_pad"
         for i, env in enumerate(envs):
-            env._prev_qpos, env._prev_qvel = c["output", "prev_qpos"][i].copy(), c["output", "prev_qvel"][i].copy()
-            env._success = bool(c["task", "success"][i, 0])
+            env._prev_qpos, env._prev_qvel = self._prev_qpos[i].copy(), self._prev_qvel[i].copy()
+            env._success = bool(self._success[i, 0])
             if self.family == "Scene":
-                for name in ("cur_button_states", "prev_button_states", "target_button_states"):
-                    setattr(env, "_" + name, c["scene", name][i].copy())
+                env._cur_button_states = self._buttons_now[i].copy()
+                env._prev_button_states = self._buttons_before[i].copy()
+                env._target_button_states = self._buttons_goal[i].copy()
                 env._apply_button_states()
-            env.np_random.bit_generator.state = pcg_decode(
-                {k: c["rng", "environment", k][i] for k in ("state", "increment", "has_uint32", "uinteger")}
-            )
+            env.np_random.bit_generator.state = pcg_decode({key: value[i] for key, value in self._env_rng.items()})
             for _ in range(2):
                 mujoco.mj_setState(env.model, env.data, self.b.state[i], spec)
                 mujoco.mj_forward(env.model, env.data)
             mujoco.mj_setState(env.model, env.data, self.b.state[i], spec)
-            env.data.site_xpos[self._pos_sites] = c["controller", "site_xpos"][i]
-            env.data.site_xmat[self._rot_sites] = c["controller", "site_xmat"][i]
-            env.data.body(pad).cfrc_ext[:] = c["output", "gripper_force"][i]
+            env.data.site_xpos[self._pos_sites] = self._site_xpos[i]
+            env.data.site_xmat[self._rot_sites] = self._site_xmat[i]
+            env.data.body(pad).cfrc_ext[:] = self._gripper_force[i]
         self._stale = False
 
     def _check_open(self):
@@ -250,17 +287,16 @@ class OGBManipulationBatchAdapter:
         return self.lanes.get_state()
 
     def _load(self, state):
-        """Write full CPU State (or its columns) into the batch, the per-lane model fields and the State columns."""
+        """Write full CPU State, or its ``{group key: array}`` columns, into the batch and the live groups."""
         self._stale = False
-        columns = {key: state[key] if isinstance(state, dict) else state[key].numpy() for key in self._order}
-        self._columns = {key: value.copy() for key, value in columns.items() if key[0] != "physics"}
-        parts = []
-        for key in self._order:
-            if key[0] == "physics":
-                parts.append(columns[key].astype(np.float64).reshape(self.num_envs, -1))
+        columns = groups_of(self.schema, state)
+        for key, value in self._live.items():
+            value[...] = columns[key]
+        physics = self.schema.views(columns, self._physics, numpy=True)
+        parts = [physics[name].astype(np.float64).reshape(self.num_envs, -1) for name in self._physics]
         self.b.state[:] = np.concatenate(parts, axis=1)
         self._load_models(columns)
-        success = self._columns["task", "success"][:, 0]
+        success = self._success[:, 0]
         self._outputs = {
             "reward": np.where(success, 1.0, 0.0) if not self._reward_task else np.zeros(self.num_envs),
             "success": success.copy(),
@@ -288,16 +324,15 @@ class OGBManipulationBatchAdapter:
         return self._layout.export(self._state_values(), device)
 
     def _state_values(self):
-        columns = dict(self._columns)
-        for name, value in self._views.items():
-            columns["physics", name] = (value != 0) if name == "eq_active" else value
-        return columns
+        """``{group key: (B, size) array}`` of the State: the live groups and the packed physics groups."""
+        physics = {name: (value != 0) if name == "physics/eq_active" else value for name, value in self._views.items()}
+        return {**self._live, **self.schema.pack(physics, self._physics_groups)}
 
     def render_columns(self):
         from .render_state import projected_keys
 
-        state = self.get_state()
-        return {key: state[key].detach().cpu().numpy().copy() for key in projected_keys(self.family)}
+        values = self._state_values()
+        return {name: self.schema.get(values, name).copy() for name in projected_keys(self.family)}
 
     def validate(self, state, **kwargs):
         return self.lanes.validate(state)
@@ -335,11 +370,11 @@ class OGBManipulationBatchAdapter:
         self._check_open()
         self._push()
         self.lanes.configure(values)
-        current = self.lanes.get_state()
-        for key in self._order:
-            if key[0] in ("variation", "model"):
-                self._columns[key] = current[key].numpy().copy()
-        self._load_models({**self._columns})
+        current = groups_of(self.schema, self.lanes.get_state())
+        for key, value in self._live.items():
+            if key.split("/")[0] in ("variation", "model"):
+                value[...] = current[key]
+        self._load_models(self._live)
 
     def close(self):
         if self._closed:
@@ -393,33 +428,32 @@ class OGBManipulationBatchAdapter:
         return {**outputs, **self._layout.host_leaves(self._state_values(), ("state",))}
 
     def _advance(self, actions, ids):
-        c = self._columns
         # Every lane steps in most calls; a slice selects them without index copies.
         rows = slice(None) if ids is self._all else ids
-        site_xpos, site_xmat = c["controller", "site_xpos"], c["controller", "site_xmat"]
+        site_xpos, site_xmat = self._site_xpos, self._site_xmat
         # The pinch site is the first cached site row.
         self._control.control(actions, self._qpos, site_xpos[rows, 0], site_xmat[rows, 0], self._ctrl, ids)
         scene = self.family == "Scene"
         if scene:
-            c["scene", "prev_button_states"][rows] = c["scene", "cur_button_states"][rows]
+            self._buttons_before[rows] = self._buttons_now[rows]
             button_pos = self._qpos[rows][:, self._buttons]
-        c["output", "prev_qpos"][rows] = self._qpos[rows]
-        c["output", "prev_qvel"][rows] = self._qvel[rows]
+        self._prev_qpos[rows] = self._qpos[rows]
+        self._prev_qvel[rows] = self._qvel[rows]
         self.physics.step(active=None if ids is self._all else ids)
-        c["output", "gripper_force"][rows] = self._out_cfrc_ext[rows, self._pad]
+        self._gripper_force[rows] = self._out_cfrc_ext[rows, self._pad]
         if scene:
             self._scene_post_step(ids, button_pos)
         self._cache_sites(rows)
         cube = self._reached(self._qpos[rows, self._cube : self._cube + 3] - self._mocap_pos[rows, self._target], 0.04)
         if scene:
-            buttons = c["scene", "cur_button_states"][rows] == c["scene", "target_button_states"][rows]
-            drawer = np.abs(self._qpos[rows, self._drawer] - c["scene", "target_drawer_pos"][rows, 0]) <= 0.04
-            window = np.abs(self._qpos[rows, self._window] - c["scene", "target_window_pos"][rows, 0]) <= 0.04
+            buttons = self._buttons_now[rows] == self._buttons_goal[rows]
+            drawer = np.abs(self._qpos[rows, self._drawer] - self._drawer_goal[rows, 0]) <= 0.04
+            window = np.abs(self._qpos[rows, self._window] - self._window_goal[rows, 0]) <= 0.04
             parts = np.concatenate([cube[:, None], buttons, drawer[:, None], window[:, None]], axis=1)
         else:
             parts = cube[:, None]
         success = parts.all(axis=1)
-        c["task", "success"][rows, 0] = success
+        self._success[rows, 0] = success
         out = self._outputs
         if self._reward_task:
             out["reward"][rows] = parts.sum(axis=1).astype(np.float64) - parts.shape[1]
@@ -430,19 +464,17 @@ class OGBManipulationBatchAdapter:
         out["truncated"][rows] = False
 
     def _cache_sites(self, rows):
-        c = self._columns
-        c["controller", "site_xpos"][rows] = self._out_site_xpos[rows][:, self._pos_sites]
-        c["controller", "site_xmat"][rows] = self._out_site_xmat[rows][:, self._rot_sites]
+        self._site_xpos[rows] = self._out_site_xpos[rows][:, self._pos_sites]
+        self._site_xmat[rows] = self._out_site_xmat[rows][:, self._rot_sites]
 
     def _scene_post_step(self, ids, button_pos):
         """``SceneEnv.post_step``: cube repair, button presses and locks, then ``mj_forward``."""
-        c = self._columns
         cube = self._qpos[ids, self._cube : self._cube + 3]
         unhealthy = ((cube <= self._workspace[0] - 0.2) | (cube >= self._workspace[1] + 0.2)).any(axis=1)
         if unhealthy.any():
             self._repair(ids[unhealthy])
         pressed = (button_pos > -0.02) & (self._qpos[ids][:, self._buttons] <= -0.02)
-        states = c["scene", "cur_button_states"]
+        states = self._buttons_now
         states[ids] = np.where(pressed, (states[ids] + 1) % self._num_button_states, states[ids])
         damping = self._expanded.get("dof_damping")
         if damping is None:
@@ -453,19 +485,16 @@ class OGBManipulationBatchAdapter:
     def _repair(self, ids):
         """OGBench's reset of a cube that left the workspace, drawing from the lane's environment generator."""
         rng = np.random.Generator(np.random.PCG64())
-        columns = self._columns
         for i in ids:
             print("Numerical instability detected. Resetting cube positions.", flush=True)
-            rng.bit_generator.state = pcg_decode(
-                {k: columns["rng", "environment", k][i] for k in ("state", "increment", "has_uint32", "uinteger")}
-            )
+            rng.bit_generator.state = pcg_decode({key: value[i] for key, value in self._env_rng.items()})
             xy = rng.uniform(*self._object_bounds)
             yaw = rng.uniform(0, 2 * np.pi)
             self._qpos[i, self._cube : self._cube + 3] = (*xy, 0.02)
             self._qpos[i, self._cube + 3 : self._cube + 7] = lie.SO3.from_z_radians(yaw).wxyz.tolist()
             self._qvel[i, self._cube_dof : self._cube_dof + 6] = 0.0
             for key, value in pcg_encode(rng).items():
-                columns["rng", "environment", key][i] = value
+                self._env_rng[key][i] = value
         self._dirty = True
         self.physics.forward(ids)
 
