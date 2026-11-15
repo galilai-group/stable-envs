@@ -380,6 +380,8 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     #: The lanes step on the device, so a step has no host arrays to move.
     step_leaves = None
     step_host = None
+    #: A step with a lane mask runs the same graphs as one without, so a sequence passes its mask without a readback.
+    masks_on_device = True
 
     def __init__(
         self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None, exclude_contacts=True

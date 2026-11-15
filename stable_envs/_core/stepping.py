@@ -64,9 +64,10 @@ def _task_outputs(result, active, *, all_active, owned=False, shared=()):
     else:
         out = exclude_leaves(result, ("state", "frame"), clone=copy)
     if not all_active:
-        inactive = (~active).nonzero(as_tuple=True)[0]
+        # A mask fill reads nothing back from an accelerator.
+        inactive = ~active
         for value in out.values(True, True):
-            value.index_fill_(0, inactive, 0)
+            value.masked_fill_(inactive.view(-1, *([1] * (value.ndim - 1))), 0)
     for key in shared:
         out[key] = result[key]
     return out
@@ -326,6 +327,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     # accelerator's lanes (``_steps_on_host``): its transitions stay on the host and the result moves in one copy.
     host_steps = pipeline is None and env.device.type != "cpu" and getattr(env, "_steps_on_host", bool)()
     host = host_steps or _host_pipeline(env, pipeline)
+    # A family that masks finished lanes on the device takes the mask as it is: no readback between actions.
+    device_masks = pipeline is None and not host_steps and getattr(env, "_masks_on_device", bool)()
     work = torch.device("cpu") if host else env.device
     if host_steps:
         acts = acts.detach().cpu() if torch.is_tensor(acts) else acts
@@ -378,7 +381,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
                 result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
-            elif bool(active.any()):
+            elif device_masks or bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
@@ -387,7 +390,10 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 live_state = env.get_state().to(work)
             next_active = active & ~_done(result) if t + 1 < length else active
             # Reuse the routing decision for padding to avoid another readback or empty indexing of large images.
-            next_all_active = bool(next_active.all()) if t + 1 < length else all_active
+            if t + 1 < length:
+                next_all_active = False if device_masks else bool(next_active.all())
+            else:
+                next_all_active = all_active
             if pipeline is not None and t + 1 < length and (next_all_active or bool(next_active.any())):
                 # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
