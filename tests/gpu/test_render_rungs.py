@@ -54,12 +54,14 @@ def test_a_small_cuda_batch_draws_the_same_bytes_on_the_cpu_renderer(name, varie
         state = _varied(env, rng) if varied else env.reset(seed=0)
         for _ in range(3):
             state = env.step(_actions(env, rng), frames=None)["state"]
+        # PushT States carry their appearance; TwoRoom takes the per-lane variation of the slice.
+        part = {} if name.startswith("PushT") or not varied else {"variation": env.get_variation()[:5]}
         with tuning.override(large_renderer_min_rows=1):
             gpu = env.render(state)
-            gpu_part = env.render(state[:5])
+            gpu_part = env.render(state[:5], **part)
         with tuning.override(large_renderer_min_rows=LANES + 1):
             cpu = env.render(state)
-            cpu_part = env.render(state[:5])
+            cpu_part = env.render(state[:5], **part)
             out = torch.zeros_like(gpu)
             env.render(state, out=out)
             stepped = env.step(_actions(env, rng))["frames"]
