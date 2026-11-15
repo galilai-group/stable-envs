@@ -58,13 +58,9 @@ def test_a_device_masked_sequence_equals_the_sequence_that_reads_its_masks_back(
             assert env._masks_on_device()
             monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
             env.reset(seed=3)
+            # The cube target of lane 0 moves onto its cube.
             sim = env._simulator
-            state = env.get_state().clone()
-            qpos, mocap = state["physics", "qpos"], state["physics", "mocap_pos"]
-            moved = mocap.reshape(4, -1, 3).clone()
-            moved[0, sim._target] = qpos[0, sim._cube : sim._cube + 3]
-            state["physics", "mocap_pos"] = moved.reshape(mocap.shape)
-            env.set_state(state)
+            sim._mocap_pos[0, sim._target] = sim._qpos[0, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
             runs.append(env.step(actions, frames=None))
         monkeypatch.undo()
     masked, readback = runs
