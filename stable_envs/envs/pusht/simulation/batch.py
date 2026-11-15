@@ -193,9 +193,10 @@ class PushTBatchAdapter(PushTReplayAdapter):
                     f"{name!r}: {source(child) if type(child) is dict else f'L[{child!r}]'}"
                     for name, child in node.items()
                 )
-                return "{" + ", ".join(items) + "}"
+                return "N({" + ", ".join(items) + "})"
 
-            nest = eval("lambda L: " + source(tree))  # noqa: S307 - the source holds only State key literals
+            # Builds every TensorDict node from its finished children, without the per-key checks of nesting.
+            nest = eval("lambda L, N: " + source(tree))  # noqa: S307 - the source holds only State key literals
             # Fixed fields of one dtype and per-lane shape are packed together and become leaves with one unbind.
             parts = []
             for fixed, moving in groups.values():
@@ -208,30 +209,36 @@ class PushTBatchAdapter(PushTReplayAdapter):
                 ]
                 parts.append((blocks, moving))
             self._layout = parts, nest
+            self._groups = {}
         return self._layout
+
+    def _moving_groups(self, fields, part, moving):
+        """``(shape, keys)`` of the moving fields of one dtype, grouped by per-lane shape; cached per shapes."""
+        signature = (part, tuple(tuple(fields[key].shape[1:]) for key in moving))
+        groups = self._groups.get(signature)
+        if groups is None:
+            shaped = {}
+            for key, shape in zip(moving, signature[1], strict=True):
+                shaped.setdefault(shape, []).append(key)
+            groups = self._groups[signature] = [(shape, keys) for shape, keys in shaped.items()]
+        return groups
 
     def get_state(self):
         fields = self._state_fields(self._history_width())
         parts, nest = self._state_layout(fields)
         batch = self.num_envs
         leaves = {}
-        for blocks, moving in parts:
-            shaped = {}
-            for key in moving:
-                value = fields[key]
-                values, keys = shaped.setdefault(tuple(value.shape[1:]), ([], []))
-                values.append(value.reshape(-1))
-                keys.append(key)
-            groups = [(shape, keys) for _, shape, keys in blocks]
+        for part, (blocks, moving) in enumerate(parts):
+            moved = self._moving_groups(fields, part, moving)
+            groups = [(shape, keys) for _, shape, keys in blocks] + moved
             sources = [packed for packed, _, _ in blocks]
-            for shape, (values, keys) in shaped.items():
-                groups.append((shape, keys))
-                sources.extend(values)
+            sources += [fields[key].reshape(-1) for _, keys in moved for key in keys]
             sizes = [len(keys) * batch * math.prod(shape) for shape, keys in groups]
             flat = torch.cat(sources, out=self._buffer(sources[0].dtype, sum(sizes)))
             for (shape, keys), block in zip(groups, flat.split(sizes), strict=True):
                 leaves.update(zip(keys, block.view(len(keys), batch, *shape).unbind(0), strict=True))
-        return TensorDict._new_unsafe(nest(leaves), batch_size=torch.Size([batch]), device=self._state_device)
+        size, device = torch.Size([batch]), self._state_device
+        return nest(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=size, device=device, nested=False))
 
     def _buffer(self, dtype, numel):
         """A flat State buffer: on CPU, one that no earlier State still uses, to avoid new pages per step."""
