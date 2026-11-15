@@ -56,6 +56,25 @@ def time_backend(measure: Measure, backend: str, num_envs: int, device: str | to
         close()
 
 
+def measure_env(make: Callable[[str, int], object]) -> Measure:
+    """A ``Measure`` for environments: ``make(backend, num_envs)`` builds one with that simulation backend.
+
+    Each timed call is ``env.step`` with the default arguments, so the timing includes every cost a backend adds per
+    call, such as moving the State and the outputs. The environment is reset with seed 0 and stepped with the same
+    actions, drawn from its action spec, at every call.
+    """
+
+    def measure(backend: str, num_envs: int):
+        import numpy as np
+
+        env = make(backend, num_envs)
+        env.reset(seed=0)
+        actions = env.action_spec.sample(num_envs, np.random.default_rng(0), device=env.device)
+        return (lambda: env.step(actions)), env.close
+
+    return measure
+
+
 def measure_adapter(make: Callable[[str, int], object], actions: Callable[[int], object]) -> Measure:
     """A ``Measure`` for adapters: ``make(backend, num_envs)`` builds one, ``actions(num_envs)`` gives its actions.
 
@@ -152,6 +171,7 @@ def select_backend(
     *,
     choices: Sequence[str],
     measure: Measure | None = None,
+    knob: bool = True,
 ) -> str:
     """Return the simulation backend of a batch. It reads the knob and the tuning cache, and times nothing.
 
@@ -164,6 +184,8 @@ def select_backend(
             family's one declaration of its backends and shipped switch points.
         choices: Backends that ``requested`` may name.
         measure: Builds and steps one backend; ``stable-envs tune`` uses it to calibrate ``path``.
+        knob: False ignores the ``large_backend_min_envs`` knob for this path, for a split that the knob doesn't
+            describe. The tuning cache and the shipped switch point still apply.
 
     Raises:
         ValueError: If ``requested`` is neither ``"auto"``, None nor one of ``choices``.
@@ -181,7 +203,12 @@ def select_backend(
         _REGISTERED[path, device.type] = (rungs, measure)
     if rungs.small == rungs.large:
         return rungs.small
-    value = tuning.get(KNOB, path=path, size=0, batch=num_envs, device=device)
+    if knob:
+        value = tuning.get(KNOB, path=path, size=0, batch=num_envs, device=device)
+    else:
+        data, current = tuning.read_cache(device)
+        entry = data.get("entries", {}).get(tuning.entry_key(path, 0, num_envs), {}) if current else {}
+        value = entry.get(KNOB)
     if value is not None:
         return rungs.large if num_envs >= value else rungs.small
     side = _cached_neighbours(path, device, num_envs)

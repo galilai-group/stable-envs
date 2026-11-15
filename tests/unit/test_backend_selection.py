@@ -53,6 +53,17 @@ def test_the_knob_sets_the_switch_point(switch, batch, expected):
         assert _select(batch, requested=None) == expected
 
 
+def test_a_path_can_ignore_the_knob():
+    rungs = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large", 8)}
+
+    def pick(n, knob):
+        return backends.select_backend("test-sim", n, "cuda", "auto", rungs, choices=CHOICES, knob=knob)
+
+    with tuning.override(large_backend_min_envs=2):
+        assert pick(4, knob=True) == "large"
+        assert pick(4, knob=False) == "small" and pick(8, knob=False) == "large"
+
+
 def test_without_a_value_auto_uses_the_shipped_switch_point():
     assert _select(3) == "large"
     shipped = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large", 4)}
