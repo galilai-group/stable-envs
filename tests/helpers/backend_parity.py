@@ -18,13 +18,16 @@ def _key(key) -> str:
     return "/".join(key) if isinstance(key, tuple) else key
 
 
-def compare_backend_states(actual, expected, *, atol: float, exclude: Iterable[str] = (), what: str = "") -> None:
-    """Assert equal keys, exact integer and bool leaves, and float leaves within ``atol``.
+def compare_backend_states(
+    actual, expected, *, atol: float, rtol: float = 0.0, exclude: Iterable[str] = (), what: str = ""
+) -> None:
+    """Assert equal keys, exact integer and bool leaves, and float leaves within ``atol`` plus ``rtol``.
 
-    ``exclude`` holds ``/``-joined key prefixes that one backend computes differently, such as solver caches.
+    ``exclude`` holds ``/``-joined key prefixes or final names that one backend computes differently, such as
+    solver warm-start caches.
     """
     skip = tuple(exclude)
-    keep = lambda key: not _key(key).startswith(skip)  # noqa: E731
+    keep = lambda key: not _key(key).startswith(skip) and _key(key).rsplit("/", 1)[-1] not in skip  # noqa: E731
     a = {_key(k): v for k, v in actual.items(True, True) if keep(k)}
     e = {_key(k): v for k, v in expected.items(True, True) if keep(k)}
     assert set(a) == set(e), f"{what}: keys differ: {sorted(set(a) ^ set(e))}"
@@ -33,7 +36,7 @@ def compare_backend_states(actual, expected, *, atol: float, exclude: Iterable[s
         assert x.shape == y.shape, f"{what} {key}: shape {tuple(x.shape)} != {tuple(y.shape)}"
         if x.is_floating_point() or y.is_floating_point():
             torch.testing.assert_close(
-                x.double(), y.double(), atol=atol, rtol=0, equal_nan=True, msg=lambda m, k=key: f"{what} {k}: {m}"
+                x.double(), y.double(), atol=atol, rtol=rtol, equal_nan=True, msg=lambda m, k=key: f"{what} {k}: {m}"
             )
         else:
             assert torch.equal(x.to(y.dtype), y), f"{what} {key}: integer or bool values differ"
