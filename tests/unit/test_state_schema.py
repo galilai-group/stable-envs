@@ -15,7 +15,29 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
-ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {}
+ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
+    "navigation": (
+        ("navigation", "simple_point_maze"),
+        [
+            ROOT / "tests" / path
+            for path in (
+                "gpu/test_navdot_fused.py",
+                "gpu/test_tworoom_jax.py",
+                "integration/test_tworoom_jax_source.py",
+                "unit/test_envs_classic_nav.py",
+                "unit/test_full_state_contract.py",
+                "unit/test_nav_dynamics_variation.py",
+                "unit/test_nav_render_checks.py",
+                "unit/test_nav_tuning_invariance.py",
+                "unit/test_nav_variation_maps.py",
+                "unit/test_navdot_cpu.py",
+                "unit/test_navstep_numba.py",
+                "unit/test_step_capture.py",
+                "unit/test_tworoom_jax.py",
+            )
+        ],
+    ),
+}
 
 FIELDS = [
     Field("t/pose", (3,), torch.float64, "t/float64"),

@@ -216,7 +216,7 @@ def test_navigation_sequence_matches_scalar_calls(name):
     with snv.make(name, num_envs=3, device="cpu") as env:
         state = env.reset(seed=17)
         if name in ("TwoRoom", "Piecewise"):
-            state["target", "position"].fill_(0)
+            snv.get_field(state, "target.position").fill_(0)
             env.set_state(state)
         actions = torch.zeros(3, 3, env.action_dim)
         expected = [env.step(actions[:, t], frames=None)["state"] for t in range(3)]
@@ -232,7 +232,7 @@ def test_gpu_sequence_frames_equal_repeated_steps(name):
     with snv.make(name, num_envs=3, device="cuda") as env:
         initial = env.reset(seed=17)
         if name in ("TwoRoom", "Piecewise"):
-            initial["target", "position"].fill_(0)
+            snv.get_field(initial, "target.position").fill_(0)
             env.set_state(initial)
         actions = torch.zeros(3, 3, env.action_dim, dtype=env.action_spec.dtype, device="cuda")
         reference = [env.step(actions[:, t]) for t in range(3)]

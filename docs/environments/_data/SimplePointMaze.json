@@ -22,22 +22,10 @@
  },
  "state": [
   {
-   "key": "agent",
-   "leaves": 1,
-   "numel": 2,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "goal",
-   "leaves": 1,
-   "numel": 2,
-   "dtypes": ["float32"]
-  },
-  {
-   "key": "task",
-   "leaves": 2,
-   "numel": 3,
-   "dtypes": ["bool", "float32"]
+   "key": "simple_point_maze",
+   "leaves": 3,
+   "numel": 7,
+   "dtypes": ["bool", "float32", "float64"]
   }
  ],
  "variation": [

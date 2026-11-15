@@ -8,6 +8,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
+- The navigation classes fold their state. TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones keep the agent and target positions in one `navigation/float32` leaf, and SimplePointMaze keeps its fields in one `simple_point_maze/<dtype>` leaf for each dtype. Read and write a field with `snv.get_field(state, "agent.position")` and `snv.set_field`.
 
 ### Added
 

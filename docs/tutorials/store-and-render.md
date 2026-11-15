@@ -76,21 +76,21 @@ Rendering is enough for training on pixels, but to continue an episode you need 
 midpoint = out["states"][:, 3]  # the state after 4 actions, batch (4,)
 env.set_state(midpoint)
 branch = env.step(torch.zeros(4, 2))
-print(branch["state"]["agent", "position"].shape)  # torch.Size([4, 2])
+print(snv.get_field(branch["state"], "agent.position").shape)  # torch.Size([4, 2])
 ```
 
 To branch several futures from one state, restore it into a second environment and step that one.
 
 ## Hand a rollout to a model
 
-stable-envs stops at frames and states, and you pick the [observation](../terms.md#observation) a model sees. Here the batch keeps the pixels, the agent position and the actions, and leaves out `state["target", "position"]` on purpose: TwoRoom never draws its target, so its position is privileged information that a pixel model doesn't see.
+stable-envs stops at frames and states, and you pick the [observation](../terms.md#observation) a model sees. Here the batch keeps the pixels, the agent position and the actions, and leaves out the `target.position` field on purpose: TwoRoom never draws its target, so its position is privileged information that a pixel model doesn't see.
 
 ```python
 start = env.reset(seed=0)
 actions = torch.rand(4, 16, 2) * 2 - 1
 out = env.step(actions, frames=slice(None))  # every state and frame
 pixels = torch.cat([env.render(start)[:, None], out["frames"]], dim=1)
-agent = torch.cat([start["agent", "position"][:, None], out["states"]["agent", "position"]], dim=1)
+agent = torch.cat([snv.get_field(start, "agent.position")[:, None], snv.get_field(out["states"], "agent.position")], dim=1)
 first = torch.full((4, 1, 2), float("nan"))  # no action comes before reset
 batch = {"pixels": pixels.permute(0, 1, 4, 2, 3).float() / 255, "proprio": agent, "action": torch.cat([first, actions], dim=1)}
 print(batch["pixels"].shape)   # torch.Size([4, 17, 3, 224, 224])

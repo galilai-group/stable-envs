@@ -92,7 +92,9 @@ def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatc
             env.step(action, states=None, frames=None)
         stream.synchronize()
         assert_same_state(result, held)
-        assert_same_state(result["state", "agent", "position"], initial["agent", "position"] + 0.625)
+        assert_same_state(
+            se.get_field(result["state"], "agent.position"), se.get_field(initial, "agent.position") + 0.625
+        )
 
 
 def test_cuda_masked_sequence_with_variation():
@@ -103,7 +105,7 @@ def test_cuda_masked_sequence_with_variation():
         actions[..., 0] = 1
         result = env.step(actions, frames=None)
         expected = torch.tensor([[65.25, 60], [75.75, 60], [102, 60]], device="cuda")
-        assert_same_state(result["state", "agent", "position"], expected)
+        assert_same_state(se.get_field(result["state"], "agent.position"), expected)
         assert result["valid"].sum(dim=1).tolist() == [1, 3, 8]
 
 
@@ -129,7 +131,7 @@ def test_cuda_shared_distance_matches_cpu_norm_without_host_conversion(name, mon
     targets = np.random.default_rng(7).uniform(14, 209, (512, 2)).astype(np.float32)
     with se.make(name, num_envs=len(targets), device="cuda") as env:
         state = env.reset(seed=0, options={"state": [60, 60], "target_state": targets})
-        delta = (state["agent", "position"] - state["target", "position"]).cpu()
+        delta = (se.get_field(state, "agent.position") - se.get_field(state, "target.position")).cpu()
         expected = torch.tensor([float(torch.norm(row)) for row in delta], dtype=torch.float64)
         env._outputs(state)  # Compile before guarding the runtime path.
 
@@ -151,7 +153,7 @@ def test_cuda_single_lane_sequence_with_offset_action_views():
         actions = torch.arange(12, device="cuda", dtype=torch.float32).reshape(1, 6, 2) / 32
         actual = env.step(actions, frames=None)
         expected = torch.tensor([[54.6875, 55.625]], device="cuda")
-        assert_same_state(actual["state", "agent", "position"], expected)
+        assert_same_state(se.get_field(actual["state"], "agent.position"), expected)
 
 
 @pytest.mark.parametrize("batch", [1, 5])
