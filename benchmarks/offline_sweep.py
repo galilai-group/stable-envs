@@ -357,6 +357,9 @@ def cmd_ours(args) -> None:
         torch.set_num_threads(args.threads)
     dev = torch.device(args.device)
     sync = torch.cuda.synchronize if dev.type == "cuda" else None
+    # Ours draws stored inputs the way the package draws offline: snv.FrameLoader renders ahead in large chunks and
+    # hands out b frames at a time. --per-batch draws each batch with its own env.render call instead.
+    loader_cls = getattr(snv, "FrameLoader", None)
     results = {
         "arm": f"ours-{dev.type}",
         "host": _host(),
@@ -383,14 +386,21 @@ def cmd_ours(args) -> None:
                 frame = render(*spans[0])
                 shape = list(frame.shape[1:])
                 del frame
+                loader = None if args.per_batch or loader_cls is None else loader_cls(env, data, b)
 
                 def sweep():
+                    if loader is not None:
+                        for frames in loader:
+                            yield int(frames.shape[0])
+                        return
                     for s, e in spans:
                         render(s, e)
                         yield e - s
 
                 t = _timed(_cycle(sweep), seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup)
                 row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": t["rate"], **t}
+                row["draw"] = "per-batch" if loader is None else "FrameLoader"
+                row["render_rows"] = b if loader is None else loader.chunk_size
                 if dev.type == "cuda":
                     row["peak_mib"] = torch.cuda.max_memory_allocated() / 2**20
             except torch.cuda.OutOfMemoryError as e:
@@ -643,6 +653,7 @@ def main() -> None:
     o.add_argument("--device", default="cuda")
     o.add_argument("--batches", type=int, nargs="+", default=[1, 256, 512, 1024, 2048, 4096])
     o.add_argument("--threads", type=int, default=8)
+    o.add_argument("--per-batch", action="store_true", help="one env.render call per batch, without snv.FrameLoader")
     o.add_argument("--output", required=True)
     r = sub.add_parser("source", parents=[common])
     r.add_argument("--procs", type=int, default=1)
