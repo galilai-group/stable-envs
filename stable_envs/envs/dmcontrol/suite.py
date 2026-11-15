@@ -44,6 +44,18 @@ def _textured(p, n, v, L, mat_rgb, bi, idx, spec, shin, tex, unlit=None):
 class _FrameGraph:
     """A captured CUDA graph of ``draw(*inputs)``; each call copies new inputs in and replays it."""
 
+    @classmethod
+    def capture(cls, draw, inputs):
+        """The graph, or False when ``draw`` reads device values on the host, which a capture cannot hold.
+
+        The Torch cast does, with its primitive bounds.
+        """
+        try:
+            return cls(draw, inputs)
+        except RuntimeError:
+            torch.cuda.synchronize()
+            return False
+
     def __init__(self, draw, inputs):
         self.inputs = [t.clone() for t in inputs]
         self.lock = threading.Lock()
@@ -793,11 +805,21 @@ class DMControlSuite(_DMCModel):
             return self._render_group_rays(rays, sc, s, size, ss, rows)
         poses = self._fk(s, sc, rows)
         if graph:
-            key = ("graph", int(ss), tuple(poses[0].shape), bool(self.SHADOW_COMPACTION), _shade_triton.ENABLED)
-            graph = sc.const.get(key)
-            if graph is None:
-                graph = sc.const[key] = _FrameGraph(lambda *p: self._draw(sc, size, ss, *p), poses)
-            return graph(*poses)
+            # A patched cast is part of the captured work, so it keys the graph.
+            key = (
+                "graph",
+                int(ss),
+                tuple(poses[0].shape),
+                bool(self.SHADOW_COMPACTION),
+                _shade_triton.ENABLED,
+                R3.cast_nearest,
+                R3.any_blocking,
+            )
+            replay = sc.const.get(key)
+            if replay is None:
+                replay = sc.const[key] = _FrameGraph.capture(lambda *p: self._draw(sc, size, ss, *p), poses)
+            if replay:
+                return replay(*poses)
         return self._draw(sc, size, ss, *poses, bound_scale=self._bound_scale(sc, rows))
 
     def _draw(self, sc: _Scene, size: int, ss: int, xpos, xmat, sizes, mat_rgb, bound_scale=None) -> torch.Tensor:
