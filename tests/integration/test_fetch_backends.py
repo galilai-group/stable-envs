@@ -52,6 +52,19 @@ def test_routing():
             fetch_backend(8, "cpu", bad)
 
 
+def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch, tmp_path):
+    from stable_envs.envs.fetch.simulation.execution import CUDA_MIN_ENVS
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    tuning._clear_caches()
+    assert CUDA_MIN_ENVS == {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
+    for task, switch in CUDA_MIN_ENVS.items():
+        assert fetch_backend(switch - 1, "cuda", "auto", task) == "native"
+        assert fetch_backend(switch, "cuda", "auto", task) == "mjwarp"
+
+
 def test_public_env_steps_on_the_cpu_batch():
     with snv.make("FetchPush", num_envs=3, device="cpu") as env:
         assert (env.simulation_backend, env.execution_mode) == ("native", "DELEGATED_CPU")

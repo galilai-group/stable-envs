@@ -52,6 +52,7 @@ class FetchSemantics:
         "rendering.transparent_arm",
     }
     simulation_backends = ("native", "mjwarp", "source")
+    state_solver_caches = ("warmstart",)
 
     def __init__(
         self,

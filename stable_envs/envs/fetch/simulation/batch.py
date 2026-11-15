@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.cpus import cpu_limit
+from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import to_device
 from ...._execution.protocol import SimulatorAdapter
 from .adapter import _VISUAL_GROUPS, VISUAL_LEAVES, _integer, _words, episode_limits, host_actions, host_active
@@ -406,6 +407,7 @@ class FetchBatchAdapter(FetchLanes):
         # Batch outputs are copied only for fields bound before a call.
         self._xpos, self._xquat, self._site_xpos = (self.b.bind(name) for name in _OUTPUTS)
         self._body_mass = None
+        self._layout = None
         self._elapsed = np.zeros(B, np.int64)
         self._grip_pos, self._grip_quat = np.zeros((B, 3)), np.zeros((B, 4))
         self._reward_dtype = np.float32 if t.reward_type == "sparse" else np.float64
@@ -452,27 +454,29 @@ class FetchBatchAdapter(FetchLanes):
     def _host_state(self) -> TensorDict:
         self._check_open()
         words = self._rng_words()
-        tensor = lambda value, dtype=torch.float64: torch.tensor(value, dtype=dtype)  # noqa: E731
-        return TensorDict(
-            {
-                "qpos": tensor(self._qpos),
-                "qvel": tensor(self._qvel),
-                "time": tensor(self._time[:, None]),
-                "task": {"initial_gripper_xpos": tensor(self._anchor)},
-                "warmstart": tensor(self._qacc_warmstart),
-                "controller": {"position": tensor(self._grip_pos), "quaternion": tensor(self._grip_quat)},
-                "goal": tensor(self._goal),
-                "lifecycle": {"elapsed_steps": tensor(self._elapsed[:, None], torch.int64)},
-                "rng": {
-                    "state_words": tensor(words[:, 0:4], torch.int64),
-                    "increment_words": tensor(words[:, 4:8], torch.int64),
-                    "has_uint32": tensor(words[:, 8:9], torch.int64),
-                    "uinteger": tensor(words[:, 9:10], torch.int64),
-                },
-            },
-            [self.num_envs],
-            device="cpu",
-        )
+        values = {
+            "qpos": self._qpos,
+            "qvel": self._qvel,
+            "time": self._time[:, None],
+            "task/initial_gripper_xpos": self._anchor,
+            "warmstart": self._qacc_warmstart,
+            "controller/position": self._grip_pos,
+            "controller/quaternion": self._grip_quat,
+            "goal": self._goal,
+            "lifecycle/elapsed_steps": self._elapsed[:, None],
+            "rng/state_words": words[:, 0:4],
+            "rng/increment_words": words[:, 4:8],
+            "rng/has_uint32": words[:, 8:9],
+            "rng/uinteger": words[:, 9:10],
+        }
+        if self._layout is None:
+            dtypes = {np.dtype(np.int64): torch.int64}
+            self._layout = StateLayout(
+                [(key, value.shape[1:], dtypes.get(value.dtype, torch.float64)) for key, value in values.items()],
+                self.num_envs,
+            )
+        # The export copies every value, so the snapshot does not change with later steps.
+        return self._layout.export(values, "cpu")
 
     def set_state(self, state: TensorDict) -> None:
         self.validate(state)

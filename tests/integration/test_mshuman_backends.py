@@ -124,6 +124,12 @@ def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point(device):
         assert type(env._simulator) is MSHumanWarpAdapter
 
 
+def test_the_shipped_switch_point_is_16():
+    from stable_envs.envs.mshuman.envs import CUDA_MIN_ENVS
+
+    assert CUDA_MIN_ENVS == 16
+
+
 def test_mjwarp_backend_requires_cuda():
     with pytest.raises(ValueError, match="requires device='cuda'"):
         se.make("MSHumanLocomotion", num_envs=1, device="cpu", simulation_backend="mjwarp")

@@ -42,7 +42,8 @@ def test_maze_native_and_mjwarp(name):
     pytest.importorskip("mujoco_warp")
     # MuJoCo Warp integrates PointMaze with Euler where OGBench uses RK4, and its contacts differ in AntMaze.
     steps = 3 if name.startswith("Humanoid") else 0
-    check_backend_parity(name, ("native", "mjwarp"), steps=steps, exclude=("simulator/warmstart",))
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), steps=steps, exclude=exclude)
 
 
 @pytest.mark.family("fetch")
@@ -50,13 +51,15 @@ def test_maze_native_and_mjwarp(name):
 def test_fetch_native_and_mjwarp(name):
     pytest.importorskip("mujoco_warp")
     # The MuJoCo Warp model of Fetch changes the contact settings (docs/environments/fetch.md), so only resets agree.
-    check_backend_parity(name, ("native", "mjwarp"), steps=0, size=32, exclude=("warmstart",))
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), steps=0, size=32, exclude=exclude)
 
 
 @pytest.mark.family("mshuman")
 def test_mshuman_native_and_mjwarp():
     pytest.importorskip("mujoco_warp")
-    check_backend_parity("MSHumanLocomotion", ("native", "mjwarp"), size=32, exclude=("warmstart",))
+    exclude = se.MSHumanLocomotion.state_solver_caches
+    check_backend_parity("MSHumanLocomotion", ("native", "mjwarp"), size=32, exclude=exclude)
 
 
 @pytest.mark.family("roadster")
@@ -64,4 +67,5 @@ def test_mshuman_native_and_mjwarp():
 def test_roadster_native_and_mjwarp(name):
     pytest.importorskip("mujoco_warp")
     # Mocap positions are a few hundred metres, where float32 rounding is about 2e-5.
-    check_backend_parity(name, ("native", "mjwarp"), size=32, reset_atol=5e-5, exclude=("sim/warmstart",))
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), size=32, reset_atol=5e-5, exclude=exclude)

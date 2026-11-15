@@ -15,8 +15,15 @@ _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: MEASURED
-MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {"point": 4096, "ant": 256, "humanoid": 256}
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
+    "point": 16,  # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16
+    "ant": 128,  # 64, 64; 128, 128
+    "humanoid": 128,  # 64, 64; 128, 64
+}
 
 
 def maze_backend(
@@ -27,13 +34,17 @@ def maze_backend(
     maze: str = "large",
 ) -> str:
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``mujoco_backend``."""
-    from ...._execution.mjbatch import measure_adapter, mujoco_backend
+    import torch
+
+    from ...._execution.backends import measure_adapter
+    from ...._execution.mjbatch import mujoco_backend
     from .maze import BODIES
 
     def build(backend: str, n: int):
         return make_maze_adapter(n, device, 0, loco=loco, maze=maze, simulation_backend=backend)
 
-    measure = measure_adapter(build, BODIES[loco][2], device)
+    dim = BODIES[loco][2]
+    measure = measure_adapter(build, lambda n: torch.rand(n, dim, device=device) * 2 - 1)
     path = f"ogb-sim/{loco}maze-{maze}"
     return mujoco_backend(
         path, num_envs, device, simulation_backend, cuda_min_envs=MAZE_CUDA_MIN_ENVS[loco], measure=measure

@@ -7,7 +7,9 @@ from types import SimpleNamespace
 import mujoco
 import numpy as np
 import torch
+from tensordict import TensorDict
 
+from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
@@ -463,6 +465,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._goal = np.zeros((self.num_envs, 3))
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
         self._last = None
+        self._layout = None
         self.reset(seed=seed)
 
     def reset(self, seed=None):
@@ -484,11 +487,16 @@ class OGBMazeBatchAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._random.columns,
         }
-        return tree({key: torch.from_numpy(np.array(value)) for key, value in columns.items()})
+        columns = {key: np.asarray(value) for key, value in columns.items()}
+        if self._layout is None:
+            leaves = [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in columns.items()]
+            self._layout = StateLayout(leaves, self.num_envs)
+        # The export copies every value, so the snapshot does not change with later steps.
+        return self._layout.export(columns, "cpu")
 
     def _place(self, source):
         """A TensorDict of host leaves ``source`` on the env device, with one copy."""
-        td = build_tensordict(source, [self.num_envs], _CPU)
+        td = source if isinstance(source, TensorDict) else build_tensordict(source, [self.num_envs], _CPU)
         return td if self.device.type == "cpu" else to_device(td, self.device)
 
     def get_state(self):

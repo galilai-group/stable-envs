@@ -1,20 +1,25 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import torch
 
-from ...._execution.mjbatch import measure_adapter, mujoco_backend
+from ...._execution.backends import measure_adapter
+from ...._execution.mjbatch import mujoco_backend
 from ...._execution.policy import cpu_affinity, process_count
-
-if TYPE_CHECKING:
-    import torch
-
 from .adapter import FetchAdapter
 from .process import FetchProcessAdapter
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: MEASURED
-CUDA_MIN_ENVS: dict[str, int | None] = {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+CUDA_MIN_ENVS: dict[str, int | None] = {
+    "Reach": 256,
+    "Push": 256,  # RTX 3090 128, RTX A5000 256
+    "Slide": 256,
+    "PickAndPlace": 256,
+}
 #: ``simulation_backend`` values besides ``"auto"``: the shared MuJoCo backends, and the per-environment
 #: gymnasium-robotics loop.
 SIMULATION_BACKENDS = ("native", "mjwarp", "source")
@@ -41,7 +46,7 @@ def fetch_backend(
     def build(backend: str, n: int):
         return make_fetch_adapter(n, device, 0, task, reward_type, simulation_backend=backend)
 
-    measure = measure_adapter(build, 4, device)
+    measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
     path = f"fetch-sim/{task.lower()}"
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)

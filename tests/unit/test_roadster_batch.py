@@ -53,6 +53,19 @@ def test_the_backend_follows_the_device_and_the_switch_point():
         assert isinstance(env._simulator, RoadsterNativeAdapter)
 
 
+def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch, tmp_path):
+    from stable_envs.envs.roadster.simulation.execution import CUDA_MIN_ENVS
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    tuning._clear_caches()
+    assert CUDA_MIN_ENVS == {"loop": 32, "mission": 16, "traffic": 32, "rooftop": 64, "carhop": 32}
+    for task, switch in CUDA_MIN_ENVS.items():
+        assert roadster_backend(switch - 1, "cuda", "auto", task) == "native"
+        assert roadster_backend(switch, "cuda", "auto", task) == "mjwarp"
+
+
 def test_environments_that_end_within_an_action_continue_as_the_source():
     """Random commands crash the car within an action; the source then stops that action's substeps and its
     gust draws. The batch keeps every environment's State, its gust generator included, equal to the source."""

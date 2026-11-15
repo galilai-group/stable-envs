@@ -57,6 +57,7 @@ class RoadsterBase(Env):
     reset_value_paths = frozenset(PHYSICS_LEAVES)
     reset_sample_paths = frozenset(PHYSICS_LEAVES)
     simulation_backends = ("native", "mjwarp")
+    state_solver_caches = ("sim/warmstart",)
 
     def __init__(
         self,

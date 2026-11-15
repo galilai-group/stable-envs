@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, WarpBatch
 from ...._execution.protocol import SimulatorAdapter
@@ -53,6 +54,7 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
     def __init__(self, num_envs: int, device, model):
         super().__init__(num_envs, device, model)
         self.batch = NativeBatch(model, self.num_envs, "cpu", keyframe=0)
+        self._layout: StateLayout | None = None
         limited = model.actuator_ctrllimited.astype(bool)
         self._ctrl_low = np.where(limited, model.actuator_ctrlrange[:, 0], -np.inf)
         self._ctrl_high = np.where(limited, model.actuator_ctrlrange[:, 1], np.inf)
@@ -75,8 +77,10 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
     def _host_state(self, values: dict[str, np.ndarray] | None = None) -> TensorDict:
         if values is None:
             values = {key: self.batch.numpy(name).astype(np.float32) for key, name in _FIELDS.items()}
-        leaves = {key: torch.from_numpy(value.reshape(self.num_envs, -1)) for key, value in values.items()}
-        return build_tensordict(leaves, [self.num_envs], "cpu")
+        values["time"] = values["time"].reshape(self.num_envs, 1)
+        if self._layout is None:
+            self._layout = StateLayout([(k, v.shape[1:], torch.float32) for k, v in values.items()], self.num_envs)
+        return self._layout.export(values, "cpu")
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()

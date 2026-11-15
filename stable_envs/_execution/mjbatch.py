@@ -65,7 +65,7 @@ import threading
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -116,23 +116,6 @@ def mujoco_backend(
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
     backends = {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", cuda_min_envs)}
     return select_backend(path, num_envs, device, requested, backends, choices=BACKENDS, measure=measure)
-
-
-def measure_adapter(
-    build: Callable[[str, int], Any],
-    action_dim: int,
-    device: str | torch.device,
-    low: float = -1.0,
-    high: float = 1.0,
-) -> Measure:
-    """A ``measure`` for :func:`mujoco_backend` that steps ``build(backend, num_envs)`` with uniform actions."""
-
-    def measure(backend: str, num_envs: int):
-        adapter = build(backend, num_envs)
-        actions = torch.rand(num_envs, action_dim, device=device) * (high - low) + low
-        return (lambda: adapter.step(actions)), adapter.close
-
-    return measure
 
 
 def native_threads(num_envs: int) -> int:

@@ -104,6 +104,20 @@ def test_maze_backend_routing(batch, device, backend, switch, expected):
         assert maze_backend(batch, device, "ant", backend) == expected
 
 
+def test_auto_uses_the_shipped_switch_point_of_each_body(monkeypatch, tmp_path):
+    from stable_envs import tuning
+    from stable_envs.envs.ogbench.simulation.execution import MAZE_CUDA_MIN_ENVS, maze_backend
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    tuning._clear_caches()
+    assert MAZE_CUDA_MIN_ENVS == {"point": 16, "ant": 128, "humanoid": 128}
+    for loco, switch in MAZE_CUDA_MIN_ENVS.items():
+        assert maze_backend(switch - 1, "cuda", loco) == "native"
+        assert maze_backend(switch, "cuda", loco) == "mjwarp"
+
+
 def test_maze_backend_rejects_bad_options():
     from stable_envs.envs.ogbench.simulation.execution import maze_backend
 

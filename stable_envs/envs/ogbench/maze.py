@@ -1391,6 +1391,7 @@ class MazeSemantics:
     # Each step returns outputs in new storage.
     _step_outputs_owned = True
     simulation_backends = ("native", "mjwarp")
+    state_solver_caches = ("simulator/warmstart",)
 
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction; outputs are on ``device``.

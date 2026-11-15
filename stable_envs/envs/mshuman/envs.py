@@ -10,7 +10,8 @@ import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.stepping import _stack_states, _threads
-from ..._execution.mjbatch import measure_adapter, mujoco_backend
+from ..._execution.backends import measure_adapter
+from ..._execution.mjbatch import mujoco_backend
 from ...env import Env, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
@@ -22,8 +23,11 @@ from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: MEASURED
-CUDA_MIN_ENVS: int | None = 256
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
@@ -51,6 +55,7 @@ class MSHumanLocomotion(Env):
 
     family = "mshuman"
     simulation_backends = ("native", "mjwarp")
+    state_solver_caches = ("warmstart",)
     reference_id = f"LNSGroup/MS-Human-700/{_XML}@{_COMMIT}"
     default_size = 128
     action_dim = _NU
@@ -79,7 +84,8 @@ class MSHumanLocomotion(Env):
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
 
-        measure = measure_adapter(_builder(self._model, self.device), _NU, self.device, 0.0, 1.0)
+        device = self.device
+        measure = measure_adapter(_builder(self._model, device), lambda n: torch.rand(n, _NU, device=device))
         path, requested = "mshuman-sim/locomotion", simulation_backend
         self.simulation_backend = mujoco_backend(
             path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure

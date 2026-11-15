@@ -4,13 +4,23 @@ from __future__ import annotations
 
 import torch
 
-from ...._execution.mjbatch import measure_adapter, mujoco_backend
+from ...._execution.backends import measure_adapter
+from ...._execution.mjbatch import mujoco_backend
 
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: MEASURED
-CUDA_MIN_ENVS: dict[str, int | None] = {"loop": 64, "mission": 64, "traffic": 64, "rooftop": 64, "carhop": 64}
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+CUDA_MIN_ENVS: dict[str, int | None] = {
+    "loop": 32,  # RTX 3090 16, RTX A5000 32
+    "mission": 16,
+    "traffic": 32,  # 16, 32
+    "rooftop": 64,  # 32, 64
+    "carhop": 32,  # 16, 32
+}
 
 
 def roadster_backend(
@@ -25,7 +35,7 @@ def roadster_backend(
     def build(backend: str, n: int):
         return make_roadster_adapter(task, n, device, backend)
 
-    measure = measure_adapter(build, 4, device)
+    measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
     path = f"roadster-sim/{task}"
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)

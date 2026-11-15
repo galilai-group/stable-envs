@@ -51,7 +51,7 @@ On CPU, `mujoco.batch` steps the physics on its own threads, and the step does i
 import stable_envs as snv
 
 with snv.AntMazeMediumNavigate(num_envs=64, device="cuda") as env:
-    print(env.simulation_backend)  # native or mjwarp, from the switch point
+    print(env.simulation_backend)  # native: 64 is below the AntMaze switch point, 128
 ```
 
 MuJoCo Warp agrees with MuJoCo to float32 rounding on a step where no contact starts or stops. When contacts start or stop, the contact forces of the two solvers differ and the trajectories move apart. After 200 steps of smooth actions from the same state on 64 environments, the median distance between the `xy` positions of MuJoCo Warp and OGBench was:
