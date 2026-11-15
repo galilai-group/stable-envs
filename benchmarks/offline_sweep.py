@@ -76,17 +76,42 @@ def _sweeps(fn, *, warmup: int, repeats: int, budget_s: float, sync=None) -> dic
     return {"median_s": statistics.median(times), "samples_s": times, "repeats": len(times), "warmup": warmup}
 
 
+def _cpu_seconds() -> tuple[float, str]:
+    """CPU seconds of this process and of its live worker processes (all threads), and what they cover."""
+    try:
+        import psutil
+    except ImportError:
+        return time.process_time(), "this process"
+    me = psutil.Process()
+    total = sum(me.cpu_times()[:2])
+    for child in me.children(recursive=True):
+        try:
+            total += sum(child.cpu_times()[:2])
+        except psutil.NoSuchProcess:
+            pass
+    return total, "this process and its worker processes"
+
+
 def _timed(
-    units, *, seconds: float, repeats: int, sync=None, warmup_s: float = WARMUP_S, budget_s: float = 60.0
+    units,
+    *,
+    seconds: float,
+    repeats: int,
+    sync=None,
+    warmup_s: float = WARMUP_S,
+    warmup_items: int = 0,
+    budget_s: float = 60.0,
 ) -> dict:
     """Items per second over up to ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns
-    its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
-    slow source can take minutes, and one window of whole units is then enough."""
+    its items. The untimed warmup lasts ``warmup_s`` and at least ``warmup_items`` items. After the first window, no
+    new window starts once the windows took ``budget_s`` in total: a unit of a slow source can take minutes, and one
+    window of whole units is then enough."""
     end = time.perf_counter() + warmup_s
-    while time.perf_counter() < end:
-        next(units)
+    warmed = 0
+    while time.perf_counter() < end or warmed < warmup_items:
+        warmed += next(units)
     rates, windows, items = [], [], []
-    cpu0 = time.process_time()
+    cpu0, scope = _cpu_seconds()
     for _ in range(repeats):
         if windows and sum(windows) >= budget_s:
             break
@@ -108,8 +133,9 @@ def _timed(
         "window_s": windows,
         "items": items,
         "repeats": len(rates),
-        # CPU seconds of this process (all its threads) per wall second of the windows.
-        "cpu_util": (time.process_time() - cpu0) / sum(windows),
+        # CPU seconds per wall second of the windows.
+        "cpu_util": (_cpu_seconds()[0] - cpu0) / sum(windows),
+        "cpu_util_scope": scope,
     }
 
 
@@ -558,10 +584,10 @@ def cmd_mse(args) -> None:
         try:
             kind, data = _frames_of(blob, args.device)
             if jax_source:
-                # The upstream renderer on CPU draws the same States.
+                # The upstream renderer on CPU draws the same States; the host converts them to uint8 as swm does.
                 n = min(args.n, len(data))
                 src = CraftaxSource(name, "cpu")
-                theirs = np.asarray(src.render(src.state_from(data[:n])))
+                theirs = src.reference_frames(src.state_from(data[:n]))
                 keep = np.ones(n, bool)
             else:
                 inputs = _source_inputs(blob, kind)

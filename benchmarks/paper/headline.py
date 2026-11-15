@@ -4,7 +4,8 @@ usage: python3 benchmarks/paper/headline.py OUT [--batches 1024:2048] [--write]
 OUT holds one folder per env (run.sh output: offline/, online/). The multiple of a cell is ours / source on the same
 machine: the source at the same lane count, else the best source over the lane counts that were timed. Offline cells use
 the best source over 1 and N processes. GPU frames use the source's GPU renderer where it passed the frame check, else
-the CPU source. Where a class also has a batched JAX source (Craftax), each cell takes the faster source. --batches keeps only the cells of ours at those batches and lane counts. Works on a partial OUT.
+the CPU source. Where a class also has a batched JAX source (Craftax), each cell takes the faster source, and a cell with
+T actions per call also counts that source stepping T actions per call in one jitted scan. --batches keeps only the cells of ours at those batches and lane counts. Works on a partial OUT.
 """
 
 import argparse
@@ -86,21 +87,24 @@ def cells(folder, env):
                 merged[L] = max(merged.get(L, 0), v)
         return merged
 
+    # {(L, T): rate} of the batched JAX source; T > 1 steps T actions per call in one jitted scan.
     jax = {
-        (kind, dev): {L: v for (L, _), v in online(folder, env, f"src-jax-{kind}-{dev}").items()}
+        (kind, dev): online(folder, env, f"src-jax-{kind}-{dev}")
         for kind in ("step", "render")
         for dev in ("cpu", "gpu")
     }
-    for reg, dev, prefix, src in (
-        ("steps", "cpu", "snv-step-cpu", best(step_src, jax["step", "cpu"])),
-        ("steps", "gpu", "snv-step-gpu", best(step_src, jax["step", "gpu"])),
-        ("framesteps", "cpu", "snv-render-cpu", best(rcpu, jax["render", "cpu"])),
-        ("framesteps", "gpu", "snv-render-gpu", best(rgpu or rcpu, jax["render", "gpu"])),
+    for reg, dev, prefix, src, scans in (
+        ("steps", "cpu", "snv-step-cpu", step_src, jax["step", "cpu"]),
+        ("steps", "gpu", "snv-step-gpu", step_src, jax["step", "gpu"]),
+        ("framesteps", "cpu", "snv-render-cpu", rcpu, jax["render", "cpu"]),
+        ("framesteps", "gpu", "snv-render-gpu", rgpu or rcpu, jax["render", "gpu"]),
     ):
+        src = best(src, {L: v for (L, T), v in scans.items() if T == 1})
         if not src:
             continue
         for (L, T), v in online(folder, env, prefix).items():
-            out.append((reg, dev, L, T, v, src.get(L, max(src.values()))))
+            # A cell with T actions per call also counts the batched JAX source timed with T actions per call.
+            out.append((reg, dev, L, T, v, max(src.get(L, max(src.values())), scans.get((L, T), 0))))
     return out
 
 

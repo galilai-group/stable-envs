@@ -225,10 +225,12 @@ for spec in "$@"; do
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1
-        [ -n "$JAXSRC" ] && [ $L -gt ${POOL_CAP_L:-64} ] && srcok=0
+        # The pool source of a class with a batched JAX source stops at POOL_CAP_L lanes; ours keeps the whole sweep.
+        poolok=1
+        [ -n "$JAXSRC" ] && [ $L -gt ${POOL_CAP_L:-64} ] && poolok=0
         [ -n "${SRC_CAP_FILE:-}" ] && grep -qx "$E" "$SRC_CAP_FILE" && [ $L -gt ${SRC_CAP_L:-256} ] && srcok=0
         if has step; then
-          [ $CPU_SOURCES = 1 ] && [ $srcok = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
+          [ $CPU_SOURCES = 1 ] && [ $srcok = 1 ] && [ $poolok = 1 ] && once $n/src-step-L$L.json sw $ON run $COMMON --arms src-pipelined-step --output $n/src-step-L$L.json
           arm=$([ $dev = cpu ] && echo snv-step || echo snv-step-gpu)
           once $n/snv-step-$tag-L$L.json gl $dev $ON run $COMMON --arms $arm --output $n/snv-step-$tag-L$L.json
           [ -n "$JAXSRC" ] && once $n/src-jax-step-$tag-L$L.json gl $dev $ON run $COMMON --arms src-jax-step --jax-device $dev --output $n/src-jax-step-$tag-L$L.json
@@ -236,7 +238,7 @@ for spec in "$@"; do
         fi
         if has frames; then
           [ -n "$JAXSRC" ] && once $n/src-jax-render-$tag-L$L.json gl $dev $ON run $COMMON --arms src-jax-render --jax-device $dev --ours-device $dev --output $n/src-jax-render-$tag-L$L.json
-          [ $CPU_SOURCES = 1 ] && [ -n "$POOLFRAMES" ] && { [ -z "$JAXSRC" ] || [ $srcok = 1 ]; } && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
+          [ $CPU_SOURCES = 1 ] && [ -n "$POOLFRAMES" ] && [ $poolok = 1 ] && once $n/src-render-cpu-L$L.json sw $ON run $COMMON --arms src-pipelined-render --src-label cpu --ours-device cpu --output $n/src-render-cpu-L$L.json
           [ $dev = cuda ] && [ -n "$GPUSRC" ] && once $n/src-render-gpu-L$L.json egl $ON run $COMMON --arms src-pipelined-render --src-label gpu --ours-device cuda $slice --output $n/src-render-gpu-L$L.json
           once $n/snv-render-$tag-L$L.json gl $dev $ON run $COMMON --arms snv-render-$tag --output $n/snv-render-$tag-L$L.json
           [ -n "$slice" ] && once $n/snv-render-$tag-L$L-s8.json gl $dev $ON run $COMMON --arms snv-render-$tag --chunks 1 8 $slice --output $n/snv-render-$tag-L$L-s8.json
