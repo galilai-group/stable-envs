@@ -132,7 +132,7 @@ def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
 def test_auto_routes_small_cuda_batches_to_the_cpu():
     with tuning.override(large_backend_min_envs=8), se.make("CartPole", num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and isinstance(env._simulator, DeviceClassicAdapter)
-    with tuning.override(large_backend_min_envs=4), se.make("CartPole", num_envs=2, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=4), se.make("Acrobot", num_envs=2, device="cuda") as env:
         assert env.simulation_backend == "gym" and env.execution_mode == "DELEGATED_CPU"
         assert env.step(torch.zeros(2, 1, dtype=torch.int64, device="cuda"))["reward"].device.type == "cuda"
 

@@ -410,22 +410,29 @@ _KERNELS = {
 class BatchedClassicAdapter(ClassicControlAdapter):
     """Batched classic-control steps; resets and RNG stay with the Gymnasium environments.
 
-    ``backend="numpy"`` steps on the host and ``backend="torch"`` on ``device``.
+    ``backend="numpy"`` steps on the host, ``backend="numba"`` steps on the host in one compiled call (the tasks of
+    ``numba_step.STEPS``), and ``backend="torch"`` steps on ``device``.
     """
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0, backend: str = "numpy"):
-        if backend not in ("numpy", "torch"):
-            raise ValueError(f"backend must be 'numpy' or 'torch', got {backend!r}")
+        from .numba_step import STEPS
+
+        if backend not in ("numpy", "numba", "torch"):
+            raise ValueError(f"backend must be 'numpy', 'numba' or 'torch', got {backend!r}")
+        if backend == "numba" and domain not in STEPS:
+            raise ValueError(f"simulation_backend='numba' has no {domain} step; use 'gym' or 'numpy'")
+        self._compiled = STEPS.get(domain) if backend == "numba" else None
         super().__init__(domain, num_envs, device, seed)
         self.backend = backend
         # The kernels call one array API; NumPy and Torch overloads differ only in their stubs.
-        self._xp: Any = _NumPy(self.device) if backend == "numpy" else _Torch(self.device)
+        self._xp: Any = _Torch(self.device) if backend == "torch" else _NumPy(self.device)
         self._kernel = _KERNELS[domain]
         self._dynamic = _DYNAMIC[domain]
         self._max_steps = MAX_EPISODE_STEPS[domain]
         self._fixed: dict | None = None
         # NumPy steps the live fields in place in the packed State; Torch keeps its own tensors.
-        self._in_place = backend == "numpy"
+        self._in_place = backend in ("numpy", "numba")
+        self._everyone = np.ones(int(num_envs), np.bool_)
         self._layout = None if self._in_place else state_layout(domain, self.num_envs)
 
     def _load(self, state: TensorDict) -> None:
@@ -514,6 +521,11 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             a, dtype = xp.integers(a), None
         else:
             a, dtype = xp.floats(a)
+        if self._compiled is not None:
+            reward, terminated, truncated, observation = self._compiled(
+                self._packed.views, self._params, a, self._everyone if live is None else live, self._max_steps
+            )
+            return self._outputs(reward, terminated, truncated, observation, capture_state)
         old = self._live
         new, observation, reward, terminated = self._kernel(xp, old, self._params, a, dtype)
         if live is not None:
@@ -533,7 +545,10 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             observation = [xp.where(live, column, 0.0) for column in observation]
             reward = xp.where(live, reward, 0.0)
             terminated = live & terminated
-        observation = xp.stack(observation)
+        return self._outputs(reward, terminated, truncated, xp.stack(observation), capture_state)
+
+    def _outputs(self, reward, terminated, truncated, observation, capture_state: bool) -> TensorDict:
+        xp = self._xp
         return build_tensordict(
             {
                 **({"state": self.get_state()} if capture_state else {}),
@@ -571,6 +586,11 @@ CPU_MIN_ENVS: dict[str, int | None] = {
     "mountain_car_continuous": 8,
 }
 CUDA_MIN_ENVS: dict[str, int | None] = dict.fromkeys(CPU_MIN_ENVS)
+#: Tasks whose compiled step (``"numba"``) is the host backend at every batch size, in place of Gymnasium and NumPy.
+#: Measured 2026-11-15 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each) with
+#: ``python -m benchmarks.classic_switch cartpole``: the compiled CartPole step was the fastest host backend at every
+#: batch from 1 to 4096 on both (B=1: 162 us against Gymnasium 197 us and NumPy 252 us on the RTX 3090 node).
+COMPILED_HOST = frozenset({"cartpole"})
 
 
 def _measure(domain: str, device: torch.device):
@@ -586,23 +606,28 @@ def _measure(domain: str, device: torch.device):
 
 
 def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
-    """Return ``"gym"``, ``"numpy"`` or ``"torch"``.
+    """Return ``"gym"``, ``"numpy"``, ``"numba"`` or ``"torch"``.
 
-    ``"auto"`` (or None) first selects the host backend: Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On
-    CUDA it then selects that host backend below ``CUDA_MIN_ENVS`` and Torch from it.
+    ``"auto"`` (or None) first selects the host backend: the compiled step for ``COMPILED_HOST`` tasks, else
+    Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
+    ``CUDA_MIN_ENVS`` and Torch from it.
     """
     from ...._execution.backends import Rungs, select_backend
+    from .numba_step import STEPS
 
     device = torch.device(device)
+    choices = SIMULATION_BACKENDS + (("numba",) if domain in STEPS else ())
     cpu = torch.device("cpu")
+    compiled = domain in COMPILED_HOST and domain in STEPS
+    rungs = Rungs("numba", "numba") if compiled else Rungs("gym", "numpy", CPU_MIN_ENVS[domain])
     host = select_backend(
-        f"classic-cpu/{domain}", num_envs, cpu, backend, {"cpu": Rungs("gym", "numpy", CPU_MIN_ENVS[domain])},
-        choices=SIMULATION_BACKENDS, measure=_measure(domain, cpu),
+        f"classic-cpu/{domain}", num_envs, cpu, backend, {"cpu": rungs}, choices=choices,
+        measure=_measure(domain, cpu),
     )  # fmt: skip
     if device.type == "cpu" or backend not in (None, "auto"):
         return host
     return select_backend(
         f"classic-sim/{domain}", num_envs, device, backend,
         {"cpu": Rungs(host, host), "cuda": Rungs(host, "torch", CUDA_MIN_ENVS[domain])},
-        choices=SIMULATION_BACKENDS, measure=_measure(domain, device),
+        choices=choices, measure=_measure(domain, device),
     )  # fmt: skip
