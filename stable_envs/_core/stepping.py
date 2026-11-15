@@ -216,7 +216,8 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
     else:
         outputs = exclude_leaves(result, ("state", "frame"), clone=not getattr(env, "_step_outputs_owned", False))
         if sequence:
-            outputs = stack_leaves([outputs])
+            # The outputs are a copy or owned: a time axis of views costs no copy and no device kernel.
+            outputs = stack_leaves([outputs], view=True)
     count = 1 + (state_indices is not None)
     flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=env.device).unbind(0)
     out = {"state": live_state} if final_state else {}

@@ -156,37 +156,39 @@ def exclude_leaves(td: TensorDict, exclude=(), *, clone: bool = False) -> Tensor
     return out
 
 
-def _stack_node(nodes, batch, device):
+def _stack_node(nodes, batch, device, view):
     out = {}
     single = len(nodes) == 1
     for key, value in nodes[0]._tensordict.items():
         if single and type(value) is torch.Tensor:
-            out[key] = torch.stack((value,), 1)
+            out[key] = value.unsqueeze(1) if view else torch.stack((value,), 1)
             continue
         items = [node._tensordict[key] for node in nodes]
         if type(value) is torch.Tensor:
             out[key] = torch.stack(items, 1)
         elif _dense(value):
-            out[key] = _stack_node(items, batch, device)
+            out[key] = _stack_node(items, batch, device, view)
         else:
             raise _Irregular
     return TensorDict._new_unsafe(out, batch_size=batch, device=device)
 
 
-def stack_leaves(values) -> TensorDict:
-    """Stack TensorDicts of one structure along a new dim 1, leaf by leaf."""
+def stack_leaves(values, *, view: bool = False) -> TensorDict:
+    """Stack TensorDicts of one structure along a new dim 1, leaf by leaf.
+
+    With ``view`` and one dense TensorDict, each leaf is a view of the input leaf, without a copy. Use it only for
+    a TensorDict that the caller owns.
+    """
     first = values[0]
     batch = torch.Size([*first.batch_size, len(values)])
     if all(_dense(value) and value.device == first.device for value in values):
         try:
-            return _stack_node(values, batch, first.device)
+            return _stack_node(values, batch, first.device, view)
         except (_Irregular, KeyError):
             pass
     return first.apply(lambda *leaves: torch.stack(leaves, dim=1), *values[1:], batch_size=batch)
 
 
-#: Byte alignment of each dtype group in the packed transfer buffer; a multiple of every dtype's size.
-_ALIGN = 16
 _NUMPY = {
     torch.bool: np.bool_,
     torch.uint8: np.uint8,
@@ -215,46 +217,33 @@ def _leaves(node, prefix, out, batch):
     return out
 
 
+#: ``StateLayout`` per leaf structure that ``to_device`` moved; cleared when it holds this many.
+_LAYOUTS_HELD = 64
+_layouts: dict = {}
+
+
 def to_device(td: TensorDict, device) -> TensorDict:
     """``td.to(device)`` for a CPU TensorDict, with one host-to-device copy for all its leaves.
 
-    The leaves are packed by dtype into one pinned buffer, which moves in one asynchronous copy; each returned leaf
-    is a view of the device copy. A TensorDict that isn't dense, or that has a leaf NumPy can't hold, moves leaf by
-    leaf.
+    A ``StateLayout`` of the TensorDict's leaf structure, kept for later calls, packs the leaves by dtype and moves
+    them in one copy; each returned leaf is a view of the device copy. A TensorDict that isn't dense, or that has a
+    leaf NumPy can't hold, moves leaf by leaf.
     """
+    from .state_layout import StateLayout
+
     device = _device(device)
-    if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu"):
+    if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu") or td.batch_dims != 1:
         return td.to(device)
     try:
         leaves = _leaves(td, (), [], td.batch_size)
     except _Irregular:
         return td.to(device)
-    groups: dict = {}
-    for index, (_, value) in enumerate(leaves):
-        groups.setdefault(value.dtype, []).append(index)
-    layout, total = [], 0
-    for dtype, indices in groups.items():
-        sizes = [leaves[i][1].numel() for i in indices]
-        nbytes = sum(sizes) * leaves[indices[0]][1].element_size()
-        layout.append((dtype, indices, sizes, total, nbytes))
-        total += -(-nbytes // _ALIGN) * _ALIGN
-    host = torch.empty(max(total, _ALIGN), dtype=torch.uint8, pin_memory=True)
-    packed = host.numpy()
-    for dtype, indices, sizes, start, nbytes in layout:
-        segment, position = packed[start : start + nbytes].view(_NUMPY[dtype]), 0
-        for i, size in zip(indices, sizes):
-            segment[position : position + size] = leaves[i][1].numpy().reshape(-1)
-            position += size
-    # The pinned block isn't reused before this copy ends: the host allocator records the copy's stream.
-    moved = host.to(device, non_blocking=True)
-    parts: list = [None] * len(leaves)
-    for dtype, indices, sizes, start, nbytes in layout:
-        for i, part in zip(indices, moved[start : start + nbytes].view(dtype).split_with_sizes(sizes)):
-            parts[i] = part
-    tree: dict = {}
-    for (key, value), part in zip(leaves, parts):
-        node = tree
-        for name in key[:-1]:
-            node = node.setdefault(name, {})
-        node[key[-1]] = part if value.dim() == 1 else part.view(value.shape)
-    return TensorDict._new_unsafe(tree, batch_size=td.batch_size, device=device)
+    signature = tuple((key, value.shape, value.dtype) for key, value in leaves)
+    layout = _layouts.get(signature)
+    if layout is None:
+        if len(_layouts) >= _LAYOUTS_HELD:
+            _layouts.clear()
+        layout = _layouts[signature] = StateLayout(
+            [(key, tuple(shape[1:]), dtype) for key, shape, dtype in signature], td.batch_size[0]
+        )
+    return layout.export(dict(leaves), device)
