@@ -52,49 +52,45 @@ class StateLayout:
     """The leaves of a State with ``num_envs`` rows, grouped by dtype into packed buffers.
 
     Args:
-        leaves: ``(key, per-row shape, dtype)`` of every leaf, in State order.
+        leaves: ``(key, per-row shape, dtype)`` of every leaf, in State order. A shape of None takes the value's
+            shape at each export, for a leaf whose width changes, such as an action history.
         num_envs: Number of rows.
         static: Keys, as declared in ``leaves``, whose values ``load_static`` packs once instead of every export.
     """
 
     def __init__(
         self,
-        leaves: Sequence[tuple[Key, tuple[int, ...], torch.dtype]],
+        leaves: Sequence[tuple[Key, tuple[int, ...] | None, torch.dtype]],
         num_envs: int,
         static: frozenset[Key] = frozenset(),
     ):
         self.num_envs = int(num_envs)
         self.keys: tuple[Key, ...] = tuple(key for key, _, _ in leaves)
-        self.shapes = {key: (self.num_envs, *shape) for key, shape, _ in leaves}
+        self.shapes = {key: None if shape is None else (self.num_envs, *shape) for key, shape, _ in leaves}
         self.dtypes = {key: dtype for key, _, dtype in leaves}
         groups: dict[torch.dtype, tuple[list[int], list[int]]] = {}
         for index, (key, _, dtype) in enumerate(leaves):
             groups.setdefault(dtype, ([], []))[key not in static].append(index)
-        #: ``(dtype, NumPy dtype, static leaf indices, moving leaf indices, element counts)`` per dtype; a buffer
-        #: holds the static leaves first.
-        self.groups = [
-            (dtype, _numpy_dtype(dtype), fixed, moving, [self._numel(i) for i in fixed + moving])
-            for dtype, (fixed, moving) in groups.items()
-        ]
-        self._static: dict[torch.dtype, torch.Tensor] = {}
+        #: ``(dtype, NumPy dtype, static leaf indices, moving leaf indices)`` per dtype; a buffer holds the static
+        #: leaves first.
+        self.groups = [(dtype, _numpy_dtype(dtype), fixed, moving) for dtype, (fixed, moving) in groups.items()]
+        self._static: dict[torch.dtype, torch.Tensor | np.ndarray] = {}
         self._build = _builder(self.keys)
         self._batch = torch.Size([self.num_envs])
-
-    def _numel(self, index: int) -> int:
-        return int(np.prod(self.shapes[self.keys[index]]))
 
     def load_static(self, values: Mapping[Key, torch.Tensor | np.ndarray]) -> None:
         """Pack the static leaves from ``values``; call it after a reset, restore or Variation change."""
         self._static = {
             dtype: self._pack(kind, [values[self.keys[i]] for i in fixed])
-            for dtype, kind, fixed, _, _ in self.groups
+            for dtype, kind, fixed, _ in self.groups
             if fixed
         }
 
     @staticmethod
-    def _pack(kind: np.dtype, sources: Sequence) -> torch.Tensor:
+    def _pack(kind: np.dtype, sources: Sequence) -> torch.Tensor | np.ndarray:
+        """One new flat buffer: a NumPy array when every source is one, else a tensor."""
         if all(isinstance(v, np.ndarray) for v in sources):
-            return torch.from_numpy(np.concatenate([v.reshape(-1) for v in sources], dtype=kind))
+            return np.concatenate([v.reshape(-1) for v in sources], dtype=kind)
         return torch.cat([torch.as_tensor(v).reshape(-1) for v in sources])
 
     @classmethod
@@ -113,23 +109,35 @@ class StateLayout:
         Values already on ``device`` are packed there.
         """
         device = torch.device(device)
-        flats = []
-        for dtype, kind, fixed, moving, _ in self.groups:
+        flats, shapes = [], [None] * len(self.keys)
+        for dtype, kind, fixed, moving in self.groups:
             sources = [values[self.keys[i]] for i in moving]
+            for i, value in zip(moving, sources, strict=True):
+                shapes[i] = self.shapes[self.keys[i]] or tuple(value.shape)
+            for i in fixed:
+                shapes[i] = self.shapes[self.keys[i]]
             if fixed:
                 if dtype not in self._static:
                     raise RuntimeError("StateLayout.load_static must run before export")
                 sources.insert(0, self._static[dtype])
-            flats.append(self._pack(kind, sources) if len(sources) > 1 or not fixed else sources[0].clone())
-        if device.type != "cpu" and any(flat.device.type == "cpu" for flat in flats):
-            flats = self._to_device(flats, device)
+            flats.append(self._pack(kind, sources))
+        host = device.type == "cpu"
+        if not host:
+            flats = [torch.from_numpy(f) if isinstance(f, np.ndarray) else f for f in flats]
+            if any(flat.device.type == "cpu" for flat in flats):
+                flats = self._to_device(flats, device)
         leaves: list = [None] * len(self.keys)
-        for (_, _, fixed, moving, sizes), flat in zip(self.groups, flats, strict=True):
-            for i, part in zip(fixed + moving, flat.split(sizes), strict=True):
-                leaves[i] = part.view(self.shapes[self.keys[i]])
+        for (_, _, fixed, moving), flat in zip(self.groups, flats, strict=True):
+            start = 0
+            for i in fixed + moving:
+                stop = start + int(np.prod(shapes[i]))
+                # NumPy slices and from_numpy cost less per leaf than tensor views.
+                part = flat[start:stop].reshape(shapes[i])
+                leaves[i] = torch.from_numpy(part) if isinstance(part, np.ndarray) else part
+                start = stop
         batch, where = self._batch, _recorded(flats, device)
         return self._build(
-            leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where, nested=False)
+            leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where)
         )
 
     def _to_device(self, flats: list[torch.Tensor], device: torch.device) -> list[torch.Tensor]:
@@ -158,17 +166,20 @@ class StateLayout:
                 value = state[_path(key)]
             except KeyError:
                 raise KeyError(f"State has no leaf {name}") from None
-            if tuple(value.shape) != self.shapes[key] or value.dtype != self.dtypes[key]:
+            shape = self.shapes[key]
+            wrong = (shape is not None and tuple(value.shape) != shape) or value.shape[:1] != self._batch
+            if wrong or value.dtype != self.dtypes[key]:
                 raise ValueError(
-                    f"State leaf {name} must be {self.dtypes[key]} {self.shapes[key]}, got {value.dtype} "
-                    f"{tuple(value.shape)}"
+                    f"State leaf {name} must be {self.dtypes[key]} {shape or (self.num_envs, '...')}, "
+                    f"got {value.dtype} {tuple(value.shape)}"
                 )
             out[key] = value
         return out
 
 
-def _recorded(flats: Sequence[torch.Tensor], device: torch.device) -> torch.device:
+def _recorded(flats: Sequence, device: torch.device) -> torch.device:
     """The device the TensorDict records: ``device`` with its index."""
     if device.type == "cuda" and device.index is None:
-        return flats[0].device if flats else torch.device("cuda", torch.cuda.current_device())
+        cuda = [f.device for f in flats if torch.is_tensor(f)]
+        return cuda[0] if cuda else torch.device("cuda", torch.cuda.current_device())
     return device

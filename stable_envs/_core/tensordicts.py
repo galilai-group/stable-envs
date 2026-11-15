@@ -50,7 +50,7 @@ def _build(source: dict, batch: torch.Size, device: torch.device, index: int | N
         else:
             return None
         out[key] = value
-    return TensorDict._new_unsafe(out, batch_size=batch, device=device, nested=False)
+    return TensorDict._new_unsafe(out, batch_size=batch, device=device)
 
 
 def build_tensordict(source: dict, batch_size, device) -> TensorDict:

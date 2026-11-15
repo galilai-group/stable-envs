@@ -59,3 +59,12 @@ def test_export_needs_the_static_leaves():
     layout = StateLayout(LEAVES, 2, static=frozenset({"qpos"}))
     with pytest.raises(RuntimeError, match="load_static"):
         layout.export(_values(2), "cpu")
+
+
+def test_a_leaf_without_a_shape_takes_the_width_of_each_export():
+    layout = StateLayout([("qpos", (3,), torch.float64), ("history/actions", None, torch.float64)], 2)
+    for width in (0, 1, 5):
+        values = {"qpos": np.zeros((2, 3)), "history/actions": np.ones((2, width, 2))}
+        state = layout.export(values, "cpu")
+        assert state["history", "actions"].shape == (2, width, 2)
+        assert torch.equal(state["history", "actions"], torch.ones(2, width, 2, dtype=torch.float64))

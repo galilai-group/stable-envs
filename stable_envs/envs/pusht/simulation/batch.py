@@ -169,29 +169,27 @@ class PushTBatchAdapter(PushTReplayAdapter):
         )
         return fields
 
-    def _state_layout(self, fields, width):
-        """The State layout at history ``width``; the fields that only reset, restore or a Variation change are static.
-
-        Leaves follow the CPU owners' State order, then the solver cache.
+    def _state_layout(self, fields):
+        """The State layout: the fields that only reset, restore or a Variation change are static, and the action
+        history has the width of the longest history. Leaves follow the CPU owners' State order, then the solver cache.
         """
         if self._layout is None:
-            self._layout = {}
-        layout = self._layout.get(width)
-        if layout is None:
             rank = {key: index for index, key in enumerate(self._keys)}
             order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
-            layout = self._layout[width] = StateLayout(
-                [(key, tuple(fields[key].shape[1:]), fields[key].dtype) for key in order],
+            self._layout = StateLayout(
+                [
+                    (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), fields[key].dtype)
+                    for key in order
+                ],
                 self.num_envs,
                 static=frozenset(key for key in order if not _changes_with_step(key)),
             )
-            layout.load_static(fields)
-        return layout
+            self._layout.load_static(fields)
+        return self._layout
 
     def get_state(self):
-        width = self._history_width()
-        fields = self._state_fields(width)
-        return self._state_layout(fields, width).export(fields, self._state_device)
+        fields = self._state_fields(self._history_width())
+        return self._state_layout(fields).export(fields, self._state_device)
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.
