@@ -73,3 +73,27 @@ def test_short_path_matches_the_general_path(name, kwargs, num_envs, sequence, m
             previous = (a, b.clone())
         _same(fast.get_state(), general.get_state())
     assert calls and all(calls)
+
+
+@pytest.mark.family("dmc")
+def test_short_path_runs_with_the_torch_threads_of_the_general_path(monkeypatch):
+    with snv.make("DMCReacher", num_envs=2, device="cpu") as env:
+        env.reset(seed=1)
+        seen = []
+        host_step = env._host_step
+
+        def recorded(*args):
+            seen.append(torch.get_num_threads())
+            return host_step(*args)
+
+        env.__dict__["_host_step"] = recorded
+        # A family that steps on a native thread pool gets one intra-op thread during the step, on either path.
+        env.__dict__["native_step_threads"] = True
+        before = torch.get_num_threads()
+        torch.set_num_threads(2)
+        try:
+            env.step(env.action_spec.sample(2, rng=np.random.default_rng(0)), states=None, frames=None)
+            assert seen == [1]
+            assert torch.get_num_threads() == 2
+        finally:
+            torch.set_num_threads(before)
