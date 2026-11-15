@@ -23,7 +23,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.tensordicts import build_tensordict
-from .local import _PHYSICS_SPACES, ClassicControlAdapter, physics_state_key
+from .local import _PHYSICS_SPACES, ClassicControlAdapter, physics_state_key, state_layout
 
 #: Time limits that ``gymnasium.make`` adds for each registered id.
 MAX_EPISODE_STEPS = {
@@ -424,16 +424,31 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._dynamic = _DYNAMIC[domain]
         self._max_steps = MAX_EPISODE_STEPS[domain]
         self._fixed: dict | None = None
+        # NumPy steps the live fields in place in the packed State; Torch keeps its own tensors.
+        self._in_place = backend == "numpy"
+        self._layout = None if self._in_place else state_layout(domain, self.num_envs)
 
     def _load(self, state: TensorDict) -> None:
         """Adopt ``state`` as the live lanes and keep the fields that steps do not change."""
         xp = self._xp
         moving = (*self._dynamic, _ELAPSED)
-        self._fixed = {key: xp.load(state[key]) for key in self.fields if key not in moving}
-        self._live = {key: xp.load(state[key][:, 0]) for key in self._dynamic}
-        self._elapsed = xp.load(state[_ELAPSED][:, 0])
-        self._params = {name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]}
-        self._layout.load_static(self._fixed)
+        if self._in_place:
+            views = self._packed.views
+            host = state.cpu()
+            for key in self.fields:
+                views[key][...] = host[key].numpy()
+            self._fixed = {}
+            self._live = {key: views[key][:, 0] for key in self._dynamic}
+            self._elapsed = views[_ELAPSED][:, 0]
+            self._params = {name: views[physics_state_key(name)][:, 0] for name in _PHYSICS_SPACES[self.domain]}
+        else:
+            self._fixed = {key: xp.load(state[key]) for key in self.fields if key not in moving}
+            self._live = {key: xp.load(state[key][:, 0]) for key in self._dynamic}
+            self._elapsed = xp.load(state[_ELAPSED][:, 0])
+            self._params = {
+                name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]
+            }
+            self._layout.load_static(self._fixed)
         self._static_loaded = True
 
     def configure(self, values) -> None:
@@ -458,10 +473,15 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._check_open()
         if self._fixed is None:
             return super().get_state()
+        if self._in_place:
+            return self._packed.export(self.device)
         values: dict = {key: value[:, None] for key, value in self._live.items()}
         values[_ELAPSED] = self._elapsed[:, None]
         # Steps keep the static fields; the layout holds them since the last ``_load``.
         return self._layout.export(values, self.device)
+
+    def stack_states(self, states) -> TensorDict | None:
+        return self._packed.stack(states) if self._in_place else None
 
     def _check_actions(self, a, live) -> None:
         n = _DISCRETE[self.domain]
@@ -496,13 +516,19 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             a, dtype = xp.floats(a)
         old = self._live
         new, observation, reward, terminated = self._kernel(xp, old, self._params, a, dtype)
-        if live is None:
+        if live is not None:
+            new = {key: xp.where(live, new[key], old[key]) for key in self._dynamic}
+        if self._in_place:
+            # The live fields are views of the packed State.
+            for key in self._dynamic:
+                old[key][...] = new[key]
+            self._elapsed += 1 if live is None else live
+        else:
             self._live = new
-            self._elapsed = self._elapsed + 1
+            self._elapsed = self._elapsed + (1 if live is None else live)
+        if live is None:
             truncated = self._elapsed >= self._max_steps
         else:
-            self._live = {key: xp.where(live, new[key], old[key]) for key in self._dynamic}
-            self._elapsed = self._elapsed + live
             truncated = live & (self._elapsed >= self._max_steps)
             observation = [xp.where(live, column, 0.0) for column in observation]
             reward = xp.where(live, reward, 0.0)
