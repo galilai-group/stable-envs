@@ -30,6 +30,8 @@ class _OwnStates:
 
 
 class ManipulationSemantics:
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("native", "mjwarp")
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
     cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"

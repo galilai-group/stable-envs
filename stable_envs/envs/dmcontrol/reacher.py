@@ -11,6 +11,8 @@ from ._delegated import DelegatedSemantics
 class _ReacherSemantics(DelegatedSemantics):
     """Reacher with native CPU, CUDA MuJoCo Warp or CUDA MJX physics."""
 
+    simulation_backends = ("native", "mjwarp", "mjx")
+
     def make_variation_space(self):
         space = super().make_variation_space()
         space["visibility"]["target"].set_init_value(0)
