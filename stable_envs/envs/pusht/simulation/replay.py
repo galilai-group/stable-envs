@@ -50,13 +50,17 @@ def shallow_copy(obj):
     return clone
 
 
+#: Seeds the bit generator of a copy before its state is set; one sequence serves every copy.
+_SEED = np.random.SeedSequence(0)
+
+
 def _copy_generator(generator, memo):
     """``copy.deepcopy`` of a NumPy generator: a PCG64 generator is rebuilt from its state, which costs less."""
     if generator is None or type(generator.bit_generator) is not np.random.PCG64:
         return copy.deepcopy(generator, memo)
     copied = memo.get(id(generator))
     if copied is None:
-        copied = memo[id(generator)] = np.random.default_rng(0)
+        copied = memo[id(generator)] = np.random.Generator(np.random.PCG64(_SEED))
         copied.bit_generator.state = generator.bit_generator.state
     return copied
 

@@ -25,6 +25,23 @@ def _dtype(value):
     return dtype
 
 
+def _host_copies(fields):
+    """Owned CPU tensors of the NumPy ``fields``: one copy per dtype, each field a contiguous block of it."""
+    keys: dict = {}
+    for key, value in fields.items():
+        keys.setdefault(value.dtype, []).append(key)
+    out = {}
+    for names in keys.values():
+        flat = np.concatenate([fields[key].reshape(-1) for key in names])
+        start = 0
+        for key in names:
+            shape = fields[key].shape
+            stop = start + fields[key].size
+            out[key] = torch.from_numpy(flat[start:stop].reshape(shape))
+            start = stop
+    return out
+
+
 def _changes_with_step(key):
     return key.startswith(("current/", "history/")) and not key.startswith("current/goal")
 
@@ -124,7 +141,10 @@ class PushTBatchAdapter(PushTReplayAdapter):
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
-        self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
+        if self.device.type == "cpu" and all(type(value) is np.ndarray for value in fields.values()):
+            self._fixed = _host_copies(fields)
+        else:
+            self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
         self._latest_tags = torch.tensor([[4, 0], [4, 1]], dtype=torch.uint8, device=self.device)
         self._symmetries = torch.tensor(
