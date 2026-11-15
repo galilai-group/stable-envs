@@ -247,7 +247,7 @@ def run_gate(device="cpu"):
                 other.reset(seed=77)
                 boundary_rng = unfold(boundary_state).select("rng").clone()
                 boundary_history = check_two_histories_same_state(env, other, boundary_state, np.zeros((4, batch, 21)))
-                replayed = env.get_state()
+                replayed = unfold(env.get_state())
                 replay_rng_changed = any(
                     not torch.equal(boundary_rng[key], replayed[key]) for key in boundary_rng.keys(True, True)
                 )

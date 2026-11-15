@@ -14,7 +14,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from stable_envs._core.state_schema import get_field, unfold
+from stable_envs._core.state_schema import get_field, set_field, unfold
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCAlignedReference
 from tests.helpers.reference.dmc_semantics import compare_models
 from tests.helpers.reference.saved import SWM_PIN
@@ -68,7 +68,8 @@ def _omission_experiments(domain, env, reference):
             for action in -actions[prefix : prefix + 9]:
                 env.step(action, states=None, frames=None).exclude("valid")
         omitted = saved.clone()
-        omitted[omitted_key] = env.get_state()[omitted_key]
+        name = "/".join(omitted_key)
+        set_field(omitted, name, get_field(env.get_state(), name))
         env.set_state(omitted)
         continuation = actions[prefix : prefix + 8]
         bad = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]

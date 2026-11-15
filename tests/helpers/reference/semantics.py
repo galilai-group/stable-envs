@@ -33,7 +33,7 @@ def _fields(td):
 def fold_for(env, state: TensorDict) -> TensorDict:
     """A reference State of one leaf per field in the layout of ``env``'s own State."""
     schema = schema_of(env.get_state())
-    return state if schema is None else schema.fold(state, state.batch_size, state.device)
+    return state if schema is None else schema.fold(state, state.batch_size, state.device or "cpu")
 
 
 def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict:
