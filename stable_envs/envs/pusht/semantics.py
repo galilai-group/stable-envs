@@ -181,7 +181,6 @@ class PushT(Env):
         device = torch.device(Env.resolve_device(device))
         resolution = self.default_size if size is None else size
         config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
-        self._render_action = render_action
         self.simulation_backend = pusht_backend(
             num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
         )
@@ -422,7 +421,7 @@ class PushT(Env):
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
             raise ValueError("PushT render size must be a positive integer")
-        if self._render_action and size < 96:
+        if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         fields = self._render_fields_of(state, on_device=self._rasterizes(size))
         if self._rasterizes(size):
