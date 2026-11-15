@@ -12,6 +12,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.physics import state_key
+from ...._core.tensordicts import to_device
 from ...._execution.protocol import SimulatorAdapter
 from ..source.sim import FUEL_CAPACITY
 from .adapter import (
@@ -248,7 +249,7 @@ class RoadsterBatch(SimulatorAdapter):
     def get_state(self) -> TensorDict:
         self._check_open()
         live = self._live_state()
-        return live.clone() if self._compute == self.device else live.to(self.device)
+        return live.clone() if self._compute == self.device else to_device(live, self.device)
 
     def render_fields(self) -> dict:
         """Host arrays of the State fields a render row is packed from; no snapshot."""

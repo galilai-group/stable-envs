@@ -13,23 +13,22 @@ if TYPE_CHECKING:
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
-#: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body: the smallest measured
-#: batch (of 1, 8, 64, 256, 1024, 4096; L40S, 8 cores) at which MuJoCo Warp steps faster than mujoco.batch.
-MAZE_MJWARP_MIN_ENVS = {"point": 4096, "ant": 256, "humanoid": 256}
-
-
 def maze_backend(
     num_envs: int,
     device: str | torch.device,
     loco: str,
-    simulation_backend: str | None = "default",
-    mjwarp_min_envs: int | None = None,
+    simulation_backend: str | None = "auto",
+    maze: str = "large",
 ) -> str:
-    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``resolve_backend``."""
-    from ...._execution.mjbatch import resolve_backend
+    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``mujoco_backend``."""
+    from ...._execution.mjbatch import measure_adapter, mujoco_backend
+    from .maze import BODIES
 
-    threshold = MAZE_MJWARP_MIN_ENVS[loco] if mjwarp_min_envs is None else mjwarp_min_envs
-    return resolve_backend(num_envs, device, simulation_backend, threshold)
+    def build(backend: str, n: int):
+        return make_maze_adapter(n, device, 0, loco=loco, maze=maze, simulation_backend=backend)
+
+    measure = measure_adapter(build, BODIES[loco][2], device)
+    return mujoco_backend(f"ogb-sim/{loco}maze-{maze}", num_envs, device, simulation_backend, measure=measure)
 
 
 def make_maze_adapter(
@@ -39,10 +38,9 @@ def make_maze_adapter(
     *,
     loco: str = "point",
     maze: str = "large",
-    simulation_backend: str | None = "default",
-    mjwarp_min_envs: int | None = None,
+    simulation_backend: str | None = "auto",
 ) -> OGBMazeBatchAdapter | OGBMazeWarpAdapter:
-    if maze_backend(num_envs, device, loco, simulation_backend, mjwarp_min_envs) == "mjwarp":
+    if maze_backend(num_envs, device, loco, simulation_backend, maze) == "mjwarp":
         from .maze_batch import OGBMazeWarpAdapter
 
         return OGBMazeWarpAdapter(num_envs, device, seed, loco=loco, maze=maze)

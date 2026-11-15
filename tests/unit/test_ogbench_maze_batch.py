@@ -83,33 +83,35 @@ def test_teleport_lanes_teleport_as_the_source_does():
 
 
 @pytest.mark.parametrize(
-    "batch,device,backend,threshold,expected",
+    "batch,device,backend,switch,expected",
     [
-        (1, "cpu", "default", None, "native"),
-        (4096, "cpu", "default", None, "native"),
-        (4096, "cpu", "auto", None, "native"),
-        (1, "cuda", "default", None, "mjwarp"),
+        (1, "cpu", "auto", 1, "native"),
+        (4096, "cpu", None, 1, "native"),
+        (4096, "cpu", "auto", 8, "native"),
+        (1, "cuda", "auto", 1, "mjwarp"),
         (1, "cuda:1", "auto", 8, "native"),
         (7, "cuda", "auto", 8, "native"),
-        (8, "cuda", "auto", 8, "mjwarp"),
-        (4096, "cuda", "native", None, "native"),
-        (1, "cuda", "mjwarp", None, "mjwarp"),
+        (8, "cuda", None, 8, "mjwarp"),
+        (4096, "cuda", "native", 1, "native"),
+        (1, "cuda", "mjwarp", 8, "mjwarp"),
     ],
 )
-def test_maze_backend_routing(batch, device, backend, threshold, expected):
+def test_maze_backend_routing(batch, device, backend, switch, expected):
+    from stable_envs import tuning
     from stable_envs.envs.ogbench.simulation.execution import maze_backend
 
-    assert maze_backend(batch, device, "ant", backend, threshold) == expected
+    with tuning.override(large_backend_min_envs=switch):
+        assert maze_backend(batch, device, "ant", backend) == expected
 
 
-def test_auto_uses_the_measured_cutoff_of_each_body():
-    from stable_envs.envs.ogbench.simulation.execution import MAZE_MJWARP_MIN_ENVS, maze_backend
+def test_maze_backend_rejects_bad_options():
+    from stable_envs.envs.ogbench.simulation.execution import maze_backend
 
-    for loco, cutoff in MAZE_MJWARP_MIN_ENVS.items():
-        assert maze_backend(cutoff - 1, "cuda", loco, "auto") == "native"
-        assert maze_backend(cutoff, "cuda", loco, "auto") == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
         maze_backend(8, "cpu", "point", "mjwarp")
+    for bad in ("default", "mjx"):
+        with pytest.raises(ValueError, match="simulation_backend"):
+            maze_backend(8, "cuda", "point", bad)
 
 
 def test_legacy_streams_draw_as_random_state():

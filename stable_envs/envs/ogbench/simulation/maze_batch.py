@@ -8,13 +8,14 @@ import mujoco
 import numpy as np
 import torch
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
 from .maze import _REST_CLEARANCE, BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
 from .pcg import uint128_bytes
 
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
+_CPU = torch.device("cpu")
 #: ``HumanoidEnv.get_ob`` limb bodies (left hand, left foot, right hand, right foot) relative to the torso.
 _LIMBS = (16, 10, 13, 7)
 #: Teleport destinations drawn ahead per lane on CUDA; the host refills them at least this often.
@@ -327,37 +328,6 @@ def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
     )
 
 
-def to_device(source: dict, batch: int, device) -> dict:
-    """Copy the nested contiguous host tensors ``source`` to ``device`` in one transfer; leaves are views of it."""
-    rows, layout, start = [], [], 0
-
-    def walk(node, path):
-        nonlocal start
-        for key, value in node.items():
-            if isinstance(value, dict):
-                walk(value, (*path, key))
-                continue
-            raw = value.numpy().reshape(batch, -1).view(np.uint8)
-            # Each leaf starts at a multiple of 8 bytes, so that every dtype views its bytes in place.
-            pad = -raw.shape[1] % 8
-            rows.append(raw)
-            if pad:
-                rows.append(np.zeros((batch, pad), np.uint8))
-            layout.append(((*path, key), value.dtype, value.shape, start, raw.shape[1]))
-            start += raw.shape[1] + pad
-
-    walk(source, ())
-    block = torch.from_numpy(np.concatenate(rows, 1)).to(device)
-    out: dict = {}
-    for path, dtype, shape, offset, size in layout:
-        node = out
-        for part in path[:-1]:
-            node = node.setdefault(part, {})
-        leaf = block[:, offset : offset + size].view(dtype)
-        node[path[-1]] = leaf if leaf.shape == shape else leaf.reshape(shape)
-    return out
-
-
 class RestGrid:
     """``_resting_lanes``'s wall clearance test against only the walls near each ball.
 
@@ -518,9 +488,8 @@ class OGBMazeBatchAdapter(_MazeLanes):
 
     def _place(self, source):
         """A TensorDict of host leaves ``source`` on the env device, with one copy."""
-        if self.device.type != "cpu":
-            source = to_device(source, self.num_envs, self.device)
-        return build_tensordict(source, [self.num_envs], self.device)
+        td = build_tensordict(source, [self.num_envs], _CPU)
+        return td if self.device.type == "cpu" else to_device(td, self.device)
 
     def get_state(self):
         self._check_open()

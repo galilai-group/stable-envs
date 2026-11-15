@@ -28,7 +28,7 @@ from ...registry import register
 from ...spaces import Box, Dict, Discrete
 from . import render as roadster_render
 from .simulation.adapter import PHYSICS_LEAVES, RAIN_MAX, RENDER_FIELDS, TASKS, WIND_MAX
-from .simulation.execution import MJWARP_MIN_ENVS, make_roadster_adapter, roadster_backend
+from .simulation.execution import make_roadster_adapter, roadster_backend
 
 #: The visual variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
@@ -66,20 +66,19 @@ class RoadsterBase(Env):
         backend="auto",
         seed=0,
         *,
-        simulation_backend="default",
-        mjwarp_min_envs=MJWARP_MIN_ENVS,
+        simulation_backend="auto",
     ):
         """Build ``num_envs`` environments of the task.
 
-        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp and CPU batches on native
-        ``mujoco.batch``. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and every
-        other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``. On CUDA it steps small batches
+        on native ``mujoco.batch`` and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs``
+        switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
 
         Frames show the world-model camera; the ``rendering.cinematic`` variation leaf draws the same camera
         on the dark-space scene with shadows and MSAA (use a larger ``size``, e.g. 512).
         """
         device = Env.resolve_device(device)
-        self.simulation_backend = roadster_backend(int(num_envs), device, simulation_backend, mjwarp_min_envs)
+        self.simulation_backend = roadster_backend(int(num_envs), device, simulation_backend, self.TASK)
         self.execution_mode = "MUJOCO_WARP" if self.simulation_backend == "mjwarp" else "DELEGATED_CPU"
         self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device, self.simulation_backend)
         model = self._simulator.model

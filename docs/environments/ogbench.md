@@ -37,13 +37,12 @@ One call steps all the environments of a batch, and `simulation_backend` selects
 
 | Value | Device | Physics | Agreement with OGBench |
 |---|---|---|---|
-| `"default"` (default) | CPU | `mujoco.batch`, float64 | equal, bit for bit: state, observations, task outputs, resets and RNG streams |
-| `"default"` (default) | CUDA | MuJoCo Warp, float32 | equal resets, goals, tasks, teleports and RNG streams; approximate physics |
-| `"auto"` | CUDA | `mujoco.batch` below `mjwarp_min_envs` environments, MuJoCo Warp from there | as the selected physics |
+| `"auto"` (default) | CPU | `mujoco.batch`, float64 | equal, bit for bit: state, observations, task outputs, resets and RNG streams |
+| `"auto"` (default) | CUDA | `mujoco.batch` for small batches, MuJoCo Warp for large ones | as the selected physics |
 | `"native"` | CPU or CUDA | `mujoco.batch`, float64 | equal, bit for bit |
-| `"mjwarp"` | CUDA | MuJoCo Warp, float32 | as `"default"` on CUDA |
+| `"mjwarp"` | CUDA | MuJoCo Warp, float32 | equal resets, goals, tasks, teleports and RNG streams; approximate physics |
 
-The default `mjwarp_min_envs` was measured for each body on an L40S with 8 CPU cores: 4096 for PointMaze, 256 for AntMaze and 256 for HumanoidMaze. The outputs are on the device of the environment.
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the first environment of each body, maze and power-of-two batch range times both backends on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends). The outputs are on the device of the environment. On CUDA, `mujoco.batch` moves the outputs and the state of a step to the device in one copy.
 
 On CPU, `mujoco.batch` steps the physics on its own threads, and the step does its Torch operations on one thread. Idle Torch threads would otherwise keep the CPU cores busy while the `mujoco.batch` threads wait for them. The frames and the state do not change with the thread count.
 
@@ -51,8 +50,8 @@ On CPU, `mujoco.batch` steps the physics on its own threads, and the step does i
 # CUDA only; needs the ogbench and mjwarp extras
 import stable_envs as snv
 
-with snv.AntMazeMediumNavigate(num_envs=64, device="cuda", simulation_backend="auto") as env:
-    print(env.simulation_backend)  # native
+with snv.AntMazeMediumNavigate(num_envs=64, device="cuda") as env:
+    print(env.simulation_backend)  # native or mjwarp, from the switch point
 ```
 
 MuJoCo Warp agrees with MuJoCo to float32 rounding on a step where no contact starts or stops. When contacts start or stop, the contact forces of the two solvers differ and the trajectories move apart. After 200 steps of smooth actions from the same state on 64 environments, the median distance between the `xy` positions of MuJoCo Warp and OGBench was:

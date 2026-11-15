@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, WarpBatch
 from ...._execution.protocol import SimulatorAdapter
 
@@ -33,7 +34,7 @@ class _MSHumanAdapter(SimulatorAdapter):
         return TensorDict(
             {key: physics[name].to(torch.float32) for key, name in _FIELDS.items()},
             batch_size=[self.num_envs],
-            device=self.device,
+            device=physics["qpos"].device,
         )
 
     def _physics(self, state) -> dict:
@@ -51,7 +52,7 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
 
     def __init__(self, num_envs: int, device, model):
         super().__init__(num_envs, device, model)
-        self.batch = NativeBatch(model, self.num_envs, self.device, keyframe=0)
+        self.batch = NativeBatch(model, self.num_envs, "cpu", keyframe=0)
         limited = model.actuator_ctrllimited.astype(bool)
         self._ctrl_low = np.where(limited, model.actuator_ctrlrange[:, 0], -np.inf)
         self._ctrl_high = np.where(limited, model.actuator_ctrlrange[:, 1], np.inf)
@@ -62,17 +63,31 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         """The ``mujoco.batch.Batch``, or None once closed."""
         return None if self._closed else self.batch.b
 
-    def _quantize_state(self) -> None:
-        """Keep the complete public checkpoint lossless at its float32 dtype."""
-        for name in _FIELDS.values():
+    def _quantize_state(self) -> dict[str, np.ndarray]:
+        """Keep the complete public checkpoint lossless at its float32 dtype; return the float32 values."""
+        values = {}
+        for key, name in _FIELDS.items():
             value = self.batch.numpy(name)
-            value[...] = value.astype(np.float32)
+            values[key] = value.astype(np.float32)
+            value[...] = values[key]
+        return values
+
+    def _host_state(self, values: dict[str, np.ndarray] | None = None) -> TensorDict:
+        if values is None:
+            values = {key: self.batch.numpy(name).astype(np.float32) for key, name in _FIELDS.items()}
+        leaves = {key: torch.from_numpy(value.reshape(self.num_envs, -1)) for key, value in values.items()}
+        return build_tensordict(leaves, [self.num_envs], "cpu")
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
         self.batch.reset()
         self._quantize_state()
         return self.get_state()
+
+    def get_state(self) -> TensorDict:
+        self._check_open()
+        state = self._host_state()
+        return state if self.device.type == "cpu" else to_device(state, self.device)
 
     def set_state(self, state) -> None:
         self._check_open()
@@ -87,10 +102,11 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         # Clamp as MuJoCo Warp does, NaN to the lower bound: native MuJoCo would instead zero the
         # lane's controls on a NaN, inf or huge value and warn, which raises below.
         self.batch.step(np.fmin(np.fmax(ctrl, self._ctrl_low), self._ctrl_high))
-        self._quantize_state()
+        values = self._quantize_state()
         if (bad := self.batch.unstable_envs()).size:
             raise RuntimeError(f"Physics state is invalid in lanes {bad.tolist()}")
-        return TensorDict({"state": self.get_state()}, batch_size=[self.num_envs], device=self.device)
+        out = build_tensordict({"state": self._host_state(values)}, [self.num_envs], "cpu")
+        return out if self.device.type == "cpu" else to_device(out, self.device)
 
 
 class MSHumanWarpAdapter(_MSHumanAdapter):

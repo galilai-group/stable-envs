@@ -13,6 +13,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.tensordicts import to_device
 from ...._execution.mjbatch import MAX_NATIVE_THREADS, NativeBatch, native_threads
 from ..source.control import ACC_SCALE, INERTIA, WHEELBASE, WRENCH_SCALE, YAW_RATE_SCALE, G
 from ..source.sim import ACTION_HIGH, ACTION_LOW, AIR_DENSITY, DRAG_CDA, FRAME_SKIP
@@ -526,7 +527,6 @@ class RoadsterNativeAdapter(RoadsterBatch):
             success[ids], failed[ids], cost[ids] = succ, fail, c
             terminated[ids] = succ | fail
             truncated[ids] = (self.elapsed[ids] >= HORIZON[self.task]) & ~(succ | fail)
-        dev = self.device
         result = TensorDict(
             {
                 "reward": torch.from_numpy(reward),
@@ -537,7 +537,13 @@ class RoadsterNativeAdapter(RoadsterBatch):
                 "cost": torch.from_numpy(cost),
             },
             batch_size=[n],
-        ).to(dev)
+            device="cpu",
+        )
+        if self.device.type == "cpu":
+            if capture_state:
+                result["state"] = self.get_state()
+            return result
         if capture_state:
-            result["state"] = self.get_state()
-        return result
+            # The copy to the device is the snapshot of the live State.
+            result["state"] = self._live_state()
+        return to_device(result, self.device)

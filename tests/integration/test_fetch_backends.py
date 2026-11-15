@@ -9,9 +9,10 @@ import torch
 pytest.importorskip("gymnasium_robotics")
 
 import stable_envs as snv  # noqa: E402
+from stable_envs import tuning  # noqa: E402
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter  # noqa: E402
 from stable_envs.envs.fetch.simulation.batch import FetchBatchAdapter  # noqa: E402
-from stable_envs.envs.fetch.simulation.execution import MJWARP_MIN_ENVS, fetch_backend  # noqa: E402
+from stable_envs.envs.fetch.simulation.execution import fetch_backend  # noqa: E402
 from tests.helpers.reference.fetch_policy import scripted_actions, source_rollouts  # noqa: E402
 
 TASKS = ("Reach", "Push", "Slide", "PickAndPlace")
@@ -38,19 +39,17 @@ def assert_identical(expected, actual, what):
 
 def test_routing():
     assert fetch_backend(1, "cpu") == "native"
-    assert fetch_backend(1, "cuda") == "mjwarp"
     assert fetch_backend(4096, "cpu", "auto") == "native"
-    assert fetch_backend(MJWARP_MIN_ENVS - 1, "cuda", "auto") == "native"
-    assert fetch_backend(MJWARP_MIN_ENVS, "cuda", "auto") == "mjwarp"
-    assert fetch_backend(8, "cuda", "auto", 8) == "mjwarp"
-    assert fetch_backend(8, "cuda", "native") == "native"
-    assert fetch_backend(8, "cuda", "source") == "source"
+    with tuning.override(large_backend_min_envs=8):
+        assert fetch_backend(7, "cuda", "auto") == "native"
+        assert fetch_backend(8, "cuda", None) == "mjwarp"
+        assert fetch_backend(8, "cuda", "native") == "native"
+        assert fetch_backend(8, "cuda", "source") == "source"
     with pytest.raises(ValueError, match="requires device='cuda'"):
         fetch_backend(8, "cpu", "mjwarp")
-    with pytest.raises(ValueError, match="simulation_backend"):
-        fetch_backend(8, "cpu", "mjx")
-    with pytest.raises(ValueError, match="mjwarp_min_envs"):
-        fetch_backend(8, "cuda", "auto", 0)
+    for bad in ("mjx", "default"):
+        with pytest.raises(ValueError, match="simulation_backend"):
+            fetch_backend(8, "cpu", bad)
 
 
 def test_public_env_steps_on_the_cpu_batch():
@@ -200,9 +199,11 @@ def test_mjwarp_resets_masks_and_routing():
         assert out["state"]["lifecycle", "elapsed_steps"].cpu()[~held].eq(1).all()
     finally:
         adapter.close()
-    with snv.make("FetchReach", num_envs=2, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=2), snv.make("FetchReach", num_envs=2, device="cuda") as env:
         assert env.simulation_backend == "mjwarp"
-    with snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="auto") as env:
+    with tuning.override(large_backend_min_envs=3):
+        env = snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="auto")
+    with env:
         assert env.simulation_backend == "native"
         out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
         assert out["state"]["qpos"].device.type == "cuda" and out["reward"].device.type == "cuda"

@@ -10,7 +10,7 @@ import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.stepping import _stack_states, _threads
-from ..._execution.mjbatch import resolve_backend
+from ..._execution.mjbatch import measure_adapter, mujoco_backend
 from ...env import Env, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
@@ -20,9 +20,6 @@ from .assets import model as _model
 from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
-#: With ``simulation_backend="auto"``, the smallest CUDA batch that steps on MuJoCo Warp; smaller CUDA batches
-#: step faster on mujoco.batch.
-MJWARP_MIN_ENVS = 256
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
@@ -53,22 +50,28 @@ class MSHumanLocomotion(Env):
         ("warmstart", _NV, None),
     )
 
-    def __init__(self, num_envs: int = 1, *, simulation_backend="default", mjwarp_min_envs=MJWARP_MIN_ENVS, **kwargs):
+    def __init__(self, num_envs: int = 1, *, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp and CPU batches on native
-        ``mujoco.batch``. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and every
-        other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``. On CUDA it steps small batches
+        on native ``mujoco.batch`` and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs``
+        switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        resolve_backend(1, "cpu", "native", mjwarp_min_envs)
-        if simulation_backend not in (None, "default", "auto", "native", "mjwarp"):
-            raise ValueError("simulation_backend must be 'default', 'auto', 'native' or 'mjwarp'")
+        if simulation_backend not in (None, "auto", "native", "mjwarp"):
+            raise ValueError("simulation_backend must be 'auto', 'native' or 'mjwarp'")
         super().__init__(num_envs, **kwargs)
-        self.simulation_backend = resolve_backend(self.B, self.device, simulation_backend, mjwarp_min_envs)
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
+
+        def build(backend: str, n: int):
+            return (MSHumanWarpAdapter if backend == "mjwarp" else MSHumanBatchAdapter)(n, self.device, self._model)
+
+        measure = measure_adapter(build, _NU, self.device, 0.0, 1.0)
+        self.simulation_backend = mujoco_backend(
+            "mshuman-sim/locomotion", self.B, self.device, simulation_backend, measure=measure
+        )
         # nq == nv: every joint is a hinge or a slide with one qpos.
         self.state_names = tuple(
             mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"

@@ -1391,15 +1391,15 @@ class MazeSemantics:
     # Each step returns outputs in new storage.
     _step_outputs_owned = True
 
-    def __init__(self, *args, simulation_backend="default", mjwarp_min_envs=None, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction; outputs are on ``device``.
 
-        ``"default"`` steps CUDA batches on MuJoCo Warp (float32) and CPU batches on ``mujoco.batch``, which
-        equals the source bit for bit. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` (by
-        default a measured size per body) on ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``"auto"`` steps CPU batches on ``mujoco.batch``, which equals the source bit for bit. On CUDA it steps
+        small batches on ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the measured
+        ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
         super().__init__(*args, **kwargs)
-        self.simulation_backend = maze_backend(self.B, self.device, self.LOCO, simulation_backend, mjwarp_min_envs)
+        self.simulation_backend = maze_backend(self.B, self.device, self.LOCO, simulation_backend, self.MAZE)
         self._simulator = make_maze_adapter(
             self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )

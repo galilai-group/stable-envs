@@ -4,25 +4,23 @@ from __future__ import annotations
 
 import torch
 
-from ...._execution.mjbatch import resolve_backend
-
-#: Smallest CUDA batch that ``simulation_backend="auto"`` steps on MuJoCo Warp; smaller ones step on the CPU batch.
-MJWARP_MIN_ENVS = 64
-SIMULATION_BACKENDS = ("default", "auto", "native", "mjwarp")
+from ...._execution.mjbatch import measure_adapter, mujoco_backend
 
 
 def roadster_backend(
-    num_envs: int, device: str | torch.device, simulation_backend: str | None = "default", mjwarp_min_envs=None
+    num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto", task: str = "traffic"
 ) -> str:
     """Return ``"native"`` or ``"mjwarp"`` for a batch.
 
-    ``"default"`` steps on MuJoCo Warp on CUDA and on the native batch on CPU. ``"auto"`` steps CUDA batches of
-    ``mjwarp_min_envs`` or more on MuJoCo Warp and smaller ones on the native batch.
+    ``"auto"`` steps on the native batch on CPU. On CUDA it steps small batches on the native batch and large ones
+    on MuJoCo Warp; see ``mujoco_backend``.
     """
-    if simulation_backend not in (None, *SIMULATION_BACKENDS):
-        raise ValueError("simulation_backend must be 'default', 'auto', 'native' or 'mjwarp'")
-    min_envs = MJWARP_MIN_ENVS if mjwarp_min_envs is None else mjwarp_min_envs
-    return resolve_backend(num_envs, device, simulation_backend, min_envs)
+
+    def build(backend: str, n: int):
+        return make_roadster_adapter(task, n, device, backend)
+
+    measure = measure_adapter(build, 4, device)
+    return mujoco_backend(f"roadster-sim/{task}", num_envs, device, simulation_backend, measure=measure)
 
 
 def make_roadster_adapter(task: str, num_envs: int, device="cpu", backend: str = "native"):

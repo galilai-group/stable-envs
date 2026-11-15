@@ -1,4 +1,4 @@
-"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch and CUDA lanes on MuJoCo Warp by default.
+"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch, and CUDA lanes on it or on MuJoCo Warp.
 
 Covers backend dispatch, float32 State at the API boundary, fidelity against single-MjData MuJoCo,
 State restore and replay, action clamping, and release of the batch's native threads.
@@ -20,6 +20,7 @@ pytest.importorskip("mujoco_warp")
 import mujoco
 
 import stable_envs as se
+from stable_envs import tuning
 from stable_envs._execution import mjbatch
 from stable_envs.envs.mshuman.assets import model
 from stable_envs.envs.mshuman.simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
@@ -43,9 +44,10 @@ DEVICES = ["cpu", pytest.param("cuda", marks=cuda_only), pytest.param("cuda/mjwa
 
 
 def _make(lanes=LANES, device="cpu"):
-    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend."""
+    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend, native at ``lanes``."""
     device, _, backend = device.partition("/")
-    return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
+    with tuning.override(large_backend_min_envs=lanes + 1):
+        return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
 
 
 def _actions(env, steps=STEPS, seed=SEED):
@@ -94,9 +96,11 @@ def test_cpu_env_steps_on_the_native_batch():
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
-def test_cuda_env_steps_on_mujoco_warp_by_default_at_every_batch_size(device):
+def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point_by_default(device):
     for lanes in (1, LANES):
-        with se.make("MSHumanLocomotion", num_envs=lanes, device=device) as env:
+        with tuning.override(large_backend_min_envs=lanes):
+            env = se.make("MSHumanLocomotion", num_envs=lanes, device=device)
+        with env:
             assert env.simulation_backend == "mjwarp"
             assert type(env._simulator) is MSHumanWarpAdapter
 
@@ -109,8 +113,10 @@ def test_small_cuda_env_steps_on_the_native_batch(device):
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
-def test_cuda_env_steps_on_mujoco_warp_from_the_cutoff(device):
-    with se.make("MSHumanLocomotion", num_envs=2, device=device, simulation_backend="auto", mjwarp_min_envs=2) as env:
+def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point(device):
+    with tuning.override(large_backend_min_envs=2):
+        env = se.make("MSHumanLocomotion", num_envs=2, device=device, simulation_backend="auto")
+    with env:
         assert env.simulation_backend == "mjwarp"
         assert type(env._simulator) is MSHumanWarpAdapter
         assert env._simulator.batch._step_graph is not None

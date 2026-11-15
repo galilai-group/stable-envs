@@ -28,10 +28,11 @@ The [state](../terms.md#state) holds `qpos` (36 values), `qvel` (36), the muscle
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"default"` (default) | `mujoco.batch` | MuJoCo Warp |
-| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from there |
+| `"auto"` (default) | `mujoco.batch` | `mujoco.batch` for small batches, MuJoCo Warp for large ones |
 | `"native"` | `mujoco.batch` | `mujoco.batch` |
 | `"mjwarp"` | error | MuJoCo Warp |
+
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the first environment of each power-of-two batch range times both backends on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends).
 
 `mujoco.batch` steps every environment in one native call, on up to 8 threads, at most one per CPU in the process affinity and one per environment. It runs MuJoCo in float64 and rounds the integration state to float32 after every step, so a state restores bit for bit, and the steps equal a per-environment `mj_step` loop with the same rounding. A CUDA environment on `mujoco.batch` returns its state on CUDA. MuJoCo Warp steps every environment in float32 in one captured CUDA graph.
 

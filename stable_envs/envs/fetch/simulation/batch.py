@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.cpus import cpu_limit
+from ...._core.tensordicts import to_device
 from ...._execution.protocol import SimulatorAdapter
 from .adapter import _VISUAL_GROUPS, VISUAL_LEAVES, _integer, _words, episode_limits, host_actions, host_active
 from .adapter import state_fields as _state_fields
@@ -445,6 +446,10 @@ class FetchBatchAdapter(FetchLanes):
         return self.get_state()
 
     def get_state(self) -> TensorDict:
+        state = self._host_state()
+        return state if self.device.type == "cpu" else to_device(state, self.device)
+
+    def _host_state(self) -> TensorDict:
         self._check_open()
         words = self._rng_words()
         tensor = lambda value, dtype=torch.float64: torch.tensor(value, dtype=dtype)  # noqa: E731
@@ -466,7 +471,7 @@ class FetchBatchAdapter(FetchLanes):
                 },
             },
             [self.num_envs],
-            device=self.device,
+            device="cpu",
         )
 
     def set_state(self, state: TensorDict) -> None:
@@ -490,7 +495,17 @@ class FetchBatchAdapter(FetchLanes):
     def check_step(self, actions, active):
         return host_actions(actions, self.num_envs), host_active(active, self.num_envs)
 
+    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
+        out = self._advance(actions, active)
+        if capture_state:
+            out["state"] = self._host_state()
+        return out if self.device.type == "cpu" else to_device(out, self.device)
+
     def advance(self, actions, *, active=None) -> TensorDict:
+        out = self._advance(actions, active)
+        return out if self.device.type == "cpu" else to_device(out, self.device)
+
+    def _advance(self, actions, active) -> TensorDict:
         """robot_env.step, _set_action, _step_callback, compute_reward and TimeLimit on the active lanes."""
         self._check_open()
         t = self.task
@@ -525,10 +540,8 @@ class FetchBatchAdapter(FetchLanes):
             out["reward"][ids] = -(d > t.distance_threshold).astype(np.float32) if t.reward_type == "sparse" else -d
             self._elapsed[ids] += 1
             out["truncated"][ids] = self._elapsed[ids] >= self._limits[ids]
-        out = TensorDict(
-            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}, [self.num_envs]
-        )
-        return out if self.device.type == "cpu" else out.to(self.device)
+        outputs = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
+        return TensorDict(outputs, [self.num_envs], device="cpu")
 
     def close(self) -> None:
         if not self._closed:
