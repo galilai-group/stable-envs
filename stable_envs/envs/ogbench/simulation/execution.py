@@ -20,7 +20,9 @@ _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 #: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
 #: both hosts stay on ``mujoco.batch`` where it was faster on either one.
 MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
-    "point": 16,  # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16
+    # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16. 8 keeps a batch of 8 at or above OGBench's own speed on
+    # both GPU types: at 8, mujoco.batch on CUDA ran below it on an RTX 3090 (5164 against 6637 env steps per second).
+    "point": 8,
     "ant": 128,  # 64, 64; 128, 128
     "humanoid": 128,  # 64, 64; 128, 64
 }

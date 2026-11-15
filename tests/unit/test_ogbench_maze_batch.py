@@ -112,7 +112,7 @@ def test_auto_uses_the_shipped_switch_point_of_each_body(monkeypatch, tmp_path):
     monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
     tuning.reset()
     tuning._clear_caches()
-    assert MAZE_CUDA_MIN_ENVS == {"point": 16, "ant": 128, "humanoid": 128}
+    assert MAZE_CUDA_MIN_ENVS == {"point": 8, "ant": 128, "humanoid": 128}
     for loco, switch in MAZE_CUDA_MIN_ENVS.items():
         assert maze_backend(switch - 1, "cuda", loco) == "native"
         assert maze_backend(switch, "cuda", loco) == "mjwarp"
