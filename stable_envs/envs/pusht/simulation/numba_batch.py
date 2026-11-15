@@ -7,6 +7,7 @@ import torch
 from numba import njit
 from tensordict import TensorDict
 
+from ...._core.tensordicts import build_tensordict
 from .batch import PushTBatchAdapter
 from .numba_physics import advance_batch, advance_serial
 from .replay_batch import validate_actions
@@ -210,8 +211,10 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         else:
             code = (np.dtype(np.float32), np.dtype(np.float64)).index(actions.dtype)
         n = self.num_envs
-        reward = np.empty(n)
-        flags = np.zeros((3, n), np.bool_)
+        # Reward, then success, terminated and truncated, in one buffer that moves to an accelerator in one copy.
+        raw = np.zeros(11 * n, np.uint8)
+        reward = raw[: 8 * n].view(np.float64)
+        flags = raw[8 * n :].view(np.bool_).reshape(3, n)
         lengths = self._lengths.numpy()
         _finish(
             body, active, counts, host["contacts"], host["render_segment_count"], relative, actions, code,
@@ -221,12 +224,22 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         )  # fmt: skip
         self._width = int(lengths.max())
         flags[1] = flags[0]
-        success, terminated, truncated = torch.from_numpy(flags).unbind(0)
-        outputs = dict(reward=torch.from_numpy(reward), success=success, terminated=terminated, truncated=truncated)
+        device = self._state_device
+        if self.export_device is None:
+            reward, flags = torch.from_numpy(reward), torch.from_numpy(flags)
+        else:
+            # On an accelerator every output is already there, so the step result needs no further move.
+            device = self.__dict__.get("_output_device")
+            if device is None:
+                device = self._output_device = build_tensordict({}, [n], self.export_device).device
+            moved = torch.from_numpy(raw).to(device)
+            reward, flags = moved[: 8 * n].view(torch.float64), moved[8 * n :].view(torch.bool).view(3, n)
+        success, terminated, truncated = flags.unbind(0)
+        outputs = dict(reward=reward, success=success, terminated=terminated, truncated=truncated)
         if capture_state:
             # For an accelerator, the State moves there in the export's own copy, with no plan per history width.
             outputs["state"] = self._export(self.export_device or self._state_device)
-        return TensorDict._new_unsafe(outputs, batch_size=torch.Size([self.num_envs]), device=self._state_device)
+        return TensorDict._new_unsafe(outputs, batch_size=torch.Size([n]), device=device)
 
     def _reserve_history(self):
         """Widen the action history buffers when a lane's next action would not fit."""
