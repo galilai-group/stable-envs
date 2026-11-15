@@ -108,7 +108,11 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             "goal/value",
         ):
             host[key] = fixed["current/" + key].numpy()
-        host["shape"] = fixed["owned/variation/block/shape/current/value"].numpy()
+        n = self.num_envs
+        host["shape"] = fixed["owned/variation/block/shape/current/value"].numpy().reshape(n)
+        host["latest_present"] = host["latest_present"].reshape(n)
+        host["everyone"] = np.ones(n, np.bool_)
+        host["lengths"] = self._lengths.numpy()
         # NumPy State sources let the export pack with NumPy and wrap leaves with from_numpy.
         fields = {key: value.numpy() for key, value in fixed.items()}
         fields.update(("current/jax/" + key, value.numpy()) for key, value in self._solver_state().items())
@@ -257,9 +261,9 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
         discrete = self.discrete
         validate_actions(actions, discrete)
-        everyone = active is None
-        if everyone:
-            active = np.ones(self.num_envs, np.bool_)
+        host = self._views()
+        if active is None:
+            active = host["everyone"]
         else:
             active = active.numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or active.dtype != np.bool_:
@@ -270,7 +274,6 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             relative = np.stack((polar[:, 0] * np.cos(theta), polar[:, 0] * np.sin(theta)), 1).astype(np.float32)
         else:
             relative = actions
-        host = self._views()
         body = host["body"]
         target = (body[:, 0, :2].astype(relative.dtype) + relative * 100).astype(np.float64)
         counts = np.empty((self.num_envs, 2), np.int64)
@@ -300,12 +303,12 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         raw = np.zeros(11 * n, np.uint8)
         reward = raw[: 8 * n].view(np.float64)
         flags = raw[8 * n :].view(np.bool_).reshape(3, n)
-        lengths = self._lengths.numpy()
+        lengths = host["lengths"]
         _finish(
             body, active, counts, host["contacts"], host["render_segment_count"], relative, actions, code,
             _LATEST_TAGS[0 if relative.dtype == np.float32 else 1], host["latest/value"], host["latest/type"],
-            host["latest_present"].reshape(n), self._actions.numpy(), self._codes.numpy(), lengths,
-            host["observation"], host["goal/value"], host["shape"].reshape(n), reward, flags[0],
+            host["latest_present"], self._actions.numpy(), self._codes.numpy(), lengths,
+            host["observation"], host["goal/value"], host["shape"], reward, flags[0],
         )  # fmt: skip
         self._width = int(lengths.max())
         flags[1] = flags[0]
@@ -313,7 +316,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
 
     def _reserve_history(self):
         """Widen the action history buffers when a lane's next action would not fit."""
-        width = int(self._lengths.numpy().max()) + 1
+        width = self._history_width() + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])
             self._actions = torch.cat(
