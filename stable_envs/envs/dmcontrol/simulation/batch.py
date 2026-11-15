@@ -90,6 +90,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         # Bound once: ``Batch.ctrl`` makes a new view at each access.
         self._ctrl, self._warning = self.b.bind("ctrl"), self.b.warning[:, :, 1]
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
+        #: Substeps that every lane has before its step limit; 0 until a step computes it.
+        self._margin = 0.0
         self._rng_views = {}
         self._load(np.arange(self.num_envs))
 
@@ -127,6 +129,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         """
         ids = np.asarray(ids)
         envs = [self.lanes.envs[i] for i in ids]
+        self._margin = 0.0
         self._warnings = self.b.warning[:, :, 1].copy()
         models = [self._models[i] for i in ids]
         flags = [m.opt.disableflags for m in models]
@@ -243,8 +246,10 @@ class DMCBatchAdapter(SimulatorAdapter):
         actions, _ = self.lanes.check_step(actions, active)
         ctrl, reward = self._transform(actions), np.zeros(self.num_envs)
         for _ in range(2):
+            # While every lane is more than one substep from its limit, no lane resets or reaches it.
+            quiet = self._margin > 1
             reset = self._reset_next
-            resetting = reset.any()
+            resetting = not quiet and reset.any()
             if resetting:
                 reset = reset.copy()
                 ids = np.flatnonzero(reset)
@@ -261,7 +266,11 @@ class DMCBatchAdapter(SimulatorAdapter):
             else:
                 reward += self.task.reward()
                 self._count += 1
-            self._reset_next = self._count >= self._limit
+            if quiet:
+                self._margin -= 1
+            else:
+                self._reset_next = self._count >= self._limit
+                self._margin = float((self._limit - self._count).min())
         self._cumulative += reward
         out = {
             ("reward",): reward,
