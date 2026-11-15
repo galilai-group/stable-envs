@@ -40,8 +40,9 @@ def _same_outputs(a, b):
 
 @pytest.mark.parametrize("family", FAMILIES)
 @pytest.mark.parametrize("reward_task_id", [None, 2])
-def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
-    lanes, rng = 6, np.random.default_rng(3)
+@pytest.mark.parametrize("lanes", [1, 6])
+def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id, lanes):
+    rng = np.random.default_rng(3)
     ref = OGBManipulationAdapter(family, lanes, seed=11, reward_task_id=reward_task_id)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=11, reward_task_id=reward_task_id, threads=3)
     try:
@@ -60,8 +61,9 @@ def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-def test_batch_restore_and_variation_continue_bit_for_bit(family):
-    lanes, rng = 4, np.random.default_rng(8)
+@pytest.mark.parametrize("lanes", [1, 4])
+def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
+    rng = np.random.default_rng(8)
     ref = OGBManipulationAdapter(family, lanes, seed=2)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=2, threads=2)
     try:
@@ -83,6 +85,23 @@ def test_batch_restore_and_variation_continue_bit_for_bit(family):
         for t in range(40, 60):
             action = _actions(rng, t, lanes)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+    finally:
+        ref.close()
+        bat.close()
+
+
+@pytest.mark.parametrize("lanes", [1, 2])
+def test_scene_cube_repair_equals_ogbench(lanes):
+    ref = OGBManipulationAdapter("Scene", lanes, seed=4)
+    bat = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
+    try:
+        for _ in range(2):
+            # The last lane's cube leaves the workspace; post_step puts it back from the lane's generator.
+            ref.envs[-1].data.qpos[bat._cube] = 5.0
+            bat._qpos[-1, bat._cube] = 5.0
+            action = np.zeros((lanes, 5))
+            assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+        assert_same_state(bat.reset(), ref.reset())
     finally:
         ref.close()
         bat.close()

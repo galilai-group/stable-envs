@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import mujoco
 import numpy as np
 import torch
@@ -20,6 +22,7 @@ from .pcg import pcg_decode, pcg_encode
 _BATCH_NAMES = {name: "qacc_warmstart" if name == "warmstart" else name for name in FLAGS}
 _BATCH_NAMES["plugin"] = "plugin_state"
 _CPU = torch.device("cpu")
+_INTEGRATION = mujoco.mjtState.mjSTATE_INTEGRATION
 
 
 def state_layout(schema, num_envs):
@@ -70,6 +73,65 @@ def copy_model_fields(source, target):
         value, out = getattr(source, name, None), getattr(target, name, None)
         if isinstance(value, np.ndarray) and isinstance(out, np.ndarray) and value.shape == out.shape:
             out[...] = value
+
+
+class _IntegrationState:
+    """``mujoco.batch``'s ``state`` rows for one ``MjData``: ``mjSTATE_INTEGRATION`` read and written whole."""
+
+    def __init__(self, lane):
+        self._lane = lane
+
+    def __getitem__(self, row):
+        lane = self._lane
+        value = np.empty(mujoco.mj_stateSize(lane.model, _INTEGRATION))
+        mujoco.mj_getState(lane.model, lane.data, value, _INTEGRATION)
+        return value if isinstance(row, int | np.integer) else value[None][row]
+
+    def __setitem__(self, row, value):
+        lane = self._lane
+        value = np.asarray(value, np.float64).reshape(-1, mujoco.mj_stateSize(lane.model, _INTEGRATION))
+        mujoco.mj_setState(lane.model, lane.data, value[-1], _INTEGRATION)
+        lane._time[0] = lane.data.time
+
+
+class OneLane:
+    """One lane on one ``MjData``, with the ``NativeBatch`` calls that the Cube/Scene batch makes.
+
+    A step is OGBench's own: ``mj_step`` for ``frame_skip`` substeps, then one ``mj_rnePostConstraint``. A batch
+    reads the contact forces through a sensor that runs ``mj_rnePostConstraint`` in every substep instead.
+
+    Args:
+        model: The lane's model. The Variation writes its per-lane fields into it.
+        frame_skip: Substeps per step.
+    """
+
+    def __init__(self, model, frame_skip):
+        self.model, self.frame_skip = model, int(frame_skip)
+        self.data = mujoco.MjData(model)
+        self.b = self
+        self.state = _IntegrationState(self)
+        # MjData holds the time as a float; the State reads it from this array.
+        self._time = np.array([self.data.time])
+
+    def bind(self, name):
+        return self._time[None] if name == "time" else getattr(self.data, name)[None]
+
+    def numpy(self, name):
+        return getattr(self.data, name)[None]
+
+    def expand(self, name):
+        return getattr(self.model, name)[None]
+
+    def step(self, active=None):
+        mujoco.mj_step(self.model, self.data, nstep=self.frame_skip)
+        mujoco.mj_rnePostConstraint(self.model, self.data)
+        self._time[0] = self.data.time
+
+    def forward(self, env_ids=None):
+        mujoco.mj_forward(self.model, self.data)
+
+    def close(self):
+        self.data = None
 
 
 #: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_lanes`` knob is set. A
@@ -172,14 +234,19 @@ class OGBManipulationBatchAdapter:
         try:
             self._meta = env = metadata_env(family)
             threads = native_threads(num_envs) if threads is None else max(1, min(int(threads), num_envs))
-            self._base = physics_model(env)
-            self.physics = NativeBatch(
-                self._base,
-                num_envs,
-                frame_skip=int(env._n_steps),
-                outputs=("site_xpos", "site_xmat", "cfrc_ext"),
-                nthread=threads,
-            )
+            if num_envs == 1:
+                # The lane's model keeps the Variation's fields; _base keeps the defaults.
+                self._base = copy.copy(env.model)
+                self.physics = OneLane(copy.copy(env.model), int(env._n_steps))
+            else:
+                self._base = physics_model(env)
+                self.physics = NativeBatch(
+                    self._base,
+                    num_envs,
+                    frame_skip=int(env._n_steps),
+                    outputs=("site_xpos", "site_xmat", "cfrc_ext"),
+                    nthread=threads,
+                )
             self._control = BatchController(env, num_envs, threads)
         except BaseException:
             self.close()
