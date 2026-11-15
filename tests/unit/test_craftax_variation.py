@@ -122,6 +122,15 @@ def test_values_outside_a_leaf_are_refused_by_set_state():
         assert_same_state(env.get_state(), before)
 
 
+def test_a_state_without_its_values_is_refused_by_set_state():
+    with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
+        state = env.reset(seed=SEED)
+        before = env.get_state()
+        with pytest.raises(ValueError, match="State is missing physics"):
+            env.set_state(state.exclude("physics"))
+        assert_same_state(env.get_state(), before)
+
+
 def test_sampled_values_stay_inside_their_leaves():
     with se.make("CraftaxClassicSymbolic", num_envs=8, device="cpu") as env:
         paths = sorted(env.dynamics_variation_leaves)

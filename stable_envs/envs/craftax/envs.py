@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import importlib.util
 import os
-from collections.abc import Mapping
 
 import numpy as np
 import torch
@@ -19,7 +18,6 @@ from tensordict import TensorDict
 
 from ..._core.config import get_config, log
 from ..._core.stepping import _stack_states
-from ..._core.style import StyleTensor
 from ..._core.tensordicts import build_tensordict
 from ...env import Env, require_contiguous_out
 from ...registry import register
@@ -74,7 +72,10 @@ class CraftaxEnv(Env):
         if backend not in ("auto", "jax"):
             raise ValueError(f"{type(self).__name__} runs on the JAX backend, not {backend!r}")
         self._k = kernel(self.reference_id)
+        self._simulator = _ParamRows(self._k.physics_layout)
         super().__init__(num_envs, size, supersample, device, backend, seed)
+        self._configure_physics()
+        self._default_physics = self._physics_installed
         self._device = self._k.device(self.device)
         self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state = None
@@ -121,33 +122,9 @@ class CraftaxEnv(Env):
             leaves.setdefault(group, {})[name] = space
         return Dict({group: Dict(spaces) for group, spaces in leaves.items()})
 
-    def sample_variation(self, batch=None, paths=None, rng=None):
-        """Sample variation rows as ``Env`` does, with integer leaves inside their ``[start, start + n)`` range."""
-        out = super().sample_variation(batch, paths, rng)
-        for path, offset, _ in self.variation_space.flat_layout():
-            node = self.variation_space._walk(path)
-            if hasattr(node, "n") and (paths is None or path in paths):
-                out[:, offset] += int(node.start)
-        return out
-
     def _lane_values(self) -> dict[str, np.ndarray]:
-        """The installed variation as per-lane parameter values."""
-        rows = self.get_variation().detach().cpu().numpy()
-        columns = {path: offset for path, offset, _ in self.variation_space.flat_layout()}
-        out = {}
-        for path, _, dtype, _ in self._k.params:
-            column = rows[: self.B, columns[path]]
-            out[path] = np.rint(column).astype(dtype) if dtype != np.float32 else column.astype(np.float32)
-        return out
-
-    def _adopt_values(self, values: Mapping[str, np.ndarray]) -> None:
-        """Install the parameter values of a restored state as the variation."""
-        rows = self.get_variation().clone()
-        columns = {path: offset for path, offset, _ in self.variation_space.flat_layout()}
-        for path, value in values.items():
-            rows[:, columns[path]] = torch.as_tensor(value.astype(np.float32), device=rows.device)
-        self._style = StyleTensor(rows, self.variation_space.flat_layout())
-        self._variation_is_default = False
+        """The installed physics rows as per-lane parameter values."""
+        return self._k.from_rows(self._physics_installed)
 
     def _layout(self):
         return tuple((f.key, f.width, None) for f in self._k.fields)
@@ -196,15 +173,16 @@ class CraftaxEnv(Env):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._check_pending()
         state = self._checked(state, "set_state", self.B)
+        restored = self._k.restore(state, self.device)
         values = self._k.values(state)
         for path, value in values.items():
             space = self.variation_space._walk(path)
             low, high = (space.start, space.start + space.n - 1) if hasattr(space, "n") else (space.low, space.high)
             if not ((value >= low) & (value <= high)).all():
                 raise ValueError(f"State field physics.{path} is outside [{low}, {high}]")
-        self._state, self._keys = self._k.restore(state, self.device)
+        self._state, self._keys = restored
         self._varied = self._k.varied(values)
-        self._adopt_values(values)
+        self._adopt_physics_state(state)
 
     def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
@@ -338,6 +316,16 @@ class CraftaxEnv(Env):
         self._state = None
         # A step whose device actions were out of range still raises when nothing else reads its flag.
         self._check_pending()
+
+
+class _ParamRows:
+    """The layout of the per-lane ``EnvParams`` values, for the physics variation that ``Env`` installs."""
+
+    def __init__(self, layout):
+        self.physics_layout = layout
+
+    def configure_physics(self, values) -> None:
+        """Do nothing: ``Env`` keeps the installed rows, and each lane reads its values at its next reset."""
 
 
 _CLASSIC_LEAVES = frozenset(path for path, _ in CLASSIC_PARAMS)

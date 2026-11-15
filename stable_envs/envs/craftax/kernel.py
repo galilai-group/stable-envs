@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from craftax.craftax_env import make_craftax_env_from_name
 
+from ..._core.physics import PhysicsLayout
 from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS
 from .render import renderer
 
@@ -110,6 +111,14 @@ class Kernel:
         self.params = tuple(
             (path, attr, _dtype(getattr(params, attr)), getattr(params, attr))
             for path, attr in (CLASSIC_PARAMS if classic else CRAFTAX_PARAMS)
+        )
+        n = len(self.params)
+        #: The physics layout of the parameters: one column each, in ``params`` order.
+        self.physics_layout = PhysicsLayout(
+            leaves=tuple(path for path, *_ in self.params),
+            widths=(1,) * n,
+            offsets=tuple(range(n)),
+            nominal=tuple(float(default) for *_, default in self.params),
         )
         engine = jax.eval_shape(lambda k: upstream.reset(k, params)[1], jax.random.PRNGKey(0))
         lane_params = {path: jax.ShapeDtypeStruct((), dtype) for path, _, dtype, _ in self.params}
@@ -345,10 +354,18 @@ class Kernel:
         return tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))
 
     def values(self, td) -> dict[str, np.ndarray]:
-        """The per-lane parameter values that a state TensorDict holds, on the host."""
+        """The per-lane parameter values that a checked state TensorDict holds, copied to the host at once."""
+        n = int(td.batch_size[0])
+        leaves = [
+            td[("physics", *path.split("."))].detach().reshape(n, 1).to(torch.float64) for path, *_ in self.params
+        ]
+        return self.from_rows(torch.cat(leaves, dim=1).cpu().numpy())
+
+    def from_rows(self, rows: np.ndarray) -> dict[str, np.ndarray]:
+        """Per-lane parameter values from float64 rows with one column per parameter, in ``params`` order."""
         return {
-            path: td[("physics", *path.split("."))].detach().cpu().numpy().reshape(-1).astype(dtype)
-            for path, _, dtype, _ in self.params
+            path: rows[:, i].astype(np.float32) if dtype == np.float32 else np.rint(rows[:, i]).astype(dtype)
+            for i, (path, _, dtype, _) in enumerate(self.params)
         }
 
     def restore(self, td, device: torch.device):
