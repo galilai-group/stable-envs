@@ -104,7 +104,7 @@ state = layout.export({"qpos": qpos, "task/target": target}, device)
 
 ### Folding state into groups
 
-A state with many small leaves costs one tensor and one TensorDict node for each leaf on each export, slice, copy and device move. To prevent this cost, declare a `StateSchema` from `stable_envs._core.state_schema`. The schema puts fields of one dtype into one group leaf of shape `(N, size)`. Each named field is a slice of its group. A field whose shape changes between states, such as an action history, stays a leaf of its own (a "kept" field, with group `None`). PushT uses a schema.
+A state with many small leaves costs one tensor and one TensorDict node for each leaf on each export, slice, copy and device move. To prevent this cost, declare a `StateSchema` from `stable_envs._core.state_schema`. The schema puts fields of one dtype into one group leaf of shape `(N, size)`. Each named field is a slice of its group. A field whose shape changes between states, such as an action history, stays a leaf of its own (a "kept" field, with group `None`). PushT and DM Control use a schema.
 
 1. Declare each field once, in state order, with its name, per-environment shape, dtype and group. By convention, a group path ends in the dtype name.
 2. Keep the live state in the group buffers and write the kernels into them. Make the field views once, when you make the buffers.

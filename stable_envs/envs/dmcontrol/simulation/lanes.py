@@ -6,11 +6,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import unfold
 from ...._execution.protocol import SimulatorAdapter
-from ...._execution.state_columns import require_columns
 from . import physics as _physics
 from .registered import normalized
-from .state import export_state, restore_lane
+from .state import export_state, field_arrays, restore_lane, state_schema, validate_state
 
 
 def _clone_envs(make, seed, count):
@@ -44,6 +44,7 @@ class DMCLanes(SimulatorAdapter):
         self.physics = _physics.make_lanes(key, [env.physics.model.ptr for env in self.envs])
         self.fields = {**fields, **_physics.state_fields(key)}
         self._base_fields = fields
+        self.schema = state_schema(key, self.fields)
         self.action_dim = int(self.envs[0].action_spec().shape[0])
         self._cumulative = np.zeros(self.num_envs, np.float64)
         self._closed = False
@@ -82,24 +83,21 @@ class DMCLanes(SimulatorAdapter):
     def get_state(self):
         self._check_open()
         extra = None if self.physics is None else self.physics.export()
-        return export_state(self.envs, self._cumulative, self.fields, self.device, extra)
+        return export_state(self.envs, self._cumulative, self.schema, self.fields, self.device, extra)
 
     def validate(self, state):
         """Check every lane of ``state`` and return its physics rows, or None without physics variation."""
         self._check_open()
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")
-        rows = None if self.physics is None else self.physics.rows_from_state(state)
-        require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
-        return rows
+        validate_state(self.schema, state, self.num_envs, self.key)
+        return None if self.physics is None else self.physics.rows_from_state(unfold(state))
 
     def set_state(self, state):
         rows = self.validate(state)
-        host = state.cpu()
+        values = field_arrays(self.schema, state.cpu(), self.fields)
         if rows is not None:
             self.physics.configure(rows)
         for i, env in enumerate(self.envs):
-            restore_lane(env, host[i], self._base_fields, self._cumulative, i)
+            restore_lane(env, values, i, self._cumulative)
 
     def check_step(self, actions, active):
         if torch.is_tensor(actions):

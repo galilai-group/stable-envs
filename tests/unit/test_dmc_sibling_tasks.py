@@ -7,6 +7,7 @@ import torch
 pytest.importorskip("dm_control")
 
 import stable_envs as se  # noqa: E402
+from stable_envs._core.state_schema import get_field, unfold  # noqa: E402
 from tests.helpers.reference.dmc_suite import SuiteReference  # noqa: E402
 from tests.helpers.reference.semantics import compare_state  # noqa: E402
 
@@ -38,7 +39,7 @@ def _make(name):
 
 
 def _source_fields(state):
-    return state.exclude("physics")
+    return unfold(state).exclude("physics")
 
 
 def _rollout(env, ref, actions):
@@ -72,14 +73,14 @@ def test_cell_matches_the_source_task_and_restores_into_a_fresh_env(name):
             saved = env.get_state()
             # Both lanes cross the source's time limit inside the next actions.
             near_limit = saved.clone()
-            near_limit["lifecycle", "step_count"][:] = ref.step_limit - 3
+            get_field(near_limit, "lifecycle/step_count")[:] = ref.step_limit - 3
             for wrapper in ref.envs:
                 wrapper._env._step_count = ref.step_limit - 3
             env.set_state(near_limit)
             compare_state(env.get_state(), near_limit)
             _chunk(env, ref, actions[8:16])
             resumed = env.get_state()
-            assert bool((resumed["lifecycle", "step_count"] < ref.step_limit - 3).all()), "no implicit reset"
+            assert bool((get_field(resumed, "lifecycle/step_count") < ref.step_limit - 3).all()), "no implicit reset"
             with _make(name) as fresh:
                 fresh.set_state(resumed)
                 compare_state(fresh.get_state(), resumed)

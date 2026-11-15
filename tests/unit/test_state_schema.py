@@ -15,7 +15,33 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
-ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {}
+ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
+    "dmcontrol": (
+        tuple(
+            f"dmc_{key}"
+            for key in (
+                "acrobot",
+                "ball_in_cup",
+                "cartpole",
+                "cartpole_balance",
+                "cheetah",
+                "finger",
+                "finger_spin",
+                "finger_turn_easy",
+                "hopper",
+                "humanoid",
+                "manipulator",
+                "pendulum",
+                "point_mass_easy",
+                "quadruped",
+                "reacher",
+                "swimmer_swimmer6",
+                "walker",
+            )
+        ),
+        [*sorted((ROOT / "tests").rglob("*dmc_*.py")), *sorted((ROOT / "tests").rglob("*reacher*.py"))],
+    ),
+}
 
 FIELDS = [
     Field("t/pose", (3,), torch.float64, "t/float64"),

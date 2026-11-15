@@ -21,6 +21,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, unfold
 from tests.helpers.reference.dmc_semantics import PHYSICS_LEAVES, DMCReference
 from tests.helpers.reference.semantics import compare_state
 
@@ -140,7 +141,8 @@ def _swm_values(name, leaf):
 
 
 def _compare(ours, theirs) -> float:
-    """Largest relative floating error; integer and boolean leaves must match exactly."""
+    """Largest relative floating error; integer and boolean fields must match exactly."""
+    ours, theirs = unfold(ours), unfold(theirs)
     assert set(ours.keys(True, True)) == set(theirs.keys(True, True))
     error = 0.0
     for key in theirs.keys(True, True):
@@ -167,7 +169,7 @@ def _kick(name, env, lanes):
     if name != "DMCFingerTurnHard":
         return
     state = env.get_state()
-    state["qvel"][:, -1] = KICK
+    get_field(state, "qvel")[:, -1] = KICK
     env.set_state(state)
     for ref in lanes.refs:
         physics = ref.envs[0].env.physics
@@ -199,7 +201,7 @@ def leaf_gate(name, leaf, seed=11):
             base = [default.step(action)["qpos"] for action in actions]
         finally:
             default.close()
-    moved = torch.stack([v["qpos"] - b for v, b in zip(varied, base, strict=True)]).abs().amax(dim=(0, 2))
+    moved = torch.stack([get_field(v, "qpos") - b for v, b in zip(varied, base, strict=True)]).abs().amax(dim=(0, 2))
     assert float(moved[0]) == 0.0, "lane 0 runs the registered value on both sides"
     return {
         "values": values.reshape(-1).tolist(),
@@ -215,7 +217,7 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
         leaves = list(env.physics_variation_leaves)
         drawn = env.reset(seed=seed, options={"variation": leaves})
-        values = {leaf: drawn[("physics", *leaf.split("."))].numpy() for leaf in leaves}
+        values = {leaf: get_field(drawn, f"physics.{leaf}").numpy() for leaf in leaves}
         for leaf, value in values.items():
             assert len(set(value.reshape(-1).tolist())) == 3, (leaf, value)
             if not (leaf.startswith("gravity.") or leaf == "floor.rotation_y"):
@@ -255,7 +257,7 @@ def reset_rule_gate(name="DMCCartpoleSwingup", seed=23, steps=10) -> dict:
                 ref.options = None
             ours = env.reset(seed=seed + 1)
             assert _compare(ours, lanes.reset(seed + 1)) == 0
-            assert bool((ours["physics", "gravity", "z"] == -9.81).all())
+            assert bool((get_field(ours, "physics/gravity/z") == -9.81).all())
             registered, _ = _rollout(env, lanes, actions)
 
             env.set_variation({"gravity.z": [configured]})
@@ -269,8 +271,8 @@ def reset_rule_gate(name="DMCCartpoleSwingup", seed=23, steps=10) -> dict:
                 ref.options = None
             ours = env.reset(seed=seed + 3)
             assert _compare(ours, lanes.reset(seed + 3)) == 0
-            assert bool((ours["physics", "gravity", "x"] == 0.0).all())
-            assert bool((ours["physics", "gravity", "z"] == configured).all())
+            assert bool((get_field(ours, "physics/gravity/x") == 0.0).all())
+            assert bool((get_field(ours, "physics/gravity/z") == configured).all())
             configured_error, _ = _rollout(env, lanes, actions)
         finally:
             lanes.close()

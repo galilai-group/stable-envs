@@ -8,6 +8,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, unfold
 from stable_envs.envs.dmcontrol.simulation.first_family import ReacherAdapter
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -23,9 +24,9 @@ def test_reacher_matches_native_for_100_calls_with_variation_and_resets():
         initial = reference.reset(7)
         limit = math.ceil(reference.envs[0]._env._step_limit)
         # Reset in the second control round, reset in the first, and continue.
-        initial["lifecycle", "step_count"][:, 0] = torch.tensor([limit - 1, limit, 6])
-        initial["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False])
-        initial["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0])
+        get_field(initial, "lifecycle/step_count")[:, 0] = torch.tensor([limit - 1, limit, 6])
+        get_field(initial, "lifecycle/reset_next_step")[:, 0] = torch.tensor([False, True, False])
+        get_field(initial, "task/cumulative_reward")[:, 0] = torch.tensor([11.0, 17.0, 23.0])
         reference.set_state(initial)
         env.set_state(initial.cuda())
         assert_same_state(env.get_state().cpu(), initial)
@@ -35,15 +36,21 @@ def test_reacher_matches_native_for_100_calls_with_variation_and_resets():
         for action in np.random.default_rng(43).uniform(-1, 1, (100, 3, 2)):
             expected = reference.step(action)
             actual = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
-            torch.testing.assert_close(actual["state", "qpos"], expected["state", "qpos"], rtol=0, atol=1e-5)
-            torch.testing.assert_close(actual["state", "qvel"], expected["state", "qvel"], rtol=0, atol=3e-5)
+            torch.testing.assert_close(
+                get_field(actual["state"], "qpos"), get_field(expected["state"], "qpos"), rtol=0, atol=1e-5
+            )
+            torch.testing.assert_close(
+                get_field(actual["state"], "qvel"), get_field(expected["state"], "qvel"), rtol=0, atol=3e-5
+            )
             torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-5)
             for key in ("reward", "score", "terminated", "truncated"):
                 assert_same_state(actual[key], expected[key])
             for key in ("rng", "lifecycle", "time", "physics", ("task", "target_pos"), ("task", "cumulative_reward")):
-                assert_same_state(actual["state"][key], expected["state"][key])
-        assert not torch.equal(actual["state", "task", "target_pos"][:2], initial["task", "target_pos"][:2])
-        assert_same_state(actual["state", "task", "target_pos"][2], initial["task", "target_pos"][2])
+                assert_same_state(unfold(actual["state"])[key], unfold(expected["state"])[key])
+        assert not torch.equal(
+            get_field(actual["state"], "task/target_pos")[:2], get_field(initial, "task/target_pos")[:2]
+        )
+        assert_same_state(get_field(actual["state"], "task/target_pos")[2], get_field(initial, "task/target_pos")[2])
 
 
 def test_reacher_target_restore_preserves_sparse_rewards():
@@ -52,13 +59,13 @@ def test_reacher_target_restore_preserves_sparse_rewards():
         se.make("DMCReacher", num_envs=3, device="cuda", simulation_backend="mjwarp", size=32) as env,
     ):
         state = reference.get_state()
-        state["qpos"].zero_()
-        state["qvel"].zero_()
-        state["warmstart"].zero_()
+        get_field(state, "qpos").zero_()
+        get_field(state, "qvel").zero_()
+        get_field(state, "warmstart").zero_()
         targets = torch.tensor([[0.26, 0, 0.01], [0.27, 0, 0.01], [0.24, 0.1, 0.01]], dtype=torch.float64)
         action = torch.zeros(3, 2, dtype=torch.float64)
         for order in ((0, 1, 2), (1, 2, 0)):
-            state["task", "target_pos"][:] = targets[list(order)]
+            get_field(state, "task/target_pos")[:] = targets[list(order)]
             reference.set_state(state)
             env.set_state(state.cuda())
             expected = reference.step(action)
@@ -68,12 +75,12 @@ def test_reacher_target_restore_preserves_sparse_rewards():
             )
             assert_same_state(actual["reward"], expected["reward"])
             torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-6)
-            assert_same_state(actual["state", "task", "target_pos"], state["task", "target_pos"])
+            assert_same_state(get_field(actual["state"], "task/target_pos"), get_field(state, "task/target_pos"))
 
         held = env.get_state()
         invalid = held.clone()
-        invalid["task", "target_pos"][0, 0] += 0.1
-        invalid["task", "target_pos"][2, 0] = float("nan")
+        get_field(invalid, "task/target_pos")[0, 0] += 0.1
+        get_field(invalid, "task/target_pos")[2, 0] = float("nan")
         with pytest.raises(ValueError):
             env.set_state(invalid)
         assert_same_state(env.get_state(), held)

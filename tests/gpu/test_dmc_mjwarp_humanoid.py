@@ -5,6 +5,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, unfold
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
@@ -39,11 +40,11 @@ def test_humanoid_replays_100_public_calls(seed):
         assert_same_state(env.get_state(), checkpoint)
         for call, (action, want) in enumerate(zip(actions[5:], expected, strict=True), start=1):
             actual = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
-            assert_same_state(actual["state", "lifecycle"], want["state", "lifecycle"])
-            assert_same_state(actual["state", "rng"], want["state", "rng"])
+            assert_same_state(unfold(actual["state"])["lifecycle"], unfold(want["state"])["lifecycle"])
+            assert_same_state(unfold(actual["state"])["rng"], unfold(want["state"])["rng"])
             assert float((actual["reward"] - want["reward"]).abs().max()) <= REPLAY_REWARD, f"call {call}"
             if call <= REPLAY_QPOS_CALLS:
-                gap = float((actual["state", "qpos"] - want["state", "qpos"]).abs().max())
+                gap = float((get_field(actual["state"], "qpos") - get_field(want["state"], "qpos")).abs().max())
                 assert gap <= REPLAY_QPOS, f"Humanoid seed {seed}, replay public call {call}: qpos gap {gap:.3g}"
 
 
@@ -61,11 +62,13 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
             limit = int(env._simulator._limits[0])
             # Staggered resets leave two lanes resetting in different rounds. When
             # both reset in round one, only lane 2 continues in that round.
-            initial["lifecycle", "step_count"][:, 0] = torch.tensor(
+            get_field(initial, "lifecycle/step_count")[:, 0] = torch.tensor(
                 [limit if reset_together else limit - 1, limit, 6], device=device
             )
-            initial["lifecycle", "reset_next_step"][:, 0] = torch.tensor([reset_together, True, False], device=device)
-            initial["task", "cumulative_reward"][:, 0] = torch.tensor([11.0, 17.0, 23.0], device=device)
+            get_field(initial, "lifecycle/reset_next_step")[:, 0] = torch.tensor(
+                [reset_together, True, False], device=device
+            )
+            get_field(initial, "task/cumulative_reward")[:, 0] = torch.tensor([11.0, 17.0, 23.0], device=device)
             action = torch.linspace(-0.5, 0.5, 6 * env.action_dim, dtype=torch.float64, device=device).reshape(3, -1)[
                 :, ::2
             ]
@@ -89,15 +92,17 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
         assert_same_state(actual, expected)
         assert_same_state(replay_following, following)
         counts = [1 if reset_together else 0, 1, 8]
-        assert actual["state", "lifecycle", "step_count"].flatten().tolist() == counts
-        assert following["state", "lifecycle", "step_count"].flatten().tolist() == [count + 2 for count in counts]
-        assert_same_state(actual["state", "rng"][2], initial["rng"][2])
+        assert get_field(actual["state"], "lifecycle/step_count").flatten().tolist() == counts
+        assert get_field(following["state"], "lifecycle/step_count").flatten().tolist() == [
+            count + 2 for count in counts
+        ]
+        assert_same_state(unfold(actual["state"])["rng"][2], unfold(initial)["rng"][2])
 
         # Keep the same batch width but let all lanes advance persistently.
         # The third lane must not depend on the other lanes' reset decisions.
         ordinary = initial.clone()
-        ordinary["lifecycle", "step_count"][:2] = 0
-        ordinary["lifecycle", "reset_next_step"][:2] = False
+        get_field(ordinary, "lifecycle/step_count")[:2] = 0
+        get_field(ordinary, "lifecycle/reset_next_step")[:2] = False
         env.set_state(ordinary)
         persistent = env.step(action, states=None, frames=None)
         persistent_following = env.step(action, states=None, frames=None)

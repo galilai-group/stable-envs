@@ -114,7 +114,7 @@ def test_dmc_state_draws_its_own_appearance_and_rows_the_current_variation():
     with se.make("DMCBallInCupCatch", num_envs=2, device="cpu") as env:
         env.set_variation({"ball.size": 0.04})
         state = env.reset(seed=0)
-        size = state[state_key("ball.size")].to(torch.float32)
+        size = se.get_field(state, "/".join(state_key("ball.size"))).to(torch.float32)
         assert torch.allclose(size, torch.full_like(size, 0.04))
         env.set_variation({"ball.size": 0.015})
         env.reset(seed=0)
@@ -122,5 +122,5 @@ def test_dmc_state_draws_its_own_appearance_and_rows_the_current_variation():
         own = env.render(state)
         current = env.render(rows)
         assert not torch.equal(own, current)
-        drawn = {p: state[state_key(p)].to(torch.float32) for p in env.FRAME_PHYSICS}
+        drawn = {p: se.get_field(state, "/".join(state_key(p))).to(torch.float32) for p in env.FRAME_PHYSICS}
         assert torch.equal(own, env.render(rows, variation=drawn))

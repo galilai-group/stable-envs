@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, set_field, unfold
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCContinuationReference
 from tests.helpers.reference.dmc_semantics import compare_models
 from tests.helpers.reference.saved import SWM_PIN
@@ -36,13 +37,13 @@ POSITIVE_SPEED = {"cheetah": 15.0, "hopper": 3.0, "walker": 1.0}
 
 def _positive_state(domain, state):
     state = state.clone()
-    state["qpos"].zero_()
-    state["qvel"].zero_()
-    state["qvel"][:, 0] = POSITIVE_SPEED[domain]
-    state["time"].zero_()
-    state["lifecycle", "step_count"].zero_()
-    state["lifecycle", "reset_next_step"].zero_()
-    state["task", "cumulative_reward"].zero_()
+    get_field(state, "qpos").zero_()
+    get_field(state, "qvel").zero_()
+    get_field(state, "qvel")[:, 0] = POSITIVE_SPEED[domain]
+    get_field(state, "time").zero_()
+    get_field(state, "lifecycle/step_count").zero_()
+    get_field(state, "lifecycle/reset_next_step").zero_()
+    get_field(state, "task/cumulative_reward").zero_()
     return state
 
 
@@ -71,7 +72,7 @@ def _warmstart_experiment(domain, env, reference):
     for action in -actions[prefix_steps : prefix_steps + 9]:
         env.step(action, states=None, frames=None).exclude("valid")
     omitted = saved.clone()
-    omitted["warmstart"] = env.get_state()["warmstart"]
+    set_field(omitted, "warmstart", get_field(env.get_state(), "warmstart"))
     env.set_state(omitted)
     continuation = actions[prefix_steps : prefix_steps + 8]
     bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
@@ -159,8 +160,8 @@ def run_gate(device="cpu"):
                     for seed in (0, 17, 42):
                         check_reset_matches_reference(env, ref, seed=seed)
                         saved, live = env.get_state(), env.get_state()
-                        saved["qpos"].add_(1)
-                        saved["rng", "keys"].add_(1)
+                        get_field(saved, "qpos").add_(1)
+                        get_field(saved, "rng/keys").add_(1)
                         compare_state(env.get_state(), live)
 
                         actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, ref.action_dim))
@@ -233,9 +234,9 @@ def run_gate(device="cpu"):
                     boundary_actions = np.zeros((public_at_last + 2, batch, ref.action_dim))
                     check_step_matches_reference(env, ref, boundary_actions[: public_at_last - 1])
                     near_limit = env.get_state()
-                    rng_before = near_limit.select("rng").clone()
+                    rng_before = unfold(near_limit).select("rng").clone()
                     check_step_matches_reference(env, ref, boundary_actions[public_at_last - 1 :])
-                    after = env.get_state()
+                    after = unfold(env.get_state())
                     assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, boundary_actions[:4])

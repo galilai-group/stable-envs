@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, unfold
 from tests.helpers.reference.dmc_semantics import DMCReference as DMCFirstFamilyReference
 from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
@@ -33,13 +34,13 @@ CASES = {
 
 def _positive_reward_state(state):
     state = state.clone()
-    state["qpos"].zero_()
-    state["qvel"].zero_()
-    state["time"].zero_()
-    state["warmstart"].zero_()
-    state["lifecycle", "step_count"].zero_()
-    state["lifecycle", "reset_next_step"].zero_()
-    state["task", "cumulative_reward"].zero_()
+    get_field(state, "qpos").zero_()
+    get_field(state, "qvel").zero_()
+    get_field(state, "time").zero_()
+    get_field(state, "warmstart").zero_()
+    get_field(state, "lifecycle/step_count").zero_()
+    get_field(state, "lifecycle/reset_next_step").zero_()
+    get_field(state, "task/cumulative_reward").zero_()
     return state
 
 
@@ -75,8 +76,8 @@ def run_gate(device="cpu"):
                         check_reset_matches_reference(env, ref, seed=seed)
                         saved = env.get_state()
                         live = env.get_state()
-                        saved["qpos"].add_(1)
-                        saved["rng", "keys"].add_(1)
+                        get_field(saved, "qpos").add_(1)
+                        get_field(saved, "rng/keys").add_(1)
                         compare_state(env.get_state(), live)
                         actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, 1))
                         check_state_roundtrip(env, actions=actions[:4])
@@ -141,9 +142,9 @@ def run_gate(device="cpu"):
                     actions = np.zeros((public_at_last + 2, batch, 1))
                     check_step_matches_reference(env, ref, actions[: public_at_last - 1])
                     near_limit = env.get_state()
-                    rng_before = near_limit.select("rng").clone()
+                    rng_before = unfold(near_limit).select("rng").clone()
                     check_step_matches_reference(env, ref, actions[public_at_last - 1 :])
-                    after = env.get_state()
+                    after = unfold(env.get_state())
                     assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, actions[:4])
