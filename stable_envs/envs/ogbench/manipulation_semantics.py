@@ -179,7 +179,7 @@ class ManipulationSemantics:
             return None
         self._check_open("step")
         self._rows_installed = False
-        result, self._own_state = move(step(actions))
+        result, self._own_state = move(step(actions, state=getattr(move, "needs_state", True)))
         return result
 
     def _step_pipeline(self) -> StepPipeline | None:

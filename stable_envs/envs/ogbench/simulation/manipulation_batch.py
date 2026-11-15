@@ -482,16 +482,19 @@ class OGBManipulationBatchAdapter:
         # The State and the outputs move to the device in one copy.
         return result if self.device.type == "cpu" else to_device(result, self.device)
 
-    def step_leaves(self, actions):
+    def step_leaves(self, actions, *, state=True):
         """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
 
-        The arrays may be live buffers: the caller copies them before the next call.
+        With ``state`` False, the State is left out. The arrays may be live buffers: the caller copies them before
+        the next call.
         """
         self._check_open()
         actions, _ = self.check_step(actions, None)
         self._advance(actions, self._all)
         self._stale = True
         outputs = {(key,): value for key, value in self._outputs.items()}
+        if not state:
+            return outputs
         return {**outputs, **self._layout.host_leaves(self._state_values(), ("state",))}
 
     def _advance(self, actions, ids):
