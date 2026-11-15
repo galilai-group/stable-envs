@@ -371,6 +371,9 @@ class Env:
     #: ``(saved, loaded)`` simulation backend pairs whose States don't resume within tolerance on the other backend.
     #: ``set_state`` doesn't refuse them yet (issue #63); the cross-backend State check expects them to fail.
     state_backend_mismatches: frozenset[tuple[str, str]] = frozenset()
+    #: Most rows that ``FrameLoader`` draws in one ``render`` call: a batch size at which the family's render rate
+    #: no longer grows. Free device memory can lower it.
+    render_ahead_rows: int = 1024
     #: The ``select_backend`` path of this environment's physics backend choice; ``stable-envs tune`` times only it.
     simulation_backend_path: str | None = None
     reference_id: str | None = None

@@ -108,7 +108,27 @@ def test_chunk_rows_fits_memory_and_stays_a_multiple_of_the_batch(monkeypatch):
     monkeypatch.setattr(frames_mod, "_free_bytes", lambda device: 0)
     assert frames_mod.chunk_rows(env, 8, 1000) == 8
     monkeypatch.setattr(frames_mod, "_free_bytes", lambda device: 1 << 50)
+    monkeypatch.setattr(env, "render_ahead_rows", 10**9)
     assert frames_mod.chunk_rows(env, 1, 10**9) == frames_mod.MAX_CHUNK_BYTES // frame
+
+
+def test_chunk_rows_stops_at_the_family_render_ahead_rows(monkeypatch):
+    env = _env()
+    monkeypatch.setattr(frames_mod, "_free_bytes", lambda device: 1 << 50)
+    monkeypatch.setattr(env, "render_ahead_rows", 100)
+    assert frames_mod.chunk_rows(env, 8, 1000) == 96
+    assert frames_mod.chunk_rows(env, 8, 90) == 90
+    assert frames_mod.chunk_rows(env, 256, 1000) == 256
+
+
+def test_a_chunk_of_every_row_draws_the_states_unsliced():
+    env = _env()
+    states = torch.as_tensor(id_states(10))
+    loader = snv.FrameLoader(env, states, 2, chunk_size=10)
+    seen = []
+    env.render = lambda x=None, **kw: seen.append(x) or TinyEnv.render(env, x, **kw)
+    list(loader)
+    assert len(seen) == 1 and seen[0] is states
 
 
 def test_chunk_rows_reads_size_and_supersample():

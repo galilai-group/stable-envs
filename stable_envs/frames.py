@@ -2,7 +2,8 @@
 
 The chunk size comes from memory alone, never from timing: two chunks of frames and renderer working memory
 per row must fit in a quarter of the free memory of the device, and one chunk of frames stays under
-``MAX_CHUNK_BYTES`` so that every renderer can index it with 32-bit offsets.
+``MAX_CHUNK_BYTES`` so that every renderer can index it with 32-bit offsets. A chunk holds at most the family's
+``Env.render_ahead_rows`` and never fewer rows than a batch.
 """
 
 from __future__ import annotations
@@ -56,9 +57,9 @@ def _free_bytes(device: torch.device) -> int:
 
 
 def chunk_rows(env: Env, batch_size: int, total: int, size: int | None = None, supersample: int | None = None) -> int:
-    """Rows of one render-ahead chunk: ``total`` when it fits in memory, else a multiple of ``batch_size``.
+    """Rows of one render-ahead chunk: ``total`` when it fits, else a multiple of ``batch_size`` and at least one batch.
 
-    A row needs two frames (the chunk that the caller holds and the next one) and renderer working memory: a
+    A chunk holds at most ``env.render_ahead_rows`` rows. A row needs two frames (the chunk that the caller holds and the next one) and renderer working memory: a
     float32 RGBA image at the supersampled size, and at least ``MIN_ROW_WORK``.
     """
     b = max(1, int(batch_size))
@@ -69,6 +70,7 @@ def chunk_rows(env: Env, batch_size: int, total: int, size: int | None = None, s
     frame = int(h) * int(w) * 3
     per_row = 2 * frame + max(16 * int(h) * int(w) * ss * ss, MIN_ROW_WORK)
     rows = min(_free_bytes(env.device) // MEMORY_SHARE // per_row, MAX_CHUNK_BYTES // frame)
+    rows = min(rows, int(env.render_ahead_rows))
     return int(total) if rows >= total else max(b, rows // b * b)
 
 
@@ -165,6 +167,8 @@ class FrameLoader:
         return style is None or bool(getattr(style, "shared", True))
 
     def _take(self, start: int, stop: int):
+        if self.indices is None and start == 0 and stop == self._count:
+            return self.states.to(self.env.device)
         if self.indices is None:
             return self.states[start:stop].to(self.env.device)
         return self.states[self.indices[start:stop].to(self.states.device)].to(self.env.device)
