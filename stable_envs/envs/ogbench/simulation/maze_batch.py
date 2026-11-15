@@ -487,7 +487,20 @@ class OGBMazeBatchAdapter(_MazeLanes):
         }
 
     def _export(self, values, name):
-        """A TensorDict of ``values`` on the env device: one packed copy per dtype; the layout is built once."""
+        """A TensorDict that owns copies of ``values``, on the env device.
+
+        On CPU each leaf is copied on its own, which costs less than packing at these sizes. On an accelerator the
+        values are packed into one buffer per dtype and move in one copy.
+        """
+        if self.device.type == "cpu":
+            tree: dict = {}
+            for key, value in values.items():
+                *path, leaf = (key,) if isinstance(key, str) else key
+                node = tree
+                for part in path:
+                    node = node.setdefault(part, {})
+                node[leaf] = torch.from_numpy(np.array(value))
+            return build_tensordict(tree, [self.num_envs], self.device)
         layout = self._layouts.get(name)
         if layout is None:
             dtype = lambda value: torch.from_numpy(np.asarray(value)[:0]).dtype  # noqa: E731
