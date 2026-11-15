@@ -248,3 +248,41 @@ def test_cpu_frames_and_states_do_not_depend_on_the_step_thread_counts():
     other_frames, other_states = rollout(False)
     assert torch.equal(frames, other_frames)
     assert (states == other_states).all()
+
+
+def test_host_leaves_at_buffer_width_keep_their_shapes_between_steps():
+    """A CUDA host step moves leaves whose shapes don't change, so the transfer plan for them is reused."""
+    with closing(PushTNumbaAdapter(2, "cpu", 0, config=dict(resolution=32))) as env:
+        env.reset(9)
+        action = np.full((2, 2), 0.1, np.float32)
+        shapes = None
+        for _ in range(5):
+            leaves = env.step_leaves(action, capacity=True)
+            now = {key: (value.shape, value.dtype) for key, value in leaves.items()}
+            assert shapes is None or now == shapes
+            shapes = now
+        assert env.history_width() == 5
+        assert leaves["state", "history", "actions"].shape[1] >= 5
+        assert not leaves["state", "history", "valid"][:, 5:].any()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_cuda_host_steps_reuse_the_transfer_plan():
+    from stable_envs._core import tensordicts
+
+    if not hasattr(tensordicts, "pack_to_device"):
+        pytest.skip("this tree moves host steps without pack_to_device")
+    with PushT(num_envs=2, device="cuda", size=32, simulation_backend="numba") as env:
+        env.reset(seed=0)
+        action = torch.full((2, 2), 0.1, device="cuda")
+        state = env.get_state()
+        for _ in range(2):
+            out = env.step(action, frames=None)
+        held = len(tensordicts._transfers)
+        for _ in range(5):
+            out = env.step(action, frames=None)
+        assert len(tensordicts._transfers) == held
+        width = get_field(out["state"], "history/lengths").max()
+        assert get_field(out["state"], "history/actions").shape[1] == int(width) == 7
+        assert get_field(out["states"], "history/actions").shape[2] == 7
+        env.set_state(state)

@@ -271,13 +271,30 @@ class PushT(Env):
         return self._simulator.step(actions, active=active)
 
     def _host_step(self, actions, move):
-        """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere."""
-        step = getattr(getattr(self._simulator, "host_adapter", self._simulator), "step_leaves", None)
+        """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.
+
+        For an accelerator the action history moves at the width of its buffers, so the leaf shapes, and the
+        transfer plan that ``move`` keeps for them, stay the same from step to step; the result is cut to the
+        history width without a copy.
+        """
+        host = getattr(self._simulator, "host_adapter", self._simulator)
+        step = getattr(host, "step_leaves", None)
         if step is None:
             return None
         self._check_open("step")
-        leaves = step(actions.cpu() if torch.is_tensor(actions) else actions)
-        return None if leaves is None else move(leaves)[0]
+        moved = self.device.type != "cpu"
+        leaves = step(actions.cpu() if torch.is_tensor(actions) else actions, capacity=moved)
+        if leaves is None:
+            return None
+        result = move(leaves)[0]
+        if moved:
+            width = host.history_width()
+            for node, axes in (("state", (slice(None),)), ("states", (slice(None), slice(None)))):
+                history = result.get((node, "history"), None)
+                if history is not None:
+                    for name in ("actions", "dtypes", "valid"):
+                        history.set(name, history.get(name)[(*axes, slice(0, width))])
+        return result
 
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._simulator.step(actions, active=active, capture_state=False)

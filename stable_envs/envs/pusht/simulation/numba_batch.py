@@ -141,7 +141,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         kept = {name: np.array(groups[name]) for name in self._groups.kept}
         return self._host_state({key: groups[key] for key in self._moving}, kept)
 
-    def _host_groups(self):
+    def _host_groups(self, history=None):
         """``{leaf key: array}`` of the State: new arrays of the step-changed groups, and views of the others.
 
         Each step-changed group is gathered from ``(num_envs, -1)`` views of its fields, cut once per reset.
@@ -157,8 +157,8 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             moving = {key: np.concatenate(views, 1) for key, views in plan.items()}
         else:
             moving = self._groups.pack(self._state_fields(width), self._moving)
-        history = self._history_fields(width)
-        return {**self._static, **moving, **{name: history[name] for name in self._groups.kept}}
+        kept = self._history_fields(width if history is None else history)
+        return {**self._static, **moving, **{name: kept[name] for name in self._groups.kept}}
 
     def _export_plan(self, fields):
         """``{group key: [(num_envs, -1) view of each field]}`` of the step-changed groups; empty if a view copies."""
@@ -235,10 +235,12 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             outputs["state"] = self._export(self.export_device or self._state_device)
         return TensorDict._new_unsafe(outputs, batch_size=torch.Size([n]), device=device)
 
-    def step_leaves(self, actions):
+    def step_leaves(self, actions, capacity=False):
         """Step every lane; the outputs and the State as host arrays by key path, or None off the CPU.
 
-        The arrays may be live buffers: the caller copies them before the next call.
+        The arrays may be live buffers: the caller copies them before the next call. With ``capacity``, the action
+        history has the width of its buffers, which changes only when they grow, so the leaf shapes stay the same
+        from step to step; the caller cuts it to ``history_width()``.
         """
         if self.device.type != "cpu":
             return None
@@ -251,8 +253,13 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             ("terminated",): flags[1],
             ("truncated",): flags[2],
         }
-        leaves.update((("state", *key.split("/")), value) for key, value in self._host_groups().items())
+        width = self._actions.shape[1] if capacity else None
+        leaves.update((("state", *key.split("/")), value) for key, value in self._host_groups(width).items())
         return leaves
+
+    def history_width(self):
+        """The width of the exported action history: the longest lane's history."""
+        return self._history_width()
 
     def _advance_host(self, actions, active):
         """Step the lanes on the host; the reward, then success, terminated and truncated, in one byte buffer."""
