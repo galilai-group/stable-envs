@@ -3,7 +3,8 @@
 A State with one leaf per named field costs one tensor and one TensorDict node per field on every export, slice,
 copy and device move. With a ``StateSchema``, a State has one ``(*batch, size)`` leaf per group. A group holds
 fields of one dtype side by side, and a field is a slice of its group. A field whose shape changes from one State
-to the next, such as an action history, is a "kept" field: it stays a leaf of its own.
+to the next, such as an action history, is a "kept" field: it stays a leaf of its own, and ``set`` can give it a
+new width.
 
 The schema is the only code that knows the layout. Everything else reads and writes fields by name, with
 ``StateSchema.get`` / ``StateSchema.set``, or with ``get_field`` / ``set_field`` when it has only the State.
@@ -378,6 +379,9 @@ class StateSchema:
     def set(self, state: TensorDictBase, name: str, value) -> None:
         """Write ``value`` into the field ``name`` of ``state``, broadcast to the field's shape.
 
+        A kept field whose ``value`` has as many dims as the field is replaced by a copy of ``value``, so its
+        non-batch sizes can change, as when an action history grows. Its batch sizes must stay the same.
+
         Args:
             state: A folded State.
             name: Field name, with parts joined by ``/`` or ``.``.
@@ -386,9 +390,22 @@ class StateSchema:
         Raises:
             KeyError: If the field or its group is missing.
             TypeError: If ``value`` doesn't cast to the field's dtype without loss.
-            ValueError: If ``value`` doesn't broadcast to the field's shape.
+            ValueError: If ``value`` doesn't broadcast to the field's shape, or a kept field's new value changes
+                the batch sizes.
         """
         field = self.get(state, name)
+        name = self.name_of(name)
+        if name in self.kept:
+            value = _cast(f"{self.name} State field {name!r}", value, field.dtype, field.device)
+            if value.ndim == field.ndim:
+                rank = len(state.batch_size)
+                if value.shape[:rank] != field.shape[:rank]:
+                    raise ValueError(
+                        f"{self.name} State field {name!r} has batch {tuple(field.shape[:rank])}; "
+                        f"got {tuple(value.shape)}"
+                    )
+                state.set(_path(name), value.clone())
+                return
         field.copy_(self._coerce(name, value, field.dtype, field.device, field.shape))
 
     def _coerce(self, name, value, dtype, device, shape) -> torch.Tensor:
@@ -586,6 +603,8 @@ def get_field(state: TensorDictBase, name: str) -> torch.Tensor:
 def set_field(state: TensorDictBase, name: str, value) -> None:
     """Write ``value`` into the field ``name`` of any State, broadcast to the field's shape.
 
+    On a folded State, a kept field can take a new non-batch shape, as ``StateSchema.set`` says.
+
     Args:
         state: A State, with any batch shape.
         name: Field name, as for ``get_field``.
@@ -594,7 +613,8 @@ def set_field(state: TensorDictBase, name: str, value) -> None:
     Raises:
         KeyError: If ``state`` has no field ``name``.
         TypeError: If ``value`` doesn't cast to the field's dtype without loss.
-        ValueError: If ``value`` doesn't broadcast to the field's shape.
+        ValueError: If ``value`` doesn't broadcast to the field's shape, or a kept field's new value changes the
+            batch sizes.
     """
     schema = schema_of(state)
     if schema is not None:
@@ -613,16 +633,17 @@ def unfold(state: TensorDictBase) -> TensorDictBase:
 def raw_field_access(paths: Iterable[str | Path], sections: Iterable[str]) -> list[str]:
     """``"path:line"`` of each line in ``paths`` that indexes a State leaf by key under one of ``sections``.
 
-    It finds ``state["section", ...]``, ``state["section/..."]`` and ``.get``, ``.set``, ``.select``, ``.exclude``
-    or ``.pop`` calls with such a key. A line that also calls ``unfold(`` reads a State with one leaf per field and
-    is allowed. The schema module itself is never reported.
+    It finds ``state["section", ...]``, ``state["section"]`` and ``.get``, ``.set``, ``.select``, ``.exclude`` or
+    ``.pop`` calls with such a key. A string key that joins names with ``/``, such as ``row["section/field"]``, reads
+    a mapping of named fields, not a State, so it isn't reported. A line that also calls ``unfold(`` reads a State
+    with one leaf per field and is allowed. The schema module itself is never reported.
 
     Args:
         paths: Python files to scan.
         sections: Top-level State keys of an adopted family, such as ``("current", "history")``.
     """
     names = "|".join(re.escape(s) for s in sections)
-    pattern = re.compile(rf"""(\[|\.(get|set|select|exclude|pop)\(\(?)\s*(["'])({names})(\3|/)""")
+    pattern = re.compile(rf"""(\[|\.(get|set|select|exclude|pop)\(\(?)\s*(["'])({names})\3""")
     found = []
     for path in map(Path, paths):
         if path.resolve() == Path(__file__).resolve():
