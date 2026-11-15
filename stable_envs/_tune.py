@@ -112,6 +112,15 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
         scope = {"paths": (own,)} if own else {"prefixes": tuning.paths_of(type(env))}
         for path, pick in backends.calibrate(env.num_envs, env.device, write=write, **scope).items():
             say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
+    if (not knobs or backends.RENDER_KNOB in knobs) and env.render_rungs and env.has_dynamics:
+        # A first draw registers the render paths of the class; then both renderers are timed.
+        env.render()
+        prefixes = tuning.paths_of(type(env))
+        render_paths = backends.calibrate(
+            env.num_envs, env.device, prefixes=prefixes, write=write, knob=backends.RENDER_KNOB
+        )
+        for path, pick in render_paths.items():
+            say(f"  {path}: {env.num_envs} frames draw with the {pick} renderer")
     chosen = [k for k in knobs_for(env) if not knobs or k.name in knobs]
     if not chosen:
         say(f"{type(env).__name__} reads no other tunable knob on {env.device.type}.")
