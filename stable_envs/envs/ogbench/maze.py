@@ -1400,8 +1400,12 @@ class MazeSemantics:
         small batches on ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the measured
         ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
+        # Select before the scene and its OpenGL contexts exist, so a refused backend leaves nothing to release.
+        num_envs = kwargs.get("num_envs", args[0] if args else 1)
+        device = Env.resolve_device(kwargs.get("device", args[3] if len(args) > 3 else "cuda"))
+        backend = maze_backend(int(num_envs), device, self.LOCO, simulation_backend, self.MAZE)
         super().__init__(*args, **kwargs)
-        self.simulation_backend = maze_backend(self.B, self.device, self.LOCO, simulation_backend, self.MAZE)
+        self.simulation_backend = backend
         self._simulator = make_maze_adapter(
             self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )

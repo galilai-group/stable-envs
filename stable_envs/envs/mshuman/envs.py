@@ -78,6 +78,8 @@ class MSHumanLocomotion(Env):
         """
         if simulation_backend not in (None, "auto", "native", "mjwarp"):
             raise ValueError("simulation_backend must be 'auto', 'native' or 'mjwarp'")
+        if simulation_backend == "mjwarp" and torch.device(Env.resolve_device(kwargs.get("device"))).type != "cuda":
+            raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
         super().__init__(num_envs, **kwargs)
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
