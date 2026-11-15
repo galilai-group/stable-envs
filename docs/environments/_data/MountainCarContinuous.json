@@ -22,38 +22,10 @@
  },
  "state": [
   {
-   "key": "position",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "velocity",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "task",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["bool"]
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 4,
-   "numel": 10,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "physics",
-   "leaves": 2,
-   "numel": 2,
-   "dtypes": ["float64"]
+   "key": "mountain_car_continuous",
+   "leaves": 3,
+   "numel": 16,
+   "dtypes": ["bool", "float64", "int64"]
   }
  ],
  "variation": [

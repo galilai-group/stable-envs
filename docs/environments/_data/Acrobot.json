@@ -23,42 +23,10 @@
  },
  "state": [
   {
-   "key": "theta1",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "theta2",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "dtheta1",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "dtheta2",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 4,
-   "numel": 10,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "physics",
-   "leaves": 7,
-   "numel": 7,
-   "dtypes": ["float64"]
+   "key": "acrobot",
+   "leaves": 2,
+   "numel": 22,
+   "dtypes": ["float64", "int64"]
   }
  ],
  "variation": [
