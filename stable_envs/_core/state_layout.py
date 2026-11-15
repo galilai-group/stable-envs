@@ -144,16 +144,30 @@ class StateLayout:
                 if dtype not in self._static:
                     raise RuntimeError("StateLayout.load_static must run before export")
                 sources.insert(0, self._static[dtype])
-            flat = self._pack(kind, sources)
-            flats.append(torch.from_numpy(flat) if isinstance(flat, np.ndarray) else flat)
-        if device.type != "cpu" and any(flat.device.type == "cpu" for flat in flats):
-            flats = self._to_device(flats, device)
+            flats.append(self._pack(kind, sources))
+        if device.type != "cpu":
+            flats = [torch.from_numpy(flat) if isinstance(flat, np.ndarray) else flat for flat in flats]
+            if any(flat.device.type == "cpu" for flat in flats):
+                flats = self._to_device(flats, device)
         leaves: list = [None] * len(self.keys)
         for (*_, runs), sizes, flat in zip(self.groups, self._sizes, flats, strict=True):
             widths = None
             if sizes is None:
                 widths = {i[0]: tuple(values[self.keys[i[0]]].shape) for i, shape in runs if shape is None}
                 sizes = [len(i) * math.prod(shape) if shape else math.prod(widths[i[0]]) for i, shape in runs]
+            if isinstance(flat, np.ndarray):
+                # On the host, NumPy slices and from_numpy cost less per leaf than tensor views.
+                start = 0
+                for (indices, shape), size in zip(runs, sizes, strict=True):
+                    block = flat[start : start + size]
+                    start += size
+                    if shape is None or len(indices) == 1:
+                        leaves[indices[0]] = torch.from_numpy(block.reshape(shape or widths[indices[0]]))
+                    else:
+                        rows = torch.from_numpy(block.reshape(len(indices), *shape)).unbind(0)
+                        for i, leaf in zip(indices, rows, strict=True):
+                            leaves[i] = leaf
+                continue
             for (indices, shape), block in zip(runs, flat.split_with_sizes(sizes), strict=True):
                 if shape is None:
                     leaves[indices[0]] = block.view(widths[indices[0]])

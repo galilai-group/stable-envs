@@ -12,6 +12,7 @@ import threading
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from .tensordicts import build_tensordict, exclude_leaves, stack_leaves, to_device
 
@@ -209,9 +210,13 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
     live_state = result.get("state", None) if needs_state else None
     if needs_state and live_state is None:
         live_state = env.get_state()
-    outputs = exclude_leaves(result, ("state", "frame"), clone=not getattr(env, "_step_outputs_owned", False))
-    if sequence:
-        outputs = stack_leaves([outputs])
+    if getattr(env, "_step_outputs_owned", False) and type(result) is TensorDict and not sequence:
+        # Owned outputs pass through as they are: their nodes need no rebuild.
+        outputs = {k: v for k, v in result._tensordict.items() if k != "state" and k != "frame"}
+    else:
+        outputs = exclude_leaves(result, ("state", "frame"), clone=not getattr(env, "_step_outputs_owned", False))
+        if sequence:
+            outputs = stack_leaves([outputs])
     count = 1 + (state_indices is not None)
     flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=env.device).unbind(0)
     out = {"state": live_state} if final_state else {}
