@@ -41,7 +41,7 @@ def test_fresh_env_redraws_stored_states_within_the_driver_variation(name):
 
 #: Largest mean squared 0-255 difference between CUDA frames drawn by the OpenGL workers and by one process. Each
 #: worker has its own context, so only the driver variation above remains. RTX A5000 and A5500 hosts measured below
-#: 1e-4 for Cube and 1.3e-3 for Scene at 8 states.
+#: 1e-4 for Cube and 1.3e-3 for Scene at 8 states in two workers.
 WORKER_MSE = 2e-3
 
 
@@ -55,7 +55,7 @@ def test_worker_frames_stay_within_the_measured_mse_of_one_process(name):
         pytest.skip("CUDA OpenGL rendering requires a GPU")
     env = se.make(name, num_envs=1, device="cuda")
     try:
-        rows = C.sample_render_rows(env, 8, rng=np.random.default_rng(20261115))
+        rows = C.sample_render_rows(env, 16, rng=np.random.default_rng(20261115))
         if pool.workers(len(rows), "cuda") < 2:
             pytest.skip("OpenGL workers need Linux and at least two CPUs")
         workers = env._render(rows).cpu().numpy().astype(np.float64)

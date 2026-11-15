@@ -1,7 +1,7 @@
-"""One Triton kernel for ``_shade(...) * tex * 255`` of DM Control frames, equal to the Torch ops bit for bit.
+"""One Triton kernel for ``_shade(...) * tex * 255`` of DM Control frames.
 
 Each Torch op rounds to float32, so the kernel does the same ops in the same order, unfused, with ``div_rn`` and
-``sqrt_rn``. A light configuration it does not cover returns None and the caller uses the Torch ops.
+``sqrt_rn``. A few frame values still differ from the Torch ops by 1 level; tests/gpu/test_fast_paths.py bounds them. A light configuration it does not cover returns None and the caller uses the Torch ops.
 """
 
 from __future__ import annotations

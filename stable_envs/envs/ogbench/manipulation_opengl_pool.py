@@ -173,8 +173,8 @@ def workers(batch, device_type="cpu"):
     if device_type == "cpu":
         # Single-threaded software workers beat one multi-threaded context once each worker has a state.
         return count if count >= 2 and batch >= count else 0
-    # One NVIDIA context draws its frames one after another; two or more contexts overlap them from two states up.
-    count = min(count, batch)
+    # NVIDIA frames are fast: below about eight states per worker, inter-process traffic outweighs the parallel draws.
+    count = min(count, batch // 8)
     return count if count >= 2 else 0
 
 

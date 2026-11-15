@@ -65,7 +65,7 @@ class _FrameGraph:
             draw(*self.inputs)  # compiles kernels and fills the scene caches outside the capture
         torch.cuda.current_stream().wait_stream(side)
         self.graph = torch.cuda.CUDAGraph()
-        with torch.cuda.graph(self.graph):
+        with torch.cuda.graph(self.graph, capture_error_mode="thread_local"):
             self.output = draw(*self.inputs)
 
     def __call__(self, *inputs):
