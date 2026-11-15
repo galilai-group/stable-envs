@@ -95,18 +95,21 @@ def _mocap(t, n=B):
 
 
 def test_routing_follows_device_and_switch_point():
-    assert mujoco_backend("test-sim", 1, "cpu") == "native"
-    assert mujoco_backend("test-sim", 4096, "cpu", "auto") == "native"
+    assert mujoco_backend("test-sim", 1, "cpu", cuda_min_envs=8) == "native"
+    assert mujoco_backend("test-sim", 7, "cuda", cuda_min_envs=8) == "native"
+    assert mujoco_backend("test-sim", 8, "cuda", cuda_min_envs=8) == "mjwarp"
+    assert mujoco_backend("test-sim", 1, "cuda", cuda_min_envs=None) == "mjwarp"
+    assert mujoco_backend("test-sim", 4096, "cpu", "auto", cuda_min_envs=8) == "native"
     with tuning.override(large_backend_min_envs=256):
-        assert mujoco_backend("test-sim", 255, "cuda", "auto") == "native"
-        assert mujoco_backend("test-sim", 256, "cuda", None) == "mjwarp"
-        assert mujoco_backend("test-sim", 4096, "cuda", "native") == "native"
-        assert mujoco_backend("test-sim", 1, "cuda", "mjwarp") == "mjwarp"
+        assert mujoco_backend("test-sim", 255, "cuda", "auto", cuda_min_envs=8) == "native"
+        assert mujoco_backend("test-sim", 256, "cuda", None, cuda_min_envs=8) == "mjwarp"
+        assert mujoco_backend("test-sim", 4096, "cuda", "native", cuda_min_envs=8) == "native"
+        assert mujoco_backend("test-sim", 1, "cuda", "mjwarp", cuda_min_envs=8) == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
-        mujoco_backend("test-sim", 1, "cpu", "mjwarp")
+        mujoco_backend("test-sim", 1, "cpu", "mjwarp", cuda_min_envs=8)
     for bad in ("mjx", "default"):
         with pytest.raises(ValueError, match="simulation_backend must be"):
-            mujoco_backend("test-sim", 1, "cpu", bad)
+            mujoco_backend("test-sim", 1, "cpu", bad, cuda_min_envs=8)
 
 
 def test_native_threads_follow_the_cpu_limit(monkeypatch):
@@ -311,7 +314,7 @@ def test_mjwarp_excluded_pairs_make_no_contacts():
 def test_make_backend_builds_the_routed_backend():
     for switch, kind in ((8, NativeBatch), (4, WarpBatch)):
         with tuning.override(large_backend_min_envs=switch):
-            backend = mujoco_backend("test-sim", 4, "cuda")
+            backend = mujoco_backend("test-sim", 4, "cuda", cuda_min_envs=8)
         with make_backend(backend, _model(), 4, "cuda") as batch:
             assert isinstance(batch, kind)
 
