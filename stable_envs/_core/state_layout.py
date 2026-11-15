@@ -9,6 +9,7 @@ them once, and each export copies them with one copy per dtype. ``columns`` read
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Mapping, Sequence
 
@@ -36,6 +37,7 @@ _CPU = torch.device("cpu")
 _ALIGN = 16
 
 
+@functools.cache
 def _numpy_dtype(dtype: torch.dtype) -> np.dtype:
     return torch.empty((), dtype=dtype).numpy().dtype
 
@@ -61,6 +63,7 @@ class StateLayout:
         self.shapes = {key: None if shape is None else (self.num_envs, *shape) for key, shape, _ in leaves}
         self.dtypes = {key: dtype for key, _, dtype in leaves}
         self._kinds = {key: _numpy_dtype(dtype) for key, dtype in self.dtypes.items()}
+        self._host_plans: dict[tuple[str, ...], list] = {}
         groups: dict[torch.dtype, tuple[list[int], list[int]]] = {}
         for index, (key, _, dtype) in enumerate(leaves):
             groups.setdefault(dtype, ([], []))[key not in static].append(index)
@@ -201,11 +204,21 @@ class StateLayout:
         """
         if any(fixed for _, _, fixed, _, _ in self.groups):
             raise RuntimeError("StateLayout.host_leaves needs a layout without static leaves")
+        plan = self._host_plans.get(prefix)
+        if plan is None:
+            plan = self._host_plans[prefix] = [
+                (key, (*prefix, *_path(key)), self._kinds[key], self.shapes[key]) for key in self.keys
+            ]
         out = {}
-        for key in self.keys:
+        for key, path, kind, shape in plan:
             value = values[key]
-            value = np.asarray(value.numpy() if torch.is_tensor(value) else value, self._kinds[key])
-            out[(*prefix, *_path(key))] = value.reshape(self.shapes[key] or value.shape)
+            if type(value) is not np.ndarray:
+                value = value.numpy() if torch.is_tensor(value) else np.asarray(value)
+            if value.dtype != kind:
+                value = value.astype(kind)
+            if shape is not None and value.shape != shape:
+                value = value.reshape(shape)
+            out[path] = value
         return out
 
     def _buffer(self, dtype: torch.dtype, numel: int) -> torch.Tensor:

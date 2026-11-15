@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import operator
 import sys
 import threading
 
@@ -80,7 +81,8 @@ def nested_builder(paths, *, with_paths: bool = False):
 
     def source(node, path):
         items = (
-            f"{name!r}: {source(c, (*path, name)) if type(c) is dict else f'L[{c}]'}" for name, c in node.items()
+            f"{name!r}: {source(c, (*path, name) if with_paths else ()) if type(c) is dict else f'L[{c}]'}"
+            for name, c in node.items()
         )
         return "N({" + ", ".join(items) + "}" + (f", {path!r})" if with_paths else ")")
 
@@ -329,6 +331,8 @@ _ALIGN = 16
 _TRANSFERS_HELD = 64
 _transfers: dict = {}
 _TORCH = {np.dtype(kind): dtype for dtype, kind in _NUMPY.items()}
+_SHAPE = operator.attrgetter("shape")
+_DTYPE = operator.attrgetter("dtype")
 
 
 class _Transfer:
@@ -511,11 +515,19 @@ def pack_to_device(leaves, batch, device, batches=()) -> TensorDict:
     """
     device = _device(device)
     batch = torch.Size(batch)
-    plan = _plan((tuple((key, value.shape, _TORCH[value.dtype]) for key, value in leaves), (), tuple(batches)))
+    keys, arrays = zip(*leaves)
+    # The structure of the leaves, read without a Python step per leaf.
+    signature = (keys, tuple(map(_SHAPE, arrays)), tuple(map(_DTYPE, arrays)), tuple(batches))
+    plan = _transfers.get(signature)
+    if plan is None:
+        if len(_transfers) >= _TRANSFERS_HELD:
+            _transfers.clear()
+        layout = tuple(zip(keys, signature[1], (_TORCH[kind] for kind in signature[2])))
+        plan = _transfers[signature] = _Transfer(layout, (), signature[3])
     cpu = device.type == "cpu"
     # On the CPU the leaves are views of a new buffer, which the result owns.
     packed = np.empty(plan.total, np.uint8) if cpu else plan.staging()
     for _, kind, order, start, stop, _, _ in plan.groups:
-        np.concatenate([leaves[i][1].reshape(-1) for i in order], out=packed[start:stop].view(kind))
+        np.concatenate([arrays[i].reshape(-1) for i in order], out=packed[start:stop].view(kind))
     parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
     return plan.build(parts, plan.node(batch, device))
