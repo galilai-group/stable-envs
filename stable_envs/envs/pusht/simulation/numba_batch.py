@@ -131,20 +131,30 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         }
 
     def _export(self, device):
-        """On the host, gather each step-changed group from ``(num_envs, -1)`` views of its fields, cut at reset."""
         if self.device.type != "cpu" or torch.device(device).type != "cpu":
             return super()._export(device)
+        groups = self._host_groups()
+        kept = {name: np.array(groups[name]) for name in self._groups.kept}
+        return self._host_state({key: groups[key] for key in self._moving}, kept)
+
+    def _host_groups(self):
+        """``{leaf key: array}`` of the State: new arrays of the step-changed groups, and views of the others.
+
+        Each step-changed group is gathered from ``(num_envs, -1)`` views of its fields, cut once per reset.
+        """
         host = self._views()
         width = self._history_width()
         plan = host.get("export")
         if plan is None or self._layout is None:
-            self._state_layout(self._state_fields(width))
+            fields = self._state_fields(width)
+            self._state_layout(fields)
             plan = host["export"] = self._export_plan(host["fields"])
-        if not plan:
-            return super()._export(device)
-        moving = {key: np.concatenate(views, 1) for key, views in plan.items()}
+        if plan:
+            moving = {key: np.concatenate(views, 1) for key, views in plan.items()}
+        else:
+            moving = self._groups.pack(self._state_fields(width), self._moving)
         history = self._history_fields(width)
-        return self._host_state(moving, {name: np.array(history[name]) for name in self._groups.kept})
+        return {**self._static, **moving, **{name: history[name] for name in self._groups.kept}}
 
     def _export_plan(self, fields):
         """``{group key: [(num_envs, -1) view of each field]}`` of the step-changed groups; empty if a view copies."""
@@ -200,6 +210,48 @@ class PushTNumbaAdapter(PushTBatchAdapter):
     def step(self, actions, *, active=None, capture_state=True):
         if self.device.type != "cpu":
             return super().step(actions, active=active, capture_state=capture_state)
+        raw = self._advance_host(actions, active)
+        n = self.num_envs
+        reward = raw[: 8 * n].view(np.float64)
+        flags = raw[8 * n :].view(np.bool_).reshape(3, n)
+        device = self._state_device
+        if self.export_device is None:
+            reward, flags = torch.from_numpy(reward), torch.from_numpy(flags)
+        else:
+            # On an accelerator every output is already there, so the step result needs no further move.
+            device = self.__dict__.get("_output_device")
+            if device is None:
+                device = self._output_device = build_tensordict({}, [n], self.export_device).device
+            moved = torch.from_numpy(raw).to(device)
+            reward, flags = moved[: 8 * n].view(torch.float64), moved[8 * n :].view(torch.bool).view(3, n)
+        success, terminated, truncated = flags.unbind(0)
+        outputs = dict(reward=reward, success=success, terminated=terminated, truncated=truncated)
+        if capture_state:
+            # For an accelerator, the State moves there in the export's own copy, with no plan per history width.
+            outputs["state"] = self._export(self.export_device or self._state_device)
+        return TensorDict._new_unsafe(outputs, batch_size=torch.Size([n]), device=device)
+
+    def step_leaves(self, actions):
+        """Step every lane; the outputs and the State as host arrays by key path, or None off the CPU.
+
+        The arrays may be live buffers: the caller copies them before the next call.
+        """
+        if self.device.type != "cpu":
+            return None
+        raw = self._advance_host(actions, None)
+        n = self.num_envs
+        flags = raw[8 * n :].view(np.bool_).reshape(3, n)
+        leaves = {
+            ("reward",): raw[: 8 * n].view(np.float64),
+            ("success",): flags[0],
+            ("terminated",): flags[1],
+            ("truncated",): flags[2],
+        }
+        leaves.update((("state", *key.split("/")), value) for key, value in self._host_groups().items())
+        return leaves
+
+    def _advance_host(self, actions, active):
+        """Step the lanes on the host; the reward, then success, terminated and truncated, in one byte buffer."""
         actions = actions.numpy() if torch.is_tensor(actions) else np.asarray(actions)
         if actions.shape != (self.num_envs, 2):
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
@@ -257,22 +309,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         )  # fmt: skip
         self._width = int(lengths.max())
         flags[1] = flags[0]
-        device = self._state_device
-        if self.export_device is None:
-            reward, flags = torch.from_numpy(reward), torch.from_numpy(flags)
-        else:
-            # On an accelerator every output is already there, so the step result needs no further move.
-            device = self.__dict__.get("_output_device")
-            if device is None:
-                device = self._output_device = build_tensordict({}, [n], self.export_device).device
-            moved = torch.from_numpy(raw).to(device)
-            reward, flags = moved[: 8 * n].view(torch.float64), moved[8 * n :].view(torch.bool).view(3, n)
-        success, terminated, truncated = flags.unbind(0)
-        outputs = dict(reward=reward, success=success, terminated=terminated, truncated=truncated)
-        if capture_state:
-            # For an accelerator, the State moves there in the export's own copy, with no plan per history width.
-            outputs["state"] = self._export(self.export_device or self._state_device)
-        return TensorDict._new_unsafe(outputs, batch_size=torch.Size([n]), device=device)
+        return raw
 
     def _reserve_history(self):
         """Widen the action history buffers when a lane's next action would not fit."""

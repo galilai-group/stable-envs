@@ -270,6 +270,15 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
+    def _host_step(self, actions, move):
+        """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere."""
+        step = getattr(getattr(self._simulator, "host_adapter", self._simulator), "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        leaves = step(actions.cpu() if torch.is_tensor(actions) else actions)
+        return None if leaves is None else move(leaves)[0]
+
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._simulator.step(actions, active=active, capture_state=False)
 
