@@ -90,6 +90,21 @@ def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
         bat.close()
 
 
+@pytest.mark.parametrize("family", FAMILIES)
+def test_threaded_physics_equals_one_thread(family):
+    lanes, rng = 8, np.random.default_rng(6)
+    serial = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=1)
+    threaded = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=4)
+    try:
+        assert serial.physics.b.nthread == 1 and threaded.physics.b.nthread == 4
+        for t in range(40):
+            action = _actions(rng, t, lanes)
+            assert_same_state(threaded.step(action)["state"], serial.step(action)["state"])
+    finally:
+        serial.close()
+        threaded.close()
+
+
 @pytest.mark.parametrize("lanes", [1, 2])
 def test_scene_cube_repair_equals_ogbench(lanes):
     ref = OGBManipulationAdapter("Scene", lanes, seed=4)
