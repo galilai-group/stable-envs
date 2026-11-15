@@ -16,7 +16,7 @@ from ...registry import register
 from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
 from ...spaces import Box, Dict, Discrete, RGBBox
-from ...specs import CompositeSpec
+from ...specs import CompositeSpec, Spec
 from . import navdot
 from .maze_goal import GoalPainter, goal_frames
 
@@ -557,10 +557,39 @@ class _GymReferencePort(Env):
         self._check_drawn(state, groups)
         return self._render_checked(self._rows(state, groups), **kwargs)
 
+    #: ``{field name: (low, high, column names)}`` of the State fields that have bounds.
+    STATE_FIELD_BOUNDS: dict[str, tuple[float, float, tuple[str, ...]]] = {}
+
     @property
     def state_spec(self) -> CompositeSpec:
-        """Specs of the State groups, without the batch axis."""
-        return self.STATE.spec(self.device)
+        """Specs of the State groups, without the batch axis, with bounds and column names where every field of
+        the group declares them."""
+        out = self.STATE.spec(self.device)
+        for group in self.STATE.groups.values():
+            if not all(field.name in self.STATE_FIELD_BOUNDS for field in group.fields):
+                continue
+            low: list[float] = []
+            high: list[float] = []
+            names: list[str] = []
+            for field in group.fields:
+                lo, hi, labels = self.STATE_FIELD_BOUNDS[field.name]
+                where = self.STATE.slices[field.name]
+                low += [lo] * (where.stop - where.start)
+                high += [hi] * (where.stop - where.start)
+                names += labels
+            spec = Spec(
+                (group.size,),
+                dtype=group.dtype,
+                low=np.array(low),
+                high=np.array(high),
+                device=self.device,
+                names=tuple(names) if len(names) == group.size else (),
+            )
+            node = out
+            for part in group.path[:-1]:
+                node = node[part]
+            node.specs[group.path[-1]] = spec
+        return out
 
     @staticmethod
     def reference_step(ref, a):
@@ -610,6 +639,10 @@ class _HiddenTargetSemantics:
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
     STATE = TARGET_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
+        "target/position": (POS_LO, POS_HI, ("target_x", "target_y")),
+    }
     # TwoRoom observations append the door centers.
     _numba_doors = False
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
@@ -1396,6 +1429,10 @@ class TwoRoomTarget(_TwoRoomBase):
     reference_kwargs = {"render_target": True}
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
     STATE = TARGET_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
+        "target/position": (POS_LO, POS_HI, ("target_x", "target_y")),
+    }
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
     # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where
     # stable-worldmodel's TwoRoom does.
@@ -1471,6 +1508,7 @@ class _PiecewiseBase(_TorchNavBase):
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
     STATE = AGENT_STATE
+    STATE_FIELD_BOUNDS = {"agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y"))}
     dynamics_variation_leaves = frozenset(
         {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
     )
@@ -1743,6 +1781,12 @@ class SimplePointMaze(_GymReferencePort):
         (("task", "state_is_float64"), 1, None, torch.bool),
     )
     STATE = MAZE_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (0.0, WORLD, ("agent_x", "agent_y")),
+        "goal/position": (0.0, WORLD, ("goal_x", "goal_y")),
+        "task/cached_goal_agent_position": (0.0, WORLD, ()),
+        "task/state_is_float64": (0, 1, ()),
+    }
 
     reset_tree_factory = staticmethod(_simple_maze_reset_tree)
     reset_leaves = (

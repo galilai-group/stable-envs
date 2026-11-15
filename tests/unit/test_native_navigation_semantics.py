@@ -26,3 +26,15 @@ def test_uncertified_sampled_reset_variations_refuse(name):
     with se.make(name, num_envs=1, device="cpu") as env:
         with pytest.raises(NotImplementedError, match="sampled"):
             env.reset(seed=0, options={"variation": ["background.color"]})
+
+
+@pytest.mark.parametrize("name", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze"])
+def test_the_state_spec_keeps_bounds_and_samples_states_inside_them(name):
+    with se.make(name, num_envs=3) as env:
+        spec = env.state_spec
+        sample = spec.sample(5, np.random.default_rng(0))
+        for key, leaf in spec.items(nested=True):
+            assert leaf.low is not None and leaf.high is not None, key
+            assert leaf.contains(sample[key]), key
+        if name.startswith("TwoRoom"):
+            assert spec["navigation", "float32"].names == ("agent_x", "agent_y", "target_x", "target_y")
