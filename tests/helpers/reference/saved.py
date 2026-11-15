@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from stable_envs._core.state_schema import unfold
 from stable_envs.testing.conformance import frame_mse, mse_summary
 from stable_envs.testing.evidence import sha256
 from stable_envs.testing.metrics import normalized_mse, summarize_errors
@@ -49,6 +50,7 @@ def assert_frozen_equal(actual, expected, *, equal_nan=False, msg=None):
 
 
 def assert_frozen_state(actual, expected):
+    actual, expected = unfold(actual), unfold(expected)
     assert actual.batch_size == expected.batch_size
     assert set(actual.keys(True, True)) == set(expected.keys(True, True))
     for key in expected.keys(True, True):
