@@ -20,6 +20,7 @@ print(snv.get_config())  # {'verbose': 'WARNING', 'default_device': 'auto'}
 | `snv.list_families()` | List the family IDs that registered a class. |
 | `snv.info(name)` | Read class metadata without building anything. |
 | `snv.import_errors()` | Say why a family didn't register. |
+| `snv.get_field(state, name)`, `snv.set_field(state, name, value)`, `snv.schema_of(state)` | Read or write one named field of a State, also of a folded State, and find the schema of a folded State. |
 | `snv.set(...)`, `snv.get_config()` | Change and read the log level and the default device. |
 | `snv.tune(env)` | Measure the fastest tuning knob values for an environment's render path. |
 | `snv.__version__` | The installed version. Put it in bug reports next to `stable-envs doctor --json`. |
@@ -44,6 +45,16 @@ A family registers only if its module imports. The extras you install decide whi
 ::: stable_envs.info
 
 ::: stable_envs.import_errors
+
+## Read a State field
+
+Some families fold their State: the fixed-shape fields go into a few `(N, size)` arrays, one for each group of fields with the same dtype, and the State has one leaf for each group. A folded State costs less to export, copy and slice than a State with one leaf for each field. `snv.get_field(state, name)` returns one field as a view, on a folded State and on a State with one leaf for each field. The name joins the key parts with `/` or `.`, for example `"current/body/agent/position"`. A write to the view changes the State. `snv.schema_of(state)` returns the schema of a folded State, which lists the fields (`names`) and where each one is (`slices`).
+
+::: stable_envs.get_field
+
+::: stable_envs.set_field
+
+::: stable_envs.schema_of
 
 ## Global settings
 
