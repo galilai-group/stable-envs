@@ -207,7 +207,7 @@ class StateLayout:
                 raise ValueError("StateLayout.views needs a declared shape for every leaf")
             self._split(flat, runs, sizes, None, leaves)
         batch, where = self._batch, _recorded(flats, torch.device(device))
-        return self._build(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where))
+        return self._build(leaves, lambda node: new_node(node, batch, where))
 
     @staticmethod
     def _split(flat: torch.Tensor, runs, sizes, widths, leaves: list) -> None:

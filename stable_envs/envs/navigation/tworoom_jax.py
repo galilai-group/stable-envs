@@ -6,9 +6,10 @@ See licenses/APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 Torch owns the live state; steps exchange device buffers through DLPack. ``Kernel.step`` runs the physics, the
 masking, the observation and the task outputs in one jitted call. It imports the actions, and the step mask when
 there is one. The rows, the target and the Variation stay on the JAX side between steps, as copies that are taken
-again when their Torch tensors change. The call returns one new buffer, and the step result is a TensorDict of
-views of it. Torch's stream waits for that buffer, so a later Torch write to the borrowed actions cannot race the
-kernel. No buffer is donated, so public state snapshots keep independent storage. The first call compiles.
+again when their Torch tensors change. The call returns the new rows, which stay on the JAX side, and one new
+buffer. The step result is a TensorDict of views of that buffer, and JAX never reads the buffer again. Torch's
+stream waits for it, so a later Torch write to the borrowed actions cannot race the kernel. No buffer is donated,
+so public state snapshots keep independent storage. The first call compiles.
 """
 
 from __future__ import annotations
@@ -31,9 +32,16 @@ try:
 except ImportError:
     _xla = None
 # The protocol layers of jax.dlpack and torch.from_dlpack cost more than the step at small batches;
-# the jaxlib calls under them do the same exchange.
+# the jaxlib calls under them do the same exchange. A jaxlib whose calls take other arguments raises
+# TypeError on the first exchange, and the public functions take over for the rest of the process.
 if not all(hasattr(_xla, name) for name in ("dlpack_managed_tensor_to_buffer", "buffer_to_dlpack_managed_tensor")):
     _xla = None
+
+
+def _public_exchange():
+    global _xla
+    _xla = None
+
 
 try:
     from jax import enable_x64
@@ -116,10 +124,8 @@ _WORDS = _FLOAT_WORDS + 4
 def _compiled_step(layout, width):
     fields, advance = _physics(layout)
 
-    def step(source, inputs, fixed):
+    def step(rows, inputs, fixed):
         n = inputs.shape[0]
-        # The previous packed output starts with the rows; after a change outside the step, the rows themselves.
-        rows = source[: 2 * n].reshape(n, 2) if source.ndim == 1 else source
         style, target = fixed[:, :width], fixed[:, width:]
         column = lambda path: style[:, fields[path]]
         moved = advance(rows, inputs[:, :2], style)
@@ -146,7 +152,8 @@ def _compiled_step(layout, width):
             jax.lax.bitcast_convert_type(doubles, jnp.float32).reshape(-1),
             jax.lax.bitcast_convert_type(flags.reshape(-1, 4), jnp.float32),
         )
-        return jnp.concatenate(words)
+        # The new rows are a second output that stays on the JAX side: the exported buffer belongs to the caller.
+        return agent, jnp.concatenate(words)
 
     return jax.jit(step)
 
@@ -169,9 +176,15 @@ def from_torch(value, device=None):
     alignment = 64 if value.device.type == "cpu" else 16
     if value.data_ptr() % alignment:
         value = value.clone()
-    if _xla is None:
-        return jax.dlpack.from_dlpack(value, copy=False)
-    device = device or _jax_device(value.device.type, value.device.index)
+    if _xla is not None:
+        try:
+            return _import(value, device or _jax_device(value.device.type, value.device.index))
+        except TypeError:
+            _public_exchange()
+    return jax.dlpack.from_dlpack(value, copy=False)
+
+
+def _import(value, device):
     if not value.is_cuda:
         return _xla.dlpack_managed_tensor_to_buffer(torch.utils.dlpack.to_dlpack(value), device, None, False, 1)
     # Make JAX's stream for external buffers wait for the work that Torch queued on the value.
@@ -185,14 +198,18 @@ def from_torch(value, device=None):
 
 def to_torch(array, device):
     """Export a JAX array on ``device`` to Torch, ready on Torch's current stream."""
-    if _xla is None:
-        return torch.from_dlpack(array)
-    stream = None
-    if device.type == "cuda":
-        # DLPack names the legacy default stream 1.
-        stream = torch.cuda.current_stream(device).cuda_stream or 1
-    capsule = _xla.buffer_to_dlpack_managed_tensor(array.addressable_data(0), stream=stream)
-    return torch.utils.dlpack.from_dlpack(capsule)
+    if _xla is not None:
+        stream = None
+        if device.type == "cuda":
+            # DLPack names the legacy default stream 1.
+            stream = torch.cuda.current_stream(device).cuda_stream or 1
+        try:
+            capsule = _xla.buffer_to_dlpack_managed_tensor(array.addressable_data(0), stream=stream)
+        except TypeError:
+            _public_exchange()
+        else:
+            return torch.utils.dlpack.from_dlpack(capsule)
+    return torch.from_dlpack(array)
 
 
 class Kernel:
@@ -248,12 +265,12 @@ class Kernel:
         source = packed[2] if current else from_torch(rows.clone(), self.device)
         # Every input is committed to the device, so the call needs no default device.
         with enable_x64():
-            out = self._step(source, inputs, fixed)
+            agent, out = self._step(source, inputs, fixed)
         words = to_torch(out, rows.device)
         sizes = (_FLOAT_WORDS * n, (_WORDS - _FLOAT_WORDS) * n, words.numel() - _WORDS * n)
         floats, doubles, flags = words.split(sizes)
         flags = flags.view(torch.uint8)[: 2 * n].view(torch.bool)
         result = self._outputs.views((floats, doubles.view(torch.float64), flags), rows.device)
         rows.copy_(result["state", "agent", "position"])
-        self._packed = (rows, rows._version, out)
+        self._packed = (rows, rows._version, agent)
         return result

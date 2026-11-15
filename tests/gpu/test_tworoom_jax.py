@@ -124,6 +124,79 @@ def test_cuda_success_boundary_matches_swm():
         compare_state(actual, expected)
 
 
+#: The smallest batch that steps in JAX by default.
+JAX_BATCH = 1024
+
+
+def _boundary_targets(batch):
+    """Targets on and near the 16 px success circle around (60, 60), then random ones."""
+    angles = np.linspace(0, 2 * np.pi, batch // 2, endpoint=False)
+    radius = np.where(np.arange(batch // 2) % 3 == 0, 16, 15.999)[:, None]
+    ring = np.stack((np.cos(angles), np.sin(angles)), -1) * radius
+    rest = np.random.default_rng(7).uniform(14, 209, (batch - batch // 2, 2))
+    return np.concatenate((ring + 60, rest)).astype(np.float32)
+
+
+def test_cuda_jax_success_boundary_and_distance_match_cpu_at_the_switch_batch():
+    targets = _boundary_targets(JAX_BATCH)
+    with (
+        se.TwoRoom(num_envs=JAX_BATCH, device="cuda") as env,
+        se.TwoRoom(num_envs=JAX_BATCH, device="cpu", simulation_backend="torch") as cpu,
+    ):
+        assert env.simulation_backend == "jax"
+        options = {"state": [60, 60], "target_state": targets}
+        state = env.reset(seed=0, options=options)
+        cpu.reset(seed=0, options=options)
+        delta = (state["agent", "position"] - state["target", "position"]).cpu()
+        norm = torch.tensor([float(torch.norm(row)) for row in delta], dtype=torch.float64)
+        action = torch.zeros(JAX_BATCH, 2, device="cuda")
+        actual = env.step(action, states=None, frames=None).exclude("valid")
+        assert_same_state(actual.cpu(), cpu.step(action.cpu(), states=None, frames=None).exclude("valid"))
+        assert_same_state(actual["info", "distance_to_target"].cpu(), norm)
+        assert_same_state(actual["terminated"].cpu(), norm < 16)
+        assert 0 < int(actual["terminated"].sum()) < JAX_BATCH
+
+
+def test_cuda_jax_masked_sequence_matches_cpu_at_the_switch_batch():
+    targets = np.random.default_rng(11).uniform(40, 90, (JAX_BATCH, 2)).astype(np.float32)
+    actions = torch.from_numpy(np.random.default_rng(12).uniform(-1, 1, (JAX_BATCH, 8, 2)).astype(np.float32))
+    with (
+        se.TwoRoom(num_envs=JAX_BATCH, device="cuda", simulation_backend="jax") as env,
+        se.TwoRoom(num_envs=JAX_BATCH, device="cpu", simulation_backend="torch") as cpu,
+    ):
+        options = {"state": [60, 60], "target_state": targets}
+        env.reset(seed=0, options=options)
+        cpu.reset(seed=0, options=options)
+        actual = env.step(actions.cuda(), frames=None)
+        expected = cpu.step(actions, frames=None)
+        assert 0 < int((~actual["valid"].cpu()).sum())
+        assert_same_state(actual.cpu(), expected)
+        assert_same_state(env.step(actions.cuda(), frames=None).cpu(), cpu.step(actions, frames=None))
+
+
+def test_cuda_jax_step_waits_for_actions_from_a_busy_side_stream():
+    batch = JAX_BATCH
+    stream = torch.cuda.Stream()
+    big = torch.rand(4096, 4096, device="cuda")
+    with (
+        se.TwoRoom(num_envs=batch, device="cuda", simulation_backend="jax") as env,
+        se.TwoRoom(num_envs=batch, device="cpu", simulation_backend="torch") as cpu,
+    ):
+        env.reset(seed=1)
+        cpu.reset(seed=1)
+        for step in range(6):
+            value = (step % 3 - 1) * 0.75
+            with torch.cuda.stream(stream):
+                busy = big @ big
+                action = torch.full((batch, 2), value, device="cuda") + busy[:batch, :2] * 0
+                result = env.step(action, states=None, frames=None)
+                observed = result["observation"] + 0
+            stream.synchronize()
+            expected = cpu.step(torch.full((batch, 2), value), states=None, frames=None)
+            assert_same_state(observed.cpu(), expected["observation"])
+            assert_same_state(result.exclude("valid").cpu(), expected.exclude("valid"))
+
+
 @pytest.mark.parametrize("name", ["TwoRoom", "Piecewise"])
 def test_cuda_shared_distance_matches_cpu_norm_without_host_conversion(name, monkeypatch):
     targets = np.random.default_rng(7).uniform(14, 209, (512, 2)).astype(np.float32)

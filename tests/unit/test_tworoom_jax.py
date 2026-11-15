@@ -170,6 +170,58 @@ def test_task_snapshots_and_output_leaves_have_independent_storage(name, device)
         assert_same_state(result, modified)
 
 
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_writing_into_a_jax_step_result_does_not_change_the_next_step(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    with (
+        se.TwoRoom(num_envs=5, device=device, simulation_backend="jax") as env,
+        se.TwoRoom(num_envs=5, device=device, simulation_backend="jax") as reference,
+    ):
+        for e in (env, reference):
+            e.reset(seed=3)
+        action = torch.full((5, 2), 0.5, device=device)
+        result = env.step(action, states=None, frames=None)
+        reference.step(action, states=None, frames=None)
+        for leaf in result.values(True, True):
+            leaf.fill_(0 if leaf.dtype == torch.bool else 100)
+        assert_same_state(env.get_state(), reference.get_state())
+        assert_same_state(env.step(action, states=None, frames=None), reference.step(action, states=None, frames=None))
+
+
+class _OtherJaxlib:
+    """A jaxlib whose DLPack calls take other arguments, as older releases bind them."""
+
+    def dlpack_managed_tensor_to_buffer(self, dlpack, device, stream):
+        raise AssertionError("never reached: the call above raises TypeError")
+
+    def buffer_to_dlpack_managed_tensor(self, buffer):
+        raise AssertionError("never reached: the call above raises TypeError")
+
+
+@pytest.mark.parametrize("exchange", ["jaxlib", "public", "other-jaxlib"])
+def test_each_dlpack_exchange_gives_the_torch_steps(monkeypatch, exchange):
+    from stable_envs.envs.navigation import tworoom_jax
+
+    if exchange == "jaxlib" and tworoom_jax._xla is None:
+        pytest.skip("this jaxlib has no direct DLPack calls")
+    if exchange == "public":
+        monkeypatch.setattr(tworoom_jax, "_xla", None)
+    if exchange == "other-jaxlib":
+        monkeypatch.setattr(tworoom_jax, "_xla", _OtherJaxlib())
+    with (
+        se.TwoRoom(num_envs=4, device="cpu", simulation_backend="jax") as env,
+        se.TwoRoom(num_envs=4, device="cpu", simulation_backend="torch") as reference,
+    ):
+        options = {"state": [60, 60], "target_state": [[60, 70], [80, 60], [180, 180], [62, 61]]}
+        actions = torch.from_numpy(np.random.default_rng(5).uniform(-2, 2, (4, 6, 2)).astype(np.float32))
+        for e in (env, reference):
+            e.reset(seed=0, options=options)
+        assert_same_state(env.step(actions, frames=None), reference.step(actions, frames=None))
+    if exchange == "other-jaxlib":
+        assert tworoom_jax._xla is None
+
+
 def test_noncontiguous_actions_and_one_lane_offset_views():
     with se.TwoRoom(num_envs=1, device="cpu") as env:
         env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
