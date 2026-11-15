@@ -581,10 +581,11 @@ class _HiddenTargetSemantics:
         return self.simulation_backend == "numba" and self.device.type != "cpu"
 
     @torch.no_grad()
-    def _host_advance(self, action, *, active=None):
+    def _host_advance(self, action, *, active=None, capture_state=True):
         """``_step`` on the host copies of the lanes: the actions, the mask and the result stay on the CPU.
 
-        The device rows are behind until ``_end_host_steps``.
+        The result always holds the State, which the kernel builds anyway. The device rows are behind until
+        ``_end_host_steps``.
         """
         self._check_open("step")
         act = torch.as_tensor(action, dtype=torch.float32).reshape(self.B, self.action_dim)
