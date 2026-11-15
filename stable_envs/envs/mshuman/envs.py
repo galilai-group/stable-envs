@@ -10,7 +10,7 @@ import torch
 
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.stepping import _stack_states, _threads
-from ..._execution.backends import measure_adapter
+from ..._execution.backends import measure_env
 from ..._execution.mjbatch import mujoco_backend
 from ...env import Env, require_contiguous_out
 from ...registry import register
@@ -29,15 +29,6 @@ SIMULATION_PATH = "mshuman-sim/locomotion"
 CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
-
-
-def _builder(model, device):
-    """Builds an adapter of one backend for the calibration; it holds the model and device, not the env."""
-
-    def build(backend: str, n: int):
-        return (MSHumanWarpAdapter if backend == "mjwarp" else MSHumanBatchAdapter)(n, device, model)
-
-    return build
 
 
 def _renderer(model, size: int):
@@ -86,7 +77,8 @@ class MSHumanLocomotion(Env):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
 
         device = self.device
-        measure = measure_adapter(_builder(self._model, device), lambda n: torch.rand(n, _NU, device=device))
+        cls = type(self)
+        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
         path, requested = SIMULATION_PATH, simulation_backend
         self.simulation_backend_path = path
         self.simulation_backend = mujoco_backend(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 
-from ...._execution.backends import measure_adapter
+from ...._execution.backends import measure_env
 from ...._execution.mjbatch import mujoco_backend
 
 
@@ -26,7 +26,11 @@ def roadster_path(task: str) -> str:
 
 
 def roadster_backend(
-    num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto", task: str = "traffic"
+    num_envs: int,
+    device: str | torch.device,
+    simulation_backend: str | None = "auto",
+    task: str = "traffic",
+    env_type: type | None = None,
 ) -> str:
     """Return ``"native"`` or ``"mjwarp"`` for a batch.
 
@@ -34,10 +38,9 @@ def roadster_backend(
     on MuJoCo Warp; see ``mujoco_backend``.
     """
 
-    def build(backend: str, n: int):
-        return make_roadster_adapter(task, n, device, backend)
-
-    measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
+    measure = None if env_type is None else measure_env(
+        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    )
     path = roadster_path(task)
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)

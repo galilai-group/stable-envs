@@ -1403,7 +1403,7 @@ class MazeSemantics:
         # Select before the scene and its OpenGL contexts exist, so a refused backend leaves nothing to release.
         num_envs = kwargs.get("num_envs", args[0] if args else 1)
         device = Env.resolve_device(kwargs.get("device", args[3] if len(args) > 3 else "cuda"))
-        backend = maze_backend(int(num_envs), device, self.LOCO, simulation_backend, self.MAZE)
+        backend = maze_backend(int(num_envs), device, self.LOCO, simulation_backend, self.MAZE, env_type=type(self))
         super().__init__(*args, **kwargs)
         self.simulation_backend = backend
         self.simulation_backend_path = maze_path(self.LOCO, self.MAZE)

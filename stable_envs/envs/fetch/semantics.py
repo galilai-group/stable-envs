@@ -73,7 +73,9 @@ class FetchSemantics:
         _check_render_backend(backend)
         device = Env.resolve_device(device)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
-        self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, self.SCENE, reward_type)
+        self.simulation_backend = fetch_backend(
+            num_envs, device, simulation_backend, self.SCENE, reward_type, env_type=type(self)
+        )
         self.simulation_backend_path = fetch_path(self.SCENE)
         if self.simulation_backend == "source":
             self._simulator = FetchAdapter(num_envs, device, seed, self.SCENE, reward_type)

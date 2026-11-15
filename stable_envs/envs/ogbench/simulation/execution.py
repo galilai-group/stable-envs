@@ -36,19 +36,18 @@ def maze_backend(
     loco: str,
     simulation_backend: str | None = "auto",
     maze: str = "large",
+    env_type: type | None = None,
 ) -> str:
-    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``mujoco_backend``."""
-    import torch
+    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``mujoco_backend``.
 
-    from ...._execution.backends import measure_adapter
+    ``stable-envs tune`` times ``env_type`` on both backends; without it this call registers nothing to time.
+    """
+    from ...._execution.backends import measure_env
     from ...._execution.mjbatch import mujoco_backend
-    from .maze import BODIES
 
-    def build(backend: str, n: int):
-        return make_maze_adapter(n, device, 0, loco=loco, maze=maze, simulation_backend=backend)
-
-    dim = BODIES[loco][2]
-    measure = measure_adapter(build, lambda n: torch.rand(n, dim, device=device) * 2 - 1)
+    measure = None if env_type is None else measure_env(
+        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    )
     path = maze_path(loco, maze)
     return mujoco_backend(
         path, num_envs, device, simulation_backend, cuda_min_envs=MAZE_CUDA_MIN_ENVS[loco], measure=measure

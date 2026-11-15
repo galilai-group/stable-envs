@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from ...._execution.backends import measure_adapter
+from ...._execution.backends import measure_env
 from ...._execution.mjbatch import mujoco_backend
 from ...._execution.policy import cpu_affinity, process_count
 from .adapter import FetchAdapter
@@ -33,6 +33,7 @@ def fetch_backend(
     simulation_backend: str | None = "auto",
     task: str = "PickAndPlace",
     reward_type: str = "sparse",
+    env_type: type | None = None,
 ) -> str:
     """Return ``"native"``, ``"mjwarp"`` or ``"source"`` for a Fetch batch.
 
@@ -45,10 +46,9 @@ def fetch_backend(
     if simulation_backend not in (None, "auto", *SIMULATION_BACKENDS):
         raise ValueError("simulation_backend must be 'auto', 'native', 'mjwarp' or 'source'")
 
-    def build(backend: str, n: int):
-        return make_fetch_adapter(n, device, 0, task, reward_type, simulation_backend=backend)
-
-    measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
+    measure = None if env_type is None else measure_env(
+        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    )
     path = fetch_path(task)
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)

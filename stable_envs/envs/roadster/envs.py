@@ -80,7 +80,9 @@ class RoadsterBase(Env):
         on the dark-space scene with shadows and MSAA (use a larger ``size``, e.g. 512).
         """
         device = Env.resolve_device(device)
-        self.simulation_backend = roadster_backend(int(num_envs), device, simulation_backend, self.TASK)
+        self.simulation_backend = roadster_backend(
+            int(num_envs), device, simulation_backend, self.TASK, env_type=type(self)
+        )
         self.simulation_backend_path = roadster_path(self.TASK)
         self.execution_mode = "MUJOCO_WARP" if self.simulation_backend == "mjwarp" else "DELEGATED_CPU"
         self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device, self.simulation_backend)
