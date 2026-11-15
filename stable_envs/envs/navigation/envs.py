@@ -923,7 +923,7 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
-    render_rungs = {"cuda": Rungs("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS)}
+    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS)}
     _numba_paths = (
         "agent.speed",
         "agent.radius",

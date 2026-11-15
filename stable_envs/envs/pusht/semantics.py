@@ -133,7 +133,7 @@ class PushT(Env):
     #: Every step returns new reward, success, terminated and truncated tensors.
     _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
-    render_rungs = {"cuda": Rungs("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
+    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0

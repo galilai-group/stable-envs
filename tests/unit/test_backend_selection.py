@@ -1,4 +1,4 @@
-"""The shared simulation backend switch: explicit names, the knob, the calibration and its cache."""
+"""The shared backend and renderer switch: explicit names, the knobs, the calibration and its cache."""
 
 import functools
 
@@ -8,7 +8,7 @@ from tensordict import TensorDict
 
 from stable_envs import tuning
 from stable_envs._core.tensordicts import to_device
-from stable_envs._execution import backends
+from stable_envs._execution import backends, host_render
 from stable_envs._execution.host import HostAdapter
 
 BACKENDS = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large")}
@@ -19,6 +19,7 @@ CHOICES = ("small", "large")
 def cache(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    monkeypatch.delenv("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS", raising=False)
     tuning.reset()
     tuning._clear_caches()
     yield
@@ -114,6 +115,57 @@ def test_calibrate_times_only_the_named_paths(monkeypatch):
         backends.select_backend(path, 4, "cuda", "auto", BACKENDS, choices=CHOICES, measure=measure)
     assert set(backends.calibrate(4, "cuda", paths=("test-sim/b",), write=False)) == {"test-sim/b"}
     assert set(backends.calibrate(4, "cuda", prefixes=("test-sim",), write=False)) == {"test-sim/a", "test-sim/b"}
+
+
+RENDERERS = {"cpu": backends.Rungs("cpu", "cpu"), "cuda": backends.Rungs("cpu", "cuda", 16)}
+
+
+def test_renderers_switch_at_their_own_knob():
+    pick = lambda n: backends.select_renderer("test-render/Env", n, "cuda", RENDERERS)  # noqa: E731
+    assert pick(15) == "cpu" and pick(16) == "cuda"
+    assert backends.select_renderer("test-render/Env", 1, "cpu", RENDERERS) == "cpu"
+    with tuning.override(large_backend_min_envs=1):
+        assert pick(15) == "cpu"
+    with tuning.override(large_renderer_min_rows=4):
+        assert pick(3) == "cpu" and pick(4) == "cuda"
+
+
+def test_tune_calibrates_renderers_under_the_render_knob(monkeypatch):
+    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: step())
+    monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
+    monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
+    monkeypatch.setattr(backends, "_REGISTERED", {})
+    costs = {"cpu": lambda rows: 1e-4 * rows, "cuda": lambda rows: 4e-4}
+    measure = _measure(costs, [])
+    _select(2, measure=_measure({"small": lambda rows: 0.0, "large": lambda rows: 1.0}, []))
+    backends.select_renderer("test-render/Env", 2, "cuda", RENDERERS, measure=measure)
+    assert backends.calibrate(2, "cuda", knob=backends.RENDER_KNOB) == {"test-render/Env": "cpu"}
+    assert backends.calibrate(64, "cuda", knob=backends.RENDER_KNOB) == {"test-render/Env": "cuda"}
+    data, _ = tuning.read_cache("cuda")
+    assert data["entries"]["test-render/Env|0|2-3"] == {backends.RENDER_KNOB: 4}
+    assert data["entries"]["test-render/Env|0|64-127"] == {backends.RENDER_KNOB: 64}
+    assert backends.select_renderer("test-render/Env", 1024, "cuda", RENDERERS) == "cuda"
+    assert _select(2) == "large"
+
+
+def test_cpu_envs_and_explicit_renderers_do_not_switch():
+    class Env:
+        device = torch.device("cpu")
+        render_rungs = RENDERERS
+
+    assert not host_render.on_host(Env(), "test-render", 1)
+    Env.device = torch.device("cuda")
+    assert not host_render.on_host(Env(), "test-render", 1, backend="torch")
+    Env.render_rungs = None
+    assert not host_render.on_host(Env(), "test-render", 1)
+
+
+def test_upload_fills_the_destination():
+    frames = torch.arange(24, dtype=torch.uint8).reshape(2, 2, 2, 3)
+    out = torch.empty_like(frames)
+    assert host_render.upload(frames, torch.device("cpu"), out) is out
+    assert torch.equal(out, frames)
+    assert torch.equal(host_render.draw_into((2, 2, 2, 3), torch.device("cpu"), lambda buffer: frames), frames)
 
 
 def test_to_device_keeps_cpu_tensordicts_and_their_values():

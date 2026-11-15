@@ -56,7 +56,7 @@ class DMControlSuite(_DMCModel):
         assert sc.model.nq == self.nq, f"{type(self).__name__}: nq changed under us"
         rows = CUDA_RENDER_MIN_ROWS.get(self.DOMAIN)
         if rows is not None:
-            self.render_rungs = {"cuda": Rungs("cpu", "cuda", rows)}
+            self.render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", rows)}
 
     @classmethod
     def _grid_slots(cls):
