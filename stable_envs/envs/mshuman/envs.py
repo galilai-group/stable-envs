@@ -23,10 +23,7 @@ from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
-#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
-#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
-#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}

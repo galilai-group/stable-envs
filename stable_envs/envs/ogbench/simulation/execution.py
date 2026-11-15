@@ -15,10 +15,7 @@ _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
-#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
-#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ...
-#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
-#: both hosts stay on ``mujoco.batch`` where it was faster on either one.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
     # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16. 8 keeps a batch of 8 at or above OGBench's own speed on
     # both GPU types: at 8, mujoco.batch on CUDA ran below it on an RTX 3090 (5164 against 6637 env steps per second).

@@ -32,7 +32,7 @@ The shipped switch points were measured on 14 November 2026 on hosts with an NVI
 
 After `stable-envs tune`, `"auto"` can select different backends on different machines for the same batch size. Both backends draw the reset values from the same host generators, so a seed gives the same reset state on either backend, to float precision. The physics can still differ: the CPU backends compute in float64 and most GPU backends in float32, so trajectories can move apart over time. For runs that must be identical across machines, pass `simulation_backend` explicitly. `env.simulation_backend` and `env.describe()["simulation_backend"]` name the backend an environment uses.
 
-The OGBench mazes, Fetch, MS-Human and Roadster use the same switch, with `mujoco.batch` for small batches and MuJoCo Warp for large ones. Their simulation paths are `ogb-sim/<body>maze-<maze>`, `fetch-sim/<task>`, `mshuman-sim/locomotion` and `roadster-sim/<task>`.
+The OGBench mazes, Fetch, MS-Human and Roadster use the same switch, with `mujoco.batch` for small batches and MuJoCo Warp for large ones. Their simulation paths are `ogb-sim/<body>maze-<maze>`, `fetch-sim/<task>`, `mshuman-sim/locomotion` and `roadster-sim/<task>`. Their switch points were measured in the same way, at batches up to 1024 for the mazes and Roadster, and the larger value of the two GPU types is shipped. PointMaze is the exception: it ships 8, the RTX 3090 value, because at a batch of 8 `mujoco.batch` on CUDA was slower than OGBench's own step on that host, and MuJoCo Warp was faster.
 
 ## Measure the fastest values
 
