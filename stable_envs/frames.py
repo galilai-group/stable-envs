@@ -25,14 +25,34 @@ MIN_ROW_WORK = 4 << 20
 MEMORY_SHARE = 4
 
 
+def _host_available() -> int:
+    """Bytes the process can still allocate on the host: MemAvailable, and the cgroup limit where one is set."""
+    out = []
+    try:
+        with open("/proc/meminfo") as f:
+            out += [int(line.split()[1]) * 1024 for line in f if line.startswith("MemAvailable:")]
+    except OSError:
+        pass
+    try:
+        with open("/sys/fs/cgroup/memory.max") as f, open("/sys/fs/cgroup/memory.current") as g:
+            limit = f.read().strip()
+            if limit != "max":
+                out.append(int(limit) - int(g.read()))
+    except (OSError, ValueError):
+        pass
+    if not out:
+        try:
+            out.append(os.sysconf("SC_AVPHYS_PAGES") * os.sysconf("SC_PAGE_SIZE"))
+        except (ValueError, OSError, AttributeError):
+            out.append(MAX_CHUNK_BYTES)
+    return max(0, min(out))
+
+
 def _free_bytes(device: torch.device) -> int:
     if device.type == "cuda":
         free, _ = torch.cuda.mem_get_info(device)
         return int(free + torch.cuda.memory_reserved(device) - torch.cuda.memory_allocated(device))
-    try:
-        return int(os.sysconf("SC_AVPHYS_PAGES") * os.sysconf("SC_PAGE_SIZE"))
-    except (ValueError, OSError, AttributeError):
-        return MAX_CHUNK_BYTES
+    return _host_available()
 
 
 def chunk_rows(env: Env, batch_size: int, total: int, size: int | None = None, supersample: int | None = None) -> int:

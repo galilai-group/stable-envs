@@ -133,3 +133,7 @@ def test_bad_arguments_raise(kwargs, error):
 def test_rows_must_be_two_dimensional():
     with pytest.raises(ValueError):
         snv.FrameLoader(_env(), id_states(4).reshape(-1), 2)
+
+
+def test_host_memory_query_is_positive():
+    assert frames_mod._free_bytes(torch.device("cpu")) > 0
