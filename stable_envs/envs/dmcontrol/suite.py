@@ -7,8 +7,6 @@ from ... import tuning
 from ..._core.plate_texels import substitute as _substitute_texels
 from ..._core.plate_texels import texel_key as _texel_key
 from ..._core.plate_texels import texel_slots as _texel_slots
-from ..._execution import host_render
-from ..._execution.backends import Rungs
 from ...render import raycast3d as R3
 from ...render.cpu_raster import ray_module
 from ...render.mjwarp import effective_alpha
@@ -32,13 +30,6 @@ from ._shading import _dot, _Lights, _norm, _Scene, _shade, _upsample_rgb
 from ._tendon import _chain_capsules_batch, _find_tendon, _Tendon, _tendon_polyline
 from .base import _DMCModel
 
-#: Shipped CUDA render switch points of the fixed-camera cells, per domain: the smallest batch that draws with the
-#: Triton ray caster; smaller batches draw with the CPU ray caster and move the frames to CUDA in one copy. A domain
-#: that isn't here draws every CUDA batch with Triton. A domain is listed only when both ray casters draw the same
-#: bytes; for Reacher they differ by one level in a few pixels. docs/performance-tuning.md (Renderers) says how the
-#: values are measured.
-CUDA_RENDER_MIN_ROWS: dict[str, int] = {}
-
 
 class DMControlSuite(_DMCModel):
     """Render fixed-camera domains using static plates and analytic moving geometry.
@@ -55,9 +46,6 @@ class DMControlSuite(_DMCModel):
         super().__init__(*a, **kw)
         sc = self._scene()
         assert sc.model.nq == self.nq, f"{type(self).__name__}: nq changed under us"
-        rows = CUDA_RENDER_MIN_ROWS.get(self.DOMAIN)
-        if rows is not None:
-            self.render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", rows)}
 
     @classmethod
     def _grid_slots(cls):
@@ -637,9 +625,6 @@ class DMControlSuite(_DMCModel):
         buf = out.view(B, size, size, 3)
         if self.device.type == "cuda" and warp_render.selected(self):
             warp_render.render(self, s, sty, size, buf, ss)
-            return buf.view(*lead, size, size, 3) if lead else buf
-        if host_render.on_host(self, "dmc-suite", B, self.backend):
-            buf = host_render.draw_rows(self, s, sty, size, ss, buf)
             return buf.view(*lead, size, size, 3) if lead else buf
         tuning.on_render("dmc-suite", size, B, self)
 
