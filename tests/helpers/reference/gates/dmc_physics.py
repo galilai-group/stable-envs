@@ -156,7 +156,7 @@ def _rollout(env, lanes, actions):
     error = 0.0
     states = []
     for action in actions:
-        ours, theirs = env.step(action, states=slice(0, 0), frames=None)["state"], lanes.step(action)
+        ours, theirs = env.step(action, states=None, frames=None)["state"], lanes.step(action)
         error = max(error, _compare(ours, theirs))
         states.append(theirs)
     return error, states

@@ -35,7 +35,7 @@ def _assert_bad_actions_rejected(env):
         np.full((env.B, 21), np.inf),
     ):
         try:
-            env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
+            env.step(action, states=None, frames=None).exclude("valid")
         except ValueError:
             pass
         else:
@@ -50,7 +50,7 @@ def _warmstart_experiment(env, reference):
     saved = env.get_state()
     saved_control = env._simulator.b.ctrl.copy()
     for action in -actions[1:10]:
-        env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
+        env.step(action, states=None, frames=None).exclude("valid")
     divergent_warmstart = env.get_state()["warmstart"].clone()
     assert not torch.equal(saved["warmstart"], divergent_warmstart)
     divergent_control = env._simulator.b.ctrl.copy()
@@ -66,7 +66,7 @@ def _warmstart_experiment(env, reference):
     omitted["warmstart"] = divergent_warmstart
     env.set_state(omitted)
     continuation = actions[1:9]
-    bad_outputs = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
+    bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         max_state_error(actual, expected, exclude=(("state", "warmstart"),))
@@ -74,7 +74,7 @@ def _warmstart_experiment(env, reference):
     )
 
     env.set_state(saved)
-    good_outputs = [env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid") for action in continuation]
+    good_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
     error_with = max(
         max_state_error(actual, expected) for actual, expected in zip(good_outputs, expected_outputs, strict=True)
     )
@@ -173,7 +173,7 @@ def run_gate(device="cpu"):
 
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
+                        other.step(action, states=None, frames=None).exclude("valid")
                     # set_state reloads every lane's ctrl from dm_control, so the divergence is read before it.
                     control_diverged = not np.array_equal(env._simulator.b.ctrl, other._simulator.b.ctrl)
                     snapshot = env.get_state()
@@ -210,7 +210,7 @@ def run_gate(device="cpu"):
 
                 check_reset_matches_reference(env, reference, seed=18)
                 zeros = np.zeros((batch, 21))
-                got, expected = env.step(zeros, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), reference.step(zeros)
+                got, expected = env.step(zeros, states=None, frames=None).exclude("valid"), reference.step(zeros)
                 compare_state(got, expected)
                 assert (got["reward"] > 0).all()
                 evidence["cases"].append(
@@ -227,7 +227,7 @@ def run_gate(device="cpu"):
                 rng_before = env.get_state().select("rng").clone()
                 boundary_state = None
                 for public_step in range(1, 503):
-                    got, expected = env.step(zeros, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), reference.step(zeros)
+                    got, expected = env.step(zeros, states=None, frames=None).exclude("valid"), reference.step(zeros)
                     compare_state(got, expected)
                     if public_step in (499, 500, 501, 502):
                         state = got["state"]
@@ -269,7 +269,7 @@ def run_gate(device="cpu"):
                     check_reset_matches_reference(env, reference, seed=31)
                     outside = np.full((1, 21), 1.1)
                     compare_state(
-                        env.step(outside, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), reference.step(outside)
+                        env.step(outside, states=None, frames=None).exclude("valid"), reference.step(outside)
                     )
                     evidence["action_validation"] = {
                         "shape_and_nonfinite_rejected": True,

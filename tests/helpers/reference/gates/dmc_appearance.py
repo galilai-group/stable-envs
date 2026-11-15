@@ -161,7 +161,7 @@ def frames(cell, cfg, seed=13, steps=8, device="cpu", substituted=False):
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 1, env.action_dim))
         theirs, ours, ignored, states = [], [], [], []
         for action in actions:
-            state = env.step(action, states=slice(0, 0), frames=None)["state"]
+            state = env.step(action, states=None, frames=None)["state"]
             states.append(state)
             ref.step(action)
             theirs.append(renderer())

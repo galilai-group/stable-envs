@@ -24,7 +24,7 @@ def test_public_steps_match_swm(seed, backend):
         assert env.execution_mode == {"jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}[backend]
         actions = np.random.default_rng(seed).uniform(-2, 2, (40, 8, 2)).astype(np.float32)
         for action in actions:
-            compare_state(env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), source.step(action))
+            compare_state(env.step(action, states=None, frames=None).exclude("valid"), source.step(action))
 
 
 @pytest.mark.parametrize("backend", ["jax", "numba"])
@@ -51,7 +51,7 @@ def test_collisions_and_observations_match_swm_with_variation(axis, doors, backe
         source.reset(seed=0)
         source.set_state(state)
         for _ in range(6):
-            compare_state(env.step(actions, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), source.step(actions))
+            compare_state(env.step(actions, states=None, frames=None).exclude("valid"), source.step(actions))
 
 
 def test_success_boundary_matches_swm():
@@ -65,7 +65,7 @@ def test_success_boundary_matches_swm():
         source.reset(seed=0)
         source.set_state(state)
         action = torch.zeros(len(targets), 2)
-        compare_state(env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), source.step(action))
+        compare_state(env.step(action, states=None, frames=None).exclude("valid"), source.step(action))
 
 
 def test_continuous_action_rounding_matches_swm():
@@ -76,4 +76,4 @@ def test_continuous_action_rounding_matches_swm():
         se.TwoRoom(device="cpu") as env,
     ):
         compare_state(env.reset(seed=0, options=options), source.reset(seed=0))
-        compare_state(env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"), source.step(action))
+        compare_state(env.step(action, states=None, frames=None).exclude("valid"), source.step(action))

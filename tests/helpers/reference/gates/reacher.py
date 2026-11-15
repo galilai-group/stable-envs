@@ -61,7 +61,7 @@ def run_gate(device="cpu"):
                     assert (saved == other.reset(seed=seed)).all()
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
+                        other.step(action, states=None, frames=None).exclude("valid")
                     snapshot = env.get_state()
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                     frame = env.render(snapshot)
@@ -94,7 +94,7 @@ def run_gate(device="cpu"):
                 env.set_state(reward_state)
                 ref.set_state(reward_state)
                 got, expected = (
-                    env.step(np.zeros((batch, 2)), states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid"),
+                    env.step(np.zeros((batch, 2)), states=None, frames=None).exclude("valid"),
                     ref.step(np.zeros((batch, 2))),
                 )
                 compare_state(got, expected)

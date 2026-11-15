@@ -213,8 +213,6 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     if frame_indices is not None and not getattr(env, "produces_rgb", True):
         raise ValueError(f"{type(env).__name__} has no RGB output; use frames=None")
     state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
-    # The final State is returned only when ``states`` selects states; ``states=None`` builds no State.
-    final = state_indices is not None
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
     history, saved_states, saved_frames, validity = [], {}, {}, []
@@ -251,7 +249,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
             acts[:, t] if sequence else acts,
             # The initial mask is already known to be all true; avoid a GPU readback.
             active=None if all_active else mask,
-            capture_state=t in state_times or (final and t == length - 1) or (frame and not draws_live),
+            capture_state=t in state_times or t == length - 1 or (frame and not draws_live),
             **({"capture_frame": True} if frame and pipeline_frames else {}),
         )
 
@@ -268,15 +266,14 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
-                # A single step that returns its State exports it with the outputs, in one call.
-                captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
-                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
+                # A single step returns its State: it exports the State with the outputs, in one call.
+                result = (env._step if length == 1 else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
-            needs_state = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
+            needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
                 live_state = env.get_state().to(work)
             next_active = active & ~_done(result) if t + 1 < length else active
@@ -311,7 +308,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         raise
 
     valid = flags[0] if single else torch.stack(validity, dim=1)
-    out = {"state": live_state} if final else {}
+    out = {"state": live_state}
     spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
     out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
     out["valid"] = valid

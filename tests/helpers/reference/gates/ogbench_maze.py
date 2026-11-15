@@ -30,7 +30,7 @@ def _np_state_equal(first, second):
 
 
 def _plain_step(env, action):
-    return env.step(action, states=slice(0, 0), frames=None).exclude("valid", "states", "state_valid")
+    return env.step(action, states=None, frames=None).exclude("valid")
 
 
 def _xy(state):

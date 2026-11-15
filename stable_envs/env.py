@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 #: Full simulator state is a TensorDict with entity-grouped keys and batch size [num_envs].
 State = TensorDict
 
-#: Step results contain the final state unless ``states=None``; task outputs exist only where the family defines them.
+#: Step results always contain final state; task outputs exist only where the family defines them.
 StepResult = TensorDict
 
 #: Variation accepts leaf overrides or a flat/batched compiled configuration row.
@@ -1398,8 +1398,8 @@ class Env:
             frames: Slice over the steps that selects which frames to render, or None.
 
         Returns:
-            A TensorDict with batch size ``(B,)``: ``state`` (the final state, absent with ``states=None``), the
-                family's task outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
+            A TensorDict with batch size ``(B,)``: ``state`` (the final state), the family's task
+                outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
                 mask, and the selected ``(B, S)`` ``states`` and ``(B, F, H, W, 3)`` uint8 ``frames``
                 with their ``state_valid`` and ``frame_valid`` masks.
 

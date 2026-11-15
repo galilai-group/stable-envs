@@ -61,7 +61,7 @@ Slices follow Python's rules for clipping, negative indices and negative strides
 
 | Key | Shape | Notes |
 |---|---|---|
-| `state` | batch `(B,)` | the state after the last action, missing when `states=None` |
+| `state` | batch `(B,)` | always present, the state after the last action |
 | `states` | batch `(B, S)` | the `S` selected states, missing when `states=None` |
 | `frames` | `(B, F, H, W, 3)` uint8 | the `F` selected frames, missing when `frames=None` |
 | `valid` | `(B, T)` | whether each action ran |
@@ -71,7 +71,7 @@ A single action counts as a sequence of length one: `frames` is `(B, 1, H, W, 3)
 
 Each batch row stops at its first termination or truncation and skips the rest of its actions. The transition that ended it is valid, and its later task outputs are zero. Its later selected states and frames repeat the final one with `state_valid` and `frame_valid` set to false. `step` never resets a batch row. The next `step` call steps every batch row again, and a single action after the end behaves as it does in the upstream library.
 
-Returned states and frames own their memory, and later calls leave them unchanged. A few classes return the same task output tensor at every step, such as `info.goal` of `SimplePointMaze`; treat it as read-only. Selecting fewer frames skips rendering, while physics still runs for every action. With `states=None`, `step` builds no state at all, which makes each call cheaper; call `get_state()` when you need the state. Calling `get_state()` right after a `step()` that returned `result["state"]` copies it again. Send a sequence only when you already know every action in it. To branch from a state, use a second environment with `set_state`.
+Returned states and frames own their memory, and later calls leave them unchanged. A few classes return the same task output tensor at every step, such as `info.goal` of `SimplePointMaze`; treat it as read-only. Selecting fewer frames skips rendering, while physics still runs for every action. Calling `get_state()` right after `step()` copies `result["state"]` again. Send a sequence only when you already know every action in it. To branch from a state, use a second environment with `set_state`.
 
 ## Construction
 

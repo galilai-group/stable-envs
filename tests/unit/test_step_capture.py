@@ -127,15 +127,10 @@ def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
 
     with CheapAdvance() as env:
         env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None)
-        assert env.exports == 1  # the final frame draws from the State
+        assert env.exports == 1
     with CheapAdvance() as env:
         env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=slice(None, None, 2), frames=None)
         assert env.exports == 3  # selected 0,2, plus mandatory final State
-    with CheapAdvance() as env:
-        out = env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None, frames=None)
-        assert env.exports == 0 and "state" not in out.keys()
-        out = env.step(torch.ones(3, 1), states=None, frames=None)
-        assert env.exports == 0 and "state" not in out.keys()
 
 
 @pytest.mark.family("dmc")
@@ -236,11 +231,10 @@ def test_gpu_sequence_frames_equal_repeated_steps(name):
         result = env.step(actions, states=None, frames=slice(None))
         assert result["frames"].device.type == "cuda"
         assert torch.equal(result["frames"], torch.stack([out["frames"][:, 0] for out in reference], dim=1))
-        assert "state" not in result.keys()
-        assert (env.get_state() == reference[-1]["state"]).all()
+        assert (result["state"] == reference[-1]["state"]).all()
         env.set_state(initial)
         final = env.step(actions, states=None)
-        assert (env.get_state() == reference[-1]["state"]).all()
+        assert (final["state"] == result["state"]).all()
         assert torch.equal(final["frames"][:, 0], result["frames"][:, -1])
 
         for selection in (slice(None, None, 2), slice(None, None, -1), slice(2, 2)):
