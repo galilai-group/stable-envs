@@ -322,9 +322,15 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     all_active = True
     result, live_state, live_frame = None, None, None
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
-    # the end of the step; then the outputs move to the device.
-    host = _host_pipeline(env, pipeline)
+    # the end of the step; then the outputs move to the device. So does a family that steps host copies of an
+    # accelerator's lanes (``_steps_on_host``): its transitions stay on the host and the result moves in one copy.
+    host_steps = pipeline is None and env.device.type != "cpu" and getattr(env, "_steps_on_host", bool)()
+    host = host_steps or _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
+    step_once = env._step
+    if host_steps:
+        acts = acts.detach().cpu() if torch.is_tensor(acts) else acts
+        step_once = advance = env._host_advance
     # One action needs one all-true flag column per output; a single allocation serves them all.
     single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
     flags = None
@@ -366,7 +372,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
             elif all_active:
                 # A single step that needs its State exports it with the outputs, in one call.
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
-                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
+                result = (step_once if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
@@ -405,6 +411,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
         if pending:
             pipeline.abort_step()
         raise
+    finally:
+        if host_steps:
+            env._end_host_steps()
 
     valid = flags[0] if single else torch.stack(validity, dim=1)
     out = {"state": live_state} if final_state else {}

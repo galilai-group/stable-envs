@@ -168,6 +168,11 @@ def test_cuda_numba_steps_host_rows_like_torch(batch):
         assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
         assert_same_state(actual, expected)
         assert torch.equal(actual["frames"], expected["frames"])
+        # The sequence stepped host copies of the lanes; the device rows hold the last State.
+        assert torch.equal(env._render_state, reference._render_state)
+        assert torch.equal(env.render(), reference.render())
+        later = env.step(actions, states=None, frames=None)
+        assert_same_state(later, reference.step(actions, states=None, frames=None))
         env.set_state(checkpoint)
         reference.set_state(checkpoint)
         assert_same_state(env.step(actions[:, 0], frames=None), reference.step(actions[:, 0], frames=None))
