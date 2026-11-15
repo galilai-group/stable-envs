@@ -11,12 +11,14 @@ Explicit settings are kept.
 
 from __future__ import annotations
 
+import atexit
 import ctypes
 import functools
 import importlib
 import importlib.util
 import os
 import sys
+import threading
 
 _DARWIN_MUJOCO = frozenset({"cgl", "glfw"})
 _LINUX_MUJOCO = frozenset({"egl", "osmesa", "glfw"})
@@ -124,8 +126,85 @@ def _renderer_import_error() -> Exception | None:
     return None
 
 
+_GL_LOCK = threading.RLock()
+_GL_OWNED: dict[int, tuple] = {}
+_GL_EXIT_HOOKED = False
+
+
+def track_gl(resource, release=None):
+    """Own an object that holds an OpenGL context until ``release_gl`` or interpreter exit; return it.
+
+    ``release`` defaults to ``release_renderer``. Exit releases newest first, before MuJoCo ends its EGL display.
+    """
+    global _GL_EXIT_HOOKED
+    with _GL_LOCK:
+        _GL_OWNED[id(resource)] = (resource, release or release_renderer)
+        if not _GL_EXIT_HOOKED:
+            # Registered after MuJoCo's EGL display hook, so it runs first.
+            _GL_EXIT_HOOKED = True
+            atexit.register(release_all_gl)
+    return resource
+
+
+def release_renderer(renderer) -> None:
+    """Free a ``mujoco.Renderer``: make its context current so its GL objects are the ones freed, then close it."""
+    context = getattr(renderer, "_gl_context", None)
+    if context is not None:
+        try:
+            context.make_current()
+        except Exception:  # noqa: BLE001 — a context that is already gone has nothing to free
+            pass
+    renderer.close()
+
+
+def close_source_env(env) -> None:
+    """Close an upstream OGBench environment together with the ``mujoco.Renderer`` it keeps outside ``close``."""
+    unwrapped = getattr(env, "unwrapped", env)
+    for name in ("custom_renderer", "_renderer"):
+        renderer = getattr(unwrapped, name, None)
+        if renderer is not None:
+            setattr(unwrapped, name, None)
+            release_renderer(renderer)
+    env.close()
+
+
+def track_source_env(env):
+    """Own an upstream OGBench environment; ``release_gl`` closes it with its renderer."""
+    return track_gl(env, close_source_env)
+
+
+def release_gl(resource) -> None:
+    """Release one tracked object once; an untracked object is ignored."""
+    with _GL_LOCK:
+        entry = _GL_OWNED.pop(id(resource), None)
+    if entry is not None:
+        entry[1](resource)
+
+
+def release_all_gl() -> int:
+    """Release every tracked object, newest first, and return how many were released.
+
+    A failing release does not stop the others; the first failure is raised afterward.
+    """
+    with _GL_LOCK:
+        entries = list(_GL_OWNED.values())[::-1]
+        _GL_OWNED.clear()
+    first = None
+    for resource, release in entries:
+        try:
+            release(resource)
+        except Exception as e:  # noqa: BLE001
+            first = first or e
+    if first is not None:
+        raise first
+    return len(entries)
+
+
 def mujoco_renderer(model, *, height: int, width: int):
-    """Construct ``mujoco.Renderer``, failing with the GL setup to change when no OpenGL context can be made."""
+    """Construct ``mujoco.Renderer``, failing with the GL setup to change when no OpenGL context can be made.
+
+    The renderer is tracked: ``release_gl`` frees it, and interpreter exit frees whatever remains.
+    """
     import mujoco
 
     backend = os.environ.get("MUJOCO_GL", "<unset>")
@@ -140,7 +219,7 @@ def mujoco_renderer(model, *, height: int, width: int):
         detail = f"MuJoCo has no OpenGL renderer with MUJOCO_GL={backend}"
     else:
         try:
-            return renderer(model, height=height, width=width)
+            return track_gl(renderer(model, height=height, width=width))
         except ValueError:
             raise
         except Exception as e:  # noqa: BLE001 — re-raised with the fix

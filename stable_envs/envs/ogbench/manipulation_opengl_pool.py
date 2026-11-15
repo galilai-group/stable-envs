@@ -42,6 +42,7 @@ def _worker(conn, family, device_type, threads):
         while True:
             message = conn.recv()
             if message is None:
+                manipulation_opengl.release_renderers()
                 break
             if message[0] == "buffer":
                 fd = reduction.recv_handle(conn)
@@ -215,8 +216,10 @@ def draw(family, columns, device_type, size):
 
 
 @atexit.register
-def _close_all():
-    for pool in _POOLS.values():
-        if pool is not None:
-            pool.close()
-    _POOLS.clear()
+def close_all() -> None:
+    """Stop the worker processes; each releases its OpenGL contexts first. The next draw starts them again."""
+    with _LOCK:
+        pools = [pool for pool in _POOLS.values() if pool is not None]
+        _POOLS.clear()
+    for pool in pools:
+        pool.close()
