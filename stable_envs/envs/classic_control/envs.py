@@ -395,6 +395,8 @@ class CartPole(ClassicControlSemantics, _Classic):
     use solid SDL line rules; the rotated pole uses Wu antialiasing.
     """
 
+    simulation_backends = ("gym", "numpy", "numba", "torch")
+
     name = "cartpole"
     state_dim = 2
     state_names = ("x", "theta")

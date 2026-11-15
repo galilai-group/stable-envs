@@ -15,7 +15,7 @@ from .simulation.local import (
     validate_classic_state,
 )
 
-_EXECUTION_MODES = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "torch": "NATIVE_TORCH"}
+_EXECUTION_MODES = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA", "torch": "NATIVE_TORCH"}
 
 
 class ClassicControlSemantics:

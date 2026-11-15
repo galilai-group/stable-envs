@@ -13,13 +13,15 @@ import torch
 
 from stable_envs._execution import backends
 from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, _measure
+from stable_envs.envs.classic_control.simulation.numba_step import STEPS
 
 
 def main():
     domains = sys.argv[1].split(",") if len(sys.argv) > 1 else list(CPU_MIN_ENVS)
     out = {}
     for domain in domains:
-        for dev, names in (("cpu", ("gym", "numpy")), ("cuda", ("gym", "numpy", "torch"))):
+        compiled = ("numba",) if domain in STEPS else ()
+        for dev, names in (("cpu", ("gym", "numpy", *compiled)), ("cuda", ("gym", "numpy", *compiled, "torch"))):
             device = torch.device(dev)
             measure = _measure(domain, device)
             rows = []

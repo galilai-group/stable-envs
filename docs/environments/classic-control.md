@@ -26,12 +26,13 @@ The `simulation_backend` argument selects how the batch steps:
 |---|---|
 | `"auto"` (default) | on CPU, `"gym"` for small batches and `"numpy"` for large batches. On CUDA, the CPU choice for small batches and `"torch"` for large batches |
 | `"numpy"` | the whole batch in one NumPy operation on the host, with outputs moved to the environment device |
+| `"numba"` | CartPole only: the whole batch in one compiled call on the host, in place on the state |
 | `"torch"` | the whole batch in one Torch operation on the environment device |
 | `"gym"` | one Gymnasium environment per batch row |
 
-`None` means `"auto"`. Each class ships two switch points, measured on RTX 3090 and RTX A5000 hosts: the batch size from which the host steps in NumPy instead of Gymnasium, and the batch size from which CUDA batches step in Torch. The `large_backend_min_envs` tuning knob and `stable-envs tune` can change them (see [Physics backends](../performance-tuning.md#physics-backends)). On CUDA, the CPU choice steps on the host and moves the outputs and the state of each step to the GPU in one copy.
+`None` means `"auto"`. CartPole steps with `"numba"` on the host at every batch size, because it was the fastest host backend from 1 to 4096 environments. Each other class ships two switch points, measured on RTX 3090 and RTX A5000 hosts: the batch size from which the host steps in NumPy instead of Gymnasium, and the batch size from which CUDA batches step in Torch. The `large_backend_min_envs` tuning knob and `stable-envs tune` can change them (see [Physics backends](../performance-tuning.md#physics-backends)). On CUDA, the CPU choice steps on the host and moves the outputs and the state of each step to the GPU in one copy.
 
-Gymnasium resets each environment and owns its PCG64 random stream for every backend, so a seed gives the same initial states on every backend and device. NumPy steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
+Gymnasium resets each environment and owns its PCG64 random stream for every backend, so a seed gives the same initial states on every backend and device. NumPy and Numba steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
 
 On CUDA, `"torch"` keeps the [state](../terms.md#state) on the GPU. One Triton kernel steps the batch and a CUDA graph replays it, so a step reads nothing back to the host. A reset draws the initial states with Gymnasium on the host and copies them to the GPU in one copy. The step doesn't check the range of discrete actions, because that check would read back to the host, and an action out of range gives undefined dynamics.
 
