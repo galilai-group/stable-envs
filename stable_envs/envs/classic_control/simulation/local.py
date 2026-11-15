@@ -237,7 +237,9 @@ class ClassicControlAdapter(SimulatorAdapter):
         self._physics_keys = tuple(physics_state_key(name) for name in self._physics_names)
         self._static_keys = _static_keys(domain)
         self._moving_fields = tuple(key for key in self.fields if key not in self._static_keys)
-        self._layout = state_layout(domain, self.num_envs)
+        from .packed import PackedState
+
+        self._packed = PackedState(domain, self.num_envs)
         self._bases = [env.unwrapped for env in self.envs]
         self._static_loaded = False
         self._closed = False
@@ -320,34 +322,39 @@ class ClassicControlAdapter(SimulatorAdapter):
 
     def _load_static(self) -> None:
         if not self._static_loaded:
-            self._layout.load_static(self._columns(self._static_keys))
+            views = self._packed.views
+            for key, value in self._columns(self._static_keys).items():
+                views[key][...] = value
             self._static_loaded = True
 
-    def _moving_columns(self) -> dict:
-        """``{key: (num_envs, width) array}`` of the fields that steps change, gathered from all lanes at once."""
-        n, bases = self.num_envs, self._bases
+    def _write_moving(self) -> None:
+        """Copy the fields that steps change from all lanes into the packed State."""
+        n, bases, views = self.num_envs, self._bases, self._packed.views
         state = np.array([base.state for base in bases], dtype=np.float64).reshape(n, -1)
-        values: dict = {name: state[:, i : i + 1] for i, name in enumerate(_STATE_NAMES[self.domain])}
-        values[("lifecycle", "elapsed_steps")] = np.fromiter((env._elapsed_steps for env in self.envs), np.int64, n)[
-            :, None
-        ]
+        for i, name in enumerate(_STATE_NAMES[self.domain]):
+            views[name][:, 0] = state[:, i]
+        views[("lifecycle", "elapsed_steps")][:, 0] = np.fromiter((env._elapsed_steps for env in self.envs), np.int64, n)
         if self.domain == "cartpole":
             beyond = [base.steps_beyond_terminated for base in bases]
-            values[("task", "steps_beyond_terminated")] = np.array([[b or 0] for b in beyond], np.int64)
-            values[("task", "has_steps_beyond_terminated")] = np.array([[b is not None] for b in beyond], np.bool_)
+            views[("task", "steps_beyond_terminated")][:, 0] = [b or 0 for b in beyond]
+            views[("task", "has_steps_beyond_terminated")][:, 0] = [b is not None for b in beyond]
         elif self.domain == "pendulum":
             last = [getattr(base, "last_u", None) for base in bases]
-            values["torque"] = np.array([[0.0 if u is None else u] for u in last], np.float64)
-            values[("task", "has_last_u")] = np.array([[u is not None] for u in last], np.bool_)
+            views["torque"][:, 0] = [0.0 if u is None else u for u in last]
+            views[("task", "has_last_u")][:, 0] = [u is not None for u in last]
         elif self.domain == "mountain_car_continuous":
             narrow = [np.asarray(base.state).dtype == np.float32 for base in bases]
-            values[("task", "state_is_float32")] = np.array(narrow, np.bool_)[:, None]
-        return values
+            views[("task", "state_is_float32")][:, 0] = narrow
 
     def get_state(self) -> TensorDict:
         self._check_open()
         self._load_static()
-        return self._layout.export(self._moving_columns(), self.device)
+        self._write_moving()
+        return self._packed.export(self.device)
+
+    def stack_states(self, states) -> TensorDict | None:
+        """Stack States that ``get_state`` made with one copy per dtype; None for other States."""
+        return self._packed.stack(states)
 
     def validate(self, state: TensorDict) -> None:
         """Check the schema and every lane's PCG64 state; change no simulator."""
