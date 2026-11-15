@@ -34,7 +34,7 @@ def test_reacher_matches_native_for_100_calls_with_variation_and_resets():
         # bounds, but advance 100 public calls without intermediate restoration.
         for action in np.random.default_rng(43).uniform(-1, 1, (100, 3, 2)):
             expected = reference.step(action)
-            actual = env.step(torch.as_tensor(action, device="cuda"), states=slice(0, 0), frames=None).cpu()
+            actual = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
             torch.testing.assert_close(actual["state", "qpos"], expected["state", "qpos"], rtol=0, atol=1e-5)
             torch.testing.assert_close(actual["state", "qvel"], expected["state", "qvel"], rtol=0, atol=3e-5)
             torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-5)
@@ -86,10 +86,10 @@ def test_reacher_replays_100_public_calls():
         for action in actions[:5]:
             env.step(action, states=None, frames=None)
         checkpoint = env.get_state()
-        expected = [env.step(action, states=slice(0, 0), frames=None).cpu() for action in actions[5:]]
+        expected = [env.step(action, states=None, frames=None).cpu() for action in actions[5:]]
         env.reset(seed=77)
         env.set_state(checkpoint)
         assert_same_state(env.get_state(), checkpoint)
         for action, want in zip(actions[5:], expected, strict=True):
-            actual = env.step(action, states=slice(0, 0), frames=None).cpu()
+            actual = env.step(action, states=None, frames=None).cpu()
             assert_same_state(actual, want)

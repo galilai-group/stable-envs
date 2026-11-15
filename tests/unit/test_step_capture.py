@@ -136,7 +136,7 @@ def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
     with CheapAdvance() as env:
         out = env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None, frames=None)
         assert env.exports == 0 and "state" not in out.keys()
-        out = env.step(torch.ones(3, 1, dtype=torch.int64), states=None, frames=None)
+        out = env.step(torch.ones(3, 1), states=None, frames=None)
         assert env.exports == 0 and "state" not in out.keys()
 
 
