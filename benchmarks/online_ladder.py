@@ -549,12 +549,14 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     sync = torch.cuda.synchronize if dev.startswith("cuda") else None
     acts = torch.as_tensor(actions, device=dev)
     frames = slice(None) if render else None
+    # STEP_STATES=all times step() with its default states=slice(None) (a state per action) instead of states=None.
+    states = slice(None) if os.environ.get("STEP_STATES") == "all" else None
 
     def play(groups):
         for s in groups:
             env.reset(seed=int(seeds[s]))
             for t0 in range(0, length, chunk):
-                env.step(acts[s : s + lanes, t0 : min(t0 + chunk, length)], states=None, frames=frames)
+                env.step(acts[s : s + lanes, t0 : min(t0 + chunk, length)], states=states, frames=frames)
             yield lanes * length
 
     groups = list(range(0, n - lanes + 1, lanes))
@@ -574,6 +576,7 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
         "device": dev,
         "execution_mode": execution_mode,
         "actions_per_call": chunk,
+        "step_states": "all" if states is not None else "none",
         "steps_per_episode": length,
         "threads": args.threads,
         "frame_shape": shape,
