@@ -16,7 +16,9 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Changed
 
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
-- On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and PushT moves the outputs of a step to the device in one copy and the state in one more copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
+- On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and TwoRoom moves the result of a single step to the device in one copy: the state, the outputs, the `states` and the validity masks. PushT moves the outputs of a step in one copy and the state in one more copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
+- On CUDA, a step result that moves from the host reuses the device memory of an earlier result when no tensor uses that result any more. A single step stacks a state whose leaves share one buffer with one copy.
+- TwoRoom and the other classes with reset leaves build their reset sampling tree once per environment, not at each `reset`. On CUDA, a TwoRoom reset moves its state to the device in one copy.
 - A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.
 
 ## [0.1.0] - 2026-11-13

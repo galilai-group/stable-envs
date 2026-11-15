@@ -403,6 +403,18 @@ class _Transfer:
                 pool.pop(0)
         return parts
 
+    def host_parts(self, packed: np.ndarray) -> list:
+        """The leaves of ``packed`` as CPU tensors, in signature order; they share its memory."""
+        parts: list = [None] * self.count
+        for _, kind, _, start, stop, sizes, runs in self.groups:
+            block, offset = packed[start:stop].view(kind), 0
+            for (shape, indices), size in zip(runs, sizes, strict=True):
+                piece = block[offset : offset + size].reshape(len(indices), *shape)
+                offset += size
+                for i, row in zip(indices, piece, strict=True):
+                    parts[i] = torch.from_numpy(row)
+        return parts
+
     def node(self, batch, device):
         """``node(dict, path)`` for the builder: a node with the batch size of its path."""
         batches = self.batches
@@ -491,15 +503,19 @@ def leaf_tree(leaves) -> dict:
 def pack_to_device(leaves, batch, device, batches=()) -> TensorDict:
     """The TensorDict of host NumPy ``leaves``, ``[(key path, array)]``, on ``device`` in one copy.
 
-    The arrays are packed by dtype straight into one host buffer, with no tensor per leaf on the host; each
-    returned leaf is a view of the device copy, which can be the block of an earlier result that nothing uses any
-    more. ``batches`` holds ``(node path, batch size)`` of each node whose
-    batch size extends its parent's; the batch size of a node is its parent's unless listed.
+    The arrays are packed by dtype straight into one host buffer, with no intermediate tensor per leaf. On an
+    accelerator each returned leaf is a view of the device copy, which can be the block of an earlier result that
+    nothing uses any more; on the CPU each leaf is a view of a new buffer that the result owns. ``batches`` holds
+    ``(node path, batch size)`` of each node whose batch size extends its parent's; the batch size of a node is its
+    parent's unless listed.
     """
     device = _device(device)
     batch = torch.Size(batch)
     plan = _plan((tuple((key, value.shape, _TORCH[value.dtype]) for key, value in leaves), (), tuple(batches)))
-    packed = plan.staging()
+    cpu = device.type == "cpu"
+    # On the CPU the leaves are views of a new buffer, which the result owns.
+    packed = np.empty(plan.total, np.uint8) if cpu else plan.staging()
     for _, kind, order, start, stop, _, _ in plan.groups:
         np.concatenate([leaves[i][1].reshape(-1) for i in order], out=packed[start:stop].view(kind))
-    return plan.build(plan.send(packed, device), plan.node(batch, device))
+    parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
+    return plan.build(parts, plan.node(batch, device))

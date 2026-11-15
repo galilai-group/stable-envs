@@ -565,12 +565,12 @@ class _HiddenTargetSemantics:
 
     @torch.no_grad()
     def _host_step(self, action, move):
-        """Step on host copies for an accelerator and hand the host arrays to ``move``, which copies them over once.
+        """Step with Numba and hand the host arrays to ``move``, which puts them on the device in one copy.
 
-        ``move({key path: array})`` returns the step result and the moved State. None when this env doesn't step on
-        the host.
+        ``move({key path: array})`` returns the step result and the moved State. None when this env doesn't step
+        with Numba.
         """
-        if self.simulation_backend != "numba" or self.device.type == "cpu":
+        if self.simulation_backend != "numba":
             return None
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
@@ -579,8 +579,8 @@ class _HiddenTargetSemantics:
     def _numba_step(self, action, active, move=None):
         """Advance the lanes and build state and task outputs in one Numba call.
 
-        On an accelerator the call runs on host copies; the outputs move to the device after it, through ``move``
-        when it is given.
+        On an accelerator the call runs on host copies. ``move`` builds the result from the host arrays when it is
+        given.
         """
         from . import navstep_cpu
 
@@ -603,15 +603,16 @@ class _HiddenTargetSemantics:
             ("info", "goal_state"): goal_state,
             ("info", "distance_to_target"): distance,
         }
-        if self.device.type == "cpu" or move is None:
-            result = leaf_tree(leaves)
-            result = build_tensordict(result, [n], "cpu")
-            if self.device.type == "cpu":
-                return result
-            result = to_device(result, self.device)
-            moved = result["state"]
-        else:
+        if move is not None:
             result, moved = move(leaves)
+        else:
+            result = build_tensordict(leaf_tree(leaves), [n], "cpu")
+            if self.device.type != "cpu":
+                result = to_device(result, self.device)
+            moved = result["state"]
+        if self.device.type == "cpu":
+            # The kernel advanced the live rows in place.
+            return result
         rows = inputs[0]
         if self.state_dim == 2:
             # The rows are the agent positions, already on the device: a device copy, without a host wait.
