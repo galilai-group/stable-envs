@@ -93,6 +93,15 @@ Validate before changing any batch row: missing or extra keys, batch shape, dtyp
 
 Reset seeding follows the upstream library. Some upstream libraries reseed with fresh entropy on `reset(seed=None)` instead of continuing a single generator. State and the reset anchors must capture everything a replay you promise depends on.
 
+### Exporting state
+
+Build the state snapshot with `stable_envs._core.state_layout.StateLayout` instead of a TensorDict per call. Declare the leaves once, as `(key, per-row shape, dtype)` in state order, with keys as tuples of names or as names joined by `/`. `export(values, device)` copies the current `{key: (B, ...) value}` into one new buffer per dtype, moves the buffers to an accelerator in one copy when the values are on the host, and returns a TensorDict whose leaves are views of those buffers. The returned state owns its memory. Name the leaves that change only on reset, restore or a variation change in `static=`, and call `load_static(values)` after each of those events: each export then copies them with one copy per dtype. `columns(state)` reads a state back and checks each leaf's shape and dtype.
+
+```python
+layout = StateLayout([("qpos", (nq,), torch.float64), ("task/target", (3,), torch.float64)], num_envs)
+state = layout.export({"qpos": qpos, "task/target": target}, device)
+```
+
 ### Running in worker processes
 
 To run a backend in worker processes, subclass `stable_envs._execution.process.ProcessAdapter`. The local adapter must accept `step(actions, *, active=None, capture_state=True)`, and its `validate(state)` must leave every batch row unchanged. `stable_envs/_execution/README.md` gives the full contract.
