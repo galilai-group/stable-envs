@@ -147,7 +147,10 @@ measures only the cells that are missing.
   the call, and the actions are on the device before timing. Without frames, the Pixels step drops its observation,
   as stable-envs does, and the Symbolic step keeps it. With frames, each step returns uint8 frames; the Symbolic
   classes draw them with the pixel env of their game. Offline, this source draws the stored States at each batch.
-  It is also the reference of the Craftax frame MSE. Each cell compares stable-envs with the faster of the two sources.
+  Each episode group waits for its last outputs, as the stable-envs cells do, and the steps between them are queued.
+  With T actions per call, the source steps T actions in one jitted `scan` of the vmapped step. It is also the
+  reference of the Craftax frame MSE: the MSE checks convert its pixel observation to uint8 on the host with NumPy,
+  as stable-worldmodel does. Each cell compares stable-envs with the faster of the two sources.
 
 ### Output
 
@@ -158,7 +161,9 @@ measures only the cells that are missing.
 - `online/<Env>/{snv,src}-{step,render}-*-L<L>.json`: steps/s at L lanes.
 - `offline/<Env>/src-jax-{cpu,gpu}.json` and `online/<Env>/src-jax-{step,render}-{cpu,gpu}-L<L>.json`: the batched
   JAX source (Craftax).
-- Each timed cell records `cpu_util`: CPU seconds of the timing process, all threads, per wall second.
+- Each timed cell records `cpu_util`: CPU seconds per wall second of the timing process, all threads, and of its
+  live worker processes when psutil is installed. `cpu_util_scope` says which.
+- The online cells warm up for `--warmup` seconds and at least `--warmup-steps` steps (1000 by default).
 
 Each timed cell keeps the median rate and the rate of each window (`rates`). A cell whose rates spread by more
 than 10% is not reliable. Measure it again before you use it.
