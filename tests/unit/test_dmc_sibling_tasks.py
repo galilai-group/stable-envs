@@ -51,7 +51,7 @@ def _rollout(env, ref, actions):
 
 
 def _chunk(env, ref, actions):
-    result = env.step(actions.transpose(1, 0, 2), states=None, frames=None)
+    result = env.step(actions.transpose(1, 0, 2), states=slice(0, 0), frames=None)
     for t, action in enumerate(actions):
         expected, reward, observation = ref.step(action)
         assert torch.equal(result["reward"][:, t], reward)

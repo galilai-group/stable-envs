@@ -55,7 +55,7 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
             states = [
                 framed(got, want)["state"]
                 for got, want in zip(
-                    (env.step(a, states=None, frames=None) for a in actions),
+                    (env.step(a, states=slice(0, 0), frames=None).exclude("states", "state_valid") for a in actions),
                     (ref.step(a) for a in actions),
                     strict=True,
                 )
@@ -100,7 +100,7 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
             _classic_compare(drawn, ref.reset(seed + 1))
             worst = [frame_mse(env, ref)] if draws else [0.0]
             for a in actions:
-                _classic_compare(env.step(a, states=None, frames=None), ref.step(a))
+                _classic_compare(env.step(a, states=slice(0, 0), frames=None).exclude("states", "state_valid"), ref.step(a))
                 if draws:
                     worst.append(frame_mse(env, ref))
             assert max(worst) == 0.0, f"{domain} sampled frames differ from SWM: worst-frame MSE {max(worst)}"
