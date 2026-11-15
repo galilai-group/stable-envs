@@ -11,7 +11,7 @@ from stable_envs._core.tensordicts import to_device
 from stable_envs._execution import backends
 from stable_envs._execution.host import HostAdapter
 
-BACKENDS = {"cpu": ("small", "small"), "cuda": ("small", "large")}
+BACKENDS = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large")}
 CHOICES = ("small", "large")
 
 
@@ -55,29 +55,34 @@ def test_the_knob_sets_the_switch_point(switch, batch, expected):
         assert _select(batch, requested=None) == expected
 
 
-def test_without_a_measure_auto_uses_the_large_batch_backend():
+def test_without_a_value_auto_uses_the_shipped_switch_point():
     assert _select(3) == "large"
+    shipped = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large", 4)}
+    pick = lambda n: backends.select_backend("test-sim", n, "cuda", "auto", shipped, choices=CHOICES)  # noqa: E731
+    assert pick(3) == "small" and pick(4) == "large"
+    with tuning.override(large_backend_min_envs=2):
+        assert pick(3) == "large"
 
 
-def test_calibration_picks_the_faster_backend_and_caches_it(monkeypatch):
+def test_selection_times_nothing_and_tune_calibrates_and_caches(monkeypatch):
     monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: step())
     monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
     monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
+    monkeypatch.setattr(backends, "_REGISTERED", {})
     calls = []
     costs = {"small": lambda rows: 1e-4 * rows, "large": lambda rows: 4e-4}
     measure = _measure(costs, calls)
-    assert _select(2, measure=measure) == "small"
+    assert _select(2, measure=measure) == "large"
+    assert calls == []
+    assert backends.calibrate(2, "cuda") == {"test-sim": "small"}
     assert calls == [("large", 2), ("small", 1), ("small", 2)]
     calls.clear()
     assert _select(3, measure=measure) == "small"
-    assert calls == []
     # From a large batch, the search stops once the small-batch backend is slower.
-    assert _select(64, measure=measure) == "large"
+    assert backends.calibrate(64, "cuda") == {"test-sim": "large"}
     assert calls == [("large", 64), ("small", 1), ("small", 2), ("small", 4), ("small", 8)]
-    calls.clear()
-    # A larger range follows a smaller range that chose the large-batch backend, without a measurement.
+    # A larger range follows a smaller range that chose the large-batch backend.
     assert _select(1024, measure=measure) == "large"
-    assert calls == []
     data, current = tuning.read_cache("cuda")
     assert current
     assert data["entries"]["test-sim|0|2-3"] == {backends.KNOB: 4}
@@ -88,13 +93,15 @@ def test_a_backend_that_fails_to_build_loses(monkeypatch):
     monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
     monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
     monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
+    monkeypatch.setattr(backends, "_REGISTERED", {})
 
     def measure(backend, rows):
         if backend == "large":
             raise RuntimeError("no GPU backend")
         return (lambda: None), (lambda: None)
 
-    assert _select(16, measure=measure) == "small"
+    _select(16, measure=measure)
+    assert backends.calibrate(16, "cuda", write=False) == {"test-sim": "small"}
 
 
 def test_to_device_keeps_cpu_tensordicts_and_their_values():

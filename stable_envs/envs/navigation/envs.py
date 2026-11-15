@@ -9,7 +9,7 @@ from tensordict import TensorDict
 
 from ... import tuning
 from ..._core.tensordicts import build_tensordict, to_device
-from ..._execution.backends import select_backend
+from ..._execution.backends import Rungs, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -147,6 +147,11 @@ def _bias_field_rgba(biases) -> np.ndarray:
 _WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
 _EXECUTION_MODES = {"torch": "NATIVE_TORCH", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
 _NO_MASK = np.zeros(0, np.bool_)
+
+
+#: Shipped CUDA switch point of TwoRoom: the smallest batch that steps in JAX; smaller batches step in Numba (Torch
+#: without Numba). None uses JAX at every batch size. The knob and the tuning cache take precedence. MEASUREMENT
+TWO_ROOM_CUDA_MIN_ENVS: int | None = None
 
 
 def _numba_available() -> bool:
@@ -1088,7 +1093,10 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             self.B,
             self.device,
             "auto",
-            {"cpu": ("jax", "jax"), "cuda": ("numba" if _numba_available() else "torch", "jax")},
+            {
+                "cpu": Rungs("jax", "jax"),
+                "cuda": Rungs("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
+            },
             choices=self.simulation_backends,
             measure=measure,
         )

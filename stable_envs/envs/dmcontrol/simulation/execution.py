@@ -4,13 +4,19 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from ...._execution.backends import select_backend
+from ...._execution.backends import Rungs, select_backend
 from .batch import DMCBatchAdapter
 from .factory import ACTION_DIMS, make_batch
 from .first_family import ReacherAdapter
 
 if TYPE_CHECKING:
     from .mjwarp import DMCWarpAdapter
+
+
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp, per simulator key; smaller batches step
+#: on native physics. A key that isn't here uses MuJoCo Warp at every batch size. The knob and the tuning cache
+#: (``stable-envs tune``) take precedence. MEASUREMENT
+CUDA_MIN_ENVS: dict[str, int] = {}
 
 
 def _measure(key: str, device: str | torch.device):
@@ -41,7 +47,7 @@ def dmc_backend(key: str, num_envs: int, device: str | torch.device, backend: st
         num_envs,
         device,
         backend,
-        {"cpu": ("native", "native"), "cuda": ("native", "mjwarp")},
+        {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", CUDA_MIN_ENVS.get(key))},
         choices=choices,
         measure=_measure(key, device),
     )

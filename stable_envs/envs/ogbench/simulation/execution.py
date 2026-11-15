@@ -51,6 +51,11 @@ def make_maze_adapter(
     return OGBMazeBatchAdapter(num_envs, device, seed, loco=loco, maze=maze)
 
 
+#: Shipped CUDA switch points of Cube and Scene: the smallest batch that steps on MuJoCo Warp; smaller batches step
+#: on native ``mujoco.batch``. The knob and the tuning cache (``stable-envs tune``) take precedence. MEASUREMENT
+MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {}
+
+
 def _measure_manipulation(family: str, device: str | torch.device):
     """Build and step Cube/Scene lanes on one backend, for the backend calibration."""
 
@@ -71,7 +76,7 @@ def manipulation_backend(
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a Cube/Scene batch; see ``select_backend``."""
     import torch
 
-    from ...._execution.backends import select_backend
+    from ...._execution.backends import Rungs, select_backend
 
     if simulation_backend == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
@@ -80,7 +85,7 @@ def manipulation_backend(
         num_envs,
         device,
         simulation_backend,
-        {"cpu": ("native", "native"), "cuda": ("native", "mjwarp")},
+        {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", MANIPULATION_CUDA_MIN_ENVS.get(family))},
         choices=("native", "mjwarp"),
         measure=_measure_manipulation(family, device),
     )

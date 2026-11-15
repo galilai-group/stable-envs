@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("triton", "jax", "numba")
+#: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
+#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence. MEASUREMENT
+CUDA_MIN_ENVS: int | None = None
 
 
 def _measure(device, discrete: bool, config: dict):
@@ -49,7 +52,7 @@ def pusht_backend(
     """
     import torch
 
-    from ...._execution.backends import select_backend
+    from ...._execution.backends import Rungs, select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
@@ -59,7 +62,7 @@ def pusht_backend(
         num_envs,
         device,
         backend,
-        {"cpu": ("numba", "numba"), "cuda": ("numba", _gpu_backend())},
+        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", _gpu_backend(), CUDA_MIN_ENVS)},
         choices=SIMULATION_BACKENDS,
         measure=measure,
     )

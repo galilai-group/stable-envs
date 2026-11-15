@@ -38,7 +38,7 @@ dm_control resets and restores each task. On CPU, every environment of a batch s
 | `"mjwarp"` | error | MuJoCo Warp |
 | `"mjx"` | error | JAX/MJX, `DMCReacher` only |
 
-`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the knob is not set, the first environment of each task and power-of-two batch range times both backends on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
+`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
 
 ```python
 # needs the dmcontrol-gpu extra; CUDA only

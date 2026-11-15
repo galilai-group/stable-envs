@@ -2,14 +2,16 @@
 
 A family declares, per device type, the backend it uses for small batches and the one it uses for large batches.
 With ``simulation_backend="auto"``, a batch of ``large_backend_min_envs`` or more rows uses the large-batch backend.
-Without a set or cached value, the first batch of each power-of-two batch range times both backends once and stores
-the result in the tuning cache of the device.
+The switch point comes from the knob, else from the tuning cache that ``stable-envs tune`` writes, else from the
+value the family ships in its backend declaration. Nothing is timed when an environment is built, so without tuning
+the same batch size selects the same backend on every machine.
 """
 
 from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping, Sequence
+from typing import NamedTuple
 
 import torch
 
@@ -106,28 +108,46 @@ def _calibrate(path: str, num_envs: int, device: torch.device, small: str, large
     return wins
 
 
+class Rungs(NamedTuple):
+    """The backends of one device type and the shipped switch point between them."""
+
+    small: str
+    large: str
+    #: Smallest batch that uses ``large`` when neither the knob nor the tuning cache sets the switch point. The
+    #: family records next to the value how it was measured. None uses ``large`` at every batch size.
+    min_envs: int | None = None
+
+
+#: ``path -> (rungs per device type, measure)`` of the simulation paths that this process selected for;
+#: ``stable-envs tune`` calibrates them.
+_REGISTERED: dict[str, tuple[Mapping[str, Rungs], Measure]] = {}
+
+
+def _rungs(backends: Mapping[str, tuple[str, ...]], device: torch.device) -> Rungs:
+    return Rungs(*backends.get(device.type, backends["cpu"]))
+
+
 def select_backend(
     path: str,
     num_envs: int,
     device: str | torch.device,
     requested: str | None,
-    backends: Mapping[str, tuple[str, str]],
+    backends: Mapping[str, tuple[str, ...]],
     *,
     choices: Sequence[str],
     measure: Measure | None = None,
 ) -> str:
-    """Return the simulation backend of a batch.
+    """Return the simulation backend of a batch. It reads the knob and the tuning cache, and times nothing.
 
     Args:
         path: Simulation path of the family and task, for example ``"dmc-sim/reacher"``. It keys the cache.
         num_envs: Number of rows in the batch.
         device: Device of the outputs.
         requested: ``"auto"`` (or None) to select from ``backends``, else one of ``choices``.
-        backends: ``{device type: (small-batch backend, large-batch backend)}``. A device type that isn't a key uses
-            the ``"cpu"`` entry.
+        backends: ``{device type: Rungs}``. A device type that isn't a key uses the ``"cpu"`` entry. This is the
+            family's one declaration of its backends and shipped switch points.
         choices: Backends that ``requested`` may name.
-        measure: Builds and steps one backend for the calibration; without it the large-batch backend is used when
-            no value is set or cached.
+        measure: Builds and steps one backend; ``stable-envs tune`` uses it to calibrate ``path``.
 
     Raises:
         ValueError: If ``requested`` is neither ``"auto"``, None nor one of ``choices``.
@@ -140,22 +160,35 @@ def select_backend(
             raise ValueError(f"simulation_backend must be one of {names}; got {requested!r}")
         return requested
     device = torch.device(device)
-    small, large = backends.get(device.type, backends["cpu"])
-    if small == large:
-        return small
+    rungs = _rungs(backends, device)
+    if measure is not None:
+        _REGISTERED[path] = (backends, measure)
+    if rungs.small == rungs.large:
+        return rungs.small
     value = tuning.get(KNOB, path=path, size=0, batch=num_envs, device=device)
     if value is not None:
-        return large if num_envs >= value else small
+        return rungs.large if num_envs >= value else rungs.small
     side = _cached_neighbours(path, device, num_envs)
     if side is not None:
-        return large if side == "large" else small
-    if measure is None:
-        return large
-    wins = _calibrate(path, num_envs, device, small, large, measure)
-    lo, hi = tuning.batch_range(num_envs)
-    try:
-        tuning.write_cache({tuning.entry_key(path, 0, num_envs): {KNOB: lo if wins else hi + 1}}, device)
-    except OSError as e:
-        log("WARNING", f"{path}: could not cache the backend choice ({e}).")
-    return large if wins else small
+        return rungs.large if side == "large" else rungs.small
+    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
 
+
+def calibrate(num_envs: int, device: str | torch.device, *, write: bool = True) -> dict[str, str]:
+    """Time both backends of every simulation path this process selected for, at ``num_envs`` rows on ``device``.
+
+    ``stable-envs tune`` calls it. Each choice goes to the tuning cache of the device unless ``write`` is False.
+    Returns ``{path: chosen backend}``.
+    """
+    device = torch.device(device)
+    chosen = {}
+    for path, (backends, measure) in list(_REGISTERED.items()):
+        rungs = _rungs(backends, device)
+        if rungs.small == rungs.large:
+            continue
+        wins = _calibrate(path, num_envs, device, rungs.small, rungs.large, measure)
+        chosen[path] = rungs.large if wins else rungs.small
+        if write:
+            lo, hi = tuning.batch_range(num_envs)
+            tuning.write_cache({tuning.entry_key(path, 0, num_envs): {KNOB: lo if wins else hi + 1}}, device)
+    return chosen

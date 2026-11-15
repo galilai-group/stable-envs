@@ -102,11 +102,17 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
     """Sweep the knobs ``env`` reads one at a time from their defaults; cache and return the fastest values."""
     from . import registry
 
+    from ._execution import backends
+
     say = echo or (lambda *_: None)
     tuning.check(dict.fromkeys(knobs))
+    if not knobs or backends.KNOB in knobs:
+        # The simulation backends of the paths this env selected for: the one place that times them.
+        for path, pick in backends.calibrate(env.num_envs, env.device, write=write).items():
+            say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
     chosen = [k for k in knobs_for(env) if not knobs or k.name in knobs]
     if not chosen:
-        say(f"{type(env).__name__} reads no tunable knob on {env.device.type}.")
+        say(f"{type(env).__name__} reads no other tunable knob on {env.device.type}.")
         return {}
     paths = tuning.paths_of(type(env))
     try:
