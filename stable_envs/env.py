@@ -112,7 +112,7 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
 
 def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
     """Describe nonfinite rows and named columns, or return None when all values are finite."""
-    if s.device.type == "cpu" and s.dtype in (torch.float32, torch.float64) and np.isfinite(s.numpy()).all():
+    if s.device.type == "cpu" and s.dtype in (torch.float32, torch.float64) and np.isfinite(s.detach().numpy()).all():
         return None
     bad = ~torch.isfinite(s)
     if not bool(bad.any()):
