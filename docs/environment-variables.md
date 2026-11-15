@@ -11,7 +11,7 @@ An unparsable value raises `ValueError` with the variable's name when the librar
 
 Integer values take an optional `K`, `M`, `G` or `T` suffix (powers of 1024). `auto` or an empty value uses the default. Flags take `1` or `0`.
 
-Variables from other libraries, such as `MUJOCO_GL`, `PYOPENGL_PLATFORM` and `MUJOCO_EGL_DEVICE_ID`, are part of [installing each family](install.md#what-each-family-needs).
+Variables from other libraries, such as `MUJOCO_GL`, `PYOPENGL_PLATFORM` and `MUJOCO_EGL_DEVICE_ID`, are part of [installing each family](install.md#what-each-family-needs). stable-envs sets one of them, `XLA_PYTHON_CLIENT_PREALLOCATE`; see [JAX GPU memory](#jax-gpu-memory).
 
 ## Tuning knobs
 
@@ -67,6 +67,16 @@ Each variable sets one [tuning knob](api/tuning.md#knobs) for the whole process.
 | `STABLE_ENVS_MSHUMAN_HOME` | unset | Path to an existing MS-Human-700 checkout. When it's unset, stable-envs downloads the pinned commit into the cache (`$XDG_CACHE_HOME/stable-envs/ms-human-700`). |
 | `STABLE_ENVS_DMC_CUDA_RENDER` | `auto` | `mjwarp` makes the fixed-camera DM Control environments with `backend="auto"` on CUDA draw with the MuJoCo Warp ray tracer, as the body-tracking ones do by default. See [DM Control](environments/dmcontrol.md#mujoco-warp-renderer). |
 | `STABLE_ENVS_DMC_WARP_OPTIONS` | unset | A JSON object of default options for the DM Control MuJoCo Warp renderer, for example `{"shadows": "one"}`. The `render_options` argument overrides each key that it sets. |
+
+## JAX GPU memory
+
+When JAX starts on a GPU, it reserves most of the GPU memory, and Torch then has little memory left. When stable-envs builds an environment that steps in JAX, it sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` before JAX starts. JAX then allocates memory only when it needs it. These environments step in JAX: TwoRoom with the JAX backend, PushT with `simulation_backend="jax"`, `DMCReacher` with `simulation_backend="mjx"`, and the Craftax classes. Importing stable-envs or building another environment doesn't set the variable.
+
+A value that you set is kept. If other code started JAX on a GPU before stable-envs built the environment, stable-envs can't change the setting. It then logs one warning that Torch can run out of GPU memory, unless you set `XLA_PYTHON_CLIENT_PREALLOCATE`, `XLA_PYTHON_CLIENT_MEM_FRACTION` or `XLA_PYTHON_CLIENT_ALLOCATOR`. To fix it, set the variable before Python starts, or build the environment before other code uses JAX:
+
+```bash
+XLA_PYTHON_CLIENT_PREALLOCATE=false python train.py
+```
 
 ## Development
 

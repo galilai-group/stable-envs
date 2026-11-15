@@ -8,17 +8,12 @@ from __future__ import annotations
 import contextlib
 import functools
 import importlib
-import os
 from dataclasses import dataclass
 
+import jax
+import jax.numpy as jnp
 import torch
-
-# JAX otherwise reserves most of the GPU at first use and leaves torch little of it.
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
-
-import jax  # noqa: E402
-import jax.numpy as jnp  # noqa: E402
-from craftax.craftax_env import make_craftax_env_from_name  # noqa: E402
+from craftax.craftax_env import make_craftax_env_from_name
 
 
 @contextlib.contextmanager

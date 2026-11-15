@@ -25,6 +25,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
+- stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` when it builds an environment that steps in JAX, before JAX starts, and no longer when it imports a JAX backend module. A value that you set is kept. If JAX already started on a GPU without the variable, stable-envs logs one warning with the fix. See [JAX GPU memory](https://galilai-group.github.io/stable-envs/environment-variables/#jax-gpu-memory).
 - CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 - On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and TwoRoom moves the result of a single step to the device in one copy: the state, the outputs, the `states` and the validity masks. PushT moves the outputs and the state of a single step without frames in one copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
