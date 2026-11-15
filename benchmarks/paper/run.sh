@@ -21,7 +21,8 @@
 #   count after so many seconds. Each cell records the warm-up steps and seconds it took. TIMED_STEPS (default 0) times
 #   each window by steps instead of WINDOW seconds: TIMED_STEPS steps per lane, rounded up to whole episodes, for an
 #   online arm, and TIMED_STEPS render calls (after WARMUP_STEPS untimed calls) for the offline ours arm. The offline
-#   source arms keep WINDOW seconds. FRAME_CHECK=0 leaves out
+#   source arms keep WINDOW seconds. REPEATS_SMALL windows (default REPEATS) are timed at batches and lane counts up to
+#   SMALL_MAX_B (default 0: none), REPEATS at the larger ones. FRAME_CHECK=0 leaves out
 #   the comparison of the source workers' frames with one-env source replays.
 #   VENV_PYTHON=path reuses an existing family venv (no build, no delete); STATES_DIR=dir keeps the stored States and
 #   episodes between runs; SRC_FROM=dir copies source cells (src-*.json) measured on the same machine into OUT first.
@@ -55,7 +56,8 @@ else
 fi
 DEVICES=${DEVICES:-cpu cuda}; ARMS=${ARMS:-offline step frames}; REPEATS=${REPEATS:-3}; WINDOW=${WINDOW:-10}; CPU_SOURCES=${CPU_SOURCES:-1}
 WARMUP=${WARMUP:-2}; TIMED_STEPS=${TIMED_STEPS:-0}
-OFFSTEPS=$([ "$TIMED_STEPS" -gt 0 ] && echo "--warmup-steps ${WARMUP_STEPS:-0} --timed-steps $TIMED_STEPS"); CHECK=$([ "${FRAME_CHECK:-1}" = 0 ] && echo --no-frame-check)
+REPEATS_SMALL=${REPEATS_SMALL:-$REPEATS}; SMALL_MAX_B=${SMALL_MAX_B:-0}
+OFFSTEPS="$([ "$TIMED_STEPS" -gt 0 ] && echo "--warmup-steps ${WARMUP_STEPS:-0} --timed-steps $TIMED_STEPS") --repeats-small $REPEATS_SMALL --small-max-batch $SMALL_MAX_B"; CHECK=$([ "${FRAME_CHECK:-1}" = 0 ] && echo --no-frame-check)
 sweep() { [ $1 = cpu ] && echo $SWEEP_CPU | tr : " " || echo $SWEEP_CUDA | tr : " "; }
 # The stored States hold the largest offline batch; the episode set holds one episode per lane of the largest count.
 N=$(for d in $DEVICES; do sweep $d; done | tr " " "\n" | sort -n | tail -1)
@@ -220,7 +222,7 @@ for spec in "$@"; do
         # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there,
         # and time ours on the same 8-step window as well, so both rates carry the same share of reset cost.
         slice=$([ $dev = cuda ] && [ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
-        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --warmup-steps ${WARMUP_STEPS:-0} --timed-steps $TIMED_STEPS --episodes $L $CHECK"
+        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $([ $L -le $SMALL_MAX_B ] && echo $REPEATS_SMALL || echo $REPEATS) --seconds $WINDOW --warmup $WARMUP --warmup-steps ${WARMUP_STEPS:-0} --timed-steps $TIMED_STEPS --episodes $L $CHECK"
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1

@@ -394,7 +394,7 @@ def cmd_ours(args) -> None:
                 t = _timed(
                     _cycle(sweep),
                     seconds=args.seconds,
-                    repeats=args.repeats,
+                    repeats=args.repeats_small if b <= args.small_max_batch else args.repeats,
                     sync=sync,
                     warmup_s=args.warmup,
                     warmup_items=args.warmup_steps * b,
@@ -655,6 +655,8 @@ def main() -> None:
     o.add_argument("--threads", type=int, default=8)
     o.add_argument("--warmup-steps", type=int, default=0, help="untimed render calls before the windows, at least")
     o.add_argument("--timed-steps", type=int, default=0, help="render calls per timed window; 0 times by --seconds")
+    o.add_argument("--repeats-small", type=int, default=0, help="windows of a batch up to --small-max-batch")
+    o.add_argument("--small-max-batch", type=int, default=0, help="largest batch that takes --repeats-small windows")
     o.add_argument("--output", required=True)
     r = sub.add_parser("source", parents=[common])
     r.add_argument("--procs", type=int, default=1)
