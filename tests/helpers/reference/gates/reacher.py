@@ -23,6 +23,7 @@ from tests.helpers.reference.semantics import (
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    fold_for,
 )
 
 
@@ -92,7 +93,7 @@ def run_gate(device="cpu"):
                 reward_state = ref.get_state()
                 for i, wrapper in enumerate(ref.envs):
                     get_field(reward_state, "task/target_pos")[i, :2] = torch.as_tensor(wrapper.info["finger_pos"])
-                env.set_state(reward_state)
+                env.set_state(fold_for(env, reward_state))
                 ref.set_state(reward_state)
                 got, expected = (
                     env.step(np.zeros((batch, 2)), states=None, frames=None).exclude("valid"),

@@ -216,7 +216,7 @@ def test_private_projection_roundtrips_the_renderer_layout_and_is_not_a_state(na
         rows = env._get_render_state()
         projection = env._unpack_render_state(rows)
         state = env.get_state()
-        assert "qvel" in state
+        assert "qvel" in schema_of(state).names
         assert env._pack_render_state(state).shape == rows.shape
         assert any(off is None for _, _, off in env._layout())
         with pytest.raises((TypeError, ValueError)):

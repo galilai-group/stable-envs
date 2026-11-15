@@ -9,7 +9,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
-from stable_envs._core.state_schema import unfold
+from stable_envs._core.state_schema import schema_of, unfold
 from stable_envs.testing.metrics import leaf_difference
 
 
@@ -28,6 +28,12 @@ def _fields(td):
         td = td.exclude("state")
         td["state"] = fields
     return td
+
+
+def fold_for(env, state: TensorDict) -> TensorDict:
+    """A reference State of one leaf per field in the layout of ``env``'s own State."""
+    schema = schema_of(env.get_state())
+    return state if schema is None else schema.fold(state, state.batch_size, state.device)
 
 
 def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict:

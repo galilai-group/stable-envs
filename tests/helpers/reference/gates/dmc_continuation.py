@@ -24,6 +24,7 @@ from tests.helpers.reference.semantics import (
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    fold_for,
     max_state_error,
 )
 
@@ -210,7 +211,7 @@ def run_gate(device="cpu"):
 
                     check_reset_matches_reference(env, ref, seed=18)
                     reward_state = _positive_state(domain, ref.get_state())
-                    env.set_state(reward_state)
+                    env.set_state(fold_for(env, reward_state))
                     ref.set_state(reward_state)
                     got, expected = (
                         env.step(np.zeros((batch, ref.action_dim)), states=None, frames=None).exclude("valid"),

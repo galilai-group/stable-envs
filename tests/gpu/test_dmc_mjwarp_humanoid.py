@@ -31,7 +31,9 @@ def test_humanoid_replays_100_public_calls(seed):
         expected = []
         for action in actions[5:]:
             result = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
-            for key in (("state", "qpos"), ("state", "qvel"), "observation", "reward"):
+            for key in ("qpos", "qvel"):
+                assert torch.isfinite(get_field(result["state"], key)).all(), key
+            for key in ("observation", "reward"):
                 assert torch.isfinite(result[key]).all(), key
             expected.append(result)
 

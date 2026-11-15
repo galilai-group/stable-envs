@@ -25,6 +25,7 @@ from tests.helpers.reference.semantics import (
     check_step_matches_reference,
     check_two_histories_same_state,
     compare_state,
+    fold_for,
     max_state_error,
 )
 
@@ -247,7 +248,7 @@ def run_gate(device="cpu"):
                         if domain in ("ball_in_cup", "finger"):
                             check_reset_matches_reference(env, reference, seed=13)
                             positive = _positive_sparse_state(domain, reference)
-                            env.set_state(positive)
+                            env.set_state(fold_for(env, positive))
                             reference.set_state(positive)
                             got = env.step(np.zeros((1, reference.action_dim)), states=None, frames=None).exclude(
                                 "valid"
