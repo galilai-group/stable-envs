@@ -96,11 +96,13 @@ print(snv.tuning.RENDER_PATHS["navigation"])    # ('navigation', 'raster2d')
 
 ::: stable_envs.tuning.cache_path
 
-## Time simulation backends
+## Time simulation backends and renderers
 
-`stable-envs tune` times the simulation backends of the environment it tunes. `benchmarks/backend_switch.py` uses these two functions to time them over a range of batch sizes.
+`stable-envs tune` times the simulation backends and the renderers of the environment it tunes. `benchmarks/backend_switch.py` uses these functions to time them over a range of batch sizes.
 
 ::: stable_envs.tuning.simulation_paths
+
+::: stable_envs.tuning.render_paths
 
 ::: stable_envs.tuning.time_backend
 

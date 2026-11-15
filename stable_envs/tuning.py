@@ -34,6 +34,7 @@ __all__ = [
     "describe",
     "cache_path",
     "simulation_paths",
+    "render_paths",
     "time_backend",
 ]
 
@@ -605,6 +606,20 @@ def simulation_paths(device="cuda"):
     from ._execution.backends import registered
 
     return registered(device)
+
+
+def render_paths(device="cuda"):
+    """Return ``(path, renderers, measure)`` of the render paths that drew in this process on ``device``.
+
+    Classes with a CPU and a GPU renderer register them when they draw; ``renderers`` has the ``small`` (CPU) and
+    ``large`` renderer names, and ``time_backend`` times either one.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import RENDER_KNOB, registered
+
+    return registered(device, knob=RENDER_KNOB)
 
 
 def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:

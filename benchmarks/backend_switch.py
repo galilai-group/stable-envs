@@ -12,11 +12,10 @@ import json
 
 import stable_envs as snv
 from stable_envs import tuning
-from stable_envs._execution import backends
 
 
 def _paths(render: bool):
-    return backends.registered("cuda", knob=backends.RENDER_KNOB if render else backends.KNOB)
+    return tuning.render_paths("cuda") if render else tuning.simulation_paths("cuda")
 
 
 def sweep(name: str, largest: int, render: bool = False) -> dict:
