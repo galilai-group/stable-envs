@@ -603,7 +603,7 @@ def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices,
     cpu = torch.device("cpu")
     if backend not in (None, "auto"):
         return backends.select_backend(path, num_envs, cpu, backend, {"cpu": rungs}, choices=choices)
-    backends._REGISTERED[path, cpu.type] = (rungs, measure)
+    backends._REGISTERED[backends.KNOB, path, cpu.type] = (rungs, measure)
     if rungs.small == rungs.large:
         return rungs.small
     data, current = tuning.read_cache(cpu)
