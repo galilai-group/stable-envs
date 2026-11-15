@@ -27,9 +27,7 @@ def test_slice_contract(states, frames, sequence, env_type):
         assert ("frames" in out.keys()) == (frames is not None)
         assert "frame" not in out.keys()
         assert env.render_calls == (0 if frames is None else len(range(length)[frames]))
-        assert ("state" in out.keys()) == (states is not None)
-        final = out["state"] if states is not None else env.get_state()
-        assert torch.equal(final["position"], positions[:, -1:])
+        assert torch.equal(out["state"]["position"], positions[:, -1:])
         assert torch.equal(out["valid"], valid)
         assert env.calls.tolist() == ([1, 3, 4] if sequence else [1, 1, 1])
         if states is not None:
