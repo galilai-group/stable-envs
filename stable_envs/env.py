@@ -1386,7 +1386,7 @@ class Env:
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
+    def step(self, actions, *, states=slice(None), frames=slice(-1, None), state: bool = True) -> TensorDict:
         """Advance one action or a sequence of actions per environment.
 
         An environment that finishes mid-sequence holds its last state, and its later task outputs are zero.
@@ -1396,9 +1396,10 @@ class Env:
                 Discrete ``(1,)`` actions also accept ``(B,)``.
             states: Slice over the steps that selects which states to return, or None.
             frames: Slice over the steps that selects which frames to render, or None.
+            state: Return the final state; False skips building it, and ``get_state()`` builds it on demand.
 
         Returns:
-            A TensorDict with batch size ``(B,)``: ``state`` (the final state), the family's task
+            A TensorDict with batch size ``(B,)``: ``state`` (the final state, unless ``state=False``), the family's task
                 outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
                 mask, and the selected ``(B, S)`` ``states`` and ``(B, F, H, W, 3)`` uint8 ``frames``
                 with their ``state_valid`` and ``frame_valid`` masks.
@@ -1407,11 +1408,11 @@ class Env:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
             ValueError: If ``actions`` has the wrong shape, or ``frames`` is set without RGB output.
-            TypeError: If ``states`` or ``frames`` is neither a slice nor None.
+            TypeError: If ``states`` or ``frames`` is neither a slice nor None, or ``state`` is not a bool.
         """
         from ._core.stepping import step
 
-        return step(self, actions, states=states, frames=frames)
+        return step(self, actions, states=states, frames=frames, state=state)
 
     def _step(self, actions) -> TensorDict:
         """Advance one transition per environment without rendering or sequence dispatch."""
