@@ -615,8 +615,8 @@ def visit_order(tree, bounds, tight, velocity, order, active, walls, circle, sha
 
 @njit(cache=True, inline="always")
 def _advance_lane(
-    lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target, single,
-    circle, active, counts, lines,
+    lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
+    single, circle, active, counts, lines,
 ):  # fmt: skip
     if active[lane]:
         total, rows = _lane(
@@ -652,8 +652,8 @@ def advance_batch(
     """
     for lane in prange(body.shape[0]):
         _advance_lane(
-            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
-            single, circle, active, counts, lines,
+            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+            target, single, circle, active, counts, lines,
         )  # fmt: skip
 
 
@@ -665,6 +665,6 @@ def advance_serial(
     """``advance_batch`` on the calling thread, without starting the parallel region of one environment."""
     for lane in range(body.shape[0]):
         _advance_lane(
-            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
-            single, circle, active, counts, lines,
+            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+            target, single, circle, active, counts, lines,
         )  # fmt: skip
