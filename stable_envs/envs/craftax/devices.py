@@ -17,8 +17,13 @@ from ..._core.config import log
 from ..._core.cpus import cpu_limit
 
 
+def host_device_count() -> int:
+    """One XLA host device for each CPU that this process can use."""
+    return cpu_limit()
+
+
 def _ask_for_host_devices() -> str | None:
-    """Ask JAX for one CPU device per CPU that this process can use; returns why it could not, or None.
+    """Ask JAX for ``host_device_count()`` CPU devices; returns why it could not, or None.
 
     JAX reads the count once, when it starts its CPU backend, and the count holds for the whole process.
     A count that the user set (``jax_num_cpu_devices``, ``JAX_NUM_CPU_DEVICES`` or
@@ -32,7 +37,7 @@ def _ask_for_host_devices() -> str | None:
     if count >= 0:
         return None
     try:
-        jax.config.update("jax_num_cpu_devices", cpu_limit())
+        jax.config.update("jax_num_cpu_devices", host_device_count())
     except RuntimeError:
         return "JAX started before the first CPU Craftax environment"
     return None
@@ -40,17 +45,18 @@ def _ask_for_host_devices() -> str | None:
 
 @functools.cache
 def use_host_devices() -> None:
-    """Before the first CPU Craftax environment, ask JAX for one CPU device per usable CPU.
+    """Before the first CPU Craftax environment, ask JAX for ``host_device_count()`` CPU devices.
 
-    Logs one warning when JAX keeps one CPU device on a machine with more usable CPUs.
+    Logs one warning when JAX keeps one CPU device where Craftax would use more.
     """
     reason = _ask_for_host_devices()
-    if reason is not None and cpu_limit() > 1 and len(jax.devices("cpu")) == 1:
+    count = host_device_count()
+    if reason is not None and count > 1 and len(jax.devices("cpu")) == 1:
         log(
             "WARNING",
-            f"JAX has one CPU device ({reason}), so Craftax steps its CPU lanes on 1 of {cpu_limit()} CPUs. "
+            f"JAX has one CPU device ({reason}), so Craftax steps its CPU lanes on one device instead of {count}. "
             "Make the first CPU Craftax env before other JAX work, or set "
-            f"XLA_FLAGS=--xla_force_host_platform_device_count={cpu_limit()} before you start Python.",
+            f"XLA_FLAGS=--xla_force_host_platform_device_count={count} before you start Python.",
         )
 
 

@@ -43,10 +43,11 @@ def texture_lock(classic: bool):
         yield
 
 
-#: The fewest lanes that one XLA host device steps, per game. A split adds a fixed cost per device and per call
-#: (placing the inputs, launching the program, joining the outputs), so a device needs this much stepping to
-#: pay for it. docs/environments/craftax.md (Simulation) says how the values were measured.
-MIN_LANES_PER_HOST_DEVICE = {"classic": 1, "craftax": 1}
+#: The fewest lanes that one XLA host device steps. A split adds a fixed cost per device and per call (placing the
+#: inputs, launching the program, joining the outputs), so each device needs this much stepping to pay for it.
+#: Measured on two CPU hosts with 8 CPUs each, both games: below 32 lanes per device a split was not faster than
+#: one device on at least one host. docs/environments/craftax.md (Simulation) says how.
+MIN_LANES_PER_HOST_DEVICE = 32
 
 
 @dataclass(frozen=True)
@@ -286,7 +287,6 @@ class Kernel:
                     self._functions[("step", s, f, varied)] = (run, (0, 1))
         self._jitted: dict = {}
         self._everyone: dict = {}
-        self.min_lanes = MIN_LANES_PER_HOST_DEVICE["classic" if classic else "craftax"]
         one = jax.tree.map(lambda x: jax.ShapeDtypeStruct((1, *x.shape), x.dtype), engine)
         #: The ``(H, W, 3)`` shape of one frame.
         self.frame_shape = tuple(jax.eval_shape(frames, one).shape[1:])
@@ -315,10 +315,11 @@ class Kernel:
     def lanes(self, count: int, device) -> Lanes:
         """The placement of ``count`` lanes on ``device``.
 
-        CPU lanes are split evenly over the host devices, with at least ``min_lanes`` lanes on each device.
+        CPU lanes are split evenly over the host devices, with at least ``MIN_LANES_PER_HOST_DEVICE`` lanes on
+        each device.
         """
         devices = [device, *(d for d in jax.devices("cpu") if d != device)] if device.platform == "cpu" else [device]
-        parts = max(1, min(len(devices), count // self.min_lanes))
+        parts = max(1, min(len(devices), count // MIN_LANES_PER_HOST_DEVICE))
         per = -(-count // parts)
         used = -(-count // per)
         if used == 1:

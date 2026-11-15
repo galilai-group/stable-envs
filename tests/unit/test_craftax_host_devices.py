@@ -27,7 +27,7 @@ import stable_envs as se
 import jax
 from stable_envs.envs.craftax import kernel
 
-kernel.MIN_LANES_PER_HOST_DEVICE.update(classic=1, craftax=1)
+kernel.MIN_LANES_PER_HOST_DEVICE = 1
 name, out = sys.argv[1], sys.argv[2]
 saved = {"devices": np.array(len(jax.devices("cpu")))}
 with se.make(name, num_envs=7, device="cpu") as env:
@@ -78,13 +78,13 @@ CHECK = """
 import json
 import os
 import jax
-from stable_envs._core.cpus import cpu_limit
+from stable_envs.envs.craftax.devices import host_device_count
 if os.environ.get("START_JAX"):
     jax.numpy.zeros(1).block_until_ready()
 import stable_envs as se
 with se.make("CraftaxClassicSymbolic", num_envs=2, device="cpu") as env:
     env.reset(seed=0)
-print(json.dumps({"devices": len(jax.devices("cpu")), "limit": cpu_limit()}))
+print(json.dumps({"devices": len(jax.devices("cpu")), "limit": host_device_count()}))
 """
 
 
@@ -126,10 +126,10 @@ def test_importing_the_kernel_keeps_the_cpu_device_count():
 
 @pytest.mark.parametrize("count", [1, 2, 3, 8, 9, 64])
 def test_each_host_device_steps_at_least_the_fewest_lanes(count):
-    from stable_envs.envs.craftax.kernel import kernel
+    from stable_envs.envs.craftax import kernel as kernel_module
 
-    k = kernel("Craftax-Classic-Symbolic-v1")
+    k = kernel_module.kernel("Craftax-Classic-Symbolic-v1")
     lanes = k.lanes(count, jax.devices("cpu")[0])
     per = lanes.rows // lanes.parts
-    assert lanes.parts == 1 or per >= k.min_lanes
+    assert lanes.parts == 1 or per >= kernel_module.MIN_LANES_PER_HOST_DEVICE
     assert lanes.rows - lanes.count < per and lanes.parts <= len(jax.devices("cpu"))

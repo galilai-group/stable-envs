@@ -31,7 +31,7 @@ The whole batch is one stacked JAX pytree that one jitted `vmap` steps. [Batch r
 
 On the CPU, one XLA program uses only a few cores. So the batch rows are split evenly over XLA host devices, one device for each CPU that the process can use (its CPU affinity, limited by a cgroup CPU quota). Each device steps its rows in the same program. The results are equal bit for bit to the results on one device. When the rows do not divide evenly, the last device also steps copies of the first row, and their results are discarded.
 
-Each split adds a fixed cost to each call, for each device. So a device gets at least `MIN_LANES_PER_HOST_DEVICE` rows (in `stable_envs/envs/craftax/kernel.py`), and a small batch uses fewer devices or one device. MIN_LANES_TEXT
+Each split adds a fixed cost to each call, for each device. So a device gets at least 32 rows (`MIN_LANES_PER_HOST_DEVICE` in `stable_envs/envs/craftax/kernel.py`), and a smaller batch uses fewer devices or one device. The value was measured on 15 November 2026 on two CPU hosts with 8 CPUs each (Intel Xeon Platinum 8268 and 8358), for Craftax-Classic and Craftax, with one step per call and no frames, at batches 1 to 256 on 1, 2, 4 and 8 devices. Below 32 rows for each device, a split was not faster than one device on at least one of the hosts. Nothing is timed when you build an environment.
 
 The number of host devices is a JAX setting for the whole process, and JAX reads it when it starts its CPU backend. Craftax sets it when you make the first Craftax environment on the CPU, before Craftax imports its game code. A Craftax environment on CUDA does not change it. Thus:
 
