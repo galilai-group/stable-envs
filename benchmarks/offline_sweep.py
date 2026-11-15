@@ -76,14 +76,22 @@ def _sweeps(fn, *, warmup: int, repeats: int, budget_s: float, sync=None) -> dic
 
 
 def _timed(
-    units, *, seconds: float, repeats: int, sync=None, warmup_s: float = WARMUP_S, budget_s: float = 60.0
+    units,
+    *,
+    seconds: float,
+    repeats: int,
+    sync=None,
+    warmup_s: float = WARMUP_S,
+    budget_s: float = 60.0,
+    warmup_items: int = 0,
 ) -> dict:
     """Items per second over up to ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns
     its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
     slow source can take minutes, and one window of whole units is then enough."""
-    end = time.perf_counter() + warmup_s
-    while time.perf_counter() < end:
-        next(units)
+    # Warm up for at least warmup_s and warmup_items items: a kernel can still be compiling after the seconds.
+    end, warmed = time.perf_counter() + warmup_s, 0
+    while time.perf_counter() < end or warmed < warmup_items:
+        warmed += next(units)
     rates, windows, items = [], [], []
     for _ in range(repeats):
         if windows and sum(windows) >= budget_s:

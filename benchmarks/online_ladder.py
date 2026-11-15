@@ -446,7 +446,8 @@ def run_source(args, name: str, render: bool) -> dict:
     got: dict = {}
     try:
         units = _cycle(lambda: play(groups))
-        t = _timed(units, seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+        warm = args.warmup_steps * lanes
+        t = _timed(units, seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup, warmup_items=warm)
         units.close()
         if render and args.frame_check:
             # The workers' frames for a few lanes, spread across workers, at the check steps.
@@ -563,7 +564,8 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
             env.reset(seed=int(seeds[0]))
             shape = list(env.step(acts[:lanes, :1], states=None, frames=slice(None))["frames"].shape[2:])
         units = _cycle(lambda: play(groups))
-        t = _timed(units, seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup)
+        warm = args.warmup_steps * lanes
+        t = _timed(units, seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup, warmup_items=warm)
     finally:
         env.close()
     return {
@@ -630,7 +632,9 @@ def run_source_single(args, name: str) -> dict:
             yield len(actions[s])
 
     try:
-        t = _timed(_cycle(play), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+        t = _timed(
+            _cycle(play), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup, warmup_items=args.warmup_steps
+        )
     finally:
         env.close()
     return {"source": source_id(name), "envs": 1, "procs": 1, "steps_per_s": t["rate"], **t}
@@ -664,7 +668,13 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
 
     groups = list(range(0, n - k + 1, k))
     try:
-        t = _timed(_cycle(lambda: play(groups)), seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup)
+        t = _timed(
+            _cycle(lambda: play(groups)),
+            seconds=args.seconds,
+            repeats=args.repeats,
+            warmup_s=args.warmup,
+            warmup_items=args.warmup_steps * k,
+        )
     finally:
         venv.close()
     return {
@@ -761,6 +771,7 @@ def main() -> None:
     r.add_argument("--budget", type=float, default=300.0)
     r.add_argument("--seconds", type=float, default=10.0, help="length of one timed window")
     r.add_argument("--warmup", type=float, default=WARMUP_S, help="seconds of untimed work before the windows")
+    r.add_argument("--warmup-steps", type=int, default=0, help="untimed steps per lane before the windows, at least")
     r.add_argument(
         "--frame-check",
         action=argparse.BooleanOptionalAction,

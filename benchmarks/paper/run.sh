@@ -211,7 +211,7 @@ for spec in "$@"; do
         # OGBench maze sources take hours per whole episode at 1024 lanes and more; time their first 8 steps there,
         # and time ours on the same 8-step window as well, so both rates carry the same share of reset cost.
         slice=$([ $dev = cuda ] && [ $fam = ogbench ] && [ $L -ge 1024 ] && [[ $E == *Maze* ]] && echo "--source-steps 8")
-        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --episodes $L $CHECK"
+        COMMON="--env $E --data $D --procs $p --source-lanes $sl --lanes $L --threads $NCORES --repeats $REPEATS --seconds $WINDOW --warmup $WARMUP --warmup-steps ${WARMUP_STEPS:-0} --episodes $L $CHECK"
         # Envs listed in SRC_CAP_FILE have a source that reaches its full rate by 8 lanes; their source cells stop at
         # SRC_CAP_L lanes, where the rate no longer grows, and ours keeps the whole sweep.
         srcok=1
