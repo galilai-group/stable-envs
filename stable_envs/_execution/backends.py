@@ -139,7 +139,7 @@ class Rungs(NamedTuple):
 _REGISTERED: dict[tuple[str, str], tuple[Rungs, Measure]] = {}
 
 
-def _rungs(backends: Mapping[str, tuple[str, ...]], device: torch.device) -> Rungs:
+def _rungs(backends: Mapping[str, Rungs], device: torch.device) -> Rungs:
     return Rungs(*backends.get(device.type, backends["cpu"]))
 
 
@@ -148,7 +148,7 @@ def select_backend(
     num_envs: int,
     device: str | torch.device,
     requested: str | None,
-    backends: Mapping[str, tuple[str, ...]],
+    backends: Mapping[str, Rungs],
     *,
     choices: Sequence[str],
     measure: Measure | None = None,
