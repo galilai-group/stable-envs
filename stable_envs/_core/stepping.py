@@ -204,17 +204,20 @@ def _dispatch(env, actions, states, frames, state):
     if type(state) is not bool:
         raise TypeError(f"state must be a bool, got {state!r}")
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
-    if pipeline is None and frames is None:
-        out = _host_single_step(env, actions, states, state)
-        if out is not None:
-            return out
+    short = pipeline is None and frames is None
     if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
-        return _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state)
+        out = _host_single_step(env, actions, states, state) if short else None
+        if out is None:
+            out = _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state)
+        return out
     # Bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers or of the
     # native pool, and a parallel region waits for every one of its threads.
     threads = _threads_outside_steps()
     with _threads(1):
-        return _step(env, actions, states, frames, pipeline, render_threads=threads, final_state=state)
+        out = _host_single_step(env, actions, states, state) if short else None
+        if out is None:
+            out = _step(env, actions, states, frames, pipeline, render_threads=threads, final_state=state)
+        return out
 
 
 def _single_step(env, action, sequence, state_indices, final_state, advance):
