@@ -425,6 +425,9 @@ class Env:
         Raises:
             ValueError: If the class requires CUDA and ``device`` is not a CUDA device.
         """
+        from . import tuning
+
+        tuning.refresh()
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
             raise ValueError(

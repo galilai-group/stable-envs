@@ -315,3 +315,26 @@ def test_a_failing_autotune_never_reaches_the_render(autotuning, caplog, monkeyp
     monkeypatch.setattr(_tune, "tune", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
     assert _draw(Probe(num_envs=tuning.HINT_LANES)).shape[0] == tuning.HINT_LANES
     assert _logged(caplog, "autotune of Probe failed")
+
+
+def test_cache_changes_in_the_process_apply_at_the_next_call_without_a_stat(monkeypatch):
+    """``override`` and ``write_cache`` apply at the next lookup; lookups between changes call no ``stat``."""
+    env = Probe(num_envs=4, device="cpu")
+    calls = []
+    real_stat = type(tuning.cache_path("cpu")).stat
+
+    def counting_stat(self, *args, **kwargs):
+        calls.append(self)
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(type(tuning.cache_path("cpu")), "stat", counting_stat)
+    default = env.chunk()
+    tuning.write_cache({tuning.entry_key("navigation", env.size, env.B): {"nav_render_chunk": 8}}, "cpu")
+    assert env.chunk() == 8 != default
+    with tuning.override(nav_render_chunk=16):
+        assert env.chunk() == 16
+    assert env.chunk() == 8
+    calls.clear()
+    for _ in range(100):
+        env.chunk()
+    assert calls == []
