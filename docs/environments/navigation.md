@@ -12,7 +12,7 @@ with snv.TwoRoom(num_envs=8, device="cpu") as env:
 
 ## Install
 
-TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. SimplePointMaze needs the `navigation` extra for Matplotlib, and so does Piecewise's `rendering.render_bias_field` leaf. The extra also installs Numba for the CPU kernels, and TwoRoom on CUDA needs the `navigation-gpu` extra.
+TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. SimplePointMaze needs the `navigation` extra for Matplotlib, and so does Piecewise's `rendering.render_bias_field` leaf. The extra also installs Numba for the CPU kernels, and TwoRoom on CUDA needs the `navigation-gpu` extra. When a JAX TwoRoom is built, stable-envs turns off JAX's GPU memory preallocation, so that Torch keeps its GPU memory. See [JAX GPU memory](../environment-variables.md#jax-gpu-memory).
 
 ## Task
 
@@ -57,7 +57,7 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
     result = env.step(actions, states=None, frames=None)
 ```
 
-The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install. When the environment is built, stable-envs turns off JAX's GPU memory preallocation, so that Torch keeps its GPU memory. See [JAX GPU memory](../environment-variables.md#jax-gpu-memory).
+The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
 
 `simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports, and JAX without Numba. On CUDA, a batch of `large_backend_min_envs` or more environments steps in JAX, and a smaller batch steps in Numba (Torch without Numba). When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). On CUDA, `TwoRoom` and `TwoRoomTarget` draw a batch of fewer than `large_renderer_min_rows` frames with the Numba compositor on the CPU, and move the frames to CUDA in one copy ([Renderers](../performance-tuning.md#renderers)).
 
