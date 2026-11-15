@@ -173,12 +173,9 @@ class ManipulationSemantics:
         return self._simulator.step(actions, active=active, capture_state=False)
 
     def _host_step(self, actions, move):
-        """One step on a host simulator for an accelerator: ``move`` puts its arrays on the device in one copy.
-
-        On the CPU the simulator's own State export costs less for the many leaves of this State.
-        """
+        """One step on a host simulator: ``move`` puts its arrays on the env's device in one copy."""
         step = getattr(self._simulator, "step_leaves", None)
-        if step is None or self.device.type == "cpu":
+        if step is None:
             return None
         self._check_open("step")
         self._rows_installed = False
