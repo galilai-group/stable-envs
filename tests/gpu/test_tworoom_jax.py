@@ -18,7 +18,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize("batch,expected", [(1, "torch"), (8, "jax")])
+@pytest.mark.parametrize("batch,expected", [(1, "numba"), (8, "jax")])
 def test_auto_cutoff_preserves_cuda_outputs(batch, expected):
     with (
         tuning.override(large_backend_min_envs=8),
@@ -152,3 +152,22 @@ def test_cuda_single_lane_sequence_with_offset_action_views():
         actual = env.step(actions, frames=None)
         expected = torch.tensor([[54.6875, 55.625]], device="cuda")
         assert_same_state(actual["state", "agent", "position"], expected)
+
+
+@pytest.mark.parametrize("batch", [1, 5])
+def test_cuda_numba_steps_host_rows_like_torch(batch):
+    with (
+        se.TwoRoom(num_envs=batch, device="cuda", simulation_backend="numba") as env,
+        se.TwoRoom(num_envs=batch, device="cuda", simulation_backend="torch") as reference,
+    ):
+        checkpoint = env.reset(seed=23)
+        reference.reset(seed=23)
+        actions = torch.linspace(-1, 1, batch * 2 * 6, device="cuda").reshape(batch, 6, 2)
+        actual = env.step(actions, frames=slice(None))
+        expected = reference.step(actions, frames=slice(None))
+        assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
+        assert_same_state(actual, expected)
+        assert torch.equal(actual["frames"], expected["frames"])
+        env.set_state(checkpoint)
+        reference.set_state(checkpoint)
+        assert_same_state(env.step(actions[:, 0], frames=None), reference.step(actions[:, 0], frames=None))
