@@ -1,6 +1,5 @@
 """Bounded Acrobot ownership, source continuation, lifecycle and public slices."""
 
-from functools import partial
 from unittest.mock import patch
 
 import numpy as np
@@ -8,7 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
-import stable_envs.envs.classic_control.semantics as semantics
+import stable_envs.envs.classic_control.simulation.execution as execution
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from tests.helpers.reference.semantics import assert_same_state
@@ -118,7 +117,8 @@ def test_public_chunks_slices_early_stop_and_current_render(pipeline, device):
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("requires CUDA")
     local = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
-    with patch.object(semantics, "ClassicControlAdapter", partial(AcrobotProcessAdapter, processes=2)):
+    workers = lambda domain, n, dev, seed, _: AcrobotProcessAdapter(domain, n, dev, seed, processes=2)  # noqa: E731
+    with patch.object(execution, "make_classic_adapter", workers):
         remote = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
     if pipeline:
         remote._step_pipeline = lambda: remote._simulator

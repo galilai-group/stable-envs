@@ -11,7 +11,6 @@ from ...specs import Spec
 from .simulation.local import (
     _PHYSICS_SPACES,
     CLASSIC_FIELDS,
-    ClassicControlAdapter,
     physics_state_key,
     validate_classic_state,
 )
@@ -26,39 +25,32 @@ class ClassicControlSemantics:
     execution_mode = "AUTO_BATCHED"
     #: Every simulator returns new output tensors on each step.
     _step_outputs_owned = True
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("gym", "numpy", "torch")
 
-    def __init__(self, *args, simulation_backend: str | None = None, torch_min_envs: int | None = None, **kwargs):
+    def __init__(self, *args, simulation_backend: str | None = "auto", **kwargs):
         """Select the step backend.
 
-        By default, CUDA lanes step, reset and keep their State on the GPU in Torch, and CPU lanes step in
-        NumPy, or with Gymnasium below ``NUMPY_MIN_ENVS`` lanes, where it is faster. ``"auto"`` uses Torch
-        only for ``torch_min_envs`` (default ``TORCH_MIN_ENVS``) or more CUDA lanes, and NumPy on the host
-        for fewer lanes.
+        ``"auto"`` selects from the device and the batch size. On the CPU, small batches step one Gymnasium
+        environment per lane and large batches step in NumPy. On CUDA, small batches step with the CPU choice and
+        move their results to the GPU, and large batches step and keep their State on the GPU in Torch.
+        The class ships the switch points (``CPU_MIN_ENVS`` and ``CUDA_MIN_ENVS``); the ``large_backend_min_envs``
+        tuning knob and ``stable-envs tune`` take precedence.
 
         ``"gym"`` steps one Gymnasium environment per lane. ``"numpy"`` or ``"torch"`` selects a batched
         backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.
-        On the CPU, Gymnasium resets every backend. On CUDA, Torch resets the lanes on the GPU.
+        Gymnasium resets every backend, so a seed gives the same initial states on each.
         """
         super().__init__(*args, **kwargs)
-        from .simulation.batched import TORCH_MIN_ENVS, BatchedClassicAdapter, classic_backend
-        from .simulation.execution import make_classic_adapter
+        from .simulation.batched import classic_backend
+        from .simulation.execution import make_step_adapter
 
-        cutoff = TORCH_MIN_ENVS if torch_min_envs is None else torch_min_envs
-        self.simulation_backend = classic_backend(self.CLASSIC_DOMAIN, self.device, self.B, simulation_backend, cutoff)
+        self.simulation_backend = classic_backend(self.CLASSIC_DOMAIN, self.device, self.B, simulation_backend)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
-        if self.simulation_backend == "gym":
-            self._simulator = make_classic_adapter(
-                self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
-            )
-        elif self.simulation_backend == "torch" and self.device.type == "cuda":
-            from .simulation.device import DeviceClassicAdapter
-
-            sink = (self._sim, self._render_state, self.sim_state_names, self.render_from_sim)
-            self._simulator = DeviceClassicAdapter(self.CLASSIC_DOMAIN, self.B, self.device, self._seed, sink)
-        else:
-            self._simulator = BatchedClassicAdapter(
-                self.CLASSIC_DOMAIN, self.B, self.device, self._seed, self.simulation_backend
-            )
+        sink = (self._sim, self._render_state, self.sim_state_names, self.render_from_sim)
+        self._simulator = make_step_adapter(
+            self.CLASSIC_DOMAIN, self.simulation_backend, self.B, self.device, self._seed, sink
+        )
         self._configure_simulator()
         self.reset(seed=self._seed)
 
@@ -202,13 +194,18 @@ class ClassicControlSemantics:
         stacked = None if stack is None else stack(states)
         return _stack_states(states) if stacked is None else stacked
 
-    def _step(self, actions, *, active=None):
+    def _step(self, actions, *, active=None, capture_state=True):
         self._check_open("step")
-        result = self._simulator.step(actions, active=active)
+        result = self._simulator.step(actions, active=active, capture_state=capture_state)
         # The rows follow the simulator only when they are read.
         if not getattr(self._simulator, "writes_render_state", False):
             self._rows_stale = True
         return result
+
+    def _advance_without_snapshot(self, actions, *, active=None):
+        # The CUDA simulator copies its whole State with the outputs either way; a later snapshot costs more.
+        capture = getattr(self._simulator, "writes_render_state", False)
+        return self._step(actions, active=active, capture_state=capture)
 
     def _close(self):
         if hasattr(self, "_simulator"):

@@ -13,6 +13,7 @@ pytest.importorskip("miniworld.envs.moving_blockworld")
 pytest.importorskip("numba")
 
 import stable_envs as snv  # noqa: E402
+from stable_envs import tuning  # noqa: E402
 
 pytestmark = [
     pytest.mark.family("miniworld"),
@@ -79,8 +80,8 @@ def test_triton_steps_and_torch_resets_give_the_numba_episodes(case):
 
 @pytest.mark.parametrize("batch,expected", [(8, "numba"), (64, "triton")])
 def test_auto_routes_small_cuda_batches_to_numba(batch, expected):
-    with snv.MiniWorldMovingBlockWorld(
-        num_envs=batch, size=32, device="cuda", simulation_backend="auto", triton_min_envs=64
+    with tuning.override(large_backend_min_envs=64), snv.MiniWorldMovingBlockWorld(
+        num_envs=batch, size=32, device="cuda", simulation_backend="auto"
     ) as env:
         assert env.simulation_backend == expected
         out = env.step(torch.full((batch, 1), 2, device="cuda"), frames=None)

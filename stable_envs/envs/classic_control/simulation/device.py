@@ -1,4 +1,4 @@
-"""Classic-control lanes held, stepped and reset on a CUDA device, with each step replayed as one CUDA graph.
+"""Classic-control lanes held and stepped on a CUDA device, with each step replayed as one CUDA graph.
 
 The State and the step outputs live in four device blocks, one per dtype. A step copies the actions
 into a fixed buffer and replays a graph. The graph runs one Triton kernel for the domain, which also
@@ -6,9 +6,9 @@ writes the environment's render rows, and packs the blocks into one byte buffer.
 buffer gives the State and outputs that the step returns, so they own their memory. The step reads
 nothing back to the host. Without Triton, the graph replays the batched Torch kernel.
 
-Resets draw from a counter-based generator on the device. The ``rng`` State fields hold each lane's
-key (``seed + lane``) and its reset count instead of a PCG64 state, so seeded resets repeat, but they
-do not equal the Gymnasium resets. The initial states have the Gymnasium distributions.
+A reset draws from each lane's PCG64 stream on the host, with NumPy's seeding and ``uniform`` repeated on arrays
+of generators (``pcg``). It gives Gymnasium's initial states and generator states, as the CPU backends do, so a
+seed gives the same initial states on every backend. One copy moves them to the device; a reset reads nothing back.
 """
 
 from __future__ import annotations
@@ -21,9 +21,10 @@ from gymnasium.envs.classic_control import utils as gym_utils
 from tensordict import TensorDict
 
 from ...._core.config import log
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from .batched import _DISCRETE, _DYNAMIC, _ELAPSED, _KERNELS, MAX_EPISODE_STEPS, _Torch
+from . import pcg
 from .local import _PHYSICS_SPACES, CLASSIC_FIELDS, physics_state_key, validate_classic_state
 from .triton_step import HAVE_TRITON, launcher
 
@@ -39,7 +40,6 @@ _RENDER_COLUMNS = {"cartpole": (0, 2), "pendulum": (0, 2), "acrobot": (0, 1), "m
 _RENDER_COLUMNS["mountain_car_continuous"] = _RENDER_COLUMNS["mountain_car"]
 _BLOCK_DTYPES = (torch.float64, torch.int64, torch.float32, torch.bool)
 _OUTPUTS = ("reward", "observation", "info_state", "terminated", "truncated")
-_MASK = 0xFFFF_FFFF
 _TORCH = _Torch(torch.device("cpu"))
 
 
@@ -134,40 +134,19 @@ def _warn_once(what: str, error: BaseException) -> None:
         log("WARNING", f"Classic control on CUDA: {what} failed ({type(error).__name__}: {error}). Steps are slower.")
 
 
-def _mix(x: torch.Tensor) -> torch.Tensor:
-    """A 32-bit integer hash of values in [0, 2**32); every product stays below 2**63."""
-    x = x ^ (x >> 16)
-    x = (x * 0x21F0AAAD) & _MASK
-    x = x ^ (x >> 15)
-    x = (x * 0x735A2D97) & _MASK
-    return x ^ (x >> 15)
-
-
-def _uniforms(key: torch.Tensor, counter: torch.Tensor, count: int) -> list[torch.Tensor]:
-    """``count`` float64 uniforms in [0, 1) with 53 random bits, for each lane's key and reset count."""
-    base = _mix((key & _MASK) ^ _mix(((key >> 32) & _MASK) ^ 0x85EBCA6B))
-    base = _mix(base ^ _mix((counter & _MASK) ^ 0xC2B2AE35))
-    out = []
-    for k in range(count):
-        high = _mix(base ^ (((2 * k + 1) * 0x27D4EB2F) & _MASK))
-        low = _mix(high ^ 0x165667B1)
-        out.append(((high >> 5) * 67108864 + (low >> 6)).double() / 9007199254740992.0)
-    return out
-
-
 def _reset_bounds(domain: str, options: dict | None):
-    """Gymnasium's ``reset`` bounds of each initial-state variable, with its ``options``."""
+    """Gymnasium's ``reset`` bounds of each initial-state variable, with its ``options``, in draw order."""
     if domain == "pendulum":
         x = gym_utils.verify_number_and_cast(options.get("x_init", np.pi) if options else np.pi)
         y = gym_utils.verify_number_and_cast(options.get("y_init", 1.0) if options else 1.0)
         return [(-x, x), (-y, y)]
     default = {"cartpole": (-0.05, 0.05), "acrobot": (-0.1, 0.1)}.get(domain, (-0.6, -0.4))
     low, high = gym_utils.maybe_parse_reset_bounds(options, *default)
-    return [(float(low), float(high))] * (4 if domain in ("cartpole", "acrobot") else 1)
+    return [(low, high)] * (4 if domain in ("cartpole", "acrobot") else 1)
 
 
 class DeviceClassicAdapter(SimulatorAdapter):
-    """Batched classic-control lanes whose State, steps and resets stay on one CUDA device.
+    """Batched classic-control lanes whose State and steps stay on one CUDA device; Gymnasium draws the resets.
 
     ``sink`` is ``(sim, render_rows, sim_names, render_columns)`` of the environment. Each step also
     writes the new ``sim`` rows and their render rows, so the environment needs no copy of the State.
@@ -219,6 +198,9 @@ class DeviceClassicAdapter(SimulatorAdapter):
             and self._render.is_contiguous()
         )
         self._launch = None
+        # Each lane's PCG64 generator, held on the host for resets: (state, inc, has_uint32, uinteger).
+        self._seed = int(seed)
+        self._rng: tuple | None = None
         self._active = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
         self._actions: dict = {}
         self._graphs: dict = {}
@@ -273,30 +255,39 @@ class DeviceClassicAdapter(SimulatorAdapter):
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
         self._check_open()
         bounds = _reset_bounds(self.domain, options)
-        rng = self._field(("rng", "state"))
+        if seed is None and self._rng is None:
+            seed = self._seed
+        n = self.num_envs
         if seed is not None:
             seed = int(seed)
-            if seed < 0:
-                raise ValueError(f"Seed must be a non-negative integer, got {seed}")
-            lanes = torch.arange(self.num_envs, device=self.device, dtype=torch.int64) + seed % (1 << 62)
-            rng[:, 0], rng[:, 1], rng[:, 2] = lanes & _MASK, lanes >> 32, 0
-            self._field(("rng", "increment")).fill_(0)[:, 0] = 1
-        else:
-            rng[:, 2] += 1
-        u = _uniforms(rng[:, 0] | (rng[:, 1] << 32), rng[:, 2], len(bounds))
-        draws = [low + (high - low) * value for (low, high), value in zip(bounds, u, strict=True)]
+            if seed < 0 or seed + n > 1 << 64:
+                raise ValueError(f"Seed must be a non-negative integer below 2**64 - num_envs, got {seed}")
+            state, inc = pcg.seed(np.arange(n, dtype=np.uint64) + np.uint64(seed))
+            zero = np.zeros(n, np.int64)
+            self._rng = (state, inc, zero, zero)
+        assert self._rng is not None
+        state, inc, has_uint32, uinteger = self._rng
+        draws, state = pcg.doubles(state, inc, len(bounds))
+        self._rng = (state, inc, has_uint32, uinteger)
+        # ``Generator.uniform`` returns ``low + (high - low) * random()``.
+        values = [low + (high - low) * u for (low, high), u in zip(bounds, draws, strict=True)]
         if self.domain == "acrobot":
             # Acrobot stores its initial state as float32.
-            draws = [value.float().double() for value in draws]
-        elif self.domain != "cartpole":
-            # Pendulum's torque and the cars' velocity start at 0.
-            draws.append(torch.zeros_like(draws[0]))
-        names = _DYNAMIC[self.domain]
-        for name, value in zip(names, draws, strict=False):
-            self._field(name)[:, 0] = value
-        for key in names[len(draws) :]:
-            self._field(key).zero_()
-        self._field(_ELAPSED).zero_()
+            values = [value.astype(np.float32).astype(np.float64) for value in values]
+        host = {name: np.zeros((n, 1), dtype=np.float64) for name in _SIM_NAMES[self.domain]}
+        for name, value in zip(_SIM_NAMES[self.domain], values, strict=False):
+            host[name][:, 0] = value
+        host["rng_state"], host["rng_increment"] = pcg.to_limbs(state), pcg.to_limbs(inc)
+        host["rng_has_uint32"], host["rng_uinteger"] = has_uint32[:, None], uinteger[:, None]
+        drawn = to_device(build_tensordict({k: torch.from_numpy(v) for k, v in host.items()}, [n], "cpu"), self.device)
+        for name in _SIM_NAMES[self.domain]:
+            self._field(name).copy_(drawn[name])
+        for leaf in ("state", "increment", "has_uint32", "uinteger"):
+            self._field(("rng", leaf)).copy_(drawn[f"rng_{leaf}"])
+        # Gymnasium's reset clears the episode fields: elapsed steps, ``last_u`` and ``steps_beyond_terminated``.
+        for key in (*_DYNAMIC[self.domain], _ELAPSED):
+            if key not in _SIM_NAMES[self.domain]:
+                self._field(key).zero_()
         return self.get_state()
 
     def get_state(self) -> TensorDict:
@@ -324,7 +315,18 @@ class DeviceClassicAdapter(SimulatorAdapter):
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
-        for key in self.fields:
+        self._load(state, self.fields)
+        # The next reset continues each lane's restored PCG64 stream.
+        rng = state["rng"].cpu()
+        self._rng = (
+            pcg.from_limbs(rng["state"].numpy()),
+            pcg.from_limbs(rng["increment"].numpy()),
+            rng["has_uint32"][:, 0].numpy().copy(),
+            rng["uinteger"][:, 0].numpy().copy(),
+        )
+
+    def _load(self, state: TensorDict, keys) -> None:
+        for key in keys:
             self._field(key).copy_(state[key])
         # Hold the values as Gymnasium holds them: an absent ``last_u`` or ``steps_beyond_terminated`` reads as 0.
         if self.domain == "cartpole":

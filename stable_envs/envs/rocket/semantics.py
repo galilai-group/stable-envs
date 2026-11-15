@@ -14,7 +14,7 @@ from ...env import Env, _split_appearance
 from ...registry import REGISTRY, _require_extra, register
 from ...specs import CompositeSpec, Spec
 from . import legacy as frozen
-from .simulation.execution import NUMBA_CUDA_MIN_ENVS, make_rocket_adapter, rocket_backend
+from .simulation.execution import make_rocket_adapter, rocket_backend
 
 #: ``execution_mode`` per backend and device; on CUDA the Numba kernel runs on the host.
 _EXECUTION_MODES = {
@@ -32,11 +32,11 @@ POSE_KEY = ("current", "wrapper", "state")
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     """Rocket CPU dynamics with CPU/CUDA rendering.
 
-    ``simulation_backend="numba"`` (the CPU default) steps every environment in one Numba kernel call on the
-    CPU, with physical State; on CUDA the results move to the device. ``"numba_cuda"`` (the CUDA default) steps
-    them with the CUDA build of the kernel. ``"auto"`` selects ``"numba"`` for CUDA batches below
-    ``numba_cuda_min_envs``. ``"pybullet"`` steps PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with
-    replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
+    ``simulation_backend="numba"`` steps every environment in one Numba kernel call on the CPU, with physical
+    State; on CUDA the results move to the device. ``"numba_cuda"`` steps them with the CUDA build of the kernel.
+    ``"auto"`` (the default) selects ``"numba"`` on CPU. On CUDA it selects ``"numba"`` for small batches and
+    ``"numba_cuda"`` for large batches, from the ``large_backend_min_envs`` switch point. ``"pybullet"`` steps
+    PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
     CPU or the nvdiffrast path on CUDA.
 
     On CPU, ``backend="pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer, and ``"numba"``
@@ -44,6 +44,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     """
 
     requires_cuda = False
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("numba", "numba_cuda", "pybullet")
     execution_mode = "NATIVE_NUMBA"
     cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
@@ -68,15 +70,14 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         seed=0,
         *,
         simulator_config=None,
-        simulation_backend=None,
-        numba_cuda_min_envs=NUMBA_CUDA_MIN_ENVS,
+        simulation_backend="auto",
     ):
         from .render import check_backend
 
         _require_extra(type(self).__name__, "rocket", "PyFlyt", "pybullet", "numba", "scipy")
         device = Env.resolve_device(device)
         check_backend(backend, device)
-        self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, numba_cuda_min_envs)
+        self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, simulator_config)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
         # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
         frame = (
@@ -142,6 +143,12 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     def set_state(self, state):
         self._check_open("set_state")
+        if isinstance(state, TensorDict) and set(state.keys(True, True)) != set(self._simulator.fields):
+            raise ValueError(
+                f"The State keys do not match simulation_backend={self.simulation_backend!r}. States of 'numba' and "
+                "'numba_cuda' hold physical values and States of 'pybullet' hold a reset recipe and an action "
+                "history, so a State does not move between these two groups."
+            )
         self._simulator.set_state(state)
 
     def _step(self, actions, *, active=None):

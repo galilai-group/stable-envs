@@ -40,7 +40,7 @@ from .simulation.adapter import (
     render_here,
     resolve_config,
 )
-from .simulation.batched import TRITON_MIN_ENVS, BatchedMovingBlockWorldAdapter, execution_mode, miniworld_backend
+from .simulation.batched import BatchedMovingBlockWorldAdapter, execution_mode, miniworld_backend
 
 
 def _require_fork() -> None:
@@ -69,6 +69,8 @@ class MiniWorldMovingBlockWorld(Env):
     execution_mode = "AUTO_NUMBA_TRITON"
     #: Every step returns new output tensors.
     _step_outputs_owned = True
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("numba", "triton", "torch")
     action_dim = 1
     action_dtype = torch.int64
     action_low, action_high = 0, ACTION_HIGH
@@ -84,8 +86,7 @@ class MiniWorldMovingBlockWorld(Env):
         seed=0,
         preset="flowm",
         *,
-        simulation_backend=None,
-        triton_min_envs=TRITON_MIN_ENVS,
+        simulation_backend="auto",
         **options,
     ):
         """Build ``num_envs`` environments of ``preset`` (``"flowm"``, ``"flowm-textured"`` or ``"upstream"``) updated with ``options``.
@@ -96,8 +97,9 @@ class MiniWorldMovingBlockWorld(Env):
 
         ``simulation_backend`` selects the step: ``"numba"`` (a CPU kernel, one environment per thread),
         ``"triton"`` (a CUDA kernel, one environment per thread) or ``"torch"`` (vectorized Torch on the env's
-        device). The default is Triton on CUDA and Numba on CPU; ``"auto"`` also steps CUDA batches of fewer than
-        ``triton_min_envs`` environments with Numba. Every backend returns State and outputs on ``device``.
+        device). ``"auto"`` (the default) takes Numba on CPU. On CUDA it takes Numba for small batches and Triton
+        for large batches, from the ``large_backend_min_envs`` switch point. Every backend returns State and outputs
+        on ``device``.
         """
         _require_fork()
         if supersample != 1:
@@ -106,7 +108,9 @@ class MiniWorldMovingBlockWorld(Env):
             raise ValueError("Miniworld draws with OpenGL; backend must be 'auto' or 'opengl'")
         self.config = resolve_config(preset, options)
         device = Env.resolve_device(device)
-        self.simulation_backend = miniworld_backend(device, int(num_envs), simulation_backend, triton_min_envs)
+        self.simulation_backend = miniworld_backend(
+            device, int(num_envs), simulation_backend, self.config, int(size or self.default_size)
+        )
         self.execution_mode = execution_mode(self.simulation_backend)
         self._simulator = BatchedMovingBlockWorldAdapter(
             self.config, int(num_envs), int(size or self.default_size), device, self.simulation_backend
