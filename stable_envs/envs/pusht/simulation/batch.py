@@ -13,9 +13,17 @@ from .replay import HISTORY_KEYS, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options
 
 
+_TORCH_DTYPES: dict = {}
+
+
 def _dtype(value):
     """The torch dtype of a tensor or NumPy array."""
-    return value.dtype if torch.is_tensor(value) else torch.from_numpy(np.empty(0, value.dtype)).dtype
+    if torch.is_tensor(value):
+        return value.dtype
+    dtype = _TORCH_DTYPES.get(value.dtype)
+    if dtype is None:
+        dtype = _TORCH_DTYPES[value.dtype] = torch.from_numpy(np.empty(0, value.dtype)).dtype
+    return dtype
 
 
 def _changes_with_step(key):
@@ -206,7 +214,9 @@ class PushTBatchAdapter(PushTReplayAdapter):
         of the longest history.
         """
         if self._layout is None:
-            rank = {key: index for index, key in enumerate(self._keys)}
+            rank = self.__dict__.get("_rank")
+            if rank is None or len(rank) != len(self._keys):
+                rank = self._rank = {key: index for index, key in enumerate(self._keys)}
             order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
             leaves = tuple(
                 (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), _dtype(fields[key]))
