@@ -43,7 +43,7 @@ dm_control resets and restores each task. On CPU, every environment of a batch s
 ```python
 # needs the dmcontrol-gpu extra; CUDA only
 with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # native on most machines
+    print(env.simulation_backend)  # native: below the shipped switch point of 128
 
 with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="mjwarp") as env:
     print(env.simulation_backend)  # mjwarp

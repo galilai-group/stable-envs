@@ -140,7 +140,7 @@ KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
-        Knob("large_backend_min_envs", None, ("dmc-sim", "ogb-sim", "pusht-sim", "navigation"), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
+        Knob("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
@@ -258,7 +258,15 @@ def stamp(device: str) -> dict[str, str]:
 
     cuda = device.startswith("cuda")
     name = torch.cuda.get_device_name(torch.device(device)) if cuda else _cpu_name()
-    return {"device": name, "driver": _driver() if cuda else "", "cpu": _cpu_name(), "stable_envs": __version__}
+    from ._core.cpus import cpu_limit
+
+    return {
+        "device": name,
+        "driver": _driver() if cuda else "",
+        "cpu": _cpu_name(),
+        "cpus": str(cpu_limit()),
+        "stable_envs": __version__,
+    }
 
 
 @cache

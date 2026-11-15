@@ -26,6 +26,9 @@ class HostAdapter:
     host-to-device copy. Other attributes are the adapter's own.
     """
 
+    #: Steps one transition per call; ``step_pipeline`` returns None for it.
+    pipelined = False
+
     def __init__(self, adapter: Any, device: str | torch.device):
         self._adapter = adapter
         self.device = torch.device(device)
@@ -63,4 +66,6 @@ class HostAdapter:
             return self._to_device(value(*args, **kwargs))
 
         call.__name__ = name
+        # Later lookups find the wrapper on the instance and skip __getattr__.
+        self.__dict__[name] = call
         return call

@@ -13,7 +13,7 @@ import threading
 import numpy as np
 import torch
 
-from .tensordicts import build_tensordict, exclude_leaves, stack_leaves
+from .tensordicts import build_tensordict, exclude_leaves, stack_leaves, to_device
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -365,7 +365,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)
     frames = out.get("frames")
-    moved = build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work).to(env.device)
+    moved = to_device(build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device)
     return build_tensordict(
         {key: frames if key == "frames" else moved[key] for key in out}, [env.num_envs], env.device
     )
