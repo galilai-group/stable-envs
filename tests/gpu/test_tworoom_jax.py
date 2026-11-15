@@ -71,7 +71,7 @@ def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatc
         raise AssertionError("host conversion in CUDA JAX TwoRoom step")
 
     stream = torch.cuda.Stream()
-    with torch.cuda.stream(stream), se.TwoRoom(num_envs=32, device="cuda") as env:
+    with torch.cuda.stream(stream), se.TwoRoom(num_envs=32, device="cuda", simulation_backend="jax") as env:
         env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
         action = torch.zeros(32, 2, device="cuda")
         borrowed = from_torch(action)
