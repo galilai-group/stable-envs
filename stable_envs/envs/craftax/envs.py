@@ -38,8 +38,6 @@ class CraftaxEnv(Env):
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
-    # XLA steps on threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
-    native_step_threads = True
     _step_outputs_owned = True
     _frames_owned = True
 
@@ -55,6 +53,9 @@ class CraftaxEnv(Env):
         self._k = kernel(self.reference_id)
         super().__init__(num_envs, size, supersample, device, backend, seed)
         self._device = self._k.device(self.device)
+        # XLA steps on CPU threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
+        # A CUDA step leaves the torch threads alone.
+        self.native_step_threads = self.device.type == "cpu"
         self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state = None
         #: The device flag of the last step with device actions, read by the next step, reset or set_state.
