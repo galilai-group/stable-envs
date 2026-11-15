@@ -169,6 +169,13 @@ def test_to_device_keeps_the_leaves_already_on_the_device():
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_to_device_returns_a_tensordict_already_on_the_device():
+    leaves = {"a": torch.ones(2, 3, device="cuda"), "b": {"c": torch.zeros(2, device="cuda")}}
+    td = TensorDict(leaves, [2], device="cuda")
+    assert to_device(td, "cuda") is td
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
 def test_to_device_keeps_the_batch_size_of_a_node_with_a_time_axis():
     td = TensorDict({"a": torch.ones(2, 3), "states": {"x": torch.arange(4.0).reshape(2, 1, 2)}}, [2])
     td["states"].batch_size = [2, 1]

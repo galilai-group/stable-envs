@@ -467,6 +467,9 @@ def to_device(td: TensorDict, device) -> TensorDict:
     that has a leaf NumPy can't hold, moves leaf by leaf.
     """
     device = _device(device)
+    if td.device == device:
+        # Every leaf of a TensorDict that records a device is on it: there is nothing to move.
+        return td
     if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu"):
         return td.to(device)
     kept: list = []
