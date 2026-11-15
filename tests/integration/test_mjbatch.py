@@ -94,7 +94,8 @@ def _mocap(t, n=B):
     return pos
 
 
-def test_routing_follows_device_and_switch_point():
+def test_routing_follows_device_and_switch_point(monkeypatch):
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
     assert mujoco_backend("test-sim", 1, "cpu", cuda_min_envs=8) == "native"
     assert mujoco_backend("test-sim", 7, "cuda", cuda_min_envs=8) == "native"
     assert mujoco_backend("test-sim", 8, "cuda", cuda_min_envs=8) == "mjwarp"

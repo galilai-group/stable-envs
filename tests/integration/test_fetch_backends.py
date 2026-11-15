@@ -52,13 +52,13 @@ def test_routing():
             fetch_backend(8, "cpu", bad)
 
 
-def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch, tmp_path):
+def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch):
     from stable_envs.envs.fetch.simulation.execution import CUDA_MIN_ENVS
 
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
     monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
     tuning.reset()
-    tuning._clear_caches()
     assert CUDA_MIN_ENVS == {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
     for task, switch in CUDA_MIN_ENVS.items():
         assert fetch_backend(switch - 1, "cuda", "auto", task) == "native"
