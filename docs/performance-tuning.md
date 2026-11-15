@@ -34,7 +34,7 @@ After `stable-envs tune`, `"auto"` can select different backends on different ma
 
 ## Measure the fastest values
 
-Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.
+Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. A process reads the cache when it builds an environment, so a cache that another process writes takes effect at the next environment build. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.
 
 ## Hint and autotune
 
