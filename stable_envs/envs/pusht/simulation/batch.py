@@ -12,6 +12,11 @@ from .replay import HISTORY_KEYS, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options
 
 
+def _dtype(value):
+    """The torch dtype of a tensor or NumPy array."""
+    return value.dtype if torch.is_tensor(value) else torch.from_numpy(np.empty(0, value.dtype)).dtype
+
+
 def _changes_with_step(key):
     return key.startswith(("current/", "history/")) and not key.startswith("current/goal")
 
@@ -178,7 +183,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
             rank = {key: index for index, key in enumerate(self._keys)}
             order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
             leaves = tuple(
-                (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), fields[key].dtype)
+                (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), _dtype(fields[key]))
                 for key in order
             )
             # Resets keep the leaves, so a layout built for them before serves again with new static values.

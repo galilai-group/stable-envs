@@ -8,7 +8,7 @@ from numba import njit
 from tensordict import TensorDict
 
 from .batch import PushTBatchAdapter
-from .numba_physics import advance_batch
+from .numba_physics import advance_batch, advance_serial
 from .replay_batch import validate_actions
 
 _SYMMETRIES = np.array([2 * np.pi, 2 * np.pi, 2 * np.pi, np.pi, np.pi / 2, np.pi, 2 * np.pi, np.pi / 2])
@@ -108,8 +108,23 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         ):
             host[key] = fixed["current/" + key].numpy()
         host["shape"] = fixed["owned/variation/block/shape/current/value"].numpy()
+        # NumPy State sources let the export pack with NumPy and wrap leaves with from_numpy.
+        fields = {key: value.numpy() for key, value in fixed.items()}
+        fields.update(("current/jax/" + key, value.numpy()) for key, value in self._solver_state().items())
+        host["fields"] = fields
         self._host = host
         return host
+
+    def _state_fields(self, width):
+        if self.device.type != "cpu":
+            return super()._state_fields(width)
+        fields = dict(self._views()["fields"])
+        lengths = self._lengths.numpy()
+        fields["history/actions"] = self._actions.numpy()[:, :width]
+        fields["history/dtypes"] = self._codes.numpy()[:, :width]
+        fields["history/lengths"] = lengths
+        fields["history/valid"] = np.arange(width) < lengths[:, None]
+        return fields
 
     def _advance(self, target, single, active):
         host = {
@@ -173,7 +188,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         body = host["body"]
         target = (body[:, 0, :2].astype(relative.dtype) + relative * 100).astype(np.float64)
         counts = np.empty((self.num_envs, 2), np.int64)
-        advance_batch(
+        (advance_batch if self.num_envs > 1 else advance_serial)(
             body,
             host["bias"],
             host["impulse"],
