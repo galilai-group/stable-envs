@@ -150,12 +150,27 @@ def _rungs(backends: Mapping[str, Rungs], device: torch.device) -> Rungs:
     return Rungs(*backends.get(device.type, backends["cpu"]))
 
 
+#: ``(knob, path, device, rows, rungs) -> (tuning state, rung)``: a choice holds while the knob's sources don't change.
+_PICKS: dict[tuple, tuple[tuple, str]] = {}
+
+
 def _pick(knob: str, path: str, num_envs: int, device: torch.device, rungs: Rungs, measure: Measure | None) -> str:
     """The rung of ``num_envs`` rows: from the knob, else the tuning cache, else the shipped switch point."""
     if measure is not None:
         _REGISTERED[knob, path, device.type] = (rungs, measure)
     if rungs.small == rungs.large:
         return rungs.small
+    key = (knob, path, str(device), num_envs, rungs)
+    state = tuning.sources_state(knob, device)
+    hit = _PICKS.get(key)
+    if hit is not None and hit[0] == state:
+        return hit[1]
+    rung = _choose(knob, path, num_envs, device, rungs)
+    _PICKS[key] = (state, rung)
+    return rung
+
+
+def _choose(knob: str, path: str, num_envs: int, device: torch.device, rungs: Rungs) -> str:
     value = tuning.get(knob, path=path, size=0, batch=num_envs, device=device)
     if value is not None:
         return rungs.large if num_envs >= value else rungs.small

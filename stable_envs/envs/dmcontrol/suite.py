@@ -34,11 +34,10 @@ from .base import _DMCModel
 
 #: Shipped CUDA render switch points of the fixed-camera cells, per domain: the smallest batch that draws with the
 #: Triton ray caster; smaller batches draw with the CPU ray caster and move the frames to CUDA in one copy. A domain
-#: that isn't here draws every CUDA batch with Triton. docs/performance-tuning.md (Renderers) says how the shipped
-#: values were measured.
-CUDA_RENDER_MIN_ROWS: dict[str, int] = {
-    "reacher": 32,  # RTX 3090 32, RTX A5000 256
-}
+#: that isn't here draws every CUDA batch with Triton. A domain is listed only when both ray casters draw the same
+#: bytes; for Reacher they differ by one level in a few pixels. docs/performance-tuning.md (Renderers) says how the
+#: values are measured.
+CUDA_RENDER_MIN_ROWS: dict[str, int] = {}
 
 
 class DMControlSuite(_DMCModel):

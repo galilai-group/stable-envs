@@ -443,6 +443,22 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
     return (knob.fallback, "fallback") if default is _MISSING else (default, "default")
 
 
+def sources_state(name: str, device=None) -> tuple:
+    """Return a value that changes whenever a source of knob ``name`` on ``device`` may change.
+
+    The sources are the ``override`` blocks of this thread, ``set``, the environment variable and the cache file.
+    Callers keep a choice they made from the knob while this value stays equal.
+    """
+    knob = KNOBS[name]
+    where = _where(knob, device)
+    path = None if where is None else cache_path(where)
+    try:
+        mtime = path.stat().st_mtime_ns if path is not None else None
+    except OSError:
+        mtime = None
+    return (_scopes.get(), _set.get(name), os.environ.get(knob.env_var), path, mtime)
+
+
 def get(
     name: str,
     *,

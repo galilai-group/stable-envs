@@ -1,6 +1,6 @@
 """CUDA render rungs: a small batch draws with the CPU renderer of its class and moves the frames in one copy.
 
-The CPU and GPU renderers of each class here draw the same frames, to the bound in ``CASES``.
+The CPU and CUDA renderers of every switched class draw the same bytes, so the switch point never changes a frame.
 """
 
 from __future__ import annotations
@@ -14,13 +14,9 @@ from stable_envs import registry, tuning
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
 
-#: ``{class: largest per-frame MSE between the CPU and the GPU renderer}``.
-CASES = {"TwoRoom": 0.01, "PushT": 0.0, "DMCReacher": 0.0}
-LANES = 4
-
-
-def _actions(env):
-    return torch.as_tensor(env.action_spec.sample(env.num_envs, rng=np.random.default_rng(0))).to("cuda")
+#: Every class that ships a CUDA render switch point.
+NAMES = ("PushT", "PushTDiscrete", "TwoRoom", "TwoRoomTarget")
+LANES = 16
 
 
 def _require(name):
@@ -32,33 +28,53 @@ def _require(name):
         pytest.skip(f"{name} needs the {missing} extra")
 
 
-def _mse(a, b):
-    a, b = a.cpu().numpy().astype(np.float64), b.cpu().numpy().astype(np.float64)
-    return ((a - b) ** 2).reshape(len(a), -1).mean(1)
+def _actions(env, rng):
+    return torch.as_tensor(env.action_spec.sample(env.num_envs, rng=rng)).to("cuda")
 
 
-@pytest.mark.parametrize("name", CASES)
-def test_a_small_cuda_batch_draws_on_the_cpu_renderer(name):
-    bound = CASES[name]
+def _varied(env, rng):
+    """Install a sampled appearance and physics variation on every lane, then reset with it."""
+    env.set_variation(env.sample_variation(env.num_envs, rng=rng))
+    return env.reset(seed=1)
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_switched_classes_declare_cuda_rungs(name):
     _require(name)
+    with se.make(name, num_envs=1, device="cuda") as env:
+        assert env.render_rungs is not None and env.render_rungs["cuda"].min_envs is not None
+
+
+@pytest.mark.parametrize("varied", [False, True], ids=["default", "varied"])
+@pytest.mark.parametrize("name", NAMES)
+def test_a_small_cuda_batch_draws_the_same_bytes_on_the_cpu_renderer(name, varied):
+    _require(name)
+    rng = np.random.default_rng(0)
     with se.make(name, num_envs=LANES, device="cuda") as env:
-        state = env.reset(seed=0)
+        state = _varied(env, rng) if varied else env.reset(seed=0)
+        for _ in range(3):
+            state = env.step(_actions(env, rng), frames=None)["state"]
         with tuning.override(large_renderer_min_rows=1):
             gpu = env.render(state)
+            gpu_part = env.render(state[:5])
         with tuning.override(large_renderer_min_rows=LANES + 1):
             cpu = env.render(state)
+            cpu_part = env.render(state[:5])
             out = torch.zeros_like(gpu)
             env.render(state, out=out)
-            stepped = env.step(_actions(env))["frames"]
+            stepped = env.step(_actions(env, rng))["frames"]
+        # TwoRoom draws in a CPU copy of the env, which receives the installed variation with the rows.
+        assert ("_host_twin" in env.__dict__) == name.startswith("TwoRoom")
         assert cpu.device == gpu.device and cpu.shape == gpu.shape and cpu.dtype == gpu.dtype
-        assert _mse(cpu, gpu).max() <= bound
+        assert torch.equal(cpu, gpu)
+        assert torch.equal(cpu_part, gpu_part) and torch.equal(cpu_part, gpu[:5])
         assert torch.equal(out, cpu)
         assert stepped.device.type == "cuda" and stepped.shape == (LANES, 1, *gpu.shape[1:])
         with tuning.override(large_renderer_min_rows=1):
-            assert _mse(stepped[:, 0], env.render(env.get_state())).max() <= bound
+            assert torch.equal(stepped[:, 0], env.render(env.get_state()))
 
 
-@pytest.mark.parametrize("name", CASES)
+@pytest.mark.parametrize("name", NAMES)
 def test_tune_times_both_renderers(name, tmp_path, monkeypatch):
     _require(name)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))

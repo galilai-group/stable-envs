@@ -48,7 +48,10 @@ def on_host(env, path: str, rows: int, backend: str = "auto") -> bool:
     rungs = getattr(env, "render_rungs", None)
     if not rungs or env.device.type == "cpu" or backend != "auto":
         return False
-    return select_renderer(f"{path}/{type(env).__name__}", rows, env.device, rungs, measure=_measure(env)) == CPU
+    measure = env.__dict__.get("_render_measure")
+    if measure is None:
+        measure = env.__dict__["_render_measure"] = _measure(env)
+    return select_renderer(f"{path}/{type(env).__name__}", rows, env.device, rungs, measure=measure) == CPU
 
 
 def pinned(shape: tuple[int, ...]) -> torch.Tensor:
