@@ -39,8 +39,6 @@ class CraftaxEnv(Env):
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
-    # XLA steps on threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
-    native_step_threads = True
     _step_outputs_owned = True
     _frames_owned = True
     visual_fidelity = {
@@ -77,6 +75,9 @@ class CraftaxEnv(Env):
         self._configure_physics()
         self._default_physics = self._physics_installed
         self._device = self._k.device(self.device)
+        # XLA steps on CPU threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
+        # A CUDA step leaves the torch threads alone.
+        self.native_step_threads = self.device.type == "cpu"
         self._keys = self._k.seed_keys(int(seed), self.B, self._device)
         self._state = None
         self._varied = False
