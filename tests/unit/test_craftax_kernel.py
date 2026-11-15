@@ -82,6 +82,8 @@ def test_render_of_any_batch_equals_render_of_each_row():
         rows = torch.cat([env.render(state[i : i + 1]) for i in range(5)])
         for n in (1, 3, 4, 5):
             assert_same_state(env.render(state[:n]), rows[:n])
+        empty = env.render(state[:0])
+        assert empty.shape == (0, *rows.shape[1:]) and empty.dtype == torch.uint8
 
 
 def test_auto_device_takes_the_cpu_without_a_jax_gpu_backend(monkeypatch):
