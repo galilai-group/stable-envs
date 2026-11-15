@@ -23,17 +23,18 @@ def _changes_with_step(key):
 
 
 def group_of(name, dtype):
-    """The group of a named PushT State field: its top-level section, then its dtype.
+    """The group of a named PushT State field, by dtype: ``static``, ``current`` or ``current/solver``.
 
-    The action history keeps leaves of its own, since its width grows. The solver cache and the episode goal get
-    groups of their own, so an export copies the goal only on reset.
+    Fields that only reset, restore or a Variation change share the ``static`` groups, which an export copies from
+    one buffer packed at reset. The fields a step changes share the ``current`` groups, except the solver cache,
+    which a RenderState leaves out. The action history keeps leaves of its own, since its width grows.
     """
     if name.startswith("history/"):
         return None
-    if name.startswith(("current/jax/", "current/goal/")):
-        section = "current/solver" if name.startswith("current/jax/") else "current/goal"
+    if not _changes_with_step(name):
+        section = "static"
     else:
-        section = name.split("/", 1)[0]
+        section = "current/solver" if name.startswith("current/jax/") else "current"
     return f"{section}/{str(dtype).removeprefix('torch.')}"
 
 

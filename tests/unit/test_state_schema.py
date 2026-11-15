@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parents[2]
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
 ADOPTED = {
-    "pusht": (("current", "anchor", "owned", "recipe", "history"), sorted((ROOT / "examples" / "lewm").rglob("*.py"))),
+    "pusht": (
+        ("current", "static", "anchor", "owned", "recipe", "history"),
+        sorted((ROOT / "examples" / "lewm").rglob("*.py")),
+    ),
 }
 
 FIELDS = [

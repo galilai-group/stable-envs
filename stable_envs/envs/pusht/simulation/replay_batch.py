@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.space_nodes import nodes
+from ...._core.state_schema import get_field
 from ...._core.tensordicts import build_tensordict
 from ...._execution.process import BROADCAST, PER_LANE
 from ...._execution.protocol import SimulatorAdapter
@@ -74,7 +75,12 @@ def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
 
 
 def reject_jax_state(state):
-    version = state.get(("recipe", "version"), None) if isinstance(state, TensorDict) else None
+    version = None
+    if isinstance(state, TensorDict):
+        try:
+            version = get_field(state, "recipe/version")
+        except KeyError:
+            pass
     if isinstance(state, TensorDict) and (
         (torch.is_tensor(version) and bool((version == 3).any()))
         or any(key[:2] in (("anchor", "jax"), ("current", "jax")) for key in state.keys(True, True))

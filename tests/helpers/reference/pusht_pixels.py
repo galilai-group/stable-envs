@@ -8,7 +8,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
-from stable_envs import get_field
+from stable_envs import get_field, set_field
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 from tests.helpers.reference.pusht_semantics import diagnostics, equal
@@ -31,8 +31,7 @@ def compare_padded_states(actual: TensorDict, expected: TensorDict) -> None:
         for field in ("actions", "dtypes", "valid"):
             value = get_field(state, f"history/{field}")
             padding = value.new_zeros((len(state), capacity - value.shape[1], *value.shape[2:]))
-            # A history field is a leaf of its own, so a wider copy replaces it.
-            state.set(("history", field), torch.cat((value, padding), dim=1))
+            set_field(state, f"history/{field}", torch.cat((value, padding), dim=1))
         padded.append(state)
     compare_state(*padded)
 
