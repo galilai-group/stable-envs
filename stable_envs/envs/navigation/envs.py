@@ -161,7 +161,7 @@ TWO_ROOM_CUDA_MIN_ENVS: int | None = 8192
 #: Shipped CUDA render switch point of TwoRoom and TwoRoomTarget: the smallest batch that draws with the Triton
 #: compositor; smaller batches draw with the Numba compositor on the CPU and move the frames to CUDA in one copy.
 #: docs/performance-tuning.md (Renderers) says how the shipped value was measured.
-TWO_ROOM_CUDA_RENDER_MIN_ROWS: int | None = 64
+TWO_ROOM_CUDA_RENDER_MIN_ROWS: int | None = 64  # RTX 3090 64, RTX A5000 64
 
 
 def _numba_available() -> bool:

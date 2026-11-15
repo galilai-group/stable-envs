@@ -113,11 +113,17 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
         for path, pick in backends.calibrate(env.num_envs, env.device, write=write, **scope).items():
             say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
     if (not knobs or backends.RENDER_KNOB in knobs) and env.render_rungs and env.has_dynamics:
-        # A first draw registers the render paths of the class; then both renderers are timed.
+        # A first draw registers the render paths of the class; then both renderers of this class are timed.
         env.render()
-        prefixes = tuning.paths_of(type(env))
-        render_paths = backends.calibrate(
-            env.num_envs, env.device, prefixes=prefixes, write=write, knob=backends.RENDER_KNOB
+        mine = [
+            path
+            for path, _, _ in backends.registered(env.device, tuning.paths_of(type(env)), knob=backends.RENDER_KNOB)
+            if path.endswith(f"/{type(env).__name__}")
+        ]
+        render_paths = (
+            backends.calibrate(env.num_envs, env.device, paths=mine, write=write, knob=backends.RENDER_KNOB)
+            if mine
+            else {}
         )
         for path, pick in render_paths.items():
             say(f"  {path}: {env.num_envs} frames draw with the {pick} renderer")

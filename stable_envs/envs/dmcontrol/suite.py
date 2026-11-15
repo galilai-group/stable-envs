@@ -36,7 +36,9 @@ from .base import _DMCModel
 #: Triton ray caster; smaller batches draw with the CPU ray caster and move the frames to CUDA in one copy. A domain
 #: that isn't here draws every CUDA batch with Triton. docs/performance-tuning.md (Renderers) says how the shipped
 #: values were measured.
-CUDA_RENDER_MIN_ROWS: dict[str, int] = {"reacher": 256}
+CUDA_RENDER_MIN_ROWS: dict[str, int] = {
+    "reacher": 256,  # RTX 3090 above 64 (not measured further), RTX A5000 256
+}
 
 
 class DMControlSuite(_DMCModel):
