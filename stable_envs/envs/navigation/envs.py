@@ -566,7 +566,9 @@ class _HiddenTargetSemantics:
         n = self.B
         host = self.device.type != "cpu"
         if host:
-            self._render_state.copy_(torch.from_numpy(inputs[0]), non_blocking=True)
+            self._render_state.copy_(torch.from_numpy(inputs[0]))
+            # The host rows already hold the new values: the next step reads them without a device copy.
+            self._host_arrays["rows"] = (self._render_state, self._render_state._version, inputs[0])
         result = build_tensordict(
             {
                 "state": {"agent": {"position": agent}, "target": {"position": target}},
@@ -635,7 +637,8 @@ class _TorchNavBase(_GymReferencePort):
     def _numba_inputs(self, action, active):
         """Return the arrays that every Numba step reads; the kernel updates the live rows in place.
 
-        On an accelerator the rows are a host copy, and the Variation is a host copy kept until it changes.
+        On an accelerator the rows, the Variation and the target are host copies, kept until the device tensor
+        changes outside the step.
         """
         act = action.detach().cpu().numpy()
         if not act.flags.c_contiguous:
@@ -644,7 +647,7 @@ class _TorchNavBase(_GymReferencePort):
         style = self._host_array("style", self._style.values)
         if style.shape[0] != self.B:
             raise ValueError(f"{type(self).__name__}: the installed Variation has {style.shape[0]} rows, not {self.B}")
-        rows = self._render_state.numpy() if self.device.type == "cpu" else self._render_state.cpu().numpy()
+        rows = self._host_array("rows", self._render_state)
         return rows, act, style, self._numba_cols, mask, active is not None
 
     def _host_array(self, name, tensor):
