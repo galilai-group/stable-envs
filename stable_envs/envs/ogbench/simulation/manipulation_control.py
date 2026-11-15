@@ -11,7 +11,7 @@ import numpy as np
 _MINVAL = mujoco.mjMINVAL
 _IDENTITY = np.array([1.0, 0.0, 0.0, 0.0])
 _INVERT = np.array([1.0, -1.0, -1.0, -1.0])
-#: Lanes per IK batch thread (L40S host, 8 cores).
+#: Lanes per IK batch thread. docs/performance-tuning.md (DM Control threads) gives the hosts it was measured on.
 IK_LANES_PER_THREAD = 128
 
 
