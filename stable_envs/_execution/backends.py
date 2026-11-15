@@ -59,9 +59,10 @@ def time_backend(measure: Measure, backend: str, num_envs: int, device: str | to
 def measure_env(make: Callable[[str, int], object]) -> Measure:
     """A ``Measure`` for environments: ``make(backend, num_envs)`` builds one with that simulation backend.
 
-    Each timed call is ``env.step`` with the default arguments, so the timing includes every cost a backend adds per
-    call, such as moving the State and the outputs. The environment is reset with seed 0 and stepped with the same
-    actions, drawn from its action spec, at every call.
+    Each timed call is ``env.step`` without frames and with the State built, so the timing includes every cost the
+    simulation backend adds per call, such as moving the State and the outputs. Rendering has its own switch and its
+    own timing. The environment is reset with seed 0 and stepped with the same actions, drawn from its action spec,
+    at every call.
     """
 
     def measure(backend: str, num_envs: int):
@@ -70,7 +71,7 @@ def measure_env(make: Callable[[str, int], object]) -> Measure:
         env = make(backend, num_envs)
         env.reset(seed=0)
         actions = env.action_spec.sample(num_envs, np.random.default_rng(0), device=env.device)
-        return (lambda: env.step(actions)), env.close
+        return (lambda: env.step(actions, frames=None)), env.close
 
     return measure
 
