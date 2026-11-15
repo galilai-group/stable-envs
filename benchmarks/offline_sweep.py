@@ -84,10 +84,12 @@ def _timed(
     warmup_s: float = WARMUP_S,
     budget_s: float = 60.0,
     warmup_items: int = 0,
+    window_items: int = 0,
 ) -> dict:
     """Items per second over up to ``repeats`` windows of about ``seconds``; each ``next(units)`` does work and returns
-    its items. After the first window, no new window starts once the windows took ``budget_s`` in total: a unit of a
-    slow source can take minutes, and one window of whole units is then enough."""
+    its items. With ``window_items``, a window ends at the first whole unit at or after that many items, and
+    ``seconds`` is not used. After the first window, no new window starts once the windows took ``budget_s`` in total:
+    a unit of a slow source can take minutes, and one window of whole units is then enough."""
     # Warm up for at least warmup_s and warmup_items items: a kernel can still be compiling after the seconds.
     # WARMUP_MAX_S (seconds, 0 = no limit) stops the item count early for sources that take hours per item count.
     t0 = time.perf_counter()
@@ -103,7 +105,7 @@ def _timed(
             sync()
         t = time.perf_counter()
         done = 0
-        while time.perf_counter() - t < seconds:
+        while (done < window_items) if window_items else (time.perf_counter() - t < seconds):
             done += next(units)
         if sync:
             sync()
@@ -389,7 +391,15 @@ def cmd_ours(args) -> None:
                         render(s, e)
                         yield e - s
 
-                t = _timed(_cycle(sweep), seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup)
+                t = _timed(
+                    _cycle(sweep),
+                    seconds=args.seconds,
+                    repeats=args.repeats,
+                    sync=sync,
+                    warmup_s=args.warmup,
+                    warmup_items=args.warmup_steps * b,
+                    window_items=args.timed_steps * b,
+                )
                 row = {"batch": b, "status": "ok", "frames": n, "frame_shape": shape, "fps": t["rate"], **t}
                 if dev.type == "cuda":
                     row["peak_mib"] = torch.cuda.max_memory_allocated() / 2**20
@@ -643,6 +653,8 @@ def main() -> None:
     o.add_argument("--device", default="cuda")
     o.add_argument("--batches", type=int, nargs="+", default=[1, 256, 512, 1024, 2048, 4096])
     o.add_argument("--threads", type=int, default=8)
+    o.add_argument("--warmup-steps", type=int, default=0, help="untimed render calls before the windows, at least")
+    o.add_argument("--timed-steps", type=int, default=0, help="render calls per timed window; 0 times by --seconds")
     o.add_argument("--output", required=True)
     r = sub.add_parser("source", parents=[common])
     r.add_argument("--procs", type=int, default=1)

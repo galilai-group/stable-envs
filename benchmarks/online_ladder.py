@@ -447,7 +447,14 @@ def run_source(args, name: str, render: bool) -> dict:
     try:
         units = _cycle(lambda: play(groups))
         warm = args.warmup_steps * lanes
-        t = _timed(units, seconds=args.seconds, repeats=args.repeats, warmup_s=args.warmup, warmup_items=warm)
+        t = _timed(
+            units,
+            seconds=args.seconds,
+            repeats=args.repeats,
+            warmup_s=args.warmup,
+            warmup_items=warm,
+            window_items=args.timed_steps * lanes,
+        )
         units.close()
         if render and args.frame_check:
             # The workers' frames for a few lanes, spread across workers, at the check steps.
@@ -567,7 +574,14 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
             shape = list(env.step(acts[:lanes, :1], states=None, frames=slice(None))["frames"].shape[2:])
         units = _cycle(lambda: play(groups))
         warm = args.warmup_steps * lanes
-        timing = dict(seconds=args.seconds, repeats=args.repeats, sync=sync, warmup_s=args.warmup, warmup_items=warm)
+        timing = dict(
+            seconds=args.seconds,
+            repeats=args.repeats,
+            sync=sync,
+            warmup_s=args.warmup,
+            warmup_items=warm,
+            window_items=args.timed_steps * lanes,
+        )
         t = _timed(units, **timing)
     finally:
         env.close()
@@ -642,6 +656,7 @@ def run_source_single(args, name: str) -> dict:
             repeats=args.repeats,
             warmup_s=args.warmup,
             warmup_items=args.warmup_steps,
+            window_items=args.timed_steps,
         )
     finally:
         env.close()
@@ -682,6 +697,7 @@ def run_source_vector(args, name: str, asynchronous: bool) -> dict:
             repeats=args.repeats,
             warmup_s=args.warmup,
             warmup_items=args.warmup_steps * k,
+            window_items=args.timed_steps * k,
         )
     finally:
         venv.close()
@@ -780,6 +796,12 @@ def main() -> None:
     r.add_argument("--seconds", type=float, default=10.0, help="length of one timed window")
     r.add_argument("--warmup", type=float, default=WARMUP_S, help="seconds of untimed work before the windows")
     r.add_argument("--warmup-steps", type=int, default=0, help="untimed steps per lane before the windows, at least")
+    r.add_argument(
+        "--timed-steps",
+        type=int,
+        default=0,
+        help="steps per lane in one timed window, rounded up to whole episodes; 0 times by --seconds",
+    )
     r.add_argument(
         "--frame-check",
         action=argparse.BooleanOptionalAction,
