@@ -239,7 +239,9 @@ def test_dmc_rows_per_thread_cover_every_batch_domain():
 
     assert LANES_PER_THREAD.keys() == BATCH_TASKS.keys()
     assert min(LANES_PER_THREAD.values()) >= 2
-    assert step_threads("reacher", 8, 8) == 1 and step_threads("walker", 8, 8) == 4 and step_threads("walker", 64, 8) == 8
+    assert step_threads("reacher", 8, 8) == 1
+    assert step_threads("walker", 8, 8) == 4
+    assert step_threads("walker", 64, 8) == 8
 
 
 @pytest.mark.family("dmc")
