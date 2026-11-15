@@ -172,7 +172,7 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         assert torch.equal(packed, a._pack_render_state(a._unpack_render_state(packed)))
         spec = a.state_spec
         assert all(spec[key].shape == anchor[key].shape[1:] for key in anchor.keys(True, True))
-        assert set(spec.keys(True, True)) == set(anchor.keys(True, True))
+        assert {key for key, _ in spec.items(nested=True)} == set(anchor.keys(True, True))
         numpy_equal(outside, np.random.get_state())
 
 
