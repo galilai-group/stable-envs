@@ -153,7 +153,7 @@ _NO_MASK = np.zeros(0, np.bool_)
 #: Shipped CUDA switch point of TwoRoom: the smallest batch that steps in JAX; smaller batches step in Numba (Torch
 #: without Numba). None uses JAX at every batch size. The knob and the tuning cache take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-#: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and Numba overtakes it
+#: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and it is faster than Numba
 #: from 8192 environments on both GPU types.
 TWO_ROOM_CUDA_MIN_ENVS: int | None = 8192
 
