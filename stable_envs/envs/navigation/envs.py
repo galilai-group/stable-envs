@@ -565,10 +565,6 @@ class _HiddenTargetSemantics:
             observation = self._observation(agent, target)
         n = self.B
         host = self.device.type != "cpu"
-        if host:
-            self._render_state.copy_(torch.from_numpy(inputs[0]))
-            # The host rows already hold the new values: the next step reads them without a device copy.
-            self._host_arrays["rows"] = (self._render_state, self._render_state._version, inputs[0])
         result = build_tensordict(
             {
                 "state": {"agent": {"position": agent}, "target": {"position": target}},
@@ -586,7 +582,18 @@ class _HiddenTargetSemantics:
             [n],
             "cpu",
         )
-        return to_device(result, self.device) if host else result
+        if not host:
+            return result
+        result = to_device(result, self.device)
+        rows = inputs[0]
+        if self.state_dim == 2:
+            # The rows are the agent positions, already on the device: a device copy, without a host wait.
+            self._render_state.copy_(result["state", "agent", "position"])
+        else:
+            self._render_state.copy_(torch.from_numpy(rows))
+        # The host rows already hold the new values: the next step reads them without a device copy.
+        self._host_arrays["rows"] = (self._render_state, self._render_state._version, rows)
+        return result
 
 
 class _TorchNavBase(_GymReferencePort):
