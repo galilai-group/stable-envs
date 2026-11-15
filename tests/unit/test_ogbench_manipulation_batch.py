@@ -199,6 +199,35 @@ def test_batch_controller_writes_ogbench_controls(family):
             env.close()
 
 
+@pytest.mark.parametrize("family", FAMILIES)
+def test_controller_site_jacobian_equals_mujoco(family):
+    import mujoco
+
+    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
+
+    cls = CompatibleCube if family == "Cube" else CompatibleScene
+    env = cls(seed=0, pool=LanePool())
+    env.reset(seed=0)
+    lanes = 6
+    controller = BatchController(env, lanes, 2)
+    try:
+        if controller._jacobian is None:
+            pytest.skip("Numba is not installed")
+        b, rng = controller._ik, np.random.default_rng(4)
+        controller._ik_qpos[:] = rng.uniform(-np.pi, np.pi, controller._ik_qpos.shape)
+        b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
+        site_xpos = controller._ik_site_xpos[:, controller._site]
+        for rows in (np.arange(lanes), np.array([1, 4])):
+            jacp, jacr = b.jac(controller._site_body, site_xpos[rows], None if len(rows) == lanes else rows)
+            ours = controller._jacobian(
+                controller._ik_cdof, controller._ik_subtree_com, site_xpos, rows, controller._chain, controller._root
+            )
+            assert np.array_equal(ours, np.concatenate([jacp, jacr], axis=1))
+    finally:
+        controller.close()
+        env.close()
+
+
 @pytest.mark.parametrize(
     "batch,device,backend,switch,expected",
     [

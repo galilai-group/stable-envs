@@ -393,8 +393,47 @@ def _numba_ik_steps():
     return reached, advance
 
 
+def _numba_site_jacobian():
+    """Numba ``mj_jac`` of a site for rows of a batch, from the batch's ``cdof`` and ``subtree_com``; or None.
+
+    The arithmetic is MuJoCo's, in its order: the offset from the subtree center of mass of the body's root, and for
+    each dof of the chain the rotational rows from ``cdof[:3]`` and the translational rows ``cdof[3:] + cdof[:3] x
+    offset``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True)
+    def jacobian(cdof, subtree_com, site_xpos, rows, chain, root):
+        """``[jacp; jacr]`` as ``(len(rows), 6, nv)``; row ``r`` reads batch row ``rows[r]``."""
+        out = np.zeros((rows.shape[0], 6, cdof.shape[1]))
+        for r in range(rows.shape[0]):
+            i = rows[r]
+            o0 = site_xpos[i, 0] - subtree_com[i, root, 0]
+            o1 = site_xpos[i, 1] - subtree_com[i, root, 1]
+            o2 = site_xpos[i, 2] - subtree_com[i, root, 2]
+            for j in range(chain.shape[0]):
+                d = chain[j]
+                c = cdof[i, d]
+                out[r, 3, d] = c[0]
+                out[r, 4, d] = c[1]
+                out[r, 5, d] = c[2]
+                t0 = c[1] * o2 - c[2] * o1
+                t1 = c[2] * o0 - c[0] * o2
+                t2 = c[0] * o1 - c[1] * o0
+                out[r, 0, d] = c[3] + t0
+                out[r, 1, d] = c[4] + t1
+                out[r, 2, d] = c[5] + t2
+        return out
+
+    return jacobian
+
+
 _NUMBA_POSE = _numba_pose()
 _NUMBA_IK_STEPS = _numba_ik_steps()
+_NUMBA_SITE_JACOBIAN = _numba_site_jacobian()
 
 
 def _squares(q):
@@ -422,13 +461,30 @@ class BatchController:
         # The IK reads kinematics only; without contacts and constraints the position stage skips collision.
         model = copy.copy(ik._model)
         model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT | mujoco.mjtDisableBit.mjDSBL_CONTACT
-        self._batch = NativeBatch(model, num_envs, outputs=("site_xpos", "site_xmat"), nthread=threads)
+        self._jacobian = _NUMBA_SITE_JACOBIAN
+        # With Numba the Jacobian comes from the position stage's cdof and subtree_com, without a second kinematics
+        # pass per call.
+        outputs = ("site_xpos", "site_xmat") + (("cdof", "subtree_com") if self._jacobian is not None else ())
+        self._batch = NativeBatch(model, num_envs, outputs=outputs, nthread=threads)
         self._ik = self._batch.b
         self._ik_qpos = self._batch.numpy("qpos")
         self._ik_site_xpos = self._batch.numpy("site_xpos")
         self._ik_site_xmat = self._batch.numpy("site_xmat")
         self._site = int(ik._site_ids[0])
         self._site_body = int(ik._model.site_bodyid[self._site])
+        if self._jacobian is not None:
+            self._ik_cdof, self._ik_subtree_com = self._batch.numpy("cdof"), self._batch.numpy("subtree_com")
+            m = ik._model
+            # The dofs that move the site's body, from the last one up the parent chain, as mj_jac walks them.
+            weld = int(m.body_weldid[self._site_body])
+            chain = []
+            if m.body_dofnum[weld]:
+                dof = int(m.body_dofadr[weld] + m.body_dofnum[weld] - 1)
+                while dof >= 0:
+                    chain.append(dof)
+                    dof = int(m.dof_parentid[dof])
+            self._chain = np.array(chain, np.int64)
+            self._root = int(m.body_rootid[self._site_body])
         self._damping = ik._damping
         self._max_angle = ik._max_angle_change
         self._arm_qpos = env.model.jnt_qposadr[env._arm_joint_ids]
@@ -560,8 +616,12 @@ class BatchController:
                 err = err[keep]
                 if not len(ids):
                     break
-            jacp, jacr = b.jac(self._site_body, site_xpos if ids is None else site_xpos[ids], ids)
-            jac = np.concatenate([jacp, jacr], axis=1)
+            if self._jacobian is not None:
+                rows = self._rows[:n] if ids is None else ids
+                jac = self._jacobian(self._ik_cdof, self._ik_subtree_com, site_xpos, rows, self._chain, self._root)
+            else:
+                jacp, jacr = b.jac(self._site_body, site_xpos if ids is None else site_xpos[ids], ids)
+                jac = np.concatenate([jacp, jacr], axis=1)
             h = jac @ jac.transpose(0, 2, 1) + self._damping
             update = (jac.transpose(0, 2, 1) @ np.linalg.solve(h, err[:, :, None]))[:, :, 0]
             if self._steps is not None:
