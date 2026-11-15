@@ -18,6 +18,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 - On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and PushT moves the outputs of a step to the device in one copy and the state in one more copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
 - A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.
+- PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
 
 ## [0.1.0] - 2026-11-13
 
