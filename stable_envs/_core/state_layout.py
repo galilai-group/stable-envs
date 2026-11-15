@@ -16,6 +16,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .tensordicts import new_node
+
 #: A leaf key: a tuple of names, or names joined by ``/``. ``export`` reads values under the key as declared.
 Key = tuple[str, ...] | str
 
@@ -119,7 +121,8 @@ class StateLayout:
         """One new flat buffer: a NumPy array when every source is one, else a tensor."""
         if all(isinstance(v, np.ndarray) for v in sources):
             return np.concatenate([v.reshape(-1) for v in sources], dtype=kind)
-        return torch.cat([torch.as_tensor(v).reshape(-1) for v in sources])
+        # One call flattens and concatenates the tensors.
+        return torch._C._nn.flatten_dense_tensors([torch.as_tensor(v) for v in sources])
 
     @classmethod
     def of(cls, state: TensorDict) -> StateLayout:
@@ -177,7 +180,7 @@ class StateLayout:
                     for i, leaf in zip(indices, block.view(len(indices), *shape).unbind(0), strict=True):
                         leaves[i] = leaf
         batch, where = self._batch, _recorded(flats, device)
-        return self._build(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where))
+        return self._build(leaves, lambda node: new_node(node, batch, where))
 
     def _to_device(self, flats: list[torch.Tensor], device: torch.device) -> list[torch.Tensor]:
         """Move host buffers to ``device`` through one pinned buffer and one asynchronous copy."""

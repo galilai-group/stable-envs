@@ -18,6 +18,48 @@ def _device(device) -> torch.device:
     return device
 
 
+def _direct_node(source: dict, batch: torch.Size, device) -> TensorDict:
+    node = TensorDict.__new__(TensorDict)
+    node._device = device
+    node._tensordict = source
+    node._batch_size = batch
+    node._td_dim_names = None
+    return node
+
+
+def _direct_nodes_match() -> bool:
+    """Whether ``_direct_node`` sets exactly the attributes ``TensorDict._new_unsafe`` sets, in this tensordict."""
+    try:
+        batch, value = torch.Size([1]), torch.zeros(1)
+        made = TensorDict._new_unsafe({"x": value}, batch_size=batch, device=torch.device("cpu"))
+        direct = _direct_node({"x": value}, batch, torch.device("cpu"))
+        return (
+            type(made._tensordict) is dict
+            and vars(made).keys() == vars(direct).keys()
+            and all(
+                getattr(made, k) is getattr(direct, k) or getattr(made, k) == getattr(direct, k)
+                for k in vars(made)
+                if k != "_tensordict"
+            )
+        )
+    except Exception:  # noqa: BLE001 - any difference keeps the library constructor
+        return False
+
+
+_DIRECT_NODES = _direct_nodes_match()
+
+
+def new_node(source: dict, batch: torch.Size, device) -> TensorDict:
+    """``TensorDict._new_unsafe(source, batch_size=batch, device=device)`` for a dict of finished children.
+
+    ``source`` becomes the node's storage. When this tensordict's constructor sets only the attributes checked at
+    import, the node is built directly, which costs about half as much.
+    """
+    if _DIRECT_NODES:
+        return _direct_node(source, batch, device)
+    return TensorDict._new_unsafe(source, batch_size=batch, device=device)
+
+
 def _build(source: dict, batch: torch.Size, device: torch.device, index: int | None) -> TensorDict | None:
     """Wrap ``source`` in one pass when every leaf already fits; None when a leaf needs validation.
 
@@ -50,7 +92,7 @@ def _build(source: dict, batch: torch.Size, device: torch.device, index: int | N
         else:
             return None
         out[key] = value
-    return TensorDict._new_unsafe(out, batch_size=batch, device=device)
+    return new_node(out, batch, device)
 
 
 def build_tensordict(source: dict, batch_size, device) -> TensorDict:
