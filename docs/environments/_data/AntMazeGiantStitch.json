@@ -22,33 +22,9 @@
  },
  "state": [
   {
-   "key": "root",
-   "leaves": 3,
-   "numel": 13,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "joints",
-   "leaves": 2,
-   "numel": 16,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "simulator",
-   "leaves": 2,
-   "numel": 15,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "task",
-   "leaves": 2,
-   "numel": 4,
-   "dtypes": ["float64", "int64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 8,
-   "numel": 661,
+   "key": "maze",
+   "leaves": 5,
+   "numel": 709,
    "dtypes": ["bool", "float64", "int64", "uint8"]
   }
  ],

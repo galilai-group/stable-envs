@@ -158,15 +158,16 @@ class FetchWarpAdapter(FetchLanes):
         self._check_open()
         words = self._words_dev()
         data = self.batch.data
+        f64 = lambda x: x.to(torch.float64)  # noqa: E731
         groups = self.schema.pack(
             {
-                "qpos": self._qpos,
-                "qvel": data("qvel"),
-                "time": data("time")[:, None],
+                "qpos": f64(self._qpos),
+                "qvel": f64(data("qvel")),
+                "time": f64(data("time")[:, None]),
                 "task/initial_gripper_xpos": self._anchor64,
-                "warmstart": data("qacc_warmstart"),
-                "controller/position": self._grip_pos,
-                "controller/quaternion": self._grip_quat,
+                "warmstart": f64(data("qacc_warmstart")),
+                "controller/position": f64(self._grip_pos),
+                "controller/quaternion": f64(self._grip_quat),
                 "goal": self._goal64,
                 "lifecycle/elapsed_steps": self._elapsed[:, None],
                 "rng/state_words": words[:, 0:4],

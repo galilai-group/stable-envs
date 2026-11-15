@@ -63,7 +63,7 @@ Resets draw the start, goal, traffic and parked cars of each environment with th
 
 ### State
 
-The state has one tensor for each dtype: `roadster.float64`, `roadster.int64` and `roadster.bool`. Each field below is a slice of one of them. Read a field by name with `snv.get_field(state, "sim.qpos")`. The state is made of:
+The state has one tensor for each dtype: `roadster_state.float64`, `roadster_state.int64` and `roadster_state.bool`. Each field below is a slice of one of them. Read a field by name with `snv.get_field(state, "sim.qpos")`. The state is made of:
 
 - MuJoCo's integration state, split into `sim.time`, `sim.qpos`, `sim.qvel`, `sim.warmstart`, `sim.ctrl`, `sim.qfrc_applied`, `sim.xfrc_applied`, `sim.mocap_pos` and `sim.mocap_quat`. The two mocap fields place the traffic and the parked cars.
 - `sim.qpos_pre`, the pose that MuJoCo's derived quantities refer to after a step.

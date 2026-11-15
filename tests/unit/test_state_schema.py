@@ -19,7 +19,7 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
     "fetch": (("fetch_state",), []),
     "mshuman": (("mshuman",), []),
     "ogbench": (("maze", "joints"), []),
-    "roadster": (("roadster",), []),
+    "roadster": (("roadster_state",), []),
 }
 
 FIELDS = [

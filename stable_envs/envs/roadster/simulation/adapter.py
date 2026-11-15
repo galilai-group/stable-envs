@@ -97,7 +97,11 @@ def integration_layout(model) -> dict[str, tuple[int, int]]:
 
 
 #: State groups, one per dtype.
-GROUPS = {torch.float64: "roadster/float64", torch.int64: "roadster/int64", torch.bool: "roadster/bool"}
+GROUPS = {
+    torch.float64: "roadster_state/float64",
+    torch.int64: "roadster_state/int64",
+    torch.bool: "roadster_state/bool",
+}
 
 
 def name_of(key: tuple[str, ...]) -> str:

@@ -23,7 +23,7 @@ pytestmark = pytest.mark.unit
 NAMES = [name for name, _ in CELLS]
 LANES = 2
 SEED = 3
-FLOATS, BOOLS = ("roadster", "float64"), ("roadster", "bool")
+FLOATS, BOOLS = ("roadster_state", "float64"), ("roadster_state", "bool")
 
 
 def _actions(env, steps: int, seed: int = 0) -> list[np.ndarray]:
@@ -112,7 +112,7 @@ def test_set_state_validates_everything_before_changing_any_lane(jam):
     refused(wrong_dtype, "float64")
     wrong_shape = state.clone()
     wrong_shape[FLOATS] = wrong_shape[FLOATS][:, :-1]
-    refused(wrong_shape, "roadster/float64")
+    refused(wrong_shape, "roadster_state/float64")
     nonfinite = state.clone()
     snv.get_field(nonfinite, "sim/qpos")[1, 0] = float("nan")
     refused(nonfinite, "non-finite")

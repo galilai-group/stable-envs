@@ -22,64 +22,10 @@
  },
  "state": [
   {
-   "key": "sim",
-   "leaves": 11,
-   "numel": 490,
-   "dtypes": ["bool", "float64"]
-  },
-  {
-   "key": "autopilot",
+   "key": "roadster_state",
    "leaves": 3,
-   "numel": 3,
-   "dtypes": ["bool", "float64"]
-  },
-  {
-   "key": "task",
-   "leaves": 15,
-   "numel": 15,
+   "numel": 2377,
    "dtypes": ["bool", "float64", "int64"]
-  },
-  {
-   "key": "goal",
-   "leaves": 3,
-   "numel": 7,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "route",
-   "leaves": 5,
-   "numel": 33,
-   "dtypes": ["bool", "float64", "int64"]
-  },
-  {
-   "key": "jam",
-   "leaves": 2,
-   "numel": 4,
-   "dtypes": ["bool", "float64"]
-  },
-  {
-   "key": "weather",
-   "leaves": 11,
-   "numel": 21,
-   "dtypes": ["float64", "int64"]
-  },
-  {
-   "key": "fx",
-   "leaves": 2,
-   "numel": 1801,
-   "dtypes": ["float64", "int64"]
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "physics",
-   "leaves": 2,
-   "numel": 2,
-   "dtypes": ["float64"]
   }
  ],
  "variation": [
