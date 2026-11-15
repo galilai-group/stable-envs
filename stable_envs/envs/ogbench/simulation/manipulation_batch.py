@@ -276,10 +276,16 @@ class OGBManipulationBatchAdapter:
         return self._layout.export(columns, self.device)
 
     def render_columns(self):
+        """Host copies of the State leaves a frame reads, with the State's dtypes and shapes, without a State."""
         from .render_state import projected_keys
 
-        state = self.get_state()
-        return {key: state[key].detach().cpu().numpy().copy() for key in projected_keys(self.family)}
+        self._check_open()
+        out = {}
+        for key in projected_keys(self.family):
+            value = self._views[key[1]] if key[0] == "physics" else self._columns[key]
+            dtype = torch.empty((), dtype=self._layout.dtypes[key]).numpy().dtype
+            out[key] = np.array(value, dtype=dtype).reshape(self._layout.shapes[key] or value.shape)
+        return out
 
     def validate(self, state, **kwargs):
         return self.lanes.validate(state)

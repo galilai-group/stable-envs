@@ -162,6 +162,7 @@ KNOBS: dict[str, Knob] = {
         Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
         Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
         Knob("dmc_ray_budget", 1 << 24, ("dmc-suite",), "cuda", "pow2", "rays", "Rays per CUDA render chunk of fixed-camera DMC cells.", _cuda_rays),
+        Knob("dmc_graph_rows", 32, ("dmc-suite",), "cuda", "n", "rows", "Most rows of a fixed-camera DMC CUDA render chunk that replay one captured graph; larger chunks launch kernels and draw only the rays movers reach."),
         Knob("dmc_launch_rays", 256 * 224 * 224, ("dmc-trackcom",), "cuda", "n", "rays", "Rays per MJWarp launch of DMC TrackCom cells."),
         Knob("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
         Knob("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),

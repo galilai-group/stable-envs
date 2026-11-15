@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 import numpy as np
 import torch
 
@@ -11,7 +13,7 @@ from ...render import raycast3d as R3
 from ...render.cpu_raster import ray_module
 from ...render.mjwarp import effective_alpha
 from ...spaces import Box, Dict
-from . import warp_render
+from . import _shade_triton, warp_render
 from ._model import (
     _GRID_SLOTS,
     _SCENE_CACHE,
@@ -29,6 +31,37 @@ from ._model import (
 from ._shading import _dot, _Lights, _norm, _Scene, _shade, _upsample_rgb
 from ._tendon import _chain_capsules_batch, _find_tendon, _Tendon, _tendon_polyline
 from .base import _DMCModel
+
+
+def _textured(p, n, v, L, mat_rgb, bi, idx, spec, shin, tex, unlit=None):
+    """Shaded, textured colors of the rays that hit primitive ``idx``, in 0-255."""
+    out = _shade_triton.shade_textured(p, n, v, L, mat_rgb, idx, spec, shin, tex, unlit)
+    if out is None:
+        out = _shade(p, n, v, L, mat_rgb[bi, idx], spec[idx], shin[idx], unlit) * tex[idx] * 255.0
+    return out
+
+
+class _FrameGraph:
+    """A captured CUDA graph of ``draw(*inputs)``; each call copies new inputs in and replays it."""
+
+    def __init__(self, draw, inputs):
+        self.inputs = [t.clone() for t in inputs]
+        self.lock = threading.Lock()
+        side = torch.cuda.Stream()
+        side.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(side):
+            draw(*self.inputs)  # compiles kernels and fills the scene caches outside the capture
+        torch.cuda.current_stream().wait_stream(side)
+        self.graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(self.graph):
+            self.output = draw(*self.inputs)
+
+    def __call__(self, *inputs):
+        with self.lock:
+            for target, value in zip(self.inputs, inputs, strict=True):
+                target.copy_(value)
+            self.graph.replay()
+            return self.output.clone()
 
 
 class DMControlSuite(_DMCModel):
@@ -84,7 +117,12 @@ class DMControlSuite(_DMCModel):
     @property
     def PLATE_PATHS(self) -> tuple[str, ...]:  # noqa: N802
         """Return every appearance leaf; any may affect static surfaces through shared materials."""
-        return tuple(p for p, _, _ in self.variation_space.flat_layout() if p not in self._physics_paths)
+        space = self.variation_space
+        hit = self.__dict__.get("_plate_paths")
+        if hit is None or hit[0] is not space:
+            paths = tuple(p for p, _, _ in space.flat_layout() if p not in self._physics_paths)
+            hit = self.__dict__["_plate_paths"] = (space, paths)
+        return hit[1]
 
     def _plate_key(self, size, variation):
         """Key texture colors by their stored uint8 bytes and other leaves to six decimals."""
@@ -628,28 +666,47 @@ class DMControlSuite(_DMCModel):
             return buf.view(*lead, size, size, 3) if lead else buf
         tuning.on_render("dmc-suite", size, B, self)
 
+        frame_rows, groups = self._plan(sty, B, size)
+        # Rays per chunk, counting supersamples; smaller CPU chunks stay cache-resident.
+        knob = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
+        budget = tuning.get(knob, path="dmc-suite", size=size, batch=B, device=self.device)
+        step = max(1, int(budget // max(1, size * size * ss * ss)))
+        graph_rows = 0
+        if self.device.type == "cuda" and self.CUDA_GRAPHS:
+            graph_rows = tuning.get("dmc_graph_rows", path="dmc-suite", size=size, batch=B, device=self.device)
+        for sc, sub, idx in groups:
+            for a in range(0, len(sub), step):
+                part = idx[a : a + step]
+                rows = {k: v[sub[a : a + step]] for k, v in frame_rows.items()}
+                buf[part] = self._render_group(sc, s[part], size, ss, rows, graph=len(part) <= graph_rows)
+        return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _plan(self, sty, B: int, size: int):
+        """Per-row frame physics and ``(scene, rows, row index)`` per plate group.
+
+        The host reads a style once per version of its values.
+        """
+        values = sty.values
+        hit = self.__dict__.get("_render_plan")
+        if hit is not None and hit[0] is values and hit[1] == (values._version, B, size):
+            return hit[2]
         key = torch.cat([sty[p].reshape(B, -1) for p in self.PLATE_PATHS], 1).cpu().numpy()
         uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)
+        inv = np.asarray(inv).reshape(-1)
         offs, o = [], 0
         for p in self.PLATE_PATHS:
             w = int(sty.layout[p][1])
             offs.append((o, w))
             o += w
-        frame_rows = self._frame_rows(sty, B)
+        groups = []
         for gi in range(len(uniq)):
             sub = np.flatnonzero(inv == gi)
             over = {p: uniq[gi][a : a + w] for p, (a, w) in zip(self.PLATE_PATHS, offs)}
-            sc = self._scene(size, over)
-            idx = torch.as_tensor(sub, device=self.device, dtype=torch.long)
-            # Rays per chunk, counting supersamples; smaller CPU chunks stay cache-resident.
-            knob = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
-            budget = tuning.get(knob, path="dmc-suite", size=size, batch=B, device=self.device)
-            step = max(1, int(budget // max(1, size * size * ss * ss)))
-            for a in range(0, len(sub), step):
-                part = idx[a : a + step]
-                rows = {k: v[sub[a : a + step]] for k, v in frame_rows.items()}
-                buf[part] = self._render_group(sc, s[part], size, ss, rows)
-        return buf.view(*lead, size, size, 3) if lead else buf
+            groups.append((self._scene(size, over), sub, torch.as_tensor(sub, device=self.device, dtype=torch.long)))
+        plan = (self._frame_rows(sty, B), groups)
+        # The entry holds the values tensor, so a later style cannot reuse its storage and match by address.
+        self.__dict__["_render_plan"] = (values, (values._version, B, size), plan)
+        return plan
 
     # Window divisors, ordered from smallest footprint to largest.
     MOVER_TILES = (8, 6, 4, 3, 2, 1.5, 1.25)
@@ -658,6 +715,10 @@ class DMControlSuite(_DMCModel):
     SHADOW_COMPACTION = True
     # Disable in differential tests to shade every candidate ray.
     COVER_COMPACTION = True
+    # CUDA chunks of at most ``dmc_graph_rows`` rows replay one captured graph per scene and chunk shape. The graph
+    # shades every ray: windows and compaction need the host to read device values, and they skip only rays that
+    # cannot change a pixel.
+    CUDA_GRAPHS = True
 
     @staticmethod
     def _bound_scale(sc: _Scene, rows) -> float:
@@ -726,28 +787,39 @@ class DMControlSuite(_DMCModel):
             out[f"radius:{gid}"] = np.where(rows == np.float32(nominal), nominal, rows.astype(np.float64))
         return out
 
-    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None) -> torch.Tensor:
+    def _render_group(self, sc: _Scene, s: torch.Tensor, size: int, ss: int, rows=None, graph=False) -> torch.Tensor:
         rays = ray_module(self._ray_backend(), self.device)
         if rays is not None and len(sc.prims) and all(int(k) != R3.PLANE for k in sc.prims.kind):
             return self._render_group_rays(rays, sc, s, size, ss, rows)
+        poses = self._fk(s, sc, rows)
+        if graph:
+            key = ("graph", int(ss), tuple(poses[0].shape), bool(self.SHADOW_COMPACTION), _shade_triton.ENABLED)
+            graph = sc.const.get(key)
+            if graph is None:
+                graph = sc.const[key] = _FrameGraph(lambda *p: self._draw(sc, size, ss, *p), poses)
+            return graph(*poses)
+        return self._draw(sc, size, ss, *poses, bound_scale=self._bound_scale(sc, rows))
+
+    def _draw(self, sc: _Scene, size: int, ss: int, xpos, xmat, sizes, mat_rgb, bound_scale=None) -> torch.Tensor:
+        """Frames of mover poses. ``bound_scale=None`` shades every ray, with no host synchronization."""
         dev = self.device
-        B = s.shape[0]
+        B = xpos.shape[0]
         R = size * ss
         N = R * R
         o, d, plate_f, tex_rgb, spec, shin, L = self._per_chunk_constants(sc, ss)
         oo = o.expand(B, N, 3)
         dd = d.view(1, N, 3).expand(B, N, 3)
 
-        xpos, xmat, sizes, mat_rgb = self._fk(s, sc, rows)
         P = xpos.shape[1]
         sl = sc.shadow_light
         st = self._static_t(sc, ss).view(1, N).expand(B, N)
         # Tendon color varies by row, so material lookup needs both row and primitive indices.
         bi = torch.arange(B, device=dev).unsqueeze(1)
+        bounded = bound_scale is not None
 
         # Conservative windows exclude only rays movers cannot hit; fall back to a full
         # frame if none fits.
-        widx = self._mover_idx(sc, xpos, size, ss, self._bound_scale(sc, rows))
+        widx = self._mover_idx(sc, xpos, size, ss, bound_scale) if bounded else None
         base = plate_f.expand(B, N, 3).clone()
         if widx is None:
             oo_w, dd_w = oo, dd
@@ -761,7 +833,7 @@ class DMControlSuite(_DMCModel):
 
         # Compact the union of covered window positions across rows. Outside it, every
         # row selects the plate, so skipping shading cannot change the result.
-        if self.COVER_COMPACTION:
+        if bounded and self.COVER_COMPACTION:
             js = torch.nonzero(cover_w.any(0), as_tuple=False).reshape(-1)
             widx = js.view(1, -1).expand(B, -1) if widx is None else widx[:, js]
             cover_w, t_w, n_w, i_w = cover_w[:, js], t_w[:, js], n_w[:, js], i_w[:, js]
@@ -772,7 +844,7 @@ class DMControlSuite(_DMCModel):
         unlit_w = None
         if sl >= 0 and P > 1:
             unlit_w = self._occluded(sc, pm_w, L, sl, xpos, xmat, sizes, skip=i_w, eps=sc.eps)
-        col_w = _shade(pm_w, n_w, -dd_w, L, mat_rgb[bi, i_w], spec[i_w], shin[i_w], unlit_w) * tex_rgb[i_w] * 255.0
+        col_w = _textured(pm_w, n_w, -dd_w, L, mat_rgb, bi, i_w, spec, shin, tex_rgb, unlit_w)
         if sl >= 0:
             cand, dark = self._shadow_candidates(sc, ss)
             if cand.numel():
@@ -781,7 +853,7 @@ class DMControlSuite(_DMCModel):
                 occ = self._occluded(sc, ps, L, sl, xpos, xmat, sizes, eps=sc.eps) & (stc < R3.INF)
                 base[:, cand] = torch.where(occ.unsqueeze(-1), dark, base[:, cand])
         if sc.reflectance > 0:
-            base = self._reflect(sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi)
+            base = self._reflect(sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi, bounded)
 
         # Composite movers after background shadows and reflections; untouched rays retain the plate.
         if widx is None:  # nothing was restricted: no index to scatter through
@@ -800,7 +872,7 @@ class DMControlSuite(_DMCModel):
             hit = sc.const["floor"] = (t(fsize), t(fpos), t(fmat))
         return hit
 
-    def _reflect(self, sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi):
+    def _reflect(self, sc, base, xpos, xmat, sizes, mat_rgb, tex_rgb, spec, shin, L, ss, bi, compact=True):
         """Replace mirror hits using ``r * mover_color + (1-r) * unreflected_surface``.
 
         Blending onto the reflected plate would keep the plate's own reflection underneath.
@@ -814,12 +886,12 @@ class DMControlSuite(_DMCModel):
         seen = t_r < R3.INF
         widx = idx.view(1, -1).expand(B, -1)
         # Shade only the union of mirror hits across rows; outside it the background is unchanged.
-        if self.COVER_COMPACTION:
+        if compact and self.COVER_COMPACTION:
             js = torch.nonzero(seen.any(0), as_tuple=False).reshape(-1)
             widx, seen, ro, rd = widx[:, js], seen[:, js], ro[:, js], rd[:, js]
             surf, t_r, n_r, i_r = surf[:, js], t_r[:, js], n_r[:, js], i_r[:, js]
         pr = ro + t_r.clamp(max=1e6).unsqueeze(-1) * rd
-        colr = _shade(pr, n_r, -rd, L, mat_rgb[bi, i_r], spec[i_r], shin[i_r], None) * tex_rgb[i_r] * 255.0
+        colr = _textured(pr, n_r, -rd, L, mat_rgb, bi, i_r, spec, shin, tex_rgb)
         r = float(sc.reflectance)
         val = r * colr + (1.0 - r) * surf
         w3 = widx.unsqueeze(-1).expand(-1, -1, 3)
