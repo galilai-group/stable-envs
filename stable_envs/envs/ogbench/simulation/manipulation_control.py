@@ -224,6 +224,186 @@ def _numba_ik_errors():
 _NUMBA_IK_ERRORS = _numba_ik_errors()
 
 
+def _numba_pose():
+    """Numba kernels for the arithmetic of ``BatchController.control``, or None without Numba.
+
+    They run the operations of the NumPy functions above in the same order, without fused multiply-adds. ``cos``,
+    ``sin``, ``arctan2`` and ``pow`` stay in NumPy and the C library, as the source calls them. Returns
+    ``(quat, yaw_terms, half_angles, orientation, target)``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True, inline="always")
+    def multiply(a0, a1, a2, a3, b0, b1, b2, b3):
+        # so3_multiply: each component sums its signed products from the left.
+        w = ((-(a1 * b1)) + (-(a2 * b2)) + (-(a3 * b3))) + a0 * b0
+        x = ((a1 * b0) + (a2 * b3) + (-(a3 * b2))) + a0 * b1
+        y = ((-(a1 * b3)) + (a2 * b0) + (a3 * b1)) + a0 * b2
+        z = ((a1 * b2) + (-(a2 * b1)) + (a3 * b0)) + a0 * b3
+        return w, x, y, z
+
+    @numba.njit(cache=True, inline="always")
+    def from_z(theta, cos_half, sin_half):
+        # so3_from_z with its Taylor branch; cos_half and sin_half are of 0.5 * safe_theta.
+        theta_squared = theta * theta
+        theta_pow_4 = theta_squared * theta_squared
+        if theta_squared < 1e-10:
+            real = 1.0 - theta_squared / 8.0 + theta_pow_4 / 384.0
+            imaginary = 0.5 - theta_squared / 48.0 + theta_pow_4 / 3840.0
+        else:
+            real = cos_half
+            imaginary = sin_half / math.sqrt(theta_squared)
+        return real, imaginary * 0.0, imaginary * 0.0, imaginary * theta
+
+    @numba.njit(cache=True)
+    def quat(mat):
+        """``mat2quat`` of (n, 9) rows."""
+        n = mat.shape[0]
+        q = np.empty((n, 4))
+        for i in range(n):
+            m = mat[i]
+            if m[0] + m[4] + m[8] > 0:
+                q[i, 0] = 0.5 * math.sqrt(1 + m[0] + m[4] + m[8])
+                q[i, 1] = 0.25 * (m[7] - m[5]) / q[i, 0]
+                q[i, 2] = 0.25 * (m[2] - m[6]) / q[i, 0]
+                q[i, 3] = 0.25 * (m[3] - m[1]) / q[i, 0]
+            elif m[0] > m[4] and m[0] > m[8]:
+                q[i, 1] = 0.5 * math.sqrt(1 + m[0] - m[4] - m[8])
+                q[i, 0] = 0.25 * (m[7] - m[5]) / q[i, 1]
+                q[i, 2] = 0.25 * (m[1] + m[3]) / q[i, 1]
+                q[i, 3] = 0.25 * (m[2] + m[6]) / q[i, 1]
+            elif m[4] > m[8]:
+                q[i, 2] = 0.5 * math.sqrt(1 - m[0] + m[4] - m[8])
+                q[i, 0] = 0.25 * (m[2] - m[6]) / q[i, 2]
+                q[i, 1] = 0.25 * (m[1] + m[3]) / q[i, 2]
+                q[i, 3] = 0.25 * (m[5] + m[7]) / q[i, 2]
+            else:
+                q[i, 3] = 0.5 * math.sqrt(1 - m[0] - m[4] + m[8])
+                q[i, 0] = 0.25 * (m[3] - m[1]) / q[i, 3]
+                q[i, 1] = 0.25 * (m[2] + m[6]) / q[i, 3]
+                q[i, 2] = 0.25 * (m[5] + m[7]) / q[i, 3]
+            norm = math.sqrt(q[i, 0] * q[i, 0] + q[i, 1] * q[i, 1] + q[i, 2] * q[i, 2] + q[i, 3] * q[i, 3])
+            if norm < _MINVAL:
+                q[i, 0], q[i, 1], q[i, 2], q[i, 3] = 1.0, 0.0, 0.0, 0.0
+            elif abs(norm - 1) > _MINVAL:
+                inverse = 1 / norm
+                for k in range(4):
+                    q[i, k] *= inverse
+        return q
+
+    @numba.njit(cache=True)
+    def yaw_terms(q, squares):
+        """The ``arctan2`` arguments of ``so3_yaw``; ``squares`` are the C library's squares of q2 and q3."""
+        n = q.shape[0]
+        y, x = np.empty(n), np.empty(n)
+        for i in range(n):
+            y[i] = 2 * (q[i, 0] * q[i, 3] + q[i, 1] * q[i, 2])
+            x[i] = 1 - 2 * (squares[i, 0] + squares[i, 1])
+        return y, x
+
+    @numba.njit(cache=True)
+    def half_angles(theta):
+        """``0.5 * safe_theta`` of ``so3_from_z``, whose cosine and sine it reads."""
+        out = np.empty(theta.shape[0])
+        for i in range(theta.shape[0]):
+            theta_squared = theta[i] * theta[i]
+            out[i] = 0.5 * (1.0 if theta_squared < 1e-10 else math.sqrt(theta_squared))
+        return out
+
+    @numba.njit(cache=True)
+    def orientation(theta, cos_half, sin_half, down):
+        """``so3_from_z(a) * so3_from_z(b) * inverse(down)``; ``theta`` holds the n angles a, then the n angles b."""
+        n = theta.shape[0] // 2
+        out = np.empty((n, 4))
+        d0, d1, d2, d3 = down[0] * 1.0, down[1] * -1.0, down[2] * -1.0, down[3] * -1.0
+        for i in range(n):
+            a0, a1, a2, a3 = from_z(theta[i], cos_half[i], sin_half[i])
+            b0, b1, b2, b3 = from_z(theta[n + i], cos_half[n + i], sin_half[n + i])
+            c0, c1, c2, c3 = multiply(a0, a1, a2, a3, b0, b1, b2, b3)
+            out[i, 0], out[i, 1], out[i, 2], out[i, 3] = multiply(c0, c1, c2, c3, d0, d1, d2, d3)
+        return out
+
+    @numba.njit(cache=True)
+    def target(yaw, cos_half, sin_half, down, t_pa, translation):
+        """The IK target ``(pos, quat)``: ``orientation = so3_from_z(yaw) * down``, then the pinch-to-attach pose."""
+        n = yaw.shape[0]
+        pos, quat_out = np.empty((n, 3)), np.empty((n, 4))
+        for i in range(n):
+            a0, a1, a2, a3 = from_z(yaw[i], cos_half[i], sin_half[i])
+            o0, o1, o2, o3 = multiply(a0, a1, a2, a3, down[0], down[1], down[2], down[3])
+            quat_out[i, 0], quat_out[i, 1], quat_out[i, 2], quat_out[i, 3] = multiply(
+                o0, o1, o2, o3, t_pa[0], t_pa[1], t_pa[2], t_pa[3]
+            )
+            # so3_apply: o * (0, v) * inverse(o), keeping the vector part.
+            p0, p1, p2, p3 = multiply(o0, o1, o2, o3, 0.0, t_pa[4], t_pa[5], t_pa[6])
+            _, r1, r2, r3 = multiply(p0, p1, p2, p3, o0 * 1.0, o1 * -1.0, o2 * -1.0, o3 * -1.0)
+            pos[i, 0] = r1 + translation[i, 0]
+            pos[i, 1] = r2 + translation[i, 1]
+            pos[i, 2] = r3 + translation[i, 2]
+        return pos, quat_out
+
+    return quat, yaw_terms, half_angles, orientation, target
+
+
+def _numba_ik_steps():
+    """Numba kernels for the arithmetic of an iteration of ``BatchController.solve``, or None without Numba.
+
+    Returns ``(reached, advance)``: the rows whose errors are within both thresholds, with the number of rows too close
+    to a threshold to decide, and the scaled update of ``qpos``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True)
+    def reached(norms, pos_thresh, ori_thresh):
+        n = norms.shape[0]
+        done = np.empty(n, np.bool_)
+        close = 0
+        for i in range(n):
+            done[i] = norms[i, 0] <= pos_thresh and norms[i, 1] <= ori_thresh
+            if (
+                abs(norms[i, 0] - pos_thresh) <= 1e-9 * pos_thresh
+                or abs(norms[i, 1] - ori_thresh) <= 1e-9 * ori_thresh
+            ):
+                close += 1
+        return done, close
+
+    @numba.njit(cache=True)
+    def advance(qpos, rows, update, max_angle):
+        """``qpos[rows] += update``, each update row scaled down to ``max_angle`` at most, as NumPy's max decides."""
+        for r in range(rows.shape[0]):
+            peak = abs(update[r, 0])
+            for k in range(1, update.shape[1]):
+                value = abs(update[r, k])
+                if value > peak or value != value:
+                    peak = value
+            if peak > max_angle:
+                scale = max_angle / peak
+                for k in range(update.shape[1]):
+                    update[r, k] *= scale
+            i = rows[r]
+            for k in range(update.shape[1]):
+                qpos[i, k] = qpos[i, k] + 1.0 * update[r, k]
+
+    return reached, advance
+
+
+_NUMBA_POSE = _numba_pose()
+_NUMBA_IK_STEPS = _numba_ik_steps()
+
+
+def _squares(q):
+    """The C library's squares of the q2 and q3 columns, as the source squares NumPy scalars."""
+    n = len(q)
+    flat = np.fromiter(map(math.pow, q[:, 2:].ravel().tolist(), [2.0] * (2 * n)), np.float64, 2 * n)
+    return flat.reshape(n, 2)
+
+
 class BatchController:
     """``ManipSpaceEnv.set_control`` for every lane of a batch.
 
@@ -262,16 +442,30 @@ class BatchController:
         self._down_rotation, self._pinch_to_attach = env._effector_down_rotation, env._T_pa
         self._norm = np.linalg.norm
         self._errors = _NUMBA_IK_ERRORS or _ik_errors_numpy
+        self._pose, self._steps = _NUMBA_POSE, _NUMBA_IK_STEPS
+        self._rows = np.arange(num_envs)
+        self._down64, self._t_pa64 = np.asarray(self._down, np.float64), np.asarray(self._t_pa, np.float64)
 
     def control(self, actions, qpos, pinch_pos, pinch_mat, ctrl, ids):
         """Write the controls of lanes ``ids`` into ``ctrl`` from their actions and pinch site poses."""
         n = len(ids)
+        action = 0.5 * (np.asarray(actions) + 1) * (self._high - self._low) + self._low
+        if self._pose is not None and action.dtype == np.float64:
+            pos, quat, target_gripper = self._targets(action, qpos, pinch_pos, pinch_mat, ids)
+            if n == 1:
+                # One lane solves with OGBench's own controller, which costs less than a batch of one.
+                arm = self._source_ik.solve(pos=pos[0], quat=quat[0], curr_qpos=qpos[ids[0]][self._arm_qpos])
+                ctrl[ids[0], self._arm_actuators] = arm
+                ctrl[ids[0], self._gripper_actuators] = 255.0 * target_gripper[0]
+            else:
+                ctrl[ids[:, None], self._arm_actuators] = self.solve(pos, quat, qpos[ids][:, self._arm_qpos])
+                ctrl[ids[:, None], self._gripper_actuators] = 255.0 * target_gripper
+            return
         if n == 1:
             arm, gripper = self._control_one(np.asarray(actions)[0], qpos[ids[0]], pinch_pos[0], pinch_mat[0])
             ctrl[ids[0], self._arm_actuators] = arm
             ctrl[ids[0], self._gripper_actuators] = gripper
             return
-        action = 0.5 * (np.asarray(actions) + 1) * (self._high - self._low) + self._low
         a_pos, a_ori, a_gripper = action[:, :3], action[:, 3], action[:, 4:5]
         effector_pos = np.array(pinch_pos, np.float64)
         effector_yaw = so3_yaw(mat2quat(np.asarray(pinch_mat).reshape(n, 9)))
@@ -289,6 +483,23 @@ class BatchController:
         pos = so3_apply(orientation, t_pa[:, 4:]) + translation
         ctrl[ids[:, None], self._arm_actuators] = self.solve(pos, quat, qpos[ids][:, self._arm_qpos])
         ctrl[ids[:, None], self._gripper_actuators] = 255.0 * target_gripper
+
+    def _targets(self, action, qpos, pinch_pos, pinch_mat, ids):
+        """``control``'s IK targets ``(pos, quat)`` and gripper targets, with the Numba kernels."""
+        quat, yaw_terms, half_angles, orientation, target = self._pose
+        n = len(ids)
+        a_pos, a_ori, a_gripper = action[:, :3], action[:, 3], action[:, 4:5]
+        gripper_opening = np.clip(qpos[ids, self._gripper_qpos][:, None] / 0.8, 0, 1)
+        translation = np.array(pinch_pos, np.float64) + a_pos
+        np.clip(translation, *self._workspace, out=translation)
+        effector = quat(np.ascontiguousarray(np.asarray(pinch_mat).reshape(n, 9), np.float64))
+        theta = np.concatenate([a_ori, np.arctan2(*yaw_terms(effector, _squares(effector)))])
+        half = half_angles(theta)
+        rotation = orientation(theta, np.cos(half), np.sin(half), self._down64)
+        yaw = np.clip(np.arctan2(*yaw_terms(rotation, _squares(rotation))), -np.pi, +np.pi)
+        half = half_angles(yaw)
+        pos, quat_out = target(yaw, np.cos(half), np.sin(half), self._down64, self._t_pa64, translation)
+        return pos, quat_out, np.clip(gripper_opening + a_gripper, 0.0, 1.0)
 
     def _control_one(self, action, qpos, pinch_pos, pinch_mat):
         """``ManipSpaceEnv.set_control`` of one lane, with OGBench's own pose types and controller.
@@ -338,9 +549,11 @@ class BatchController:
                 self._ik_qpos[ids] = qpos[ids]
                 b.forward(ids, mujoco.mjtStage.mjSTAGE_POS)
                 err, norms = self._errors(pos[ids], quat[ids], site_xpos[ids], site_xmat[ids])
-            done = self._reached(err[:, :3], norms[:, 0], pos_thresh) & self._reached(
-                err[:, 3:], norms[:, 1], ori_thresh
-            )
+            done, close = (None, 1) if self._steps is None else self._steps[0](norms, pos_thresh, ori_thresh)
+            if close:
+                done = self._reached(err[:, :3], norms[:, 0], pos_thresh) & self._reached(
+                    err[:, 3:], norms[:, 1], ori_thresh
+                )
             if done.any():
                 keep = ~done
                 ids = (np.arange(n) if ids is None else ids)[keep]
@@ -351,6 +564,9 @@ class BatchController:
             jac = np.concatenate([jacp, jacr], axis=1)
             h = jac @ jac.transpose(0, 2, 1) + self._damping
             update = (jac.transpose(0, 2, 1) @ np.linalg.solve(h, err[:, :, None]))[:, :, 0]
+            if self._steps is not None:
+                self._steps[1](qpos, self._rows[:n] if ids is None else ids, update, self._max_angle)
+                continue
             update_max = np.max(np.abs(update), axis=1)
             over = update_max > self._max_angle
             update[over] *= (self._max_angle / update_max[over])[:, None]
