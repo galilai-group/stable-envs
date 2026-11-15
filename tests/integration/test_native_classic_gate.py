@@ -27,7 +27,7 @@ def test_frozen_source_state_and_tasks(domain, name):
         states = [env.reset(seed=manifest["seed"])]
         outputs = []
         for action in arrays["actions"]:
-            output = env.step(action, frames=None, states=slice(0, 0)).exclude("states", "state_valid")
+            output = env.step(action, frames=None, states=None)
             outputs.append(output)
             states.append(output["state"])
         keys = {"state/" + (key if isinstance(key, str) else "/".join(key)) for key in states[0].keys(True, True)}

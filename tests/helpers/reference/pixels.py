@@ -63,10 +63,7 @@ def check_online_pixels(
         actions = trace.actions[:, 0] if horizon == 1 else trace.actions
         result = env.step(actions.copy(), states=states, frames=frames)
         assert all(value.device.type == env.device.type for value in result.values(True, True))
-        if states is not None:
-            compare_states(result["state"], trace.states[-1])
-        else:
-            assert "state" not in result
+        compare_states(result["state"], trace.states[-1])
         compare_states(env.get_state(), trace.states[-1])
         torch.testing.assert_close(result["valid"].cpu(), trace.valid, atol=0, rtol=0)
         for key, expected in trace.tasks.items():
