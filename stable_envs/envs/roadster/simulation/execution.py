@@ -20,6 +20,11 @@ CUDA_MIN_ENVS: dict[str, int | None] = {
 }
 
 
+def roadster_path(task: str) -> str:
+    """The simulation path of a Roadster task, which keys its switch point in the tuning cache."""
+    return f"roadster-sim/{task}"
+
+
 def roadster_backend(
     num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto", task: str = "traffic"
 ) -> str:
@@ -33,7 +38,7 @@ def roadster_backend(
         return make_roadster_adapter(task, n, device, backend)
 
     measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
-    path = f"roadster-sim/{task}"
+    path = roadster_path(task)
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)
 

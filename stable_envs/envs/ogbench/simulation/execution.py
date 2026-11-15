@@ -25,6 +25,11 @@ MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
 }
 
 
+def maze_path(loco: str, maze: str) -> str:
+    """The simulation path of a maze body and size, which keys its switch point in the tuning cache."""
+    return f"ogb-sim/{loco}maze-{maze}"
+
+
 def maze_backend(
     num_envs: int,
     device: str | torch.device,
@@ -44,7 +49,7 @@ def maze_backend(
 
     dim = BODIES[loco][2]
     measure = measure_adapter(build, lambda n: torch.rand(n, dim, device=device) * 2 - 1)
-    path = f"ogb-sim/{loco}maze-{maze}"
+    path = maze_path(loco, maze)
     return mujoco_backend(
         path, num_envs, device, simulation_backend, cuda_min_envs=MAZE_CUDA_MIN_ENVS[loco], measure=measure
     )

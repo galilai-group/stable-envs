@@ -20,7 +20,7 @@ from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
-from .simulation.execution import make_maze_adapter, maze_backend
+from .simulation.execution import make_maze_adapter, maze_backend, maze_path
 from .simulation.maze import BODIES, maze_fields
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
@@ -1406,6 +1406,7 @@ class MazeSemantics:
         backend = maze_backend(int(num_envs), device, self.LOCO, simulation_backend, self.MAZE)
         super().__init__(*args, **kwargs)
         self.simulation_backend = backend
+        self.simulation_backend_path = maze_path(self.LOCO, self.MAZE)
         self._simulator = make_maze_adapter(
             self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )

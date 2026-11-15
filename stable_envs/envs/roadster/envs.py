@@ -28,7 +28,7 @@ from ...registry import register
 from ...spaces import Box, Dict, Discrete
 from . import render as roadster_render
 from .simulation.adapter import PHYSICS_LEAVES, RAIN_MAX, RENDER_FIELDS, TASKS, WIND_MAX
-from .simulation.execution import make_roadster_adapter, roadster_backend
+from .simulation.execution import make_roadster_adapter, roadster_backend, roadster_path
 
 #: The visual variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
@@ -81,6 +81,7 @@ class RoadsterBase(Env):
         """
         device = Env.resolve_device(device)
         self.simulation_backend = roadster_backend(int(num_envs), device, simulation_backend, self.TASK)
+        self.simulation_backend_path = roadster_path(self.TASK)
         self.execution_mode = "MUJOCO_WARP" if self.simulation_backend == "mjwarp" else "DELEGATED_CPU"
         self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device, self.simulation_backend)
         model = self._simulator.model

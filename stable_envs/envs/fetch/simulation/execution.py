@@ -22,6 +22,11 @@ CUDA_MIN_ENVS: dict[str, int | None] = {
 SIMULATION_BACKENDS = ("native", "mjwarp", "source")
 
 
+def fetch_path(task: str) -> str:
+    """The simulation path of a Fetch task, which keys its switch point in the tuning cache."""
+    return f"fetch-sim/{task.lower()}"
+
+
 def fetch_backend(
     num_envs: int,
     device: str | torch.device,
@@ -44,7 +49,7 @@ def fetch_backend(
         return make_fetch_adapter(n, device, 0, task, reward_type, simulation_backend=backend)
 
     measure = measure_adapter(build, lambda n: torch.rand(n, 4, device=device) * 2 - 1)
-    path = f"fetch-sim/{task.lower()}"
+    path = fetch_path(task)
     min_envs = CUDA_MIN_ENVS[task]
     return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)
 

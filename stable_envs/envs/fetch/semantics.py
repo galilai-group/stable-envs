@@ -10,7 +10,7 @@ from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import VISUAL_LEAVES
-from .simulation.execution import fetch_backend, make_fetch_adapter
+from .simulation.execution import fetch_backend, fetch_path, make_fetch_adapter
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 #: Render backend names; ``auto`` draws with MJWarp on CUDA and with ``numba``, or ``opengl`` without Numba, on CPU.
@@ -74,6 +74,7 @@ class FetchSemantics:
         device = Env.resolve_device(device)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
         self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, self.SCENE, reward_type)
+        self.simulation_backend_path = fetch_path(self.SCENE)
         if self.simulation_backend == "source":
             self._simulator = FetchAdapter(num_envs, device, seed, self.SCENE, reward_type)
         else:

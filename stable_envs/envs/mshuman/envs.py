@@ -24,6 +24,8 @@ _NQ, _NV, _NA, _NU = 36, 36, 100, 100
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
+#: The simulation path, which keys the switch point in the tuning cache.
+SIMULATION_PATH = "mshuman-sim/locomotion"
 CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
@@ -85,7 +87,8 @@ class MSHumanLocomotion(Env):
 
         device = self.device
         measure = measure_adapter(_builder(self._model, device), lambda n: torch.rand(n, _NU, device=device))
-        path, requested = "mshuman-sim/locomotion", simulation_backend
+        path, requested = SIMULATION_PATH, simulation_backend
+        self.simulation_backend_path = path
         self.simulation_backend = mujoco_backend(
             path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure
         )
