@@ -59,10 +59,16 @@ def copy_model_fields(source, target):
             out[...] = value
 
 
+#: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_lanes`` knob is set. A
+#: reset of one lane runs milliseconds of OGBench's Python, many times the round trip to a worker, so two lanes that
+#: reset in parallel take less time than one process that resets them in turn.
+WORKER_MIN_LANES = 2
+
+
 def make_lanes(family, num_envs, seed, reward_task_id):
-    """The OGBench objects that reset, restore and vary the lanes: in worker processes for large batches."""
+    """The OGBench objects that reset, restore and vary the lanes: in worker processes from two lanes."""
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="ogb-sim")
+    count = process_count(num_envs, cpus, path="ogb-sim", min_lanes=WORKER_MIN_LANES)
     if count:
         from .manipulation_process import OGBManipulationProcessAdapter
 
@@ -195,7 +201,7 @@ class OGBManipulationBatchAdapter:
             self._num_button_states = int(env._num_button_states)
         # Lanes whose environment generator a cube repair advanced; the OGBench objects take it before a reset.
         self._dirty = self._stale = False
-        self._load(self.lanes.get_state())
+        self._load(self._lane_state())
 
     @property
     def envs(self):
@@ -237,10 +243,16 @@ class OGBManipulationBatchAdapter:
 
     # Loading lanes from State.
 
+    def _lane_state(self):
+        """The State of the OGBench objects: their columns in process, else a CPU State."""
+        if isinstance(self.lanes, OGBManipulationAdapter):
+            return self.lanes.columns()
+        return self.lanes.get_state()
+
     def _load(self, state):
-        """Write full CPU State into the batch, the per-lane model fields and the State columns."""
+        """Write full CPU State (or its columns) into the batch, the per-lane model fields and the State columns."""
         self._stale = False
-        columns = {key: state[key].numpy() for key in self._order}
+        columns = {key: state[key] if isinstance(state, dict) else state[key].numpy() for key in self._order}
         self._columns = {key: value.copy() for key, value in columns.items() if key[0] != "physics"}
         parts = []
         for key in self._order:
@@ -294,7 +306,7 @@ class OGBManipulationBatchAdapter:
         self._check_open()
         self.lanes.set_state(state)
         self._dirty = False
-        self._load(self.lanes.get_state())
+        self._load(self._lane_state())
 
     def make_variation_space(self):
         return self.lanes.make_variation_space()
@@ -313,7 +325,10 @@ class OGBManipulationBatchAdapter:
     def reset(self, seed=None, options=None):
         self._check_open()
         self._push()
-        self._load(self.lanes.reset(seed, options).cpu())
+        if isinstance(self.lanes, OGBManipulationAdapter):
+            self._load(self.lanes.reset_columns(seed, options))
+        else:
+            self._load(self.lanes.reset(seed, options).cpu())
         return self.get_state()
 
     def configure(self, values):
@@ -379,43 +394,45 @@ class OGBManipulationBatchAdapter:
 
     def _advance(self, actions, ids):
         c = self._columns
+        # Every lane steps in most calls; a slice selects them without index copies.
+        rows = slice(None) if ids is self._all else ids
         site_xpos, site_xmat = c["controller", "site_xpos"], c["controller", "site_xmat"]
         # The pinch site is the first cached site row.
-        self._control.control(actions, self._qpos, site_xpos[ids, 0], site_xmat[ids, 0], self._ctrl, ids)
+        self._control.control(actions, self._qpos, site_xpos[rows, 0], site_xmat[rows, 0], self._ctrl, ids)
         scene = self.family == "Scene"
         if scene:
-            c["scene", "prev_button_states"][ids] = c["scene", "cur_button_states"][ids]
-            button_pos = self._qpos[ids][:, self._buttons]
-        c["output", "prev_qpos"][ids] = self._qpos[ids]
-        c["output", "prev_qvel"][ids] = self._qvel[ids]
+            c["scene", "prev_button_states"][rows] = c["scene", "cur_button_states"][rows]
+            button_pos = self._qpos[rows][:, self._buttons]
+        c["output", "prev_qpos"][rows] = self._qpos[rows]
+        c["output", "prev_qvel"][rows] = self._qvel[rows]
         self.physics.step(active=None if ids is self._all else ids)
-        c["output", "gripper_force"][ids] = self._out_cfrc_ext[ids, self._pad]
+        c["output", "gripper_force"][rows] = self._out_cfrc_ext[rows, self._pad]
         if scene:
             self._scene_post_step(ids, button_pos)
-        self._cache_sites(ids)
-        cube = self._reached(self._qpos[ids, self._cube : self._cube + 3] - self._mocap_pos[ids, self._target], 0.04)
+        self._cache_sites(rows)
+        cube = self._reached(self._qpos[rows, self._cube : self._cube + 3] - self._mocap_pos[rows, self._target], 0.04)
         if scene:
-            buttons = c["scene", "cur_button_states"][ids] == c["scene", "target_button_states"][ids]
-            drawer = np.abs(self._qpos[ids, self._drawer] - c["scene", "target_drawer_pos"][ids, 0]) <= 0.04
-            window = np.abs(self._qpos[ids, self._window] - c["scene", "target_window_pos"][ids, 0]) <= 0.04
+            buttons = c["scene", "cur_button_states"][rows] == c["scene", "target_button_states"][rows]
+            drawer = np.abs(self._qpos[rows, self._drawer] - c["scene", "target_drawer_pos"][rows, 0]) <= 0.04
+            window = np.abs(self._qpos[rows, self._window] - c["scene", "target_window_pos"][rows, 0]) <= 0.04
             parts = np.concatenate([cube[:, None], buttons, drawer[:, None], window[:, None]], axis=1)
         else:
             parts = cube[:, None]
         success = parts.all(axis=1)
-        c["task", "success"][ids, 0] = success
+        c["task", "success"][rows, 0] = success
         out = self._outputs
         if self._reward_task:
-            out["reward"][ids] = parts.sum(axis=1).astype(np.float64) - parts.shape[1]
+            out["reward"][rows] = parts.sum(axis=1).astype(np.float64) - parts.shape[1]
         else:
-            out["reward"][ids] = np.where(success, 1.0, 0.0)
-        out["success"][ids] = success
-        out["terminated"][ids] = success
-        out["truncated"][ids] = False
+            out["reward"][rows] = np.where(success, 1.0, 0.0)
+        out["success"][rows] = success
+        out["terminated"][rows] = success
+        out["truncated"][rows] = False
 
-    def _cache_sites(self, ids):
+    def _cache_sites(self, rows):
         c = self._columns
-        c["controller", "site_xpos"][ids] = self._out_site_xpos[ids][:, self._pos_sites]
-        c["controller", "site_xmat"][ids] = self._out_site_xmat[ids][:, self._rot_sites]
+        c["controller", "site_xpos"][rows] = self._out_site_xpos[rows][:, self._pos_sites]
+        c["controller", "site_xmat"][rows] = self._out_site_xmat[rows][:, self._rot_sites]
 
     def _scene_post_step(self, ids, button_pos):
         """``SceneEnv.post_step``: cube repair, button presses and locks, then ``mj_forward``."""

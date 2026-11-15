@@ -17,6 +17,7 @@ from tensordict import TensorDict
 pytest.importorskip("ogbench")
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 
+from stable_envs import tuning
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -570,7 +571,8 @@ def test_identical_genuine_box_settling_actions(family, seed, oracle):
 @pytest.mark.parametrize("family", CLASSES)
 def test_restore_failure_cannot_partially_commit_a_batch(family):
     cls = CompatibleCube if family == "Cube" else CompatibleScene
-    with CLASSES[family](num_envs=2, seed=17) as a:
+    # The test patches and reads the OGBench objects, so they stay in this process.
+    with tuning.override(worker_min_lanes=64), CLASSES[family](num_envs=2, seed=17) as a:
         saved = a.get_state()
         for field, value in [(("controller", "site_xmat"), 0.0), (("task", "reward_id"), 5)]:
             bad = saved.clone()

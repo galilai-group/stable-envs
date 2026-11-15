@@ -101,6 +101,8 @@ class DMCBatchAdapter(SimulatorAdapter):
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
         self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
+        # Bound once: ``Batch.ctrl`` makes a new view at each access.
+        self._ctrl, self._warning = self.b.bind("ctrl"), self.b.warning[:, :, 1]
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._rng_views = {}
         self._layout = None
@@ -272,17 +274,24 @@ class DMCBatchAdapter(SimulatorAdapter):
         actions, _ = self.lanes.check_step(actions, active)
         ctrl, reward = self._transform(actions), np.zeros(self.num_envs)
         for _ in range(2):
-            reset = self._reset_next.copy()
-            if reset.any():
+            reset = self._reset_next
+            resetting = reset.any()
+            if resetting:
+                reset = reset.copy()
                 ids = np.flatnonzero(reset)
                 self._reset_lanes(ids)
                 self._load(ids)
-            self.b.ctrl[:] = ctrl
-            self.b.step(~reset, self._nsub, stage=self._vel)
-            if (bad := np.flatnonzero((self.b.warning[:, :, 1] > self._warnings).any(axis=1))).size:
+            self._ctrl[:] = ctrl
+            self.b.step(~reset if resetting else None, self._nsub, stage=self._vel)
+            if (self._warning > self._warnings).any():
+                bad = np.flatnonzero((self._warning > self._warnings).any(axis=1))
                 raise self._error(f"Physics state is invalid in lanes {bad.tolist()}")
-            reward += np.where(reset, 0.0, self.task.reward())
-            self._count += ~reset
+            if resetting:
+                reward += np.where(reset, 0.0, self.task.reward())
+                self._count += ~reset
+            else:
+                reward += self.task.reward()
+                self._count += 1
             self._reset_next = self._count >= self._limit
         self._cumulative += reward
         out = {

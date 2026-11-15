@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from stable_envs import tuning
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import (
     COMPILED,
@@ -35,6 +36,12 @@ def _node(env, path):
     for part in path.split("."):
         node = node[part]
     return node
+
+
+def _make(family, seed):
+    """An env whose OGBench objects stay in this process, where the gate reads them."""
+    with tuning.override(worker_min_lanes=LANES + 1):
+        return CLASSES[family](num_envs=LANES, seed=seed)
 
 
 def _lane(value, lane, path, env):
@@ -86,7 +93,7 @@ def _reset_refs(refs, seed, options):
 def _case(family, seed, options, oracle):
     refs = _refs(family, seed, oracle)
     try:
-        with CLASSES[family](num_envs=LANES, seed=seed) as env:
+        with _make(family, seed) as env:
             state = env.reset(seed=seed, options=options)
             _reset_refs(refs, seed, options)
             _compare(env, refs, oracle)
@@ -180,7 +187,7 @@ def set_variation_gate(family, seed=37) -> dict:
     rng = np.random.default_rng(seed)
     refs = _refs(family, seed, oracle)
     try:
-        with CLASSES[family](num_envs=LANES, seed=seed) as env:
+        with _make(family, seed) as env:
             env.reset(seed=seed, options={"task_id": 2})
             _reset_refs(refs, seed, {"task_id": 2})
             for action in rng.uniform(-1, 1, (3, LANES, 5)):
