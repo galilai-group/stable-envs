@@ -17,7 +17,7 @@ The classes need the `craftax` extra, and `device="cuda"` needs the `craftax-gpu
 
 Without the `craftax-gpu` extra, `device="auto"` selects the CPU, also on a host with CUDA.
 
-`import stable_envs` sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` if it is not set, so that JAX does not reserve most of the GPU memory. JAX reads this variable when it starts its GPU backend, so an earlier `import jax` has no effect on it. If JAX code ran on the GPU before `import stable_envs`, set the variable before you start Python.
+When you build a Craftax environment, stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` if it is not set and JAX has not started, so that JAX does not reserve most of the GPU memory. Importing stable-envs does not set it. JAX reads this variable when it starts its GPU backend. If JAX code ran on the GPU before you built the first Craftax environment, set the variable before you start Python.
 
 ## Task
 
