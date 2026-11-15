@@ -10,7 +10,6 @@ from tensordict import TensorDict
 
 from ...._core.cpus import cpu_limit
 from ...._core.state_layout import StateLayout
-from ...._core.tensordicts import to_device
 from ...._execution.protocol import SimulatorAdapter
 from .adapter import _VISUAL_GROUPS, VISUAL_LEAVES, _integer, _words, episode_limits, host_actions, host_active
 from .adapter import state_fields as _state_fields
@@ -392,6 +391,13 @@ class FetchLanes(SimulatorAdapter):
         return out
 
 
+def _leaf_dtype(layout: str, key: str, value: np.ndarray) -> torch.dtype:
+    """State leaves are float64 or int64, as in gymnasium-robotics' State; step outputs keep their dtype."""
+    if layout == "state" or key.startswith("state/"):
+        return torch.int64 if value.dtype.kind in "iu" else torch.float64
+    return torch.from_numpy(value[:0]).dtype
+
+
 class FetchBatchAdapter(FetchLanes):
     """CPU Fetch lanes in one batch: gymnasium-robotics' step and reset, bit for bit, on lane arrays."""
 
@@ -407,7 +413,7 @@ class FetchBatchAdapter(FetchLanes):
         # Batch outputs are copied only for fields bound before a call.
         self._xpos, self._xquat, self._site_xpos = (self.b.bind(name) for name in _OUTPUTS)
         self._body_mass = None
-        self._layout = None
+        self._layouts: dict[str, StateLayout] = {}
         self._elapsed = np.zeros(B, np.int64)
         self._grip_pos, self._grip_quat = np.zeros((B, 3)), np.zeros((B, 4))
         self._reward_dtype = np.float32 if t.reward_type == "sparse" else np.float64
@@ -448,13 +454,12 @@ class FetchBatchAdapter(FetchLanes):
         return self.get_state()
 
     def get_state(self) -> TensorDict:
-        state = self._host_state()
-        return state if self.device.type == "cpu" else to_device(state, self.device)
-
-    def _host_state(self) -> TensorDict:
         self._check_open()
+        return self._export(self._state_values(), "state")
+
+    def _state_values(self) -> dict[str, np.ndarray]:
         words = self._rng_words()
-        values = {
+        return {
             "qpos": self._qpos,
             "qvel": self._qvel,
             "time": self._time[:, None],
@@ -469,14 +474,15 @@ class FetchBatchAdapter(FetchLanes):
             "rng/has_uint32": words[:, 8:9],
             "rng/uinteger": words[:, 9:10],
         }
-        if self._layout is None:
-            dtypes = {np.dtype(np.int64): torch.int64}
-            self._layout = StateLayout(
-                [(key, value.shape[1:], dtypes.get(value.dtype, torch.float64)) for key, value in values.items()],
-                self.num_envs,
-            )
-        # The export copies every value, so the snapshot does not change with later steps.
-        return self._layout.export(values, "cpu")
+
+    def _export(self, values: dict[str, np.ndarray], name: str) -> TensorDict:
+        """A TensorDict of ``values`` on the env device: one packed copy per dtype; the layout is built once."""
+        layout = self._layouts.get(name)
+        if layout is None:
+            leaves = [(key, value.shape[1:], _leaf_dtype(name, key, value)) for key, value in values.items()]
+            layout = self._layouts[name] = StateLayout(leaves, self.num_envs)
+        # The export copies every value, so the result does not change with later steps.
+        return layout.export(values, self.device)
 
     def set_state(self, state: TensorDict) -> None:
         self.validate(state)
@@ -501,15 +507,16 @@ class FetchBatchAdapter(FetchLanes):
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         out = self._advance(actions, active)
-        if capture_state:
-            out["state"] = self._host_state()
-        return out if self.device.type == "cpu" else to_device(out, self.device)
+        if not capture_state:
+            return self._export(out, "step")
+        self._check_open()
+        out.update({f"state/{key}": value for key, value in self._state_values().items()})
+        return self._export(out, "step+state")
 
     def advance(self, actions, *, active=None) -> TensorDict:
-        out = self._advance(actions, active)
-        return out if self.device.type == "cpu" else to_device(out, self.device)
+        return self._export(self._advance(actions, active), "step")
 
-    def _advance(self, actions, active) -> TensorDict:
+    def _advance(self, actions, active) -> dict[str, np.ndarray]:
         """robot_env.step, _set_action, _step_callback, compute_reward and TimeLimit on the active lanes."""
         self._check_open()
         t = self.task
@@ -544,8 +551,7 @@ class FetchBatchAdapter(FetchLanes):
             out["reward"][ids] = -(d > t.distance_threshold).astype(np.float32) if t.reward_type == "sparse" else -d
             self._elapsed[ids] += 1
             out["truncated"][ids] = self._elapsed[ids] >= self._limits[ids]
-        outputs = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
-        return TensorDict(outputs, [self.num_envs], device="cpu")
+        return dict(self._outputs)
 
     def close(self) -> None:
         if not self._closed:

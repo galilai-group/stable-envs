@@ -7,17 +7,15 @@ from types import SimpleNamespace
 import mujoco
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from ...._core.state_layout import StateLayout
-from ...._core.tensordicts import build_tensordict, to_device
+from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch, native_threads
 from ...._execution.protocol import SimulatorAdapter
 from .maze import _REST_CLEARANCE, BODIES, _make_maze, _rest_walls, decode_state, maze_fields, tree
 from .pcg import uint128_bytes
 
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
-_CPU = torch.device("cpu")
 #: ``HumanoidEnv.get_ob`` limb bodies (left hand, left foot, right hand, right foot) relative to the torso.
 _LIMBS = (16, 10, 13, 7)
 #: Teleport destinations drawn ahead per lane on CUDA; the host refills them at least this often.
@@ -465,7 +463,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._goal = np.zeros((self.num_envs, 3))
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
         self._last = None
-        self._layout = None
+        self._layouts: dict[str, StateLayout] = {}
         self.reset(seed=seed)
 
     def reset(self, seed=None):
@@ -477,9 +475,9 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._last = None
         return self.get_state()
 
-    def _host_state(self):
+    def _state_columns(self):
         b = self._live
-        columns = {
+        return {
             **self._split(b.qpos, b.qvel),
             ("simulator", "time"): b.time[:, None],
             ("simulator", "warmstart"): b.qacc_warmstart,
@@ -487,21 +485,20 @@ class OGBMazeBatchAdapter(_MazeLanes):
             ("task", "id"): self._task_id,
             **self._random.columns,
         }
-        columns = {key: np.asarray(value) for key, value in columns.items()}
-        if self._layout is None:
-            leaves = [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in columns.items()]
-            self._layout = StateLayout(leaves, self.num_envs)
-        # The export copies every value, so the snapshot does not change with later steps.
-        return self._layout.export(columns, "cpu")
 
-    def _place(self, source):
-        """A TensorDict of host leaves ``source`` on the env device, with one copy."""
-        td = source if isinstance(source, TensorDict) else build_tensordict(source, [self.num_envs], _CPU)
-        return td if self.device.type == "cpu" else to_device(td, self.device)
+    def _export(self, values, name):
+        """A TensorDict of ``values`` on the env device: one packed copy per dtype; the layout is built once."""
+        layout = self._layouts.get(name)
+        if layout is None:
+            dtype = lambda value: torch.from_numpy(np.asarray(value)[:0]).dtype  # noqa: E731
+            leaves = [(key, np.shape(value)[1:], dtype(value)) for key, value in values.items()]
+            layout = self._layouts[name] = StateLayout(leaves, self.num_envs)
+        # The export copies every value, so the result does not change with later steps.
+        return layout.export(values, self.device)
 
     def get_state(self):
         self._check_open()
-        return self._place(self._host_state())
+        return self._export(self._state_columns(), "state")
 
     def set_state(self, state):
         host, decoded = self.validate(state)
@@ -583,12 +580,13 @@ class OGBMazeBatchAdapter(_MazeLanes):
             values = {
                 key: np.where(idle.reshape(-1, *[1] * (v.ndim - 1)), self._last[key], v) for key, v in values.items()
             }
-        tensors = {key: torch.from_numpy(np.array(v)) for key, v in values.items()}
         self._last = values
-        tensors["info"] = {key: tensors.pop(key) for key in INFO_KEYS}
+        result = {key: values[key] for key in values if key not in INFO_KEYS}
+        result.update({("info", key): values[key] for key in INFO_KEYS})
         if capture_state:
-            tensors["state"] = self._host_state()
-        return self._place(tensors)
+            for key, value in self._state_columns().items():
+                result[("state", *((key,) if isinstance(key, str) else key))] = value
+        return self._export(result, "step+state" if capture_state else "step")
 
     def close(self):
         if not self._closed:

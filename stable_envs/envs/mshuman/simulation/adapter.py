@@ -7,7 +7,6 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.state_layout import StateLayout
-from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, WarpBatch
 from ...._execution.protocol import SimulatorAdapter
 
@@ -54,7 +53,7 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
     def __init__(self, num_envs: int, device, model):
         super().__init__(num_envs, device, model)
         self.batch = NativeBatch(model, self.num_envs, "cpu", keyframe=0)
-        self._layout: StateLayout | None = None
+        self._layouts: dict[tuple[str, ...], StateLayout] = {}
         limited = model.actuator_ctrllimited.astype(bool)
         self._ctrl_low = np.where(limited, model.actuator_ctrlrange[:, 0], -np.inf)
         self._ctrl_high = np.where(limited, model.actuator_ctrlrange[:, 1], np.inf)
@@ -74,13 +73,14 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
             value[...] = values[key]
         return values
 
-    def _host_state(self, values: dict[str, np.ndarray] | None = None) -> TensorDict:
-        if values is None:
-            values = {key: self.batch.numpy(name).astype(np.float32) for key, name in _FIELDS.items()}
+    def _export(self, values: dict[str, np.ndarray], prefix: tuple[str, ...] = ()) -> TensorDict:
+        """The State from float32 ``values`` on the env device, under ``prefix``: one packed copy."""
         values["time"] = values["time"].reshape(self.num_envs, 1)
-        if self._layout is None:
-            self._layout = StateLayout([(k, v.shape[1:], torch.float32) for k, v in values.items()], self.num_envs)
-        return self._layout.export(values, "cpu")
+        layout = self._layouts.get(prefix)
+        if layout is None:
+            leaves = [((*prefix, k), v.shape[1:], torch.float32) for k, v in values.items()]
+            layout = self._layouts[prefix] = StateLayout(leaves, self.num_envs)
+        return layout.export({(*prefix, k): v for k, v in values.items()}, self.device)
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
@@ -90,8 +90,7 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        state = self._host_state()
-        return state if self.device.type == "cpu" else to_device(state, self.device)
+        return self._export({key: self.batch.numpy(name).astype(np.float32) for key, name in _FIELDS.items()})
 
     def set_state(self, state) -> None:
         self._check_open()
@@ -109,8 +108,7 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         values = self._quantize_state()
         if (bad := self.batch.unstable_envs()).size:
             raise RuntimeError(f"Physics state is invalid in lanes {bad.tolist()}")
-        out = build_tensordict({"state": self._host_state(values)}, [self.num_envs], "cpu")
-        return out if self.device.type == "cpu" else to_device(out, self.device)
+        return self._export(values, ("state",))
 
 
 class MSHumanWarpAdapter(_MSHumanAdapter):
