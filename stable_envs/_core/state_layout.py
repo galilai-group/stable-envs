@@ -9,6 +9,7 @@ them once, and each export copies them with one copy per dtype. ``columns`` read
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -72,18 +73,44 @@ class StateLayout:
         groups: dict[torch.dtype, tuple[list[int], list[int]]] = {}
         for index, (key, _, dtype) in enumerate(leaves):
             groups.setdefault(dtype, ([], []))[key not in static].append(index)
-        #: ``(dtype, NumPy dtype, static leaf indices, moving leaf indices)`` per dtype; a buffer holds the static
-        #: leaves first.
-        self.groups = [(dtype, _numpy_dtype(dtype), fixed, moving) for dtype, (fixed, moving) in groups.items()]
+        #: ``(dtype, NumPy dtype, static leaf indices, moving leaf indices, runs)`` per dtype. A buffer holds the
+        #: static leaves, then the moving ones, each grouped by shape. A run ``(indices, row shape)`` is leaves of
+        #: one shape next to each other, which one ``unbind`` splits; a leaf without a shape is a run of its own.
+        self.groups = []
+        for dtype, (fixed, moving) in groups.items():
+            fixed, moving = self._by_shape(fixed), self._by_shape(moving)
+            self.groups.append((dtype, _numpy_dtype(dtype), fixed, moving, self._runs(fixed + moving)))
+        #: Per group: the keys of its moving leaves, and the run sizes when no leaf of the group lacks a shape.
+        self._moving_keys = [[self.keys[i] for i in moving] for _, _, _, moving, _ in self.groups]
+        self._sizes = [
+            None if any(shape is None for _, shape in runs) else [len(i) * math.prod(shape) for i, shape in runs]
+            for *_, runs in self.groups
+        ]
         self._static: dict[torch.dtype, torch.Tensor | np.ndarray] = {}
         self._build = _builder(self.keys)
         self._batch = torch.Size([self.num_envs])
+
+    def _by_shape(self, indices: list[int]) -> list[int]:
+        order = {}
+        for i in indices:
+            order.setdefault(self.shapes[self.keys[i]], []).append(i)
+        return [i for run in order.values() for i in run]
+
+    def _runs(self, indices: list[int]) -> list[tuple[list[int], tuple[int, ...] | None]]:
+        runs: list[tuple[list[int], tuple[int, ...] | None]] = []
+        for i in indices:
+            shape = self.shapes[self.keys[i]]
+            if shape is not None and runs and runs[-1][1] == shape:
+                runs[-1][0].append(i)
+            else:
+                runs.append(([i], shape))
+        return runs
 
     def load_static(self, values: Mapping[Key, torch.Tensor | np.ndarray]) -> None:
         """Pack the static leaves from ``values``; call it after a reset, restore or Variation change."""
         self._static = {
             dtype: self._pack(kind, [values[self.keys[i]] for i in fixed])
-            for dtype, kind, fixed, _ in self.groups
+            for dtype, kind, fixed, _, _ in self.groups
             if fixed
         }
 
@@ -110,32 +137,31 @@ class StateLayout:
         Values already on ``device`` are packed there.
         """
         device = torch.device(device)
-        flats, shapes = [], [None] * len(self.keys)
-        for dtype, kind, fixed, moving in self.groups:
-            sources = [values[self.keys[i]] for i in moving]
-            for i, value in zip(moving, sources, strict=True):
-                shapes[i] = self.shapes[self.keys[i]] or tuple(value.shape)
-            for i in fixed:
-                shapes[i] = self.shapes[self.keys[i]]
+        flats = []
+        for (dtype, kind, fixed, _, _), keys in zip(self.groups, self._moving_keys, strict=True):
+            sources = [values[key] for key in keys]
             if fixed:
                 if dtype not in self._static:
                     raise RuntimeError("StateLayout.load_static must run before export")
                 sources.insert(0, self._static[dtype])
-            flats.append(self._pack(kind, sources))
-        host = device.type == "cpu"
-        if not host:
-            flats = [torch.from_numpy(f) if isinstance(f, np.ndarray) else f for f in flats]
-            if any(flat.device.type == "cpu" for flat in flats):
-                flats = self._to_device(flats, device)
+            flat = self._pack(kind, sources)
+            flats.append(torch.from_numpy(flat) if isinstance(flat, np.ndarray) else flat)
+        if device.type != "cpu" and any(flat.device.type == "cpu" for flat in flats):
+            flats = self._to_device(flats, device)
         leaves: list = [None] * len(self.keys)
-        for (_, _, fixed, moving), flat in zip(self.groups, flats, strict=True):
-            start = 0
-            for i in fixed + moving:
-                stop = start + int(np.prod(shapes[i]))
-                # NumPy slices and from_numpy cost less per leaf than tensor views.
-                part = flat[start:stop].reshape(shapes[i])
-                leaves[i] = torch.from_numpy(part) if isinstance(part, np.ndarray) else part
-                start = stop
+        for (*_, runs), sizes, flat in zip(self.groups, self._sizes, flats, strict=True):
+            widths = None
+            if sizes is None:
+                widths = {i[0]: tuple(values[self.keys[i[0]]].shape) for i, shape in runs if shape is None}
+                sizes = [len(i) * math.prod(shape) if shape else math.prod(widths[i[0]]) for i, shape in runs]
+            for (indices, shape), block in zip(runs, flat.split_with_sizes(sizes), strict=True):
+                if shape is None:
+                    leaves[indices[0]] = block.view(widths[indices[0]])
+                elif len(indices) == 1:
+                    leaves[indices[0]] = block.view(shape)
+                else:
+                    for i, leaf in zip(indices, block.view(len(indices), *shape).unbind(0), strict=True):
+                        leaves[i] = leaf
         batch, where = self._batch, _recorded(flats, device)
         return self._build(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where))
 
