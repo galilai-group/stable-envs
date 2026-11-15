@@ -6,9 +6,9 @@ import mujoco
 import numpy as np
 import torch
 from ogbench.manipspace import lie, mjcf_utils
-from tensordict import TensorDict
 
-from ...._core.tensordicts import _device, build_tensordict, to_device
+from ...._core.state_layout import StateLayout
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, native_threads
 from ...._execution.policy import cpu_affinity, process_count
 from .compatibility import COMPILED_FIELDS, MODEL_VALUES, CompatibleCube, CompatibleScene, compiled_fields, values_key
@@ -22,50 +22,9 @@ _BATCH_NAMES["plugin"] = "plugin_state"
 _CPU = torch.device("cpu")
 
 
-class Snapshot:
-    """Owned State copies of ``fields``: one array per dtype, copied in one call, and a view of it per leaf."""
-
-    def __init__(self, fields, num_envs):
-        self._batch = torch.Size([num_envs])
-        groups, self._leaves = {}, []
-        for key, (shape, dtype) in fields.items():
-            kind = torch.empty((), dtype=dtype).numpy().dtype
-            start = groups.get(kind, 0)
-            size = num_envs * int(np.prod(shape, dtype=np.int64))
-            groups[kind] = start + size
-            self._leaves.append((key, kind, start, start + size, (num_envs, *shape)))
-        self._groups = {kind: [leaf for leaf in self._leaves if leaf[1] == kind] for kind in groups}
-        self._sizes = {
-            kind: [stop - start for _, _, start, stop, _ in leaves] for kind, leaves in self._groups.items()
-        }
-        # Parents first, so that each dictionary exists before its children.
-        self._parents = sorted({key[:i] for key, *_ in self._leaves for i in range(1, len(key))}, key=len)
-
-    def build(self, columns, device):
-        """A TensorDict of copies of ``columns`` on ``device``: ``{key: (B, ...) values of the field's dtype}``.
-
-        The values are NumPy arrays, or tensors on ``device``.
-        """
-        nodes = {(): {}}
-        for parent in self._parents:
-            nodes[parent] = nodes[parent[:-1]][parent[-1]] = {}
-        for kind, leaves in self._groups.items():
-            if torch.is_tensor(columns[leaves[0][0]]):
-                parts = torch.cat([columns[leaf[0]].reshape(-1) for leaf in leaves]).split_with_sizes(
-                    self._sizes[kind]
-                )
-            else:
-                flat = np.concatenate([columns[leaf[0]] for leaf in leaves], axis=None, dtype=kind)
-                if device.type == "cpu":
-                    for key, _, start, stop, shape in leaves:
-                        nodes[key[:-1]][key[-1]] = torch.from_numpy(flat[start:stop].reshape(shape))
-                    continue
-                # One host-to-device copy per dtype.
-                parts = torch.from_numpy(flat).to(device).split_with_sizes(self._sizes[kind])
-            for (key, _, _, _, shape), part in zip(leaves, parts):
-                nodes[key[:-1]][key[-1]] = part.view(shape)
-        # Every leaf has the batch and the device, so the TensorDict needs no checks.
-        return TensorDict._new_unsafe(nodes[()], batch_size=self._batch, device=_device(device))
+def state_layout(fields, num_envs):
+    """The ``StateLayout`` of Cube/Scene State ``fields``: ``{key: (per-row shape, dtype)}``."""
+    return StateLayout([(key, tuple(shape), dtype) for key, (shape, dtype) in fields.items()], num_envs)
 
 
 def physics_model(env):
@@ -207,7 +166,7 @@ class OGBManipulationBatchAdapter:
         self.fields, self.nq = self.lanes.fields, self.lanes.nq
         self._order = tuple(self.fields)
         self._views = {key[1]: self.b.bind(_BATCH_NAMES[key[1]]) for key in self._order if key[0] == "physics"}
-        self._snapshot = Snapshot(self.fields, num_envs)
+        self._layout = state_layout(self.fields, num_envs)
         self._all = np.arange(num_envs)
         self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"})
         self._expanded = {}
@@ -310,15 +269,11 @@ class OGBManipulationBatchAdapter:
     # State.
 
     def get_state(self):
-        state = self._host_state()
-        return state if self.device.type == "cpu" else to_device(state, self.device)
-
-    def _host_state(self):
         self._check_open()
         columns = dict(self._columns)
         for name, value in self._views.items():
             columns["physics", name] = (value != 0) if name == "eq_active" else value
-        return self._snapshot.build(columns, _CPU)
+        return self._layout.export(columns, self.device)
 
     def render_columns(self):
         from .render_state import projected_keys
@@ -397,11 +352,14 @@ class OGBManipulationBatchAdapter:
         if len(ids):
             self._advance(actions if active is None else actions[ids], ids)
             self._stale = True
-        result = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
+        result = build_tensordict(
+            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}, [self.num_envs], _CPU
+        )
+        if self.device.type != "cpu":
+            result = to_device(result, self.device)
         if capture_state:
-            result["state"] = self._host_state()
-        result = build_tensordict(result, [self.num_envs], _CPU)
-        return result if self.device.type == "cpu" else to_device(result, self.device)
+            result = build_tensordict({**result, "state": self.get_state()}, [self.num_envs], self.device)
+        return result
 
     def _advance(self, actions, ids):
         c = self._columns

@@ -8,6 +8,7 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.state_layout import StateLayout
 from ..._core.tensordicts import build_tensordict, to_device
 from ..._execution.backends import Rungs, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
@@ -500,14 +501,11 @@ class _HiddenTargetSemantics:
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
-        return build_tensordict(
-            {
-                "agent": {"position": agent.clone()},
-                "target": {"position": self._target_position[:n].clone()},
-            },
-            batch_size=[n],
-            device=self.device,
-        )
+        layouts = self.__dict__.setdefault("_state_layouts", {})
+        if n not in layouts:
+            leaves = [("agent/position", (2,), agent.dtype), ("target/position", (2,), agent.dtype)]
+            layouts[n] = StateLayout(leaves, n)
+        return layouts[n].export({"agent/position": agent, "target/position": self._target_position[:n]}, self.device)
 
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)

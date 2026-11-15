@@ -1,11 +1,11 @@
 """PushT batches with array physics, source resets, solver-cache checkpoints and rendering metadata."""
 
-import math
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
 from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
@@ -83,7 +83,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return self._columns if self._pool_owns else super()._static_columns()
 
     def _initialize_device(self, fields=None, geometry=None):
-        self._layout, self._buffers, self._width = None, {}, None
+        self._layout, self._width = None, None
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
@@ -169,91 +169,29 @@ class PushTBatchAdapter(PushTReplayAdapter):
         )
         return fields
 
-    def _state_layout(self, fields):
-        """Per dtype: the fields that only reset, restore or a Variation change, packed once, then the others.
+    def _state_layout(self, fields, width):
+        """The State layout at history ``width``; the fields that only reset, restore or a Variation change are static.
 
-        Also a function that nests ``{key: leaf}`` into the State tree, in export order.
+        Leaves follow the CPU owners' State order, then the solver cache.
         """
         if self._layout is None:
-            groups = {}
-            for key, value in fields.items():
-                groups.setdefault(value.dtype, ([], []))[_changes_with_step(key)].append(key)
-            # Keys in the order of the CPU owners' State, then the solver cache.
+            self._layout = {}
+        layout = self._layout.get(width)
+        if layout is None:
             rank = {key: index for index, key in enumerate(self._keys)}
-            tree = {}
-            for key in sorted(fields, key=lambda key: rank.get(key, len(rank))):
-                *parents, leaf = key.split("/")
-                node = tree
-                for part in parents:
-                    node = node.setdefault(part, {})
-                node[leaf] = key
-
-            def source(node):
-                items = (
-                    f"{name!r}: {source(child) if type(child) is dict else f'L[{child!r}]'}"
-                    for name, child in node.items()
-                )
-                return "N({" + ", ".join(items) + "})"
-
-            # Builds every TensorDict node from its finished children, without the per-key checks of nesting.
-            nest = eval("lambda L, N: " + source(tree))  # noqa: S307 - the source holds only State key literals
-            # Fixed fields of one dtype and per-lane shape are packed together and become leaves with one unbind.
-            parts = []
-            for fixed, moving in groups.values():
-                shaped = {}
-                for key in fixed:
-                    shaped.setdefault(tuple(fields[key].shape[1:]), []).append(key)
-                blocks = [
-                    (torch.cat([fields[key].reshape(-1) for key in keys]), shape, keys)
-                    for shape, keys in shaped.items()
-                ]
-                parts.append((blocks, moving))
-            self._layout = parts, nest
-            self._groups = {}
-        return self._layout
-
-    def _moving_groups(self, fields, part, moving):
-        """``(shape, keys)`` of the moving fields of one dtype, grouped by per-lane shape; cached per shapes."""
-        signature = (part, tuple(tuple(fields[key].shape[1:]) for key in moving))
-        groups = self._groups.get(signature)
-        if groups is None:
-            shaped = {}
-            for key, shape in zip(moving, signature[1], strict=True):
-                shaped.setdefault(shape, []).append(key)
-            groups = self._groups[signature] = [(shape, keys) for shape, keys in shaped.items()]
-        return groups
+            order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
+            layout = self._layout[width] = StateLayout(
+                [(key, tuple(fields[key].shape[1:]), fields[key].dtype) for key in order],
+                self.num_envs,
+                static=frozenset(key for key in order if not _changes_with_step(key)),
+            )
+            layout.load_static(fields)
+        return layout
 
     def get_state(self):
-        fields = self._state_fields(self._history_width())
-        parts, nest = self._state_layout(fields)
-        batch = self.num_envs
-        leaves = {}
-        for part, (blocks, moving) in enumerate(parts):
-            moved = self._moving_groups(fields, part, moving)
-            groups = [(shape, keys) for _, shape, keys in blocks] + moved
-            sources = [packed for packed, _, _ in blocks]
-            sources += [fields[key].reshape(-1) for _, keys in moved for key in keys]
-            sizes = [len(keys) * batch * math.prod(shape) for shape, keys in groups]
-            flat = torch.cat(sources, out=self._buffer(sources[0].dtype, sum(sizes)))
-            for (shape, keys), block in zip(groups, flat.split(sizes), strict=True):
-                leaves.update(zip(keys, block.view(len(keys), batch, *shape).unbind(0), strict=True))
-        size, device = torch.Size([batch]), self._state_device
-        return nest(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=size, device=device, nested=False))
-
-    def _buffer(self, dtype, numel):
-        """A flat State buffer: on CPU, one that no earlier State still uses, to avoid new pages per step."""
-        if self.device.type != "cpu" or not hasattr(torch._C, "_storage_Use_Count"):
-            return torch.empty(numel, dtype=dtype, device=self.device)
-        pool = self._buffers.setdefault(dtype, [])
-        for buffer in pool:
-            # The pool's tensor and the temporary storage object are the only users of a free buffer.
-            if buffer.numel() >= numel and torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2:
-                return buffer[:numel]
-        buffer = torch.empty(numel + numel // 4, dtype=dtype, device=self.device)
-        pool.append(buffer)
-        if len(pool) > 2:
-            pool.pop(0)
-        return buffer[:numel]
+        width = self._history_width()
+        fields = self._state_fields(width)
+        return self._state_layout(fields, width).export(fields, self._state_device)
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.
