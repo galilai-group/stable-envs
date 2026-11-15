@@ -12,8 +12,11 @@ def _with_time_axis(state):
     """A copy of ``state`` with a time axis of length 1, with one copy per storage that its leaves share.
 
     An exported State's leaves on an accelerator are views of a few buffers, so this copies a few buffers instead
-    of every leaf. A State whose leaves don't share storage, or view a larger buffer, is copied leaf by leaf.
+    of every leaf. A State on the CPU, or whose leaves don't share storage or view a larger buffer, is copied leaf
+    by leaf.
     """
+    if state.device.type == "cpu":
+        return stack_leaves([state])
     leaves = list(state.items(True, True))
     used: dict = {}
     for _, leaf in leaves:
