@@ -483,7 +483,7 @@ class _GymReferencePort(Env):
             group = _leaf(state, self.STATE.groups[where.group].path) if groups is None else groups[where.group]
             if group is None:
                 raise KeyError(f"{self.STATE.name} State has no group {where.group!r}")
-            out.append(group[..., where.start : where.stop])
+            out.append(group.narrow(-1, where.start, where.stop - where.start))
         return out
 
     def _check_finite(self, state, names=None, groups=None) -> None:
