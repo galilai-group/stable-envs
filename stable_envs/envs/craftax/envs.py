@@ -58,6 +58,12 @@ class CraftaxEnv(Env):
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
         jax_runtime.prepare()
+        device = self.resolve_device(device)
+        if torch.device(device).type == "cpu":
+            from .devices import use_host_devices
+
+            # Importing the kernel imports Craftax, which starts JAX, so the CPU device count is asked first.
+            use_host_devices()
         from .kernel import kernel
 
         if size not in (None, self.default_size) or supersample != 1:
@@ -75,7 +81,8 @@ class CraftaxEnv(Env):
         # XLA steps on CPU threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
         # A CUDA step leaves the torch threads alone.
         self.native_step_threads = self.device.type == "cpu"
-        self._keys = self._k.seed_keys(int(seed), self.B, self._device)
+        self._lanes = self._k.lanes(self.B, self._device)
+        self._keys = self._k.seed_keys(int(seed), self._lanes)
         self._state = None
         self._varied = False
         #: The device flag of the last step with device actions, read by the next step, reset or set_state.
@@ -94,9 +101,9 @@ class CraftaxEnv(Env):
         requested = device if device is not None else (get_config()["default_device"] or "auto")
         resolved = Env.resolve_device(device)
         if str(requested) == "auto" and resolved.startswith("cuda"):
-            from .kernel import has_gpu
+            from .devices import gpu_backend_installed, has_gpu
 
-            if not has_gpu():
+            if not gpu_backend_installed() or not has_gpu():
                 log(
                     "INFO",
                     "JAX has no GPU backend, so device='auto' chose the CPU for Craftax. "
@@ -165,13 +172,13 @@ class CraftaxEnv(Env):
 
     def get_state(self):
         """An independent snapshot: each leaf a ``(num_envs, width)`` view of blocks only it uses."""
-        return self._snapshot(self._k.export(self._live("get_state"), self._keys))
+        return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._lanes))
 
     def set_state(self, state):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
         self._check_pending()
         state = self._checked(state, "set_state", self.B)
-        restored = self._k.restore(state, self.device)
+        restored = self._k.restore(state, self.device, self._lanes)
         values = self._k.values(state)
         for path, value in values.items():
             space = self.variation_space._walk(path)
@@ -188,10 +195,10 @@ class CraftaxEnv(Env):
         self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
-            self._keys = self._k.seed_keys(int(seed), self.B, self._device)
+            self._keys = self._k.seed_keys(int(seed), self._lanes)
         values = self._lane_values()
         self._varied = self._k.varied(values)
-        self._state, self._keys, blocks = self._k.reset(self._keys, values, self._device, self._varied)
+        self._state, self._keys, blocks = self._k.reset(self._keys, values, self._lanes, self._varied)
         return self._snapshot(self._k.views(blocks))
 
     def _actions(self, actions):
@@ -238,10 +245,10 @@ class CraftaxEnv(Env):
         self._check_pending()
         state = self._live("step")
         a, deferred = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active, self._device, snapshot, frame, self._varied)
+        out = self._k.step(self._keys, state, a, active, self._lanes, snapshot, frame, self._varied)
         # The call donated the old buffers, so the new ones are held before anything else can raise.
         self._state, self._keys = out[0], out[1]
-        reward, done, observation, views, frames, invalid = self._k.outputs(out)
+        reward, done, observation, views, frames, invalid = self._k.outputs(out, self._lanes)
         self._defer(invalid, deferred)
         result = {
             "reward": reward,
@@ -294,7 +301,7 @@ class CraftaxEnv(Env):
             )
         require_contiguous_out(f"{name}.render", out)
         if state is None:
-            frames = self._k.render(self._live("render"))
+            frames = self._k.render(self._live("render"), self._lanes)
         else:
             frames = self._k.render_state(self._checked(state, "render"), self.device)
         if variation is not None or style is not None:
@@ -308,7 +315,7 @@ class CraftaxEnv(Env):
         return out
 
     def _render_live(self):
-        return self._k.render(self._live("render"))
+        return self._k.render(self._live("render"), self._lanes)
 
     def _close(self):
         self._state = None

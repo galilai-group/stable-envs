@@ -1,6 +1,7 @@
 """The upstream Craftax simulator, vmapped over lanes and jitted, with state conversion to and from torch.
 
-Arrays move between JAX and torch through DLPack, so they stay on their device.
+Arrays move between JAX and torch through DLPack, so they stay on their device. On the CPU, the lanes
+are split over XLA host devices, because one XLA:CPU program uses only a few cores.
 """
 
 from __future__ import annotations
@@ -40,6 +41,60 @@ def texture_lock(classic: bool):
     with handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         yield
+
+
+#: The fewest lanes that one XLA host device steps, per game. A split adds a fixed cost per device and per call
+#: (placing the inputs, launching the program, joining the outputs), so a device needs this much stepping to
+#: pay for it. docs/environments/craftax.md (Simulation) says how the values were measured.
+MIN_LANES_PER_HOST_DEVICE = {"classic": 1, "craftax": 1}
+
+
+@dataclass(frozen=True)
+class Lanes:
+    """Where the lanes of one env live: ``count`` lanes, padded to ``rows``, split evenly over ``sharding``.
+
+    Without a sharding, the rows are the lanes and they live on ``device``. Outputs that go to torch are
+    gathered on ``device`` and the padding rows are dropped.
+    """
+
+    count: int
+    rows: int
+    device: jax.Device
+    sharding: jax.sharding.Sharding | None
+
+    def put(self, x):
+        """Place ``count`` rows (a torch tensor, a host array, or a pytree of them) on the lanes' devices.
+
+        Padding rows copy the first row. A torch tensor on ``device`` crosses through DLPack.
+        """
+        return jax.tree.map(self._put, x)
+
+    def _put(self, a):
+        if self.sharding is None:
+            return jnp.from_dlpack(a) if torch.is_tensor(a) else jax.device_put(a, self.device)
+        a = np.asarray(a)
+        if self.rows != self.count:
+            a = np.concatenate([a, np.repeat(a[:1], self.rows - self.count, 0)])
+        return jax.device_put(a, self.sharding)
+
+    def torch(self, x):
+        """Lane-major outputs (or a pytree of them, with None kept) as torch tensors of ``count`` rows.
+
+        Split outputs are joined on the host in one copy, without the padding rows; the shards are in lane order.
+        """
+        return jax.tree.map(self._torch, x)
+
+    def _torch(self, a):
+        if self.sharding is None:
+            return torch.from_dlpack(a)
+        per = self.rows // self.parts
+        shards = [torch.from_dlpack(a.addressable_data(i)) for i in range(self.parts)]
+        shards[-1] = shards[-1][: self.count - per * (self.parts - 1)]
+        return torch.cat(shards)
+
+    @property
+    def parts(self) -> int:
+        return 1 if self.sharding is None else len(self.sharding.device_set)
 
 
 @dataclass(frozen=True)
@@ -194,7 +249,8 @@ class Kernel:
 
             state, keys = jax.tree.map(keep, (new[0], new[1]), (state, keys))
             obs = None if new[4] is None else keep(new[4], jnp.zeros_like(new[4]))
-            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, invalid
+            # The flag is repeated per lane, so every output has the lane axis first.
+            return state, keys, jnp.where(live, new[2], 0), new[3] & live, obs, jnp.broadcast_to(invalid, live.shape)
 
         # Upstream's pixel observation, scaled to uint8 as stable-worldmodel scales it on the host. The
         # barrier keeps XLA from folding the division into the scaling, which would round differently.
@@ -208,19 +264,29 @@ class Kernel:
                 out = advance(keys, state, actions, active, varied)
                 return (*out, pack(out[0], out[1]) if snapshot else None, frames(out[0][0]) if frame else None)
 
-            # The live lanes are donated: each call writes the next state over the last one.
-            return jax.jit(run, donate_argnums=(0, 1), static_argnames="varied")
+            return run
 
         def render_blocks(blocks):
             return frames(unpack(blocks)[0][0])
 
-        self._reset = jax.jit(reset_all, donate_argnums=0, static_argnames="varied")
-        self._programs = {(s, f): program(s, f) for s in (False, True) for f in (False, True)}
-        self._pack = jax.jit(pack)
-        self._unpack = jax.jit(unpack)
-        self._frames = jax.jit(frames)
-        self._render_blocks = jax.jit(render_blocks)
+        #: Each function and its donated arguments. A name that ends in ``varied`` steps with the parameter
+        #: values in the state when ``varied`` is true, and with the defaults otherwise. The step and the
+        #: reset donate the live lanes: each call writes the next state over the last one.
+        self._functions = {
+            "pack": (pack, ()),
+            "unpack": (unpack, ()),
+            "frames": (frames, ()),
+            "render_blocks": (render_blocks, ()),
+        }
+        for varied in (False, True):
+            self._functions[("reset", varied)] = (functools.partial(reset_all, varied=varied), (0,))
+            for s in (False, True):
+                for f in (False, True):
+                    run = functools.partial(program(s, f), varied=varied)
+                    self._functions[("step", s, f, varied)] = (run, (0, 1))
+        self._jitted: dict = {}
         self._everyone: dict = {}
+        self.min_lanes = MIN_LANES_PER_HOST_DEVICE["classic" if classic else "craftax"]
         one = jax.tree.map(lambda x: jax.ShapeDtypeStruct((1, *x.shape), x.dtype), engine)
         #: The ``(H, W, 3)`` shape of one frame.
         self.frame_shape = tuple(jax.eval_shape(frames, one).shape[1:])
@@ -236,20 +302,45 @@ class Kernel:
                 "device='cuda' needs a CUDA build of JAX: pip install 'stable-envs[craftax-gpu]'"
             ) from e
 
+    def _jit(self, name, lanes: Lanes):
+        """The jitted function ``name``; on split lanes, every output keeps the lanes split as the inputs are."""
+        key = (name, lanes.sharding)
+        fn = self._jitted.get(key)
+        if fn is None:
+            function, donate = self._functions[name]
+            split = {} if lanes.sharding is None else {"out_shardings": lanes.sharding}
+            fn = self._jitted[key] = jax.jit(function, donate_argnums=donate, **split)
+        return fn
+
+    def lanes(self, count: int, device) -> Lanes:
+        """The placement of ``count`` lanes on ``device``.
+
+        CPU lanes are split evenly over the host devices, with at least ``min_lanes`` lanes on each device.
+        """
+        devices = [device, *(d for d in jax.devices("cpu") if d != device)] if device.platform == "cpu" else [device]
+        parts = max(1, min(len(devices), count // self.min_lanes))
+        per = -(-count // parts)
+        used = -(-count // per)
+        if used == 1:
+            return Lanes(count, count, device, None)
+        mesh = jax.sharding.Mesh(np.array(devices[:used]), ("lanes",))
+        return Lanes(count, used * per, device, jax.sharding.NamedSharding(mesh, jax.sharding.PartitionSpec("lanes")))
+
     @staticmethod
-    def seed_keys(seed: int, num_envs: int, device):
+    def seed_keys(seed: int, lanes: Lanes):
         """The keys ``PRNGKey(seed + i)``; threefry keys of seeds in ``[0, 2**31)`` are ``[0, seed + i]``."""
+        num_envs = lanes.count
         if 0 <= seed and seed + num_envs <= 2**31 and jax.config.jax_default_prng_impl == "threefry2x32":
             keys = np.zeros((num_envs, 2), np.uint32)
             keys[:, 1] = np.arange(seed, seed + num_envs, dtype=np.uint32)
-            return jax.device_put(keys, device)
-        with jax.default_device(device):
-            keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
-        return jax.device_put(keys, device)
+        else:
+            with jax.default_device(lanes.device):
+                keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
+        return lanes.put(np.asarray(keys))
 
-    def views(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:
-        """``(lanes, width)`` views of each leaf in freshly written blocks, which nothing else holds."""
-        return self.split([torch.from_dlpack(b) for b in blocks])
+    def views(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
+        """``(lanes, width)`` views of each leaf in freshly written torch blocks, which nothing else holds."""
+        return self.split(list(blocks))
 
     def split(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
         """``(..., width)`` views of each leaf in torch blocks of shape ``(..., columns)``."""
@@ -266,27 +357,24 @@ class Kernel:
             out.append(base)
         return out
 
-    def defaults(self, num_envs: int) -> dict[str, np.ndarray]:
-        """The default parameter values of ``num_envs`` lanes."""
-        return {path: np.full(num_envs, default, dtype) for path, _, dtype, default in self.params}
-
     def varied(self, values: dict[str, np.ndarray]) -> bool:
         """Whether any lane has a parameter value other than the default."""
         return any(bool((np.asarray(values[path]) != default).any()) for path, _, _, default in self.params)
 
-    def reset(self, keys, values: dict[str, np.ndarray], device, varied: bool):
+    def reset(self, keys, values: dict[str, np.ndarray], lanes: Lanes, varied: bool):
         """Reset every lane with its parameter values and donate ``keys``.
 
-        The state keeps the values for later steps. Returns the state, the keys and the packed state.
+        The state keeps the values for later steps. Returns the state, the keys and the packed state in torch.
         """
-        values = {path: jax.device_put(np.asarray(values[path], dtype), device) for path, _, dtype, _ in self.params}
-        return self._reset(keys, values, varied=varied)
+        values = lanes.put({path: np.asarray(values[path], dtype) for path, _, dtype, _ in self.params})
+        state, keys, blocks = self._jit(("reset", varied), lanes)(keys, values)
+        return state, keys, lanes.torch(blocks)
 
-    def everyone(self, num_envs: int, device):
-        """An all-true lane mask, made once per batch size and device."""
-        mask = self._everyone.get((num_envs, device))
+    def everyone(self, lanes: Lanes):
+        """An all-true lane mask, made once per placement."""
+        mask = self._everyone.get(lanes)
         if mask is None:
-            mask = self._everyone[(num_envs, device)] = jax.device_put(np.ones(num_envs, np.bool_), device)
+            mask = self._everyone[lanes] = lanes.put(np.ones(lanes.count, np.bool_))
         return mask
 
     def step(
@@ -295,7 +383,7 @@ class Kernel:
         state,
         actions: torch.Tensor,
         active: torch.Tensor | None,
-        device,
+        lanes: Lanes,
         snapshot: bool = True,
         frame: bool = False,
         varied: bool = False,
@@ -307,31 +395,30 @@ class Kernel:
         new frames. Every lane keeps its state when any action is outside the game's range. ``varied``
         steps with the parameter values in the state instead of the defaults.
         """
-        actions = jnp.from_dlpack(actions.to(torch.int32).contiguous())
+        actions = actions.to(torch.int32).contiguous()
         if active is None:
-            active = self.everyone(actions.shape[0], device)
+            actions, active = lanes.put(actions), self.everyone(lanes)
         else:
-            active = jnp.from_dlpack(active.to(torch.bool).contiguous())
-        return self._programs[(snapshot, frame)](keys, state, actions, active, varied=varied)
+            actions, active = lanes.put((actions, active.to(torch.bool).contiguous()))
+        return self._jit(("step", snapshot, frame, varied), lanes)(keys, state, actions, active)
 
-    def outputs(self, out):
+    def outputs(self, out, lanes: Lanes):
         """The reward, ends, observation, packed-state views and frames of a step in torch, and its range flag.
 
         The flag stays on the device.
         """
         _, _, reward, done, obs, invalid, blocks, frames = out
-        obs = None if obs is None else torch.from_dlpack(obs)
+        reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
         views = None if blocks is None else self.views(blocks)
-        frames = None if frames is None else torch.from_dlpack(frames)
-        return torch.from_dlpack(reward), torch.from_dlpack(done), obs, views, frames, invalid
+        return reward, done, obs, views, frames, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:
-        """Read a device flag with an explicit transfer, which waits only for the call that wrote it."""
-        return bool(jax.device_get(flag))
+        """Read a per-lane device flag with an explicit transfer, which waits only for the call that wrote it."""
+        return bool(np.any(jax.device_get(flag)))
 
-    def export(self, state, keys) -> dict[tuple[str, ...], torch.Tensor]:
-        return self.views(self._pack(state, keys))
+    def export(self, state, keys, lanes: Lanes) -> dict[tuple[str, ...], torch.Tensor]:
+        return self.views(lanes.torch(self._jit("pack", lanes)(state, keys)))
 
     def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
         """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
@@ -350,9 +437,6 @@ class Kernel:
             raise ValueError("State contains non-finite values")
         return blocks
 
-    def _blocks(self, td, device: torch.device):
-        return tuple(jnp.from_dlpack(b) for b in self._torch_blocks(td, device))
-
     def values(self, td) -> dict[str, np.ndarray]:
         """The per-lane parameter values that a checked state TensorDict holds, copied to the host at once."""
         n = int(td.batch_size[0])
@@ -368,12 +452,12 @@ class Kernel:
             for i, (path, _, dtype, _) in enumerate(self.params)
         }
 
-    def restore(self, td, device: torch.device):
+    def restore(self, td, device: torch.device, lanes: Lanes):
         """The stacked upstream state and wrapper keys held in a state TensorDict, in buffers of their own."""
-        return self._unpack(self._blocks(td, device))
+        return self._jit("unpack", lanes)(lanes.put(tuple(self._torch_blocks(td, device))))
 
-    def render(self, state) -> torch.Tensor:
-        return torch.from_dlpack(self._frames(state[0]))
+    def render(self, state, lanes: Lanes) -> torch.Tensor:
+        return lanes.torch(self._jit("frames", lanes)(state[0]))
 
     def render_state(self, td, device: torch.device) -> torch.Tensor:
         """Frames of a state TensorDict; batches are padded to a power of two, so few sizes compile."""
@@ -384,16 +468,9 @@ class Kernel:
         rows = 1 << (n - 1).bit_length()
         if rows != n:
             blocks = [torch.cat([b, b[:1].expand(rows - n, -1)]) for b in blocks]
-        frames = torch.from_dlpack(self._render_blocks(tuple(jnp.from_dlpack(b.contiguous()) for b in blocks)))
+        lanes = self.lanes(rows, self.device(device))
+        frames = lanes.torch(self._jit("render_blocks", lanes)(lanes.put(tuple(b.contiguous() for b in blocks))))
         return frames if rows == n else frames[:n]
-
-
-def has_gpu() -> bool:
-    """Whether JAX has a GPU backend."""
-    try:
-        return bool(jax.devices("gpu"))
-    except RuntimeError:
-        return False
 
 
 @functools.cache
