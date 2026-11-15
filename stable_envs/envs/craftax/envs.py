@@ -69,8 +69,8 @@ class CraftaxEnv(Env):
         self._k = kernel(self.reference_id)
         self._simulator = _ParamRows(self._k.physics_layout)
         super().__init__(num_envs, size, supersample, device, backend, seed)
-        self._configure_physics()
-        self._default_physics = self._physics_installed
+        # Installs the default parameter rows, which each lane reads at reset.
+        self.set_variation()
         self._device = self._k.device(self.device)
         # XLA steps on CPU threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
         # A CUDA step leaves the torch threads alone.
