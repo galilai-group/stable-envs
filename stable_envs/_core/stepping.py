@@ -327,10 +327,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     host_steps = pipeline is None and env.device.type != "cpu" and getattr(env, "_steps_on_host", bool)()
     host = host_steps or _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
-    step_once = env._step
     if host_steps:
         acts = acts.detach().cpu() if torch.is_tensor(acts) else acts
-        step_once = advance = env._host_advance
     # One action needs one all-true flag column per output; a single allocation serves them all.
     single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
     flags = None
@@ -369,10 +367,16 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                     result = pipeline.receive_step(host=True) if host else pipeline.receive_step()
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
+            elif host_steps:
+                wanted = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
+                result = env._host_advance(
+                    acts[:, t] if sequence else acts, active=None if all_active else active, capture_state=wanted
+                )
+                live_state, live_frame = result.get("state", None), None
             elif all_active:
                 # A single step that needs its State exports it with the outputs, in one call.
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
-                result = (step_once if captured else advance)(acts[:, t] if sequence else acts)
+                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.

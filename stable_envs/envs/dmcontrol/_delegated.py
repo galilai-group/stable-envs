@@ -179,6 +179,17 @@ class DelegatedSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
 
+    def _steps_on_host(self) -> bool:
+        """Whether a step of several actions runs on the host simulator and moves its result once."""
+        return self.device.type != "cpu" and hasattr(self._simulator, "step_host")
+
+    def _host_advance(self, actions, *, active=None, capture_state=True):
+        self._check_open("step")
+        return self._simulator.step_host(actions, active=active, capture_state=capture_state)
+
+    def _end_host_steps(self):
+        pass
+
     def _host_step(self, actions, move):
         """One step on a host simulator: ``move`` puts its arrays on the device in one copy."""
         step = getattr(self._simulator, "step_leaves", None)

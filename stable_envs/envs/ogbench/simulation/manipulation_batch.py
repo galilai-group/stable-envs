@@ -352,6 +352,12 @@ class OGBManipulationBatchAdapter:
         return actions, active
 
     def step(self, actions, *, active=None, capture_state=True):
+        result = self.step_host(actions, active=active, capture_state=capture_state)
+        # The State and the outputs move to the device in one copy.
+        return result if self.device.type == "cpu" else to_device(result, self.device)
+
+    def step_host(self, actions, *, active=None, capture_state=True):
+        """``step`` with the result on the CPU, for a caller that moves several steps to the device at once."""
         self._check_open()
         actions, active = self.check_step(actions, active)
         ids = self._all if active is None else np.flatnonzero(active)
@@ -361,9 +367,7 @@ class OGBManipulationBatchAdapter:
         result = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
         if capture_state:
             result["state"] = self._state_on(_CPU)
-        result = build_tensordict(result, [self.num_envs], _CPU)
-        # The State and the outputs move to the device in one copy.
-        return result if self.device.type == "cpu" else to_device(result, self.device)
+        return build_tensordict(result, [self.num_envs], _CPU)
 
     def step_leaves(self, actions):
         """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
