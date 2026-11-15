@@ -28,6 +28,15 @@ _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
 
+def _builder(model, device):
+    """Builds an adapter of one backend for the calibration; it holds the model and device, not the env."""
+
+    def build(backend: str, n: int):
+        return (MSHumanWarpAdapter if backend == "mjwarp" else MSHumanBatchAdapter)(n, device, model)
+
+    return build
+
+
 def _renderer(model, size: int):
     if size not in _RENDERERS:
         entry = (mujoco_renderer(model, height=size, width=size), mujoco.MjData(model))
@@ -70,10 +79,7 @@ class MSHumanLocomotion(Env):
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
 
-        def build(backend: str, n: int):
-            return (MSHumanWarpAdapter if backend == "mjwarp" else MSHumanBatchAdapter)(n, self.device, self._model)
-
-        measure = measure_adapter(build, _NU, self.device, 0.0, 1.0)
+        measure = measure_adapter(_builder(self._model, self.device), _NU, self.device, 0.0, 1.0)
         path, requested = "mshuman-sim/locomotion", simulation_backend
         self.simulation_backend = mujoco_backend(
             path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure
