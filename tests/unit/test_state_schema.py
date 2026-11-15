@@ -165,6 +165,27 @@ def test_views_share_memory_and_writes_change_the_state():
     assert get_field(state, "t/target").eq(0.5).all()
 
 
+def test_a_kept_field_takes_a_value_of_a_new_width():
+    schema = _schema()
+    values = _values(3)
+    state = schema.fold(values, [3])
+    wider = torch.cat((values["history/actions"], torch.zeros(3, 2, 2, dtype=torch.float64)), 1)
+    set_field(state, "history/actions", wider)
+    _same(get_field(state, "history/actions"), wider)
+    wider[0, 0, 0] = 99.0
+    assert float(get_field(state, "history/actions")[0, 0, 0]) != 99.0
+    schema.set(state, "history.actions", 0.0)
+    assert get_field(state, "history/actions").shape == (3, 6, 2) and not get_field(state, "history/actions").any()
+    narrow = torch.ones(3, 1, 2, dtype=torch.float32)
+    schema.set(state, "history/actions", narrow)
+    _same(get_field(state, "history/actions"), narrow.double())
+    schema.validate(state)
+    with pytest.raises(ValueError, match="history/actions"):
+        set_field(state, "history/actions", torch.zeros(2, 4, 2, dtype=torch.float64))
+    with pytest.raises(TypeError, match="history/actions"):
+        set_field(state, "history/actions", torch.zeros(3, 4, 2, dtype=torch.complex128))
+
+
 def test_batch_indexing_slicing_stacking_and_concatenation_keep_fields_readable():
     schema = _schema()
     values = _values(6)
@@ -300,7 +321,7 @@ def test_raw_field_access_finds_the_indexing_forms(tmp_path):
         "\n".join(
             [
                 's["current", "x"]',
-                "s['current/x']",
+                "row['current/x']",
                 's.get(("current", "x"))',
                 's.select("current")',
                 'get_field(s, "current/x")',
@@ -309,4 +330,4 @@ def test_raw_field_access_finds_the_indexing_forms(tmp_path):
             ]
         )
     )
-    assert [line.rsplit(":", 1)[1] for line in raw_field_access([source], ["current"])] == ["1", "2", "3", "4"]
+    assert [line.rsplit(":", 1)[1] for line in raw_field_access([source], ["current"])] == ["1", "3", "4"]
