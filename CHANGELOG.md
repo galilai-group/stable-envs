@@ -17,7 +17,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
-- CartPole has a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
+- CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 - On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and PushT moves the outputs of a step to the device in one copy and the state in one more copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
 - A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.

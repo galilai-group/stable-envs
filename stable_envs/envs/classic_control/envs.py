@@ -851,6 +851,8 @@ class MountainCar(ClassicControlSemantics, _Classic):
     the flag cannot be part of the background because it overlaps the car.
     """
 
+    simulation_backends = ("gym", "numpy", "numba", "torch")
+
     name = "mountain-car"
     state_dim = 1
     state_names = ("position",)
@@ -1027,6 +1029,8 @@ class MountainCar(ClassicControlSemantics, _Classic):
 @register
 class MountainCarContinuous(MountainCar):
     """Continuous MountainCar geometry, with the flag at 0.45 instead of 0.5."""
+
+    simulation_backends = ("gym", "numpy", "torch")
 
     name = "mountain-car-continuous"
     reference_id = "MountainCarContinuous-v0"
