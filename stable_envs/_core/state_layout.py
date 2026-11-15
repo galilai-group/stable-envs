@@ -175,14 +175,7 @@ class StateLayout:
                         for i, leaf in zip(indices, rows, strict=True):
                             leaves[i] = leaf
                 continue
-            for (indices, shape), block in zip(runs, flat.split_with_sizes(sizes), strict=True):
-                if shape is None:
-                    leaves[indices[0]] = block.view(widths[indices[0]])
-                elif len(indices) == 1:
-                    leaves[indices[0]] = block.view(shape)
-                else:
-                    for i, leaf in zip(indices, block.view(len(indices), *shape).unbind(0), strict=True):
-                        leaves[i] = leaf
+            self._split(flat, runs, sizes, widths, leaves)
         batch, where = self._batch, _recorded(flats, device)
         return self._build(leaves, lambda node: new_node(node, batch, where))
 
@@ -200,6 +193,33 @@ class StateLayout:
         if len(pool) > 2:
             pool.pop(0)
         return buffer[:numel]
+
+    def views(self, flats: Sequence[torch.Tensor], device) -> TensorDict:
+        """A State whose leaves are views of ``flats``, without a copy.
+
+        ``flats`` holds one flat buffer per dtype, in the order of ``groups``, laid out as ``export`` lays out its
+        buffers: the leaves of each run in turn, each leaf as its contiguous ``(num_envs, ...)`` block. Every leaf
+        must have a declared shape.
+        """
+        leaves: list = [None] * len(self.keys)
+        for (*_, runs), sizes, flat in zip(self.groups, self._sizes, flats, strict=True):
+            if sizes is None:
+                raise ValueError("StateLayout.views needs a declared shape for every leaf")
+            self._split(flat, runs, sizes, None, leaves)
+        batch, where = self._batch, _recorded(flats, torch.device(device))
+        return self._build(leaves, lambda node: TensorDict._new_unsafe(node, batch_size=batch, device=where))
+
+    @staticmethod
+    def _split(flat: torch.Tensor, runs, sizes, widths, leaves: list) -> None:
+        """Fill ``leaves`` with views of ``flat``, one block per run."""
+        for (indices, shape), block in zip(runs, flat.split_with_sizes(sizes), strict=True):
+            if shape is None:
+                leaves[indices[0]] = block.view(widths[indices[0]])
+            elif len(indices) == 1:
+                leaves[indices[0]] = block.view(shape)
+            else:
+                for i, leaf in zip(indices, block.view(len(indices), *shape).unbind(0), strict=True):
+                    leaves[i] = leaf
 
     def _to_device(self, flats: list[torch.Tensor], device: torch.device) -> list[torch.Tensor]:
         """Move host buffers to ``device`` through one pinned buffer and one asynchronous copy."""

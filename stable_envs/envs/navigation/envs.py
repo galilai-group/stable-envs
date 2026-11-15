@@ -1121,6 +1121,14 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             return self._jax_kernel.advance(rows, action, sty.values)
         return super()._advance_rows(rows, action, sty)
 
+    @torch.no_grad()
+    def _step(self, action, *, active=None):
+        if self.simulation_backend != "jax" or getattr(self._observation, "__func__", None) is not TwoRoom._observation:
+            return super()._step(action, active=active)
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        return self._jax_kernel.step(self._render_state, act, active, self._style.values, self._target_position)
+
     def _observation(self, agent, target):
         n = int(agent.shape[0])
         axis = (self._style["wall.axis"][:n] > 0.5).reshape(n, 1)
