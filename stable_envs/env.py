@@ -992,9 +992,12 @@ class Env:
         from ._core.reset_tree import PathSeeder
 
         lanes = []
-        # Seeding replaces the generators that the lane reads, so one tree serves every lane.
-        tree = self.reset_tree_factory()
-        seeder = PathSeeder(tree, [leaf.path for leaf in self.reset_leaves])
+        # Seeding replaces the generators that the lane reads, so one tree serves every lane and every reset.
+        seeder = self.__dict__.get("_reset_seeder")
+        if seeder is None:
+            seeder = PathSeeder(self.reset_tree_factory(), [leaf.path for leaf in self.reset_leaves])
+            self.__dict__["_reset_seeder"] = seeder
+        tree = seeder.tree
         for lane in range(self.B):
             seeder.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))

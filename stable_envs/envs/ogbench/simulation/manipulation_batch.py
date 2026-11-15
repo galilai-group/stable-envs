@@ -270,10 +270,13 @@ class OGBManipulationBatchAdapter:
 
     def get_state(self):
         self._check_open()
+        return self._state_on(self.device)
+
+    def _state_on(self, device):
         columns = dict(self._columns)
         for name, value in self._views.items():
             columns["physics", name] = (value != 0) if name == "eq_active" else value
-        return self._layout.export(columns, self.device)
+        return self._layout.export(columns, device)
 
     def render_columns(self):
         from .render_state import projected_keys
@@ -352,14 +355,12 @@ class OGBManipulationBatchAdapter:
         if len(ids):
             self._advance(actions if active is None else actions[ids], ids)
             self._stale = True
-        result = build_tensordict(
-            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}, [self.num_envs], _CPU
-        )
-        if self.device.type != "cpu":
-            result = to_device(result, self.device)
+        result = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
         if capture_state:
-            result = build_tensordict({**result, "state": self.get_state()}, [self.num_envs], self.device)
-        return result
+            result["state"] = self._state_on(_CPU)
+        result = build_tensordict(result, [self.num_envs], _CPU)
+        # The State and the outputs move to the device in one copy.
+        return result if self.device.type == "cpu" else to_device(result, self.device)
 
     def _advance(self, actions, ids):
         c = self._columns

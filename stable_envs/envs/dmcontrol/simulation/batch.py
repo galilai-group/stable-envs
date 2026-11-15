@@ -26,6 +26,8 @@ THREAD_WORK = 1e-4
 #: Fewest lanes per batch thread: each thread that a call waits for can be the late one.
 THREAD_LANES = 2
 
+_CPU = torch.device("cpu")
+
 
 def tolerance(x, *args, **kwargs):
     """dm_control's ``rewards.tolerance`` on lane arrays."""
@@ -207,6 +209,9 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def get_state(self):
         self.lanes._check_open()
+        return self._state_on(self.device)
+
+    def _state_on(self, device):
         live = {
             **self._live,
             "time": self._live["time"][:, None],
@@ -223,7 +228,7 @@ class DMCBatchAdapter(SimulatorAdapter):
                 self.num_envs,
             )
         # The export copies every value: later steps and resets cannot change the returned snapshot.
-        return self._layout.export(values, self.device)
+        return self._layout.export(values, device)
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -265,12 +270,11 @@ class DMCBatchAdapter(SimulatorAdapter):
         if (info := self.task.info()) is not None:
             out["success"] = torch.from_numpy(np.array(info[0], np.float64))
             out["info"] = {k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}
-        out = build_tensordict(out, [self.num_envs], "cpu")
-        if self.device.type != "cpu":
-            out = to_device(out, self.device)
         if capture_state:
-            out = build_tensordict({"state": self.get_state(), **out}, [self.num_envs], self.device)
-        return out
+            out = {"state": self._state_on(_CPU), **out}
+        out = build_tensordict(out, [self.num_envs], _CPU)
+        # The State and the outputs move to the device in one copy.
+        return out if self.device.type == "cpu" else to_device(out, self.device)
 
     def close(self):
         self.lanes.close()

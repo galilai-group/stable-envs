@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import nested_builder, new_node
+from .tensordicts import nested_builder, new_node, to_device
 
 #: A leaf key: a tuple of names, or names joined by ``/``. ``export`` reads values under the key as declared.
 Key = tuple[str, ...] | str
@@ -31,6 +31,7 @@ def _path(key: Key) -> tuple[str, ...]:
 #: and reuse costs them more than it saves: the reused buffer needs a ``reshape`` per leaf and tensor views instead
 #: of NumPy slices (measured on a PushT State of 239 leaves and a DMC Reacher State of 14 leaves).
 _FRESH_PAGES = 128 * 1024
+_CPU = torch.device("cpu")
 #: Byte alignment of each dtype's buffer inside the pinned transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
 
@@ -132,6 +133,11 @@ class StateLayout:
         Values already on ``device`` are packed there.
         """
         device = torch.device(device)
+        fixed = all(sizes is not None for sizes in self._sizes)
+        if device.type == "cuda" and fixed and _on_host(values.values()) and _on_host(self._static.values()):
+            # Packed on the host, then one copy whose split into leaves is one call per dtype; a leaf whose width
+            # changes would need a new transfer plan for each width.
+            return to_device(self.export(values, _CPU), device)
         flats, layout = [], []
         for (dtype, kind, fixed, _, runs), keys, sizes in zip(
             self.groups, self._moving_keys, self._sizes, strict=True
@@ -236,6 +242,10 @@ class StateLayout:
                 )
             out[key] = value
         return out
+
+
+def _on_host(values) -> bool:
+    return not any(torch.is_tensor(v) and v.device.type != "cpu" for v in values)
 
 
 def _free(buffer: torch.Tensor) -> bool:
