@@ -222,12 +222,16 @@ class DMCBatchAdapter(SimulatorAdapter):
         return self.lanes.check_step(actions, active)
 
     def step(self, actions, *, active=None, capture_state=True):
+        out = self.step_host(actions, active=active, capture_state=capture_state)
+        # The State and the outputs move to the device in one copy.
+        return out if self.device.type == "cpu" else to_device(out, self.device)
+
+    def step_host(self, actions, *, active=None, capture_state=True):
+        """``step`` with the result on the CPU, for a caller that moves several steps to the device at once."""
         out = leaf_tree(self._advance(actions, active))
         if capture_state:
             out = {"state": self._state_on(_CPU), **out}
-        out = build_tensordict(out, [self.num_envs], _CPU)
-        # The State and the outputs move to the device in one copy.
-        return out if self.device.type == "cpu" else to_device(out, self.device)
+        return build_tensordict(out, [self.num_envs], _CPU)
 
     def step_leaves(self, actions):
         """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
