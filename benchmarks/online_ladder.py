@@ -656,8 +656,8 @@ def run_source_jax(args, name: str, render: bool, chunk: int = 1) -> dict:
         check_lanes = sorted({0, lanes // 2, lanes - 1})
         state, keys = src.reset(int(seeds[0]), lanes)
         frames = []
-        for t in range(length):
-            a = src.put(np.ascontiguousarray(actions[:lanes, t].reshape(lanes), np.int32))
+        for step in range(length):
+            a = src.put(np.ascontiguousarray(actions[:lanes, step].reshape(lanes), np.int32))
             state, keys, *_ = src.step(keys, state, a, False)
             frames.append(src.reference_frames(state)[check_lanes])
         frames = np.stack(frames, 1)
