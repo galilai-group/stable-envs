@@ -1055,8 +1055,10 @@ class Env:
     def describe(self) -> dict[str, Any]:
         """Return a JSON-friendly dict of the environment's specs and its comparison with the upstream library.
 
-        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``visual_fidelity``,
-        ``visual_note`` and ``reference_versions`` appear only when the class declares them.
+        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``simulation_backend`` and
+        ``execution_mode`` name the physics this instance selected; with ``simulation_backend="auto"`` they can
+        differ between machines. ``visual_fidelity``, ``visual_note`` and ``reference_versions`` appear only
+        when the class declares them.
         """
         d = {
             "class_name": type(self).__name__,
@@ -1074,6 +1076,8 @@ class Env:
             "variation_names": list(self.variation_names),
             "reference_id": self.reference_id,
             "variations": self.variation_space.names(),
+            "simulation_backend": getattr(self, "simulation_backend", None),
+            "execution_mode": getattr(self, "execution_mode", None),
         }
         if self.visual_fidelity:
             d["visual_fidelity"] = dict(self.visual_fidelity)
