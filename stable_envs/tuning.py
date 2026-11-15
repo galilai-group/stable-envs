@@ -352,8 +352,9 @@ def read_cache(device="cpu") -> tuple[dict, bool]:
     path = cache_path(device)
     if path is None:
         return {}, False
+    generation = _generation
     hit = _files.get(path)
-    if hit is not None and hit[0] == _generation:
+    if hit is not None and hit[0] == generation:
         return hit[2], hit[3]
     try:
         mtime = path.stat().st_mtime
@@ -372,7 +373,7 @@ def read_cache(device="cpu") -> tuple[dict, bool]:
             data = {}
         current = bool(data) and data.get("stamp") == stamp(_dev(device))
         _log("DEBUG", f"Read the tuning cache {path} (current: {current}).")
-    _files[path] = (_generation, mtime, data, current)
+    _files[path] = (generation, mtime, data, current)
     return data, current
 
 

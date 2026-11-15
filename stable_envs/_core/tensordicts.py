@@ -238,7 +238,8 @@ def _clone_packed(slots) -> bool:
     if len(spans) == len(slots) and shared:
         lo = min(start for start, _ in spans)
         hi = max(start + value.nbytes for start, value in spans)
-        if hi - lo <= 2 * sum(value.nbytes for _, value in spans):
+        aligned = all((start - lo) % value.element_size() == 0 for start, value in spans)
+        if aligned and hi - lo <= 2 * sum(value.nbytes for _, value in spans):
             whole = torch.empty(0, dtype=torch.uint8, device=first.device).set_(storage)
             copy = whole[lo:hi].clone().untyped_storage()
             # Leaves of one dtype, shape and stride at evenly spaced offsets come from one view and one unbind.
