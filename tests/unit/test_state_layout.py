@@ -68,3 +68,40 @@ def test_a_leaf_without_a_shape_takes_the_width_of_each_export():
         state = layout.export(values, "cpu")
         assert state["history", "actions"].shape == (2, width, 2)
         assert torch.equal(state["history", "actions"], torch.ones(2, width, 2, dtype=torch.float64))
+
+
+def _storages(state):
+    return {state[key].untyped_storage().data_ptr() for key in state.keys(True, True)}
+
+
+@pytest.mark.parametrize("num_envs", [2, 8192])
+def test_a_state_from_tensor_values_shares_no_storage_with_them(num_envs):
+    """Every dtype is copied, including a dtype with a single leaf, for small and for reused large buffers."""
+    leaves = [("a", (3,), torch.float32), ("b", (2,), torch.float32), ("flag", (1,), torch.bool)]
+    layout = StateLayout(leaves, num_envs)
+    values = {
+        "a": torch.rand(num_envs, 3),
+        "b": torch.rand(num_envs, 2),
+        "flag": torch.zeros(num_envs, 1, dtype=torch.bool),
+    }
+    sources = {value.untyped_storage().data_ptr() for value in values.values()}
+    for _ in range(3):
+        state = layout.export(values, "cpu")
+        assert not _storages(state) & sources
+        before = state.clone()
+        for value in values.values():
+            value.logical_not_() if value.dtype == torch.bool else value.add_(1)
+        assert (state == before).all()
+
+
+def test_a_large_buffer_in_shared_memory_is_not_reused():
+    """Another process may read a State moved to shared memory, though the use count doesn't show it."""
+    n = 1 << 15
+    layout = StateLayout([("x", (2,), torch.float32), ("y", (2,), torch.float32)], n)
+    values = {"x": torch.rand(n, 2), "y": torch.rand(n, 2)}
+    state = layout.export(values, "cpu")
+    state["x"].untyped_storage().share_memory_()
+    shared = state["x"].untyped_storage().data_ptr()
+    del state
+    for _ in range(3):
+        assert shared not in _storages(layout.export(values, "cpu"))

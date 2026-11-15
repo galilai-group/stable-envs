@@ -109,8 +109,12 @@ class StateLayout:
         """One new flat buffer: a NumPy array when every source is one, else a tensor."""
         if all(isinstance(v, np.ndarray) for v in sources):
             return np.concatenate([v.reshape(-1) for v in sources], dtype=kind)
+        tensors = [torch.as_tensor(v) for v in sources]
+        if len(tensors) == 1:
+            # Flattening one contiguous tensor returns a view of it, not a copy.
+            return tensors[0].clone(memory_format=torch.contiguous_format).view(-1)
         # One call flattens and concatenates the tensors.
-        return torch._C._nn.flatten_dense_tensors([torch.as_tensor(v) for v in sources])
+        return torch._C._nn.flatten_dense_tensors(tensors)
 
     @classmethod
     def of(cls, state: TensorDict) -> StateLayout:
@@ -129,7 +133,9 @@ class StateLayout:
         """
         device = torch.device(device)
         flats, layout = [], []
-        for (dtype, kind, fixed, _, runs), keys, sizes in zip(self.groups, self._moving_keys, self._sizes, strict=True):
+        for (dtype, kind, fixed, _, runs), keys, sizes in zip(
+            self.groups, self._moving_keys, self._sizes, strict=True
+        ):
             sources = [values[key] for key in keys]
             if fixed:
                 if dtype not in self._static:
@@ -182,12 +188,12 @@ class StateLayout:
 
     def _buffer(self, dtype: torch.dtype, numel: int) -> torch.Tensor:
         """A flat host buffer that no earlier State still uses: a large new buffer costs page faults on each export."""
-        if not hasattr(torch._C, "_storage_Use_Count"):
+        if not _REUSE:
             return torch.empty(numel, dtype=dtype)
         pool = self._buffers.setdefault(dtype, [])
         for buffer in pool:
-            # The pool's tensor and the temporary storage object are the only users of a free buffer.
-            if buffer.numel() >= numel and torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2:
+            # A buffer moved to shared memory may be read by another process, which the use count doesn't show.
+            if buffer.numel() >= numel and _free(buffer) and not buffer.untyped_storage().is_shared():
                 return buffer[:numel]
         buffer = torch.empty(numel + numel // 4, dtype=dtype)
         pool.append(buffer)
@@ -230,6 +236,29 @@ class StateLayout:
                 )
             out[key] = value
         return out
+
+
+def _free(buffer: torch.Tensor) -> bool:
+    """Whether no tensor but ``buffer`` uses its storage: the pool's tensor and the temporary storage object."""
+    return torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2
+
+
+def _reuse_works() -> bool:
+    """Whether this torch counts the users of a storage as ``_free`` expects: a held view counts, a dropped one not."""
+    if not hasattr(torch._C, "_storage_Use_Count"):
+        return False
+    try:
+        buffer = torch.empty(8)
+        view = buffer[:4]
+        held = not _free(buffer)
+        del view
+        return held and _free(buffer)
+    except Exception:  # noqa: BLE001 - any difference turns reuse off
+        return False
+
+
+#: Whether exports reuse free host buffers.
+_REUSE = _reuse_works()
 
 
 def _recorded(flats: Sequence, device: torch.device) -> torch.device:
