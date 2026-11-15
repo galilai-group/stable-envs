@@ -104,12 +104,12 @@ state = layout.export({"qpos": qpos, "task/target": target}, device)
 
 ### Folding state into groups
 
-A state with many small leaves costs one tensor and one TensorDict node for each leaf on each export, slice, copy and device move. To prevent this cost, declare a `StateSchema` from `stable_envs._core.state_schema`. The schema puts fields of one dtype into one group leaf of shape `(N, size)`. Each named field is a slice of its group. A field whose shape changes between states, such as an action history, stays a leaf of its own (a "kept" field, with group `None`). PushT uses a schema.
+A state with many small leaves costs one tensor and one TensorDict node for each leaf on each export, slice, copy and device move. To prevent this cost, declare a `StateSchema` from `stable_envs._core.state_schema`. The schema puts fields of one dtype into one group leaf of shape `(N, size)`. Each named field is a slice of its group. A field whose shape changes between states, such as an action history, stays a leaf of its own (a "kept" field, with group `None`). `STATE.set` replaces a kept field with a value of a new width when the value has as many dimensions as the field. PushT uses a schema.
 
 1. Declare each field once, in state order, with its name, per-environment shape, dtype and group. By convention, a group path ends in the dtype name.
 2. Keep the live state in the group buffers and write the kernels into them. Make the field views once, when you make the buffers.
 3. Read and write fields by name only: `STATE.get(state, name)` and `STATE.set(state, name, value)` in the family, and `snv.get_field` and `snv.set_field` in code that has only the state. `set_state` calls `STATE.validate(state)` first. The validation names a missing group, a wrong shape or a wrong dtype.
-4. Add the family and its top-level state keys to `ADOPTED` in `tests/unit/test_state_schema.py`. The test fails on raw leaf indexing, such as `state["physics", "qpos"]`, in the family, its tests and the examples.
+4. Add the family and its top-level state keys to `ADOPTED` in `tests/unit/test_state_schema.py`. The test fails on raw leaf indexing, such as `state["physics", "qpos"]`, in the family, its tests and the examples. It is in the core test profile, so run `tests/unit/test_state_schema.py` when you change a family.
 
 ```python
 from stable_envs._core.state_schema import Field, StateSchema
