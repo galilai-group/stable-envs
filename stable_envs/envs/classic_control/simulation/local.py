@@ -10,7 +10,8 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.physics import state_key
-from ...._core.tensordicts import build_tensordict
+from ...._core.state_layout import StateLayout
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
@@ -130,6 +131,30 @@ CLASSIC_FIELDS = {
     },
 }
 
+#: State fields that only a reset, a restore or a physics change sets: the PCG64 generator (classic-control steps
+#: draw no random numbers) and the physical constants.
+_STATIC_PREFIXES = ("rng", "physics")
+
+
+def _static_keys(domain: str) -> frozenset:
+    return frozenset(key for key in CLASSIC_FIELDS[domain] if isinstance(key, tuple) and key[0] in _STATIC_PREFIXES)
+
+
+def state_layout(domain: str, num_envs: int) -> StateLayout:
+    """The State layout of ``num_envs`` lanes of ``domain``, with the generator and physics leaves static."""
+    leaves = [(key, (width,), dtype) for key, (width, dtype) in CLASSIC_FIELDS[domain].items()]
+    return StateLayout(leaves, num_envs, static=_static_keys(domain))
+
+
+#: The State fields that hold each task's ``state`` array, in its order.
+_STATE_NAMES = {
+    "cartpole": ("x", "x_dot", "theta", "theta_dot"),
+    "pendulum": ("theta", "theta_dot"),
+    "acrobot": ("theta1", "theta2", "dtheta1", "dtheta2"),
+    "mountain_car": ("position", "velocity"),
+    "mountain_car_continuous": ("position", "velocity"),
+}
+
 _ENV_IDS = {
     "cartpole": "CartPole-v1",
     "pendulum": "Pendulum-v1",
@@ -210,7 +235,11 @@ class ClassicControlAdapter(SimulatorAdapter):
             np.float64,
         ).reshape(self.num_envs, len(self._physics_names))
         self._physics_keys = tuple(physics_state_key(name) for name in self._physics_names)
-        self._lane_fields = tuple(key for key in self.fields if key not in self._physics_keys)
+        self._static_keys = _static_keys(domain)
+        self._moving_fields = tuple(key for key in self.fields if key not in self._static_keys)
+        self._layout = state_layout(domain, self.num_envs)
+        self._bases = [env.unwrapped for env in self.envs]
+        self._static_loaded = False
         self._closed = False
 
     def _check_open(self) -> None:
@@ -225,6 +254,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             self._apply_physics(i, {name: float(rows[i]) for name, rows in columns.items()})
 
     def _apply_physics(self, lane: int, values: Mapping[str, float]) -> None:
+        self._static_loaded = False
         base = self.envs[lane].unwrapped
         for name, value in values.items():
             setattr(base, self._physics_attributes[name], value)
@@ -237,20 +267,21 @@ class ClassicControlAdapter(SimulatorAdapter):
         self._check_open()
         for i, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + i, options=options)
+        self._static_loaded = False
         return ClassicControlAdapter.get_state(self)
 
-    def _state_values(self, env):
+    def _state_values(self, env, static: bool = True):
+        """The State values of one lane; ``static=False`` leaves out the generator."""
         base = env.unwrapped
-        rng = base.np_random.bit_generator.state
-        if rng["bit_generator"] != "PCG64":
-            raise RuntimeError(f"Expected PCG64, got {rng['bit_generator']!r}")
-        values: dict = {
-            ("lifecycle", "elapsed_steps"): [env._elapsed_steps],
-            ("rng", "state"): _limbs(rng["state"]["state"]),
-            ("rng", "increment"): _limbs(rng["state"]["inc"]),
-            ("rng", "has_uint32"): [rng["has_uint32"]],
-            ("rng", "uinteger"): [rng["uinteger"]],
-        }
+        values: dict = {("lifecycle", "elapsed_steps"): [env._elapsed_steps]}
+        if static:
+            rng = base.np_random.bit_generator.state
+            if rng["bit_generator"] != "PCG64":
+                raise RuntimeError(f"Expected PCG64, got {rng['bit_generator']!r}")
+            values[("rng", "state")] = _limbs(rng["state"]["state"])
+            values[("rng", "increment")] = _limbs(rng["state"]["inc"])
+            values[("rng", "has_uint32")] = [rng["has_uint32"]]
+            values[("rng", "uinteger")] = [rng["uinteger"]]
         if self.domain == "cartpole":
             values.update(dict(zip(("x", "x_dot", "theta", "theta_dot"), np.asarray(base.state))))
             beyond = base.steps_beyond_terminated
@@ -270,27 +301,53 @@ class ClassicControlAdapter(SimulatorAdapter):
 
         return values
 
-    def get_state(self) -> TensorDict:
-        self._check_open()
+    def _columns(self, keys) -> dict:
+        """``{key: (num_envs, width) array}`` of ``keys``, read from each lane's Gymnasium environment."""
         columns = {
-            key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
-            for key, (width, dtype) in self.fields.items()
+            key: np.empty((self.num_envs, self.fields[key][0]), dtype=_NUMPY_DTYPES[self.fields[key][1]])
+            for key in keys
+            if key not in self._physics_keys
         }
-        lane_columns = [(key, columns[key]) for key in self._lane_fields]
+        lane_columns = list(columns.items())
         for index, env in enumerate(self.envs):
-            values = self._state_values(env)
+            values = self._state_values(env, static="rng" in {key[0] for key in columns if isinstance(key, tuple)})
             for key, column in lane_columns:
                 column[index] = values[key]
         for j, key in enumerate(self._physics_keys):
-            columns[key][:, 0] = self._physics[:, j]
-        tree: dict = {}
-        for key, value in columns.items():
-            value = torch.from_numpy(value).to(self.device)
-            if isinstance(key, str):
-                tree[key] = value
-            else:
-                tree.setdefault(key[0], {})[key[1]] = value
-        return build_tensordict(tree, [self.num_envs], self.device)
+            if key in keys:
+                columns[key] = self._physics[:, j : j + 1].copy()
+        return columns
+
+    def _load_static(self) -> None:
+        if not self._static_loaded:
+            self._layout.load_static(self._columns(self._static_keys))
+            self._static_loaded = True
+
+    def _moving_columns(self) -> dict:
+        """``{key: (num_envs, width) array}`` of the fields that steps change, gathered from all lanes at once."""
+        n, bases = self.num_envs, self._bases
+        state = np.array([base.state for base in bases], dtype=np.float64).reshape(n, -1)
+        values: dict = {name: state[:, i : i + 1] for i, name in enumerate(_STATE_NAMES[self.domain])}
+        values[("lifecycle", "elapsed_steps")] = np.fromiter((env._elapsed_steps for env in self.envs), np.int64, n)[
+            :, None
+        ]
+        if self.domain == "cartpole":
+            beyond = [base.steps_beyond_terminated for base in bases]
+            values[("task", "steps_beyond_terminated")] = np.array([[b or 0] for b in beyond], np.int64)
+            values[("task", "has_steps_beyond_terminated")] = np.array([[b is not None] for b in beyond], np.bool_)
+        elif self.domain == "pendulum":
+            last = [getattr(base, "last_u", None) for base in bases]
+            values["torque"] = np.array([[0.0 if u is None else u] for u in last], np.float64)
+            values[("task", "has_last_u")] = np.array([[u is not None] for u in last], np.bool_)
+        elif self.domain == "mountain_car_continuous":
+            narrow = [np.asarray(base.state).dtype == np.float32 for base in bases]
+            values[("task", "state_is_float32")] = np.array(narrow, np.bool_)[:, None]
+        return values
+
+    def get_state(self) -> TensorDict:
+        self._check_open()
+        self._load_static()
+        return self._layout.export(self._moving_columns(), self.device)
 
     def validate(self, state: TensorDict) -> None:
         """Check the schema and every lane's PCG64 state; change no simulator."""
@@ -359,6 +416,7 @@ class ClassicControlAdapter(SimulatorAdapter):
                 "uinteger": row["rng", "uinteger"].item(),
             }
             base.np_random.bit_generator.state = rng_state
+        self._static_loaded = False
 
     def _actions(self, actions):
         if torch.is_tensor(actions):
@@ -403,19 +461,20 @@ class ClassicControlAdapter(SimulatorAdapter):
             for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
         ]
         observations = np.stack([out[0] for out in outputs])
-        return build_tensordict(
-            {
-                **({"state": self.get_state()} if capture_state else {}),
-                "reward": torch.tensor([out[1] for out in outputs], dtype=torch.float64, device=self.device),
-                "terminated": torch.tensor([out[2] for out in outputs], dtype=torch.bool, device=self.device),
-                "truncated": torch.tensor([out[3] for out in outputs], dtype=torch.bool, device=self.device),
-                "observation": torch.as_tensor(observations, device=self.device).clone(),
-                # ``info['state']`` is a float32 copy of the observation.
-                "info_state": torch.as_tensor(observations, dtype=torch.float32, device=self.device).clone(),
-            },
-            [self.num_envs],
-            self.device,
-        )
+        host = {
+            "reward": torch.from_numpy(np.fromiter((out[1] for out in outputs), np.float64, self.num_envs)),
+            "terminated": torch.from_numpy(np.fromiter((out[2] for out in outputs), np.bool_, self.num_envs)),
+            "truncated": torch.from_numpy(np.fromiter((out[3] for out in outputs), np.bool_, self.num_envs)),
+            "observation": torch.from_numpy(observations),
+            # ``info['state']`` is a float32 copy of the observation.
+            "info_state": torch.from_numpy(observations.astype(np.float32)),
+        }
+        out = build_tensordict(host, [self.num_envs], "cpu")
+        if self.device.type != "cpu":
+            out = to_device(out, self.device)
+        if capture_state:
+            out["state"] = self.get_state()
+        return out
 
     def close(self) -> None:
         if not self._closed:

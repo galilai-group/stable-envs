@@ -139,10 +139,6 @@ class _NumPy:
         """Float64 values and the narrower float type that the source computes action terms in."""
         return a.astype(np.float64), (a.dtype if a.dtype.kind == "f" and a.dtype.itemsize < 8 else None)
 
-    def column(self, x):
-        """An owned ``[N, 1]`` tensor on the adapter's device."""
-        return torch.from_numpy(x[:, None].copy()).to(self.device)
-
     def export(self, x, dtype=None):
         return torch.from_numpy(x if dtype is None else x.astype(dtype)).to(self.device)
 
@@ -220,10 +216,6 @@ class _Torch:
     @staticmethod
     def floats(a):
         return a.double(), (a.dtype if a.is_floating_point() and a.dtype.itemsize < 8 else None)
-
-    @staticmethod
-    def column(x):
-        return x[:, None].clone()
 
     @staticmethod
     def export(x, dtype=None):
@@ -437,10 +429,12 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         """Adopt ``state`` as the live lanes and keep the fields that steps do not change."""
         xp = self._xp
         moving = (*self._dynamic, _ELAPSED)
-        self._fixed = {key: state[key].to(self.device).clone() for key in self.fields if key not in moving}
+        self._fixed = {key: xp.load(state[key]) for key in self.fields if key not in moving}
         self._live = {key: xp.load(state[key][:, 0]) for key in self._dynamic}
         self._elapsed = xp.load(state[_ELAPSED][:, 0])
         self._params = {name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]}
+        self._layout.load_static(self._fixed)
+        self._static_loaded = True
 
     def configure(self, values) -> None:
         super().configure(values)
@@ -464,20 +458,10 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._check_open()
         if self._fixed is None:
             return super().get_state()
-        tree: dict = {}
-        live, fixed, column = self._live, self._fixed, self._xp.column
-        for key in self.fields:
-            if key in live:
-                value = column(live[key])
-            elif key == _ELAPSED:
-                value = column(self._elapsed)
-            else:
-                value = fixed[key].clone()
-            if isinstance(key, str):
-                tree[key] = value
-            else:
-                tree.setdefault(key[0], {})[key[1]] = value
-        return build_tensordict(tree, [self.num_envs], self.device)
+        values: dict = {key: value[:, None] for key, value in self._live.items()}
+        values[_ELAPSED] = self._elapsed[:, None]
+        # Steps keep the static fields; the layout holds them since the last ``_load``.
+        return self._layout.export(values, self.device)
 
     def _check_actions(self, a, live) -> None:
         n = _DISCRETE[self.domain]
@@ -542,36 +526,57 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         super().close()
 
 
-#: Fewest lanes for which the CPU default and ``"auto"`` pick NumPy steps. Below them the per-call cost of the
-#: batched arrays exceeds the Gymnasium loop. Measured on a Xeon Platinum 8268.
-NUMPY_MIN_ENVS = {"cartpole": 2, "pendulum": 1, "acrobot": 2, "mountain_car": 1, "mountain_car_continuous": 8}
-#: Fewest CUDA lanes for which ``"auto"`` picks Torch steps; below them NumPy steps on the host and the
-#: outputs are copied to the GPU. On an L40S the Torch step on the GPU is faster at every batch size.
-TORCH_MIN_ENVS = 1
-BACKENDS = ("auto", "gym", "numpy", "torch")
+#: Backends that ``simulation_backend`` accepts besides ``"auto"``.
+SIMULATION_BACKENDS = ("gym", "numpy", "torch")
+
+#: Shipped switch points of ``"auto"``; the knob and the tuning cache (``stable-envs tune``) take precedence.
+#: ``CPU_MIN_ENVS``: the smallest batch that steps in NumPy rather than Gymnasium on the host, on every device; None
+#: steps in NumPy at every batch size. ``CUDA_MIN_ENVS``: the smallest CUDA batch that steps in Torch on the GPU
+#: rather than on the host; None steps in Torch at every batch size.
+#: Measured 2026-11-14 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each): the per-call step time of each
+#: backend, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096, on the CPU device and on CUDA
+#: (``python -m benchmarks.classic_switch``). Both GPU types gave the same values. Torch on CUDA was the fastest from one
+#: environment for every task.
+CPU_MIN_ENVS: dict[str, int | None] = {
+    "cartpole": 2,
+    "pendulum": None,
+    "acrobot": 4,
+    "mountain_car": None,
+    "mountain_car_continuous": 8,
+}
+CUDA_MIN_ENVS: dict[str, int | None] = dict.fromkeys(CPU_MIN_ENVS)
 
 
-def classic_backend(
-    domain: str,
-    device: str | torch.device,
-    num_envs: int,
-    backend: str | None = None,
-    torch_min_envs: int = TORCH_MIN_ENVS,
-) -> str:
-    """Resolve ``simulation_backend`` from the device and the lane count.
+def _measure(domain: str, device: torch.device):
+    """Build and step lanes of ``domain`` on one backend, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_adapter
+    from .execution import make_step_adapter
 
-    ``None`` selects Torch on CUDA and the CPU choice of ``"auto"`` on the CPU. ``"auto"`` also uses
-    Torch on CUDA, but only for ``torch_min_envs`` or more lanes.
+    dtype = torch.int64 if domain in _DISCRETE else torch.float32
+    return measure_adapter(
+        lambda backend, n: make_step_adapter(domain, backend, n, device, 0),
+        lambda n: torch.zeros((n, 1), dtype=dtype, device=device),
+    )
+
+
+def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
+    """Return ``"gym"``, ``"numpy"`` or ``"torch"``.
+
+    ``"auto"`` (or None) first selects the host backend: Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On
+    CUDA it then selects that host backend below ``CUDA_MIN_ENVS`` and Torch from it.
     """
-    if backend is not None and backend not in BACKENDS:
-        raise ValueError(f"simulation_backend must be None, 'auto', 'gym', 'numpy' or 'torch', got {backend!r}")
-    if isinstance(torch_min_envs, bool) or not isinstance(torch_min_envs, int) or torch_min_envs < 1:
-        raise ValueError(f"torch_min_envs must be an int >= 1, got {torch_min_envs!r}")
-    cuda = torch.device(device).type == "cuda"
-    if backend is None and cuda:
-        return "torch"
-    if backend not in (None, "auto"):
-        return backend
-    if cuda and num_envs >= torch_min_envs:
-        return "torch"
-    return "numpy" if num_envs >= NUMPY_MIN_ENVS[domain] else "gym"
+    from ...._execution.backends import Rungs, select_backend
+
+    device = torch.device(device)
+    cpu = torch.device("cpu")
+    host = select_backend(
+        f"classic-cpu/{domain}", num_envs, cpu, backend, {"cpu": Rungs("gym", "numpy", CPU_MIN_ENVS[domain])},
+        choices=SIMULATION_BACKENDS, measure=_measure(domain, cpu),
+    )  # fmt: skip
+    if device.type == "cpu" or backend not in (None, "auto"):
+        return host
+    return select_backend(
+        f"classic-sim/{domain}", num_envs, device, backend,
+        {"cpu": Rungs(host, host), "cuda": Rungs(host, "torch", CUDA_MIN_ENVS[domain])},
+        choices=SIMULATION_BACKENDS, measure=_measure(domain, device),
+    )  # fmt: skip

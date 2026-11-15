@@ -24,20 +24,19 @@ The `simulation_backend` argument selects how the batch steps:
 
 | Value | Steps |
 |---|---|
-| `None` (default) | `"torch"` on CUDA. On CPU, `"numpy"`, or `"gym"` for small batches |
-| `"auto"` | as the default on CPU. On CUDA, `"torch"` for `torch_min_envs` or more environments and the CPU choice below |
+| `"auto"` (default) | on CPU, `"gym"` for small batches and `"numpy"` for large batches. On CUDA, the CPU choice for small batches and `"torch"` for large batches |
 | `"numpy"` | the whole batch in one NumPy operation on the host, with outputs moved to the environment device |
 | `"torch"` | the whole batch in one Torch operation on the environment device |
 | `"gym"` | one Gymnasium environment per batch row |
 
-On CPU, the default uses `"gym"` below 2 environments for CartPole and Acrobot and below 8 for MountainCarContinuous, where the Gymnasium loop is faster. `torch_min_envs` is 1 by default: on an L40S, the GPU steps were faster than NumPy steps plus the copy of their outputs at every batch size from 1 to 4096.
+`None` means `"auto"`. Each class ships two switch points, measured on RTX 3090 and RTX A5000 hosts: the batch size from which the host steps in NumPy instead of Gymnasium, and the batch size from which CUDA batches step in Torch. The `large_backend_min_envs` tuning knob and `stable-envs tune` can change them (see [Physics backends](../performance-tuning.md#physics-backends)). On CUDA, the CPU choice steps on the host and moves the outputs and the state of each step to the GPU in one copy.
 
-On CPU, Gymnasium resets each environment and owns its PCG64 random stream for every backend. NumPy steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
+Gymnasium resets each environment and owns its PCG64 random stream for every backend, so a seed gives the same initial states on every backend and device. NumPy steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
 
-On CUDA, `"torch"` keeps the [state](../terms.md#state) on the GPU. One Triton kernel steps the batch and a CUDA graph replays it, so a step reads nothing back to the host. A reset draws the initial states on the GPU from Gymnasium's distributions. The `rng` state fields hold each environment's key (`seed + i`) and reset count instead of a PCG64 state, so a seed gives the same initial states each time, but not Gymnasium's. The step doesn't check the range of discrete actions, because that check would read back to the host, and an action out of range gives undefined dynamics.
+On CUDA, `"torch"` keeps the [state](../terms.md#state) on the GPU. One Triton kernel steps the batch and a CUDA graph replays it, so a step reads nothing back to the host. A reset draws the initial states with Gymnasium on the host and copies them to the GPU in one copy. The step doesn't check the range of discrete actions, because that check would read back to the host, and an action out of range gives undefined dynamics.
 
 ```python
-with snv.Acrobot(num_envs=256, device="cpu") as env:
+with snv.Acrobot(num_envs=256, simulation_backend="numpy", device="cpu") as env:
     print(env.simulation_backend)  # numpy
 with snv.Acrobot(num_envs=256, simulation_backend="gym", device="cpu") as env:
     print(env.simulation_backend)  # gym
@@ -45,10 +44,10 @@ with snv.Acrobot(num_envs=256, simulation_backend="gym", device="cpu") as env:
 
 ```python
 # CUDA only
-with snv.Acrobot(num_envs=64, device="cuda") as env:
+with snv.Acrobot(num_envs=64, device="cuda", simulation_backend="torch") as env:
     print(env.simulation_backend)  # torch
-with snv.Acrobot(num_envs=64, device="cuda", simulation_backend="auto", torch_min_envs=256) as env:
-    print(env.simulation_backend)  # numpy
+with snv.tuning.override(large_backend_min_envs=256), snv.Acrobot(num_envs=64, device="cuda") as env:
+    print(env.simulation_backend)  # gym
 ```
 
 ## Rendering
@@ -95,4 +94,3 @@ This class has the same terrain as MountainCar, but the action is a continuous f
 
 - Each class renders only at the native size of its Gymnasium renderer. Resize the output for a smaller frame.
 - Torch steps agree with Gymnasium to rounding, not bit for bit: Torch computes `sin`, `cos` and powers with its own code.
-- On CUDA, the default resets don't reproduce Gymnasium's initial states for a seed; pass `simulation_backend="numpy"` when you need them.

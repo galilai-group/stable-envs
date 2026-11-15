@@ -22,10 +22,11 @@ def test_classic_export_continuation_and_ownership(domain, device):
         pytest.skip("requires CUDA")
     adapter = ClassicControlAdapter(domain, 3, device, 17)
     try:
-        adapter.reset(17)
-        cached = adapter.envs[1].unwrapped.np_random.bit_generator.state
-        cached["has_uint32"], cached["uinteger"] = 1, 2**32 - 1
-        adapter.envs[1].unwrapped.np_random.bit_generator.state = cached
+        # A cached 32-bit draw: the generator changes only through reset and set_state.
+        cached = adapter.reset(17)
+        cached["rng", "has_uint32"][1], cached["rng", "uinteger"][1] = 1, 2**32 - 1
+        adapter.set_state(cached)
+        assert adapter.envs[1].unwrapped.np_random.bit_generator.state["uinteger"] == 2**32 - 1
         initial = adapter.get_state()
         held = initial.clone()
         assert_same_state(initial, classic_state(adapter))

@@ -9,10 +9,9 @@ pytest.importorskip("pygame")
 torch = pytest.importorskip("torch")
 
 import stable_envs as se  # noqa: E402
+from stable_envs import tuning  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import (  # noqa: E402
     MAX_EPISODE_STEPS,
-    NUMPY_MIN_ENVS,
-    TORCH_MIN_ENVS,
     BatchedClassicAdapter,
     classic_backend,
 )
@@ -293,26 +292,40 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
         reference.close()
 
 
+def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path):
+    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, CUDA_MIN_ENVS
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning._clear_caches()
+    try:
+        for domain, fewest in CPU_MIN_ENVS.items():
+            for lanes in (1, 2, 4, 8, 4096):
+                host = "numpy" if fewest is None or lanes >= fewest else "gym"
+                assert classic_backend(domain, "cpu", lanes) == host
+                cutoff = CUDA_MIN_ENVS[domain]
+                assert classic_backend(domain, "cuda", lanes) == ("torch" if cutoff is None or lanes >= cutoff else host)
+        assert classic_backend("cartpole", "cpu", 1) == "gym"
+        assert classic_backend("pendulum", "cpu", 1) == "numpy"
+    finally:
+        tuning._clear_caches()
+
+
 def test_backend_selection():
-    for domain, fewest in NUMPY_MIN_ENVS.items():
+    for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            assert classic_backend(domain, "cpu", fewest, backend) == "numpy"
-            assert classic_backend(domain, "cpu", fewest - 1, backend) == "gym"
-            assert classic_backend(domain, "cpu", 4096, backend) == "numpy"
-        # By default CUDA lanes step on the GPU at every batch size; "auto" keeps small batches on the host.
-        for lanes in (1, fewest, 4096):
-            assert classic_backend(domain, "cuda", lanes) == "torch"
+            with tuning.override(large_backend_min_envs=4):
+                assert classic_backend(domain, "cpu", 4, backend) == "numpy"
+                assert classic_backend(domain, "cpu", 3, backend) == "gym"
+                assert classic_backend(domain, "cuda", 4, backend) == "torch"
+                assert classic_backend(domain, "cuda", 3, backend) == "gym"
+        for lanes in (1, 4096):
             assert classic_backend(domain, "cuda:0", lanes, "gym") == "gym"
-        assert classic_backend(domain, "cuda", TORCH_MIN_ENVS, "auto") == "torch"
-        assert classic_backend(domain, "cuda", 16, "auto", torch_min_envs=16) == "torch"
-        assert classic_backend(domain, "cuda", 15, "auto", torch_min_envs=16) == "numpy"
-        assert classic_backend(domain, "cuda", fewest - 1, "auto", torch_min_envs=16) == "gym"
-    with pytest.raises(ValueError, match="torch_min_envs"):
-        classic_backend("cartpole", "cuda", 2, "auto", torch_min_envs=0)
+            assert classic_backend(domain, "cpu", lanes, "torch") == "torch"
     with pytest.raises(ValueError, match="simulation_backend"):
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():
-        with se.make(name, num_envs=8, device="cpu") as env:
+        with tuning.override(large_backend_min_envs=8), se.make(name, num_envs=8, device="cpu") as env:
             assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
             assert isinstance(env._simulator, BatchedClassicAdapter) and env._simulator.backend == "numpy"
         with se.make(name, num_envs=2, device="cpu", simulation_backend="gym") as env:
@@ -375,8 +388,9 @@ def test_cuda_steps_match_gymnasium(domain):
         finally:
             reference.close()
             fast.close()
-    with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
-    with se.make(CLASSES[domain], num_envs=8, device="cuda", simulation_backend="auto", torch_min_envs=16) as env:
-        assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
+    with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+        assert env.simulation_backend == "gym" and env.execution_mode == "DELEGATED_CPU"
+        assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"

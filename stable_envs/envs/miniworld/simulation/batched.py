@@ -8,40 +8,61 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from .adapter import COLORS, TEXTURES, state_fields, validate_state
 from .world import P_BALL_RADIUS, World
 
 BACKENDS = ("numba", "triton", "torch")
-#: CUDA batches below this size step on the Numba kernel under ``simulation_backend="auto"``. On an L40S the
-#: Triton step is as fast as the Numba step from one environment.
-TRITON_MIN_ENVS = 1
 #: Environments from which the Numba step runs on several threads.
 PARALLEL_MIN_ENVS = 64
 _EXECUTION_MODES = {"numba": "NATIVE_NUMBA", "triton": "NATIVE_TRITON", "torch": "NATIVE_TORCH"}
+#: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on Triton; smaller batches step with Numba.
+#: None uses Triton at every batch size. The knob and the tuning cache take precedence.
+#: Measured 2026-11-14 on Oscar RTX 3090 and RTX A5000 nodes (EPYC 7532, 8 cores each): the per-call step time of
+#: both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096
+#: (``python -m benchmarks.backend_switch MiniWorldMovingBlockWorld``). Triton was faster from one environment on both.
+CUDA_MIN_ENVS: int | None = None
+
+
+def _measure(config: dict, size: int, device):
+    """Build and step MovingBlockWorld environments on one backend, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_adapter
+
+    return measure_adapter(
+        lambda backend, n: BatchedMovingBlockWorldAdapter(config, n, size, device, backend),
+        lambda n: torch.full((n,), 2, dtype=torch.int64, device=device),
+    )
 
 
 def miniworld_backend(
-    device: str | torch.device, num_envs: int, backend: str | None = None, triton_min_envs: int = TRITON_MIN_ENVS
+    device: str | torch.device,
+    num_envs: int,
+    backend: str | None = "auto",
+    config: dict | None = None,
+    size: int | None = None,
 ) -> str:
     """The step backend of a batch.
 
-    ``None`` takes Triton on CUDA and Numba on CPU; ``"auto"`` also takes Numba for CUDA batches below
-    ``triton_min_envs``. ``"torch"`` runs on any device; ``"triton"`` needs CUDA.
+    ``"auto"`` (or None) takes Numba on CPU. On CUDA it takes Numba below ``CUDA_MIN_ENVS`` and Triton from it.
+    ``stable-envs tune`` measures with environments of ``config`` and frame ``size``. ``"torch"``
+    runs on any device; ``"triton"`` needs CUDA.
     """
-    if backend not in (None, "auto", *BACKENDS):
-        raise ValueError(f"simulation_backend must be None, 'auto', 'numba', 'triton' or 'torch', got {backend!r}")
-    if isinstance(triton_min_envs, bool) or not isinstance(triton_min_envs, int) or triton_min_envs < 1:
-        raise ValueError("triton_min_envs must be an int >= 1")
-    cuda = torch.device(device).type == "cuda"
-    if backend == "triton" and not cuda:
+    from ...._execution.backends import Rungs, select_backend
+
+    if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    if backend is None:
-        return "triton" if cuda else "numba"
-    if backend == "auto":
-        return "triton" if cuda and num_envs >= triton_min_envs else "numba"
-    return backend
+    valid = type(num_envs) is int and num_envs > 0 and config is not None and size is not None
+    measure = _measure(config, size, device) if valid else None
+    return select_backend(
+        "miniworld-sim/moving_blockworld",
+        num_envs,
+        device,
+        backend,
+        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "triton", CUDA_MIN_ENVS)},
+        choices=BACKENDS,
+        measure=measure,
+    )
 
 
 def execution_mode(backend: str) -> str:
@@ -320,6 +341,16 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
                 self.s[key].copy_(out[key])
             truncated = out["truncated"]
         dev, B = self.device, self.num_envs
+        if self.sim_device != dev:
+            # The outputs and the State move from the host in one copy.
+            out = {
+                "reward": torch.zeros(B, dtype=torch.float64),
+                "terminated": torch.zeros(B, dtype=torch.bool),
+                "truncated": truncated,
+            }
+            if capture_state:
+                out["state"] = self._snapshot(*(flat.clone() for flat in self._flat))
+            return to_device(build_tensordict(out, [B], self.sim_device), dev)
         out = {
             "reward": torch.zeros(B, dtype=torch.float64, device=dev),
             "terminated": torch.zeros(B, dtype=torch.bool, device=dev),
