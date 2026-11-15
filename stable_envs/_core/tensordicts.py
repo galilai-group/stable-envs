@@ -248,7 +248,9 @@ def _clone_packed(slots) -> bool:
                 while j < len(slots):
                     after, other = spans[j]
                     gap = after - spans[j - 1][0]
-                    like = other.dtype == value.dtype and other.shape == value.shape and other.stride() == value.stride()
+                    like = (
+                        other.dtype == value.dtype and other.shape == value.shape and other.stride() == value.stride()
+                    )
                     if not like or gap <= 0 or gap % value.element_size() or (step is not None and gap != step):
                         break
                     step, j = gap, j + 1
