@@ -368,6 +368,9 @@ class Env:
     #: ``/``-joined State key prefixes of solver caches, such as contact warm starts, that each simulation backend
     #: writes its own way: they seed the next solve and are not part of the comparable physical state.
     state_solver_caches: tuple[str, ...] = ()
+    #: ``(saved, loaded)`` simulation backend pairs whose States don't resume within tolerance on the other backend.
+    #: ``set_state`` doesn't refuse them yet (issue #63); the cross-backend State check expects them to fail.
+    state_backend_mismatches: frozenset[tuple[str, str]] = frozenset()
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()

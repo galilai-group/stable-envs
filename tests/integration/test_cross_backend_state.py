@@ -45,9 +45,12 @@ def _cases():
             if device == "cuda":
                 marks.append(pytest.mark.gpu)
             for saved, loaded in itertools.permutations(backends, 2):
-                cases.append(
-                    pytest.param(name, device, saved, loaded, id=f"{name}-{device}-{saved}-{loaded}", marks=marks)
-                )
+                pair = marks
+                if (saved, loaded) in cls.state_backend_mismatches:
+                    reason = "the State has no backend tag, so set_state can't refuse it yet (issue #63)"
+                    pair = [*marks, pytest.mark.xfail(reason=reason, strict=True)]
+                case_id = f"{name}-{device}-{saved}-{loaded}"
+                cases.append(pytest.param(name, device, saved, loaded, id=case_id, marks=pair))
     return cases
 
 
