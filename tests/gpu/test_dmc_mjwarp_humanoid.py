@@ -29,7 +29,7 @@ def test_humanoid_replays_100_public_calls(seed):
         checkpoint = env.get_state()
         expected = []
         for action in actions[5:]:
-            result = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
+            result = env.step(torch.as_tensor(action, device="cuda"), states=slice(0, 0), frames=None).cpu()
             for key in (("state", "qpos"), ("state", "qvel"), "observation", "reward"):
                 assert torch.isfinite(result[key]).all(), key
             expected.append(result)
@@ -38,7 +38,7 @@ def test_humanoid_replays_100_public_calls(seed):
         env.set_state(checkpoint)
         assert_same_state(env.get_state(), checkpoint)
         for call, (action, want) in enumerate(zip(actions[5:], expected, strict=True), start=1):
-            actual = env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None).cpu()
+            actual = env.step(torch.as_tensor(action, device="cuda"), states=slice(0, 0), frames=None).cpu()
             assert_same_state(actual["state", "lifecycle"], want["state", "lifecycle"])
             assert_same_state(actual["state", "rng"], want["state", "rng"])
             assert float((actual["reward"] - want["reward"]).abs().max()) <= REPLAY_REWARD, f"call {call}"
@@ -75,14 +75,14 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
         # Adapter operations must order their own work across caller streams.
         # There is no explicit caller synchronization until both runs finish.
         with torch.cuda.stream(second):
-            expected = env.step(action, states=None, frames=None)
-            following = env.step(action, states=None, frames=None)
+            expected = env.step(action, states=slice(0, 0), frames=None)
+            following = env.step(action, states=slice(0, 0), frames=None)
             env.set_state(initial)
         with torch.cuda.stream(first):
             restored = env.get_state()
-            actual = env.step(action, states=None, frames=None)
+            actual = env.step(action, states=slice(0, 0), frames=None)
         with torch.cuda.stream(second):
-            replay_following = env.step(action, states=None, frames=None)
+            replay_following = env.step(action, states=slice(0, 0), frames=None)
         first.synchronize()
         second.synchronize()
         assert_same_state(restored, initial)
@@ -99,7 +99,7 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
         ordinary["lifecycle", "step_count"][:2] = 0
         ordinary["lifecycle", "reset_next_step"][:2] = False
         env.set_state(ordinary)
-        persistent = env.step(action, states=None, frames=None)
-        persistent_following = env.step(action, states=None, frames=None)
+        persistent = env.step(action, states=slice(0, 0), frames=None)
+        persistent_following = env.step(action, states=slice(0, 0), frames=None)
         assert_same_state(actual[2], persistent[2])
         assert_same_state(following[2], persistent_following[2])
