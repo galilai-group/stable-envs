@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import new_node
+from .tensordicts import nested_builder, new_node
 
 #: A leaf key: a tuple of names, or names joined by ``/``. ``export`` reads values under the key as declared.
 Key = tuple[str, ...] | str
@@ -32,24 +32,6 @@ _ALIGN = 16
 
 def _numpy_dtype(dtype: torch.dtype) -> np.dtype:
     return torch.empty((), dtype=dtype).numpy().dtype
-
-
-def _builder(keys: Sequence[Key]):
-    """``build(leaves, node)``: the nested State from leaves in ``keys`` order; ``node(dict)`` makes one TensorDict."""
-    tree: dict = {}
-    for index, key in enumerate(map(_path, keys)):
-        node = tree
-        for part in key[:-1]:
-            node = node.setdefault(part, {})
-        if not isinstance(node, dict) or key[-1] in node:
-            raise ValueError(f"State key {key} clashes with another key")
-        node[key[-1]] = index
-
-    def source(node):
-        items = (f"{name!r}: {source(c) if type(c) is dict else f'L[{c}]'}" for name, c in node.items())
-        return "N({" + ", ".join(items) + "})"
-
-    return eval("lambda L, N: " + source(tree))  # noqa: S307 - the source holds only State key literals
 
 
 class StateLayout:
@@ -89,7 +71,7 @@ class StateLayout:
             for *_, runs in self.groups
         ]
         self._static: dict[torch.dtype, torch.Tensor | np.ndarray] = {}
-        self._build = _builder(self.keys)
+        self._build = nested_builder([_path(key) for key in self.keys])
         self._batch = torch.Size([self.num_envs])
 
     def _by_shape(self, indices: list[int]) -> list[int]:

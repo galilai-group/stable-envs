@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -58,6 +60,24 @@ def new_node(source: dict, batch: torch.Size, device) -> TensorDict:
     if _DIRECT_NODES:
         return _direct_node(source, batch, device)
     return TensorDict._new_unsafe(source, batch_size=batch, device=device)
+
+
+def nested_builder(paths):
+    """``build(leaves, node)``: the nested TensorDict from leaves in ``paths`` order; ``node(dict)`` makes one node."""
+    tree: dict = {}
+    for index, key in enumerate(paths):
+        node = tree
+        for part in key[:-1]:
+            node = node.setdefault(part, {})
+        if not isinstance(node, dict) or key[-1] in node:
+            raise ValueError(f"State key {key} clashes with another key")
+        node[key[-1]] = index
+
+    def source(node):
+        items = (f"{name!r}: {source(c) if type(c) is dict else f'L[{c}]'}" for name, c in node.items())
+        return "N({" + ", ".join(items) + "})"
+
+    return eval("lambda L, N: " + source(tree))  # noqa: S307 - the source holds only key literals
 
 
 def _build(source: dict, batch: torch.Size, device: torch.device, index: int | None) -> TensorDict | None:
@@ -217,33 +237,68 @@ def _leaves(node, prefix, out, batch):
     return out
 
 
-#: ``StateLayout`` per leaf structure that ``to_device`` moved; cleared when it holds this many.
-_LAYOUTS_HELD = 64
-_layouts: dict = {}
+#: Byte alignment of each dtype group in the pinned transfer buffer; a multiple of every dtype's size.
+_ALIGN = 16
+#: ``_Transfer`` per leaf structure that ``to_device`` moved; cleared when it holds this many.
+_TRANSFERS_HELD = 64
+_transfers: dict = {}
+
+
+class _Transfer:
+    """Where the leaves of one TensorDict structure go in the pinned buffer, and how the device copy splits.
+
+    Each dtype is one block; inside it, leaves of one shape sit next to each other, so one ``unbind`` splits them.
+    """
+
+    def __init__(self, signature):
+        groups: dict = {}
+        for index, (_, shape, dtype) in enumerate(signature):
+            groups.setdefault(dtype, {}).setdefault(tuple(shape), []).append(index)
+        self.groups, total = [], 0
+        for dtype, runs in groups.items():
+            order = [i for indices in runs.values() for i in indices]
+            sizes = [len(indices) * math.prod(shape) for shape, indices in runs.items()]
+            nbytes = sum(sizes) * torch.empty((), dtype=dtype).element_size()
+            self.groups.append((dtype, order, total, total + nbytes, sizes, list(runs.items())))
+            total += -(-nbytes // _ALIGN) * _ALIGN
+        self.total = max(total, _ALIGN)
+        self.build = nested_builder([key for key, _, _ in signature])
 
 
 def to_device(td: TensorDict, device) -> TensorDict:
     """``td.to(device)`` for a CPU TensorDict, with one host-to-device copy for all its leaves.
 
-    A ``StateLayout`` of the TensorDict's leaf structure, kept for later calls, packs the leaves by dtype and moves
-    them in one copy; each returned leaf is a view of the device copy. A TensorDict that isn't dense, or that has a
-    leaf NumPy can't hold, moves leaf by leaf.
+    The leaves are packed by dtype into one pinned buffer, which moves in one asynchronous copy; each returned leaf
+    is a view of the device copy. A TensorDict that isn't dense, or that has a leaf NumPy can't hold, moves leaf by
+    leaf.
     """
-    from .state_layout import StateLayout
-
     device = _device(device)
-    if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu") or td.batch_dims != 1:
+    if device.type != "cuda" or not _dense(td) or td.device != torch.device("cpu"):
         return td.to(device)
     try:
         leaves = _leaves(td, (), [], td.batch_size)
     except _Irregular:
         return td.to(device)
     signature = tuple((key, value.shape, value.dtype) for key, value in leaves)
-    layout = _layouts.get(signature)
-    if layout is None:
-        if len(_layouts) >= _LAYOUTS_HELD:
-            _layouts.clear()
-        layout = _layouts[signature] = StateLayout(
-            [(key, tuple(shape[1:]), dtype) for key, shape, dtype in signature], td.batch_size[0]
-        )
-    return layout.export(dict(leaves), device)
+    plan = _transfers.get(signature)
+    if plan is None:
+        if len(_transfers) >= _TRANSFERS_HELD:
+            _transfers.clear()
+        plan = _transfers[signature] = _Transfer(signature)
+    host = torch.empty(plan.total, dtype=torch.uint8, pin_memory=True)
+    packed = host.numpy()
+    for _, order, start, stop, _, _ in plan.groups:
+        packed[start:stop] = torch._C._nn.flatten_dense_tensors([leaves[i][1] for i in order]).numpy().view(np.uint8)
+    # The pinned block isn't reused before this copy ends: the host allocator records the copy's stream.
+    moved = host.to(device, non_blocking=True)
+    parts: list = [None] * len(leaves)
+    for dtype, _, start, stop, sizes, runs in plan.groups:
+        block = moved[start:stop].view(dtype)
+        for (shape, indices), piece in zip(runs, block.split_with_sizes(sizes) if len(runs) > 1 else (block,)):
+            if len(indices) == 1:
+                parts[indices[0]] = piece.view(shape)
+            else:
+                for i, leaf in zip(indices, piece.view(len(indices), *shape).unbind(0), strict=True):
+                    parts[i] = leaf
+    batch = td.batch_size
+    return plan.build(parts, lambda node: new_node(node, batch, device))
