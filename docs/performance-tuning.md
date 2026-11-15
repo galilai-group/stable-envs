@@ -32,6 +32,10 @@ The shipped switch points were measured on 14 November 2026 on hosts with an NVI
 
 After `stable-envs tune`, `"auto"` can select different backends on different machines for the same batch size. Both backends draw the reset values from the same host generators, so a seed gives the same reset state on either backend, to float precision. The physics can still differ: the CPU backends compute in float64 and most GPU backends in float32, so trajectories can move apart over time. For runs that must be identical across machines, pass `simulation_backend` explicitly. `env.simulation_backend` and `env.describe()["simulation_backend"]` name the backend an environment uses. The other families still select with their constructor cutoffs.
 
+## Render ahead
+
+`snv.FrameLoader` draws at most `Env.render_ahead_rows` stored states (1024 by default) in one `render` call, and fewer when the free device memory is smaller. On 15 November 2026 we timed one `render` call per batch for `PushT`, `TwoRoom`, `DMCReacher` and `OGBCube` at batches of 1 to 1024, on an Intel Xeon Platinum 8268 node (8 cores) and on an RTX A5000 host. The frame rate stopped growing by 256 rows for every class on both devices, except `PushT` on CUDA, which still grew at 1024 rows. A second GPU host was not measured. A larger value does not change the frames of a class whose renderer bytes do not depend on the batch size.
+
 ## Measure the fastest values
 
 Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.

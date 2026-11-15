@@ -77,22 +77,39 @@ def test_render_kwargs_pass_through():
     assert got[:, 0, 1].tolist() == [[1, 2, 3]] * 4
 
 
-def test_a_per_environment_variation_keeps_one_batch_per_call():
+def test_a_per_environment_variation_keeps_one_batch_per_call_and_a_short_last_batch():
     env = _Counting(num_envs=2, device="cpu")
     env.set_variation({"block.color": np.array([[1, 2, 3], [4, 5, 6]], np.float32)})
-    loader = snv.FrameLoader(env, id_states(4), 2)
+    loader = snv.FrameLoader(env, id_states(5), 2)
     assert loader.chunk_size == 2
     out = list(loader)
-    assert env.calls == [2, 2]
+    assert env.calls == [2, 2, 1]
     assert out[1][:, 0, 1].tolist() == [[1, 2, 3], [4, 5, 6]]
+    assert out[2][:, 0, 1].tolist() == [[1, 2, 3]]
+    assert [i for f in out for i in frame_ids(f)] == list(range(5))
+    with pytest.raises(ValueError, match="batch_size must be 2"):
+        snv.FrameLoader(env, id_states(5), 3)
 
 
-def test_a_per_row_variation_keeps_one_batch_per_call():
+def test_one_variation_row_per_stored_state_is_sliced_with_the_states():
+    env = _Counting(num_envs=1, device="cpu")
+    colors = np.arange(7 * 3, dtype=np.float32).reshape(7, 3)
+    for kwargs in ({}, {"chunk_size": 4}, {"indices": [6, 0, 3, 3, 1]}):
+        env.calls.clear()
+        loader = snv.FrameLoader(env, id_states(7), 2, variation=colors, **kwargs)
+        order = kwargs.get("indices", list(range(7)))
+        out = list(loader)
+        assert [i for f in out for i in frame_ids(f)] == order
+        assert [c for f in out for c in f[:, 0, 1].tolist()] == colors[order].tolist()
+        assert max(env.calls) > 2
+
+
+def test_a_shared_variation_row_allows_chunks_and_other_row_counts_raise():
     env = _env()
-    rows = np.tile(np.float32([7, 8, 9]), (2, 1))
-    assert snv.FrameLoader(env, id_states(4), 2, variation=rows).chunk_size == 2
     one = np.float32([[7, 8, 9]])
     assert snv.FrameLoader(env, id_states(4), 2, variation=one).chunk_size == 4
+    with pytest.raises(ValueError, match="one row per stored state"):
+        snv.FrameLoader(env, id_states(4), 2, variation=np.tile(np.float32([7, 8, 9]), (2, 1)))
 
 
 def test_chunk_rows_fits_memory_and_stays_a_multiple_of_the_batch(monkeypatch):

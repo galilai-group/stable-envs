@@ -17,9 +17,10 @@ NAMES = ("PushT", "TwoRoom", "DMCReacher", "OGBCube")
 DEVICES = ("cpu", pytest.param("cuda", marks=pytest.mark.gpu))
 ROWS = 37
 BATCHES = (1, 8, 16)
-#: Largest per-frame MSE between a chunk and a per-batch render. MuJoCo Warp draws OGBCube with a few pixels
-#: 1 level apart at another world count (measured on an RTX A5500: 94 pixels of 1 of 37 frames, MSE 0.0019).
-MSE_BOUND = {("OGBCube", "cuda"): 0.005}
+#: Largest per-frame MSE between a chunk and a per-batch render. On CUDA, OGBCube and OGBScene draw 16 or more
+#: states in OpenGL worker processes, each with its own context, so a few pixels can be 1 level apart from one
+#: process (measured on an RTX A5500 for OGBCube: 94 pixels of 1 of 37 frames, MSE 0.0019).
+MSE_BOUND = {("OGBCube", "cuda"): 0.005, ("OGBScene", "cuda"): 0.005}
 
 
 def _make(name: str, **kwargs):

@@ -61,7 +61,7 @@ for frames in loader:
     break
 ```
 
-Each batch has the same bytes as `viewer.render` of its 8 states. A few renderers give bytes that depend on the batch size, such as MJWarp for `OGBCube` on CUDA, where a few pixels differ by 1 level. Pass `indices=` to draw the states in another order, for example a shuffled order that you draw before the epoch. Other keyword arguments, such as `size` and `variation`, go to every `render` call.
+Each batch has the same bytes as `viewer.render` of its 8 states. A few renderers give bytes that depend on the batch size. `OGBCube` and `OGBScene` on CUDA draw 16 or more states in OpenGL worker processes, and a few pixels of those frames can differ by 1 level from frames drawn in one process. Pass `indices=` to draw the states in another order, for example a shuffled order that you draw before the epoch. Other keyword arguments, such as `size` and `variation`, go to every `render` call.
 
 ## Store the variation too
 
