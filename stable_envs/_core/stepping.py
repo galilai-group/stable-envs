@@ -257,6 +257,8 @@ def _true_flags(env, count, device):
 
 #: All-true ``(num_envs, 1)`` host flags per lane count; packing copies them, so the result never shares them.
 _HOST_TRUE: dict = {}
+#: ``copies`` of ``pack_to_device`` that give the ``states`` of one action from the State.
+_STATE_COPIES = (("state",), ("states",), ("state_valid",))
 
 
 def _moved_leaves(env, leaves, sequence, state_indices, final_state):
@@ -281,12 +283,17 @@ def _moved_leaves(env, leaves, sequence, state_indices, final_state):
             out.append((key, value))
     out = state + out
     out.append((("valid",), ones))
+    copies = None
     if state_indices is not None:
         width = len(state_indices)
-        out += [(("states", *key[1:]), value.reshape(n, 1, *value.shape[1:])[:, :width]) for key, value in state]
+        if width == 1:
+            # The State of the one action: copies of the State leaves from the same transfer, in (B, 1, ...) shape.
+            copies = _STATE_COPIES
+        else:
+            out += [(("states", *key[1:]), value.reshape(n, 1, *value.shape[1:])[:, :width]) for key, value in state]
         out.append((("state_valid",), ones[:, :width]))
         batches.append((("states",), (n, width)))
-    moved = pack_to_device(out, (n,), env.device, tuple(dict.fromkeys(batches)))
+    moved = pack_to_device(out, (n,), env.device, tuple(dict.fromkeys(batches)), copies)
     source = moved._tensordict
     live = source["state"]
     if not final_state:

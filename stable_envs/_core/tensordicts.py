@@ -65,13 +65,14 @@ def new_node(source: dict, batch: torch.Size, device) -> TensorDict:
     return TensorDict._new_unsafe(source, batch_size=batch, device=device)
 
 
-def nested_builder(paths, *, with_paths: bool = False):
+def nested_builder(paths, *, with_paths: bool = False, indices=None):
     """``build(leaves, node)``: the nested TensorDict from leaves in ``paths`` order; ``node(dict)`` makes one node.
 
-    With ``with_paths``, ``node(dict, path)`` also gets the key path of the node, ``()`` for the root.
+    With ``with_paths``, ``node(dict, path)`` also gets the key path of the node, ``()`` for the root. With
+    ``indices``, the leaf of ``paths[k]`` is ``leaves[indices[k]]``.
     """
     tree: dict = {}
-    for index, key in enumerate(paths):
+    for index, key in zip(range(len(paths)) if indices is None else indices, paths, strict=True):
         node = tree
         for part in key[:-1]:
             node = node.setdefault(part, {})
@@ -346,24 +347,52 @@ class _Transfer:
     extends its parent's.
     """
 
-    def __init__(self, signature, kept_keys=(), batches=()):
+    def __init__(self, signature, kept_keys=(), batches=(), copies=None):
         groups: dict = {}
         for index, (_, shape, dtype) in enumerate(signature):
             groups.setdefault(dtype, {}).setdefault(tuple(shape), []).append(index)
         self.groups, total = [], 0
+        #: ``(dtype, first byte, shape)`` of each moved leaf, by signature index.
+        self.places: dict = {}
         for dtype, runs in groups.items():
             order = [i for indices in runs.values() for i in indices]
             sizes = [len(indices) * math.prod(shape) for shape, indices in runs.items()]
             nbytes = sum(sizes) * dtype.itemsize
             self.groups.append((dtype, _NUMPY[dtype], order, total, total + nbytes, sizes, list(runs.items())))
+            offset = total
+            for shape, indices in runs.items():
+                for i in indices:
+                    self.places[i] = (dtype, offset, shape)
+                    offset += math.prod(shape) * dtype.itemsize
             total += -(-nbytes // _ALIGN) * _ALIGN
-        self.total = max(total, _ALIGN)
-        self.count = len(signature)
+        #: ``(key, source index, shape)`` of each mirror: a copy of a moved leaf below node ``copies[0]``, under
+        #: ``copies[1]`` with a time axis of length one, cut from a second copy of the packed leaves that follows
+        #: them in the buffer.
+        self.mirrors = ()
+        if copies is not None:
+            source, target, before = copies
+            depth = len(source)
+            self.mirrors = tuple(
+                ((*target, *key[depth:]), i, (shape[0], 1, *shape[1:]))
+                for i, (key, shape, _) in enumerate(signature)
+                if key[:depth] == source
+            )
+        self.main = max(total, _ALIGN)
+        self.total = 2 * self.main if self.mirrors else self.main
+        self.count = len(signature) + len(self.mirrors)
         self.buffers: dict[int, np.ndarray] = {}
         #: Per thread: device blocks of earlier calls with their leaves and the counts that show them unused.
         self.held: dict[int, list] = {}
-        keys = [key for key, _, _ in signature] + list(kept_keys)
-        self.build = nested_builder(keys, with_paths=True)
+        keys = [key for key, _, _ in signature] + [key for key, _, _ in self.mirrors] + list(kept_keys)
+        indices = list(range(len(keys)))
+        if self.mirrors:
+            # The copies sit before key ``before`` in the result, as they would if they were moved leaves.
+            first = len(signature)
+            at = next((k for k, key in enumerate(keys[:first]) if key == before), first)
+            copied = indices[first : first + len(self.mirrors)]
+            indices = indices[:at] + copied + indices[at:first] + indices[first + len(self.mirrors) :]
+            keys = [keys[i] for i in indices]
+        self.build = nested_builder(keys, with_paths=True, indices=indices)
         #: Batch size of every node below the root whose batch size differs from the root's.
         self.batches: dict = {}
         explicit = dict(batches)
@@ -419,6 +448,12 @@ class _Transfer:
                 offset += size
                 for i, row in zip(indices, piece, strict=True):
                     parts[i] = torch.from_numpy(row)
+        first = self.count - len(self.mirrors)
+        for j, (_, source, shape) in enumerate(self.mirrors):
+            dtype, start, _ = self.places[source]
+            start += self.main
+            stop = start + math.prod(shape) * dtype.itemsize
+            parts[first + j] = torch.from_numpy(packed[start:stop].view(_NUMPY[dtype]).reshape(shape))
         return parts
 
     def node(self, batch, device):
@@ -438,6 +473,11 @@ class _Transfer:
                 else:
                     for i, leaf in zip(indices, piece.view(len(indices), *shape).unbind(0), strict=True):
                         parts[i] = leaf
+        first = self.count - len(self.mirrors)
+        for j, (_, source, shape) in enumerate(self.mirrors):
+            dtype, start, _ = self.places[source]
+            start += self.main
+            parts[first + j] = moved[start : start + math.prod(shape) * dtype.itemsize].view(dtype).view(shape)
 
 
 def _uses(tensor) -> int:
@@ -509,30 +549,35 @@ def leaf_tree(leaves) -> dict:
     return tree
 
 
-def pack_to_device(leaves, batch, device, batches=()) -> TensorDict:
+def pack_to_device(leaves, batch, device, batches=(), copies=None) -> TensorDict:
     """The TensorDict of host NumPy ``leaves``, ``[(key path, array)]``, on ``device`` in one copy.
 
     The arrays are packed by dtype straight into one host buffer, with no intermediate tensor per leaf. On an
     accelerator each returned leaf is a view of the device copy, which can be the block of an earlier result that
     nothing uses any more; on the CPU each leaf is a view of a new buffer that the result owns. ``batches`` holds
     ``(node path, batch size)`` of each node whose batch size extends its parent's; the batch size of a node is its
-    parent's unless listed.
+    parent's unless listed. ``copies``, ``(source node path, target node path, key)``, adds a copy of every leaf
+    below the source node under the target node, before ``key`` in the result, with a time axis of length one after
+    the batch axis. The buffer then holds the packed leaves twice, written with one memory copy, and the copies
+    come from the second half, so they share no memory with their sources.
     """
     device = _device(device)
     batch = torch.Size(batch)
     keys, arrays = zip(*leaves)
     # The structure of the leaves, read without a Python step per leaf.
-    signature = (keys, tuple(map(_SHAPE, arrays)), tuple(map(_DTYPE, arrays)), tuple(batches))
+    signature = (keys, tuple(map(_SHAPE, arrays)), tuple(map(_DTYPE, arrays)), tuple(batches), copies)
     plan = _transfers.get(signature)
     if plan is None:
         if len(_transfers) >= _TRANSFERS_HELD:
             _transfers.clear()
         layout = tuple(zip(keys, signature[1], (_TORCH[kind] for kind in signature[2])))
-        plan = _transfers[signature] = _Transfer(layout, (), signature[3])
+        plan = _transfers[signature] = _Transfer(layout, (), signature[3], signature[4])
     cpu = device.type == "cpu"
     # On the CPU the leaves are views of a new buffer, which the result owns.
     packed = np.empty(plan.total, np.uint8) if cpu else plan.staging()
     for _, kind, order, start, stop, _, _ in plan.groups:
         np.concatenate([arrays[i].reshape(-1) for i in order], out=packed[start:stop].view(kind))
+    if plan.mirrors:
+        packed[plan.main :] = packed[: plan.main]
     parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
     return plan.build(parts, plan.node(batch, device))

@@ -258,3 +258,26 @@ def test_host_adapter_moves_arguments_to_the_host_and_results_to_the_device():
     assert out["reward"].tolist() == [2.0, 2.0]
     assert set(adapter.render_fields()) == {"a", "b"}
     assert adapter.template is _Adapter.template
+
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_pack_to_device_copies_the_state_under_states_with_a_time_axis(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    leaves = [
+        (("state", "x"), np.arange(6, dtype=np.float32).reshape(2, 3)),
+        (("state", "n"), np.array([4, 5], np.int64)),
+        (("reward",), np.array([0.5, 1.5])),
+        (("state_valid",), np.ones((2, 1), np.bool_)),
+    ]
+    copies = (("state",), ("states",), ("state_valid",))
+    result = pack_to_device(leaves, (2,), device, ((("states",), (2, 1)),), copies)
+    assert list(result.keys()) == ["state", "reward", "states", "state_valid"]
+    assert result["states"].batch_size == torch.Size([2, 1])
+    for key in ("x", "n"):
+        state, states = result["state", key], result["states", key]
+        assert states.shape == (2, 1, *state.shape[1:])
+        assert torch.equal(states[:, 0], state)
+        assert states.data_ptr() != state.data_ptr()
+    result["state", "x"].zero_()
+    assert torch.equal(result["states", "x"][:, 0].cpu(), torch.arange(6.0).reshape(2, 3))
