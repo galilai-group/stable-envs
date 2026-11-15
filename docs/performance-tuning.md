@@ -32,6 +32,16 @@ The shipped switch points were measured on 14 November 2026 on hosts with an NVI
 
 After `stable-envs tune`, `"auto"` can select different backends on different machines for the same batch size. Both backends draw the reset values from the same host generators, so a seed gives the same reset state on either backend, to float precision. The physics can still differ: the CPU backends compute in float64 and most GPU backends in float32, so trajectories can move apart over time. For runs that must be identical across machines, pass `simulation_backend` explicitly. `env.simulation_backend` and `env.describe()["simulation_backend"]` name the backend an environment uses. The other families still select with their constructor cutoffs.
 
+## Renderers
+
+`PushT`, `PushTDiscrete`, `TwoRoom`, `TwoRoomTarget` and `DMCReacher` have a CPU renderer and a CUDA renderer. A CUDA renderer has a fixed cost for each call, so a small batch draws faster on the CPU. With the default `backend="auto"` on CUDA, a call that draws fewer than `large_renderer_min_rows` frames uses the CPU renderer. The frames then move to CUDA in one copy from pinned memory. A larger call uses the CUDA renderer. This applies to `render` and to the frames that `step` returns. An explicit `backend` draws every batch with that renderer.
+
+The switch point comes from, in this order: `snv.tuning.override`, `snv.tuning.set` or `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS`; the tuning cache that `stable-envs tune <Env> --batch N --device cuda` writes; and the value each class ships. Nothing is timed when you build an environment or draw a frame. `stable-envs tune` times both renderers at the batch size you give and stores the choice for that power-of-two batch range, as it does for the physics backends.
+
+The CPU and CUDA renderers of these classes draw the same frames. PushT draws the same bytes on both. TwoRoom frames differ in less than 0.01 % of the pixels by one level. DMCReacher frames differ by a mean per-frame MSE of MSE_REACHER (0-255 scale), and both renderers have the same MSE against the source. Set `large_renderer_min_rows=1` to draw every CUDA batch with the CUDA renderer.
+
+The shipped switch points were measured on 15 November 2026 on hosts with an NVIDIA RTX 3090 and an NVIDIA RTX A5000, 8 CPU cores each. `python -m benchmarks.backend_switch --render <Env>` times both renderers of a class at batches 1, 2, 4, and so on, the way `stable-envs tune` times them, and prints the smallest batch from which the CUDA renderer is faster at every larger batch. Where the two GPU types disagree, the class ships the larger value.
+
 ## Measure the fastest values
 
 Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.
