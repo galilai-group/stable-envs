@@ -324,31 +324,56 @@ def entry_key(path: str, size: int, batch: int) -> str:
     return "{}|{}|{}-{}".format(path, int(size), *batch_range(batch))
 
 
-_files: dict[Path, tuple[float, dict, bool]] = {}
+_files: dict[Path, tuple[int, float | None, dict, bool]] = {}
+#: Bumped by ``write_cache``, ``set``, ``reset``, ``override`` and ``refresh``. ``read_cache`` reads a file again only
+#: after a bump, so a lookup on the step or render path costs no file system call.
+_generation = 0
+
+
+def _bump() -> None:
+    global _generation
+    _generation += 1
+
+
+def refresh() -> None:
+    """Read the cache files again at their next use. Building an environment calls it."""
+    _bump()
 
 
 def read_cache(device="cpu") -> tuple[dict, bool]:
     """Return the cache file of ``device`` and whether it is current (same device, driver, CPU and version).
 
+    The file is read again only after ``refresh`` or a change of knobs in this process. A file that another process
+    writes is read when this process builds its next environment.
+
     Args:
         device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
     """
     path = cache_path(device)
-    try:
-        mtime = path.stat().st_mtime
-    except (OSError, AttributeError):
+    if path is None:
         return {}, False
     hit = _files.get(path)
-    if hit is None or hit[0] != mtime:
+    if hit is not None and hit[0] == _generation:
+        return hit[2], hit[3]
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = None
+    if mtime is None:
+        data, current = {}, False
+    elif hit is not None and hit[1] == mtime:
+        data, current = hit[2], hit[3]
+    else:
         try:
             data = json.loads(path.read_text())
             data["entries"].items()
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
             warnings.warn(f"ignoring tuning cache {path}: {e!r}", RuntimeWarning, stacklevel=2)
             data = {}
-        hit = _files[path] = (mtime, data, bool(data) and data.get("stamp") == stamp(_dev(device)))
-        _log("DEBUG", f"Read the tuning cache {path} (current: {hit[2]}).")
-    return hit[1], hit[2]
+        current = bool(data) and data.get("stamp") == stamp(_dev(device))
+        _log("DEBUG", f"Read the tuning cache {path} (current: {current}).")
+    _files[path] = (_generation, mtime, data, current)
+    return data, current
 
 
 def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
@@ -378,6 +403,7 @@ def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
     tmp.write_text(json.dumps({"stamp": stamp(where), "entries": merged}, indent=2, sort_keys=True) + "\n")
     tmp.replace(path)
     _files.pop(path, None)
+    _bump()
     return path
 
 
@@ -467,12 +493,14 @@ def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.se
             _set.pop(name, None)
         else:
             _set[name] = value
+    _bump()
     return dict(_set)
 
 
 def reset() -> None:
     """Clear every knob set with ``set``."""
     _set.clear()
+    _bump()
 
 
 @contextlib.contextmanager
@@ -486,10 +514,12 @@ def override(**knobs: int) -> Iterator[None]:
     """
     values = {k: v for k, v in check(knobs).items() if v is not None}
     token = _scopes.set((*_scopes.get(), values))
+    _bump()
     try:
         yield
     finally:
         _scopes.reset(token)
+        _bump()
 
 
 def describe(**where) -> dict[str, tuple[int | None, str]]:
@@ -575,6 +605,7 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
 
 
 def _clear_caches() -> None:
+    _bump()
     _files.clear()
     _derived.clear()
     _noticed.clear()
