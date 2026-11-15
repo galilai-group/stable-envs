@@ -52,8 +52,12 @@ def make_maze_adapter(
 
 
 #: Shipped CUDA switch points of Cube and Scene: the smallest batch that steps on MuJoCo Warp; smaller batches step
-#: on native ``mujoco.batch``. The knob and the tuning cache (``stable-envs tune``) take precedence. MEASUREMENT
-MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {}
+#: on native ``mujoco.batch``. The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on the CPU backend where it was faster on either one.
+MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 64, "Scene": 128}
 
 
 def _measure_manipulation(family: str, device: str | torch.device):
@@ -99,7 +103,7 @@ def make_manipulation_adapter(
     reward_task_id: int | None,
     simulation_backend: str | None = "auto",
 ) -> OGBManipulationBatchAdapter | OGBManipulationWarpAdapter:
-    """Cube/Scene lanes on the backend that ``manipulation_backend`` selects: MuJoCo Warp or native ``mujoco.batch``."""
+    """Cube/Scene lanes on the backend that ``manipulation_backend`` selects: MuJoCo Warp or ``mujoco.batch``."""
     backend = manipulation_backend(family, num_envs, device, simulation_backend)
     if backend == "mjwarp":
         from .manipulation_warp import OGBManipulationWarpAdapter

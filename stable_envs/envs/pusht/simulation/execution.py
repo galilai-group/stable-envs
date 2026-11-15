@@ -14,7 +14,12 @@ if TYPE_CHECKING:
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("triton", "jax", "numba")
 #: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
-#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence. MEASUREMENT
+#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence.
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on the CPU backend where it was faster on either one.
+#: Triton was faster from one environment on both GPU types, because a Numba step moves the whole State to CUDA.
 CUDA_MIN_ENVS: int | None = None
 
 

@@ -15,8 +15,30 @@ if TYPE_CHECKING:
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp, per simulator key; smaller batches step
 #: on native physics. A key that isn't here uses MuJoCo Warp at every batch size. The knob and the tuning cache
-#: (``stable-envs tune``) take precedence. MEASUREMENT
-CUDA_MIN_ENVS: dict[str, int] = {}
+#: (``stable-envs tune``) take precedence.
+#: Measured 2026-11-14 on Oscar RTX 3090 (EPYC 7532) and RTX A5000 (EPYC 7532 and 7662) nodes, 8 cores each: the
+#: per-call step time of both backends, timed as ``stable-envs tune`` times them, at batches 1, 2, 4, ..., 4096
+#: (``python -m benchmarks.backend_switch <Env>``). Where the two GPU types disagree, the larger value is kept, so
+#: both hosts stay on the CPU backend where it was faster on either one.
+CUDA_MIN_ENVS: dict[str, int] = {
+    "acrobot": 512,  # RTX 3090 512, RTX A5000 128
+    "ball_in_cup": 512,  # 512, 256
+    "cartpole": 512,  # 512, 128
+    "cartpole-balance": 256,  # 256, 64
+    "cheetah": 64,
+    "finger": 128,  # 128, 64
+    "finger-spin": 128,
+    "finger-turn_easy": 128,  # 128, 64
+    "hopper": 256,  # 256, 128
+    "humanoid": 128,
+    "manipulator": 512,  # 256, 512
+    "pendulum": 256,
+    "point_mass-easy": 64,
+    "quadruped": 128,
+    "reacher": 128,
+    "swimmer-swimmer6": 256,
+    "walker": 512,  # 256, 512
+}
 
 
 def _measure(key: str, device: str | torch.device):
