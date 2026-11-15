@@ -1,6 +1,6 @@
 """Offline frames: draw stored states ahead in large ``env.render`` calls and hand them out a batch at a time.
 
-The chunk size comes from memory alone, never from timing: two chunks of frames and a renderer working buffer
+The chunk size comes from memory alone, never from timing: two chunks of frames and renderer working memory
 per row must fit in a quarter of the free memory of the device, and one chunk of frames stays under
 ``MAX_CHUNK_BYTES`` so that every renderer can index it with 32-bit offsets.
 """
@@ -18,6 +18,9 @@ from .env import Env, State
 
 #: Most bytes of frames in one chunk; below 2**31, so that 32-bit offsets reach every pixel.
 MAX_CHUNK_BYTES = 1 << 30
+#: Least working memory per row; it covers the per-world buffers of the MuJoCo Warp renderers (DMCReacher at 84x84
+#: holds about 0.9 MiB per row).
+MIN_ROW_WORK = 4 << 20
 #: Share of the free device memory that the frames and working buffers of render-ahead may use.
 MEMORY_SHARE = 4
 
@@ -33,10 +36,10 @@ def _free_bytes(device: torch.device) -> int:
 
 
 def chunk_rows(env: Env, batch_size: int, total: int, size: int | None = None, supersample: int | None = None) -> int:
-    """Rows of one render-ahead chunk: a multiple of ``batch_size`` that fits in memory, at most ``total``.
+    """Rows of one render-ahead chunk: ``total`` when it fits in memory, else a multiple of ``batch_size``.
 
-    A row needs two frames (the chunk that the caller holds and the next one) and a float32 RGBA image at the
-    supersampled size as renderer working memory.
+    A row needs two frames (the chunk that the caller holds and the next one) and renderer working memory: a
+    float32 RGBA image at the supersampled size, and at least ``MIN_ROW_WORK``.
     """
     b = max(1, int(batch_size))
     if total <= b:
@@ -44,9 +47,9 @@ def chunk_rows(env: Env, batch_size: int, total: int, size: int | None = None, s
     h, w = (size, size) if size is not None else tuple(env.frame_spec.shape[:2])
     ss = int(supersample if supersample is not None else getattr(env, "ss", 1) or 1)
     frame = int(h) * int(w) * 3
-    per_row = 2 * frame + 16 * int(h) * int(w) * ss * ss
-    rows = min(_free_bytes(env.device) // MEMORY_SHARE // per_row, MAX_CHUNK_BYTES // frame, total)
-    return max(b, rows // b * b)
+    per_row = 2 * frame + max(16 * int(h) * int(w) * ss * ss, MIN_ROW_WORK)
+    rows = min(_free_bytes(env.device) // MEMORY_SHARE // per_row, MAX_CHUNK_BYTES // frame)
+    return int(total) if rows >= total else max(b, rows // b * b)
 
 
 class FrameLoader:

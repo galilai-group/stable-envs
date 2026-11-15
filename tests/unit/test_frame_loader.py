@@ -97,11 +97,13 @@ def test_a_per_row_variation_keeps_one_batch_per_call():
 
 def test_chunk_rows_fits_memory_and_stays_a_multiple_of_the_batch(monkeypatch):
     env = _env()
-    frame = 3 * 4 * 3
-    per_row = 2 * frame + 16 * 3 * 4
+    h, w = env.frame_spec.shape[:2]
+    frame = h * w * 3
+    per_row = 2 * frame + max(16 * h * w * env.ss**2, frames_mod.MIN_ROW_WORK)
     monkeypatch.setattr(frames_mod, "_free_bytes", lambda device: 4 * per_row * 50)
     assert frames_mod.chunk_rows(env, 8, 1000) == 48
-    assert frames_mod.chunk_rows(env, 8, 20) == 16
+    assert frames_mod.chunk_rows(env, 8, 20) == 20
+    assert frames_mod.chunk_rows(env, 8, 52) == 48
     assert frames_mod.chunk_rows(env, 8, 5) == 5
     monkeypatch.setattr(frames_mod, "_free_bytes", lambda device: 0)
     assert frames_mod.chunk_rows(env, 8, 1000) == 8

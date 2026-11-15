@@ -17,9 +17,16 @@ ROWS = 37
 BATCHES = (1, 8, 16)
 
 
+def _make(name: str, **kwargs):
+    try:
+        return snv.make(name, **kwargs)
+    except ModuleNotFoundError as e:
+        pytest.skip(str(e))
+
+
 def _states(name: str) -> snv.State:
     """``ROWS`` full States along seeded random-action rollouts, on the CPU."""
-    with snv.make(name, num_envs=ROWS, device="cpu") as env:
+    with _make(name, num_envs=ROWS, device="cpu") as env:
         env.reset(seed=3)
         rng = np.random.default_rng(3)
         for _ in range(6):
@@ -28,7 +35,7 @@ def _states(name: str) -> snv.State:
 
 
 def _rows(name: str):
-    with snv.make(name, num_envs=1, device="cpu") as env:
+    with _make(name, num_envs=1, device="cpu") as env:
         try:
             return env.sample_states(ROWS, rng=np.random.default_rng(4))
         except NotImplementedError:
