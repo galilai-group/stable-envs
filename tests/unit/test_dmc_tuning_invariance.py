@@ -44,10 +44,10 @@ def test_cpu_ray_budget_keeps_fixed_camera_frames(supersample):
 
 @pytest.mark.parametrize("threads", [2, 3, 6])
 def test_thread_count_keeps_state(threads, monkeypatch):
-    from stable_envs.envs.dmcontrol.simulation import batch
+    from stable_envs.envs.dmcontrol.simulation import factory
 
     # Six Cartpole lanes are too little work for a second thread; give every thread work so the knob applies.
-    monkeypatch.setattr(batch, "THREAD_WORK", 1e-9)
+    monkeypatch.setattr(factory, "LANES_PER_THREAD", {})
     with tuning.override(dmc_threads=1):
         reference = snv.make("DMCCartpoleSwingup", num_envs=6, seed=3, device="cpu")
     with tuning.override(dmc_threads=threads):

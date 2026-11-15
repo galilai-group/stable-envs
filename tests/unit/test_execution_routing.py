@@ -205,7 +205,8 @@ def dmc_factory(monkeypatch, tmp_path):
     monkeypatch.delenv("STABLE_ENVS_DMC_THREADS", raising=False)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.setattr(factory, "make_local", lambda *args: None)
-    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda lanes, task, threads, **_: threads)
+    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda lanes, task, threads: threads)
+    monkeypatch.setattr(factory, "LANES_PER_THREAD", {})
     tuning.reset()
     tuning._clear_caches()
     yield factory
@@ -230,6 +231,15 @@ def test_dmc_batch_threads_follow_the_knob_within_cpus_and_lanes(
     monkeypatch.setattr(dmc_factory, "cpu_limit", lambda: 6 if cpus is None else cpus)
     with tuning.override(**knobs):
         assert dmc_factory.make_batch("cartpole", batch) == expected
+
+
+@pytest.mark.family("dmc")
+def test_dmc_rows_per_thread_cover_every_batch_domain():
+    from stable_envs.envs.dmcontrol.simulation.factory import BATCH_TASKS, LANES_PER_THREAD, step_threads
+
+    assert LANES_PER_THREAD.keys() == BATCH_TASKS.keys()
+    assert min(LANES_PER_THREAD.values()) >= 2
+    assert step_threads("reacher", 8, 8) == 1 and step_threads("walker", 8, 8) == 4 and step_threads("walker", 64, 8) == 8
 
 
 @pytest.mark.family("dmc")

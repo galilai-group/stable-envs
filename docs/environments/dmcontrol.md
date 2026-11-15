@@ -25,7 +25,7 @@ Each action dimension drives one actuator of the model, in the order of the MuJo
 
 ## Simulation
 
-dm_control resets and restores each task. On CPU, every environment of a batch steps in one `mujoco.batch` call on a pool of threads. `dmc_threads` caps the number of threads, and a step with little MuJoCo work uses fewer: when you construct the environment, it times one MuJoCo step and gives each thread about 0.1 ms of work per call and at least two environments. The number of threads doesn't change the [state](../terms.md#state) or the outputs. Build the environment in the process that steps it: the `mujoco.batch` threads don't survive `fork()`.
+dm_control resets and restores each task. On CPU, every environment of a batch steps in one `mujoco.batch` call on a pool of threads. `dmc_threads` caps the number of threads, and a task with little MuJoCo work uses fewer: each thread gets about 0.1 ms of work per call, by a number of environments per thread that each task ships (see [DM Control threads](../performance-tuning.md#dm-control-threads)), and at least two environments. The number of threads doesn't change the [state](../terms.md#state) or the outputs. Build the environment in the process that steps it: the `mujoco.batch` threads don't survive `fork()`.
 
 ### Physics backends
 

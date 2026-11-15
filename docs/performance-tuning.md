@@ -32,6 +32,10 @@ The shipped switch points were measured on 14 November 2026 on hosts with an NVI
 
 After `stable-envs tune`, `"auto"` can select different backends on different machines for the same batch size. Both backends draw the reset values from the same host generators, so a seed gives the same reset state on either backend, to float precision. The physics can still differ: the CPU backends compute in float64 and most GPU backends in float32, so trajectories can move apart over time. For runs that must be identical across machines, pass `simulation_backend` explicitly. `env.simulation_backend` and `env.describe()["simulation_backend"]` name the backend an environment uses. The other families still select with their constructor cutoffs.
 
+## DM Control threads
+
+On the CPU, a DM Control batch steps in one `mujoco.batch` call on at most `dmc_threads` threads, one per CPU in the process affinity and one per batch row. A domain with little MuJoCo work per step uses fewer threads: one per `LANES_PER_THREAD` batch rows (in `stable_envs/envs/dmcontrol/simulation/factory.py`), so that each thread gets about 0.1 ms of MuJoCo work per call, and each thread gets at least two batch rows. Nothing is timed when you build an environment. The rows per thread were measured on 15 November 2026 on two hosts with 8 CPU cores each, an AMD EPYC 7662 and an Intel Xeon Platinum 8268: the median time of one environment's `mj_step` call with the task's substeps, as the mean of the two hosts, sets the rows that hold 0.1 ms of work. `dmc_threads` overrides the cap, and `stable-envs tune` can measure it for a batch range.
+
 ## Measure the fastest values
 
 Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.
