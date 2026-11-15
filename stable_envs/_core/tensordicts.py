@@ -281,7 +281,8 @@ def stack_leaves(values, *, view: bool = False) -> TensorDict:
                 # One copy of packed leaves instead of a copy per leaf.
                 out = _stack_node(values, batch, first.device, True)
                 slots = _leaf_slots(out, [])
-                if slots and _clone_packed(slots):
+                # A single leaf costs less to stack than to copy through its storage.
+                if len(slots) > 1 and _clone_packed(slots):
                     return out
             return _stack_node(values, batch, first.device, view)
         except (_Irregular, KeyError):
