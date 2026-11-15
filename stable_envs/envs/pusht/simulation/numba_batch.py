@@ -1,7 +1,10 @@
 """PushT batches stepped by the Numba port of the contact solver on the CPU."""
 
+import math
+
 import numpy as np
 import torch
+from numba import njit
 from tensordict import TensorDict
 
 from .batch import PushTBatchAdapter
@@ -10,6 +13,54 @@ from .replay_batch import validate_actions
 
 _SYMMETRIES = np.array([2 * np.pi, 2 * np.pi, 2 * np.pi, np.pi, np.pi / 2, np.pi, 2 * np.pi, np.pi / 2])
 _LATEST_TAGS = np.array([[4, 0], [4, 1]], np.uint8)
+_TURN = 2 * np.pi
+_SUCCESS_ANGLE = np.pi / 9
+
+
+@njit(cache=True)
+def _finish(
+    body, active, counts, contacts, segment_count, relative, actions, code, tag, latest, latest_type, present,
+    history, codes, lengths, observation, goal, shape, reward, success,
+):  # fmt: skip
+    """Record the step of the ``active`` lanes and write their observation, reward and success.
+
+    The same arithmetic, in the same order, as the NumPy expressions of the source task.
+    """
+    for lane in range(body.shape[0]):
+        on = active[lane]
+        n = lengths[lane]
+        if on:
+            contacts[lane] = counts[lane, 0]
+            segment_count[lane] = counts[lane, 1]
+            history[lane, n, 0] = actions[lane, 0]
+            history[lane, n, 1] = actions[lane, 1]
+            codes[lane, n] = code
+            lengths[lane] = n + 1
+            latest[lane, 0] = relative[lane, 0]
+            latest[lane, 1] = relative[lane, 1]
+            latest_type[lane, 0] = tag[0]
+            latest_type[lane, 1] = tag[1]
+            present[lane] = True
+        else:
+            history[lane, n, 0] = 0.0
+            history[lane, n, 1] = 0.0
+            codes[lane, n] = 0
+        obs = observation[lane]
+        obs[0], obs[1] = body[lane, 0, 0], body[lane, 0, 1]
+        obs[2], obs[3] = body[lane, 1, 0], body[lane, 1, 1]
+        obs[4] = body[lane, 1, 4] % _TURN
+        obs[5], obs[6] = body[lane, 0, 2], body[lane, 0, 3]
+        total = 0.0
+        near = 0.0
+        for i in range(obs.shape[0]):
+            d = goal[lane, i] - obs[i]
+            total += d * d
+            if i == 3:
+                near = total
+        reward[lane] = -math.sqrt(total)
+        symmetry = _SYMMETRIES[int(shape[lane])]
+        angle = abs(goal[lane, 4] - obs[4]) % symmetry
+        success[lane] = (math.sqrt(near) < 20) & (min(angle, symmetry - angle) < _SUCCESS_ANGLE)
 
 
 class PushTNumbaAdapter(PushTBatchAdapter):
@@ -103,7 +154,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         actions = actions.numpy() if torch.is_tensor(actions) else np.asarray(actions)
         if actions.shape != (self.num_envs, 2):
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
-        discrete = self.template.discrete
+        discrete = self.discrete
         validate_actions(actions, discrete)
         everyone = active is None
         if everyone:
@@ -138,42 +189,33 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             counts,
             host["render_segments"],
         )
-        if everyone:
-            host["contacts"][:] = counts[:, 0]
-            host["render_segment_count"][:] = counts[:, 1]
+        self._reserve_history()
+        if self.discrete:
+            code = (np.dtype(np.int32), np.dtype(np.int64)).index(actions.dtype) + 2
         else:
-            host["contacts"][active] = counts[active, 0]
-            host["render_segment_count"][active] = counts[active, 1]
-        self._record(host, actions, relative, active, everyone)
-        observation = host["observation"]
-        observation[:, 0:2] = body[:, 0, :2]
-        observation[:, 2:4] = body[:, 1, :2]
-        observation[:, 4] = body[:, 1, 4] % (2 * np.pi)
-        observation[:, 5:7] = body[:, 0, 2:4]
-        goal = host["goal/value"]
-        distance = np.sqrt(((goal - observation) ** 2).sum(1))
-        shape = host["shape"].astype(np.int64)
-        symmetry = _SYMMETRIES[shape]
-        angle = np.abs(goal[:, 4] - observation[:, 4]) % symmetry
-        success = (np.sqrt(((goal[:, :4] - observation[:, :4]) ** 2).sum(1)) < 20) & (
-            np.minimum(angle, symmetry - angle) < np.pi / 9
-        )
-        success = torch.from_numpy(success)
-        outputs = dict(
-            reward=torch.from_numpy(-distance),
-            success=success,
-            terminated=success.clone(),
-            truncated=torch.zeros_like(success),
-        )
+            code = (np.dtype(np.float32), np.dtype(np.float64)).index(actions.dtype)
+        n = self.num_envs
+        reward = np.empty(n)
+        flags = np.zeros((3, n), np.bool_)
+        lengths = self._lengths.numpy()
+        _finish(
+            body, active, counts, host["contacts"], host["render_segment_count"], relative, actions, code,
+            _LATEST_TAGS[0 if relative.dtype == np.float32 else 1], host["latest/value"], host["latest/type"],
+            host["latest_present"].reshape(n), self._actions.numpy(), self._codes.numpy(), lengths,
+            host["observation"], host["goal/value"], host["shape"].reshape(n), reward, flags[0],
+        )  # fmt: skip
+        self._width = int(lengths.max())
+        flags[1] = flags[0]
+        success, terminated, truncated = torch.from_numpy(flags).unbind(0)
+        outputs = dict(reward=torch.from_numpy(reward), success=success, terminated=terminated, truncated=truncated)
         if capture_state:
             # For an accelerator, the State moves there in the export's own copy, with no plan per history width.
             outputs["state"] = self._export(self.export_device or self._state_device)
         return TensorDict._new_unsafe(outputs, batch_size=torch.Size([self.num_envs]), device=self._state_device)
 
-    def _record(self, host, actions, relative, active, everyone):
-        """Append the actions of the active environments to their histories and set the latest action fields."""
-        lengths = self._lengths.numpy()
-        width = int(lengths.max()) + 1
+    def _reserve_history(self):
+        """Widen the action history buffers when a lane's next action would not fit."""
+        width = int(self._lengths.numpy().max()) + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])
             self._actions = torch.cat(
@@ -182,22 +224,3 @@ class PushTNumbaAdapter(PushTBatchAdapter):
             self._codes = torch.cat(
                 (self._codes, self._codes.new_zeros(self.num_envs, capacity - self._codes.shape[1])), 1
             )
-        lane = np.arange(self.num_envs)
-        if self.template.discrete:
-            code = (np.dtype(np.int32), np.dtype(np.int64)).index(actions.dtype) + 2
-        else:
-            code = (np.dtype(np.float32), np.dtype(np.float64)).index(actions.dtype)
-        history, codes = self._actions.numpy(), self._codes.numpy()
-        history[lane, lengths] = np.where(active[:, None], actions.astype(np.float64), 0.0)
-        codes[lane, lengths] = np.where(active, code, 0)
-        lengths += active
-        self._width = int(lengths.max())
-        tag = _LATEST_TAGS[0 if relative.dtype == np.float32 else 1]
-        if everyone:
-            host["latest/value"][:] = relative
-            host["latest/type"][:] = tag
-            host["latest_present"][:] = True
-        else:
-            host["latest/value"][active] = relative[active]
-            host["latest/type"][active] = tag
-            host["latest_present"][active] = True

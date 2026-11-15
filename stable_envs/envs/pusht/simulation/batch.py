@@ -177,15 +177,20 @@ class PushTBatchAdapter(PushTReplayAdapter):
         if self._layout is None:
             rank = {key: index for index, key in enumerate(self._keys)}
             order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
-            self._layout = StateLayout(
-                [
-                    (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), fields[key].dtype)
-                    for key in order
-                ],
-                self.num_envs,
-                static=frozenset(key for key in order if not _changes_with_step(key)),
+            leaves = tuple(
+                (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), fields[key].dtype)
+                for key in order
             )
-            self._layout.load_static(fields)
+            # Resets keep the leaves, so a layout built for them before serves again with new static values.
+            layouts = self.__dict__.setdefault("_layouts", {})
+            layout = layouts.get(leaves)
+            if layout is None:
+                if len(layouts) >= 8:
+                    layouts.clear()
+                static = frozenset(key for key in order if not _changes_with_step(key))
+                layout = layouts[leaves] = StateLayout(leaves, self.num_envs, static=static)
+            layout.load_static(fields)
+            self._layout = layout
         return self._layout
 
     def get_state(self):
@@ -214,12 +219,14 @@ class PushTBatchAdapter(PushTReplayAdapter):
             install_latest(self.envs, *latest)
             return super().reset(seed, options)
         validate_seed(seed)
-        space = self.template.env.variation_space
-        lanes = (
-            options
-            if isinstance(options, list)
-            else [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
-        )
+        if isinstance(options, list):
+            lanes = options
+        elif isinstance((options or {}).get("variation_values"), dict):
+            # Only per-lane variation values need the space; reading it rebuilds a lane the workers own.
+            space = self.template.env.variation_space
+            lanes = [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+        else:
+            lanes = [options] * self.num_envs
         # Workers that do not own the lanes first take the owners' metadata from the columns.
         sync = None if self._pool_owns else self._static_columns()
         static, current, geometry = self._pool.reset(seed, lanes, latest, sync)
@@ -253,7 +260,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
 
     def step(self, actions, *, active=None, capture_state=True):
         actions = torch.as_tensor(actions, device=self.device)
-        discrete = self.template.discrete
+        discrete = self.discrete
         allowed = (torch.int32, torch.int64) if discrete else (torch.float32, torch.float64)
         if actions.shape != (self.num_envs, 2) or actions.dtype not in allowed:
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
@@ -383,6 +390,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
         staged = object.__new__(type(self))
         staged.__dict__ = self.__dict__.copy()
         staged.envs, staged._sources, staged._columns, staged._prepared = [], [None] * self.num_envs, {}, None
+        # A layout holds the static values of its owner, so the staged batch builds its own.
+        staged._layouts = {}
         staged._pool, staged._pool_owns = None, False
         try:
             for row in rows:

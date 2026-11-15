@@ -47,12 +47,18 @@ def _finite(arrays):
     return all(np.isfinite(np.concatenate(parts)).all() for parts in small.values())
 
 
+def _children(node):
+    """The ``{name: child}`` of a TensorDict node, or None for a leaf."""
+    if type(node) is TensorDict:
+        return node._tensordict
+    return dict(node.items()) if isinstance(node, TensorDictBase) else None
+
+
 def _lookup(nodes, key):
     """``state.get(key, None)`` through ``nodes``: the children of each nested TensorDict already reached."""
     parent = key[:-1]
     if parent not in nodes:
-        node = _lookup(nodes, parent)
-        nodes[parent] = dict(node.items()) if isinstance(node, TensorDictBase) else None
+        nodes[parent] = _children(_lookup(nodes, parent))
     children = nodes[parent]
     return None if children is None else children.get(key[-1])
 
@@ -175,6 +181,7 @@ class PushT(Env):
         device = torch.device(Env.resolve_device(device))
         resolution = self.default_size if size is None else size
         config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
+        self._render_action = render_action
         self.simulation_backend = pusht_backend(
             num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
         )
@@ -375,7 +382,7 @@ class PushT(Env):
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        selected, error, nodes = {}, None, {(): dict(state.items())}
+        selected, error, nodes = {}, None, {(): _children(state)}
         batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
             value = _lookup(nodes, key)
@@ -415,7 +422,7 @@ class PushT(Env):
         size = self.size if size is None else size
         if type(size) is not int or size < 1:
             raise ValueError("PushT render size must be a positive integer")
-        if self._simulator.template.config["render_action"] and size < 96:
+        if self._render_action and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         fields = self._render_fields_of(state, on_device=self._rasterizes(size))
         if self._rasterizes(size):

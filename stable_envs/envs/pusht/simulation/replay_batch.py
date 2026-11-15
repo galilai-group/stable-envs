@@ -125,6 +125,7 @@ class PushTReplayAdapter(SimulatorAdapter):
             raise ValueError("PushT batch must be a positive integer")
         validate_seed(seed)
         self.num_envs, self.device = batch, torch.device(device)
+        self.discrete = bool(discrete)
         if self.device.type not in ("cpu", "cuda"):
             raise ValueError("PushT supports CPU physics with CPU/CUDA State storage")
         self.envs = []
