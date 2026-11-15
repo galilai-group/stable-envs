@@ -623,6 +623,15 @@ class _HiddenTargetSemantics:
         self._target_position = torch.full((self.B, 2), 0.0, device=self.device, dtype=torch.float32)
         self._target_position[:, 0] = 164.0
         self._target_position[:, 1] = 112.0
+        if self.device.type != "cpu" and self.state_dim == 2:
+            # The live rows and target are columns of one State group, so a moved State refreshes them in one copy.
+            agent, target = (TARGET_STATE.slices[name] for name in ("agent/position", "target/position"))
+            lanes = torch.empty(self.B, _TARGET_GROUP.size, device=self.device, dtype=torch.float32)
+            lanes[:, agent.start : agent.stop] = self._render_state
+            lanes[:, target.start : target.stop] = self._target_position
+            self._render_state = lanes.narrow(1, agent.start, agent.stop - agent.start)
+            self._target_position = lanes.narrow(1, target.start, target.stop - target.start)
+            self._lanes = lanes
         if self.device.type == "cuda":
             from torch._inductor import list_options
 
@@ -758,8 +767,21 @@ class _HiddenTargetSemantics:
         """Put the rows that ``_host_advance`` advanced on the device."""
         hit = self.__dict__.get("_host_arrays", {}).get("rows")
         if hit is not None and hit[0] is self._render_state and hit[1] == self._render_state._version:
+            before = self._target_position._version
             self._render_state.copy_(torch.from_numpy(hit[2]))
-            self._host_arrays["rows"] = (self._render_state, self._render_state._version, hit[2])
+            self._keep_host_copies(hit[2], before)
+
+    def _keep_host_copies(self, rows, before):
+        """Record ``rows`` as the host copy of the device rows after a write that left the target as it was.
+
+        The rows and the target can share a version counter, so the target's host copy is kept when its version
+        was ``before`` the write.
+        """
+        cache = self._host_arrays
+        cache["rows"] = (self._render_state, self._render_state._version, rows)
+        hit = cache.get("target")
+        if hit is not None and hit[0] is self._target_position and hit[1] == before:
+            cache["target"] = (hit[0], self._target_position._version, hit[2])
 
     def _numba_step(self, action, active, move=None, host=False):
         """Advance the lanes and build state and task outputs in one Numba call.
@@ -801,14 +823,15 @@ class _HiddenTargetSemantics:
             # The kernel advanced the live rows in place.
             return result
         rows = inputs[0]
+        before = self._target_position._version
         if self.state_dim == 2:
-            # The rows are the agent positions, already on the device: a device copy, without a host wait.
-            (agent,) = self._fields(moved, ("agent/position",))
-            self._render_state.copy_(agent)
+            # The moved State group holds the new rows and the target, already on the device: one device copy,
+            # without a host wait.
+            self._lanes.copy_(_leaf(moved, _TARGET_GROUP.path))
         else:
             self._render_state.copy_(torch.from_numpy(rows))
         # The host rows already hold the new values: the next step reads them without a device copy.
-        self._host_arrays["rows"] = (self._render_state, self._render_state._version, rows)
+        self._keep_host_copies(rows, before)
         return result
 
 
