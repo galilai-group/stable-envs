@@ -434,6 +434,8 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         # Torch in the group tensors of its own State on ``device``.
         self._in_place = backend in ("numpy", "numba")
         schema = STATES[domain]
+        self._groups: dict[str, Any]
+        views: dict[str, Any]
         if self._in_place:
             self._groups = self._packed.arrays
             views = self._packed.views
