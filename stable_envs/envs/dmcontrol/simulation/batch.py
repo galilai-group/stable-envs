@@ -232,12 +232,15 @@ class DMCBatchAdapter(SimulatorAdapter):
         # The State and the outputs move to the device in one copy.
         return out if self.device.type == "cpu" else to_device(out, self.device)
 
-    def step_leaves(self, actions):
+    def step_leaves(self, actions, *, state=True):
         """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
 
-        The arrays may be live buffers: the caller copies them before the next call.
+        With ``state`` False, the State is left out. The arrays may be live buffers: the caller copies them before
+        the next call.
         """
         outputs = self._advance(actions, None)
+        if not state:
+            return outputs
         return {**self._layout.host_leaves(self._state_groups(), ("state",)), **outputs}
 
     def _advance(self, actions, active):

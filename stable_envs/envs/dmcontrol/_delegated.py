@@ -252,7 +252,7 @@ class DelegatedSemantics:
         if step is None:
             return None
         self._check_open("step")
-        return move(step(actions))[0]
+        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
 
     def _close(self):
         if hasattr(self, "_simulator"):

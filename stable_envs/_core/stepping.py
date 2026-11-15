@@ -327,7 +327,14 @@ def _host_single_step(env, actions, states, final_state):
     state_indices = _selection(states, 1, "states")
     if torch.is_tensor(acts) and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
-    return host_step(acts, lambda leaves: _moved_leaves(env, leaves, sequence, state_indices, final_state))
+
+    def move(leaves):
+        return _moved_leaves(env, leaves, sequence, state_indices, final_state)
+
+    # A family may leave the State out of ``leaves`` when the result doesn't hold it; on an accelerator the family
+    # can read the moved State, so it always comes.
+    move.needs_state = final_state or state_indices is not None or env.device.type != "cpu"
+    return host_step(acts, move)
 
 
 def _host_builder(keys, n, sequence, state_indices):
@@ -391,8 +398,8 @@ def _host_result(env, leaves, sequence, state_indices, final_state):
         build = cache[plan_key] = _host_builder(plan_key[0], env.num_envs, sequence, state_indices)
     result = build(leaves)
     source = result._tensordict
-    live = source["state"]
-    if not final_state:
+    live = source.get("state")
+    if not final_state and live is not None:
         result = new_node({k: v for k, v in source.items() if k != "state"}, result.batch_size, result.device)
     return result, live
 
