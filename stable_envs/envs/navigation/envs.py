@@ -561,7 +561,7 @@ class _HiddenTargetSemantics:
         from . import navstep_cpu
 
         inputs = self._numba_inputs(action, active)
-        target = self._host_array("_target_position")
+        target = self._host_array("target", self._target_position)
         values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
         agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
@@ -641,25 +641,22 @@ class _TorchNavBase(_GymReferencePort):
         if not act.flags.c_contiguous:
             act = np.ascontiguousarray(act)
         mask = _NO_MASK if active is None else active.cpu().numpy()
-        style = self._style.values.numpy() if self.device.type == "cpu" else self._host_array(self._style.values)
+        style = self._host_array("style", self._style.values)
         if style.shape[0] != self.B:
             raise ValueError(f"{type(self).__name__}: the installed Variation has {style.shape[0]} rows, not {self.B}")
         rows = self._render_state.numpy() if self.device.type == "cpu" else self._render_state.cpu().numpy()
         return rows, act, style, self._numba_cols, mask, active is not None
 
-    def _host_array(self, tensor):
-        """A NumPy view of ``tensor`` (or of the attribute it names), copied once per change on an accelerator."""
-        if isinstance(tensor, str):
-            tensor = getattr(self, tensor)
+    def _host_array(self, name, tensor):
+        """A NumPy view of ``tensor``; on an accelerator a host copy, kept under ``name`` until the tensor changes."""
         if tensor.device.type == "cpu":
             return tensor.numpy()
         cache = self.__dict__.setdefault("_host_arrays", {})
-        key = (tensor.data_ptr(), tuple(tensor.shape))
-        hit = cache.get(key)
-        # The version counter changes with every in-place write to the tensor or a view of it.
-        if hit is None or hit[0] != tensor._version:
-            hit = cache[key] = (tensor._version, tensor.cpu().numpy())
-        return hit[1]
+        hit = cache.get(name)
+        # The same tensor object at the same version counter: no in-place write since the copy.
+        if hit is None or hit[0] is not tensor or hit[1] != tensor._version:
+            hit = cache[name] = (tensor, tensor._version, tensor.cpu().numpy())
+        return hit[2]
 
     def _advance_rows(self, rows, action, sty) -> torch.Tensor:
         numba = self.simulation_backend == "numba" and rows.dtype == action.dtype == torch.float32 and not rows.is_cuda

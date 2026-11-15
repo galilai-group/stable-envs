@@ -1390,8 +1390,6 @@ class MazeSemantics:
     execution_mode = "DELEGATED_CPU"
     # Each step returns outputs in new storage.
     _step_outputs_owned = True
-    # CPU batches step on mujoco.batch threads.
-    native_step_threads = True
 
     def __init__(self, *args, simulation_backend="default", mjwarp_min_envs=None, **kwargs):
         """Select physics at construction; outputs are on ``device``.
@@ -1406,6 +1404,8 @@ class MazeSemantics:
             self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )
         self.execution_mode = getattr(self._simulator, "execution_mode", "DELEGATED_CPU")
+        # mujoco.batch steps on threads of its own.
+        self.native_step_threads = self.simulation_backend == "native"
 
     @property
     def _qpos_fields(self):

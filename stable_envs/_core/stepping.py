@@ -218,7 +218,8 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
     out.update(outputs.items())
     out["valid"] = flags[0]
     if state_indices is not None:
-        out["states"] = _stack_states([live_state]) if state_indices else live_state.unsqueeze(1)[:, :0].clone()
+        stack = getattr(env, "_stack_states", _stack_states)
+        out["states"] = stack([live_state]) if state_indices else live_state.unsqueeze(1)[:, :0].clone()
         out["state_valid"] = flags[1] if state_indices else flags[1][:, :0]
     return build_tensordict(out, [env.num_envs], env.device)
 

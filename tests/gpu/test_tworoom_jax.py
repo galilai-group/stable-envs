@@ -171,3 +171,17 @@ def test_cuda_numba_steps_host_rows_like_torch(batch):
         env.set_state(checkpoint)
         reference.set_state(checkpoint)
         assert_same_state(env.step(actions[:, 0], frames=None), reference.step(actions[:, 0], frames=None))
+
+
+def test_cuda_numba_steps_with_the_variation_of_each_reset():
+    speeds = ([2.0], [7.5], [21.0])
+    with (
+        se.TwoRoom(num_envs=3, device="cuda", simulation_backend="numba") as env,
+        se.TwoRoom(num_envs=3, device="cuda", simulation_backend="torch") as reference,
+    ):
+        action = torch.full((3, 2), 0.5, device="cuda")
+        for speed in speeds:
+            for e in (env, reference):
+                e.set_variation({"agent.speed": speed})
+                e.reset(seed=4, options={"state": [60, 60], "target_state": [180, 180]})
+            assert_same_state(env.step(action, frames=None), reference.step(action, frames=None))
