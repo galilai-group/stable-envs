@@ -1,6 +1,8 @@
-"""FrameLoader frames equal ``env.render`` of each batch byte for byte, for full States and compact rows.
+"""FrameLoader frames match ``env.render`` of each batch, for full States and compact rows.
 
-Each family runs where its extra is installed; the CUDA cases need a CUDA device.
+The frames are byte-equal, except for renderers whose bytes depend on the batch size: their largest per-frame MSE
+(0-255 scale) stays under ``MSE_BOUND``, far below the MSE between any renderer and its source. Each family runs
+where its extra is installed; the CUDA cases need a CUDA device.
 """
 
 from __future__ import annotations
@@ -15,6 +17,9 @@ NAMES = ("PushT", "TwoRoom", "DMCReacher", "OGBCube")
 DEVICES = ("cpu", pytest.param("cuda", marks=pytest.mark.gpu))
 ROWS = 37
 BATCHES = (1, 8, 16)
+#: Largest per-frame MSE between a chunk and a per-batch render. MuJoCo Warp draws OGBCube with a few pixels
+#: 1 level apart at another world count (measured on an RTX A5500: 94 pixels of 1 of 37 frames, MSE 0.0019).
+MSE_BOUND = {("OGBCube", "cuda"): 0.005}
 
 
 def _make(name: str, **kwargs):
@@ -48,10 +53,12 @@ def _check(name, device, data):
         with snv.make(name, num_envs=b, device=device) as env:
             loader = snv.FrameLoader(env, data, b)
             assert loader.chunk_size == ROWS
+            bound = MSE_BOUND.get((name, device), 0.0)
             for got, start in zip(loader, range(0, ROWS, b), strict=True):
                 want = env.render(data[start : start + b])
-                assert got.device == want.device and got.dtype == torch.uint8
-                assert torch.equal(got, want), f"{name} {device} batch {b} rows {start}: frames differ"
+                assert got.device == want.device and got.dtype == torch.uint8 and got.shape == want.shape
+                mse = (got.double() - want.double()).pow(2).flatten(1).mean(1).max().item()
+                assert mse <= bound, f"{name} {device} batch {b} rows {start}: frame MSE {mse:.5f} > {bound}"
 
 
 @pytest.mark.parametrize("device", DEVICES)

@@ -57,7 +57,8 @@ class FrameLoader:
 
     The loader draws a chunk of many batches with one ``env.render`` call and yields its slices, so a small
     batch costs the same per frame as a large one. It picks the chunk size from the free memory of
-    ``env.device``. Each batch has the same bytes as ``env.render`` of its states.
+    ``env.device``. Each batch has the bytes of ``env.render`` of its states, except where a renderer's bytes
+    depend on the batch size: OGBCube on CUDA differs by at most 1 level in a few pixels.
 
     Args:
         env: The environment that draws. Its live state doesn't change.

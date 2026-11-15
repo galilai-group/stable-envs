@@ -11,7 +11,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
-- `snv.FrameLoader(env, states, batch_size)` yields the frames of stored States or rows a batch at a time. It draws many batches in one `env.render` call, with a chunk size that it picks from free device memory, so small batches draw at the per-frame cost of a large batch. Each batch has the same bytes as `env.render` of its states.
+- `snv.FrameLoader(env, states, batch_size)` yields the frames of stored States or rows a batch at a time. It draws many batches in one `env.render` call, with a chunk size that it picks from free device memory, so small batches draw at the per-frame cost of a large batch. Each batch has the same bytes as `env.render` of its states, except for `OGBCube` on CUDA, where a few pixels differ by 1 level.
 - `step(..., state=False)` skips building the final state; the result then has no `state` key, and `get_state()` builds the state on demand.
 
 ### Changed
