@@ -11,6 +11,10 @@ if TYPE_CHECKING:
 from .adapter import FetchAdapter
 from .process import FetchProcessAdapter
 
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: MEASURED
+CUDA_MIN_ENVS: dict[str, int | None] = {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
 #: ``simulation_backend`` values besides ``"auto"``: the shared MuJoCo backends, and the per-environment
 #: gymnasium-robotics loop.
 SIMULATION_BACKENDS = ("native", "mjwarp", "source")
@@ -38,7 +42,9 @@ def fetch_backend(
         return make_fetch_adapter(n, device, 0, task, reward_type, simulation_backend=backend)
 
     measure = measure_adapter(build, 4, device)
-    return mujoco_backend(f"fetch-sim/{task.lower()}", num_envs, device, simulation_backend, measure=measure)
+    path = f"fetch-sim/{task.lower()}"
+    min_envs = CUDA_MIN_ENVS[task]
+    return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)
 
 
 def make_fetch_adapter(

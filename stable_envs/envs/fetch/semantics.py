@@ -51,6 +51,7 @@ class FetchSemantics:
         "camera.angle_delta",
         "rendering.transparent_arm",
     }
+    simulation_backends = ("native", "mjwarp", "source")
 
     def __init__(
         self,

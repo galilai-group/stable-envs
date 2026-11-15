@@ -51,7 +51,7 @@ The task's cost is the distance to the current subgoal plus the path through the
 | `"native"` | CPU batch | CPU batch |
 | `"mjwarp"` | error | MuJoCo Warp |
 
-With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the first environment of each task and power-of-two batch range times both backends on your machine and stores the result in the [tuning cache](../performance-tuning.md#physics-backends).
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
 Both backends step every environment in one batch. The source's autopilot, drag and wind forces, fuel, ring and route bookkeeping, crash checks, cost, reward and success run on arrays of environments. MuJoCo steps the 10 substeps of each 50 Hz step one at a time, because the drag and wind force of a substep depends on the velocity after the previous one. The physics model is the source's world with MuJoCo contact sensors for the contacts that the task reads (tires on anything, on the pad, on the ground and on the goal roof, the hull on anything, the car on each obstacle). The visual geoms outside the car are not in it. Sensors and these geoms do not change the dynamics.
 

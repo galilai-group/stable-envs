@@ -7,6 +7,12 @@ import torch
 from ...._execution.mjbatch import measure_adapter, mujoco_backend
 
 
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: MEASURED
+CUDA_MIN_ENVS: dict[str, int | None] = {"loop": 64, "mission": 64, "traffic": 64, "rooftop": 64, "carhop": 64}
+
+
 def roadster_backend(
     num_envs: int, device: str | torch.device, simulation_backend: str | None = "auto", task: str = "traffic"
 ) -> str:
@@ -20,7 +26,9 @@ def roadster_backend(
         return make_roadster_adapter(task, n, device, backend)
 
     measure = measure_adapter(build, 4, device)
-    return mujoco_backend(f"roadster-sim/{task}", num_envs, device, simulation_backend, measure=measure)
+    path = f"roadster-sim/{task}"
+    min_envs = CUDA_MIN_ENVS[task]
+    return mujoco_backend(path, num_envs, device, simulation_backend, cuda_min_envs=min_envs, measure=measure)
 
 
 def make_roadster_adapter(task: str, num_envs: int, device="cpu", backend: str = "native"):

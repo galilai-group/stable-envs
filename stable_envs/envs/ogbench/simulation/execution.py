@@ -13,6 +13,12 @@ if TYPE_CHECKING:
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: MEASURED
+MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {"point": 4096, "ant": 256, "humanoid": 256}
+
+
 def maze_backend(
     num_envs: int,
     device: str | torch.device,
@@ -28,7 +34,10 @@ def maze_backend(
         return make_maze_adapter(n, device, 0, loco=loco, maze=maze, simulation_backend=backend)
 
     measure = measure_adapter(build, BODIES[loco][2], device)
-    return mujoco_backend(f"ogb-sim/{loco}maze-{maze}", num_envs, device, simulation_backend, measure=measure)
+    path = f"ogb-sim/{loco}maze-{maze}"
+    return mujoco_backend(
+        path, num_envs, device, simulation_backend, cuda_min_envs=MAZE_CUDA_MIN_ENVS[loco], measure=measure
+    )
 
 
 def make_maze_adapter(

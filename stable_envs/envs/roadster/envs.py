@@ -56,6 +56,7 @@ class RoadsterBase(Env):
     dynamics_variation_leaves = frozenset(PHYSICS_LEAVES)
     reset_value_paths = frozenset(PHYSICS_LEAVES)
     reset_sample_paths = frozenset(PHYSICS_LEAVES)
+    simulation_backends = ("native", "mjwarp")
 
     def __init__(
         self,

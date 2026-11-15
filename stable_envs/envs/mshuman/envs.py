@@ -20,6 +20,10 @@ from .assets import model as _model
 from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 
 _NQ, _NV, _NA, _NU = 36, 36, 100, 100
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: MEASURED
+CUDA_MIN_ENVS: int | None = 256
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
@@ -37,6 +41,7 @@ class MSHumanLocomotion(Env):
     """MS-Human-700 whole-body locomotion: 100 muscles actuate 36 DoF, controls in ``[0, 1]``."""
 
     family = "mshuman"
+    simulation_backends = ("native", "mjwarp")
     reference_id = f"LNSGroup/MS-Human-700/{_XML}@{_COMMIT}"
     default_size = 128
     action_dim = _NU
@@ -69,8 +74,9 @@ class MSHumanLocomotion(Env):
             return (MSHumanWarpAdapter if backend == "mjwarp" else MSHumanBatchAdapter)(n, self.device, self._model)
 
         measure = measure_adapter(build, _NU, self.device, 0.0, 1.0)
+        path, requested = "mshuman-sim/locomotion", simulation_backend
         self.simulation_backend = mujoco_backend(
-            "mshuman-sim/locomotion", self.B, self.device, simulation_backend, measure=measure
+            path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure
         )
         # nq == nv: every joint is a hinge or a slide with one qpos.
         self.state_names = tuple(
