@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from stable_envs.envs.pusht.simulation import execution
 from stable_envs.envs.pusht.simulation.jax_batch import from_torch
 from tests.helpers.reference.semantics import assert_same_state
@@ -33,7 +34,7 @@ def test_public_cuda_steps_use_dlpack_without_host_staging(batch, monkeypatch):
         assert_same_state(result, held)
         env.set_state(checkpoint)
         assert_same_state(result, env.step(actions, frames=None))
-        assert result["state", "current", "observation"].is_cuda
+        assert get_field(result["state"], "current/observation").is_cuda
 
 
 @pytest.mark.parametrize("name", ["PushT", "PushTDiscrete"])

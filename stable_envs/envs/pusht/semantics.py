@@ -7,6 +7,7 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from ... import tuning
+from ..._core.state_schema import schema_of
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, _require_extra, register
@@ -31,6 +32,11 @@ def _to_host(tensors):
             host[key] = flat[offset : offset + size].view(tensors[key].shape)
             offset += size
     return {key: host[key] for key in tensors}
+
+
+def _host_blocks(blocks):
+    """``{key: NumPy array}`` of ``{key: tensor}``, with one transfer per tensor on a device."""
+    return {key: (value if value.device.type == "cpu" else value.cpu()).numpy() for key, value in blocks.items()}
 
 
 def _finite(arrays):
@@ -374,13 +380,20 @@ class PushT(Env):
         """Return an owned, history-free copy of the state fields the CPU renderer reads."""
         state = self.get_state() if state is None else state
         self._render_fields_of(state)
-        return state.select(*(key for key, _, _ in self._render_fields)).clone()
+        groups = schema_of(state)
+        if groups is None:
+            return state.select(*(key for key, _, _ in self._render_fields)).clone()
+        drawn = {groups.slices["/".join(key)].group for key, _, _ in self._render_fields}
+        return state.select(*(tuple(key.split("/")) for key in sorted(drawn))).clone()
 
     def _render_fields_of(self, state, on_device=False):
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
+        groups = schema_of(state)
+        if groups is not None:
+            return self._folded_render_fields(state, groups, on_device)
         selected, error, nodes = {}, None, {(): _children(state)}
         batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
@@ -406,6 +419,29 @@ class PushT(Env):
                     raise ValueError(f"Nonfinite PushT render field: {key}")
         if error is not None:
             raise error
+        return fields
+
+    def _folded_render_fields(self, state, groups, on_device):
+        """The render fields of a folded ``state``: views of its groups, as tensors on the device or host arrays."""
+        names = ["/".join(key) for key, _, _ in self._render_fields]
+        missing = next((name for name in names if name not in groups.slices), None)
+        keys = {groups.slices[name].group for name in names if name in groups.slices}
+        absent = next((key for key in keys if state.get(tuple(key.split("/")), None) is None), None)
+        if missing is not None or absent is not None:
+            raise KeyError(missing or absent)
+        blocks = {key: state[tuple(key.split("/"))] for key in keys}
+        if on_device and all(block.is_cuda for block in blocks.values()):
+            fields = groups.views(blocks, names)
+            floats = [value.reshape(-1) for value in fields.values() if value.is_floating_point()]
+            if floats and not bool(torch.isfinite(torch.cat(floats)).all()):
+                key = next(k for k, v in fields.items() if v.is_floating_point() and not bool(v.isfinite().all()))
+                raise ValueError(f"Nonfinite PushT render field: {key}")
+            return fields
+        fields = groups.views(_host_blocks(blocks), names)
+        if not _finite(fields.values()):
+            for key, array in fields.items():
+                if array.dtype.kind == "f" and not np.isfinite(array).all():
+                    raise ValueError(f"Nonfinite PushT render field: {key}")
         return fields
 
     def _render_state_input(self, state, *, size=None, out=None, **options):

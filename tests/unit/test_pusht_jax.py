@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs import get_field
+from stable_envs._core.state_schema import unfold
 from stable_envs.envs.pusht.semantics import PushT
 from stable_envs.envs.pusht.simulation.jax_batch import PushTJaxAdapter
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter, resolve_variation
@@ -57,8 +59,8 @@ def test_relative_controls_and_contact_track_main(device, initial, action, steps
             got = env.step(torch.tensor([action], device=device))
             want = ref.step(np.array([action], np.float32))
             np.testing.assert_allclose(
-                got["state", "current", "observation"].cpu(),
-                want["state", "current", "observation"],
+                get_field(got["state"], "current/observation").cpu(),
+                get_field(want["state"], "current/observation"),
                 atol=atol,
                 rtol=0,
             )
@@ -84,7 +86,7 @@ def test_shapes_variations_reward_mask_and_source_checkpoint(device, monkeypatch
         source = ref.reset(0, options)
         env.set_state(source.to(device))
         np.testing.assert_array_equal(
-            env.get_state()["current", "observation"].cpu(), source["current", "observation"]
+            get_field(env.get_state(), "current/observation").cpu(), get_field(source, "current/observation")
         )
         before = env.get_state()
 
@@ -96,10 +98,10 @@ def test_shapes_variations_reward_mask_and_source_checkpoint(device, monkeypatch
             monkeypatch.setattr(owner.env.space, "step", forbidden)
         result = env.step(torch.full((8, 2), 0.2, device=device), active=torch.arange(8, device=device) != 0)
         state = result["state"]
-        assert torch.isfinite(state["current", "observation"]).all()
-        for key, value in before["current"].items(True, True):
-            assert torch.equal(value[0], state["current"][key][0])
-        expected = -(state["current", "observation"] - state["current", "goal", "value"]).norm(dim=1)
+        assert torch.isfinite(get_field(state, "current/observation")).all()
+        for key, value in unfold(before)["current"].items(True, True):
+            assert torch.equal(value[0], unfold(state)["current"][key][0])
+        expected = -(get_field(state, "current/observation") - get_field(state, "current/goal/value")).norm(dim=1)
         torch.testing.assert_close(result["reward"], expected, rtol=0, atol=0)
         assert not result["truncated"].any()
         env.set_state(state)
@@ -146,7 +148,7 @@ def test_episode_checkpoint_restores_without_physics_replay(device, discrete, mo
         assert_same_state(checkpoint, env.get_state())
         assert_same_state(expected, env.step(action))
         bad = checkpoint.clone()
-        bad["current", "jax", "bias"][1, 0, 0] = float("nan")
+        get_field(bad, "current/jax/bias")[1, 0, 0] = float("nan")
         before = env.get_state()
         with pytest.raises(ValueError, match="solver cache"):
             env.set_state(bad)
@@ -240,7 +242,7 @@ def test_reset_workers_match_in_process_resets(device, discrete):
                 adapter.reset(seed=23, options=bad)
         assert_same_state(env.get_state(), before)
         same(lambda adapter: adapter.reset(seed=24))
-        assert env.reset(seed=None)["current", "observation"].isfinite().all()
+        assert get_field(env.reset(seed=None), "current/observation").isfinite().all()
 
         # The parent owners rebuilt from the batch columns equal the in-process owners.
         same(lambda adapter: adapter.reset(seed=25))

@@ -24,7 +24,7 @@
  "state": [
   {
    "key": "recipe",
-   "leaves": 2,
+   "leaves": 1,
    "numel": 5,
    "dtypes": ["int64"]
   },
@@ -36,19 +36,19 @@
   },
   {
    "key": "anchor",
-   "leaves": 101,
+   "leaves": 4,
    "numel": 438,
    "dtypes": ["bool", "float64", "int64", "uint8"]
   },
   {
    "key": "current",
-   "leaves": 37,
-   "numel": 151475,
+   "leaves": 8,
+   "numel": 947,
    "dtypes": ["bool", "float64", "int64", "uint8"]
   },
   {
    "key": "owned",
-   "leaves": 95,
+   "leaves": 3,
    "numel": 417,
    "dtypes": ["float64", "int64", "uint8"]
   }

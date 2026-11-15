@@ -11,6 +11,7 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("pygame")
 pytest.importorskip("cv2")
 
+from stable_envs import get_field
 from stable_envs.envs.pusht.simulation.numeric import decode_seed, encode_seed, get_value, put_value
 from stable_envs.envs.pusht.simulation.replay import PushTReplay
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter
@@ -98,13 +99,13 @@ def test_batch_padding_active_lanes_ownership_and_restore(discrete):
         for i in range(4):
             env.step(action, active=np.arange(16) % 4 <= i)
         saved = env.get_state()
-        assert saved["history", "actions"].shape == (16, 5, 2)
-        assert torch.equal(saved["history", "lengths"], torch.tensor([5, 4, 3, 2] * 4))
-        assert owned["history", "actions"].shape == (16, 1, 2)
+        assert get_field(saved, "history/actions").shape == (16, 5, 2)
+        assert torch.equal(get_field(saved, "history/lengths"), torch.tensor([5, 4, 3, 2] * 4))
+        assert get_field(owned, "history/actions").shape == (16, 1, 2)
         expected = env.step(action)["state"]
         env.set_state(saved)
         assert_same_state(env.step(action)["state"], expected)
-        saved["history", "actions"].zero_()
+        get_field(saved, "history/actions").zero_()
         assert_same_state(env.get_state(), expected)
     finally:
         env.close()
@@ -118,19 +119,19 @@ def test_invalid_state_never_partially_installs_lanes(damage):
         before = env.get_state()
         bad = before.clone()
         if damage == "late_diagnostic":
-            bad["current", "body", "block", "position"][1, 0] += 1
+            get_field(bad, "current/body/block/position")[1, 0] += 1
         elif damage == "dtype":
-            bad["history", "dtypes"][0, 0] = 3
+            get_field(bad, "history/dtypes")[0, 0] = 3
         elif damage == "padding":
-            bad["history", "actions"][1, 0, 0] = 1
+            get_field(bad, "history/actions")[1, 0, 0] = 1
         elif damage == "mask":
-            bad["history", "valid"][1, 0] = True
+            get_field(bad, "history/valid")[1, 0] = True
         elif damage == "rng":
-            bad["anchor", "rng"][1, 5] = 0
+            get_field(bad, "anchor/rng")[1, 5] = 0
         elif damage == "version":
-            bad["recipe", "version"][1] += 1
+            get_field(bad, "recipe/version")[1] += 1
         else:
-            bad["owned", "variation", "block", "shape", "current", "value"][1] = 100
+            get_field(bad, "owned/variation/block/shape/current/value")[1] = 100
         with pytest.raises(ValueError):
             env.set_state(bad)
         assert_same_state(env.get_state(), before)
@@ -163,8 +164,10 @@ def test_success_does_not_impose_an_auto_reset_or_permanent_stop():
         assert env.step(np.zeros((1, 2), np.float64))["terminated"].item()
         before = env.get_state()
         env.step(np.ones((1, 2), np.float64))
-        assert env.get_state()["history", "lengths"].item() == 2
-        assert not torch.equal(before["current", "observation"], env.get_state()["current", "observation"])
+        assert get_field(env.get_state(), "history/lengths").item() == 2
+        assert not torch.equal(
+            get_field(before, "current/observation"), get_field(env.get_state(), "current/observation")
+        )
     finally:
         env.close()
 
@@ -175,10 +178,10 @@ def test_continuous_actions_outside_the_space_step_as_the_source_does():
     try:
         start = env.get_state()
         env.step(np.array([[1.0, 0.0]], np.float64))
-        unit = env.get_state()["current", "observation"].clone()
+        unit = get_field(env.get_state(), "current/observation").clone()
         env.set_state(start)
         env.step(np.array([[1.5, 0.0]], np.float64))
-        far = env.get_state()["current", "observation"]
+        far = get_field(env.get_state(), "current/observation")
         assert far[0, 0] > unit[0, 0]
     finally:
         env.close()

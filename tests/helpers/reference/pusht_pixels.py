@@ -8,6 +8,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
+from stable_envs import get_field
 from tests.helpers.reference.pixels import PixelTrace
 from tests.helpers.reference.profiles import Registration
 from tests.helpers.reference.pusht_semantics import diagnostics, equal
@@ -16,21 +17,22 @@ from tests.helpers.reference.semantics import compare_state
 
 def compare_padded_states(actual: TensorDict, expected: TensorDict) -> None:
     """Compare all fields exactly, allowing only additional zero history padding."""
-    capacity = max(row["history", "valid"].shape[1] for row in (actual, expected))
+    capacity = max(get_field(row, "history/valid").shape[1] for row in (actual, expected))
     padded = []
     for state in (actual, expected):
-        valid = state["history", "valid"]
-        lengths = state["history", "lengths"].reshape(-1)
+        valid = get_field(state, "history/valid")
+        lengths = get_field(state, "history/lengths").reshape(-1)
         assert valid.dtype == torch.bool and lengths.dtype == torch.int64
         assert bool(((lengths >= 0) & (lengths <= valid.shape[1])).all())
         torch.testing.assert_close(valid, torch.arange(valid.shape[1], device=valid.device)[None] < lengths[:, None])
         for field in ("actions", "dtypes"):
-            assert bool((state["history", field][~valid] == 0).all()), "Nonzero invalid history padding"
+            assert bool((get_field(state, f"history/{field}")[~valid] == 0).all()), "Nonzero invalid history padding"
         state = state.clone()
         for field in ("actions", "dtypes", "valid"):
-            value = state["history", field]
+            value = get_field(state, f"history/{field}")
             padding = value.new_zeros((len(state), capacity - value.shape[1], *value.shape[2:]))
-            state["history", field] = torch.cat((value, padding), dim=1)
+            # A history field is a leaf of its own, so a wider copy replaces it.
+            state.set(("history", field), torch.cat((value, padding), dim=1))
         padded.append(state)
     compare_state(*padded)
 

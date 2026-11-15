@@ -6,6 +6,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
+from stable_envs import get_field
 from tests.helpers.reference.semantics import assert_same_state
 
 
@@ -77,7 +78,7 @@ def test_failed_restore_and_bad_actions_do_not_partially_mutate_batch(name, devi
     with se.make(name, num_envs=2, size=32, device=device) as env:
         before = env.step(actions(name, 2, 3), frames=None)["state"]
         bad = before.clone()
-        bad["current", "body", "block", "position"][1, 0] += 1
+        get_field(bad, "current/body/block/position")[1, 0] += 1
         with pytest.raises(ValueError, match="replay disagrees"):
             env.set_state(bad)
         assert_same_state(before, env.get_state())
@@ -105,12 +106,12 @@ def test_render_projection_has_no_history_and_does_not_step(name, monkeypatch):
             monkeypatch.setattr(cached[1], "step", forbidden)
         assert torch.equal(first, env.render(projected))
         assert_same_state(state, env.get_state())
-        assert ("current", "body", "agent", "velocity") not in projected.keys(True, True)
+        assert ("current", "solver", "float64") not in projected.keys(True, True)
         undrawn = state.clone()
-        undrawn["current", "body", "agent", "velocity"][0, 0] = float("nan")
+        get_field(undrawn, "current/body/agent/velocity")[0, 0] = float("nan")
         assert torch.equal(first, env.render(undrawn))
         drawn = state.clone()
-        drawn["current", "body", "agent", "position"][0, 0] = float("nan")
+        get_field(drawn, "current/body/agent/position")[0, 0] = float("nan")
         with pytest.raises(ValueError, match="Nonfinite PushT render field"):
             env.render(drawn)
 
@@ -131,12 +132,12 @@ def test_persistent_variation_and_reset_checkpoint(name):
 def test_set_variation_applies_appearance_now_and_bodies_at_reset(name):
     with se.make(name, num_envs=2, size=32, device="cpu") as env:
         env.reset(seed=8, options={"variation": [], "variation_values": {"block.shape": np.asarray([1, 4])}})
-        moment = env.get_state()["current", "body", "block", "moment"].clone()
+        moment = get_field(env.get_state(), "current/body/block/moment").clone()
         env.set_variation({"agent.color": np.asarray([[1, 2, 3], [4, 5, 6]], np.uint8), "block.shape": 6})
         col = {p: o for p, o, _ in env.variation_space.flat_layout()}
         assert env.get_variation()[:, col["agent.color"]].tolist() == [1.0, 4.0]
         assert env.get_variation()[:, col["block.shape"]].tolist() == [1.0, 4.0]
-        assert torch.equal(env.get_state()["current", "body", "block", "moment"], moment)
+        assert torch.equal(get_field(env.get_state(), "current/body/block/moment"), moment)
         env.reset(seed=8, options={"variation": []})
         assert env.get_variation()[:, col["block.shape"]].tolist() == [6.0, 6.0]
 

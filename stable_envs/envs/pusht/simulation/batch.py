@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.state_layout import StateLayout
+from ...._core.state_schema import Field, StateSchema, get_field, schema_of, unfold
 from ...._core.tensordicts import build_tensordict
 from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
@@ -21,6 +22,26 @@ def _changes_with_step(key):
     return key.startswith(("current/", "history/")) and not key.startswith("current/goal")
 
 
+def group_of(name, dtype):
+    """The group of a named PushT State field: its top-level section, then its dtype.
+
+    The action history keeps leaves of its own, since its width grows. The solver cache and the episode goal get
+    groups of their own, so an export copies the goal only on reset.
+    """
+    if name.startswith("history/"):
+        return None
+    if name.startswith(("current/jax/", "current/goal/")):
+        section = "current/solver" if name.startswith("current/jax/") else "current/goal"
+    else:
+        section = name.split("/", 1)[0]
+    return f"{section}/{str(dtype).removeprefix('torch.')}"
+
+
+#: Fields a folded State leaves out. The goal image is a frame of the goal pose, which a restore draws again; an
+#: export would otherwise copy its 150 kB per environment on every step.
+UNFOLDED = frozenset({"current/goal_image"})
+
+
 class PushTBatchAdapter(PushTReplayAdapter):
     """Step PushT lanes with one batched physics call; CPU owners supply resets, restores and Variation.
 
@@ -29,7 +50,11 @@ class PushTBatchAdapter(PushTReplayAdapter):
     With ``processes``, owners in worker processes reset the lanes (see ``PushTResetPool``). After a
     worker reset, the workers own the lanes' CPU engines and the batch columns hold their static fields;
     ``envs`` rebuilds the parent owners from the columns when it is read.
+
+    The exported State is folded by ``group_of``.
     """
+
+    _groups: StateSchema | None = None
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None, processes=0, cpus=None):
         self._pool, self._pool_owns = None, False
@@ -185,17 +210,22 @@ class PushTBatchAdapter(PushTReplayAdapter):
             leaves = tuple(
                 (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), _dtype(fields[key]))
                 for key in order
+                if key not in UNFOLDED
             )
             # Resets keep the leaves, so a layout built for them before serves again with new static values.
             layouts = self.__dict__.setdefault("_layouts", {})
-            layout = layouts.get(leaves)
-            if layout is None:
+            entry = layouts.get(leaves)
+            if entry is None:
                 if len(layouts) >= 8:
                     layouts.clear()
-                static = frozenset(key for key in order if not _changes_with_step(key))
-                layout = layouts[leaves] = StateLayout(leaves, self.num_envs, static=static)
-            layout.load_static(fields)
-            self._layout = layout
+                groups = StateSchema("PushT", [Field(*leaf, group_of(leaf[0], leaf[2])) for leaf in leaves])
+                declared = groups.leaves()
+                static = frozenset(key for key, _, _ in declared if not _changes_with_step(key))
+                moving = [key for key in groups.groups if _changes_with_step(key)]
+                entry = layouts[leaves] = (StateLayout(declared, self.num_envs, static=static), groups, moving)
+            self._layout, self._groups, self._moving = entry
+            static = [key for key in self._groups.groups if not _changes_with_step(key)]
+            self._layout.load_static(self._groups.pack(fields, static))
         return self._layout
 
     def get_state(self):
@@ -203,7 +233,11 @@ class PushTBatchAdapter(PushTReplayAdapter):
 
     def _export(self, device):
         fields = self._state_fields(self._history_width())
-        return self._state_layout(fields).export(fields, device)
+        layout = self._state_layout(fields)
+        groups = self._groups
+        return layout.export(
+            {**{name: fields[name] for name in groups.kept}, **groups.pack(fields, self._moving)}, device
+        )
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.
@@ -374,12 +408,25 @@ class PushTBatchAdapter(PushTReplayAdapter):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise ValueError("PushT full State requires batch [num_envs]")
         base = self.template.get_state()
+        groups = schema_of(state)
+        if groups is None and ("recipe", "version") not in state.keys(True, True):
+            # A State with groups of another layout: the schema of this batch names what differs.
+            self._state_layout(self._state_fields(self._history_width()))
+            groups = self._groups
+        if groups is not None:
+            groups.validate(state)
+            # The owners draw the goal image again on reconstruction; the checks only read its shape and dtype.
+            state = groups.unfold(state)
+            for key in UNFOLDED:
+                state[tuple(key.split("/"))] = torch.zeros(
+                    (self.num_envs, *base[key].shape), dtype=torch.from_numpy(base[key]).dtype, device=state.device
+                )
         keys = [tuple(key.split("/")) for key in base]
         extras = {("current", "jax", key) for key in self._solver_state()}
         actual_keys = set(state.keys(True, True))
         if not set(keys) <= actual_keys:
             raise ValueError("PushT full State keys differ")
-        version = state["recipe", "version"]
+        version = get_field(state, "recipe/version")
         new = bool((version == 3).all())
         if actual_keys != set(keys) | (extras if new else set()):
             raise ValueError("PushT full State keys differ")
@@ -410,10 +457,10 @@ class PushTBatchAdapter(PushTReplayAdapter):
                         [
                             torch.cat(
                                 [
-                                    state["current", "body", name, "position"],
-                                    state["current", "body", name, "velocity"],
-                                    state["current", "body", name, "angle"][:, None],
-                                    state["current", "body", name, "angular_velocity"][:, None],
+                                    get_field(state, f"current/body/{name}/position"),
+                                    get_field(state, f"current/body/{name}/velocity"),
+                                    get_field(state, f"current/body/{name}/angle")[:, None],
+                                    get_field(state, f"current/body/{name}/angular_velocity")[:, None],
                                 ],
                                 1,
                             )
@@ -425,13 +472,13 @@ class PushTBatchAdapter(PushTReplayAdapter):
                     .clone()
                 )
                 for key, sample in staged._solver_state().items():
-                    value = state["current", "jax", key]
+                    value = get_field(state, "current/jax/" + key)
                     if value.shape != sample.shape or value.dtype != sample.dtype or not bool(value.isfinite().all()):
                         raise ValueError(f"Invalid PushT JAX solver cache: {key}")
                     setattr(staged, "_" + key, value.to(self.device).clone())
                 if bool((staged._impulse < 0).any() | (staged._identifiers < -1).any()):
                     raise ValueError("Invalid PushT JAX contact cache")
-                staged._contacts = state["current", "contacts"].to(self.device).clone()
+                staged._contacts = get_field(state, "current/contacts").to(self.device).clone()
                 for key in (
                     "latest/value",
                     "latest/type",
@@ -451,7 +498,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
                         {k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")}
                     )
                 staged.variation_changed()
-                actual = staged.get_state()
+                actual = unfold(staged.get_state())
                 for key, value in actual.items(True, True):
                     expected = state[key].to(self.device)
                     if "/".join(key) in HISTORY_KEYS:

@@ -20,6 +20,7 @@ except PackageNotFoundError:
     pytest.skip("PushT requires pymunk", allow_module_level=True)
 
 import stable_envs as se  # noqa: E402
+from stable_envs import get_field
 
 EPISODES, STEPS, SEED = 48, 200, 1000
 
@@ -70,12 +71,12 @@ def test_scripted_pushing_tracks_the_source(source, device):
     actions, poses, success = source
     with se.make("PushT", num_envs=EPISODES, size=64, device=device) as env:
         state = env.reset(seed=SEED)
-        np.testing.assert_array_equal(state["current", "observation"].cpu().numpy(), poses[:, 0])
+        np.testing.assert_array_equal(get_field(state, "current/observation").cpu().numpy(), poses[:, 0])
         ours, done = [poses[:, 0]], []
         sequence = torch.as_tensor(actions, device=device)
         for t in range(STEPS):
             out = env.step(sequence[:, t], frames=None)
-            ours.append(out["state"]["current", "observation"].cpu().numpy())
+            ours.append(get_field(out["state"], "current/observation").cpu().numpy())
             done.append(out["terminated"].cpu().numpy().reshape(EPISODES))
     ours, done = np.stack(ours, 1), np.stack(done, 1)
     gap = np.linalg.norm(ours[:, :, 2:4] - poses[:, :, 2:4], axis=2)

@@ -10,6 +10,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from stable_envs.envs.pusht import raster
 
 pytestmark = pytest.mark.skipif(
@@ -46,9 +47,9 @@ def _seeded(name):
 def _states(name):
     """64 seeded States after random pushes, then edge cases written into the first lanes."""
     state = _seeded(name).clone()
-    block = state["current", "body", "block", "position"]
-    agent = state["current", "body", "agent", "position"]
-    angle = state["current", "body", "block", "angle"]
+    block = get_field(state, "current/body/block/position")
+    agent = get_field(state, "current/body/agent/position")
+    angle = get_field(state, "current/body/block/angle")
     # Block partly above the canvas, upside down: its outline lines are clipped.
     block[0] = torch.tensor([300.0, 20.0], dtype=block.dtype)
     angle[0] = math.pi + 0.05
@@ -60,7 +61,7 @@ def _states(name):
     # Agent over the block.
     agent[3] = block[3].clone()
     # Goal not drawn.
-    state["owned", "variation", "rendering", "render_goal", "current", "value"][4] = 0
+    get_field(state, "owned/variation/rendering/render_goal/current/value")[4] = 0
     return state
 
 
@@ -79,7 +80,7 @@ def _counting(env):
 @pytest.mark.parametrize("name", NAMES)
 def test_device_frames_equal_the_pygame_frames(name):
     state = _states(name)
-    assert int((state["current", "render_segment_count"] > 0).sum()) > 0, "no State has contact lines"
+    assert int((get_field(state, "current/render_segment_count") > 0).sum()) > 0, "no State has contact lines"
     with (
         se.make(name, num_envs=LANES, size=224, device="cuda") as env,
         se.make(name, num_envs=LANES, size=224, device="cpu") as ref,
