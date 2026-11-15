@@ -52,7 +52,8 @@ step(actions, *, states=slice(None), frames=slice(-1, None))
 | You want | `states` | `frames` |
 |---|---|---|
 | all states, final frame (default) | `slice(None)` | `slice(-1, None)` |
-| final state and frame only | `None` | `slice(-1, None)` |
+| final state and frame only | `slice(0, 0)` | `slice(-1, None)` |
+| final frame only, no state (fastest) | `None` | `slice(-1, None)` |
 | all states, no rendering | `slice(None)` | `None` |
 | all states and frames | `slice(None)` | `slice(None)` |
 | States at 0, 4, 8... and frames at 3, 7, 11... | `slice(None, None, 4)` | `slice(3, None, 4)` |
