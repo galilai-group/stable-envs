@@ -18,8 +18,11 @@ def _device(device) -> torch.device:
     return device
 
 
-def _build(source: dict, batch: torch.Size, device: torch.device) -> TensorDict | None:
-    """Wrap ``source`` in one pass when every leaf already fits; None when a leaf needs validation."""
+def _build(source: dict, batch: torch.Size, device: torch.device, index: int | None) -> TensorDict | None:
+    """Wrap ``source`` in one pass when every leaf already fits; None when a leaf needs validation.
+
+    ``index`` is ``Tensor.get_device()`` of a tensor on ``device`` (-1 on CPU), or None to compare devices.
+    """
     n = len(batch)
     # A tensor fits when its leading dims equal the batch; one batch dim is the common case.
     rows = batch[0] if n == 1 else None
@@ -29,15 +32,16 @@ def _build(source: dict, batch: torch.Size, device: torch.device) -> TensorDict 
             return None
         cls = type(value)
         if cls is torch.Tensor:
-            if value.device != device:
+            # get_device() returns an int, without building a torch.device for each leaf.
+            if (value.get_device() != index) if index is not None else (value.device != device):
                 return None
             if rows is not None:
-                if not value.ndim or value.shape[0] != rows:
+                if not value.ndim or value.size(0) != rows:
                     return None
             elif value.shape[:n] != batch:
                 return None
         elif cls is dict:
-            value = _build(value, batch, device)
+            value = _build(value, batch, device, index)
             if value is None:
                 return None
         elif cls is TensorDict:
@@ -46,13 +50,15 @@ def _build(source: dict, batch: torch.Size, device: torch.device) -> TensorDict 
         else:
             return None
         out[key] = value
-    return TensorDict._new_unsafe(out, batch_size=batch, device=device)
+    return TensorDict._new_unsafe(out, batch_size=batch, device=device, nested=False)
 
 
 def build_tensordict(source: dict, batch_size, device) -> TensorDict:
     """``TensorDict(source, batch_size, device=device)``; skips the per-leaf checks when every leaf already fits."""
     batch = torch.Size(batch_size)
-    built = _build(source, batch, _device(device))
+    device = _device(device)
+    index = -1 if device.type == "cpu" else device.index if device.type == "cuda" else None
+    built = _build(source, batch, device, index)
     return TensorDict(source, batch_size=batch, device=device) if built is None else built
 
 

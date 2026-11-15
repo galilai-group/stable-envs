@@ -202,6 +202,27 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True
         return _step(env, actions, states, frames, pipeline, render_threads=threads, final_state=state)
 
 
+def _single_step(env, action, sequence, state_indices, final_state, advance):
+    """One action without frames or a step pipeline: one transition, no masks to route and no history to stack."""
+    needs_state = final_state or state_indices is not None
+    result = (env._step if needs_state else advance)(action)
+    live_state = result.get("state", None) if needs_state else None
+    if needs_state and live_state is None:
+        live_state = env.get_state()
+    outputs = exclude_leaves(result, ("state", "frame"), clone=not getattr(env, "_step_outputs_owned", False))
+    if sequence:
+        outputs = stack_leaves([outputs])
+    count = 1 + (state_indices is not None)
+    flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=env.device).unbind(0)
+    out = {"state": live_state} if final_state else {}
+    out.update(outputs.items())
+    out["valid"] = flags[0]
+    if state_indices is not None:
+        out["states"] = _stack_states([live_state]) if state_indices else live_state.unsqueeze(1)[:, :0].clone()
+        out["state_valid"] = flags[1] if state_indices else flags[1][:, :0]
+    return build_tensordict(out, [env.num_envs], env.device)
+
+
 def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
@@ -219,10 +240,12 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     final = final_state or state_indices == ()
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
-    history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
     outputs_owned = getattr(env, "_step_outputs_owned", False)
     shared = tuple(getattr(env, "_shared_outputs", ()))
+    if length == 1 and frame_indices is None and pipeline is None and not shared:
+        return _single_step(env, acts[:, 0] if sequence else acts, sequence, state_indices, final_state, advance)
+    history, saved_states, saved_frames, validity = [], {}, {}, []
     # Draws the live lanes without rebuilding them from the state snapshot.
     render_live = getattr(env, "_render_live", None)
     all_active = True
