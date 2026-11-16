@@ -15,6 +15,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core import jax_runtime
 from ..._core.stepping import _stack_states
 from ..._core.tensordicts import build_tensordict
 from ...env import Env
@@ -34,6 +35,7 @@ class CraftaxEnv(Env):
     action_low = 0
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
+        jax_runtime.prepare()
         from .kernel import kernel
 
         if size not in (None, self.default_size) or supersample != 1:

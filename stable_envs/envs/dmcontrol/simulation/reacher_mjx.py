@@ -6,23 +6,20 @@ See licenses/APACHE-2.0.txt and THIRD_PARTY_NOTICES.md.
 
 from __future__ import annotations
 
-import os
 import xml.etree.ElementTree as ET
 
+import jax
+import jax.dlpack
+import jax.numpy as jnp
+import mujoco
 import numpy as np
 import torch
+from dm_control.suite import reacher
+from mujoco import mjx
 from tensordict import TensorDict
 
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
-
-import jax  # noqa: E402
-import jax.dlpack  # noqa: E402
-import jax.numpy as jnp  # noqa: E402
-import mujoco  # noqa: E402
-from dm_control.suite import reacher  # noqa: E402
-from mujoco import mjx  # noqa: E402
-
-from .first_family import ReacherAdapter  # noqa: E402
+from ...._core import jax_runtime
+from .first_family import ReacherAdapter
 
 # Density-dependent fields, including constants from mj_setConst.
 _MODEL_FIELDS = (
@@ -64,6 +61,7 @@ class ReacherMJXAdapter(ReacherAdapter):
     """Batched MJX Reacher dynamics."""
 
     def __init__(self, num_envs, device="cuda", seed=0):
+        jax_runtime.prepare()
         super().__init__(num_envs, device, seed)
         backend = "gpu" if self.device.type == "cuda" else "cpu"
         devices = jax.devices(backend)

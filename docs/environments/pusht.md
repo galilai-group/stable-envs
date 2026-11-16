@@ -13,7 +13,7 @@ with snv.PushT(num_envs=8, device="cpu") as env:
 
 ## Install
 
-The classes need the `pusht` extra. On CUDA, the physics and the frames use Triton, which comes with the CUDA builds of torch on Linux. The `pusht-gpu` extra adds JAX, which only `simulation_backend="jax"` needs. See [what each family needs](../install.md#what-each-family-needs).
+The classes need the `pusht` extra. On CUDA, the physics and the frames use Triton, which comes with the CUDA builds of torch on Linux. The `pusht-gpu` extra adds JAX, which only `simulation_backend="jax"` needs. When a JAX PushT is built, stable-envs turns off JAX's GPU memory preallocation, so that Torch keeps its GPU memory. See [JAX GPU memory](../environment-variables.md#jax-gpu-memory). See [what each family needs](../install.md#what-each-family-needs).
 
 ## Task
 

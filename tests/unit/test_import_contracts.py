@@ -17,6 +17,7 @@ CORE = [
     "_core/config.py",
     "_core/style.py",
     "_core/mujoco_gl.py",
+    "_core/jax_runtime.py",
 ]
 
 
