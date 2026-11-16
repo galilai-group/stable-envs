@@ -13,7 +13,7 @@ from tensordict import TensorDict
 from ...._execution.protocol import SimulatorAdapter
 from .mjwarp_reset import WarpResetPool, warp_batch_fields
 from .mjwarp_tasks import bind_task
-from .state import MODEL_FIELDS
+from .state import MODEL_FIELDS, field_name
 
 #: Physical State columns and the ``MjData`` fields that hold them.
 _PHYSICAL = {"qpos": "qpos", "qvel": "qvel", "warmstart": "qacc_warmstart"}
@@ -255,7 +255,7 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._model_fields, self._option_fields = warp_batch_fields()
         self._source = WarpResetPool(key, self.num_envs, seed, self._model_fields, self._option_fields)
         try:
-            self.fields = self._source.fields
+            self.fields, self.schema = self._source.fields, self._source.schema
             self.action_dim = self._source.action_dim
             owner = self._source.envs[0]
             self._task = bind_task(key, owner)
@@ -396,8 +396,9 @@ class DMCWarpAdapter(SimulatorAdapter):
 
     def _write_physics(self, state, lanes=None):
         """Load the physical columns of ``state`` rows ``lanes`` (all when None) and forward every world."""
-        values = {name: state[key].to(torch.float32) for key, name in self._physical.items()}
-        values["time"] = state["time"].to(torch.float32)[:, 0]
+        get = self.schema.get
+        values = {name: get(state, key).to(torch.float32) for key, name in self._physical.items()}
+        values["time"] = get(state, "time").to(torch.float32)[:, 0]
         # dm_control forwards a reset with actuation disabled; the next step writes the controls again.
         self.batch.data("ctrl").zero_()
         self.batch.set_physics(values, lanes, forward=True)
@@ -414,9 +415,12 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._upload_models(models)
         self._write_physics(state)
         self._state = state
-        self._clock = host["time"][:, 0].numpy().copy()
-        self._counts = host["lifecycle", "step_count"].numpy().reshape(-1).copy()
-        self._pending = host["lifecycle", "reset_next_step"].numpy().reshape(-1).copy()
+        # Views of the State's groups, which the step and the State export write.
+        self._views = self.schema.views(state)
+        get = self.schema.get
+        self._clock = get(host, "time")[:, 0].numpy().copy()
+        self._counts = get(host, "lifecycle/step_count").numpy().reshape(-1).copy()
+        self._pending = get(host, "lifecycle/reset_next_step").numpy().reshape(-1).copy()
         self._stale = np.zeros(self.num_envs, dtype=bool)
 
     def _reinstall(self):
@@ -430,7 +434,7 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._validate_models(prepared.models)
         state = self.get_state()
         for key in self._source.physics.state_fields():
-            state[key] = prepared.state[key].to(self.device).clone()
+            self.schema.set(state, field_name(key), self.schema.get(prepared.state, field_name(key)))
         try:
             self._install(state, prepared.models)
         except Exception:
@@ -454,15 +458,15 @@ class DMCWarpAdapter(SimulatorAdapter):
             for key, name in self._physical.items():
                 value = self.batch.data(name)
                 if stale is None:
-                    self._state[key].copy_(value)
+                    self._views[key].copy_(value)
                 else:
-                    self._state[key][stale] = value[stale].to(torch.float64)
+                    self._views[key][stale] = value[stale].to(torch.float64)
             self._stale[:] = False
         # The clock and lifecycle live on the host; one copy that does not wait for the queued physics.
         host = self._upload(np.stack([self._clock, self._counts, self._pending], axis=1).astype(np.float64))
-        self._state["time"] = host[:, 0:1].contiguous()
-        self._state["lifecycle", "step_count"] = host[:, 1:2].to(torch.int64)
-        self._state["lifecycle", "reset_next_step"] = host[:, 2:3].to(torch.bool)
+        self._views["time"].copy_(host[:, 0:1])
+        self._views["lifecycle/step_count"].copy_(host[:, 1:2].to(torch.int64))
+        self._views["lifecycle/reset_next_step"].copy_(host[:, 2:3].to(torch.bool))
         return self._state.clone()
 
     def _upload(self, array):
@@ -473,18 +477,20 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._check_open()
         self._source.validate(state)
         # Validate all columns before either native owners or GPU buffers change.
+        columns = self.schema.views(state)
         for key, (_, dtype) in self.fields.items():
-            if dtype == torch.float64 and not bool(torch.isfinite(state[key]).all()):
+            value = columns[field_name(key)]
+            if dtype == torch.float64 and not bool(torch.isfinite(value).all()):
                 raise ValueError(f"DMC State field {key!r} must be finite")
             if key in {"qpos", "qvel", "time", "warmstart", "activation"} or key in MODEL_FIELDS:
-                if not bool(torch.isfinite(state[key].to(torch.float32)).all()):
+                if not bool(torch.isfinite(value.to(torch.float32)).all()):
                     raise ValueError(f"DMC State field {key!r} must be representable in Warp float32")
-        keys, position = state["rng", "keys"], state["rng", "position"]
+        keys, position = columns["rng/keys"], columns["rng/position"]
         if bool(((keys < 0) | (keys > np.iinfo(np.uint32).max)).any()):
             raise ValueError("DMC RNG keys must be uint32 values")
         if bool(((position < 0) | (position > 624)).any()):
             raise ValueError("DMC RNG position must be in [0, 624]")
-        if bool((state["lifecycle", "step_count"] < 0).any()):
+        if bool((columns["lifecycle/step_count"] < 0).any()):
             raise ValueError("DMC step_count must be nonnegative")
         prepared = self._source.prepare_state(state)
         self._validate_models(prepared.models)
@@ -572,10 +578,10 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._source.commit(prepared)
         # The other worlds' physics is read back lazily; these rows keep the exact float64 reset.
         self._stale[lanes] = False
-        cumulative = self._state["task", "cumulative_reward"][ids]
+        cumulative = self._views["task/cumulative_reward"][ids]
         self._state[ids] = rows
-        self._state["task", "cumulative_reward"][ids] = cumulative
-        self._clock[lanes] = prepared.state["time"][lanes, 0].numpy()
+        self._views["task/cumulative_reward"][ids] = cumulative
+        self._clock[lanes] = self.schema.get(prepared.state, "time")[lanes, 0].numpy()
         self._counts[lanes] = 0
         self._pending[lanes] = False
 
@@ -615,7 +621,7 @@ class DMCWarpAdapter(SimulatorAdapter):
             self._clock[continuing] = clock
             self._counts[continuing] += 1
             self._pending[continuing] = self._counts[continuing] >= self._limits[continuing]
-        cumulative = self._state["task", "cumulative_reward"]
+        cumulative = self._views["task/cumulative_reward"]
         cumulative += reward[:, None]
         out["reward"] = reward
         out["score"] = cumulative[:, 0] / 1000

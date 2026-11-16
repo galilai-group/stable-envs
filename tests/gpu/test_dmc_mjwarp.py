@@ -13,6 +13,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, unfold
 from tests.gpu._shared import family_params, resolve_family
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -31,13 +32,15 @@ def test_cuda_stepping_snapshot_ownership_and_pixels(name):
         assert not actions.is_contiguous()
         env.step(actions, states=None, frames=None)
         saved = env.get_state()
-        saved["rng", "has_gauss"][:] = True
-        saved["rng", "cached_gaussian"][:, 0] = torch.tensor(
+        get_field(saved, "rng/has_gauss")[:] = True
+        get_field(saved, "rng/cached_gaussian")[:, 0] = torch.tensor(
             [0.123456789012345, -0.75, 1.25], device="cuda", dtype=torch.float64
         )
         if name == "DMCQuadrupedWalk":
-            assert saved["activation"].shape[1] > 0
-            saved["activation"][:] = torch.tensor([0.15, 0.45, 0.85], device="cuda", dtype=torch.float64)[:, None]
+            assert get_field(saved, "activation").shape[1] > 0
+            get_field(saved, "activation")[:] = torch.tensor([0.15, 0.45, 0.85], device="cuda", dtype=torch.float64)[
+                :, None
+            ]
         env.set_state(saved)
         assert_same_state(env.get_state(), saved)
         pixels = env.render().clone()
@@ -53,9 +56,9 @@ def test_cuda_stepping_snapshot_ownership_and_pixels(name):
 
         supplied = saved.clone()
         env.set_state(supplied)
-        supplied["qpos"].add_(1)
+        get_field(supplied, "qpos").add_(1)
         exported = env.get_state()
-        exported["qvel"].add_(1)
+        get_field(exported, "qvel").add_(1)
         assert_same_state(env.get_state(), saved)
         sequence = torch.zeros(3, 2, env.action_dim, device="cuda", dtype=torch.float64)
         captured = env.step(sequence, states=slice(None), frames=slice(None))
@@ -75,16 +78,16 @@ def test_mutating_returned_leaves_preserves_live_state_and_physics(name):
             state = adapter.reset(91000)
             if mixed:
                 limit = math.ceil(adapter._limits[0])
-                state["lifecycle", "step_count"][:, 0] = torch.tensor([limit - 1, limit, 6], device="cuda")
-                state["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False], device="cuda")
+                get_field(state, "lifecycle/step_count")[:, 0] = torch.tensor([limit - 1, limit, 6], device="cuda")
+                get_field(state, "lifecycle/reset_next_step")[:, 0] = torch.tensor([False, True, False], device="cuda")
                 adapter.set_state(state)
             output = adapter.step(actions, capture_state=mixed)
             checkpoint = adapter.get_state()
             physics = TensorDict(adapter.batch.get_physics(), [3])
             if mixed and "info" in output.keys():
-                saved_qpos = output["state", "qpos"].clone()
+                saved_qpos = get_field(output["state"], "qpos").clone()
                 output["info", "qpos"].fill_(123)
-                assert_same_state(output["state", "qpos"], saved_qpos)
+                assert_same_state(get_field(output["state"], "qpos"), saved_qpos)
             for value in output.values(True, True):
                 if value.dtype == torch.bool:
                     value.logical_not_()
@@ -109,29 +112,31 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         limit = math.ceil(source.envs[0]._env._step_limit)
         # Lane 0 resets in the second control round, lane 1 in the first;
         # lane 2 continues through both rounds.
-        state["lifecycle", "step_count"][:] = torch.tensor([[limit - 1], [limit], [6]])
-        state["lifecycle", "reset_next_step"][:] = torch.tensor([[False], [True], [False]])
-        state["task", "cumulative_reward"][:] = torch.tensor([[11.0], [17.0], [23.0]])
-        state["rng", "has_gauss"][:2] = True
-        state["rng", "cached_gaussian"][:2, 0] = torch.tensor([0.125, -0.375], dtype=torch.float64)
+        get_field(state, "lifecycle/step_count")[:] = torch.tensor([[limit - 1], [limit], [6]])
+        get_field(state, "lifecycle/reset_next_step")[:] = torch.tensor([[False], [True], [False]])
+        get_field(state, "task/cumulative_reward")[:] = torch.tensor([[11.0], [17.0], [23.0]])
+        get_field(state, "rng/has_gauss")[:2] = True
+        get_field(state, "rng/cached_gaussian")[:2, 0] = torch.tensor([0.125, -0.375], dtype=torch.float64)
         adapter.set_state(state.to("cuda"))
         source.set_state(state)
         actions = torch.full((3, 1), 0.25, dtype=torch.float64)
         expected = source.step(actions)
         actual = adapter.step(actions.to("cuda")).cpu()
-        assert_same_state(actual["state", "rng"], expected["state", "rng"])
-        assert_same_state(actual["state", "lifecycle"], expected["state", "lifecycle"])
-        assert actual["state", "lifecycle", "step_count"].flatten().tolist() == [0, 1, 8]
+        assert_same_state(unfold(actual["state"])["rng"], unfold(expected["state"])["rng"])
+        assert_same_state(unfold(actual["state"])["lifecycle"], unfold(expected["state"])["lifecycle"])
+        assert get_field(actual["state"], "lifecycle/step_count").flatten().tolist() == [0, 1, 8]
         # Cartpole's first reset velocity consumes the cached Gaussian. Lane 0
         # has not integrated after its reset, so this value must remain exact.
-        assert actual["state", "qvel"][0, 0].item() == 0.01 * 0.125
+        assert get_field(actual["state"], "qvel")[0, 0].item() == 0.01 * 0.125
         for key in ("qpos", "qvel"):
-            torch.testing.assert_close(actual["state", key], expected["state", key], atol=1e-5, rtol=0)
+            torch.testing.assert_close(
+                get_field(actual["state"], key), get_field(expected["state"], key), atol=1e-5, rtol=0
+            )
         torch.testing.assert_close(actual["observation"], expected["observation"], atol=1e-5, rtol=0)
         torch.testing.assert_close(actual["reward"], expected["reward"], atol=1e-6, rtol=0)
         torch.testing.assert_close(
-            actual["state", "task", "cumulative_reward"],
-            state["task", "cumulative_reward"] + actual["reward"][:, None],
+            get_field(actual["state"], "task/cumulative_reward"),
+            get_field(state, "task/cumulative_reward") + actual["reward"][:, None],
             atol=0,
             rtol=0,
         )
@@ -141,11 +146,11 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         following = adapter.step(actions.to("cuda"), capture_state=False)
         assert "state" not in following.keys()
         after = adapter.get_state().cpu()
-        assert after["lifecycle", "step_count"].flatten().tolist() == [2, 3, 10]
-        assert_same_state(after["rng"], actual["state", "rng"])
+        assert get_field(after, "lifecycle/step_count").flatten().tolist() == [2, 3, 10]
+        assert_same_state(unfold(after)["rng"], unfold(actual["state"])["rng"])
         torch.testing.assert_close(
-            after["task", "cumulative_reward"],
-            actual["state", "task", "cumulative_reward"] + following["reward"].cpu()[:, None],
+            get_field(after, "task/cumulative_reward"),
+            get_field(actual["state"], "task/cumulative_reward") + following["reward"].cpu()[:, None],
             atol=0,
             rtol=0,
         )
@@ -163,8 +168,8 @@ def test_invalid_later_lane_restore_preserves_models_state_and_rng():
         native_before = adapter._source.get_state()
         masses = [model.body_mass.copy() for model in adapter._source.models]
         bad = before.clone()
-        bad["physics", "agent", "cart_mass"][0] = 1.25
-        bad["physics", "agent", "cart_mass"][2] = -1
+        get_field(bad, "physics/agent/cart_mass")[0] = 1.25
+        get_field(bad, "physics/agent/cart_mass")[2] = -1
         with pytest.raises(ValueError):
             adapter.set_state(bad)
         assert_same_state(adapter.get_state(), before)
@@ -267,16 +272,17 @@ def test_pooled_resets_preserve_rng_targets_and_variation(name):
             state = source.reset(91020)
             assert_same_state(adapter.reset(91020).cpu(), state)
             limit = math.ceil(source.envs[0]._env._step_limit)
-            state["lifecycle", "step_count"][:, 0] = torch.tensor([limit - 1, limit, 6])
-            state["lifecycle", "reset_next_step"][:, 0] = torch.tensor([False, True, False])
-            state["rng", "has_gauss"].fill_(True)
-            state["rng", "cached_gaussian"][:, 0] = torch.tensor([0.125, -0.375, 0.75], dtype=torch.float64)
+            get_field(state, "lifecycle/step_count")[:, 0] = torch.tensor([limit - 1, limit, 6])
+            get_field(state, "lifecycle/reset_next_step")[:, 0] = torch.tensor([False, True, False])
+            get_field(state, "rng/has_gauss").fill_(True)
+            get_field(state, "rng/cached_gaussian")[:, 0] = torch.tensor([0.125, -0.375, 0.75], dtype=torch.float64)
             source.set_state(state)
             adapter.set_state(state.to("cuda"))
             actions = torch.zeros(3, adapter.action_dim, dtype=torch.float64)
             for _ in range(3):
                 expected = source.step(actions)["state"]
                 actual = adapter.step(actions.to("cuda"))["state"].cpu()
+                actual, expected = unfold(actual), unfold(expected)
                 for section in ("rng", "lifecycle"):
                     assert_same_state(actual[section], expected[section])
                 for key in source.fields:

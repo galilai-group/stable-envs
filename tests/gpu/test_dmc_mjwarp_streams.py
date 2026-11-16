@@ -3,6 +3,7 @@
 import pytest
 import torch
 
+from stable_envs._core.state_schema import get_field
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = [pytest.mark.family("dmc"), pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")]
@@ -36,7 +37,7 @@ def test_reset_step_and_restore_across_caller_streams():
         assert_same_state(stepped_on_first, stepped["state"])
         assert_same_state(reset_on_second, reset)
         assert_same_state(restored, initial)
-        assert stepped["state", "lifecycle", "step_count"].flatten().tolist() == [2, 2, 2]
+        assert get_field(stepped["state"], "lifecycle/step_count").flatten().tolist() == [2, 2, 2]
         assert all(value.device == device for value in stepped.values(True, True))
     finally:
         adapter.close()

@@ -31,10 +31,8 @@ class _ReacherSemantics(DelegatedSemantics):
     def _render_fields(self):
         return (("qpos",), ("task", "target_pos"))
 
-    def _pack_render_state(self, state):
-        if not isinstance(state, TensorDict):
-            raise TypeError("Expected full Reacher State")
-        return torch.cat((state["qpos"], state["task", "target_pos"][:, :2]), -1).to(self.device, torch.float32)
+    def _render_spans(self):
+        return (("qpos", 0, 2), ("task/target_pos", 0, 2))
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 4)

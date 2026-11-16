@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 import stable_envs as se
+from stable_envs._core.state_schema import unfold
 from stable_envs.envs.dmcontrol.simulation.factory import make_batch
 from tests.helpers.reference.crosswalk import canonical_names, class_for_frozen_cell
 from tests.helpers.reference.oracle import assert_outputs, state_at
@@ -75,12 +76,12 @@ def test_adapter_replays_every_recorded_step_from_restored_states(directory, dom
             # Each step starts from the recorded state, so platform roundoff cannot compound
             # through chaotic dynamics; the solver's warm start is only a starting guess.
             for t, action in enumerate(data["actions"]):
-                expected = state_at(data, t, batch=3, physics=env.physics_layout)
+                expected = env.schema.fold(state_at(data, t, batch=3, physics=env.physics_layout), [3])
                 env.set_state(expected)
                 compare_state(env.get_state(), expected)
                 result = env.step(action)
                 compare_state(
-                    result["state"].exclude("warmstart"),
+                    unfold(result["state"]).exclude("warmstart"),
                     state_at(data, t + 1, batch=3, physics=env.physics_layout).exclude("warmstart"),
                     atol=FROZEN_FLOAT64_ATOL,
                 )

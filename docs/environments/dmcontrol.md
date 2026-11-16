@@ -27,6 +27,18 @@ Each action dimension drives one actuator of the model, in the order of the MuJo
 
 dm_control resets and restores each task. On CPU, every environment of a batch steps in one `mujoco.batch` call on a pool of threads. `dmc_threads` caps the number of threads, and a task with little MuJoCo work uses fewer: each thread gets about 0.1 ms of work per call, by a number of environments per thread that each task ships (see [DM Control threads](../performance-tuning.md#dm-control-threads)), and at least two environments. The number of threads doesn't change the [state](../terms.md#state) or the outputs. Build the environment in the process that steps it: the `mujoco.batch` threads don't survive `fork()`.
 
+### State
+
+The [state](../terms.md#state) of a task has three leaves, one for each dtype: `dmc_<task>/float64`, `dmc_<task>/int64` and `dmc_<task>/bool`. For example, Reacher uses `dmc_reacher/float64`. Each field of the state is a slice of one of these leaves:
+
+| Leaf | Fields |
+| --- | --- |
+| float64 | `qpos`, `qvel`, `time`, `warmstart`, `task/cumulative_reward`, `rng/cached_gaussian`, `activation` (Quadruped), the target that the episode draws (`task/target_pos` or `model/...`) and the physics variation (`physics/...`) |
+| int64 | `lifecycle/step_count`, `rng/keys`, `rng/position` |
+| bool | `lifecycle/reset_next_step`, `rng/has_gauss` |
+
+Read a field with `snv.get_field(state, "qpos")`, and write a field with `snv.set_field(state, "qpos", value)`. `env.describe()["state_fields"]` gives the shape and dtype of each leaf.
+
 ### Physics backends
 
 `simulation_backend` picks the physics when you construct the environment:

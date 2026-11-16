@@ -11,7 +11,7 @@ import torch
 from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict, leaf_tree, to_device
 from ...._execution.protocol import SimulatorAdapter
-from .state import model_columns, new_columns, write_task_row
+from .state import group_views, model_columns, new_groups, write_task_row
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
 _pow = np.frompyfunc(math.pow, 2, 1)
@@ -46,6 +46,8 @@ def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value
 
 #: State fields read from the batch: ``State key -> MjData field``.
 _LIVE = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart", "activation": "act"}
+_COUNT, _RESET = ("lifecycle", "step_count"), ("lifecycle", "reset_next_step")
+_CUMULATIVE = ("task", "cumulative_reward")
 
 
 class DMCBatchAdapter(SimulatorAdapter):
@@ -62,7 +64,7 @@ class DMCBatchAdapter(SimulatorAdapter):
 
         self.lanes, self._task, self._cumulative = lanes, task, lanes._cumulative
         self.key, self.num_envs, self.device = lanes.key, lanes.num_envs, lanes.device
-        self.action_dim, self.fields = lanes.action_dim, lanes.fields
+        self.action_dim, self.fields, self.schema = lanes.action_dim, lanes.fields, lanes.schema
         self.physics_layout, self.physics_dim = lanes.physics_layout, lanes.physics_dim
         self._models = [env.physics.model.ptr for env in lanes.envs]
         self._transform = lanes.envs[0]._transform
@@ -75,12 +77,20 @@ class DMCBatchAdapter(SimulatorAdapter):
         self.b = Batch(self._models[0], self.num_envs, nthread=threads, persistent=True)
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
-        self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
+        # The State lives in host group arrays; the step copies the batch's physics and counters into their views.
+        self._groups = new_groups(self.schema, self.num_envs)
+        self._columns = group_views(self.schema, self._groups, self.fields)
+        self._layout = StateLayout(self.schema.leaves(), self.num_envs)
+        self._live = [
+            (self._columns[key], bound[:, None] if bound.ndim == 1 else bound)
+            for key, name in _LIVE.items()
+            if key in self.fields
+            for bound in (self.b.bind(name),)
+        ]
         # Bound once: ``Batch.ctrl`` makes a new view at each access.
         self._ctrl, self._warning = self.b.bind("ctrl"), self.b.warning[:, :, 1]
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._rng_views = {}
-        self._layout = None
         self._load(np.arange(self.num_envs))
 
     def _reset_lanes(self, ids, seed=None):
@@ -129,36 +139,32 @@ class DMCBatchAdapter(SimulatorAdapter):
         finally:
             for m, flag in zip(models, flags, strict=True):
                 m.opt.disableflags = flag
-        columns = self._export(ids, envs, seeded and not getattr(self.task, "RESET_DRAWS_NORMALS", True))
+        self._export(ids, envs, seeded and not getattr(self.task, "RESET_DRAWS_NORMALS", True))
         if len(ids) == self.num_envs:
-            self._columns = columns
-        else:
-            for key, column in columns.items():
-                self._columns[key][ids] = column
+            self._export_physics()
 
     def _export(self, ids, envs, gauss_free=False):
-        """State columns of lanes ``ids``: physics from the batch, task RNG and model entries from dm_control.
+        """Write the task RNG and model entries of lanes ``ids`` from dm_control into the State columns.
 
         With ``gauss_free``, the task RNGs hold no cached gaussian, and their keys and positions are read in place.
         """
-        columns = new_columns(len(ids), self.lanes._base_fields)
-        for key, name in _LIVE.items():
-            if key in columns:
-                columns[key][:] = self.b.bind(name)[ids].reshape(len(ids), -1)
-        columns["lifecycle", "step_count"][:, 0] = self._count[ids]
-        columns["lifecycle", "reset_next_step"][:, 0] = self._reset_next[ids]
-        columns["task", "cumulative_reward"][:, 0] = self._cumulative[ids]
+        columns = self._columns
         model_fields = model_columns(columns)
         if not gauss_free or model_fields:
-            for row, env in enumerate(envs):
-                write_task_row(columns, row, env, model_fields)
-            return columns
+            for i, env in zip(ids, envs, strict=True):
+                write_task_row(columns, i, env, model_fields)
+            return
         keys, position = columns["rng", "keys"], columns["rng", "position"]
-        for row, (i, env) in enumerate(zip(ids, envs, strict=True)):
-            keys[row], position[row] = self._rng_view(i, env.task.random)
-        columns["rng", "has_gauss"][:] = False
-        columns["rng", "cached_gaussian"][:] = 0.0
-        return columns
+        for i, env in zip(ids, envs, strict=True):
+            keys[i], position[i] = self._rng_view(i, env.task.random)
+        columns["rng", "has_gauss"][ids] = False
+        columns["rng", "cached_gaussian"][ids] = 0.0
+
+    def _export_physics(self):
+        """Write the installed physics Variation of every lane into the State columns."""
+        if self.lanes.physics is not None:
+            for key, value in self.lanes.physics.export().items():
+                self._columns[key][:] = value
 
     def _rng_view(self, lane, random):
         """Views of the MT19937 keys and position of ``random``, the task RNG of lane ``lane``."""
@@ -173,6 +179,7 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def configure_physics(self, values):
         self.lanes.configure_physics(values)
+        self._export_physics()
         self.b.set_models(self._models)
         self.b.forward(stage=self._vel)
         self.task = self._task(self.b, self._models)
@@ -189,30 +196,18 @@ class DMCBatchAdapter(SimulatorAdapter):
         return self._state_on(self.device)
 
     def _state_on(self, device):
-        values = self._state_values()
-        # The export copies every value: later steps and resets cannot change the returned snapshot.
-        return self._layout_of(values).export(values, device)
+        # The export copies every group: later steps and resets cannot change the returned snapshot.
+        return self._layout.export(self._state_groups(), device)
 
-    def _state_values(self):
-        live = {
-            **self._live,
-            "time": self._live["time"][:, None],
-            ("lifecycle", "step_count"): self._count[:, None],
-            ("lifecycle", "reset_next_step"): self._reset_next[:, None],
-            ("task", "cumulative_reward"): self._cumulative[:, None],
-        }
-        values = {key: live.get(key, column) for key, column in self._columns.items()}
-        if self.lanes.physics is not None:
-            values.update(self.lanes.physics.export())
-        return values
-
-    def _layout_of(self, values):
-        if self._layout is None:
-            self._layout = StateLayout(
-                [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in values.items()],
-                self.num_envs,
-            )
-        return self._layout
+    def _state_groups(self):
+        """The State group arrays, with the batch's physics and the step counters copied in."""
+        for column, bound in self._live:
+            column[:] = bound
+        columns = self._columns
+        columns[_COUNT][:, 0] = self._count
+        columns[_RESET][:, 0] = self._reset_next
+        columns[_CUMULATIVE][:, 0] = self._cumulative
+        return self._groups
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -244,8 +239,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         The arrays may be live buffers: the caller copies them before the next call.
         """
         outputs = self._advance(actions, None)
-        values = self._state_values()
-        return {**self._layout_of(values).host_leaves(values, ("state",)), **outputs}
+        return {**self._layout.host_leaves(self._state_groups(), ("state",)), **outputs}
 
     def _advance(self, actions, active):
         """Advance the lanes; the task outputs as ``{key path: array}``."""

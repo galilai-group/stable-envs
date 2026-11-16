@@ -11,6 +11,7 @@ import torch
 
 import stable_envs as se
 from stable_envs._core.physics import GeomMass, ModelField, PhysicsKnobs, state_key
+from stable_envs._core.state_schema import unfold
 
 mujoco = pytest.importorskip("mujoco")
 
@@ -212,9 +213,10 @@ def test_dmc_batch_rejects_a_state_without_its_physics():
 
     adapter = make_batch("cartpole", 2)
     try:
-        stale = adapter.get_state().exclude(state_key("gravity.y"))
+        # A State of one leaf per field, without the gravity.y field.
+        stale = unfold(adapter.get_state()).exclude(state_key("gravity.y"))
         current = adapter.step(np.full((2, 1), 0.4))["state"]
-        with pytest.raises(ValueError, match="does not record the physics"):
+        with pytest.raises(ValueError, match="missing the group"):
             adapter.set_state(stale)
         assert (adapter.get_state() == current).all()
     finally:
@@ -225,7 +227,7 @@ def _gravity(env):
     state = env.get_state()
     sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.lanes.envs])
     style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
-    rows = torch.cat([state["physics", "gravity", axis] for axis in "xyz"], dim=1).numpy()
+    rows = torch.cat([se.get_field(state, f"physics/gravity/{axis}") for axis in "xyz"], dim=1).numpy()
     np.testing.assert_array_equal(rows, sim)
     np.testing.assert_array_equal(style, sim.astype(np.float32))
     return sim
@@ -246,8 +248,8 @@ def test_reset_sets_or_samples_named_physics_and_restores_the_rest(cartpole):
     np.testing.assert_array_equal(_gravity(cartpole)[:, 2:], gz)
     cartpole.reset(seed=1, options={"variation_values": {"gravity.x": [1.25]}})
     np.testing.assert_array_equal(_gravity(cartpole), np.tile([1.25, 0.0, -9.81], (3, 1)))
-    first = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
-    again = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
+    first = se.get_field(cartpole.reset(seed=9, options={"variation": ["gravity.y"]}), "physics/gravity/y")
+    again = se.get_field(cartpole.reset(seed=9, options={"variation": ["gravity.y"]}), "physics/gravity/y")
     assert torch.equal(first, again) and len(set(first.reshape(-1).tolist())) == 3
     np.testing.assert_array_equal(_gravity(cartpole)[:, [0, 2]], registered[:, [0, 2]])
     cartpole.reset()

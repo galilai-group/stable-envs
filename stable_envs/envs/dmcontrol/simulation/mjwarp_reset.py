@@ -9,12 +9,20 @@ from dataclasses import dataclass, fields
 from functools import cache
 
 import numpy as np
-import torch
 
-from ...._execution.state_columns import require_columns
+from ...._core.state_schema import unfold
 from .batch import THREADED_RESETS
 from .factory import BATCH_TASKS, batch_threads, make_local
-from .state import MODEL_FIELDS, columns_to_state, model_columns, new_columns, write_row
+from .state import (
+    MODEL_FIELDS,
+    Columns,
+    columns_to_state,
+    field_arrays,
+    field_name,
+    model_columns,
+    validate_state,
+    write_row,
+)
 
 
 @cache
@@ -164,6 +172,7 @@ class WarpResetPool:
             self._owner = self._owners[0]
             self.envs = self._owner.envs
             self.fields, self.action_dim = self._owner.fields, self._owner.action_dim
+            self.schema = self._owner.schema
             reference = copy.copy(self.envs[0].physics.model.ptr)
             self.models = WarpModelBatch(reference, self.num_envs, model_fields, option_fields)
             # This holder uses the native physics layout/column validation, but
@@ -173,7 +182,7 @@ class WarpResetPool:
                 self.physics.models = self.models
                 self.physics._data = None
                 self.physics.values = np.tile(self.physics.spec.nominal, (self.num_envs, 1))
-            self._state = None
+            self._state = self._columns = None
             self.commit(self.prepare_reset(seed, initial=True))
         except BaseException:
             self.close()
@@ -191,7 +200,8 @@ class WarpResetPool:
         if self._closed:
             raise RuntimeError("WarpResetPool is closed")
 
-    def _select_owner(self, owner, state, lane, values):
+    def _select_owner(self, owner, columns, lane, values):
+        """Install lane ``lane`` in ``owner``: its model, its physics ``values`` and the RNG of State ``columns``."""
         env = owner.envs[0]
         if self._state is not None:
             self.models.restore(lane, env.physics)
@@ -202,18 +212,18 @@ class WarpResetPool:
                 owner.physics.values = self.physics.values[lane : lane + 1].copy()
         if values is not None:
             owner.configure_physics(values[lane : lane + 1])
-        if state is not None:
+        if columns is not None:
             for key in self.fields:
                 if key in MODEL_FIELDS:
                     name, index = MODEL_FIELDS[key]
-                    getattr(env.physics.named.model, name)[index] = state[key][lane].numpy()
+                    getattr(env.physics.named.model, name)[index] = columns[key][lane]
             env.task.random.set_state(
                 (
                     "MT19937",
-                    state["rng", "keys"][lane].numpy().astype(np.uint32),
-                    state["rng", "position"][lane].item(),
-                    int(state["rng", "has_gauss"][lane].item()),
-                    state["rng", "cached_gaussian"][lane].item(),
+                    columns["rng", "keys"][lane].astype(np.uint32),
+                    columns["rng", "position"][lane].item(),
+                    int(columns["rng", "has_gauss"][lane].item()),
+                    columns["rng", "cached_gaussian"][lane].item(),
                 )
             )
         return env
@@ -242,14 +252,14 @@ class WarpResetPool:
         order = np.argsort(ids, kind="stable")
         lanes, owner, begun, rng = ids[order], self._owners[0], [], []
         for lane in lanes:
-            base = self._select_owner(owner, self._state, lane, values)._env
+            base = self._select_owner(owner, self._columns, lane, values)._env
             if seed is not None:
                 base.task._random = np.random.RandomState(int(seed) + int(lane))
             base._reset_next_step, base._step_count = False, 0
             begun.append(task.begin_reset(base, lane))
             rng.append(base.task.random.get_state())
         for k, (lane, value) in enumerate(zip(lanes, task.batch_reset(lanes, begun), strict=True)):
-            env = self._select_owner(owner, self._state, lane, values)
+            env = self._select_owner(owner, self._columns, lane, values)
             env._env.task.random.set_state(rng[k])
             task.end_reset(env._env, lane, value)
             models.capture(lane, env.physics)
@@ -260,17 +270,15 @@ class WarpResetPool:
         ids = np.arange(self.num_envs) if lanes is None else np.asarray(lanes, dtype=np.int64)
         values = None if self.physics is None else self.physics.values.copy()
         models = self.models if initial else self.models.clone()
-        cumulative = (
-            np.zeros(len(ids)) if lanes is None else self._state["task", "cumulative_reward"][ids, 0].numpy().copy()
-        )
+        cumulative = np.zeros(len(ids)) if lanes is None else self._columns["task", "cumulative_reward"][ids, 0].copy()
 
-        columns = new_columns(len(ids), self.fields)
+        columns = Columns(self.schema, len(ids), self.fields)
         model_fields = model_columns(columns)
 
         def reset_shard(owner, positions):
             for position in positions:
                 lane = ids[position]
-                env = self._select_owner(owner, self._state, lane, values)
+                env = self._select_owner(owner, self._columns, lane, values)
                 # make_local performed the first lane's registered initial
                 # reset already. Reuse it without consuming a second RNG draw.
                 if not (initial and lane == 0):
@@ -303,26 +311,22 @@ class WarpResetPool:
 
     def validate(self, state):
         self._check_open()
-        from tensordict import TensorDict
-
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
-            raise TypeError(f"{self.key} requires full TensorDict State with batch [num_envs]")
-        rows = None if self.physics is None else self.physics.rows_from_state(state)
-        require_columns(state, {key: ((self.num_envs, width), dtype) for key, (width, dtype) in self.fields.items()})
-        return rows
+        validate_state(self.schema, state, self.num_envs, self.key)
+        return None if self.physics is None else self.physics.rows_from_state(unfold(state))
 
     def prepare_state(self, state):
         values = self.validate(state)
         host = state.cpu().clone()
+        columns = field_arrays(self.schema, host, self.fields)
         changed = np.zeros(self.num_envs, dtype=bool)
         if values is not None:
             changed |= np.any(values != self.physics.values, axis=1)
         for key in self.fields:
             if key in MODEL_FIELDS:
-                changed |= np.any(host[key].numpy() != self._state[key].numpy(), axis=1)
+                changed |= np.any(columns[key] != self._columns[key], axis=1)
         models = self.models.clone() if changed.any() else self.models
         for lane in np.flatnonzero(changed):
-            env = self._select_owner(self._owner, host, lane, values)
+            env = self._select_owner(self._owner, columns, lane, values)
             env.physics.forward()
             models.capture(lane, env.physics)
         return _Prepared(host, models, values)
@@ -348,11 +352,12 @@ class WarpResetPool:
         proposed.values = rows
         state = self._state.clone()
         for key, value in proposed.export().items():
-            state[key] = torch.from_numpy(value)
+            self.schema.set(state, field_name(key), value)
         return self.prepare_state(state)
 
     def commit(self, prepared):
         self._state, self.models = prepared.state, prepared.models
+        self._columns = field_arrays(self.schema, self._state, self.fields)
         if self.physics is not None:
             self.physics.models = self.models
             self.physics.values = prepared.physics_values

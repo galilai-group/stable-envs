@@ -9,6 +9,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
 - The PushT state is folded: its fixed-shape fields are slices of one `(N, size)` leaf for each section and dtype, and the action history keeps its own leaves. The state has about 20 leaves instead of 239, and it leaves out the goal image. Read and write fields with `snv.get_field` and `snv.set_field`.
+- The DM Control state has three leaves: `dmc_<task>/float64`, `dmc_<task>/int64` and `dmc_<task>/bool`, such as `dmc_reacher/float64`. Each field, such as `qpos` or `rng/keys`, is a slice of one of them. Read and write a field with `snv.get_field(state, "qpos")` and `snv.set_field`. States saved before this change do not load.
 
 ### Added
 
