@@ -55,7 +55,7 @@ Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github
 
 - speed: steps, steps with a frame after each step, and frames of stored States, at each batch size, with stable-envs and stable-worldmodel on the same CPU cores in the same run.
 - render MSE: the frame MSE on the 0-255 scale between the two renderers, for the same States, at the frame size and default appearance of stable-worldmodel.
-- rollout parity: the state error after each of the same actions from the same start State.
+- rollout parity: the state error after each of the same actions, from the same seeded reset, and from the state of a stable-worldmodel rollout loaded into stable-envs.
 
 [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#comparison-with-stable-worldmodel) gives the commands, the timing method and the output columns.
 

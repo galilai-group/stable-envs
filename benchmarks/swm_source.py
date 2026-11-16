@@ -79,6 +79,8 @@ FIELDS = {
     "block": ("current.body.block.position",),
     "angle": ("current.body.block.angle",),
     "velocity": ("current.body.agent.velocity",),
+    "block_velocity": ("current.body.block.velocity",),
+    "block_angular_velocity": ("current.body.block.angular_velocity",),
     "qpos": ("qpos", "physics.qpos"),
     "qvel": ("qvel", "physics.qvel"),
 }
@@ -187,6 +189,29 @@ class SwmSource:
 
         data.qpos[:], data.qvel[:] = qpos[: model.nq], qvel[: model.nv]
         mujoco.mj_forward(model, data)
+
+    def read(self) -> dict:
+        """The fields that swm exposes, as ``{short name: float64 vector}`` (see ``FIELDS``)."""
+        u = self.env.unwrapped
+        if hasattr(u, "block") and hasattr(u, "agent"):
+            return {
+                "agent": np.array(u.agent.position, np.float64),
+                "velocity": np.array(u.agent.velocity, np.float64),
+                "block": np.array(u.block.position, np.float64),
+                "angle": np.array([u.block.angle], np.float64),
+                "block_velocity": np.array(u.block.velocity, np.float64),
+                "block_angular_velocity": np.array([u.block.angular_velocity], np.float64),
+            }
+        if hasattr(u, "agent_position"):
+            return {"agent": np.asarray(u.agent_position, np.float64).reshape(-1)[:2]}
+        mj = _mujoco(u)
+        if mj is None:
+            raise NotImplementedError(f"no swm state mapping for {self.name}")
+        model, data = mj
+        return {
+            "qpos": np.array(data.qpos[: model.nq], np.float64),
+            "qvel": np.array(data.qvel[: model.nv], np.float64),
+        }
 
     def get_state(self, like: dict) -> np.ndarray:
         """Read the swm env's state as the vector that :func:`state_vector` makes of the row ``like``."""

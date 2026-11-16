@@ -91,4 +91,5 @@ def test_render_mse_and_rollout_parity_write_their_columns(tmp_path):
     parity = tmp_path / "parity.csv"
     _run("benchmarks.rollout_parity", "--env", ENV, "--episodes", "1", "--steps", "3", "--out", str(parity))
     columns, rows = _rows(parity)
-    assert columns == rollout_parity.COLUMNS and rows[0]["status"] == "ok", rows
+    assert columns == rollout_parity.COLUMNS and [r["mode"] for r in rows] == ["seeded", "natural"], rows
+    assert all(r["status"] == "ok" for r in rows), rows

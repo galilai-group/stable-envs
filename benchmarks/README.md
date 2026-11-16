@@ -80,7 +80,7 @@ uv sync --group bench --group pin-pusht --extra pusht --group torch-cuda
 |---|---|
 | `speed.py` | Times stable-envs and swm on the same cores in one run, and writes one CSV row per cell |
 | `render_mse.py` | Draws the same States with swm and stable-envs, and writes the frame MSE per env |
-| `rollout_parity.py` | Plays the same start State and actions in both, and writes the state error per env |
+| `rollout_parity.py` | Plays the same actions in both from the same seeded reset, and from swm's own state loaded into ours, and writes the state error per env. It never writes a state into swm |
 | `swm_source.py` | The swm source: ids, the swm env calls, and the State mapping |
 | `backend_switch.py` | Times both CUDA simulation backends of a class at batches 1 to 4096 and prints its switch point |
 
@@ -90,7 +90,7 @@ Run the scripts from the repository root.
 python -m benchmarks.speed --cpu --gpu --step --render --step-and-render --env PushT TwoRoom \
   --batch 1 8 16 64 --actions-per-call 1 16 --out speed.csv
 python -m benchmarks.render_mse --env PushT TwoRoom --device cpu cuda --out render_mse.csv
-python -m benchmarks.rollout_parity --env PushT TwoRoom --steps 20 --out rollout_parity.csv
+python -m benchmarks.rollout_parity --env PushT TwoRoom DMCReacher OGBCube --steps 20 --out rollout_parity.csv
 ```
 
 ### Method of `speed.py`
