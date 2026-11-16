@@ -595,7 +595,7 @@ def _measure(domain: str, device: torch.device):
     )
 
 
-def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices, measure) -> str:
+def _host_backend(path: str, num_envs: int, backend: str | None, pair, choices, measure) -> str:
     """The host backend.
 
     The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here: the tuning cache
@@ -605,18 +605,18 @@ def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices,
 
     cpu = torch.device("cpu")
     if backend not in (None, "auto"):
-        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": rungs}, choices=choices)
-    backends._REGISTERED[backends.KNOB, path, cpu.type] = (rungs, measure)
-    if rungs.small == rungs.large:
-        return rungs.small
+        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": pair}, choices=choices)
+    backends._REGISTERED[backends.KNOB, path, cpu.type] = (pair, measure)
+    if pair.small == pair.large:
+        return pair.small
     data, current = tuning.read_cache(cpu)
     value = data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.KNOB) if current else None
     if value is not None:
-        return rungs.large if num_envs >= value else rungs.small
+        return pair.large if num_envs >= value else pair.small
     side = backends._cached_neighbours(path, cpu, num_envs)
     if side is not None:
-        return rungs.large if side == "large" else rungs.small
-    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
+        return pair.large if side == "large" else pair.small
+    return pair.large if pair.min_envs is None or num_envs >= pair.min_envs else pair.small
 
 
 def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
@@ -626,19 +626,19 @@ def classic_backend(domain: str, device: str | torch.device, num_envs: int, back
     Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
     ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` knob moves only the CUDA switch point.
     """
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
     from .numba_step import STEPS
 
     device = torch.device(device)
     choices = SIMULATION_BACKENDS + (("numba",) if domain in STEPS else ())
     cpu = torch.device("cpu")
     compiled = domain in COMPILED_HOST and domain in STEPS
-    rungs = Rungs("numba", "numba") if compiled else Rungs("gym", "numpy", CPU_MIN_ENVS[domain])
-    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, rungs, choices, _measure(domain, cpu))
+    pair = BackendPair("numba", "numba") if compiled else BackendPair("gym", "numpy", CPU_MIN_ENVS[domain])
+    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, pair, choices, _measure(domain, cpu))
     if device.type == "cpu" or backend not in (None, "auto"):
         return host
     return select_backend(
         f"classic-sim/{domain}", num_envs, device, backend,
-        {"cpu": Rungs(host, host), "cuda": Rungs(host, "torch", CUDA_MIN_ENVS[domain])},
+        {"cpu": BackendPair(host, host), "cuda": BackendPair(host, "torch", CUDA_MIN_ENVS[domain])},
         choices=choices, measure=_measure(domain, device),
     )  # fmt: skip

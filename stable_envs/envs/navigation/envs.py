@@ -11,7 +11,7 @@ from ... import tuning
 from ..._core.state_schema import Field, StateSchema
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution import host_render
-from ..._execution.backends import Rungs, measure_env, select_backend
+from ..._execution.backends import BackendPair, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_drawn_fields, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -1207,7 +1207,10 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
-    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS)}
+    render_backends = {
+        "cpu": BackendPair("cpu", "cpu"),
+        "cuda": BackendPair("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS),
+    }
     _numba_paths = (
         "agent.speed",
         "agent.radius",
@@ -1416,8 +1419,8 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             self.device,
             "auto",
             {
-                "cpu": Rungs("jax", "jax"),
-                "cuda": Rungs("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
+                "cpu": BackendPair("jax", "jax"),
+                "cuda": BackendPair("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
             },
             choices=self.simulation_backends,
             measure=measure,

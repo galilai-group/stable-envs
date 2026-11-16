@@ -55,7 +55,7 @@ def pusht_backend(
     """
     import torch
 
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
@@ -65,7 +65,7 @@ def pusht_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", _gpu_backend(), CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", _gpu_backend(), CUDA_MIN_ENVS)},
         choices=SIMULATION_BACKENDS,
         measure=measure,
     )

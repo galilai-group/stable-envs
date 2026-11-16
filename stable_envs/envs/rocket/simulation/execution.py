@@ -43,7 +43,7 @@ def rocket_backend(
     """
     import torch
 
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "numba_cuda" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='numba_cuda' requires device='cuda'")
@@ -52,7 +52,7 @@ def rocket_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "numba_cuda", CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "numba_cuda", CUDA_MIN_ENVS)},
         choices=SIMULATION_BACKENDS,
         measure=_measure(device, config) if type(num_envs) is int and num_envs > 0 else None,
     )

@@ -9,7 +9,7 @@ from tensordict import TensorDict, TensorDictBase
 from ... import tuning
 from ..._core.state_schema import schema_of
 from ..._execution import host_render
-from ..._execution.backends import Rungs
+from ..._execution.backends import BackendPair
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, _require_extra, register
@@ -149,7 +149,7 @@ class PushT(Env):
     #: Every step returns new reward, success, terminated and truncated tensors.
     _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
-    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
+    render_backends = {"cpu": BackendPair("cpu", "cpu"), "cuda": BackendPair("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0

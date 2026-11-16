@@ -44,7 +44,7 @@ def miniworld_backend(
     ``stable-envs tune`` measures with environments of ``config`` and frame ``size``. ``"torch"``
     runs on any device; ``"triton"`` needs CUDA.
     """
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
@@ -55,7 +55,7 @@ def miniworld_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "triton", CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "triton", CUDA_MIN_ENVS)},
         choices=BACKENDS,
         measure=measure,
     )

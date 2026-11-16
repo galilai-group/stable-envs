@@ -12,7 +12,7 @@ from stable_envs._core.tensordicts import pack_to_device, stack_leaves, to_devic
 from stable_envs._execution import backends, host_render
 from stable_envs._execution.host import HostAdapter
 
-BACKENDS = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large")}
+BACKENDS = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large")}
 CHOICES = ("small", "large")
 
 
@@ -56,10 +56,10 @@ def test_the_knob_sets_the_switch_point(switch, batch, expected):
 
 
 def test_a_path_can_ignore_the_knob():
-    rungs = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large", 8)}
+    pairs = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large", 8)}
 
     def pick(n, knob):
-        return backends.select_backend("test-sim", n, "cuda", "auto", rungs, choices=CHOICES, knob=knob)
+        return backends.select_backend("test-sim", n, "cuda", "auto", pairs, choices=CHOICES, knob=knob)
 
     with tuning.override(large_backend_min_envs=2):
         assert pick(4, knob=True) == "large"
@@ -68,7 +68,7 @@ def test_a_path_can_ignore_the_knob():
 
 def test_without_a_value_auto_uses_the_shipped_switch_point():
     assert _select(3) == "large"
-    shipped = {"cpu": backends.Rungs("small", "small"), "cuda": backends.Rungs("small", "large", 4)}
+    shipped = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large", 4)}
     pick = lambda n: backends.select_backend("test-sim", n, "cuda", "auto", shipped, choices=CHOICES)  # noqa: E731
     assert pick(3) == "small" and pick(4) == "large"
     with tuning.override(large_backend_min_envs=2):
@@ -129,7 +129,7 @@ def test_calibrate_times_only_the_named_paths(monkeypatch):
     assert set(backends.calibrate(4, "cuda", prefixes=("test-sim",), write=False)) == {"test-sim/a", "test-sim/b"}
 
 
-RENDERERS = {"cpu": backends.Rungs("cpu", "cpu"), "cuda": backends.Rungs("cpu", "cuda", 16)}
+RENDERERS = {"cpu": backends.BackendPair("cpu", "cpu"), "cuda": backends.BackendPair("cpu", "cuda", 16)}
 
 
 def test_renderers_switch_at_their_own_knob():
@@ -163,12 +163,12 @@ def test_tune_calibrates_renderers_under_the_render_knob(monkeypatch):
 def test_cpu_envs_and_explicit_renderers_do_not_switch():
     class Env:
         device = torch.device("cpu")
-        render_rungs = RENDERERS
+        render_backends = RENDERERS
 
     assert not host_render.on_host(Env(), "test-render", 1)
     Env.device = torch.device("cuda")
     assert not host_render.on_host(Env(), "test-render", 1, backend="torch")
-    Env.render_rungs = None
+    Env.render_backends = None
     assert not host_render.on_host(Env(), "test-render", 1)
 
 

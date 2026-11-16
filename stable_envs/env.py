@@ -402,10 +402,10 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
-    #: ``{device type: Rungs("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
-    #: ``"cpu"`` entry: on a device whose rungs differ, a batch of fewer than ``min_rows`` frames draws with the CPU
+    #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
+    #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
-    render_rungs: Mapping[str, Any] | None = None
+    render_backends: Mapping[str, Any] | None = None
     #: The rows ``render`` checked for the call in progress; ``_render`` does not check them again.
     _checked_rows: torch.Tensor | None = None
 

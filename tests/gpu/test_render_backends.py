@@ -1,4 +1,4 @@
-"""CUDA render rungs: a small batch draws with the CPU renderer of its class and moves the frames in one copy.
+"""CUDA render backends: a small batch draws with the CPU renderer of its class and moves the frames in one copy.
 
 The CPU and CUDA renderers of every switched class draw the same bytes, so the switch point never changes a frame.
 """
@@ -39,10 +39,10 @@ def _varied(env, rng):
 
 
 @pytest.mark.parametrize("name", NAMES)
-def test_switched_classes_declare_cuda_rungs(name):
+def test_switched_classes_declare_cuda_backends(name):
     _require(name)
     with se.make(name, num_envs=1, device="cuda") as env:
-        assert env.render_rungs is not None and env.render_rungs["cuda"].min_envs is not None
+        assert env.render_backends is not None and env.render_backends["cuda"].min_envs is not None
 
 
 @pytest.mark.parametrize("varied", [False, True], ids=["default", "varied"])

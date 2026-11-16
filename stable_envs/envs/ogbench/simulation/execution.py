@@ -99,7 +99,7 @@ def manipulation_backend(
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a Cube/Scene batch; see ``select_backend``."""
     import torch
 
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if simulation_backend == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
@@ -108,7 +108,10 @@ def manipulation_backend(
         num_envs,
         device,
         simulation_backend,
-        {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", MANIPULATION_CUDA_MIN_ENVS.get(family))},
+        {
+            "cpu": BackendPair("native", "native"),
+            "cuda": BackendPair("native", "mjwarp", MANIPULATION_CUDA_MIN_ENVS.get(family)),
+        },
         choices=("native", "mjwarp"),
         measure=_measure_manipulation(env_type, device),
     )
