@@ -20,13 +20,13 @@ ANCHORS = tuple(
 )
 
 
-
 def _bytes(value, count):
     """The bytes of each of ``count`` rows.
 
     A field view of a folded State can have a stride other than 1 on a size-one axis, which ``view`` refuses.
     """
     return value.reshape(count, -1).clone(memory_format=torch.contiguous_format).view(torch.uint8)
+
 
 class Tables:
     """Device tables for every template seen so far, indexed by template id."""

@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
-from tensordict import TensorDict
 
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.semantics import compare_state

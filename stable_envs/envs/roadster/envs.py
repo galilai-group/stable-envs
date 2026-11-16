@@ -15,7 +15,6 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 
-import numpy as np
 import torch
 from tensordict import TensorDict
 
@@ -25,9 +24,7 @@ try:
 except ImportError as e:  # registered only with the extra, so import_errors() names it
     raise ImportError("Roadster needs the roadster extra: pip install 'stable-envs[roadster]'") from e
 
-from ..._core.physics import state_key
 from ..._core.state_schema import get_field, schema_of
-from ..._core.style import StyleTensor
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import register
