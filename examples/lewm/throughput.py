@@ -168,7 +168,13 @@ def main() -> None:
     p.add_argument("--data", required=True, help="HDF5 dataset: pixels for stored, state rows for source and ours")
     p.add_argument("--steps", type=int, default=1000)
     p.add_argument("--warmup-steps", type=int, default=200, help="first steps left out (compile, worker start)")
-    p.add_argument("--model-overrides", nargs="*", default=[], help="OmegaConf dotlist, e.g. model.predictor.depth=3")
+    p.add_argument(
+        "--model-overrides",
+        nargs="*",
+        default=[],
+        help="OmegaConf dotlist of the config, e.g. model.predictor.depth=3",
+    )
+    p.add_argument("--accelerator", default="gpu", help="Lightning accelerator; cpu reports no GPU numbers")
     p.add_argument("--compile", action=argparse.BooleanOptionalAction, default=True, help="torch.compile each module")
     p.add_argument("--out", default="runs/throughput")
     a = p.parse_args()
@@ -200,6 +206,10 @@ def main() -> None:
         }
     )
     cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(a.model_overrides))
+    if cfg.loader.num_workers == 0:
+        cfg.loader.persistent_workers = False
+        cfg.loader.prefetch_factor = None
+    gpu = a.accelerator == "gpu"
     stats = dt.dataset_stats.ImageNet
     keys = ["pixels", "action"] if a.input == "stored" else ["action", col]
     dataset = swm.data.load_dataset(
@@ -260,7 +270,8 @@ def main() -> None:
             render_ms.append(e0.elapsed_time(e1))
             return x
 
-        pixels = timed_draw
+        if gpu:
+            pixels = timed_draw
     module = spt.Module(
         model=model,
         sigreg=SIGReg(**cfg.loss.sigreg.kwargs),
@@ -274,20 +285,22 @@ def main() -> None:
 
         def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
             self.starts.append(time.time())
-            self.e0 = torch.cuda.Event(enable_timing=True)
-            self.e1 = torch.cuda.Event(enable_timing=True)
-            self.e0.record()
+            if gpu:
+                self.e0 = torch.cuda.Event(enable_timing=True)
+                self.e1 = torch.cuda.Event(enable_timing=True)
+                self.e0.record()
 
         def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-            self.e1.record()
-            torch.cuda.synchronize()
+            if gpu:
+                self.e1.record()
+                torch.cuda.synchronize()
+                self.gpu_ms.append(self.e0.elapsed_time(self.e1))
             self.ends.append(time.time())
-            self.gpu_ms.append(self.e0.elapsed_time(self.e1))
 
     timing, monitor = Timing(), Monitor()
     trainer = pl.Trainer(
         **{**OmegaConf.to_container(cfg.trainer), "max_epochs": 1},
-        accelerator="gpu",
+        accelerator=a.accelerator,
         devices=1,
         max_steps=a.steps,
         limit_val_batches=1,
@@ -297,9 +310,11 @@ def main() -> None:
         enable_checkpointing=False,
         default_root_dir=a.out,
     )
-    monitor.start()
+    if gpu:
+        monitor.start()
     spt.Manager(trainer=trainer, module=module, data=spt.data.DataModule(train=train, val=val), seed=cfg.seed)()
-    monitor.stop()
+    if gpu:
+        monitor.stop()
 
     w = a.warmup_steps
     starts, ends, gpu_ms = np.array(timing.starts), np.array(timing.ends), np.array(timing.gpu_ms)
@@ -316,12 +331,12 @@ def main() -> None:
     summary = {
         "env": a.env,
         "input": a.input,
-        "gpu": torch.cuda.get_device_name(0),
+        "gpu": torch.cuda.get_device_name(0) if gpu else "",
         "steps": len(starts),
         "steady_steps": steady,
         "steps_per_s": steady / wall,
         "samples_per_s": steady * int(cfg.loader.batch_size) / wall,
-        "train_busy_frac": train_ms / 1000 / wall,
+        "train_busy_frac": train_ms / 1000 / wall if gpu else None,
         "render_busy_frac": (np.sum(render_ms[w:]) / 1000 / wall) if render_ms else None,
         "gpu_util_mean": float(np.mean(util)) if util else None,
         "proc_sm_train": proc_mean("train"),

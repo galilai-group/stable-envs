@@ -23,6 +23,24 @@ SOURCE_KWARGS = {
 }
 #: swm ids whose seeded reset needs the seeded classes of ``tests/helpers/reference/ogbench_manipulation_source.py``.
 SEEDED = {"swm/OGBCube-v0": "OwnedCube", "swm/OGBScene-v0": "OwnedScene"}
+#: The MuJoCo state parts that the OGBench Cube and Scene State holds as ``physics/<part>``; together they make
+#: ``mjSTATE_INTEGRATION``.
+MUJOCO_STATE_PARTS = (
+    "TIME",
+    "QPOS",
+    "QVEL",
+    "ACT",
+    "HISTORY",
+    "WARMSTART",
+    "CTRL",
+    "QFRC_APPLIED",
+    "XFRC_APPLIED",
+    "EQ_ACTIVE",
+    "MOCAP_POS",
+    "MOCAP_QUAT",
+    "USERDATA",
+    "PLUGIN",
+)
 #: Families whose swm env draws with MuJoCo, so it can draw on the GPU with EGL.
 MUJOCO_FAMILIES = ("dmcontrol", "fetch", "ogbench")
 
@@ -242,15 +260,14 @@ def _read_manipulation(u) -> dict:
     """The fields of an OGBench Cube or Scene State that a step changes, read from swm's env."""
     import mujoco
 
-    from stable_envs.envs.ogbench.simulation.manipulation import FLAGS, field
-
     out = {}
-    for name, flag in FLAGS.items():
+    for part in MUJOCO_STATE_PARTS:
+        flag = getattr(mujoco.mjtState, "mjSTATE_" + part)
         size = mujoco.mj_stateSize(u._model, flag)
         if size:
             value = np.empty(size, np.float64)
             mujoco.mj_getState(u._model, u._data, value, flag)
-            out[field("physics", name).replace("/", ".")] = value
+            out["physics." + part.lower()] = value
     pinch = [u._pinch_site_id]
     out["controller.site_xpos"] = u._data.site_xpos[pinch].copy().reshape(-1)
     out["controller.site_xmat"] = u._data.site_xmat[pinch].copy().reshape(-1)

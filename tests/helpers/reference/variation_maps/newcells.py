@@ -64,12 +64,6 @@ _OGB_APPEARANCE = (
 
 _OGB_CUBE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *(k for k in _OGB_APPEARANCE if k != "lock_color"))))
 _OGB_SCENE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *_OGB_APPEARANCE)))
-_OGB_OURS_ONLY = {
-    "agent.opacity": "swm's OGBCube-v0/OGBScene-v0 always draw OGBench's opaque state-task arm and have no "
-    "leaf for it; ours defaults to OGBench's see-through pixel-task arm (0) and draws swm's arm at 1",
-    "target.opacity": "swm's OGBCube-v0/OGBScene-v0 draw the goal cube at alpha 0.2 (visualize_info=True) and "
-    "have no leaf for it; ours defaults to OGBench's hidden pixel-task goal cube (0) and draws swm's at 1",
-}
 _OGB_PLACEMENT_NOTES = {
     k: "SWM CubeEnv/SceneEnv read this leaf only in data_collection mode; the registered env runs in task "
     "mode, where it is sampled, stored and seeded but moves no physics. Ours carries the same value "
@@ -110,13 +104,11 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
         swm_id="swm/OGBCube-v0",
         identical=_OGB_CUBE_MAPPED,
         notes=_OGB_PLACEMENT_NOTES,
-        ours_only=_OGB_OURS_ONLY,
     ),
     "OGBScene": VariationMap(
         swm_id="swm/OGBScene-v0",
         identical=_OGB_SCENE_MAPPED,
         notes=_OGB_PLACEMENT_NOTES,
-        ours_only=_OGB_OURS_ONLY,
     ),
     "PFRocketLanding": VariationMap(
         swm_id="swm/PFRocketLanding-v0",
@@ -531,8 +523,8 @@ LEAF_CLASSIFICATION.update(
 #: manipulation cells do not construct without CUDA; a live check asserts the table wherever the
 #: class can be built.
 RECORDED_OURS_LEAVES: dict[str, tuple[str, ...]] = {
-    "OGBCube": tuple(sorted((*_OGB_CUBE_MAPPED, *_OGB_OURS_ONLY))),
-    "OGBScene": tuple(sorted((*_OGB_SCENE_MAPPED, *_OGB_OURS_ONLY))),
+    "OGBCube": _OGB_CUBE_MAPPED,
+    "OGBScene": _OGB_SCENE_MAPPED,
     "PointmazeLargeNavigate": (
         "agent.color",
         "agent.scale",

@@ -49,23 +49,11 @@ def _lane(value, lane, path, env):
     return value[lane] if value.ndim > np.ndim(_node(env, path).value) else value
 
 
-#: Variation nodes of ours that swm does not have: agent.opacity and target.opacity.
-OURS_ONLY = ("variation/agent/opacity", "variation/target", "variation/target/opacity")
-#: The Dicts that hold them. A Dict seeds its children from one draw of len(children) values, so these
-#: draw one more child seed than swm's; the swm children sort first and keep swm's seeds.
-EXTENDED = ("variation", "variation/agent")
-
-
 def _same_variation(ours, theirs, oracle):
     mine, other = dict(oracle.spaces(ours.variation_space)), dict(oracle.spaces(theirs.variation_space))
-    assert mine.keys() - set(OURS_ONLY) == other.keys()
-    for name in OURS_ONLY:
-        node = mine.pop(name)
-        if not hasattr(node, "spaces"):
-            assert np.array_equal(node.value, [0.0]), name
+    assert mine.keys() == other.keys()
     for name, node in mine.items():
-        if name not in EXTENDED:
-            assert node.np_random.bit_generator.state == other[name].np_random.bit_generator.state, name
+        assert node.np_random.bit_generator.state == other[name].np_random.bit_generator.state, name
         if not hasattr(node, "spaces"):
             assert np.array_equal(node.value, other[name].value), name
             assert np.array_equal(node.init_value, other[name].init_value), name

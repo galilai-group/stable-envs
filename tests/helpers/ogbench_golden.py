@@ -54,10 +54,6 @@ def load(path):
             {tuple(key.split("/")): torch.from_numpy(data[key]) for key in data.files if key != "frames"},
             batch_size=[len(frames)],
         )
-    # The fixtures predate the arm and goal cube opacity leaves; they were drawn at the defaults, 0.
-    for name in ("agent.opacity", "target.opacity"):
-        if ("appearance", name) not in state.keys(True):
-            state["appearance", name] = torch.zeros(len(frames), 1, dtype=torch.float64)
     return state, frames
 
 

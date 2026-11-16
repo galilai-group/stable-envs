@@ -19,8 +19,6 @@ HOST = (*OPENGL, "numba")
 
 
 VIEW = ("camera.angle_delta", "light.intensity")
-# Leaves that select a compiled bundle: they set alphas, which select the transparent passes.
-LOOK = ("agent.opacity", "target.opacity")
 # Compiled arrays a configuration changes that the fixed-camera MJWarp and OpenGL passes never read.
 _INERT = (
     "body_inertia",
@@ -56,21 +54,15 @@ def _groups(host, names):
     return list(keys), first, group
 
 
-def configured_bundle(family, sample_pattern="grid", look=(0.0, 0.0)):
-    """Compile the family's render model once per value of the ``LOOK`` leaves, at default configuration otherwise."""
+def configured_bundle(family, sample_pattern="grid"):
+    """Compile the family's render model once, at default configuration."""
     token = f"stable-envs-{family}" + ("" if sample_pattern == "grid" else "/" + sample_pattern)
-    look = tuple(float(value) for value in look)
-    if any(look):
-        token += "/" + ",".join(f"{name}={value!r}" for name, value in zip(LOOK, look))
     with _LOCK:
         bundle = core.get_bundle(token)
         if bundle is None:
             import mujoco
 
-            row = None
-            if any(look):
-                row = {("appearance", n): torch.tensor([v], dtype=torch.float64) for n, v in zip(LOOK, look)}
-            env = pixels.build_model(family, row, LOOK if row else None)
+            env = pixels.build_model(family)
             if int(env.model.joint("object_joint_0").qposadr[0]) != pixels.OBJECT_QPOS_ADR:
                 raise ValueError(f"{family}: object_joint_0 has an unexpected qpos address")
             fixed = mujoco.mjtCamLight.mjCAMLIGHT_FIXED
@@ -90,12 +82,11 @@ class _View:
 
 def _view(family, bundle, host, index, value):
     """Camera and light arrays of a configuration, from its own compile at default cube size."""
-    look = b"".join(host["appearance", name][index].numpy().tobytes() for name in LOOK)
-    key = (family, value, look)
+    key = (family, value)
     hit = _VIEWS.get(key)
     if hit is not None:
         return hit
-    env = pixels.build_model(family, host[index], (*VIEW, *LOOK))
+    env = pixels.build_model(family, host[index], VIEW)
     try:
         changed = [
             name
@@ -301,18 +292,11 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
         raise ValueError("chunk_size must be a positive integer")
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
     result = torch.empty((len(state), size, size, 3), dtype=torch.uint8, device=device)
-    looks = np.concatenate([host["appearance", name].numpy() for name in LOOK], axis=1)
-    values, group = np.unique(looks, axis=0, return_inverse=True)
-    if len(values) > 1:
-        for index in range(len(values)):
-            rows = torch.as_tensor(np.flatnonzero(group.reshape(-1) == index))
-            result[rows.to(device)] = render(family, state[rows], device, backend, chunk_size, validated)
-        return result
     # Shared caches hold mutable render buffers; serialize callers.
     wp = require_warp_cuda("OGBench manipulation GPU rendering")
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
         pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
-        token, bundle = configured_bundle(family, pattern, tuple(values[0]))
+        token, bundle = configured_bundle(family, pattern)
         worlds = _worlds(family, token, bundle, host, device)
         limit = chunk_size or len(state)
         active = set()

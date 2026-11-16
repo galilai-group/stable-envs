@@ -25,7 +25,6 @@ def opengl():
     compat = ModuleType("stable_envs.envs.ogbench.simulation.compatibility")
     compat.MODEL_VALUES = MODEL_VALUES
     compat.CompatibleCube = compat.CompatibleScene = object
-    compat.target_alpha = lambda env: pixels.TARGET_ALPHA
     resources = ModuleType("stable_envs.render._resources")
     resources.retain_process_lifetime = Mock()
     mujoco = ModuleType("mujoco")

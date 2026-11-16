@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.swm
+
 pytest.importorskip("stable_worldmodel")
 pytest.importorskip("matplotlib")
 
@@ -65,7 +67,7 @@ def test_speed_writes_one_row_per_cell(tmp_path):
         "--states-n",
         "16",
         "--cores",
-        str(min(os.sched_getaffinity(0))),
+        str(min(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else 0),
         "--work",
         str(tmp_path / "work"),
         "--out",

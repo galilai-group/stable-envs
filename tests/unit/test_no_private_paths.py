@@ -19,6 +19,13 @@ BENCHMARKS = ROOT / "benchmarks"
 ALLOWED_PRIVATE = {
     "_ob_type": "OGBench's pixel task has no public switch to state observations",
     "_worker": "a hidden argparse flag of benchmarks/dmc_mjwarp.py",
+    "_set_state": "the state setter of swm's PushT and TwoRoom envs, which have no public one",
+    "_get_obs": "the observation of swm's PushT env, which its State check needs",
+    "_model": "the MuJoCo model of swm's OGBench envs, which have no public accessor",
+    "_data": "the MuJoCo data of swm's OGBench envs, which have no public accessor",
+    "_pinch_site_id": "the gripper site of swm's OGBench manipulation envs, read for the controller fields",
+    "_prev_qpos": "the previous qpos of swm's OGBench manipulation envs, an output field of the State",
+    "_prev_qvel": "the previous qvel of swm's OGBench manipulation envs, an output field of the State",
 }
 
 #: Private stable-envs members named in shell code, such as ``python -c`` lines.

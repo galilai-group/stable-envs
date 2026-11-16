@@ -95,6 +95,7 @@ tests = [
   "test_envs_classic_nav.py",
   "test_variation_navigation.py",
   "test_navigation_source_pixels.py",
+  "test_benchmark_swm_scripts.py",
 ]
 requires = ["jax", "matplotlib"]
 capabilities = ["swm"]
@@ -168,11 +169,7 @@ tests = ["test_ogb*", "test_envs_ogbench.py", "test_variation_maps_newcells.py"]
 requires = ["ogbench", "mujoco"]
 capabilities = ["swm"]
 swm_with = ["pymunk", "shapely"]
-# Cube/Scene batches reset in their own worker processes from two envs. Spawned for each env of every test, they
-# don't fit a 16 GB runner next to four test workers, so the profile resets in-process; the
-# test_ogbench_manipulation_process and test_ogb_process_equivalence tests build the worker path directly.
-# STABLE_ENVS_WORKER_MIN_ENVS is the name of the knob after the rename of worker_min_lanes.
-linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa", STABLE_ENVS_WORKER_MIN_LANES = "64", STABLE_ENVS_WORKER_MIN_ENVS = "64" }
+linux_env = { MUJOCO_GL = "osmesa", PYOPENGL_PLATFORM = "osmesa" }
 shards = { pr = 6, nightly = 6 }
 env_affinity = true
 

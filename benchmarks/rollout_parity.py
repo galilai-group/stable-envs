@@ -49,7 +49,7 @@ COLUMNS = [
 
 
 def _field_names(state) -> list[str]:
-    from stable_envs._core.state_schema import schema_of
+    from stable_envs import schema_of
 
     schema = schema_of(state)
     if schema is not None:
