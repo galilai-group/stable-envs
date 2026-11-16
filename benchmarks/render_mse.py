@@ -49,7 +49,7 @@ def measure(name: str, device: str, states_path: str) -> dict:
     src.reset(seed=0)
     theirs = []
     for row in torch.load(rows_path(states_path), weights_only=False):
-        src.set_state(row)
+        src.set_state(row, velocity=False)
         theirs.append(src.render()[..., :3])
     src.close()
     theirs = np.stack(theirs)

@@ -231,9 +231,32 @@ def make_states(name: str, path: Path, n: int, *, lanes=64, steps=1000, every=30
                         break
     from benchmarks.swm_source import rows
 
-    states = torch.cat(saved)[:n]
+    states = _cat_states(saved)[:n]
     torch.save(states, path)
     torch.save(rows(states), rows_path(path))
+
+
+def _cat_states(states):
+    """Concatenate State batches whose growing leaves (PushT's action history) differ in length along axis 1.
+
+    Shorter leaves are zero-padded; a history's ``valid`` mask is then False on the padding.
+    """
+    import torch
+
+    lengths: dict = {}
+    for st in states:
+        for key, value in st.items(True, True):
+            if value.dim() > 1:
+                lengths[key] = max(lengths.get(key, 0), value.shape[1])
+    padded = []
+    for st in states:
+        st = st.clone()
+        for key, value in list(st.items(True, True)):
+            if value.dim() > 1 and value.shape[1] < lengths[key]:
+                pad = value.new_zeros((value.shape[0], lengths[key] - value.shape[1], *value.shape[2:]))
+                st.set(key, torch.cat([value, pad], 1))
+        padded.append(st)
+    return torch.cat(padded)
 
 
 def rows_path(states_path) -> Path:
@@ -564,7 +587,7 @@ def _render_rows(span) -> int:
     s, e = span
     src = _W["src"]
     for i in range(s, e):
-        src.set_state(_W["rows"][i])
+        src.set_state(_W["rows"][i], velocity=False)
         src.render()
     return e - s
 
@@ -575,7 +598,7 @@ def source_render(spec) -> dict:
     if procs == 1:
         _render_init(spec["env"], spec["states"])
         n = len(_W["rows"])
-        _W["src"].set_state(_W["rows"][0])
+        _W["src"].set_state(_W["rows"][0], velocity=False)
         shape = list(_W["src"].render().shape)
         units = cycle(lambda: (_render_rows((i, min(i + 8, n))) for i in range(0, n, 8)))
         t = timed(units, **_timing(spec, 8))

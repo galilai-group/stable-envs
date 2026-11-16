@@ -154,8 +154,11 @@ class SwmSource:
     def close(self):
         self.env.close()
 
-    def set_state(self, state: dict) -> None:
+    def set_state(self, state: dict, velocity: bool = True) -> None:
         """Write one instance of a stable-envs State (a dict from :func:`rows`) into the swm env.
+
+        swm's PushT setter takes one physics step after it writes the poses. ``velocity=False`` writes a zero agent
+        velocity, so that step does not move the agent before a frame is drawn.
 
         Raises:
             NotImplementedError: If there is no mapping for this class.
@@ -163,7 +166,7 @@ class SwmSource:
         u = self.env.unwrapped
         agent, block = _leaf(state, "agent"), _leaf(state, "block")
         if block is not None and hasattr(u, "_set_state"):
-            vel = _leaf(state, "velocity")
+            vel = _leaf(state, "velocity") if velocity else None
             angle = _leaf(state, "angle")
             u._set_state(np.concatenate([agent, block, angle[:1], vel if vel is not None else np.zeros(2)]))
             return
