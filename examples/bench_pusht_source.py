@@ -61,9 +61,9 @@ def main() -> None:
 
             poses = []
             for state in saved:
-                agent = state["current", "body", "agent", "position"].numpy()
-                block = state["current", "body", "block", "position"].numpy()
-                angle = state["current", "body", "block", "angle"].numpy()
+                agent = snv.get_field(state, "current.body.agent.position").numpy()
+                block = snv.get_field(state, "current.body.block.position").numpy()
+                angle = snv.get_field(state, "current.body.block.angle").numpy().reshape(-1)
                 poses += [np.array([*agent[i], *block[i], angle[i], 0.0, 0.0]) for i in range(batch)]
             poses = poses[: args.source_frames]
             t = time.perf_counter()
