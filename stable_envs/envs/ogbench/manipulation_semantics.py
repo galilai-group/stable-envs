@@ -92,6 +92,7 @@ class ManipulationSemantics:
             backend,
             0 if seed is None else seed,
         )
+        self._count_live()
         self._sync_style()
 
     def make_variation_space(self):

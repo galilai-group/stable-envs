@@ -35,6 +35,10 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
 - On CUDA, the `mujoco.batch` physics of Fetch, MS-Human and Roadster moves the outputs and the state of a step to the device in one copy. MS-Human converts the state to float32 before the copy.
 
+### Fixed
+
+- OpenGL contexts of OGBench environments are released. `env.close()` frees the shared OGBench renderers and stops the Cube and Scene OpenGL worker processes when the last environment closes, and interpreter exit frees any that remain before MuJoCo ends its EGL display. This removes the `EGLError` that `mujoco.Renderer.__del__` raised at exit.
+
 ## [0.1.0] - 2026-11-13
 
 First public release.

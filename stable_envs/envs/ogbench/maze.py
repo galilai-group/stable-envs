@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import contextlib
 import math
+import threading
 
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from ... import tuning
-from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer
+from ..._core.mujoco_gl import configure_mujoco_gl, mujoco_renderer, release_gl, track_source_env
 from ..._core.plate_texels import quantise
 from ..._core.stepping import _stack_states, _threads
 from ..._execution.protocol import StepPipeline, step_pipeline
@@ -654,7 +655,7 @@ def _build_reference(loco: str, maze: str, size: int, ob_type: str = "pixels"):
         f"{loco}maze-{maze}-v0", render_mode="rgb_array", ob_type=ob_type, width=int(size), height=int(size)
     )
     env.reset(options={"task_id": 1})
-    return env
+    return track_source_env(env)
 
 
 # One source environment per (body, maze, size, observation mode), with pristine
@@ -690,7 +691,6 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
         geom_rgba=np.array(m.geom_rgba, copy=True),
         # Texture bytes upload at context creation, so cache a renderer per texture mode;
         # recolored checkers share one renderer and upload their texels explicitly.
-        # Keep contexts alive to avoid corrupting other live renderers during teardown.
         renderers={},
         agent=[
             g
@@ -701,6 +701,22 @@ def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
     )
     _ENV_CACHE[key] = (env, u, pristine)
     return _ENV_CACHE[key]
+
+
+_LIVE_ENVS = 0
+_LIVE_LOCK = threading.Lock()
+
+
+def release_scene_envs() -> None:
+    """Release the shared source environments and their renderers; the next bake builds them again."""
+    with _LIVE_LOCK:
+        entries = list(_ENV_CACHE.values())
+        _ENV_CACHE.clear()
+    for env, _, pr in entries:
+        for renderer in pr["renderers"].values():
+            release_gl(renderer)
+        pr["renderers"].clear()
+        release_gl(env)
 
 
 def _upload_xml_checker(env, loco: str) -> None:
@@ -1414,6 +1430,9 @@ class MazeSemantics:
         self.execution_mode = getattr(self._simulator, "execution_mode", "DELEGATED_CPU")
         # mujoco.batch steps on threads of its own.
         self.native_step_threads = self.simulation_backend == "native"
+        global _LIVE_ENVS
+        with _LIVE_LOCK:
+            _LIVE_ENVS += 1
 
     @property
     def _qpos_fields(self):
@@ -1515,8 +1534,14 @@ class MazeSemantics:
         return step_pipeline(self._simulator)
 
     def _close(self):
+        global _LIVE_ENVS
         if hasattr(self, "_simulator"):
             self._simulator.close()
+            with _LIVE_LOCK:
+                _LIVE_ENVS -= 1
+                last = _LIVE_ENVS == 0
+            if last:
+                release_scene_envs()
 
 
 class _StatesScene:

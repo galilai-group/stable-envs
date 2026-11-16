@@ -1,9 +1,8 @@
-"""Resource accounting for tests that keep GL contexts alive for the process lifetime.
+"""Resource accounting for the GL contexts that tests create.
 
 Install constructor/release wrappers before environments are built and re-arm
 after new backends load. Snapshot deltas enforce per-test allocation limits;
-session totals detect runaway allocation. These are suite policies, not a
-general proof that a GL resource is safe to release.
+session totals detect runaway allocation and contexts that nothing released.
 """
 
 from __future__ import annotations
@@ -39,6 +38,7 @@ class Counts:
 _LOCK = threading.Lock()
 _COUNTS = Counts()
 _PEAK_LIVE = 0
+_LIVE_SITES: dict[int, list[str]] = {}
 _INSTALLED = False
 _PATCHED: list[str] = []
 
@@ -64,7 +64,20 @@ def _count_one(obj, kind: str, action: str) -> None:
             obj._se_released = True
         except Exception:  # noqa: BLE001
             pass  # __slots__ or a C type: fall back to counting
+    if kind == "context":
+        with _LOCK:
+            if action == "created":
+                stack = traceback.extract_stack(limit=SITE_DEPTH + 2)[:-2]
+                _LIVE_SITES[id(obj)] = [f"{f.filename}:{f.lineno} {f.name}" for f in stack[-6:]]
+            else:
+                _LIVE_SITES.pop(id(obj), None)
     _record(kind, action)
+
+
+def live_sites() -> list[list[str]]:
+    """Return the creation call sites of contexts that are still live."""
+    with _LOCK:
+        return [list(v) for v in _LIVE_SITES.values()]
 
 
 def _wrap(cls, name: str, kind: str, action: str) -> None:
@@ -207,8 +220,8 @@ def limits() -> dict:
     """Return per-test and session context limits, overridable through SE_MAX_* variables.
 
     The session limit scales with registry size because reference and plate
-    renderers retain contexts. Per-test limits catch allocation proportional
-    to calls or batch size; any release is a separate policy violation.
+    renderers stay live while their environments run. Per-test limits catch allocation
+    proportional to calls or batch size.
     """
     try:  # import here: this module must not need the registry
         from stable_envs import REGISTRY
@@ -228,31 +241,6 @@ def violations(d: dict, batch: int | None = None) -> list[tuple[str, str]]:
     """Return named policy violations with diagnostics for a test delta and session totals."""
     lim = limits()
     out = []
-    if d["context_freed"]:
-        out.append(
-            (
-                "EGL_CONTEXT_RELEASED",
-                (
-                    f"this test released {d['context_freed']} EGL context(s). Releasing one silently corrupts "
-                    f"rendering in every other live context in the process, showing up later as pixel "
-                    f"differences in an unrelated env. Cache the object for the life of the process; do not "
-                    f"close it.\n"
-                    f"  released at:\n{format_sites([s for s in d['sites'] if s[0].endswith('freed')])}"
-                ),
-            )
-        )
-    if d["renderer_closed"]:
-        out.append(
-            (
-                "MUJOCO_RENDERER_CLOSED",
-                (
-                    f"this test closed {d['renderer_closed']} mujoco.Renderer(s). A Renderer owns an EGL "
-                    f"context, so closing one is the same defect as EGL_CONTEXT_RELEASED; a common cause is "
-                    f"constructing and closing a renderer per baked plate.\n"
-                    f"  closed at:\n{format_sites([s for s in d['sites'] if s[0].endswith('closed')])}"
-                ),
-            )
-        )
     n = d["context_created"]
     if batch and batch >= 4 and n >= batch:
         out.append(

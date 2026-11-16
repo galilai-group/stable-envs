@@ -101,7 +101,7 @@ Comment on your pull request or [open an issue](https://github.com/galilai-group
 ## Pull request rules
 
 - Don't relax a parity threshold or edit a frozen fixture to make a test pass.
-- Don't release an EGL context or close a `mujoco.Renderer`, because that corrupts rendering in other live contexts. `tests/_runner/resource_guard.py` fails the test that does it.
+- Create every `mujoco.Renderer` with `mujoco_renderer` from `stable_envs._core.mujoco_gl`. It tracks the renderer. Release it with `release_gl` when its owner closes. Interpreter exit releases the rest.
 - Don't create contexts, renderers or environments per state, per style value or per call.
 - Read the upstream source, then check your reading against the upstream renderer, as [Matching the upstream library](https://galilai-group.github.io/stable-envs/contributing/upstream/#measure-constants-against-the-upstream-library) describes.
 - Don't commit local artifacts like scratch output, screenshots or one-off JSON. Fixtures that a committed script regenerates live under `tests/fixtures/`.

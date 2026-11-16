@@ -154,8 +154,8 @@ def test_innocent():
 
 
 def test_the_resource_guard_fails_the_test_that_broke_the_rule(tmp_path):
-    """Each guarded rule violation fails the offending test under a greppable name (for example
-    ``EGL_CONTEXT_RELEASED``), while an innocent test in the same module still passes."""
+    """A context created per row fails the offending test under a greppable name, while tests that
+    release what they create still pass."""
     (tmp_path / "test_guard.py").write_text(GUARD_PROBE)
     p = subprocess.run(
         [
@@ -180,10 +180,8 @@ def test_the_resource_guard_fails_the_test_that_broke_the_rule(tmp_path):
         cwd=str(tmp_path),
     )
     out = p.stdout + p.stderr
-    assert "EGL_CONTEXT_RELEASED" in out, out
-    assert "MUJOCO_RENDERER_CLOSED" in out, out
     assert "EGL_CONTEXTS_PER_TEST" in out or "EGL_CONTEXTS_SCALE_WITH_BATCH" in out, out
-    assert "3 failed, 1 passed" in out, f"the guard must fail exactly the three offenders:\n{out}"
+    assert "1 failed, 3 passed" in out, f"the guard must fail exactly the one offender:\n{out}"
 
 
 def test_the_guard_can_be_put_in_report_only_mode_for_a_bisect(tmp_path):

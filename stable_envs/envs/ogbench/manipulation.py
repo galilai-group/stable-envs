@@ -13,13 +13,15 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import sys
+import threading
 
 import numpy as np
 import torch
 
 from ... import tuning
 from ..._core import environ as _environ
-from ..._core.mujoco_gl import mujoco_renderer
+from ..._core.mujoco_gl import mujoco_renderer, release_gl, track_source_env
 from ..._core.plate_texels import quantise as _quantise
 from ..._core.plate_texels import substitute as _substitute
 from ..._core.plate_texels import texel_key as _texel_key
@@ -105,7 +107,7 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
         kw = {"width": int(size), "height": int(size)}
     env = _ogbench_make(cell, kw, pixels=role == "render")
     env.reset(seed=0)
-    _REF_CACHE[key] = env
+    _REF_CACHE[key] = track_source_env(env)
     return env
 
 
@@ -531,13 +533,30 @@ class OGBManipBase(Env):
             seed=seed,
         )
         self._b = b
+        # Renderers the library builds from a registered bundle are internal; only the caller's envs count.
+        if bundle is None:
+            self._count_live()
         if self.requires_cuda:
             self._check_plate_is_constant()
 
+    def _count_live(self) -> None:
+        global _LIVE_ENVS
+        self._counted = True
+        with _LIVE_LOCK:
+            _LIVE_ENVS += 1
+
     def _close(self) -> None:
-        """Drop instance-owned index and style caches; shared contexts remain alive."""
+        """Drop instance-owned caches; the last close also releases the shared plate renderers."""
+        global _LIVE_ENVS
         self.__dict__.pop("_idx_cache", None)
         self.__dict__.pop("_style_host_cache", None)
+        if not getattr(self, "_counted", False):
+            return
+        with _LIVE_LOCK:
+            _LIVE_ENVS -= 1
+            last = _LIVE_ENVS == 0
+        if last:
+            release_plate_rigs()
 
     def _check_plate_is_constant(self) -> None:
         """Check once per compiled bundle that the baked background is pose-independent."""
@@ -957,9 +976,26 @@ class OGBManipBase(Env):
 
 
 _PLATE_RIGS: dict = {}
+_LIVE_ENVS = 0
+_LIVE_LOCK = threading.Lock()
 
-# Retain GL renderers until process exit; releasing one may corrupt other live contexts.
-_KEEPALIVE: list = []
+
+def release_plate_rigs() -> None:
+    """Release the plate rigs, the OpenGL fidelity renderers and workers, and the reference renderers."""
+    with _LIVE_LOCK:
+        rigs = list(_PLATE_RIGS.values())
+        _PLATE_RIGS.clear()
+    for rig in rigs:
+        release_gl(rig.renderer)
+    for key in [k for k in _REF_CACHE if k[2] == "render"]:
+        release_gl(_REF_CACHE.pop(key))
+    pool = sys.modules.get(f"{__package__}.manipulation_opengl_pool")
+    if pool is not None:
+        pool.close_all()
+    opengl = sys.modules.get(f"{__package__}.manipulation_opengl")
+    if opengl is not None:
+        opengl.release_renderers()
+
 
 # Static appearance arrays; per-world geom/material colors are handled separately.
 _APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_", "hfield_", "skin_")
@@ -1033,7 +1069,6 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
     rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
     rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
     rig.renderer = mujoco_renderer(rig.model, height=int(res), width=int(res))
-    _KEEPALIVE.append(rig.renderer)
     _PLATE_RIGS[key] = rig
     return rig
 
