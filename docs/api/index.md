@@ -22,6 +22,7 @@ print(snv.get_config())  # {'verbose': 'WARNING', 'default_device': 'auto'}
 | `snv.import_errors()` | Say why a family didn't register. |
 | `snv.get_field(state, name)`, `snv.set_field(state, name, value)`, `snv.schema_of(state)` | Read or write one named field of a State, also of a folded State, and find the schema of a folded State. |
 | `snv.set(...)`, `snv.get_config()` | Change and read the log level and the default device. |
+| `snv.FrameLoader(env, states, batch_size)` | Give the frames of stored states a batch at a time, drawn ahead in large `render` calls. |
 | `snv.tune(env)` | Measure the fastest tuning knob values for an environment's render path. |
 | `snv.__version__` | The installed version. Put it in bug reports next to `stable-envs doctor --json`. |
 | `snv.Env`, `snv.State`, `snv.StepResult`, `snv.VariationLike` | The environment base class and its types; see [Env](env.md). |
@@ -63,6 +64,12 @@ Some families fold their State: the fixed-shape fields go into a few `(N, size)`
 ::: stable_envs.set
 
 ::: stable_envs.get_config
+
+## Draw stored states in batches
+
+`snv.FrameLoader` draws stored states ahead of the caller in large `env.render` calls and yields `batch_size` frames at a time, in order. The number of states per call comes from memory only: two calls' frames and a working buffer per state fit in a quarter of the free device memory, and one call's frames stay under 1 GiB. A call draws at most the environment's `render_ahead_rows` states (1024 by default) and never fewer than `batch_size`. Building or iterating a loader times nothing. A `variation=` with one row per stored state is sliced with the states, so it still draws in large calls. Compact rows that use a per-environment variation draw one batch of `num_envs` rows per call, and a short last batch uses the variation of the first environments. [Performance tuning](../performance-tuning.md#render-ahead) records how `render_ahead_rows` was measured. [Store states, render later](../tutorials/store-and-render.md#render-a-dataset-in-small-batches) shows an example.
+
+::: stable_envs.FrameLoader
 
 ## Tune a render path
 

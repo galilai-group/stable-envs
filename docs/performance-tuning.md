@@ -59,6 +59,10 @@ The shipped switch points were measured on 15 November 2026 on hosts with an NVI
 
 Where the measurements disagree, a class ships the smaller value. This is the opposite of the physics backends, which ship the larger value. A CPU physics backend replaces GPU work that the batch needs anyway. The CPU renderer instead runs on the CPU cores of the process, beside other work such as data loading, and near the switch point the two renderers are about equally fast. The smaller value keeps the CPU renderer to the batches where it was faster on every host.
 
+## Render ahead
+
+`snv.FrameLoader` draws at most `Env.render_ahead_rows` stored states (1024 by default) in one `render` call, and fewer when the free device memory is smaller. On 15 November 2026 we timed one `render` call per batch for `PushT`, `TwoRoom`, `DMCReacher` and `OGBCube` at batches of 1 to 1024, on an Intel Xeon Platinum 8268 node (8 cores) and on an RTX A5000 host. The frame rate stopped growing by 256 rows for every class on both devices, except `PushT` on CUDA, which still grew at 1024 rows. A second GPU host was not measured. A larger value does not change the frames of a class whose renderer bytes do not depend on the batch size.
+
 ## Measure the fastest values
 
 Run `stable-envs tune DMCCheetahRun --batch 64 --device cpu` to measure the fastest values for one environment on this machine. It caches them, and later runs with the same render path, frame size and range of batch sizes use them. A process reads the cache when it builds an environment, so a cache that another process writes takes effect at the next environment build. [`stable-envs tune`](api/cli.md#stable-envs-tune) explains how it picks values and lists every option.
