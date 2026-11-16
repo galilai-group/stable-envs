@@ -14,7 +14,7 @@
     --fs-body     18 / 17   body text, abstract, contributions, h3 (semibold), authors
     --fs-ui       16        buttons, affiliations, venue
     --fs-caption  15        figure captions, figure labels and values, code blocks, BibTeX, footer
-    --fs-small    13        figure details: the Figure 1 readout, the device toggle, notes
+    --fs-small    13        figure details: the Figure 2 readout, notes
     Inline code takes the size of the text around it (1em).
 
   WIDTHS
@@ -35,7 +35,7 @@
   STROKES  1px hairlines only.
 
   MOTION  Figures animate once when scrolled into view: 800 ms, ease-out, no overshoot.
-    Only the Figure 1 factor cycle repeats. prefers-reduced-motion shows final states and stops the cycle.
+    Only the Figure 2 factor cycle repeats. prefers-reduced-motion shows final states and stops the cycle.
 */
 
 @font-face {
@@ -298,6 +298,42 @@ header .meta {
   margin: var(--s1) 0 0;
 }
 
+header .authors,
+header .affiliations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: var(--s4);
+}
+
+header .author {
+  white-space: nowrap;
+}
+
+header sup {
+  font-size: 0.7em;
+  line-height: 0;
+}
+
+/* Institution logos: one height for all */
+
+.logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s4) var(--s6);
+  margin: var(--s4) 0 var(--s3);
+  padding: 0;
+  list-style: none;
+}
+
+.logos img {
+  display: block;
+  height: 48px;
+  width: auto;
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -335,27 +371,17 @@ header .meta {
   background: none;
 }
 
-/* Hero: a fixed 16:9 slot for a GIF or video. See the comment in index.html. */
+/* Hero: the paper's Figure 1 */
 
 .hero {
   max-width: var(--w-figure);
   margin: var(--s5) auto 0;
 }
 
-.hero-media {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-}
-
-.hero-media > img,
-.hero-media > video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.hero img {
   display: block;
+  width: 100%;
+  height: auto;
 }
 
 .hero figcaption {
@@ -392,8 +418,10 @@ figcaption .label {
   --dur: 800ms;
 }
 
-main > #fig2,
-main > #fig3 {
+main > #fig-speed,
+main > #fig-dataset,
+main > #fig-training,
+main > #tab1 {
   max-width: var(--w-text);
 }
 
@@ -411,11 +439,9 @@ main > figure > figcaption {
   color: var(--muted);
 }
 
-/* Quiet text buttons: Figure 1 and hero pause, Figure 2 device toggle */
+/* Quiet text button: Figure 2 pause */
 
-.fs-pause,
-.hero-pause,
-.bc-mode button {
+.fs-pause {
   font: inherit;
   font-size: var(--fs-small);
   line-height: var(--lh-small);
@@ -427,20 +453,11 @@ main > figure > figcaption {
   cursor: pointer;
 }
 
-.fs-pause:hover,
-.hero-pause:hover,
-.bc-mode button:hover {
+.fs-pause:hover {
   color: var(--ink);
 }
 
-.hero-pause {
-  margin-left: var(--s2);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-/* Figure 1: one stored state, cycled through six factor rows */
+/* Figure 2: one stored state, cycled through six factor rows */
 
 .fs-grid {
   display: grid;
@@ -608,34 +625,6 @@ main > figure > figcaption {
   line-height: var(--lh-caption);
 }
 
-.bc-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: var(--s1) var(--s4);
-  margin-bottom: var(--s3);
-}
-
-.bc-head .bc-title {
-  margin-bottom: 0;
-}
-
-.bc-mode {
-  display: flex;
-  gap: var(--s4);
-}
-
-.bc-mode button {
-  padding-bottom: 2px;
-  border-bottom: 1px solid transparent;
-}
-
-.bc-mode button[aria-pressed="true"] {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
-}
-
 .bc-title {
   font-weight: 600;
   margin-bottom: var(--s3);
@@ -684,9 +673,9 @@ main > figure > figcaption {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* Figure 2: the gray 1x segment is the original library; GPU bars are lighter while provisional */
+/* Figure 3: the gray 1x segment is stable-worldmodel */
 
-#fig2 .bc-line::before {
+#fig-speed .bc-line::before {
   content: "";
   position: absolute;
   left: 0;
@@ -697,28 +686,7 @@ main > figure > figcaption {
   z-index: 1;
 }
 
-[data-mode="gpu"] .bc-bar {
-  --v: var(--gpu);
-  opacity: 0.6;
-}
-
-.bc-val .gpu,
-[data-mode="gpu"] .bc-val .cpu {
-  display: none;
-}
-
-[data-mode="gpu"] .bc-val .gpu {
-  display: inline;
-}
-
-.bc-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--s6);
-  row-gap: var(--s6);
-}
-
-/* Before a figure scrolls into view. html.js is set in the page head. In Figure 3 the
+/* Before a figure scrolls into view. html.js is set in the page head. In Figure 4 the
    reference bars stay put and the stable-envs bars shrink from the reference length. */
 
 .js .anim:not(.is-in) .byte:not(.accent),
@@ -726,12 +694,48 @@ main > figure > figcaption {
   width: 0;
 }
 
-.js #fig3:not(.is-in) .bc-bar:not(.ref) {
+.js #fig-dataset:not(.is-in) .bc-bar:not(.ref) {
   width: calc((100% - var(--val-w)) * var(--from) / var(--max));
 }
 
-#fig3 {
+#fig-dataset {
   --dur: 900ms;
+}
+
+/* Figure 5 and Table 1 */
+
+#fig-training img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.results th,
+.results td {
+  padding: var(--s1) var(--s3);
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+}
+
+.results th:first-child {
+  text-align: left;
+}
+
+.results thead th {
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.results tbody th {
+  font-weight: 400;
 }
 
 .js .anim:not(.is-in) .bc-val:not(.muted) {
@@ -867,8 +871,8 @@ footer p {
     row-gap: var(--s5);
   }
 
-  .bc-pair {
-    grid-template-columns: minmax(0, 1fr);
+  .logos img {
+    height: 40px;
   }
 }
 

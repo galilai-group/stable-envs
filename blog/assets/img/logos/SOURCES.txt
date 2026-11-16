@@ -1,0 +1,13 @@
+Institution logos. Each file is the university's own logo, taken from a university website.
+
+brown.svg   Brown University. The "logo" symbol of the sprite at
+            https://www.brown.edu/themes/custom/brown/static/images/logo.svg
+            (the header logo of www.brown.edu), saved as a standalone SVG.
+oxford.svg  University of Oxford. https://www.maths.ox.ac.uk/themes/custom/maths/images/header/oxford-logo.svg
+            (the University of Oxford logo in the header of the Mathematical Institute site).
+            www.ox.ac.uk blocks automated downloads, so this copy comes from a department site.
+rice.svg    Rice University. https://www.rice.edu/sites/g/files/bxs2566/files/2019-08/Rice_University_Horizontal_Blue.svg
+            (the header logo of www.rice.edu).
+
+Downloaded 2026-11-16. The files are not changed, except brown.svg: the symbol was moved into an
+<svg> root with width="580" height="287".

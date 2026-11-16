@@ -8,7 +8,7 @@
 <meta property="og:title" content="stable-envs: Fast and Reproducible Environments with Controllable Variations">
 <meta property="og:description" content="80 batched simulation environments with complete states and, in 74 of them, explicit factors of variation. Store states instead of frames and render them on the training device.">
 <!-- TODO: social cards need an absolute URL; replace with the published address of this image. -->
-<meta property="og:image" content="assets/img/hero-poster.jpg">
+<meta property="og:image" content="assets/img/fig1.png">
 <link rel="preload" href="assets/fonts/stix-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <script>document.documentElement.classList.add("js");</script>
@@ -18,57 +18,35 @@
 <header>
   <h1 class="name">stable-envs</h1>
   <p class="subtitle">Fast and Reproducible Environments with Controllable&nbsp;Variations</p>
-  <p class="authors"><span class="todo">[TODO: author list]</span></p>
-  <p class="meta"><span class="todo">[TODO: affiliations]</span></p>
+  <p class="authors">
+    <span class="author">Sami BuGhanem<sup>1</sup></span>
+    <span class="author">Francesco Capuano<sup>2</sup></span>
+    <span class="author">Ahitagni Das<sup>3</sup></span>
+    <span class="author">Richard Gao<sup>1</sup></span>
+    <span class="author">Randall Balestriero<sup>1</sup></span>
+  </p>
+  <p class="meta affiliations">
+    <span><sup>1</sup>Brown University</span>
+    <span><sup>2</sup>University of Oxford</span>
+    <span><sup>3</sup>Rice University</span>
+  </p>
+  <ul class="logos">
+    <li><img src="assets/img/logos/brown.svg" width="580" height="287" alt="Brown University"></li>
+    <li><img src="assets/img/logos/oxford.svg" width="378" height="378" alt="University of Oxford"></li>
+    <li><img src="assets/img/logos/rice.svg" width="525" height="75" alt="Rice University"></li>
+  </ul>
   <p class="meta">Preprint, 2026</p>
   <ul class="links">
-    <li><a class="todo-link" href="#" title="Add the arXiv link">Paper [TODO: link]</a></li>
+    <li><a class="todo-link" href="#" title="Add the arXiv link">Paper [TODO: arXiv link]</a></li>
     <li><a href="https://github.com/galilai-group/stable-envs">Code</a></li>
     <li><a href="https://galilai-group.github.io/stable-envs/">Docs</a></li>
     <li><a href="https://pypi.org/project/stable-envs/">PyPI</a></li>
     <li><a href="#bibtex">BibTeX</a></li>
   </ul>
 
-  <figure class="hero">
-    <div class="hero-media">
-      <!--
-        HERO SLOT, fixed at 16:9 (object-fit: cover). The source GIF (stable-envs-wide.gif, 1280 x 720, 359 frames,
-        41.6 s) is 2.6 MB, over the repo's 1000 KB check-added-large-files limit, so it is embedded as an H.264 MP4:
-          ffmpeg -i stable-envs-wide.gif -movflags +faststart -c:v libx264 -preset veryslow -tune animation \
-                 -crf 20 -pix_fmt yuv420p -vf "fps=25,scale=1280:720:flags=lanczos" -an stable-envs-wide.mp4
-        The poster is the "80 environment classes" frame at 10.1 s. To use a GIF instead (only if it is under
-        1000 KB), replace the <video> with:
-          <img src="assets/stable-envs-wide.gif" alt="..." width="1280" height="720">
-
-        TODO: RE-EXPORT THE ANIMATION. None of its speed or training numbers is in the paper or the repo, and the
-        measured values on this page are still drafts ([TODO: value] markers). Fix in the next export:
-          opener             "9.1× to 16× faster rendering"            -> a sourced claim; the page reports geometric means
-                             16× PushT, 64 CPU threads, batch 1,024    over classes on 8 CPU cores or one L40S
-                             9.1× Ball-in-Cup, RTX 3090, batch 64      (drafts: [TODO: 9.2×] CPU, [TODO: 13.1×] GPU)
-                             "each family's upstream renderer"         -> "each class's reference"
-          speed scene        "0.0082 vs 0.129 ms/frame · 64 threads"   -> unsourced, and on hardware the paper does not use;
-                             "2,190 vs 240 frames/s · RTX 3090"           source both (script, machine) or drop
-                             "Perfect fidelity"                        -> "Pixel-identical to pygame (PushT)"; "matches pygame"
-                                                                          is fine, PushT only (docs/environments/pusht.md)
-          state scene        "s ↔ o", "unique bijection"               -> "stored state + factor values -> same frame"
-                             "[active sampling]"                       -> drop; the repo has no such feature
-                             46 GB pixels / ≈160 MB states             -> correct (examples/lewm/README.md)
-          full picture       "−64%" training time, "58.3 vs 20.8 min", -> unsourced. The page has [TODO: −18%] against the
-                             "1 epoch, 1 L40S, 4 loader workers"          reference renderers, both online, 10 epochs, 8 workers.
-                                                                          If "pixels" is the stored-frames pipeline, this would
-                                                                          fill [TODO: end-to-end speedup against stored frames];
-                                                                          add the run to the paper first
-                             "−99.7%" disk                             -> correct (46 GB to about 0.16 GB)
-                             "pixels" / "stable-envs" baselines        -> name both baselines
-        Scene titles and labels to change in the same export:
-                             "State is all you need"                   -> "Store states, render on the fly"
-                             "Rendering on the fly needs speed"        -> "Batched rendering speed"
-                             "The full picture"                        -> "LeWM on PushT"
-                             rounded card border, [bracketed] labels   -> drop; set text in STIX Two Text / Latin Modern Mono
-      -->
-      <video src="assets/video/stable-envs-wide.mp4" poster="assets/img/hero-poster.jpg" width="1280" height="720" autoplay loop muted playsinline aria-label="Animation in five parts: PushT and Ball-in-Cup frames rendered one at a time by the reference and in batches by stable-envs; the 80 environment classes grouped by family; an OGBench Cube state with its factors of variation, the frame it renders, and dataset size with frames and with states only; batched PushT rendering, rendering speedups on CPU and GPU, and a PushT frame next to the matching pygame frame; LeWM training time and disk use with frames and with stable-envs."></video>
-    </div>
-    <figcaption>The animation covers rendering speedups, the 80 classes, stored states and factors of variation, batched rendering and pixel fidelity, and LeWM training time and disk use. <span class="todo">[TODO: final numbers in the animation]</span> <button type="button" class="hero-pause" hidden>Pause</button></figcaption>
+  <figure id="fig1" class="hero">
+    <img src="assets/img/fig1.png" width="1760" height="1038" alt="The stable-envs logo above three panels. Left: twelve frames from the 80 CPU and GPU environments, including Roadster, DM Control, MS-Human-700, Fetch, Craftax and Robosuite. Top right: rendering speed against stable-worldmodel, averaged over four environments: 5.6 times faster with 1 environment, 6.1 times with 16 and 8.5 times with 128, on GPU. Bottom right: PushT frames with a different block shape or agent shape.">
+    <figcaption><span class="label">Figure 1.</span> <span class="nw">stable-envs</span> has 80 CPU and GPU environments with controlled visual variations. On one NVIDIA L40S with 128 environments, its GPU renderers are 8.5× faster than <span class="nw">stable-worldmodel</span>, on average over TwoRoom, PushT, Reacher and Cube.</figcaption>
   </figure>
 </header>
 
@@ -76,7 +54,7 @@
 
 <section class="abstract" aria-labelledby="abstract-title">
   <h2 id="abstract-title">Abstract</h2>
-  <p>Scaling World Models (WMs) requires processing large amounts of image frames data, and conventional training pipelines typically require (1) physically storing large amounts of image data on disk, (2) reading data from disk into memory, and (3) move from memory to compute units possibly thousands of potentially large image frames. In principle, GPU-native rendering directly allows to speed up training by avoiding moving large image tensors from memory to compute cores, allowing for better GPU utilization. To this aim, we introduce <span class="nw">stable-envs</span>, an open-source library for fast, GPU-native rendering of multiple simulation environments used to train state-of-the-art WMs. By rendering image observations directly on GPU, <span class="nw">stable-envs</span> allows end-to-end training speed-ups of up to <span class="todo">[TODO: X]</span>× with no loss of performance. Besides faster training runs, <span class="nw">stable-envs</span> also enables reproducible, large-scale evaluations through batched physics maintaining full determinism. <span class="nw">stable-envs</span> currently supports <span class="todo">[TODO: 65+]</span> environments across multiple simulation GPU-backends, and is openly available at: <a href="https://github.com/galilai-group/stable-envs">https://github.com/galilai-group/stable-envs</a>.</p>
+  <p>Scaling World Models (WMs) requires processing large amounts of image frames data, and conventional training pipelines typically require (1) physically storing large amounts of image data on disk, (2) reading data from disk into memory, and (3) move from memory to compute units possibly thousands of potentially large image frames. In principle, GPU-native rendering directly allows to speed up training by avoiding moving large image tensors from memory to compute cores, allowing for better GPU utilization. To this aim, we introduce <span class="nw">stable-envs</span>, an open-source library for fast, GPU-native rendering of multiple simulation environments used to train state-of-the-art WMs. By rendering image observations directly on GPU, <span class="nw">stable-envs</span> renders frames 8.5× faster than <span class="nw">stable-worldmodel</span> on average and allows end-to-end training speed-ups of up to 1.33× with no loss of performance. Besides faster training runs, <span class="nw">stable-envs</span> also enables reproducible, large-scale evaluations through batched physics maintaining full determinism. <span class="nw">stable-envs</span> currently supports 80 environments across multiple simulation GPU-backends, and is openly available at: <a href="https://github.com/galilai-group/stable-envs">https://github.com/galilai-group/stable-envs</a>.</p>
 </section>
 
 <h2 id="contributions">Contributions</h2>
@@ -84,7 +62,7 @@
 <ol class="contributions">
   <li>A complete state for every class. On CPU, a saved state restored under the factor values it was collected with continues its episode exactly and renders the same frame.</li>
   <li>Explicit factors of variation in 74 of the 80 classes, set or sampled per batch row in most of them.</li>
-  <li>Batched CPU and GPU renderers, compared with the reference libraries on speed, frames and dynamics.</li>
+  <li>Batched CPU and GPU renderers, compared with <span class="nw">stable-worldmodel</span> on speed, frames and dynamics.</li>
   <li>A LeWM pipeline whose dataset holds only states and actions.</li>
 </ol>
 
@@ -116,9 +94,9 @@ state = env.reset(seed=1, options={"variation_values": {"physics.gravity": g}})
 <span class="c"># render a stored state in another color, without stepping</span>
 env.render(state, variation={"pole.color": [220, 40, 40]})</code></pre>
 
-<p>An episode can then be replayed under the appearance it was collected with, or with a single factor changed (Figure&nbsp;1).</p>
+<p>An episode can then be replayed under the appearance it was collected with, or with a single factor changed (Figure&nbsp;2).</p>
 
-<figure id="fig1" class="fs anim">
+<figure id="fig-factors" class="fs anim">
   <div class="fs-grid">
     <div class="fs-view">
       <div class="fs-frame" role="img" aria-label="A TwoRoom frame: two rooms side by side, a wall between them with a door near the top, and the agent in the left room. It is redrawn under six factor rows, which change only the colors.">
@@ -165,100 +143,94 @@ env.render(state, variation={"pole.color": [220, 40, 40]})</code></pre>
     </div>
   </div>
 
-  <figcaption><span class="label">Figure 1.</span> One TwoRoom state, saved 31 actions into an episode and rendered on CPU under six factor rows: the default, four sampled colors one at a time, and all four together. The state is the same in every frame. TwoRoom records a target position but does not draw it. The factor row holds 23 float32 values, rounded here to integers.</figcaption>
+  <figcaption><span class="label">Figure 2.</span> One TwoRoom state, saved 31 actions into an episode and rendered on CPU under six factor rows: the default, four sampled colors one at a time, and all four together. The state is the same in every frame. TwoRoom records a target position but does not draw it. The factor row holds 23 float32 values, rounded here to integers.</figcaption>
 </figure>
 
 <h2 id="speed">Speed</h2>
 
 <p><span class="nw">stable-envs</span> steps and renders whole batches at once. Static scenery is drawn once per configuration and shared across the batch, so only moving bodies are redrawn. On CPU the custom kernels mostly use Numba and Torch. On GPU they mostly use Triton, MuJoCo Warp and nvdiffrast. Most GPU renderers write frames straight into tensors on the training device. Craftax keeps its upstream JAX simulator, batched with <code>vmap</code>. Roadster and MS-Human-700 draw with MuJoCo's OpenGL renderer.</p>
 
-<p>We time each class against its reference. On CPU, the geometric-mean speedup over the <span class="todo">[TODO: 69]</span> benchmarked classes is <span class="todo">[TODO: 9.2×]</span> for rendering stored states and <span class="todo">[TODO: 11.4×]</span> for stepping (Figure&nbsp;2). <span class="nw">stable-envs</span> is at least as fast as its reference in every class and workload we timed. The smallest margins, <span class="todo">[TODO: 1.03–1.13×]</span>, are in Fetch and OGBench Cube and Scene on CPU, where both implementations spend most of their time in MuJoCo's OpenGL renderer. The largest are in the OGBench mazes, <span class="todo">[TODO: 100–3000×]</span> for stepping. <span class="todo">[TODO: why the maze references are slow]</span></p>
-<!-- TODO (authors): this follows the paper (Section 3.2), but the repo's default CPU renderer for Fetch and for
-     OGBench Cube and Scene is the Numba rasterizer (mujoco_raster, docs/contributing/renderers.md), not MuJoCo's
-     OpenGL renderer. Confirm that the benchmark used backend="opengl", or update the explanation. -->
+<p>We compare <span class="nw">stable-envs</span> with <span class="nw">stable-worldmodel</span> in four environments, TwoRoom, PushT, Reacher and Cube, on one NVIDIA L40S. With 128 environments on GPU, <span class="nw">stable-envs</span> renders 8.5× faster on average, and up to 24× faster in TwoRoom (Figure&nbsp;3).</p>
 
-<figure id="fig2" class="bc anim" data-mode="cpu">
-  <div class="bc-head">
-    <div class="bc-title">Speedup over the reference</div>
-    <div class="bc-mode" role="group" aria-label="Device" hidden>
-      <button type="button" data-mode="cpu" aria-pressed="true">CPU</button>
-      <button type="button" data-mode="gpu" aria-pressed="false">GPU (provisional)</button>
-    </div>
-  </div>
-  <div class="bc-rows" style="--max: 14">
+<figure id="fig-speed" class="bc anim">
+  <div class="bc-title">Rendering speedup over <span class="nw">stable-worldmodel</span>, GPU, 128 environments</div>
+  <div class="bc-rows" style="--max: 25">
     <div class="bc-row" style="--i: 0">
-      <div class="bc-label">Rendering stored states</div>
-      <div class="bc-line"><span class="bc-bar" style="--cpu: 9.2; --gpu: 13.1"></span><span class="bc-val"><span class="cpu"><span class="todo">[TODO: 9.2×]</span></span><span class="gpu"><span class="todo">[TODO: 13.1×]</span></span></span></div>
+      <div class="bc-label">TwoRoom</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 24.1"></span><span class="bc-val">24.1×</span></div>
     </div>
     <div class="bc-row" style="--i: 1">
-      <div class="bc-label">Stepping</div>
-      <div class="bc-line"><span class="bc-bar" style="--cpu: 11.4; --gpu: 11.9"></span><span class="bc-val"><span class="cpu"><span class="todo">[TODO: 11.4×]</span></span><span class="gpu"><span class="todo">[TODO: 11.9×]</span>†</span></span></div>
+      <div class="bc-label">PushT</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 5.3"></span><span class="bc-val">5.3×</span></div>
     </div>
     <div class="bc-row" style="--i: 2">
-      <div class="bc-label">Stepping with frames</div>
-      <div class="bc-line"><span class="bc-bar" style="--cpu: 9.8; --gpu: 6.1"></span><span class="bc-val"><span class="cpu"><span class="todo">[TODO: 9.8×]</span></span><span class="gpu"><span class="todo">[TODO: 6.1×]</span></span></span></div>
+      <div class="bc-label">Reacher</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 3.1"></span><span class="bc-val">3.1×</span></div>
+    </div>
+    <div class="bc-row" style="--i: 3">
+      <div class="bc-label">Cube</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 1.4"></span><span class="bc-val">1.4×</span></div>
     </div>
   </div>
 
-  <figcaption><span class="label">Figure 2.</span> Speedup of <span class="nw">stable-envs</span> over each class's reference (gray segment, 1×), as a geometric mean over <span class="todo">[TODO: 69]</span> classes in <span class="todo">[TODO: 7]</span> families. Rendering draws <span class="todo">[TODO: 2,048]</span> stored states. Stepping plays seeded random episodes of <span class="todo">[TODO: 64]</span> actions. Frames are 224&nbsp;×&nbsp;224 RGB, or the native size for classes with a fixed frame size. Both implementations run at their fastest tested setting on the same device, 8 CPU cores or one NVIDIA L40S. † The reference cannot step on a GPU, so it runs on 8 CPU workers.</figcaption>
-  <!-- TODO (authors): paper Section 3.2 says the comparison against the reference on CPU "applies to all stepping",
-       which would put a † on Stepping with frames ([TODO: 6.1×]) as well, but its results give [TODO: 6.1×] "against the reference
-       on the same GPU". Settle which is right and update the † marks here and in the paper.
-       The paper also marks its GPU numbers for an update after the re-timing of 2026-11-11, hence "GPU (provisional)". -->
+  <figcaption><span class="label">Figure 3.</span> Rendering speedup of <span class="nw">stable-envs</span> over <span class="nw">stable-worldmodel</span> (gray segment, 1×), with 128 environments on GPU, one NVIDIA L40S. The average over the four environments is 8.5×.</figcaption>
 </figure>
 
 <h2 id="fidelity">Fidelity</h2>
 
-<p>Matching frames does not show that a state is complete, so we compare dynamics as well as frames.</p>
+<p>Matching frames does not show that a state is complete, so we compare dynamics as well as frames. We compare <span class="nw">stable-envs</span> with <span class="nw">stable-worldmodel</span> in TwoRoom, PushT, Reacher and Cube.</p>
 
-<p><em>Frames.</em> We render <span class="todo">[TODO: 256]</span> states per class, sampled with a fixed seed, with both <span class="nw">stable-envs</span> and the reference. On CPU, <span class="todo">[TODO: 25]</span> of the <span class="todo">[TODO: 69]</span> classes are pixel-identical and <span class="todo">[TODO: 41]</span> have a mean squared error (MSE) below 1 on the 0–255 scale. The median MSE is <span class="todo">[TODO: 0.42]</span> on CPU and <span class="todo">[TODO: 0.76]</span> on GPU. <span class="todo">[TODO: per-class table; whether the 41 include the 25 pixel-identical classes; GPU counts]</span></p>
+<p><em>Dynamics.</em> From the same start state, we apply the same 20 actions in both libraries and compare the states. The state error is 0 in TwoRoom, Reacher and Cube, and 4&nbsp;×&nbsp;10<sup>−13</sup> in PushT.</p>
 
-<p>PushT frames are pixel-identical to the pygame frames of <span class="nw">stable-worldmodel</span>'s gym-pusht. In our conformance comparison, the classic-control renderer differed from the reference in 0 of 250.9 million pixels. DM Control has the largest CPU errors, up to an MSE of <span class="todo">[TODO: 12.9]</span>, at object edges. Fewer than <span class="todo">[TODO: 1%]</span> of its pixels differ by more than <span class="todo">[TODO: 16]</span> levels. On GPU, the largest errors are in Fetch (MSE <span class="todo">[TODO: 27–32]</span>), whose renderer skips the translucent target markers, and in Rocket Landing (<span class="todo">[TODO: 7.3]</span>), at shading boundaries. For exact frames, <code>backend="opengl"</code> draws Fetch and OGBench Cube and Scene with the reference renderer, which is pixel-identical on CPU.</p>
-
-<p><em>Dynamics.</em> We step <span class="nw">stable-envs</span> and the reference with the same seeds and actions, then compare resets, task outputs and state fields. On CPU, Fetch, the OGBench mazes, Cube and Scene, Roadster and MiniWorld are bit-identical to their references. With the float64 Numba and JAX backends, the PushT block stays within 0.001 pixels of Pymunk in 511 of 512 episodes of 200 steps. GPU physics runs in float32 and can drift as rounding errors compound. MuJoCo Warp's contact solver, for example, is not bit-identical from run to run. <span class="todo">[TODO: table of total dynamics error]</span></p>
+<p><em>Frames.</em> We render the same states with both libraries. The pixel mean squared error (MSE) is at most 2.2 on the 0–255 scale.</p>
 
 <h2 id="lewm">Training LeWM</h2>
 
 <p>In <a href="https://github.com/galilai-group/stable-envs/tree/main/examples/lewm"><code>examples/lewm</code></a> the dataset keeps only states and actions. Just before the forward pass, <code>env.render(state)</code> draws the frames on the GPU. The model, loss, optimizer and planning settings follow <span class="nw">stable-worldmodel</span>'s LeWM scripts.</p>
 
-<p>Without its <code>pixels</code> column, the PushT training set shrinks to about 160&nbsp;MB (Figure&nbsp;3a). The DataLoader workers no longer handle images. Only states and actions reach the GPU.</p>
+<p>Without its <code>pixels</code> column, the PushT training set shrinks to about 160&nbsp;MB (Figure&nbsp;4). The DataLoader workers no longer handle images. Only states and actions reach the GPU.</p>
 
 <p>The PushT dataset does not record contact points, so frames rendered from it miss the small marker the reference renderer draws where the agent touches the block. Full <span class="nw">stable-envs</span> states include them.</p>
 
-<figure id="fig3" class="bc anim">
-  <div class="bc-pair">
-    <div class="bc-rows" style="--max: 46">
-      <div class="bc-title">(a) PushT dataset on disk</div>
-      <div class="bc-row" style="--i: 0">
-        <div class="bc-label">With frames</div>
-        <div class="bc-line"><span class="bc-bar ref" style="--cpu: 46"></span><span class="bc-val muted">46 GB</span></div>
-      </div>
-      <div class="bc-row" style="--i: 1">
-        <div class="bc-label">States only<span class="muted">, about 290× smaller</span></div>
-        <div class="bc-line"><span class="bc-bar" style="--cpu: 0.16; --from: 46"></span><span class="bc-val accent">0.16 GB</span></div>
-      </div>
+<figure id="fig-dataset" class="bc anim">
+  <div class="bc-rows" style="--max: 46">
+    <div class="bc-title">PushT dataset on disk</div>
+    <div class="bc-row" style="--i: 0">
+      <div class="bc-label">With frames</div>
+      <div class="bc-line"><span class="bc-bar ref" style="--cpu: 46"></span><span class="bc-val muted">46 GB</span></div>
     </div>
-    <div class="bc-rows" style="--max: 1">
-      <div class="bc-title">(b) LeWM training wall time, relative</div>
-      <div class="bc-row" style="--i: 0">
-        <div class="bc-label">Reference renderers</div>
-        <div class="bc-line"><span class="bc-bar ref" style="--cpu: 1"></span><span class="bc-val muted">1.00</span></div>
-      </div>
-      <div class="bc-row" style="--i: 1">
-        <div class="bc-label"><span class="nw">stable-envs</span></div>
-        <div class="bc-line"><span class="bc-bar" style="--cpu: 0.82; --from: 1"></span><span class="bc-val accent"><span class="todo">[TODO: 0.82]</span></span></div>
-      </div>
+    <div class="bc-row" style="--i: 1">
+      <div class="bc-label">States only<span class="muted">, about 290× smaller</span></div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 0.16; --from: 46"></span><span class="bc-val accent">0.16 GB</span></div>
     </div>
   </div>
 
-  <figcaption><span class="label">Figure 3.</span> (a) Dataset size after decompression. (b) LeWM training wall time relative to the reference renderers, with both pipelines rendering online. Geometric mean over the <span class="todo">[TODO: five]</span> of six environments run with matched resources (all but <span class="todo">[TODO: excluded environment]</span>), each trained for <span class="todo">[TODO: 10]</span> epochs on one L40S with 8 DataLoader workers.</figcaption>
+  <figcaption><span class="label">Figure 4.</span> Size of the LeWM PushT dataset after decompression, with frames and with states only.</figcaption>
 </figure>
 
-<p>We train LeWM on PushT, TwoRoom, Reacher, Pendulum, Cube and Rocket Landing, once with the reference renderers and once with <span class="nw">stable-envs</span>, using <span class="todo">[TODO: three]</span> training seeds (<span class="todo">[TODO: six]</span> for Rocket Landing). Both pipelines render online. Planning uses CEM over <span class="todo">[TODO: 50]</span> episodes.</p>
+<p>We train the full-size LeWM on TwoRoom, PushT, Reacher and Cube on one NVIDIA L40S, once with <span class="nw">stable-worldmodel</span> rendering and once with <span class="nw">stable-envs</span> rendering. Both pipelines render the frames during training. With <span class="nw">stable-envs</span>, training is 1.16× to 1.33× faster (Figure&nbsp;5).</p>
 
-<p>Training on <span class="nw">stable-envs</span> takes <span class="todo">[TODO: 18%]</span> less wall time, a <span class="todo">[TODO: 1.22×]</span> speedup (Figure&nbsp;3b). We have not yet timed it against a pipeline that reads stored frames. <span class="todo">[TODO: end-to-end speedup against stored frames]</span></p>
+<figure id="fig-training">
+  <img src="assets/img/snv_training_speedups.png" width="2040" height="1155" alt="Bar chart of LeWM training speed in optimizer steps per second, stable-worldmodel against stable-envs. stable-envs is 1.16 times faster in TwoRoom, 1.33 times in PushT, 1.24 times in Reacher and 1.21 times in Cube.">
+  <figcaption><span class="label">Figure 5.</span> Training speed of the full-size LeWM, in optimizer steps per second on one NVIDIA L40S, with <span class="nw">stable-worldmodel</span> rendering and with <span class="nw">stable-envs</span> rendering. The labels give the speedup.</figcaption>
+</figure>
 
-<p>Trained and evaluated on <span class="nw">stable-envs</span>, models reach success rates within <span class="todo">[TODO: 4 points]</span> of the reference pipeline in every environment but one. In Rocket Landing, where the spread between training seeds is <span class="todo">[TODO: 4–9 points]</span>, they are <span class="todo">[TODO: 5.3 points]</span> below. Evaluated in the other implementation, a model's success rate changes by at most <span class="todo">[TODO: 5.4 points]</span> (Reacher). <span class="todo">[TODO: per-environment success rates]</span></p>
+<p>The planning success rates of the two pipelines are within 2.7 points of each other in every environment (Table&nbsp;1).</p>
+
+<figure id="tab1" class="results">
+  <table>
+    <thead>
+      <tr><th scope="col">Environment</th><th scope="col"><span class="nw">stable-worldmodel</span></th><th scope="col"><span class="nw">stable-envs</span></th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">TwoRoom</th><td>88.7</td><td>88.0</td></tr>
+      <tr><th scope="row">PushT</th><td>94.0</td><td>93.3</td></tr>
+      <tr><th scope="row">Reacher</th><td>80.0</td><td>79.3</td></tr>
+      <tr><th scope="row">Cube</th><td>74.0</td><td>71.3</td></tr>
+    </tbody>
+  </table>
+  <figcaption><span class="label">Table 1.</span> Planning success rate (%) of the full-size LeWM, trained with <span class="nw">stable-worldmodel</span> rendering and with <span class="nw">stable-envs</span> rendering.</figcaption>
+</figure>
 
 <h2 id="use">Usage</h2>
 
@@ -296,7 +268,8 @@ recolored = env.render(states, variation=torch.as_tensor(rows))</code></pre>
 <pre><code id="bib">@misc{stableenvs2026,
   title         = {stable-envs: Fast and Reproducible Environments
                    with Controllable Variations},
-  author        = {<span class="todo">[TODO: authors]</span>},
+  author        = {BuGhanem, Sami and Capuano, Francesco and Das, Ahitagni
+                   and Gao, Richard and Balestriero, Randall},
   year          = {2026},
   eprint        = {<span class="todo">[TODO: arXiv id]</span>},
   archivePrefix = {arXiv},
@@ -329,21 +302,6 @@ recolored = env.render(states, variation=torch.as_tensor(rows))</code></pre>
     var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var watch = "IntersectionObserver" in window;
 
-    var video = document.querySelector(".hero video");
-    var heroButton = document.querySelector(".hero-pause");
-    if (reduced) {
-      video.removeAttribute("autoplay");
-      video.pause();
-    }
-    function heroLabel() { heroButton.textContent = video.paused ? "Play" : "Pause"; }
-    heroButton.addEventListener("click", function () {
-      if (video.paused) { video.play(); } else { video.pause(); }
-    });
-    video.addEventListener("play", heroLabel);
-    video.addEventListener("pause", heroLabel);
-    heroLabel();
-    heroButton.hidden = false;
-
     function reveal(figure) {
       figure.classList.add("is-in");
       setTimeout(function () { figure.classList.add("is-done"); }, 1400);
@@ -364,17 +322,7 @@ recolored = env.render(states, variation=torch.as_tensor(rows))</code></pre>
       figures.forEach(function (figure) { once.observe(figure); });
     }
 
-    var chart = document.getElementById("fig2");
-    var modes = chart.querySelectorAll(".bc-mode button");
-    chart.querySelector(".bc-mode").hidden = false;
-    modes.forEach(function (button) {
-      button.addEventListener("click", function () {
-        chart.dataset.mode = button.dataset.mode;
-        modes.forEach(function (b) { b.setAttribute("aria-pressed", b === button); });
-      });
-    });
-
-    var fig = document.getElementById("fig1");
+    var fig = document.getElementById("fig-factors");
     var frames = fig.querySelectorAll(".fs-frame img");
     var picks = fig.querySelectorAll(".fs-picker [data-row]");
     var pause = fig.querySelector(".fs-pause");
