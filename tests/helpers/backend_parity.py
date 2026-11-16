@@ -12,6 +12,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import unfold
 
 
 def _key(key) -> str:
@@ -27,6 +28,8 @@ def compare_backend_states(
     least 1, so a leaf of large values gets the same relative tolerance. ``exclude`` holds ``/``-joined key prefixes
     that one backend computes differently, such as solver caches.
     """
+    # Folded States compare field by field, so each field keeps its own scaled tolerance.
+    actual, expected = unfold(actual), unfold(expected)
     skip = tuple(exclude)
     keep = lambda key: not _key(key).startswith(skip)  # noqa: E731
     a = {_key(k): v for k, v in actual.items(True, True) if keep(k)}
