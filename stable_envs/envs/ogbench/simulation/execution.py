@@ -54,7 +54,7 @@ def make_maze_adapter(
 #: Shipped CUDA switch points of Cube and Scene: the smallest batch that steps on MuJoCo Warp; smaller batches step
 #: on native ``mujoco.batch``. The knob and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 64, "Scene": 128}
+MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 256, "Scene": 128}
 
 
 def _measure_manipulation(env_type, device):

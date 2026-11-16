@@ -45,3 +45,55 @@ def test_a_device_simulator_steps_its_sequences_on_the_device():
         env.reset(seed=0)
         result = env.step(torch.zeros(2, 3, 5, device="cuda"), frames=None)
         assert result["state"].device.type == "cuda"
+
+
+@pytest.mark.family("ogbench")
+def test_a_device_masked_sequence_equals_the_sequence_that_reads_its_masks_back(monkeypatch):
+    """Lane 0 succeeds on its first action and holds; the device-masked loop gives the same bytes as the readback."""
+    pytest.importorskip("mujoco_warp")
+    actions = torch.as_tensor(np.random.default_rng(1).uniform(-1, 1, (4, 12, 5)), dtype=torch.float32).cuda()
+    runs = []
+    for device_masks in (True, False):
+        with se.make("OGBCube", num_envs=4, device="cuda", simulation_backend="mjwarp") as env:
+            assert env._masks_on_device()
+            monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
+            env.reset(seed=3)
+            # The cube target of lane 0 moves onto its cube.
+            sim = env._simulator
+            sim._mocap_pos[0, sim._target] = sim._qpos[0, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
+            runs.append(env.step(actions, frames=None))
+        monkeypatch.undo()
+    masked, readback = runs
+    assert not bool(masked["valid"][0, 1:].any()) and bool(masked["valid"][1:, 0].all())
+    assert set(masked.keys(True, True)) == set(readback.keys(True, True))
+    for key in readback.keys(True, True):
+        assert torch.equal(masked[key], readback[key]), key
+
+
+@pytest.mark.family("ogbench")
+@pytest.mark.parametrize("name", ["OGBCube", "OGBScene"])
+def test_a_device_masked_sequence_where_every_lane_ends_early_equals_the_readback(monkeypatch, name):
+    """Every lane succeeds on its first action; the device-masked loop gives the same bytes as the readback."""
+    pytest.importorskip("mujoco_warp")
+    actions = torch.as_tensor(np.random.default_rng(2).uniform(-0.1, 0.1, (3, 6, 5)), dtype=torch.float32).cuda()
+    runs = []
+    for device_masks in (True, False):
+        with se.make(name, num_envs=3, device="cuda", simulation_backend="mjwarp") as env:
+            assert env._masks_on_device()
+            monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
+            env.reset(seed=4)
+            # Every task target moves onto the current pose, so every lane succeeds at once.
+            sim, c = env._simulator, env._simulator._columns
+            sim._mocap_pos[:, sim._target] = sim._qpos[:, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
+            if name == "OGBScene":
+                c["scene", "target_button_states"].copy_(c["scene", "cur_button_states"])
+                drawer, window = c["scene", "target_drawer_pos"], c["scene", "target_window_pos"]
+                drawer[:, 0] = sim._qpos[:, sim._drawer].to(drawer.dtype)
+                window[:, 0] = sim._qpos[:, sim._window].to(window.dtype)
+            runs.append(env.step(actions, frames=None))
+        monkeypatch.undo()
+    masked, readback = runs
+    assert bool(masked["valid"][:, 0].all()) and not bool(masked["valid"][:, 1:].any())
+    assert set(masked.keys(True, True)) == set(readback.keys(True, True))
+    for key in readback.keys(True, True):
+        assert torch.equal(masked[key], readback[key]), key
