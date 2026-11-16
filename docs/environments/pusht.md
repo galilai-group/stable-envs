@@ -32,12 +32,12 @@ stable-envs steps PushT with a port of the Pymunk contact solver, and one call s
 
 | Value | Physics device | Implementation |
 |---|---|---|
-| `"numba"` | CPU | Numba in float64, in parallel over environments. The default on CPU. |
-| `"triton"` | CUDA | one Triton kernel launch per step in float32, one GPU thread per environment. The default on CUDA. |
-| `"jax"` | the environment device | JAX `vmap` in float64. The default on CUDA without Triton. |
-| `"auto"` | CPU or CUDA | on CUDA, `"numba"` below `triton_min_envs` environments and the CUDA default from there. On CPU, `"numba"`. |
+| `"auto"` (default) | CPU or CUDA | on CPU, `"numba"`. On CUDA, `"numba"` for small batches and `"triton"` (`"jax"` without Triton) for large ones. |
+| `"numba"` | CPU | Numba in float64, in parallel over environments. |
+| `"triton"` | CUDA | one Triton kernel launch per step in float32, one GPU thread per environment. |
+| `"jax"` | the environment device | JAX `vmap` in float64. |
 
-With `"numba"` on CUDA, the physics runs on the CPU and the state and outputs are CUDA tensors. On an L40S with 8 CPU cores, `"triton"` was faster than `"numba"` at every batch size, so `triton_min_envs` is 1 by default. A JAX step on CUDA is much slower than a Triton step, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, unless Triton has it in its cache. The compile takes longer for agent shapes other than the disc.
+With `"numba"` on CUDA, the physics and the state stay on the CPU, and each call moves its results to CUDA in one copy. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on the GPU. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Numba computes in float64 and Triton in float32, so the two backends can give different trajectories. A JAX step on CUDA is much slower than a Triton step, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, unless Triton has it in its cache. The compile takes longer for agent shapes other than the disc.
 
 The port follows Munk2D, the Chipmunk2D fork that pymunk 7.2.0 builds. It uses the same integration, PD control, damping and sequential impulse solver, and these Munk2D details:
 

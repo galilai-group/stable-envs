@@ -8,7 +8,9 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
-from ..._core.tensordicts import build_tensordict
+from ..._core.state_layout import StateLayout
+from ..._core.tensordicts import build_tensordict, to_device
+from ..._execution.backends import Rungs, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -146,6 +148,14 @@ def _bias_field_rgba(biases) -> np.ndarray:
 _WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
 _EXECUTION_MODES = {"torch": "NATIVE_TORCH", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
 _NO_MASK = np.zeros(0, np.bool_)
+
+
+#: Shipped CUDA switch point of TwoRoom: the smallest batch that steps in JAX; smaller batches step in Numba (Torch
+#: without Numba). None uses JAX at every batch size. The knob and the tuning cache take precedence.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
+#: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and it is faster than Numba
+#: from 8192 environments on both GPU types.
+TWO_ROOM_CUDA_MIN_ENVS: int | None = 8192
 
 
 def _numba_available() -> bool:
@@ -488,14 +498,11 @@ class _HiddenTargetSemantics:
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
-        return build_tensordict(
-            {
-                "agent": {"position": agent.clone()},
-                "target": {"position": self._target_position[:n].clone()},
-            },
-            batch_size=[n],
-            device=self.device,
-        )
+        layouts = self.__dict__.setdefault("_state_layouts", {})
+        if n not in layouts:
+            leaves = [("agent/position", (2,), agent.dtype), ("target/position", (2,), agent.dtype)]
+            layouts[n] = StateLayout(leaves, n)
+        return layouts[n].export({"agent/position": agent, "target/position": self._target_position[:n]}, self.device)
 
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)
@@ -544,17 +551,21 @@ class _HiddenTargetSemantics:
         return self._outputs(self._full_state(self._render_state))
 
     def _numba_step(self, action, active):
-        """Advance the lanes and build state and task outputs in one Numba call."""
+        """Advance the lanes and build state and task outputs in one Numba call.
+
+        On an accelerator the call runs on host copies; the new rows and the outputs move to the device after it.
+        """
         from . import navstep_cpu
 
-        values = navstep_cpu.task_step(
-            self._numba_kind, *self._numba_inputs(action, active), self._target_position.numpy(), self._numba_doors
-        )
+        inputs = self._numba_inputs(action, active)
+        target = self._host_array("target", self._target_position)
+        values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
         agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
             observation = self._observation(agent, target)
         n = self.B
-        return build_tensordict(
+        host = self.device.type != "cpu"
+        result = build_tensordict(
             {
                 "state": {"agent": {"position": agent}, "target": {"position": target}},
                 "reward": torch.zeros(n, dtype=torch.float64),
@@ -569,8 +580,20 @@ class _HiddenTargetSemantics:
                 },
             },
             [n],
-            self.device,
+            "cpu",
         )
+        if not host:
+            return result
+        result = to_device(result, self.device)
+        rows = inputs[0]
+        if self.state_dim == 2:
+            # The rows are the agent positions, already on the device: a device copy, without a host wait.
+            self._render_state.copy_(result["state", "agent", "position"])
+        else:
+            self._render_state.copy_(torch.from_numpy(rows))
+        # The host rows already hold the new values: the next step reads them without a device copy.
+        self._host_arrays["rows"] = (self._render_state, self._render_state._version, rows)
+        return result
 
 
 class _TorchNavBase(_GymReferencePort):
@@ -586,6 +609,8 @@ class _TorchNavBase(_GymReferencePort):
 
     #: Physics implementations that ``simulation_backend`` accepts in addition to ``"auto"``.
     simulation_backends: tuple[str, ...] = ("torch", "numba")
+    #: Whether Numba may step host copies of the rows for an accelerator device.
+    _numba_on_host = False
     #: Kernel selector and variation columns of the Numba step.
     _numba_kind = 0
     _numba_paths: tuple[str, ...] = ()
@@ -593,15 +618,18 @@ class _TorchNavBase(_GymReferencePort):
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation; ``"auto"`` uses Numba on CPU when it imports and Torch otherwise."""
         choices = ("auto", *self.simulation_backends)
+        simulation_backend = "auto" if simulation_backend is None else simulation_backend
         if simulation_backend not in choices:
-            raise ValueError(f"simulation_backend must be one of {', '.join(map(repr, choices))}")
+            raise ValueError(
+                f"simulation_backend must be one of {', '.join(map(repr, choices))}; got {simulation_backend!r}"
+            )
         super().__init__(*args, **kwargs)
         self._gy, self._gx = _grids(self.device)
         self._border = _border_mask(self.device)
         if simulation_backend == "auto":
             simulation_backend = self._auto_simulation_backend()
         if simulation_backend == "numba":
-            if self.device.type != "cpu":
+            if self.device.type != "cpu" and not self._numba_on_host:
                 raise ValueError(f"simulation_backend='numba' needs device='cpu', got {self.device}")
             if not _numba_available():
                 raise ImportError("simulation_backend='numba' needs Numba; install stable-envs[navigation]")
@@ -614,18 +642,34 @@ class _TorchNavBase(_GymReferencePort):
         return "numba" if self.device.type == "cpu" and _numba_available() else "torch"
 
     def _numba_inputs(self, action, active):
-        """Return the arrays that every Numba step reads; the kernel updates the live rows in place."""
-        act = action.numpy()
+        """Return the arrays that every Numba step reads; the kernel updates the live rows in place.
+
+        On an accelerator the rows, the Variation and the target are host copies, kept until the device tensor
+        changes outside the step.
+        """
+        act = action.detach().cpu().numpy()
         if not act.flags.c_contiguous:
             act = np.ascontiguousarray(act)
-        mask = _NO_MASK if active is None else active.numpy()
-        style = self._style.values.numpy()
+        mask = _NO_MASK if active is None else active.cpu().numpy()
+        style = self._host_array("style", self._style.values)
         if style.shape[0] != self.B:
             raise ValueError(f"{type(self).__name__}: the installed Variation has {style.shape[0]} rows, not {self.B}")
-        return self._render_state.numpy(), act, style, self._numba_cols, mask, active is not None
+        rows = self._host_array("rows", self._render_state)
+        return rows, act, style, self._numba_cols, mask, active is not None
+
+    def _host_array(self, name, tensor):
+        """A NumPy view of ``tensor``; on an accelerator a host copy, kept under ``name`` until the tensor changes."""
+        if tensor.device.type == "cpu":
+            return tensor.numpy()
+        cache = self.__dict__.setdefault("_host_arrays", {})
+        hit = cache.get(name)
+        # The same tensor object at the same version counter: no in-place write since the copy.
+        if hit is None or hit[0] is not tensor or hit[1] != tensor._version:
+            hit = cache[name] = (tensor, tensor._version, tensor.cpu().numpy())
+        return hit[2]
 
     def _advance_rows(self, rows, action, sty) -> torch.Tensor:
-        numba = self.simulation_backend == "numba" and rows.dtype == action.dtype == torch.float32
+        numba = self.simulation_backend == "numba" and rows.dtype == action.dtype == torch.float32 and not rows.is_cuda
         if numba and sty.batch == rows.shape[0] == action.shape[0]:
             from . import navstep_cpu
 
@@ -642,7 +686,12 @@ class _TorchNavBase(_GymReferencePort):
 
     @torch.no_grad()
     def _step(self, action, *, active=None) -> TensorDict:
-        if self.simulation_backend != "numba" or self._live_rows != self.B or self.state_dim not in (2, 4):
+        if (
+            self.simulation_backend != "numba"
+            or self.device.type != "cpu"
+            or self._live_rows != self.B
+            or self.state_dim not in (2, 4)
+        ):
             return super()._step(action, active=active)
         from . import navstep_cpu
 
@@ -1023,18 +1072,17 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
 
     simulation_backends = ("torch", "jax", "numba")
     _numba_doors = True
+    _numba_on_host = True
 
-    def __init__(self, *args, simulation_backend="auto", jax_min_envs=1, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation.
 
-        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Torch below
-        ``jax_min_envs`` and in JAX at or above it; the cutoff defaults to 1.
+        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Numba (Torch without Numba)
+        for small batches and in JAX for large ones, from the measured ``large_backend_min_envs`` switch point.
         ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
-        every batch size; Numba runs on CPU only.
+        every batch size. On CUDA, Numba steps host copies of the rows and moves the results to the device.
         """
-        if isinstance(jax_min_envs, bool) or not isinstance(jax_min_envs, int) or jax_min_envs < 1:
-            raise ValueError("jax_min_envs must be an int >= 1")
-        self.jax_min_envs = jax_min_envs
+        self.simulation_backend_path = f"navigation/{self.name}"
         super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
@@ -1044,7 +1092,21 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def _auto_simulation_backend(self) -> str:
         if self.device.type == "cpu" and _numba_available():
             return "numba"
-        return "jax" if self.B >= self.jax_min_envs else "torch"
+        cls, device = type(self), self.device
+        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
+
+        return select_backend(
+            self.simulation_backend_path,
+            self.B,
+            self.device,
+            "auto",
+            {
+                "cpu": Rungs("jax", "jax"),
+                "cuda": Rungs("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
+            },
+            choices=self.simulation_backends,
+            measure=measure,
+        )
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})

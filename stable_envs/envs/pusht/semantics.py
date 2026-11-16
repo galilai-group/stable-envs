@@ -114,6 +114,9 @@ class PushT(Env):
     """
 
     family = domain = "pusht"
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("numba", "triton", "jax")
+    state_solver_caches = ("current/jax",)
     name = "push-t"
     reference_id = "swm/PushT-v1"
     default_size = 224
@@ -149,17 +152,20 @@ class PushT(Env):
         *,
         render_action=False,
         with_target=True,
-        simulation_backend=None,
-        triton_min_envs=None,
+        simulation_backend="auto",
     ):
-        """``simulation_backend=None`` steps Triton physics on CUDA and Numba physics on CPU.
+        """Select the physics backend.
+
+        ``simulation_backend="auto"`` steps Numba physics on CPU. On CUDA it steps small batches with Numba and
+        large ones with Triton, from the ``large_backend_min_envs`` switch point.
 
         ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
-        CPU and returns CUDA tensors. ``"auto"`` steps CUDA batches smaller than ``triton_min_envs`` with Numba.
+        CPU and returns CUDA tensors.
         """
         _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
-        from .simulation.execution import TRITON_MIN_ENVS, make_pusht_adapter, pusht_backend
+        from .simulation.execution import PATH as SIMULATION_PATH
+        from .simulation.execution import make_pusht_adapter, pusht_backend
 
         if backend not in ("auto", "source", "pygame"):
             raise ValueError("PushT backend must be 'auto' or 'source' (pygame)")
@@ -167,14 +173,17 @@ class PushT(Env):
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
         device = torch.device(Env.resolve_device(device))
-        triton_min_envs = TRITON_MIN_ENVS if triton_min_envs is None else triton_min_envs
-        self.simulation_backend = pusht_backend(num_envs, device, simulation_backend, triton_min_envs)
+        resolution = self.default_size if size is None else size
+        config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
+        self.simulation_backend = pusht_backend(
+            num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
+        )
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
+        self.simulation_backend_path = SIMULATION_PATH
         # CPU batches step on Numba threads.
         self.native_step_threads = self.simulation_backend == "numba"
         # CPU renders return new storage.
         self._frames_owned = device.type == "cpu"
-        resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         self._simulator = make_pusht_adapter(
@@ -182,7 +191,7 @@ class PushT(Env):
             device,
             seed,
             discrete=self.discrete,
-            config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
+            config=config,
             simulation_backend=self.simulation_backend,
         )
         self._projection = PushTProjection()

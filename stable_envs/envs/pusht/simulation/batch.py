@@ -1,11 +1,10 @@
 """PushT batches with array physics, source resets, solver-cache checkpoints and rendering metadata."""
 
-import math
-
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
 from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
@@ -83,7 +82,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return self._columns if self._pool_owns else super()._static_columns()
 
     def _initialize_device(self, fields=None, geometry=None):
-        self._layout, self._buffers, self._width = None, {}, None
+        self._layout, self._width = None, None
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
@@ -170,83 +169,31 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return fields
 
     def _state_layout(self, fields):
-        """Per dtype: the fields that only reset, restore or a Variation change, packed once, then the others.
+        """The State layout; leaves follow the CPU owners' State order, then the solver cache.
 
-        Also a function that nests ``{key: leaf}`` into the State tree, in export order.
+        The fields that only reset, restore or a Variation change are static, and the action history has the width
+        of the longest history.
         """
         if self._layout is None:
-            groups = {}
-            for key, value in fields.items():
-                groups.setdefault(value.dtype, ([], []))[_changes_with_step(key)].append(key)
-            # Keys in the order of the CPU owners' State, then the solver cache.
             rank = {key: index for index, key in enumerate(self._keys)}
-            tree = {}
-            for key in sorted(fields, key=lambda key: rank.get(key, len(rank))):
-                *parents, leaf = key.split("/")
-                node = tree
-                for part in parents:
-                    node = node.setdefault(part, {})
-                node[leaf] = key
-
-            def source(node):
-                items = (
-                    f"{name!r}: {source(child) if type(child) is dict else f'L[{child!r}]'}"
-                    for name, child in node.items()
-                )
-                return "{" + ", ".join(items) + "}"
-
-            nest = eval("lambda L: " + source(tree))  # noqa: S307 - the source holds only State key literals
-            # Fixed fields of one dtype and per-lane shape are packed together and become leaves with one unbind.
-            parts = []
-            for fixed, moving in groups.values():
-                shaped = {}
-                for key in fixed:
-                    shaped.setdefault(tuple(fields[key].shape[1:]), []).append(key)
-                blocks = [
-                    (torch.cat([fields[key].reshape(-1) for key in keys]), shape, keys)
-                    for shape, keys in shaped.items()
-                ]
-                parts.append((blocks, moving))
-            self._layout = parts, nest
+            order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
+            self._layout = StateLayout(
+                [
+                    (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), fields[key].dtype)
+                    for key in order
+                ],
+                self.num_envs,
+                static=frozenset(key for key in order if not _changes_with_step(key)),
+            )
+            self._layout.load_static(fields)
         return self._layout
 
     def get_state(self):
-        fields = self._state_fields(self._history_width())
-        parts, nest = self._state_layout(fields)
-        batch = self.num_envs
-        leaves = {}
-        for blocks, moving in parts:
-            shaped = {}
-            for key in moving:
-                value = fields[key]
-                values, keys = shaped.setdefault(tuple(value.shape[1:]), ([], []))
-                values.append(value.reshape(-1))
-                keys.append(key)
-            groups = [(shape, keys) for _, shape, keys in blocks]
-            sources = [packed for packed, _, _ in blocks]
-            for shape, (values, keys) in shaped.items():
-                groups.append((shape, keys))
-                sources.extend(values)
-            sizes = [len(keys) * batch * math.prod(shape) for shape, keys in groups]
-            flat = torch.cat(sources, out=self._buffer(sources[0].dtype, sum(sizes)))
-            for (shape, keys), block in zip(groups, flat.split(sizes), strict=True):
-                leaves.update(zip(keys, block.view(len(keys), batch, *shape).unbind(0), strict=True))
-        return TensorDict._new_unsafe(nest(leaves), batch_size=torch.Size([batch]), device=self._state_device)
+        return self._export(self._state_device)
 
-    def _buffer(self, dtype, numel):
-        """A flat State buffer: on CPU, one that no earlier State still uses, to avoid new pages per step."""
-        if self.device.type != "cpu" or not hasattr(torch._C, "_storage_Use_Count"):
-            return torch.empty(numel, dtype=dtype, device=self.device)
-        pool = self._buffers.setdefault(dtype, [])
-        for buffer in pool:
-            # The pool's tensor and the temporary storage object are the only users of a free buffer.
-            if buffer.numel() >= numel and torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2:
-                return buffer[:numel]
-        buffer = torch.empty(numel + numel // 4, dtype=dtype, device=self.device)
-        pool.append(buffer)
-        if len(pool) > 2:
-            pool.pop(0)
-        return buffer[:numel]
+    def _export(self, device):
+        fields = self._state_fields(self._history_width())
+        return self._state_layout(fields).export(fields, device)
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.

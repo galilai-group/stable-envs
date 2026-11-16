@@ -316,12 +316,13 @@ def test_a_cpu_maze_step_advances_and_draws_a_small_unlit_batch_on_one_torch_thr
 def test_cpu_maze_frames_and_states_do_not_depend_on_the_torch_thread_count(_ogbench, monkeypatch):
     def rollout(threads, scoped):
         if not scoped:
-            monkeypatch.setattr(MAZE.MazeSemantics, "native_step_threads", False)
             monkeypatch.setattr(MAZE, "_CPU_THREADED_ROWS", 0)
         before = torch.get_num_threads()
         torch.set_num_threads(threads)
         try:
             with R.REGISTRY["AntMazeMediumExplore"](num_envs=3, device="cpu", size=48) as env:
+                if not scoped:
+                    env.native_step_threads = False
                 env.reset(seed=3)
                 actions = torch.linspace(-1, 1, 3 * 5 * 8).reshape(3, 5, 8)
                 out = env.step(actions, frames=slice(None))

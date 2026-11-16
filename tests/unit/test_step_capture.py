@@ -131,6 +131,15 @@ def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
     with CheapAdvance() as env:
         env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=slice(None, None, 2), frames=None)
         assert env.exports == 3  # selected 0,2, plus mandatory final State
+    with CheapAdvance() as env:
+        out = env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None, frames=None, state=False)
+        assert env.exports == 0 and "state" not in out.keys()
+        out = env.step(torch.ones(3, 1, dtype=torch.int64), states=None, frames=None, state=False)
+        assert env.exports == 0 and "state" not in out.keys()
+        out = env.step(torch.ones(3, 2, 1, dtype=torch.int64), states=slice(0, 0), frames=None, state=False)
+        assert "state" not in out.keys() and out["states"].batch_size == (3, 0)
+        with pytest.raises(TypeError, match="state must be a bool"):
+            env.step(torch.ones(3, 1, dtype=torch.int64), state=None)
 
 
 @pytest.mark.family("dmc")

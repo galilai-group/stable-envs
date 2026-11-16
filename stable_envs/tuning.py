@@ -23,7 +23,19 @@ from ._core import environ as _environ
 from ._core.cache import cache_dir as _cache_dir
 from ._core.config import log as _log
 
-__all__ = ["Knob", "KNOBS", "RENDER_PATHS", "get", "set", "reset", "override", "describe", "cache_path"]
+__all__ = [
+    "Knob",
+    "KNOBS",
+    "RENDER_PATHS",
+    "get",
+    "set",
+    "reset",
+    "override",
+    "describe",
+    "cache_path",
+    "simulation_paths",
+    "time_backend",
+]
 
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
 HINT_LANES = 256
@@ -140,6 +152,7 @@ KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
+        Knob("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
@@ -257,7 +270,15 @@ def stamp(device: str) -> dict[str, str]:
 
     cuda = device.startswith("cuda")
     name = torch.cuda.get_device_name(torch.device(device)) if cuda else _cpu_name()
-    return {"device": name, "driver": _driver() if cuda else "", "cpu": _cpu_name(), "stable_envs": __version__}
+    from ._core.cpus import cpu_limit
+
+    return {
+        "device": name,
+        "driver": _driver() if cuda else "",
+        "cpu": _cpu_name(),
+        "cpus": str(cpu_limit()),
+        "stable_envs": __version__,
+    }
 
 
 @cache
@@ -560,3 +581,30 @@ def _clear_caches() -> None:
     _cuda.cache_clear()
     stamp.cache_clear()
     _environ._parsed.cache_clear()
+
+
+def simulation_paths(device="cuda"):
+    """Return ``(path, backends, measure)`` of the simulation paths selected for in this process on ``device``.
+
+    Environments built in this process register them; ``backends`` has the ``small`` and ``large`` backend names.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import registered
+
+    return registered(device)
+
+
+def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:
+    """Seconds per step call of ``backend`` with ``num_envs`` environments, as ``stable-envs tune`` times it.
+
+    Args:
+        measure: The ``measure`` of a ``simulation_paths`` entry.
+        backend: A backend name of that entry.
+        num_envs: Number of environments.
+        device: Device of the outputs.
+    """
+    from ._execution.backends import time_backend as timed
+
+    return timed(measure, backend, num_envs, device)

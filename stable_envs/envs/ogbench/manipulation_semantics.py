@@ -30,6 +30,9 @@ class _OwnStates:
 
 
 class ManipulationSemantics:
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    state_solver_caches = ("physics/warmstart",)
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
     cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
@@ -53,22 +56,21 @@ class ManipulationSemantics:
         seed=0,
         *,
         reward_task_id=None,
-        simulation_backend="default",
-        mjwarp_min_envs=None,
+        simulation_backend="auto",
     ):
         """Select physics at construction.
 
-        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp (float32) and CPU batches on native
-        ``mujoco.batch``, equal to OGBench bit for bit. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or
-        more on MuJoCo Warp and every other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"``
-        select explicitly.
+        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``, equal to OGBench bit for bit. On
+        CUDA it steps small batches on native ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the
+        measured ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        from ..._execution.mjbatch import resolve_backend
-        from .simulation.execution import MJWARP_MIN_ENVS, make_manipulation_adapter
+        from .simulation.execution import make_manipulation_adapter, manipulation_backend, manipulation_path
 
         device = Env.resolve_device(device)
-        mjwarp_min_envs = MJWARP_MIN_ENVS if mjwarp_min_envs is None else mjwarp_min_envs
-        self.simulation_backend = resolve_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
+        self.simulation_backend = manipulation_backend(
+            self.CELL, num_envs, device, simulation_backend, env_type=type(self)
+        )
+        self.simulation_backend_path = manipulation_path(self.CELL)
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, self.simulation_backend
         )

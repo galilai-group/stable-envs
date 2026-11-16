@@ -139,12 +139,12 @@ def test_batch_controller_writes_ogbench_controls(family):
 
 
 @pytest.mark.parametrize(
-    "batch,device,backend,threshold,expected",
+    "batch,device,backend,switch,expected",
     [
-        (1, "cpu", "default", 256, "native"),
-        (4096, "cpu", "default", 256, "native"),
-        (1, "cuda", "default", 256, "mjwarp"),
-        (8, "cuda:1", "default", 256, "mjwarp"),
+        (1, "cpu", "auto", 1, "native"),
+        (4096, "cpu", None, 1, "native"),
+        (1, "cuda", "auto", 1, "mjwarp"),
+        (8, "cuda:1", None, 1, "mjwarp"),
         (255, "cuda", "auto", 256, "native"),
         (256, "cuda", "auto", 256, "mjwarp"),
         (4096, "cpu", "auto", 256, "native"),
@@ -153,12 +153,14 @@ def test_batch_controller_writes_ogbench_controls(family):
         (1, "cuda", "mjwarp", 256, "mjwarp"),
     ],
 )
-def test_manipulation_routing(monkeypatch, batch, device, backend, threshold, expected):
+def test_manipulation_routing(monkeypatch, batch, device, backend, switch, expected):
+    from stable_envs import tuning
     from stable_envs.envs.ogbench.simulation import manipulation_batch, manipulation_warp
 
     monkeypatch.setattr(manipulation_batch, "OGBManipulationBatchAdapter", lambda *a: ("native", a))
     monkeypatch.setattr(manipulation_warp, "OGBManipulationWarpAdapter", lambda *a: ("mjwarp", a))
-    kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend, threshold)
+    with tuning.override(large_backend_min_envs=switch):
+        kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend)
     assert kind == expected and args == ("Cube", batch, device, 17, 1)
 
 
@@ -167,5 +169,5 @@ def test_manipulation_routing_rejects_bad_options():
         execution.make_manipulation_adapter("Cube", 8, "cpu", 0, None, "mjwarp")
     with pytest.raises(ValueError, match="simulation_backend"):
         execution.make_manipulation_adapter("Cube", 8, "cpu", 0, None, "mjx")
-    with pytest.raises(ValueError, match="mjwarp_min_envs"):
-        execution.make_manipulation_adapter("Cube", 8, "cuda", 0, None, "auto", 0)
+    with pytest.raises(ValueError, match="simulation_backend"):
+        execution.make_manipulation_adapter("Cube", 8, "cuda", 0, None, "default")

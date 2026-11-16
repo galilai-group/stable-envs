@@ -69,14 +69,15 @@ On MuJoCo Warp, PointMaze integrates with Euler, where OGBench uses RK4. The poi
 
 ### Cube and Scene physics
 
-`simulation_backend` picks the physics in the same way:
+`simulation_backend` picks the physics:
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"default"` (default) | `mujoco.batch` | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
-| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from there |
+| `"auto"` (default) | `mujoco.batch` | `mujoco.batch` for small batches, [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) for large ones |
 | `"native"` | `mujoco.batch` | `mujoco.batch` |
 | `"mjwarp"` | error | MuJoCo Warp |
+
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
 `mujoco.batch` steps every environment in one native call on up to 8 threads. The step does the operations of OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step` substeps, `mj_rnePostConstraint` and the task's `post_step`. The state and the outputs equal OGBench's bit for bit, and a CUDA environment on `mujoco.batch` returns its state on CUDA. The default model has the OGBench physics, with a cube size of 0.02.
 

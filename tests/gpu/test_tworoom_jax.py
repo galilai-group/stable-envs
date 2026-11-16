@@ -8,6 +8,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import tuning
 from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
 from tests.helpers.reference.semantics import assert_same_state, compare_state
 
@@ -17,10 +18,11 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize("batch,expected", [(1, "torch"), (8, "jax")])
+@pytest.mark.parametrize("batch,expected", [(1, "numba"), (8, "jax")])
 def test_auto_cutoff_preserves_cuda_outputs(batch, expected):
     with (
-        se.TwoRoom(num_envs=batch, device="cuda", jax_min_envs=8) as env,
+        tuning.override(large_backend_min_envs=8),
+        se.TwoRoom(num_envs=batch, device="cuda") as env,
         se.TwoRoom(
             num_envs=batch,
             device="cuda",
@@ -69,7 +71,7 @@ def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatc
         raise AssertionError("host conversion in CUDA JAX TwoRoom step")
 
     stream = torch.cuda.Stream()
-    with torch.cuda.stream(stream), se.TwoRoom(num_envs=32, device="cuda") as env:
+    with torch.cuda.stream(stream), se.TwoRoom(num_envs=32, device="cuda", simulation_backend="jax") as env:
         env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
         action = torch.zeros(32, 2, device="cuda")
         borrowed = from_torch(action)
@@ -150,3 +152,36 @@ def test_cuda_single_lane_sequence_with_offset_action_views():
         actual = env.step(actions, frames=None)
         expected = torch.tensor([[54.6875, 55.625]], device="cuda")
         assert_same_state(actual["state", "agent", "position"], expected)
+
+
+@pytest.mark.parametrize("batch", [1, 5])
+def test_cuda_numba_steps_host_rows_like_torch(batch):
+    with (
+        se.TwoRoom(num_envs=batch, device="cuda", simulation_backend="numba") as env,
+        se.TwoRoom(num_envs=batch, device="cuda", simulation_backend="torch") as reference,
+    ):
+        checkpoint = env.reset(seed=23)
+        reference.reset(seed=23)
+        actions = torch.linspace(-1, 1, batch * 2 * 6, device="cuda").reshape(batch, 6, 2)
+        actual = env.step(actions, frames=slice(None))
+        expected = reference.step(actions, frames=slice(None))
+        assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
+        assert_same_state(actual, expected)
+        assert torch.equal(actual["frames"], expected["frames"])
+        env.set_state(checkpoint)
+        reference.set_state(checkpoint)
+        assert_same_state(env.step(actions[:, 0], frames=None), reference.step(actions[:, 0], frames=None))
+
+
+def test_cuda_numba_steps_with_the_variation_of_each_reset():
+    speeds = ([2.0], [7.5], [21.0])
+    with (
+        se.TwoRoom(num_envs=3, device="cuda", simulation_backend="numba") as env,
+        se.TwoRoom(num_envs=3, device="cuda", simulation_backend="torch") as reference,
+    ):
+        action = torch.full((3, 2), 0.5, device="cuda")
+        for speed in speeds:
+            for e in (env, reference):
+                e.set_variation({"agent.speed": speed})
+                e.reset(seed=4, options={"state": [60, 60], "target_state": [180, 180]})
+            assert_same_state(env.step(action, frames=None), reference.step(action, frames=None))

@@ -6,7 +6,7 @@ from tensordict import TensorDict
 from ..._core.physics import state_key
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...spaces import Box, Dict
-from .simulation.execution import dmc_backend, make_dmc_adapter
+from .simulation.execution import dmc_backend, dmc_path, make_dmc_adapter
 from .simulation.factory import ACTION_DIMS, FIELDS, RENDER_KEYS
 from .simulation.physics import LEAVES
 
@@ -16,6 +16,9 @@ class DelegatedSemantics:
 
     The physics variation leaves of the simulator are reset-time leaves and travel in state."""
 
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    state_solver_caches = ("warmstart",)
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0
     execution_mode = "AUTO_NATIVE_MJWARP"
@@ -34,16 +37,14 @@ class DelegatedSemantics:
     def _physics_paths(self) -> frozenset[str]:
         return frozenset(leaf.path for leaf in LEAVES.get(self._simulator_key(), ()))
 
-    def __init__(self, *args, simulation_backend=None, mjwarp_min_envs=None, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``None`` uses native physics on CPU and MuJoCo Warp on CUDA at every batch size. ``"auto"`` uses
-        native physics below ``mjwarp_min_envs`` environments and MuJoCo Warp at or above it on CUDA; the
-        default is the measured cutoff of the task. ``"native"``, ``"mjwarp"`` and (Reacher) ``"mjx"``
-        select explicitly.
+        ``"auto"`` uses native physics on CPU. On CUDA it uses native physics for small batches and MuJoCo Warp for
+        large ones, from the measured ``large_backend_min_envs`` switch point. ``"native"``, ``"mjwarp"`` and
+        (Reacher) ``"mjx"`` select explicitly.
         """
         self.simulation_backend = simulation_backend
-        self.mjwarp_min_envs = mjwarp_min_envs
         super().__init__(*args, **kwargs)
         self._simulator = self._make_simulator()
         self.execution_mode = {"native": "DELEGATED_CPU", "mjx": "JAX_MJX", "mjwarp": "MUJOCO_WARP"}[
@@ -52,12 +53,9 @@ class DelegatedSemantics:
 
     def _make_simulator(self):
         self.simulation_backend = dmc_backend(
-            self._simulator_key(),
-            self.B,
-            self.device,
-            self.simulation_backend,
-            mjwarp_min_envs=self.mjwarp_min_envs,
+            self._simulator_key(), self.B, self.device, self.simulation_backend, env_type=type(self)
         )
+        self.simulation_backend_path = dmc_path(self._simulator_key())
         return make_dmc_adapter(
             self._simulator_key(),
             self.B,

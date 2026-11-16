@@ -77,6 +77,7 @@ source"), and `offline_sweep.py` also writes the frame MSE between them. They us
 | `offline_sweep.py` | Saves frame inputs, and times stable-envs and the source on the same inputs. Also writes the frame MSE |
 | `online_ladder.py` | Times seeded episodes with fixed actions: steps, and steps with frames |
 | `draw.py` | The one call that draws stable-envs frames from stored inputs (`env.render`) |
+| `backend_switch.py` | Times both CUDA simulation backends of a class at batches 1 to 4096 and prints its switch point |
 
 `python benchmarks/offline_sweep.py --help` and `python benchmarks/online_ladder.py --help` list the options.
 Pin each measurement to the same CPU cores, for example with `taskset`, so that stable-envs and the source

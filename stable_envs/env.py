@@ -365,6 +365,14 @@ class Env:
     default_size: int = 96
     #: The only ``size`` the class draws, which is the size the source library draws; None draws any size.
     native_size: int | None = None
+    #: ``/``-joined State key prefixes of solver caches, such as contact warm starts, that each simulation backend
+    #: writes its own way: they seed the next solve and are not part of the comparable physical state.
+    state_solver_caches: tuple[str, ...] = ()
+    #: ``(saved, loaded)`` simulation backend pairs whose States don't resume within tolerance on the other backend.
+    #: ``set_state`` doesn't refuse them yet (issue #63); the cross-backend State check expects them to fail.
+    state_backend_mismatches: frozenset[tuple[str, str]] = frozenset()
+    #: The ``select_backend`` path of this environment's physics backend choice; ``stable-envs tune`` times only it.
+    simulation_backend_path: str | None = None
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
@@ -1055,8 +1063,10 @@ class Env:
     def describe(self) -> dict[str, Any]:
         """Return a JSON-friendly dict of the environment's specs and its comparison with the upstream library.
 
-        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``visual_fidelity``,
-        ``visual_note`` and ``reference_versions`` appear only when the class declares them.
+        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``simulation_backend`` and
+        ``execution_mode`` name the physics this instance selected; with ``simulation_backend="auto"`` they can
+        differ between machines. ``visual_fidelity``, ``visual_note`` and ``reference_versions`` appear only
+        when the class declares them.
         """
         d = {
             "class_name": type(self).__name__,
@@ -1074,6 +1084,8 @@ class Env:
             "variation_names": list(self.variation_names),
             "reference_id": self.reference_id,
             "variations": self.variation_space.names(),
+            "simulation_backend": getattr(self, "simulation_backend", None),
+            "execution_mode": getattr(self, "execution_mode", None),
         }
         if self.visual_fidelity:
             d["visual_fidelity"] = dict(self.visual_fidelity)
@@ -1382,7 +1394,7 @@ class Env:
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
+    def step(self, actions, *, states=slice(None), frames=slice(-1, None), state: bool = True) -> TensorDict:
         """Advance one action or a sequence of actions per environment.
 
         An environment that finishes mid-sequence holds its last state, and its later task outputs are zero.
@@ -1392,9 +1404,10 @@ class Env:
                 Discrete ``(1,)`` actions also accept ``(B,)``.
             states: Slice over the steps that selects which states to return, or None.
             frames: Slice over the steps that selects which frames to render, or None.
+            state: Return the final state; False skips building it, and ``get_state()`` builds it on demand.
 
         Returns:
-            A TensorDict with batch size ``(B,)``: ``state`` (the final state), the family's task
+            A TensorDict with batch size ``(B,)``: ``state`` (the final state, unless ``state=False``), the family's task
                 outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
                 mask, and the selected ``(B, S)`` ``states`` and ``(B, F, H, W, 3)`` uint8 ``frames``
                 with their ``state_valid`` and ``frame_valid`` masks.
@@ -1403,11 +1416,11 @@ class Env:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
             ValueError: If ``actions`` has the wrong shape, or ``frames`` is set without RGB output.
-            TypeError: If ``states`` or ``frames`` is neither a slice nor None.
+            TypeError: If ``states`` or ``frames`` is neither a slice nor None, or ``state`` is not a bool.
         """
         from ._core.stepping import step
 
-        return step(self, actions, states=states, frames=frames)
+        return step(self, actions, states=states, frames=frames, state=state)
 
     def _step(self, actions) -> TensorDict:
         """Advance one transition per environment without rendering or sequence dispatch."""

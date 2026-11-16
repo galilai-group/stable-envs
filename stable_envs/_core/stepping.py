@@ -12,8 +12,9 @@ import threading
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
-from .tensordicts import build_tensordict, exclude_leaves, stack_leaves
+from .tensordicts import build_tensordict, exclude_leaves, stack_leaves, to_device
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -104,8 +105,8 @@ def _stack_outputs(history, valid, shared=(), spares=None):
     only when a lane finished, to zero the slots after the end.
     """
     if not shared:
-        return torch.stack(history, dim=1)
-    out = torch.stack([entry.exclude(*shared) for entry in history], dim=1)
+        return stack_leaves(history)
+    out = stack_leaves([entry.exclude(*shared) for entry in history])
     ended = (~valid).nonzero(as_tuple=True)
     padded = bool(ended[0].numel())
     for key in shared:
@@ -183,24 +184,53 @@ def _host_pipeline(env, pipeline) -> bool:
 
 
 def _native_cpu_step(env) -> bool:
-    """Whether a CPU step advances on a thread pool of its own (``mujoco.batch``, Numba), not on torch threads."""
-    return env.device.type == "cpu" and getattr(env, "native_step_threads", False)
+    """Whether a step advances on a CPU thread pool of its own (``mujoco.batch``, Numba), not on torch threads."""
+    return getattr(env, "native_step_threads", False)
 
 
 @torch.no_grad()
-def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
+def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True):
     env._check_open("step")
+    if type(state) is not bool:
+        raise TypeError(f"state must be a bool, got {state!r}")
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
     if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
-        return _step(env, actions, states, frames, pipeline, render_threads=None)
+        return _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state)
     # Bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers or of the
     # native pool, and a parallel region waits for every one of its threads.
     threads = _threads_outside_steps()
     with _threads(1):
-        return _step(env, actions, states, frames, pipeline, render_threads=threads)
+        return _step(env, actions, states, frames, pipeline, render_threads=threads, final_state=state)
 
 
-def _step(env, actions, states, frames, pipeline, *, render_threads):
+def _single_step(env, action, sequence, state_indices, final_state, advance):
+    """One action without frames or a step pipeline: one transition, no masks to route and no history to stack."""
+    needs_state = final_state or state_indices is not None
+    result = (env._step if needs_state else advance)(action)
+    live_state = result.get("state", None) if needs_state else None
+    if needs_state and live_state is None:
+        live_state = env.get_state()
+    if getattr(env, "_step_outputs_owned", False) and type(result) is TensorDict and not sequence:
+        # Owned outputs pass through as they are: their nodes need no rebuild.
+        outputs = {k: v for k, v in result._tensordict.items() if k != "state" and k != "frame"}
+    else:
+        outputs = exclude_leaves(result, ("state", "frame"), clone=not getattr(env, "_step_outputs_owned", False))
+        if sequence:
+            # The outputs are a copy or owned: a time axis of views costs no copy and no device kernel.
+            outputs = stack_leaves([outputs], view=True)
+    count = 1 + (state_indices is not None)
+    flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=env.device).unbind(0)
+    out = {"state": live_state} if final_state else {}
+    out.update(outputs.items())
+    out["valid"] = flags[0]
+    if state_indices is not None:
+        stack = getattr(env, "_stack_states", _stack_states)
+        out["states"] = stack([live_state]) if state_indices else live_state.unsqueeze(1)[:, :0].clone()
+        out["state_valid"] = flags[1] if state_indices else flags[1][:, :0]
+    return build_tensordict(out, [env.num_envs], env.device)
+
+
+def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
 
@@ -213,12 +243,16 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     if frame_indices is not None and not getattr(env, "produces_rgb", True):
         raise ValueError(f"{type(env).__name__} has no RGB output; use frames=None")
     state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
+    # The final State: returned unless ``state=False``, and the source of an empty ``states`` selection.
+    final = final_state or state_indices == ()
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
-    history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
     outputs_owned = getattr(env, "_step_outputs_owned", False)
     shared = tuple(getattr(env, "_shared_outputs", ()))
+    if length == 1 and frame_indices is None and pipeline is None and not shared:
+        return _single_step(env, acts[:, 0] if sequence else acts, sequence, state_indices, final_state, advance)
+    history, saved_states, saved_frames, validity = [], {}, {}, []
     # Draws the live lanes without rebuilding them from the state snapshot.
     render_live = getattr(env, "_render_live", None)
     all_active = True
@@ -249,7 +283,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
             acts[:, t] if sequence else acts,
             # The initial mask is already known to be all true; avoid a GPU readback.
             active=None if all_active else mask,
-            capture_state=t in state_times or t == length - 1 or (frame and not draws_live),
+            capture_state=t in state_times or (final and t == length - 1) or (frame and not draws_live),
             **({"capture_frame": True} if frame and pipeline_frames else {}),
         )
 
@@ -266,13 +300,15 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif all_active:
-                result = advance(acts[:, t] if sequence else acts)
+                # A single step that needs its State exports it with the outputs, in one call.
+                captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
+                result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
-            needs_state = t in state_times or t == length - 1 or (t in frame_times and not draws_live)
+            needs_state = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
                 live_state = env.get_state().to(work)
             next_active = active & ~_done(result) if t + 1 < length else active
@@ -307,7 +343,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
         raise
 
     valid = flags[0] if single else torch.stack(validity, dim=1)
-    out = {"state": live_state}
+    out = {"state": live_state} if final_state else {}
     spares = env.__dict__.setdefault("_padded_output_buffers", {}) if shared else None
     out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
     out["valid"] = valid
@@ -335,7 +371,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads):
     if not host:
         return build_tensordict(out, [env.num_envs], env.device)
     frames = out.get("frames")
-    moved = build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work).to(env.device)
+    moved = to_device(
+        build_tensordict({k: v for k, v in out.items() if k != "frames"}, [env.num_envs], work), env.device
+    )
     return build_tensordict(
         {key: frames if key == "frames" else moved[key] for key in out}, [env.num_envs], env.device
     )

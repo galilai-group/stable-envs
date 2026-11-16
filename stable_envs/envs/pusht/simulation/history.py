@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from ...._core.tensordicts import stack_leaves
 from .replay import HISTORY_KEYS
 
 
@@ -14,7 +15,10 @@ def stack_states(states):
     """
     if not states:
         raise ValueError("PushT State collation requires at least one snapshot")
-    capacity = max(state["history", "actions"].shape[1] for state in states)
+    widths = [state["history", "actions"].shape[1] for state in states]
+    capacity = max(widths)
+    if min(widths) == capacity:
+        return stack_leaves(states)
     padded = []
     for state in states:
         values = {}
@@ -24,4 +28,4 @@ def stack_states(states):
                 value = torch.cat((value, padding), dim=1)
             values[key] = value
         padded.append(TensorDict(values, state.batch_size, device=state.device))
-    return torch.stack(padded, dim=1)
+    return stack_leaves(padded)

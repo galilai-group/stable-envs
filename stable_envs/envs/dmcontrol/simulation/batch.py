@@ -10,7 +10,8 @@ import time
 import numpy as np
 import torch
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.state_layout import StateLayout
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from .state import model_columns, new_columns, write_task_row
 
@@ -45,16 +46,6 @@ def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value
     else:
         raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
     return np.where((lower <= x) & (x <= upper), 1.0, value)
-
-
-def _put(tree, key, value):
-    """Set ``key``, a name or a tuple of names, in nested dicts."""
-    if isinstance(key, str):
-        tree[key] = value
-        return
-    for part in key[:-1]:
-        tree = tree.setdefault(part, {})
-    tree[key[-1]] = value
 
 
 def step_threads(physics, nsub, lanes, most):
@@ -110,6 +101,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._rng_views = {}
+        self._layout = None
         self._load(np.arange(self.num_envs))
 
     def _reset_lanes(self, ids, seed=None):
@@ -222,14 +214,16 @@ class DMCBatchAdapter(SimulatorAdapter):
             ("lifecycle", "reset_next_step"): self._reset_next[:, None],
             ("task", "cumulative_reward"): self._cumulative[:, None],
         }
-        # Fresh host copies: later steps and resets cannot change the returned snapshot.
-        state = {}
-        for key, column in self._columns.items():
-            _put(state, key, torch.from_numpy(np.array(live.get(key, column))))
-        for key, value in ({} if self.lanes.physics is None else self.lanes.physics.export()).items():
-            _put(state, key, torch.from_numpy(value))
-        state = build_tensordict(state, [self.num_envs], "cpu")
-        return state if self.device.type == "cpu" else state.to(self.device)
+        values = {key: live.get(key, column) for key, column in self._columns.items()}
+        if self.lanes.physics is not None:
+            values.update(self.lanes.physics.export())
+        if self._layout is None:
+            self._layout = StateLayout(
+                [(key, value.shape[1:], torch.from_numpy(value[:0]).dtype) for key, value in values.items()],
+                self.num_envs,
+            )
+        # The export copies every value: later steps and resets cannot change the returned snapshot.
+        return self._layout.export(values, self.device)
 
     def validate(self, state):
         return self.lanes.validate(state)
@@ -262,7 +256,6 @@ class DMCBatchAdapter(SimulatorAdapter):
             self._reset_next = self._count >= self._limit
         self._cumulative += reward
         out = {
-            **({"state": self.get_state()} if capture_state else {}),
             "reward": torch.from_numpy(reward),
             "terminated": torch.zeros(self.num_envs, dtype=torch.bool),
             "truncated": torch.zeros(self.num_envs, dtype=torch.bool),
@@ -273,7 +266,11 @@ class DMCBatchAdapter(SimulatorAdapter):
             out["success"] = torch.from_numpy(np.array(info[0], np.float64))
             out["info"] = {k: torch.from_numpy(np.array(v)) for k, v in info[1].items()}
         out = build_tensordict(out, [self.num_envs], "cpu")
-        return out if self.device.type == "cpu" else out.to(self.device)
+        if self.device.type != "cpu":
+            out = to_device(out, self.device)
+        if capture_state:
+            out = build_tensordict({"state": self.get_state(), **out}, [self.num_envs], self.device)
+        return out
 
     def close(self):
         self.lanes.close()
