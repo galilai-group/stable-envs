@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
-#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: The setting and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
     # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16. 8 keeps a batch of 8 at or above OGBench's own speed on
@@ -75,7 +75,7 @@ def make_maze_adapter(
 
 
 #: Shipped CUDA switch points of Cube and Scene: the smallest batch that steps on MuJoCo Warp; smaller batches step
-#: on native ``mujoco.batch``. The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: on native ``mujoco.batch``. The setting and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 MANIPULATION_CUDA_MIN_ENVS: dict[str, int] = {"Cube": 256, "Scene": 128}
 

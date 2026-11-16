@@ -109,7 +109,7 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_per_env_variation_is_per_env` | a per-environment variation that collapses to one value |
 | `test_style_is_state` | a frame that depends on something not stored with the state |
 | `test_default_style_is_the_official_appearance` | a default appearance that differs from the upstream library's |
-| `test_color_knobs_apply_the_requested_color` | a color knob wired to the wrong primitive or channel |
+| `test_color_settings_apply_the_requested_color` | a color setting wired to the wrong primitive or channel |
 | `test_determinism` | dependence on allocation order, cache state or a stale bake |
 | `test_backend_agreement` | a fused Triton kernel that differs from the torch reference |
 | `test_variations_all_do_something` | a variation leaf that the renderer ignores |

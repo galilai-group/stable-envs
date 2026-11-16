@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp, per simulator key; smaller batches step
-#: on native physics. A key that isn't here uses MuJoCo Warp at every batch size. The knob and the tuning cache
+#: on native physics. A key that isn't here uses MuJoCo Warp at every batch size. The setting and the tuning cache
 #: (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 CUDA_MIN_ENVS: dict[str, int] = {

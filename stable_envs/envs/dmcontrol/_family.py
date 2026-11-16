@@ -64,7 +64,7 @@ from .hopper import DMCHopperHop  # noqa: F401
 from .humanoid import DMCHumanoidWalk  # noqa: F401
 from .manipulator import (  # noqa: F401
     RENDER_INVARIANT_DIMS,
-    SHAPE_KNOB_SPECS,
+    SHAPE_CHOICE_SPECS,
     STATE_DIMS_NOTE,
     DMCManipulatorBringBall,
 )

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
 #: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on ``"numba_cuda"``; smaller batches step on
-#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The knob and the tuning cache take precedence.
+#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The setting and the tuning cache take precedence.
 #: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
 CUDA_MIN_ENVS: int | None = None
 

@@ -50,7 +50,7 @@ DMCReacher = parity_cell(
     "reacher",
     "hard",
     bases=(_ReacherSemantics,),
-    SHAPE_KNOBS={"target": ((R3.BOX, (_TARGET_RADIUS,) * 3), (R3.SPHERE, (_TARGET_RADIUS, 0.0, 0.0)))},
+    SHAPE_CHOICES={"target": ((R3.BOX, (_TARGET_RADIUS,) * 3), (R3.SPHERE, (_TARGET_RADIUS, 0.0, 0.0)))},
 )
 
 DMCReacher.name = "dmc-reacher"

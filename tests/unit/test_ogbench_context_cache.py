@@ -116,7 +116,7 @@ def test_default_budget_leaves_headroom_and_explicit_budget_is_supported(monkeyp
     assert other.budget(0) == 1234
 
 
-def test_the_budget_knob_is_read_at_call_time(monkeypatch):
+def test_the_budget_setting_is_read_at_call_time(monkeypatch):
     from stable_envs import tuning
 
     monkeypatch.delenv("STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES", raising=False)

@@ -1,4 +1,4 @@
-"""The shared backend and renderer switch: explicit names, the knobs, the calibration and its cache."""
+"""The shared backend and renderer switch: explicit names, the settings, the calibration and its cache."""
 
 import functools
 
@@ -50,20 +50,20 @@ def test_explicit_names_and_cpu_need_no_measurement():
 
 
 @pytest.mark.parametrize("switch,batch,expected", [(1, 1, "large"), (8, 7, "small"), (8, 8, "large")])
-def test_the_knob_sets_the_switch_point(switch, batch, expected):
+def test_the_setting_sets_the_switch_point(switch, batch, expected):
     with tuning.override(large_backend_min_envs=switch):
         assert _select(batch, requested=None) == expected
 
 
-def test_a_path_can_ignore_the_knob():
+def test_a_path_can_ignore_the_setting():
     pairs = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large", 8)}
 
-    def pick(n, knob):
-        return backends.select_backend("test-sim", n, "cuda", "auto", pairs, choices=CHOICES, knob=knob)
+    def pick(n, use_setting):
+        return backends.select_backend("test-sim", n, "cuda", "auto", pairs, choices=CHOICES, use_setting=use_setting)
 
     with tuning.override(large_backend_min_envs=2):
-        assert pick(4, knob=True) == "large"
-        assert pick(4, knob=False) == "small" and pick(8, knob=False) == "large"
+        assert pick(4, use_setting=True) == "large"
+        assert pick(4, use_setting=False) == "small" and pick(8, use_setting=False) == "large"
 
 
 def test_without_a_value_auto_uses_the_shipped_switch_point():
@@ -99,8 +99,8 @@ def test_selection_times_nothing_and_tune_calibrates_and_caches(monkeypatch):
     assert calls == []
     data, current = tuning.read_cache("cuda")
     assert current
-    assert data["entries"]["test-sim|0|2-3"] == {backends.KNOB: 4}
-    assert data["entries"]["test-sim|0|64-127"] == {backends.KNOB: 64}
+    assert data["entries"]["test-sim|0|2-3"] == {backends.BACKEND_SETTING: 4}
+    assert data["entries"]["test-sim|0|64-127"] == {backends.BACKEND_SETTING: 64}
 
 
 def test_a_backend_that_fails_to_build_loses(monkeypatch):
@@ -132,7 +132,7 @@ def test_calibrate_times_only_the_named_paths(monkeypatch):
 RENDERERS = {"cpu": backends.BackendPair("cpu", "cpu"), "cuda": backends.BackendPair("cpu", "cuda", 16)}
 
 
-def test_renderers_switch_at_their_own_knob():
+def test_renderers_switch_at_their_own_setting():
     pick = lambda n: backends.select_renderer("test-render/Env", n, "cuda", RENDERERS)  # noqa: E731
     assert pick(15) == "cpu" and pick(16) == "cuda"
     assert backends.select_renderer("test-render/Env", 1, "cpu", RENDERERS) == "cpu"
@@ -142,7 +142,7 @@ def test_renderers_switch_at_their_own_knob():
         assert pick(3) == "cpu" and pick(4) == "cuda"
 
 
-def test_tune_calibrates_renderers_under_the_render_knob(monkeypatch):
+def test_tune_calibrates_renderers_under_the_render_setting(monkeypatch):
     monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: step())
     monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
     monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
@@ -151,11 +151,11 @@ def test_tune_calibrates_renderers_under_the_render_knob(monkeypatch):
     measure = _measure(costs, [])
     _select(2, measure=_measure({"small": lambda rows: 0.0, "large": lambda rows: 1.0}, []))
     backends.select_renderer("test-render/Env", 2, "cuda", RENDERERS, measure=measure)
-    assert backends.calibrate(2, "cuda", knob=backends.RENDER_KNOB) == {"test-render/Env": "cpu"}
-    assert backends.calibrate(64, "cuda", knob=backends.RENDER_KNOB) == {"test-render/Env": "cuda"}
+    assert backends.calibrate(2, "cuda", setting=backends.RENDERER_SETTING) == {"test-render/Env": "cpu"}
+    assert backends.calibrate(64, "cuda", setting=backends.RENDERER_SETTING) == {"test-render/Env": "cuda"}
     data, _ = tuning.read_cache("cuda")
-    assert data["entries"]["test-render/Env|0|2-3"] == {backends.RENDER_KNOB: 4}
-    assert data["entries"]["test-render/Env|0|64-127"] == {backends.RENDER_KNOB: 64}
+    assert data["entries"]["test-render/Env|0|2-3"] == {backends.RENDERER_SETTING: 4}
+    assert data["entries"]["test-render/Env|0|64-127"] == {backends.RENDERER_SETTING: 64}
     assert backends.select_renderer("test-render/Env", 1024, "cuda", RENDERERS) == "cuda"
     assert _select(2) == "large"
 

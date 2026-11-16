@@ -77,7 +77,7 @@ LANES_PER_THREAD: dict[str, int] = {
 
 
 def batch_threads(num_envs: int) -> int:
-    """The ``dmc_threads`` knob, at most one thread per CPU in the process affinity and one per lane."""
+    """The ``dmc_threads`` setting, at most one thread per CPU in the process affinity and one per lane."""
     cpus = cpu_limit()
     return min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
 

@@ -565,7 +565,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("gym", "numpy", "torch")
 
-#: Shipped switch points of ``"auto"``; the knob and the tuning cache (``stable-envs tune``) take precedence.
+#: Shipped switch points of ``"auto"``; the setting and the tuning cache (``stable-envs tune``) take precedence.
 #: ``CPU_MIN_ENVS``: the smallest batch that steps in NumPy rather than Gymnasium on the host, on every device; None
 #: steps in NumPy at every batch size. ``CUDA_MIN_ENVS``: the smallest CUDA batch that steps in Torch on the GPU
 #: rather than on the host; None steps in Torch at every batch size.
@@ -598,7 +598,7 @@ def _measure(domain: str, device: torch.device):
 def _host_backend(path: str, num_envs: int, backend: str | None, pair, choices, measure) -> str:
     """The host backend.
 
-    The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here: the tuning cache
+    The ``large_backend_min_envs`` setting moves only CUDA switch points, so it doesn't apply here: the tuning cache
     that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point.
     """
     from ...._execution import backends
@@ -606,11 +606,13 @@ def _host_backend(path: str, num_envs: int, backend: str | None, pair, choices, 
     cpu = torch.device("cpu")
     if backend not in (None, "auto"):
         return backends.select_backend(path, num_envs, cpu, backend, {"cpu": pair}, choices=choices)
-    backends._REGISTERED[backends.KNOB, path, cpu.type] = (pair, measure)
+    backends._REGISTERED[backends.BACKEND_SETTING, path, cpu.type] = (pair, measure)
     if pair.small == pair.large:
         return pair.small
     data, current = tuning.read_cache(cpu)
-    value = data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.KNOB) if current else None
+    value = (
+        data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.BACKEND_SETTING) if current else None
+    )
     if value is not None:
         return pair.large if num_envs >= value else pair.small
     side = backends._cached_neighbours(path, cpu, num_envs)
@@ -624,7 +626,7 @@ def classic_backend(domain: str, device: str | torch.device, num_envs: int, back
 
     ``"auto"`` (or None) first selects the host backend: the compiled step for ``COMPILED_HOST`` tasks, else
     Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
-    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` knob moves only the CUDA switch point.
+    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` setting moves only the CUDA switch point.
     """
     from ...._execution.backends import BackendPair, select_backend
     from .numba_step import STEPS

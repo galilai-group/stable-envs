@@ -283,7 +283,7 @@ def render_rows(
 def worker_count(count: int, path: str, size: int, min_rows: int | None = None) -> int:
     """Return the number of render workers for ``count`` rows on render path ``path``, or 0 to draw in-process.
 
-    ``min_rows`` replaces the fallback of the ``render_worker_min_rows`` knob for this call site.
+    ``min_rows`` replaces the fallback of the ``render_worker_min_rows`` setting for this call site.
     """
     if IN_WORKER or sys.platform != "linux" or mp.current_process().daemon or not hasattr(os, "sched_getaffinity"):
         return 0

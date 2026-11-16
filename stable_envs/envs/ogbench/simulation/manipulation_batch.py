@@ -141,7 +141,7 @@ class OneLane:
         self.data = None
 
 
-#: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_lanes`` knob is set. A
+#: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_lanes`` setting is set. A
 #: reset of one lane runs milliseconds of OGBench's Python, many times the round trip to a worker, so two lanes that
 #: reset in parallel take less time than one process that resets them in turn.
 WORKER_MIN_LANES = 2

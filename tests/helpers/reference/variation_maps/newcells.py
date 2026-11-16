@@ -99,7 +99,7 @@ _ROCKET_SWM_ONLY = {
         "in PyFlyt, and pybullet's TinyRenderer clear colour is fixed. Probe: resampling it alone "
         "over 5 seeds spanning the RGB cube -- drawn values as far apart as (43,202,87) and "
         "(149,165,44) -- moved 0 of 691,200 pixels, max channel difference 0, and all three frame "
-        "stacks hash to the same digest. Offering it would advertise a knob that cannot work"
+        "stacks hash to the same digest. Offering it would advertise a setting that cannot work"
     ),
 }
 
@@ -135,7 +135,7 @@ NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
         ours_only={
             "flame.ignited": "swm has no ignition leaf: PyFlyt recolours the flame link from the "
             "thrust command at step time, so upstream it is a consequence of the "
-            "action rather than a knob. We carry it as a style bit because the "
+            "action rather than a setting. We carry it as a style bit because the "
             "renderer is a pure function of (state, style) and the flame's colour "
             "is not derivable from the 13-dim state",
         },

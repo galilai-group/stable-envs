@@ -28,7 +28,7 @@ class VariationMap:
     renamed: Mapping[str, str] = field(default_factory=dict)
     #: ``our_path -> (swm_path, factor)`` with ``ours = theirs * factor``
     scaled: Mapping[str, tuple[str, float]] = field(default_factory=dict)
-    #: ``our_path -> (swm_path, factor, offset)`` with ``ours = theirs * factor + offset``, for knobs
+    #: ``our_path -> (swm_path, factor, offset)`` with ``ours = theirs * factor + offset``, for settings
     #: spelled differently: an inverted binary switch is ``(-1.0, 1.0)``, a unit shift ``(1.0, k)``.
     #: The inverse is ``theirs = (ours - offset) / factor``, so a zero ``factor`` is refused.
     affine: Mapping[str, tuple[str, float, float]] = field(default_factory=dict)

@@ -66,7 +66,7 @@ class ContextCache:
         if size + locked > budget:
             raise MemoryError(
                 f"OGBench leased contexts need {size + locked} bytes, above the {budget}-byte context cache budget. "
-                "Reduce chunk_size/resolution or raise the ogb_context_cache_bytes tuning knob "
+                "Reduce chunk_size/resolution or raise the ogb_context_cache_bytes tuning setting "
                 "(STABLE_ENVS_OGB_CONTEXT_CACHE_BYTES)."
             )
         while self._used[device] + size > budget:

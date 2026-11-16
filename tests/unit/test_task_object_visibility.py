@@ -125,7 +125,7 @@ def test_the_guard_passes_when_both_renderers_draw_the_object(_reference):
 def test_the_guard_passes_when_neither_renderer_draws_the_object(_reference):
     o = _run(_reference, declared=0, official_draws=False)
     assert o["declared_value"] == 0
-    assert o["footprint_px"] > 0, "the knob must still be able to draw the object when asked"
+    assert o["footprint_px"] > 0, "the setting must still be able to draw the object when asked"
     assert o["presence_margin"] > 0.9, o
 
 

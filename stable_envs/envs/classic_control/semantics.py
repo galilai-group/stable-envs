@@ -36,7 +36,7 @@ class ClassicControlSemantics:
         environment per lane and large batches step in NumPy. On CUDA, small batches step with the CPU choice and
         move their results to the GPU, and large batches step and keep their State on the GPU in Torch.
         The class ships the switch points (``CPU_MIN_ENVS`` and ``CUDA_MIN_ENVS``); the ``large_backend_min_envs``
-        tuning knob and ``stable-envs tune`` take precedence.
+        tuning setting and ``stable-envs tune`` take precedence.
 
         ``"gym"`` steps one Gymnasium environment per lane. ``"numpy"`` or ``"torch"`` selects a batched
         backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.

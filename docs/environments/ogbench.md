@@ -42,7 +42,7 @@ One call steps all the environments of a batch, and `simulation_backend` selects
 | `"native"` | CPU or CUDA | `mujoco.batch`, float64 | equal, bit for bit |
 | `"mjwarp"` | CUDA | MuJoCo Warp, float32 | equal resets, goals, tasks, teleports and RNG streams; approximate physics |
 
-With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). The outputs are on the device of the environment. On CUDA, `mujoco.batch` moves the outputs and the state of a step to the device in one copy.
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). The outputs are on the device of the environment. On CUDA, `mujoco.batch` moves the outputs and the state of a step to the device in one copy.
 
 On CPU, `mujoco.batch` steps the physics on its own threads, and the step does its Torch operations on one thread. Idle Torch threads would otherwise keep the CPU cores busy while the `mujoco.batch` threads wait for them. The frames and the state do not change with the thread count.
 
@@ -76,7 +76,7 @@ On MuJoCo Warp, PointMaze integrates with Euler, where OGBench uses RK4. The poi
 | `"native"` | `mujoco.batch` | `mujoco.batch` |
 | `"mjwarp"` | error | MuJoCo Warp |
 
-With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
 With two or more environments, `mujoco.batch` steps every environment in one native call on up to 8 threads. One environment steps on one `MjData` with OGBench's own `mj_step` calls. The step does the operations of OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step` substeps, `mj_rnePostConstraint` and the task's `post_step`. The state and the outputs equal OGBench's bit for bit, and a CUDA environment on `mujoco.batch` returns its state on CUDA. The default model has the OGBench physics, with a cube size of 0.02.
 

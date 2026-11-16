@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("triton", "jax", "numba")
 #: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
-#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence.
+#: Numba. None uses the GPU backend at every batch size. The setting and the tuning cache take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 #: Measured on 15 November 2026 with ``python -m benchmarks.backend_switch PushT`` on an RTX A5000 with an AMD EPYC 7532,
 #: an RTX A5000 with an AMD EPYC 7662 and an RTX A5500 with an AMD EPYC 7662, 8 cores each: Numba with one copy of
@@ -24,7 +24,7 @@ CUDA_MIN_ENVS: int | None = 128
 
 #: The ``select_backend`` path of the PushT physics backend choice.
 PATH = "pusht-sim"
-#: Smallest batch whose resets run in worker processes, unless the ``worker_min_lanes`` knob is set. A lane's source
+#: Smallest batch whose resets run in worker processes, unless the ``worker_min_lanes`` setting is set. A lane's source
 #: reset takes milliseconds of Python. From this batch size, parallel resets save more time than the round trip to
 #: the workers costs. docs/performance-tuning.md (Worker processes) says how the value was measured.
 RESET_WORKER_MIN_LANES = 8

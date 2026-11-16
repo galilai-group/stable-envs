@@ -2,7 +2,7 @@
 
 A GPU renderer pays a launch cost per call, so a small batch draws faster on the CPU. A class that has both
 renderers declares ``render_backends``, ``{device type: BackendPair("cpu", "cuda", min_rows)}``, next to its renderer choice.
-``on_host`` selects the backend with ``select_renderer``: the ``large_renderer_min_rows`` knob, else the tuning cache,
+``on_host`` selects the backend with ``select_renderer``: the ``large_renderer_min_rows`` setting, else the tuning cache,
 else the shipped ``min_rows``. ``draw_rows`` draws compact rows in a CPU copy of the environment, and ``upload``
 moves CPU frames to the device in one pinned copy.
 """
@@ -15,7 +15,7 @@ import torch
 
 from .. import tuning
 from .._core.style import StyleTensor
-from .backends import RENDER_KNOB, Measure, select_renderer
+from .backends import RENDERER_SETTING, Measure, select_renderer
 
 #: The backend that draws on the CPU.
 CPU = "cpu"
@@ -31,7 +31,7 @@ def _measure(env) -> Measure:
         value = rows + 1 if renderer == CPU else 1
 
         def draw():
-            with tuning.override(**{RENDER_KNOB: value}):
+            with tuning.override(**{RENDERER_SETTING: value}):
                 return other.render(state)
 
         return draw, other.close

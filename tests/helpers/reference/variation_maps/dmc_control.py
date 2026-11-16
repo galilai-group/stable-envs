@@ -397,17 +397,17 @@ def _dmc(
     )
 
 
-#: ``ours_only`` entries that recur. ``material.grid`` is our floor material knob, not the mapping for
+#: ``ours_only`` entries that recur. ``material.grid`` is our floor material setting, not the mapping for
 #: ``floor.color``, which is the checker texture.
 _GRID_OURS = {
     "material.grid": "a 3-vector multiplying the floor MATERIAL's rgba, which is a "
-    "different knob from the checker TEXTURE and composes with it: swm "
-    "has no material-level floor knob. Our floor.color is swm's "
+    "different setting from the checker TEXTURE and composes with it: swm "
+    "has no material-level floor setting. Our floor.color is swm's "
     "floor.color and is mapped `identical`"
 }
 _FOVY_OURS = {
     "camera.fovy_scale": "a field-of-view multiplier; swm's DMControlWrapper renders at the "
-    "model's own camera and offers no such knob"
+    "model's own camera and offers no such setting"
 }
 _DECOR_OURS = {
     "material.decoration": "the rails/arena furniture material; swm recolours only "
@@ -438,7 +438,7 @@ def _trackcom(cell, swm_id, densities, *, ours_only, tilt=False, dead_upstream=N
 
 
 _SHAPE_NOTE = (
-    "MAPPED at both alternatives: SHAPE_KNOBS declares swm's box and sphere at the task's target size, "
+    "MAPPED at both alternatives: SHAPE_CHOICES declares swm's box and sphere at the task's target size, "
     "and the sphere is the compiled model's own, so the default style stays a render of it. Visible only "
     "with rendering.render_target = 1, which swm's registered default is not. The task reads only the "
     "target's first size, which both alternatives share, so the shape never reaches the dynamics. "

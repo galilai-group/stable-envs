@@ -528,7 +528,7 @@ def nvd_renderer(size, ss, device, scene_type=ND.Scene, renderer_type=ND.BatchRe
 
 
 def nvd_worlds(per_world: int, device, size: int, batch: int) -> int:
-    """Return the worlds one renderer chunk holds within the ``nvd_budget_bytes`` knob."""
+    """Return the worlds one renderer chunk holds within the ``nvd_budget_bytes`` setting."""
     budget = tuning.get("nvd_budget_bytes", path="rocket-nvdiff", size=size, batch=batch, device=device)
     return max(1, int(budget // per_world))
 
@@ -606,8 +606,8 @@ class PyFlytRocketLanding(Env):
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
         "judged against literal equality",
-        "successor": "not implemented: compare this renderer's response to the knob against the "
-        "official renderer's response to the same knob",
+        "successor": "not implemented: compare this renderer's response to the setting against the "
+        "official renderer's response to the same setting",
     }
     visual_note = (
         "A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "

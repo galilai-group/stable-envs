@@ -50,7 +50,7 @@ Read a field with `snv.get_field(state, "qpos")`, and write a field with `snv.se
 | `"mjwarp"` | error | MuJoCo Warp |
 | `"mjx"` | error | JAX/MJX, `DMCReacher` only |
 
-`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
+`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
 
 ```python
 # needs the dmcontrol-gpu extra; CUDA only
@@ -121,7 +121,7 @@ Material colors, the light scale, the geom color leaves, the sphere radius leave
 | `groups` | `(0, 1, 2)` | The geom groups that the renderer draws. |
 | `bvh` | `"refit"` | `"refit"` updates the bounds of the scene BVH each frame. `"rebuild"` builds the BVH again. |
 | `graph` | True | Replays one captured CUDA graph per launch. False launches each kernel. |
-| `worlds` | None | Worlds per launch. None uses the `dmc_launch_rays` and `dmc_min_worlds` tuning knobs. |
+| `worlds` | None | Worlds per launch. None uses the `dmc_launch_rays` and `dmc_min_worlds` tuning settings. |
 | `reflection` | True | The floor reflection pass. |
 | `sky` | True | The source sky for cameras that keep one orientation. False draws the MuJoCo Warp skybox. |
 | `segmentation`, `depth` | False | Keep the geom id and the planar depth of each pixel. |

@@ -1,4 +1,4 @@
-"""Tuning knobs: precedence, validation, environment variables, the measured cache, ``tune``, hint and autotune."""
+"""Tuning settings: precedence, validation, environment variables, the measured cache, ``tune``, hint and autotune."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.usefixtures("loguru_to_caplog")]
 
 @pytest.fixture(autouse=True)
 def _isolated(monkeypatch, tmp_path):
-    for name in ("STABLE_ENVS_AUTOTUNE", "STABLE_ENVS_TUNING_HINT", *(k.env_var for k in tuning.KNOBS.values())):
+    for name in ("STABLE_ENVS_AUTOTUNE", "STABLE_ENVS_TUNING_HINT", *(k.env_var for k in tuning.SETTINGS.values())):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     tuning.reset()
@@ -64,25 +64,25 @@ def _cache(value=16, batch=4, size=8):
     return tuning.write_cache({tuning.entry_key("navigation", size, batch): {"nav_render_chunk": value}}, "cpu")
 
 
-def test_every_knob_documents_itself_and_has_a_valid_fallback():
+def test_every_setting_documents_itself_and_has_a_valid_fallback():
     paths = {p for ps in tuning.RENDER_PATHS.values() for p in ps}
-    for name, knob in tuning.KNOBS.items():
-        assert knob.name == name and knob.doc and set(knob.paths) <= paths
-        assert knob.device in ("cpu", "cuda", "any") and knob.check(knob.fallback) == knob.fallback
+    for name, setting in tuning.SETTINGS.items():
+        assert setting.name == name and setting.doc and set(setting.paths) <= paths
+        assert setting.device in ("cpu", "cuda", "any") and setting.check(setting.fallback) == setting.fallback
 
 
 @pytest.mark.parametrize(
-    "knobs",
-    [{"no_such_knob": 1}, {"cpu3d_chunk": 0}, {"cpu3d_chunk": 2.0}, {"cpu3d_chunk": True}, {"cpu3d_chunk": "8"}]
+    "settings",
+    [{"no_such_setting": 1}, {"cpu3d_chunk": 0}, {"cpu3d_chunk": 2.0}, {"cpu3d_chunk": True}, {"cpu3d_chunk": "8"}]
     + [{"raster2d_block": 96}, {"navdot_warps": 3}],
 )
-def test_invalid_names_and_values_raise_and_change_nothing(knobs):
+def test_invalid_names_and_values_raise_and_change_nothing(settings):
     with pytest.raises(ValueError):
-        tuning.set(**knobs)
-    with pytest.raises(ValueError), tuning.override(**knobs):
+        tuning.set(**settings)
+    with pytest.raises(ValueError), tuning.override(**settings):
         pass
     assert tuning.set() == {}
-    with pytest.raises(ValueError, match="unknown tuning knob"):
+    with pytest.raises(ValueError, match="unknown tuning setting"):
         tuning.get("chunk")
 
 
@@ -180,8 +180,8 @@ def test_tune_without_write_leaves_no_cache():
 
 def test_candidates_start_from_the_default_and_prune_equal_splits():
     env = Probe(num_envs=100)
-    assert _tune.candidates(tuning.KNOBS["nav_render_chunk"], 256, env) == [64, 256]
-    assert _tune.candidates(tuning.KNOBS["navdot_warps"], 4, env) == [1, 2, 4, 8, 16]
+    assert _tune.candidates(tuning.SETTINGS["nav_render_chunk"], 256, env) == [64, 256]
+    assert _tune.candidates(tuning.SETTINGS["navdot_warps"], 4, env) == [1, 2, 4, 8, 16]
 
 
 def test_cli_show_clear_and_all(monkeypatch, capsys):
@@ -210,28 +210,30 @@ def test_tune_names_the_missing_extra(monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
-    ("knobs", "batch", "expected"),
+    ("settings", "batch", "expected"),
     [({}, 64, 8), ({"workers": 0}, 64, 0), ({"workers": 3}, 64, 3), ({}, 32, 0), ({"worker_min_lanes": 8}, 8, 8)],
 )
-def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
+def test_worker_settings_drive_process_count(monkeypatch, settings, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
     monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
-    with tuning.override(**knobs):
+    with tuning.override(**settings):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
 
-@pytest.mark.parametrize(("knobs", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_lanes": 64}, 32, 0)])
-def test_the_caller_sets_the_smallest_worker_batch_unless_the_knob_does(monkeypatch, knobs, batch, expected):
+@pytest.mark.parametrize(
+    ("settings", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_lanes": 64}, 32, 0)]
+)
+def test_the_caller_sets_the_smallest_worker_batch_unless_the_setting_does(monkeypatch, settings, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
     monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
-    with tuning.override(**knobs):
+    with tuning.override(**settings):
         assert policy.process_count(batch, list(range(16)), path="ogb-sim", min_lanes=2) == expected
 
 
-@pytest.mark.parametrize(("knobs", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
-def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expected):
+@pytest.mark.parametrize(("settings", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
+def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, settings, expected):
     from stable_envs._execution import requests
 
     clock = iter(range(10_000))
@@ -239,7 +241,7 @@ def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expec
     owner = requests.ProcessRequests()
     owner._connections = [SimpleNamespace(poll=lambda _: False)]
     owner._processes = [SimpleNamespace(is_alive=lambda: True, pid=1)]
-    with tuning.override(**knobs), pytest.raises(RuntimeError, match="timed out"):
+    with tuning.override(**settings), pytest.raises(RuntimeError, match="timed out"):
         owner._responses()
     # The deadline is read once; each poll reads the clock once more.
     assert next(clock) == expected + 1

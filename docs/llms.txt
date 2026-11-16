@@ -67,15 +67,15 @@ Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `
 
 ## Tuning and CLI
 
-- [Performance tuning](https://galilai-group.github.io/stable-envs/performance-tuning/): which knobs to change when rendering or stepping is slow or a batch runs out of GPU memory, worker processes, physics backends, and the tuning hint and autotune.
-- [CLI](https://galilai-group.github.io/stable-envs/api/cli/): `stable-envs doctor` (what works on this machine) and `stable-envs tune` (measure the fastest tuning knobs, how it picks values and where it caches them).
+- [Performance tuning](https://galilai-group.github.io/stable-envs/performance-tuning/): which settings to change when rendering or stepping is slow or a batch runs out of GPU memory, worker processes, physics backends, and the tuning hint and autotune.
+- [CLI](https://galilai-group.github.io/stable-envs/api/cli/): `stable-envs doctor` (what works on this machine) and `stable-envs tune` (measure the fastest tuning settings, how it picks values and where it caches them).
 
 ## API
 
 - [stable_envs](https://galilai-group.github.io/stable-envs/api/): package-level functions: `make`, `list_envs`, `list_families`, `info`, `import_errors`, global settings and `tune`.
 - [Env](https://galilai-group.github.io/stable-envs/api/env/): the `snv.Env` base class: construction and default devices, `reset`, `step` and its `states`/`frames` selectors, `get_state`/`set_state`, specs, variation and `render`.
 - [Specs and spaces](https://galilai-group.github.io/stable-envs/api/specs/): `Spec`, `CompositeSpec` and the variation spaces that describe one batch row.
-- [Tuning](https://galilai-group.github.io/stable-envs/api/tuning/): every tuning knob (chunk sizes, Triton blocks, worker counts, memory budgets) with its type and default, and how a value is chosen.
+- [Tuning](https://galilai-group.github.io/stable-envs/api/tuning/): every tuning setting (chunk sizes, Triton blocks, worker counts, memory budgets) with its type and default, and how a value is chosen.
 - [Environment variables](https://galilai-group.github.io/stable-envs/environment-variables/): every `STABLE_ENVS_*` variable and what it sets.
 
 ## Optional

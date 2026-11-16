@@ -46,25 +46,25 @@ def make(name: str, **kwargs) -> Env:
     return _make(name, **kwargs)
 
 
-def tune(env: Env, *, knobs=(), repeats: int = 5, write: bool = True, verbose: bool = True) -> dict[str, int]:
-    """Time the tuning knobs ``env`` reads and cache the fastest values.
+def tune(env: Env, *, settings=(), repeats: int = 5, write: bool = True, verbose: bool = True) -> dict[str, int]:
+    """Time the tuning settings ``env`` reads and cache the fastest values.
 
     Args:
         env: Environment whose device, ``size`` and ``num_envs`` define the workload.
-        knobs: Knobs to sweep (all that ``env`` reads if empty).
+        settings: Settings to sweep (all that ``env`` reads if empty).
         repeats: Timed calls per value.
         write: Save the results to the tuning cache.
         verbose: Print the result table.
 
     Returns:
-        A dict mapping each swept knob to its chosen value.
+        A dict mapping each swept setting to its chosen value.
 
     Raises:
-        ValueError: If ``knobs`` names an unknown knob.
+        ValueError: If ``settings`` names an unknown setting.
     """
     from ._tune import tune as _tune
 
-    return _tune(env, knobs=knobs, repeats=repeats, write=write, echo=print if verbose else None)
+    return _tune(env, settings=settings, repeats=repeats, write=write, echo=print if verbose else None)
 
 
 def __getattr__(name: str) -> Any:

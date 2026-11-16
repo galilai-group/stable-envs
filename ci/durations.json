@@ -173,7 +173,7 @@
 "tests/unit/test_cpu3d.py::test_no_gpu_runtime_is_loaded_by_a_cpu_render": 5.4,
 "tests/unit/test_cpu3d.py::test_render_at_another_resolution_is_a_pure_function_of_size": 18.4,
 "tests/unit/test_cpu3d.py::test_swimmer_builds_the_cpu_backend": 12.4,
-"tests/unit/test_cpu3d.py::test_trackcom_material_knobs_are_geom_wearers_only": 0.9,
+"tests/unit/test_cpu3d.py::test_trackcom_material_settings_are_geom_wearers_only": 0.9,
 "tests/unit/test_cpu3d.py::test_window_and_footprint_bounds_are_exact[168-DMCCheetahRun]": 116.7,
 "tests/unit/test_cpu3d.py::test_window_and_footprint_bounds_are_exact[168-DMCHopperHop]": 88.8,
 "tests/unit/test_cpu3d.py::test_window_and_footprint_bounds_are_exact[168-DMCHumanoidWalk]": 269.5,

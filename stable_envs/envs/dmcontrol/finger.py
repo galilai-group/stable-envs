@@ -21,5 +21,5 @@ DMCFingerTurnHard = parity_cell(
     "turn_hard",
     bases=(DMCAlignedSemantics,),
     GEOM_COLORS={"spinner": ("cap1", "cap2")},
-    SHAPE_KNOBS={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.005, 0.005)))},
+    SHAPE_CHOICES={"target": ((R3.BOX, (_HARD_TARGET,) * 3), (R3.SPHERE, (_HARD_TARGET, 0.005, 0.005)))},
 )

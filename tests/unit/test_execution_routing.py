@@ -215,7 +215,7 @@ def dmc_factory(monkeypatch, tmp_path):
 
 @pytest.mark.family("dmc")
 @pytest.mark.parametrize(
-    "knobs,cpus,batch,expected",
+    "settings,cpus,batch,expected",
     [
         ({}, 32, 1024, 8),
         ({}, 32, 1, 1),
@@ -225,11 +225,11 @@ def dmc_factory(monkeypatch, tmp_path):
         ({"dmc_threads": 8}, None, 1024, 6),
     ],
 )
-def test_dmc_batch_threads_follow_the_knob_within_cpus_and_lanes(
-    monkeypatch, dmc_factory, knobs, cpus, batch, expected
+def test_dmc_batch_threads_follow_the_setting_within_cpus_and_lanes(
+    monkeypatch, dmc_factory, settings, cpus, batch, expected
 ):
     monkeypatch.setattr(dmc_factory, "cpu_limit", lambda: 6 if cpus is None else cpus)
-    with tuning.override(**knobs):
+    with tuning.override(**settings):
         assert dmc_factory.make_batch("cartpole", batch) == expected
 
 

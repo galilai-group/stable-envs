@@ -14,7 +14,7 @@ from stable_envs._execution import render_pool
 pytestmark = pytest.mark.integration
 
 
-def test_worker_count_follows_knobs_and_context(monkeypatch):
+def test_worker_count_follows_settings_and_context(monkeypatch):
     if not sys.platform.startswith("linux"):
         assert render_pool.worker_count(4096, "classic-render", 600) == 0
         return

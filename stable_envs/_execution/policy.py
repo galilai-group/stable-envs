@@ -26,7 +26,7 @@ def process_count(
     """Return the number of worker processes to use, or 0 to step in this process.
 
     Workers are used only on Linux, outside daemon processes, for at least ``worker_min_lanes`` lanes
-    and 4 CPUs, up to the ``workers`` knob. ``path`` is the simulation path whose measured values apply.
+    and 4 CPUs, up to the ``workers`` setting. ``path`` is the simulation path whose measured values apply.
     ``min_lanes`` is the path's own ``worker_min_lanes`` default. A batch larger than ``lanes_per_process``
     uses at least enough workers to hold it on any platform.
     """

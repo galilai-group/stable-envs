@@ -1101,7 +1101,7 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
 
 
 def _visibility_capable_envs():
-    """Envs whose renderer supports a visibility knob, found without building anything.
+    """Envs whose renderer supports a visibility setting, found without building anything.
 
     Whether an env actually declares a ``visibility.*`` leaf needs its compiled model, so that is
     checked in the test body rather than at collection.
@@ -1109,7 +1109,7 @@ def _visibility_capable_envs():
     return [
         name
         for name, cls in sorted(se.registry.REGISTRY.items())
-        if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")
+        if getattr(cls, "VISIBILITY_VARIATION", False) and hasattr(cls, "_hideable")
     ]
 
 
@@ -1134,8 +1134,8 @@ def test_some_env_actually_declares_a_hideable_task_object():
     if not names:
         errs = se.import_errors()
         if "dmcontrol" in errs:
-            pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import ({errs['dmcontrol']})")
-        pytest.fail("no registered env sets VISIBILITY_KNOB, and every env module imported cleanly")
+            pytest.skip(f"no env can carry a visibility setting here: dmcontrol did not import ({errs['dmcontrol']})")
+        pytest.fail("no registered env sets VISIBILITY_VARIATION, and every env module imported cleanly")
     declared = _declared_visibility_leaves(names)
     if not declared:
         pytest.skip(
@@ -1143,7 +1143,7 @@ def test_some_env_actually_declares_a_hideable_task_object():
         )
     with_leaf = {n: v for n, v in declared.items() if v}
     assert with_leaf, (
-        f"{len(declared)} env(s) advertise VISIBILITY_KNOB and none declares a visibility.* leaf, "
+        f"{len(declared)} env(s) advertise VISIBILITY_VARIATION and none declares a visibility.* leaf, "
         f"so the scene-cache check skips on all of them. Check _episode_slots and _hideable: {declared}"
     )
     print(f"\nvisibility leaves declared by {len(with_leaf)} of {len(declared)} capable env(s): {with_leaf}")

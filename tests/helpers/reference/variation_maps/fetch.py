@@ -78,15 +78,15 @@ _BLOCK_NOTES = {
     "block.mass": "installed in the simulator on reset; a dynamics leaf that reaches no pixel",
 }
 
-#: Knobs we expose that ``FetchWrapper`` has no leaf for.
+#: Settings we expose that ``FetchWrapper`` has no leaf for.
 _OURS_ONLY = {
     "goal.color": "the red target sphere's colour; swm exposes no goal appearance, only goal.start_position",
     "arm.color": "the five robot0:blue links; swm's only arm leaf is rendering.transparent_arm, "
     "which is an alpha and not a colour",
-    "camera.distance_scale": "a working camera knob; swm's camera.angle_delta is dead upstream "
+    "camera.distance_scale": "a working camera setting; swm's camera.angle_delta is dead upstream "
     "(see dead_upstream) and has no distance term at all",
-    "camera.azimuth_delta": "a working camera knob; see camera.distance_scale",
-    "camera.elevation_delta": "a working camera knob; see camera.distance_scale",
+    "camera.azimuth_delta": "a working camera setting; see camera.distance_scale",
+    "camera.elevation_delta": "a working camera setting; see camera.distance_scale",
 }
 
 #: ``our path -> swm path``. swm's ``background.color`` is both the floor and the sky; the floor

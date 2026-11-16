@@ -138,7 +138,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
 
 
 def _launch_worlds(size: int, batch: int) -> int:
-    """Worlds per captured launch: within the ray budget, at most 256 and at least the minimum knob.
+    """Worlds per captured launch: within the ray budget, at most 256 and at least the minimum setting.
 
     More worlds amortize per-launch uploads; the ray budget bounds memory at large image sizes.
     """
@@ -187,10 +187,10 @@ class DMControlTrackCom(_DMCModel):
 
     default_supersample = 1
     # Field of view cannot vary per world in this MJWarp model upload.
-    CAMERA_KNOB = False
+    CAMERA_VARIATION = False
     # Visibility is fixed during context creation; a per-row toggle would need
     # an alpha-aware shader or a separate context for each configuration.
-    VISIBILITY_KNOB = False
+    VISIBILITY_VARIATION = False
 
     # Render-context flags participate in the cache key; defaults may differ by domain.
     RENDER_FLAGS: dict = {}
@@ -207,7 +207,7 @@ class DMControlTrackCom(_DMCModel):
     }
 
     def _tuning_default(self, name: str, size: int) -> int | None:
-        """Return this cell's call-site default for knob ``name`` at ``size``, or None."""
+        """Return this cell's call-site default for setting ``name`` at ``size``, or None."""
         if name != "cpu3d_chunk":
             return None
         return self._CPU_RENDER_CHUNKS.get((self.DOMAIN, size), self.CPU_RENDER_CHUNK)

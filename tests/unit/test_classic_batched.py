@@ -341,7 +341,7 @@ def test_backend_selection(monkeypatch, tmp_path):
     tuning._clear_caches()
     for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            # The knob moves the CUDA switch point and leaves the host choice to the shipped values.
+            # The setting moves the CUDA switch point and leaves the host choice to the shipped values.
             with tuning.override(large_backend_min_envs=4):
                 for lanes in (1, 3, 4, 64):
                     assert classic_backend(domain, "cpu", lanes, backend) == _shipped_host(domain, lanes)

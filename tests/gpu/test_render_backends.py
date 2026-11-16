@@ -86,7 +86,7 @@ def test_tune_times_both_renderers(name, tmp_path, monkeypatch):
 
     try:
         with se.make(name, num_envs=2, device="cuda") as env:
-            tune(env, knobs=["large_renderer_min_rows"], echo=None)
+            tune(env, settings=["large_renderer_min_rows"], echo=None)
         data, current = tuning.read_cache("cuda")
         assert current
         keys = [k for k, v in data["entries"].items() if "large_renderer_min_rows" in v]

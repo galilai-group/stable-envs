@@ -243,7 +243,7 @@ def test_a_cuda_tensor_of_values_is_accepted_without_a_numpy_round_trip():
 
 
 def test_overrides_do_not_write_through_the_caller_s_array():
-    """``from_space`` clones before writing; otherwise randomizing a knob mutates the caller's buffer."""
+    """``from_space`` clones before writing; otherwise randomizing a setting mutates the caller's buffer."""
     v = np.zeros((4, 3), np.float32)
     StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": v})
     assert not v.any(), "the override array was written through"

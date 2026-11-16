@@ -196,8 +196,8 @@ def test_default_style_is_the_official_appearance(env):
     assert r["max_abs_diff"] == 0, f"render(style=default_style()) differs from render() by {r['max_abs_diff']}/255"
 
 
-def test_color_knobs_apply_the_requested_color(env):
-    """Every RGB knob puts its color in the frame, except leaves the class declares not applicable.
+def test_color_settings_apply_the_requested_color(env):
+    """Every RGB setting puts its color in the frame, except leaves the class declares not applicable.
 
     A declared leaf's lighting cannot reach unit gain, in the official renderer too (see
     ``conformance.color_exactness_applicability``). Its measured distance must still be recorded.
@@ -205,7 +205,7 @@ def test_color_knobs_apply_the_requested_color(env):
     r = (C if has_render_rows(env) else RS).check_colors_apply_exactly(env)
     part = C.partition_colour_exactness(r)
     assert not part["asserted"], (
-        f"colour knobs that did not put the requested colour in the frame: {part['asserted']}"
+        f"colour settings that did not put the requested colour in the frame: {part['asserted']}"
         + (
             f" (these are not covered by the class's colour-exactness declaration, which covers "
             f"{[d['probe'] for d in part['not_applicable']]})"
@@ -265,7 +265,7 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
             f"task-relevant object it cannot actually draw or hide"
         )
         assert o["per_row_max_abs_diff"] == 0, (
-            f"{path} does not survive a per-row style: a batch with the knob alternating down the "
+            f"{path} does not survive a per-row style: a batch with the setting alternating down the "
             f"rows differs from the two uniform renders by {o['per_row_max_abs_diff']}/255"
         )
         assert "why_no_margin" not in o, f"{path}: {o['why_no_margin']} — {o}"

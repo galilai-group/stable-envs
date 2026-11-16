@@ -13,9 +13,9 @@ Integer values take an optional `K`, `M`, `G` or `T` suffix (powers of 1024). `a
 
 Variables from other libraries, such as `MUJOCO_GL`, `PYOPENGL_PLATFORM` and `MUJOCO_EGL_DEVICE_ID`, are part of [installing each family](install.md#what-each-family-needs). stable-envs sets one of them, `XLA_PYTHON_CLIENT_PREALLOCATE`; see [JAX GPU memory](#jax-gpu-memory).
 
-## Tuning knobs
+## Tuning settings
 
-Each variable sets one [tuning knob](api/tuning.md#knobs) for the whole process. [How a value is chosen](api/tuning.md#how-a-value-is-chosen) says when it wins.
+Each variable sets one [tuning setting](api/tuning.md#settings) for the whole process. [How a value is chosen](api/tuning.md#how-a-value-is-chosen) says when it wins.
 
 | Variable | Sets |
 |---|---|

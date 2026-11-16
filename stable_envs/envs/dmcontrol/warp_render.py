@@ -34,7 +34,7 @@ from ._model import HIDDEN_GROUP, VISIBLE_GROUPS, _suite
 SHADOWS = ("all", "one", "none")
 #: Values of :attr:`Options.bvh`.
 BVH_MODES = ("refit", "rebuild")
-#: Most worlds per launch when neither the option nor the tuning knobs set it.
+#: Most worlds per launch when neither the option nor the tuning settings set it.
 MAX_WORLDS = 256
 #: Name of the body that carries the proxy geoms.
 PROXY_BODY = "snv_render_proxies"
@@ -51,7 +51,7 @@ class Options:
     - ``groups``: the geom groups that are drawn.
     - ``bvh``: ``"refit"`` updates the scene BVH bounds each frame, ``"rebuild"`` builds the BVH again.
     - ``graph``: replay one captured CUDA graph per launch instead of separate kernel launches.
-    - ``worlds``: worlds per launch. None uses the ``dmc_launch_rays`` and ``dmc_min_worlds`` knobs.
+    - ``worlds``: worlds per launch. None uses the ``dmc_launch_rays`` and ``dmc_min_worlds`` settings.
     - ``reflection``: the floor reflection pass, which also recolours the floor per world.
     - ``sky``: the cached source sky for cameras with a fixed orientation. Otherwise MuJoCo Warp
       draws the skybox.
@@ -426,7 +426,7 @@ def _look_paths(env, opts: Options, paths) -> tuple[str, ...]:
         for p in paths
         if p == "camera.fovy_scale"
         or p.startswith("visibility.")
-        or (p.endswith(".shape") and p.split(".")[0] in getattr(env, "SHAPE_KNOBS", {}))
+        or (p.endswith(".shape") and p.split(".")[0] in getattr(env, "SHAPE_CHOICES", {}))
     ]
     if "floor.color" in paths and not _palette_by_reflection(env, opts):
         out.append("floor.color")

@@ -667,7 +667,7 @@ def render_triton(
 ) -> torch.Tensor:
     """Rasterize a CUDA Scene2D into ``(B, H, W, 3)`` uint8 frames.
 
-    ``block`` defaults to the ``raster2d_block`` knob and ``cull`` to a choice by primitive count. ``out`` must be
+    ``block`` defaults to the ``raster2d_block`` setting and ``cull`` to a choice by primitive count. ``out`` must be
     contiguous uint8 storage with exactly ``B*H*W*3`` elements.
     """
     if not HAVE_TRITON:
