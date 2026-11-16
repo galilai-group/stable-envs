@@ -6,6 +6,7 @@ import torch
 
 pytest.importorskip("dm_control")
 
+from stable_envs._core.state_schema import get_field, unfold  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation.first_family import ReacherAdapter  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
@@ -50,30 +51,34 @@ def pair():
 def test_matches_native_dynamics_and_independent_implicit_resets(pair):
     reference, env = pair
     initial = reference.get_state()
-    initial["lifecycle", "step_count"][:, 0] = torch.tensor([997, 998, 999])
+    get_field(initial, "lifecycle/step_count")[:, 0] = torch.tensor([997, 998, 999])
     for item in pair:
         item.set_state(initial)
     actions = np.random.default_rng(43).uniform(-1, 1, (32, 3, 2))
     for action in actions:
         expected, actual = reference.step(action), env.step(action)
-        torch.testing.assert_close(actual["state", "qpos"], expected["state", "qpos"], rtol=0, atol=1e-5)
-        torch.testing.assert_close(actual["state", "qvel"], expected["state", "qvel"], rtol=0, atol=3e-5)
+        torch.testing.assert_close(
+            get_field(actual["state"], "qpos"), get_field(expected["state"], "qpos"), rtol=0, atol=1e-5
+        )
+        torch.testing.assert_close(
+            get_field(actual["state"], "qvel"), get_field(expected["state"], "qvel"), rtol=0, atol=3e-5
+        )
         torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-5)
         for key in ("reward", "score", "terminated", "truncated"):
             assert torch.equal(actual[key], expected[key])
         for key in ("rng", "lifecycle", "time", ("task", "target_pos")):
-            assert_same_state(actual["state"][key], expected["state"][key])
-    assert not torch.equal(actual["state", "task", "target_pos"], initial["task", "target_pos"])
+            assert_same_state(unfold(actual["state"])[key], unfold(expected["state"])[key])
+    assert not torch.equal(get_field(actual["state"], "task/target_pos"), get_field(initial, "task/target_pos"))
 
 
 def test_checkpoint_restores_reward_and_rejects_invalid_state_atomically(pair):
     reference, env = pair
     state = reference.get_state()
-    state["qpos"].zero_()
-    state["qvel"].zero_()
+    get_field(state, "qpos").zero_()
+    get_field(state, "qvel").zero_()
     action = torch.zeros(3, 2)
     for target_x, reward in ((0.27, 0.0), (0.26, 2.0)):
-        state["task", "target_pos"][:] = torch.tensor([target_x, 0, 0.01], dtype=torch.float64)
+        get_field(state, "task/target_pos")[:] = torch.tensor([target_x, 0, 0.01], dtype=torch.float64)
         for item in pair:
             item.set_state(state)
         expected = reference.step(action)["reward"]
@@ -87,11 +92,11 @@ def test_checkpoint_restores_reward_and_rejects_invalid_state_atomically(pair):
     assert_same_state(env.step(action), expected)
     held = env.get_state()
     broken = held.clone()
-    broken["qvel"][2, 0] = float("nan")
+    get_field(broken, "qvel")[2, 0] = float("nan")
     with pytest.raises(ValueError):
         env.set_state(broken)
     assert_same_state(env.get_state(), held)
-    checkpoint["qpos"].fill_(100)
+    get_field(checkpoint, "qpos").fill_(100)
     assert_same_state(env.get_state(), held)
 
 
@@ -125,4 +130,6 @@ def test_density_changes_after_compilation_and_checkpoint_restore(pair):
         for _ in range(4):
             expected, actual = reference.step(action), env.step(action)
             for key in ("qpos", "qvel"):
-                torch.testing.assert_close(actual["state", key], expected["state", key], rtol=0, atol=3e-6)
+                torch.testing.assert_close(
+                    get_field(actual["state"], key), get_field(expected["state"], key), rtol=0, atol=3e-6
+                )

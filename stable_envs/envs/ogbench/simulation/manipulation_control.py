@@ -11,7 +11,7 @@ import numpy as np
 _MINVAL = mujoco.mjMINVAL
 _IDENTITY = np.array([1.0, 0.0, 0.0, 0.0])
 _INVERT = np.array([1.0, -1.0, -1.0, -1.0])
-#: Lanes per IK batch thread (L40S host, 8 cores).
+#: Lanes per IK batch thread. docs/performance-tuning.md (DM Control threads) gives the hosts it was measured on.
 IK_LANES_PER_THREAD = 128
 
 
@@ -224,6 +224,225 @@ def _numba_ik_errors():
 _NUMBA_IK_ERRORS = _numba_ik_errors()
 
 
+def _numba_pose():
+    """Numba kernels for the arithmetic of ``BatchController.control``, or None without Numba.
+
+    They run the operations of the NumPy functions above in the same order, without fused multiply-adds. ``cos``,
+    ``sin``, ``arctan2`` and ``pow`` stay in NumPy and the C library, as the source calls them. Returns
+    ``(quat, yaw_terms, half_angles, orientation, target)``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True, inline="always")
+    def multiply(a0, a1, a2, a3, b0, b1, b2, b3):
+        # so3_multiply: each component sums its signed products from the left.
+        w = ((-(a1 * b1)) + (-(a2 * b2)) + (-(a3 * b3))) + a0 * b0
+        x = ((a1 * b0) + (a2 * b3) + (-(a3 * b2))) + a0 * b1
+        y = ((-(a1 * b3)) + (a2 * b0) + (a3 * b1)) + a0 * b2
+        z = ((a1 * b2) + (-(a2 * b1)) + (a3 * b0)) + a0 * b3
+        return w, x, y, z
+
+    @numba.njit(cache=True, inline="always")
+    def from_z(theta, cos_half, sin_half):
+        # so3_from_z with its Taylor branch; cos_half and sin_half are of 0.5 * safe_theta.
+        theta_squared = theta * theta
+        theta_pow_4 = theta_squared * theta_squared
+        if theta_squared < 1e-10:
+            real = 1.0 - theta_squared / 8.0 + theta_pow_4 / 384.0
+            imaginary = 0.5 - theta_squared / 48.0 + theta_pow_4 / 3840.0
+        else:
+            real = cos_half
+            imaginary = sin_half / math.sqrt(theta_squared)
+        return real, imaginary * 0.0, imaginary * 0.0, imaginary * theta
+
+    @numba.njit(cache=True)
+    def quat(mat):
+        """``mat2quat`` of (n, 9) rows."""
+        n = mat.shape[0]
+        q = np.empty((n, 4))
+        for i in range(n):
+            m = mat[i]
+            if m[0] + m[4] + m[8] > 0:
+                q[i, 0] = 0.5 * math.sqrt(1 + m[0] + m[4] + m[8])
+                q[i, 1] = 0.25 * (m[7] - m[5]) / q[i, 0]
+                q[i, 2] = 0.25 * (m[2] - m[6]) / q[i, 0]
+                q[i, 3] = 0.25 * (m[3] - m[1]) / q[i, 0]
+            elif m[0] > m[4] and m[0] > m[8]:
+                q[i, 1] = 0.5 * math.sqrt(1 + m[0] - m[4] - m[8])
+                q[i, 0] = 0.25 * (m[7] - m[5]) / q[i, 1]
+                q[i, 2] = 0.25 * (m[1] + m[3]) / q[i, 1]
+                q[i, 3] = 0.25 * (m[2] + m[6]) / q[i, 1]
+            elif m[4] > m[8]:
+                q[i, 2] = 0.5 * math.sqrt(1 - m[0] + m[4] - m[8])
+                q[i, 0] = 0.25 * (m[2] - m[6]) / q[i, 2]
+                q[i, 1] = 0.25 * (m[1] + m[3]) / q[i, 2]
+                q[i, 3] = 0.25 * (m[5] + m[7]) / q[i, 2]
+            else:
+                q[i, 3] = 0.5 * math.sqrt(1 - m[0] - m[4] + m[8])
+                q[i, 0] = 0.25 * (m[3] - m[1]) / q[i, 3]
+                q[i, 1] = 0.25 * (m[2] + m[6]) / q[i, 3]
+                q[i, 2] = 0.25 * (m[5] + m[7]) / q[i, 3]
+            norm = math.sqrt(q[i, 0] * q[i, 0] + q[i, 1] * q[i, 1] + q[i, 2] * q[i, 2] + q[i, 3] * q[i, 3])
+            if norm < _MINVAL:
+                q[i, 0], q[i, 1], q[i, 2], q[i, 3] = 1.0, 0.0, 0.0, 0.0
+            elif abs(norm - 1) > _MINVAL:
+                inverse = 1 / norm
+                for k in range(4):
+                    q[i, k] *= inverse
+        return q
+
+    @numba.njit(cache=True)
+    def yaw_terms(q, squares):
+        """The ``arctan2`` arguments of ``so3_yaw``; ``squares`` are the C library's squares of q2 and q3."""
+        n = q.shape[0]
+        y, x = np.empty(n), np.empty(n)
+        for i in range(n):
+            y[i] = 2 * (q[i, 0] * q[i, 3] + q[i, 1] * q[i, 2])
+            x[i] = 1 - 2 * (squares[i, 0] + squares[i, 1])
+        return y, x
+
+    @numba.njit(cache=True)
+    def half_angles(theta):
+        """``0.5 * safe_theta`` of ``so3_from_z``, whose cosine and sine it reads."""
+        out = np.empty(theta.shape[0])
+        for i in range(theta.shape[0]):
+            theta_squared = theta[i] * theta[i]
+            out[i] = 0.5 * (1.0 if theta_squared < 1e-10 else math.sqrt(theta_squared))
+        return out
+
+    @numba.njit(cache=True)
+    def orientation(theta, cos_half, sin_half, down):
+        """``so3_from_z(a) * so3_from_z(b) * inverse(down)``; ``theta`` holds the n angles a, then the n angles b."""
+        n = theta.shape[0] // 2
+        out = np.empty((n, 4))
+        d0, d1, d2, d3 = down[0] * 1.0, down[1] * -1.0, down[2] * -1.0, down[3] * -1.0
+        for i in range(n):
+            a0, a1, a2, a3 = from_z(theta[i], cos_half[i], sin_half[i])
+            b0, b1, b2, b3 = from_z(theta[n + i], cos_half[n + i], sin_half[n + i])
+            c0, c1, c2, c3 = multiply(a0, a1, a2, a3, b0, b1, b2, b3)
+            out[i, 0], out[i, 1], out[i, 2], out[i, 3] = multiply(c0, c1, c2, c3, d0, d1, d2, d3)
+        return out
+
+    @numba.njit(cache=True)
+    def target(yaw, cos_half, sin_half, down, t_pa, translation):
+        """The IK target ``(pos, quat)``: ``orientation = so3_from_z(yaw) * down``, then the pinch-to-attach pose."""
+        n = yaw.shape[0]
+        pos, quat_out = np.empty((n, 3)), np.empty((n, 4))
+        for i in range(n):
+            a0, a1, a2, a3 = from_z(yaw[i], cos_half[i], sin_half[i])
+            o0, o1, o2, o3 = multiply(a0, a1, a2, a3, down[0], down[1], down[2], down[3])
+            quat_out[i, 0], quat_out[i, 1], quat_out[i, 2], quat_out[i, 3] = multiply(
+                o0, o1, o2, o3, t_pa[0], t_pa[1], t_pa[2], t_pa[3]
+            )
+            # so3_apply: o * (0, v) * inverse(o), keeping the vector part.
+            p0, p1, p2, p3 = multiply(o0, o1, o2, o3, 0.0, t_pa[4], t_pa[5], t_pa[6])
+            _, r1, r2, r3 = multiply(p0, p1, p2, p3, o0 * 1.0, o1 * -1.0, o2 * -1.0, o3 * -1.0)
+            pos[i, 0] = r1 + translation[i, 0]
+            pos[i, 1] = r2 + translation[i, 1]
+            pos[i, 2] = r3 + translation[i, 2]
+        return pos, quat_out
+
+    return quat, yaw_terms, half_angles, orientation, target
+
+
+def _numba_ik_steps():
+    """Numba kernels for the arithmetic of an iteration of ``BatchController.solve``, or None without Numba.
+
+    Returns ``(reached, advance)``: the rows whose errors are within both thresholds, with the number of rows too close
+    to a threshold to decide, and the scaled update of ``qpos``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True)
+    def reached(norms, pos_thresh, ori_thresh):
+        n = norms.shape[0]
+        done = np.empty(n, np.bool_)
+        close = 0
+        for i in range(n):
+            done[i] = norms[i, 0] <= pos_thresh and norms[i, 1] <= ori_thresh
+            if (
+                abs(norms[i, 0] - pos_thresh) <= 1e-9 * pos_thresh
+                or abs(norms[i, 1] - ori_thresh) <= 1e-9 * ori_thresh
+            ):
+                close += 1
+        return done, close
+
+    @numba.njit(cache=True)
+    def advance(qpos, rows, update, max_angle):
+        """``qpos[rows] += update``, each update row scaled down to ``max_angle`` at most, as NumPy's max decides."""
+        for r in range(rows.shape[0]):
+            peak = abs(update[r, 0])
+            for k in range(1, update.shape[1]):
+                value = abs(update[r, k])
+                if value > peak or value != value:
+                    peak = value
+            if peak > max_angle:
+                scale = max_angle / peak
+                for k in range(update.shape[1]):
+                    update[r, k] *= scale
+            i = rows[r]
+            for k in range(update.shape[1]):
+                qpos[i, k] = qpos[i, k] + 1.0 * update[r, k]
+
+    return reached, advance
+
+
+def _numba_site_jacobian():
+    """Numba ``mj_jac`` of a site for rows of a batch, from the batch's ``cdof`` and ``subtree_com``; or None.
+
+    The arithmetic is MuJoCo's, in its order: the offset from the subtree center of mass of the body's root, and for
+    each dof of the chain the rotational rows from ``cdof[:3]`` and the translational rows ``cdof[3:] + cdof[:3] x
+    offset``.
+    """
+    try:
+        import numba
+    except ImportError:
+        return None
+
+    @numba.njit(cache=True)
+    def jacobian(cdof, subtree_com, site_xpos, rows, chain, root):
+        """``[jacp; jacr]`` as ``(len(rows), 6, nv)``; row ``r`` reads batch row ``rows[r]``."""
+        out = np.zeros((rows.shape[0], 6, cdof.shape[1]))
+        for r in range(rows.shape[0]):
+            i = rows[r]
+            o0 = site_xpos[i, 0] - subtree_com[i, root, 0]
+            o1 = site_xpos[i, 1] - subtree_com[i, root, 1]
+            o2 = site_xpos[i, 2] - subtree_com[i, root, 2]
+            for j in range(chain.shape[0]):
+                d = chain[j]
+                c = cdof[i, d]
+                out[r, 3, d] = c[0]
+                out[r, 4, d] = c[1]
+                out[r, 5, d] = c[2]
+                t0 = c[1] * o2 - c[2] * o1
+                t1 = c[2] * o0 - c[0] * o2
+                t2 = c[0] * o1 - c[1] * o0
+                out[r, 0, d] = c[3] + t0
+                out[r, 1, d] = c[4] + t1
+                out[r, 2, d] = c[5] + t2
+        return out
+
+    return jacobian
+
+
+_NUMBA_POSE = _numba_pose()
+_NUMBA_IK_STEPS = _numba_ik_steps()
+_NUMBA_SITE_JACOBIAN = _numba_site_jacobian()
+
+
+def _squares(q):
+    """The C library's squares of the q2 and q3 columns, as the source squares NumPy scalars."""
+    n = len(q)
+    flat = np.fromiter(map(math.pow, q[:, 2:].ravel().tolist(), [2.0] * (2 * n)), np.float64, 2 * n)
+    return flat.reshape(n, 2)
+
+
 class BatchController:
     """``ManipSpaceEnv.set_control`` for every lane of a batch.
 
@@ -236,18 +455,36 @@ class BatchController:
         from ...._execution.mjbatch import NativeBatch
 
         ik = env._ik
+        self._source_ik = ik
         # A forward pass of the arm takes microseconds, so a thread pays off only for many lanes.
         threads = max(1, min(threads, num_envs // IK_LANES_PER_THREAD))
         # The IK reads kinematics only; without contacts and constraints the position stage skips collision.
         model = copy.copy(ik._model)
         model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT | mujoco.mjtDisableBit.mjDSBL_CONTACT
-        self._batch = NativeBatch(model, num_envs, outputs=("site_xpos", "site_xmat"), nthread=threads)
+        self._jacobian = _NUMBA_SITE_JACOBIAN
+        # With Numba the Jacobian comes from the position stage's cdof and subtree_com, without a second kinematics
+        # pass per call.
+        outputs = ("site_xpos", "site_xmat") + (("cdof", "subtree_com") if self._jacobian is not None else ())
+        self._batch = NativeBatch(model, num_envs, outputs=outputs, nthread=threads)
         self._ik = self._batch.b
         self._ik_qpos = self._batch.numpy("qpos")
         self._ik_site_xpos = self._batch.numpy("site_xpos")
         self._ik_site_xmat = self._batch.numpy("site_xmat")
         self._site = int(ik._site_ids[0])
         self._site_body = int(ik._model.site_bodyid[self._site])
+        if self._jacobian is not None:
+            self._ik_cdof, self._ik_subtree_com = self._batch.numpy("cdof"), self._batch.numpy("subtree_com")
+            m = ik._model
+            # The dofs that move the site's body, from the last one up the parent chain, as mj_jac walks them.
+            weld = int(m.body_weldid[self._site_body])
+            chain = []
+            if m.body_dofnum[weld]:
+                dof = int(m.body_dofadr[weld] + m.body_dofnum[weld] - 1)
+                while dof >= 0:
+                    chain.append(dof)
+                    dof = int(m.dof_parentid[dof])
+            self._chain = np.array(chain, np.int64)
+            self._root = int(m.body_rootid[self._site_body])
         self._damping = ik._damping
         self._max_angle = ik._max_angle_change
         self._arm_qpos = env.model.jnt_qposadr[env._arm_joint_ids]
@@ -258,13 +495,33 @@ class BatchController:
         self._workspace = env._workspace_bounds
         self._down = env._effector_down_rotation.wxyz
         self._t_pa = env._T_pa.wxyz_xyz
+        self._down_rotation, self._pinch_to_attach = env._effector_down_rotation, env._T_pa
         self._norm = np.linalg.norm
         self._errors = _NUMBA_IK_ERRORS or _ik_errors_numpy
+        self._pose, self._steps = _NUMBA_POSE, _NUMBA_IK_STEPS
+        self._rows = np.arange(num_envs)
+        self._down64, self._t_pa64 = np.asarray(self._down, np.float64), np.asarray(self._t_pa, np.float64)
 
     def control(self, actions, qpos, pinch_pos, pinch_mat, ctrl, ids):
         """Write the controls of lanes ``ids`` into ``ctrl`` from their actions and pinch site poses."""
         n = len(ids)
         action = 0.5 * (np.asarray(actions) + 1) * (self._high - self._low) + self._low
+        if self._pose is not None and action.dtype == np.float64:
+            pos, quat, target_gripper = self._targets(action, qpos, pinch_pos, pinch_mat, ids)
+            if n == 1:
+                # One lane solves with OGBench's own controller, which costs less than a batch of one.
+                arm = self._source_ik.solve(pos=pos[0], quat=quat[0], curr_qpos=qpos[ids[0]][self._arm_qpos])
+                ctrl[ids[0], self._arm_actuators] = arm
+                ctrl[ids[0], self._gripper_actuators] = 255.0 * target_gripper[0]
+            else:
+                ctrl[ids[:, None], self._arm_actuators] = self.solve(pos, quat, qpos[ids][:, self._arm_qpos])
+                ctrl[ids[:, None], self._gripper_actuators] = 255.0 * target_gripper
+            return
+        if n == 1:
+            arm, gripper = self._control_one(np.asarray(actions)[0], qpos[ids[0]], pinch_pos[0], pinch_mat[0])
+            ctrl[ids[0], self._arm_actuators] = arm
+            ctrl[ids[0], self._gripper_actuators] = gripper
+            return
         a_pos, a_ori, a_gripper = action[:, :3], action[:, 3], action[:, 4:5]
         effector_pos = np.array(pinch_pos, np.float64)
         effector_yaw = so3_yaw(mat2quat(np.asarray(pinch_mat).reshape(n, 9)))
@@ -283,36 +540,100 @@ class BatchController:
         ctrl[ids[:, None], self._arm_actuators] = self.solve(pos, quat, qpos[ids][:, self._arm_qpos])
         ctrl[ids[:, None], self._gripper_actuators] = 255.0 * target_gripper
 
+    def _targets(self, action, qpos, pinch_pos, pinch_mat, ids):
+        """``control``'s IK targets ``(pos, quat)`` and gripper targets, with the Numba kernels."""
+        quat, yaw_terms, half_angles, orientation, target = self._pose
+        n = len(ids)
+        a_pos, a_ori, a_gripper = action[:, :3], action[:, 3], action[:, 4:5]
+        gripper_opening = np.clip(qpos[ids, self._gripper_qpos][:, None] / 0.8, 0, 1)
+        translation = np.array(pinch_pos, np.float64) + a_pos
+        np.clip(translation, *self._workspace, out=translation)
+        effector = quat(np.ascontiguousarray(np.asarray(pinch_mat).reshape(n, 9), np.float64))
+        theta = np.concatenate([a_ori, np.arctan2(*yaw_terms(effector, _squares(effector)))])
+        half = half_angles(theta)
+        rotation = orientation(theta, np.cos(half), np.sin(half), self._down64)
+        yaw = np.clip(np.arctan2(*yaw_terms(rotation, _squares(rotation))), -np.pi, +np.pi)
+        half = half_angles(yaw)
+        pos, quat_out = target(yaw, np.cos(half), np.sin(half), self._down64, self._t_pa64, translation)
+        return pos, quat_out, np.clip(gripper_opening + a_gripper, 0.0, 1.0)
+
+    def _control_one(self, action, qpos, pinch_pos, pinch_mat):
+        """``ManipSpaceEnv.set_control`` of one lane, with OGBench's own pose types and controller.
+
+        Returns the arm and gripper controls.
+        """
+        from ogbench.manipspace import lie
+
+        action = 0.5 * (action + 1) * (self._high - self._low) + self._low
+        a_pos, a_ori, a_gripper = action[:3], action[3], action[4]
+        effector_pos = np.array(pinch_pos)
+        effector_yaw = lie.SO3.from_matrix(np.array(pinch_mat).reshape(3, 3)).compute_yaw_radians()
+        gripper_opening = np.array(np.clip([qpos[self._gripper_qpos] / 0.8], 0, 1))
+        translation = effector_pos + a_pos
+        down = self._down_rotation
+        orientation = lie.SO3.from_z_radians(a_ori) @ lie.SO3.from_z_radians(effector_yaw) @ down.inverse()
+        target_gripper = gripper_opening + a_gripper
+        np.clip(translation, *self._workspace, out=translation)
+        yaw = np.clip(orientation.compute_yaw_radians(), -np.pi, +np.pi)
+        orientation = lie.SO3.from_z_radians(yaw) @ down
+        target_gripper = np.clip(target_gripper, 0.0, 1.0)
+        pose = lie.SE3.from_rotation_and_translation(rotation=orientation, translation=translation)
+        attach = pose @ self._pinch_to_attach
+        arm = self._source_ik.solve(
+            pos=attach.translation(), quat=attach.rotation().wxyz, curr_qpos=qpos[self._arm_qpos]
+        )
+        return arm, 255.0 * target_gripper
+
     def solve(self, pos, quat, qpos, max_iters=20, pos_thresh=1e-4, ori_thresh=1e-4):
-        """``DiffIKController.solve`` per row, each row stopping at its own iteration."""
+        """``DiffIKController.solve`` per row, each row stopping at its own iteration.
+
+        While every row is still iterating, the arrays are used whole, without index copies; the arithmetic is
+        the same as on the active rows.
+        """
         n = len(pos)
         b = self._ik
         qpos = qpos.copy()
-        active = np.arange(n)
+        # The IK batch has a row per lane; a call for fewer lanes uses its first rows by index.
+        ids = None if n == len(self._ik_qpos) else np.arange(n)
+        site_xpos, site_xmat = self._ik_site_xpos[:, self._site], self._ik_site_xmat[:, self._site]
         for _ in range(max_iters):
-            ids = active
-            self._ik_qpos[ids] = qpos[ids]
-            b.forward(ids, mujoco.mjtStage.mjSTAGE_POS)
-            err, norms = self._errors(
-                pos[ids], quat[ids], self._ik_site_xpos[ids, self._site], self._ik_site_xmat[ids, self._site]
-            )
-            done = self._reached(err[:, :3], norms[:, 0], pos_thresh) & self._reached(
-                err[:, 3:], norms[:, 1], ori_thresh
-            )
+            if ids is None:
+                self._ik_qpos[:] = qpos
+                b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
+                err, norms = self._errors(pos, quat, site_xpos, site_xmat)
+            else:
+                self._ik_qpos[ids] = qpos[ids]
+                b.forward(ids, mujoco.mjtStage.mjSTAGE_POS)
+                err, norms = self._errors(pos[ids], quat[ids], site_xpos[ids], site_xmat[ids])
+            done, close = (None, 1) if self._steps is None else self._steps[0](norms, pos_thresh, ori_thresh)
+            if close:
+                done = self._reached(err[:, :3], norms[:, 0], pos_thresh) & self._reached(
+                    err[:, 3:], norms[:, 1], ori_thresh
+                )
             if done.any():
                 keep = ~done
-                ids, err = ids[keep], err[keep]
-                active = ids
+                ids = (np.arange(n) if ids is None else ids)[keep]
+                err = err[keep]
                 if not len(ids):
                     break
-            jacp, jacr = b.jac(self._site_body, self._ik_site_xpos[ids, self._site], ids)
-            jac = np.concatenate([jacp, jacr], axis=1)
+            if self._jacobian is not None:
+                rows = self._rows[:n] if ids is None else ids
+                jac = self._jacobian(self._ik_cdof, self._ik_subtree_com, site_xpos, rows, self._chain, self._root)
+            else:
+                jacp, jacr = b.jac(self._site_body, site_xpos if ids is None else site_xpos[ids], ids)
+                jac = np.concatenate([jacp, jacr], axis=1)
             h = jac @ jac.transpose(0, 2, 1) + self._damping
             update = (jac.transpose(0, 2, 1) @ np.linalg.solve(h, err[:, :, None]))[:, :, 0]
+            if self._steps is not None:
+                self._steps[1](qpos, self._rows[:n] if ids is None else ids, update, self._max_angle)
+                continue
             update_max = np.max(np.abs(update), axis=1)
             over = update_max > self._max_angle
             update[over] *= (self._max_angle / update_max[over])[:, None]
-            qpos[ids] = qpos[ids] + 1.0 * update
+            if ids is None:
+                qpos = qpos + 1.0 * update
+            else:
+                qpos[ids] = qpos[ids] + 1.0 * update
         return qpos
 
     def _reached(self, err, norm, threshold):

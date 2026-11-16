@@ -29,3 +29,33 @@ def make_classic_adapter(
 
         return AcrobotProcessAdapter(domain, num_envs, device, seed, processes=count, cpus=cpus)
     return local_factory(domain, num_envs, device, seed)
+
+
+def make_step_adapter(domain: str, backend: str, num_envs: int, device: str | torch.device, seed: int, sink=None):
+    """The simulator of ``backend``; on an accelerator, Gymnasium and NumPy lanes in this process step on the CPU.
+
+    Their results move to ``device`` in one copy. ``sink`` is the environment's rows that the CUDA Torch simulator
+    writes (see ``DeviceClassicAdapter``).
+    """
+    import torch
+
+    from ...._execution.host import HostAdapter
+
+    device = torch.device(device)
+    if backend == "torch" and device.type == "cuda":
+        from .device import DeviceClassicAdapter
+
+        return DeviceClassicAdapter(domain, num_envs, device, seed, sink)
+    where = device if backend == "torch" else torch.device("cpu")
+    if backend == "gym":
+        from .local import ClassicControlAdapter
+
+        # Worker processes move their outputs to ``device`` themselves.
+        adapter = make_classic_adapter(
+            domain, num_envs, device, seed, lambda d, n, _, s: ClassicControlAdapter(d, n, where, s)
+        )
+    else:
+        from .batched import BatchedClassicAdapter
+
+        adapter = BatchedClassicAdapter(domain, num_envs, where, seed, backend)
+    return adapter if adapter.device == device else HostAdapter(adapter, device)

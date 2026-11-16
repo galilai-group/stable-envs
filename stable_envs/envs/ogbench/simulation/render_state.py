@@ -7,7 +7,9 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import schema_of
 from .compatibility import TARGET_ALPHA, CompatibleCube, CompatibleScene
+from .manipulation import field
 
 OBJECT_QPOS_ADR = 14
 
@@ -90,34 +92,43 @@ def header(family, b, size, supersample, device):
 
 
 def sources(family):
-    """The State leaf each RenderState leaf of ``project`` copies, keyed by the RenderState leaf."""
-    result = {("pose", name): ("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")}
+    """The State field each RenderState leaf of ``project`` copies, keyed by the RenderState leaf."""
+    result = {("pose", name): field("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")}
     for name in (*STATIC, "agent.color", "floor.color"):
-        result["appearance", name] = ("model", "compiled", name)
-    result["appearance", "cube.color"] = ("variation", "current", "cube.color")
+        result["appearance", name] = field("model", "compiled", name)
+    result["appearance", "cube.color"] = field("variation", "current", "cube.color")
     if family == "Scene":
-        result["appearance", "lock_color"] = ("variation", "current", "lock_color")
-        result["pose", "buttons"] = ("scene", "cur_button_states")
+        result["appearance", "lock_color"] = field("variation", "current", "lock_color")
+        result["pose", "buttons"] = field("scene", "cur_button_states")
     return result
 
 
 def projected_keys(family):
-    """The state leaves ``project`` reads."""
+    """The State fields ``project`` reads."""
     return list(sources(family).values())
 
 
+def projected_groups(family, state):
+    """The keys of the State leaves that hold the fields ``project`` reads."""
+    schema = schema_of(state)
+    return list(dict.fromkeys(schema.groups[schema.slices[name].group].path for name in projected_keys(family)))
+
+
 def require_leaves(family, state):
-    """Check that ``state`` is a nonempty batch of full States that holds every leaf ``project`` reads."""
+    """Check that ``state`` is a nonempty batch of full States that holds every field ``project`` reads."""
     if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or len(state) < 1:
         raise TypeError("Full Cube/Scene TensorDict State with a nonempty batch is required")
-    for key in projected_keys(family):
-        if not torch.is_tensor(state.get(key, None)):
-            raise ValueError(f"Full State is missing a leaf that the frame reads: {key}")
+    schema = schema_of(state)
+    for name in projected_keys(family):
+        group = None if schema is None or name not in schema.slices else schema.groups[schema.slices[name].group]
+        value = None if group is None else state.get(group.path, None)
+        if not torch.is_tensor(value) or value.dtype != group.dtype or tuple(value.shape[1:]) != (group.size,):
+            raise ValueError(f"Full State is missing a field that the frame reads: {name}")
 
 
 def state_columns(family, columns, size, supersample):
-    """NumPy RenderState columns from trusted stacked state leaves, as ``project`` would fill them."""
-    b = len(columns["physics", "qpos"])
+    """NumPy RenderState columns from trusted ``{field name: array}`` State fields, as ``project`` fills them."""
+    b = len(next(iter(columns.values())))
     values = {
         ("renderer", "size"): np.full((b, 1), size, np.int64),
         ("renderer", "supersample"): np.full((b, 1), supersample, np.int64),
@@ -133,11 +144,12 @@ def project(family, state, size, supersample, check=True):
     ``check`` validates the result; its errors name the State leaf a bad value comes from.
     """
     b = len(state)
-    device = state.device or state["physics", "qpos"].device
+    schema = schema_of(state)
+    device = state.device or next(iter(state.values(True, True))).device
     values = header(family, b, size, supersample, device)
     leaves = sources(family)
     for target, source in leaves.items():
-        values[target] = state[source].clone()
+        values[target] = schema.get(state, source).clone(memory_format=torch.contiguous_format)
     result = TensorDict(values, [b], device=device)
     if check:
         validate(family, result, labels=leaves)

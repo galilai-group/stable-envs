@@ -124,12 +124,14 @@ class ReacherMJXAdapter(ReacherAdapter):
 
     def _load_state(self, state):
         self._state = state.to(self.device).clone()
-        self._counts = state["lifecycle", "step_count"].cpu().numpy().copy()
-        self._reset_next = state["lifecycle", "reset_next_step"].cpu().numpy().copy()
+        # Views of the State's groups, which the step writes.
+        self._views = self.schema.views(self._state)
+        self._counts = self._views["lifecycle/step_count"].cpu().numpy().copy()
+        self._reset_next = self._views["lifecycle/reset_next_step"].cpu().numpy().copy()
         self._load_data()
 
     def _load_data(self):
-        value = lambda key: _from_torch(self._state[key].to(torch.float32))
+        value = lambda key: _from_torch(self._views[key].to(torch.float32))
         warmstart = value("warmstart")
         self._data = self._forward(
             self._model_values,
@@ -137,7 +139,7 @@ class ReacherMJXAdapter(ReacherAdapter):
                 qpos=value("qpos"),
                 qvel=value("qvel"),
                 time=value("time")[:, 0],
-                mocap_pos=value(("task", "target_pos"))[:, None, :],
+                mocap_pos=value("task/target_pos")[:, None, :],
             ),
         ).replace(qacc_warmstart=warmstart)
 
@@ -176,12 +178,12 @@ class ReacherMJXAdapter(ReacherAdapter):
         for _ in range(2):
             resetting = self._reset_next[:, 0].copy()
             if resetting.any():
-                cumulative = self._state["task", "cumulative_reward"].clone()
+                cumulative = self._views["task/cumulative_reward"].clone()
                 for lane in np.flatnonzero(resetting):
                     self.envs[lane].reset()
                 mask = torch.as_tensor(resetting, device=self.device)
                 self._state[mask] = super().get_state()[mask]
-                self._state["task", "cumulative_reward"] = cumulative
+                self._views["task/cumulative_reward"].copy_(cumulative)
                 previous = self._data
                 self._load_data()
                 reset_mask = _from_torch(mask)
@@ -194,26 +196,26 @@ class ReacherMJXAdapter(ReacherAdapter):
                 reset_observation, _ = self._observe(before)
                 observation = jnp.where(mask[:, None], reset_observation, observation)
                 success = success & ~mask
-                self._state["time"][torch.as_tensor(resetting, device=self.device)] = 0
-                self._state["lifecycle", "step_count"][torch.as_tensor(resetting, device=self.device)] = -1
+                self._views["time"][torch.as_tensor(resetting, device=self.device)] = 0
+                self._views["lifecycle/step_count"][torch.as_tensor(resetting, device=self.device)] = -1
             reward += torch.from_dlpack(success)
             self._counts = np.where(resetting[:, None], 0, self._counts + 1)
             self._reset_next = self._counts >= 1000
             if resetting.any():
-                self._state["time"] += (~torch.as_tensor(resetting, device=self.device)).to(torch.float64)[
+                self._views["time"] += (~torch.as_tensor(resetting, device=self.device)).to(torch.float64)[
                     :, None
                 ] * 0.02
             else:
-                self._state["time"] += 0.02
-            self._state["lifecycle", "step_count"] += 1
+                self._views["time"] += 0.02
+            self._views["lifecycle/step_count"] += 1
         for key, data in (
             ("qpos", self._data.qpos),
             ("qvel", self._data.qvel),
             ("warmstart", self._data.qacc_warmstart),
         ):
-            self._state[key] = torch.from_dlpack(data).to(torch.float64)
-        self._state["lifecycle", "reset_next_step"] = self._state["lifecycle", "step_count"] >= 1000
-        self._state["task", "cumulative_reward"] = self._state["task", "cumulative_reward"] + reward[:, None]
+            self._views[key].copy_(torch.from_dlpack(data).to(torch.float64))
+        self._views["lifecycle/reset_next_step"].copy_(self._views["lifecycle/step_count"] >= 1000)
+        self._views["task/cumulative_reward"].add_(reward[:, None])
         observation = torch.from_dlpack(observation)
         return TensorDict(
             {
@@ -222,7 +224,7 @@ class ReacherMJXAdapter(ReacherAdapter):
                 "observation": observation,
                 "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
                 "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
-                "score": self._state["task", "cumulative_reward"][:, 0] / 1000,
+                "score": self._views["task/cumulative_reward"][:, 0] / 1000,
             },
             [self.num_envs],
             device=self.device,

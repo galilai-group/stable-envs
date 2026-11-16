@@ -11,34 +11,64 @@ if TYPE_CHECKING:
 
     from .batch import PushTBatchAdapter
 
-#: Backends that ``simulation_backend`` accepts; ``None`` takes the device default.
-SIMULATION_BACKENDS = ("auto", "triton", "jax", "numba")
-#: Smallest CUDA batch that ``simulation_backend="auto"`` steps on the GPU; smaller batches step with Numba.
-TRITON_MIN_ENVS = 1
+#: Backends that ``simulation_backend`` accepts besides ``"auto"``.
+SIMULATION_BACKENDS = ("triton", "jax", "numba")
+#: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
+#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
+#: Measured on 15 November 2026 with ``python -m benchmarks.backend_switch PushT`` on an RTX A5000 with an AMD EPYC 7532,
+#: an RTX A5000 with an AMD EPYC 7662 and an RTX A5500 with an AMD EPYC 7662, 8 cores each: Numba with one copy of
+#: the folded State to CUDA was faster up to 64 environments and Triton from 128 on all three.
+CUDA_MIN_ENVS: int | None = 128
+
+
+#: The ``select_backend`` path of the PushT physics backend choice.
+PATH = "pusht-sim"
+#: Smallest batch whose resets run in worker processes, unless the ``worker_min_lanes`` knob is set. A lane's source
+#: reset takes milliseconds of Python. From this batch size, parallel resets save more time than the round trip to
+#: the workers costs. docs/performance-tuning.md (Worker processes) says how the value was measured.
+RESET_WORKER_MIN_LANES = 8
+
+
+def _measure(env_type, device, config: dict):
+    """Build and step ``env_type`` on one backend with ``config``, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_env
+
+    options = dict(size=config["resolution"], render_action=config["render_action"], with_target=config["with_target"])
+    return measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend, **options))
 
 
 def pusht_backend(
-    num_envs: int, device: str | torch.device, backend: str | None = None, triton_min_envs: int = TRITON_MIN_ENVS
+    num_envs: int,
+    device: str | torch.device,
+    backend: str | None = "auto",
+    *,
+    discrete: bool = False,
+    config: dict | None = None,
+    env_type: type | None = None,
 ) -> str:
     """Return ``"triton"``, ``"jax"`` or ``"numba"``.
 
-    ``None`` selects Triton on CUDA (JAX without Triton) and Numba on CPU. ``"auto"`` also selects Numba
-    for CUDA batches smaller than ``triton_min_envs``.
+    ``"auto"`` selects Numba on CPU. On CUDA it selects Numba for small batches and Triton (JAX without Triton) for
+    large ones; ``select_backend`` measures the switch point. ``stable-envs tune`` builds ``env_type`` with ``config``
+    to calibrate it.
     """
     import torch
 
-    if backend is not None and backend not in SIMULATION_BACKENDS:
-        raise ValueError("simulation_backend must be None, 'auto', 'triton', 'jax' or 'numba'")
-    if isinstance(triton_min_envs, bool) or not isinstance(triton_min_envs, int) or triton_min_envs < 1:
-        raise ValueError("triton_min_envs must be an int >= 1")
-    cuda = torch.device(device).type == "cuda"
-    if backend == "auto":
-        backend = None if cuda and num_envs >= triton_min_envs else "numba"
-    if backend is None:
-        return _gpu_backend() if cuda else "numba"
-    if backend == "triton" and not cuda:
+    from ...._execution.backends import Rungs, select_backend
+
+    if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    return backend
+    measure = None if config is None or env_type is None else _measure(env_type, device, config)
+    return select_backend(
+        PATH,
+        num_envs,
+        device,
+        backend,
+        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", _gpu_backend(), CUDA_MIN_ENVS)},
+        choices=SIMULATION_BACKENDS,
+        measure=measure,
+    )
 
 
 def _gpu_backend() -> str:
@@ -54,17 +84,27 @@ def make_pusht_adapter(
     *,
     discrete: bool,
     config: dict,
-    simulation_backend: str | None = None,
-    triton_min_envs: int = TRITON_MIN_ENVS,
+    simulation_backend: str | None = "auto",
 ) -> PushTBatchAdapter:
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="pusht-sim") if type(num_envs) is int and num_envs > 0 else 0
-    backend = pusht_backend(num_envs, device, simulation_backend, triton_min_envs)
+    valid = type(num_envs) is int and num_envs > 0
+    count = process_count(num_envs, cpus, path=PATH, min_lanes=RESET_WORKER_MIN_LANES) if valid else 0
+    backend = pusht_backend(num_envs, device, simulation_backend, discrete=discrete, config=config)
     if backend == "triton":
         from .triton_batch import PushTTritonAdapter as adapter
     elif backend == "jax":
         from .jax_batch import PushTJaxAdapter as adapter
     else:
-        from .numba_batch import PushTNumbaAdapter as adapter
+        import torch
+
+        from ...._execution.host import HostAdapter
+        from .numba_batch import PushTNumbaAdapter
+
+        # Numba steps the host State; only the results move to an accelerator.
+        host = PushTNumbaAdapter(num_envs, "cpu", seed, discrete=discrete, config=config, processes=count, cpus=cpus)
+        if torch.device(device).type == "cpu":
+            return host
+        host.export_device = torch.device(device)
+        return HostAdapter(host, device)
     # Workers reset the lanes; one batched call steps them.
     return adapter(num_envs, device, seed, discrete=discrete, config=config, processes=count, cpus=cpus)

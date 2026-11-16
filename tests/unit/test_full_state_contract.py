@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import unfold
 from tests.helpers.stepping import branch_step
 
 NAVIGATION_KEYS = {
@@ -32,7 +33,7 @@ def test_lossy_projection_is_rejected_and_full_state_renders(name):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=4)
         if name in NAVIGATION_KEYS:
-            assert set(state.keys(True, True)) == NAVIGATION_KEYS[name]
+            assert set(unfold(state).keys(True, True)) == NAVIGATION_KEYS[name]
         if name in ("PushT", "PushTDiscrete"):
             rows = env.to_render_state(state)
             assert torch.equal(env.render(state), env.render(rows))

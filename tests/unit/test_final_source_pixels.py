@@ -5,6 +5,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
+from stable_envs import get_field
 from tests.helpers.reference import fetch_pixels
 from tests.helpers.reference.profiles import PROFILES
 from tests.helpers.reference.pusht_pixels import compare_padded_states
@@ -51,16 +52,16 @@ def test_push_history_allows_only_zero_padding():
 def test_push_history_rejects_corruption(corruption):
     expected, actual = history_state(2), history_state(5)
     if corruption == "tail":
-        actual["history", "actions"][0, 4] = 1
+        get_field(actual, "history/actions")[0, 4] = 1
     elif corruption == "length":
-        actual["history", "lengths"][0] = 2
-        actual["history", "valid"][0, 1] = True
+        get_field(actual, "history/lengths")[0] = 2
+        get_field(actual, "history/valid")[0, 1] = True
     elif corruption == "prefix":
-        actual["history", "valid"][0, :2] = torch.tensor([False, True])
+        get_field(actual, "history/valid")[0, :2] = torch.tensor([False, True])
     elif corruption == "content":
-        actual["history", "actions"][0, 0] = 2
+        get_field(actual, "history/actions")[0, 0] = 2
     elif corruption == "dtype":
-        actual["history", "dtypes"][0, 0] = 2
+        get_field(actual, "history/dtypes")[0, 0] = 2
     else:
         actual["position"][0] = 1
     with pytest.raises(AssertionError):

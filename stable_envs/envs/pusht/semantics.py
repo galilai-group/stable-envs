@@ -7,6 +7,9 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from ... import tuning
+from ..._core.state_schema import schema_of
+from ..._execution import host_render
+from ..._execution.backends import Rungs
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, _require_extra, register
@@ -15,22 +18,27 @@ from ...specs import CompositeSpec, Spec
 from . import legacy
 
 
-def _to_host(tensors):
-    """Copy ``{key: tensor}`` to host tensors with one transfer per dtype."""
+def _host_arrays(tensors):
+    """``{key: NumPy array}`` of ``{key: tensor}``, with one transfer per dtype from a device."""
     if not any(value.device.type != "cpu" for value in tensors.values()):
-        return dict(tensors)
+        return {key: value.numpy() for key, value in tensors.items()}
     groups = {}
     for key, value in tensors.items():
         groups.setdefault(value.dtype, []).append(key)
     host = {}
     for keys in groups.values():
-        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu()
+        flat = torch.cat([tensors[key].reshape(-1) for key in keys]).cpu().numpy()
         offset = 0
         for key in keys:
             size = tensors[key].numel()
-            host[key] = flat[offset : offset + size].view(tensors[key].shape)
+            host[key] = flat[offset : offset + size].reshape(tensors[key].shape)
             offset += size
     return {key: host[key] for key in tensors}
+
+
+def _host_blocks(blocks):
+    """``{key: NumPy array}`` of ``{key: tensor}``, with one transfer per tensor on a device."""
+    return {key: (value if value.device.type == "cpu" else value.cpu()).numpy() for key, value in blocks.items()}
 
 
 def _finite(arrays):
@@ -47,12 +55,18 @@ def _finite(arrays):
     return all(np.isfinite(np.concatenate(parts)).all() for parts in small.values())
 
 
+def _children(node):
+    """The ``{name: child}`` of a TensorDict node, or None for a leaf."""
+    if type(node) is TensorDict:
+        return node._tensordict
+    return dict(node.items()) if isinstance(node, TensorDictBase) else None
+
+
 def _lookup(nodes, key):
     """``state.get(key, None)`` through ``nodes``: the children of each nested TensorDict already reached."""
     parent = key[:-1]
     if parent not in nodes:
-        node = _lookup(nodes, parent)
-        nodes[parent] = dict(node.items()) if isinstance(node, TensorDictBase) else None
+        nodes[parent] = _children(_lookup(nodes, parent))
     children = nodes[parent]
     return None if children is None else children.get(key[-1])
 
@@ -104,6 +118,12 @@ def _drawn(key):
     return key in DRAWN_LEAVES
 
 
+#: Shipped CUDA render switch point of PushT and PushTDiscrete: the smallest batch that draws with the Triton
+#: rasterizer; smaller batches draw with the Numba rasterizer on the CPU and move the frames to CUDA in one copy. Both
+#: draw the same bytes as pygame. docs/performance-tuning.md (Renderers) says how the shipped value was measured.
+CUDA_RENDER_MIN_ROWS: int | None = 32  # RTX 3090 64, RTX A5000 32
+
+
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric state.
 
@@ -114,6 +134,9 @@ class PushT(Env):
     """
 
     family = domain = "pusht"
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("numba", "triton", "jax")
+    state_solver_caches = ("current/jax",)
     name = "push-t"
     reference_id = "swm/PushT-v1"
     default_size = 224
@@ -122,6 +145,7 @@ class PushT(Env):
     #: Every step returns new reward, success, terminated and truncated tensors.
     _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
+    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
@@ -149,17 +173,20 @@ class PushT(Env):
         *,
         render_action=False,
         with_target=True,
-        simulation_backend=None,
-        triton_min_envs=None,
+        simulation_backend="auto",
     ):
-        """``simulation_backend=None`` steps Triton physics on CUDA and Numba physics on CPU.
+        """Select the physics backend.
+
+        ``simulation_backend="auto"`` steps Numba physics on CPU. On CUDA it steps small batches with Numba and
+        large ones with Triton, from the ``large_backend_min_envs`` switch point.
 
         ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
-        CPU and returns CUDA tensors. ``"auto"`` steps CUDA batches smaller than ``triton_min_envs`` with Numba.
+        CPU and returns CUDA tensors.
         """
         _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
-        from .simulation.execution import TRITON_MIN_ENVS, make_pusht_adapter, pusht_backend
+        from .simulation.execution import PATH as SIMULATION_PATH
+        from .simulation.execution import make_pusht_adapter, pusht_backend
 
         if backend not in ("auto", "source", "pygame"):
             raise ValueError("PushT backend must be 'auto' or 'source' (pygame)")
@@ -167,14 +194,17 @@ class PushT(Env):
         if supersample != 1:
             raise ValueError("The source PushT renderer has no supersample setting")
         device = torch.device(Env.resolve_device(device))
-        triton_min_envs = TRITON_MIN_ENVS if triton_min_envs is None else triton_min_envs
-        self.simulation_backend = pusht_backend(num_envs, device, simulation_backend, triton_min_envs)
+        resolution = self.default_size if size is None else size
+        config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
+        self.simulation_backend = pusht_backend(
+            num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
+        )
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
+        self.simulation_backend_path = SIMULATION_PATH
         # CPU batches step on Numba threads.
         self.native_step_threads = self.simulation_backend == "numba"
         # CPU renders return new storage.
         self._frames_owned = device.type == "cpu"
-        resolution = self.default_size if size is None else size
         if render_action and resolution < 96:
             raise ValueError("Source PushT action markers require size >= 96")
         self._simulator = make_pusht_adapter(
@@ -182,7 +212,7 @@ class PushT(Env):
             device,
             seed,
             discrete=self.discrete,
-            config=dict(resolution=resolution, render_action=render_action, with_target=with_target),
+            config=config,
             simulation_backend=self.simulation_backend,
         )
         self._projection = PushTProjection()
@@ -249,6 +279,32 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
+    def _host_step(self, actions, move):
+        """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.
+
+        For an accelerator the action history moves at the width of its buffers, so the leaf shapes, and the
+        transfer plan that ``move`` keeps for them, stay the same from step to step; the result is cut to the
+        history width without a copy.
+        """
+        host = getattr(self._simulator, "host_adapter", self._simulator)
+        step = getattr(host, "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        moved = self.device.type != "cpu"
+        leaves = step(actions.cpu() if torch.is_tensor(actions) else actions, capacity=moved)
+        if leaves is None:
+            return None
+        result = move(leaves)[0]
+        if moved:
+            width = host.history_width()
+            for node, axes in (("state", (slice(None),)), ("states", (slice(None), slice(None)))):
+                history = result.get((node, "history"), None)
+                if history is not None:
+                    for name in ("actions", "dtypes", "valid"):
+                        history.set(name, history.get(name)[(*axes, slice(0, width))])
+        return result
+
     def _advance_without_snapshot(self, actions, *, active=None):
         return self._simulator.step(actions, active=active, capture_state=False)
 
@@ -256,6 +312,13 @@ class PushT(Env):
         return step_pipeline(self._simulator)
 
     def _render_live(self):
+        if self.device.type == "cuda" and self._cpu_port(self.size, self.B):
+            # A host simulator's fields stay on the host for the CPU renderer.
+            live = getattr(self._simulator, "host_adapter", self._simulator).render_fields()
+            keys = ["/".join(key) for key, _, _ in self._render_fields]
+            devices = {k: live[k] for k in keys if torch.is_tensor(live[k])}
+            host = _host_arrays(devices)
+            return self._draw_cpu({k: host[k] if k in host else live[k] for k in keys}, self.size)
         if self._rasterizes(self.size):
             from . import raster
 
@@ -359,14 +422,24 @@ class PushT(Env):
         """Return an owned, history-free copy of the state fields the CPU renderer reads."""
         state = self.get_state() if state is None else state
         self._render_fields_of(state)
-        return state.select(*(key for key, _, _ in self._render_fields)).clone()
+        groups = schema_of(state)
+        if groups is None:
+            return state.select(*(key for key, _, _ in self._render_fields)).clone()
+        drawn = {groups.slices["/".join(key)].group for key, _, _ in self._render_fields}
+        return state.select(*(tuple(key.split("/")) for key in sorted(drawn))).clone()
 
     def _render_fields_of(self, state, on_device=False):
         self._check_open("to_render_state")
         state = self.get_state() if state is None else state
         if not isinstance(state, TensorDict) or len(state.batch_size) != 1 or not state.batch_size[0]:
             raise ValueError("PushT render requires a nonempty State batch")
-        selected, error, nodes = {}, None, {(): dict(state.items())}
+        groups = schema_of(state)
+        if groups is not None:
+            return self._folded_render_fields(state, groups, on_device)
+        if ("recipe", "config") not in state.keys(True, True):
+            leaves = sorted("/".join(k if isinstance(k, tuple) else (k,)) for k in state.keys(True, True))
+            raise ValueError(f"PushT render: the State's leaves match no PushT layout: {leaves}")
+        selected, error, nodes = {}, None, {(): _children(state)}
         batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
             value = _lookup(nodes, key)
@@ -383,7 +456,7 @@ class PushT(Env):
                 key = next(k for k, v in selected.items() if v.is_floating_point() and not bool(v.isfinite().all()))
                 raise ValueError(f"Nonfinite PushT render field: {key}")
             return {"/".join(key): value for key, value in selected.items()}
-        fields = {"/".join(key): value.numpy() for key, value in _to_host(selected).items()}
+        fields = {"/".join(key): value for key, value in _host_arrays(selected).items()}
         if not _finite(fields.values()):
             # Fields are checked in order, so an earlier nonfinite field is reported before a later layout error.
             for key, array in fields.items():
@@ -391,6 +464,29 @@ class PushT(Env):
                     raise ValueError(f"Nonfinite PushT render field: {key}")
         if error is not None:
             raise error
+        return fields
+
+    def _folded_render_fields(self, state, groups, on_device):
+        """The render fields of a folded ``state``: views of its groups, as tensors on the device or host arrays."""
+        names = ["/".join(key) for key, _, _ in self._render_fields]
+        missing = next((name for name in names if name not in groups.slices), None)
+        keys = {groups.slices[name].group for name in names if name in groups.slices}
+        absent = next((key for key in keys if state.get(tuple(key.split("/")), None) is None), None)
+        if missing is not None or absent is not None:
+            raise KeyError(missing or absent)
+        blocks = {key: state[tuple(key.split("/"))] for key in keys}
+        if on_device and all(block.is_cuda for block in blocks.values()):
+            fields = groups.views(blocks, names)
+            floats = [value.reshape(-1) for value in fields.values() if value.is_floating_point()]
+            if floats and not bool(torch.isfinite(torch.cat(floats)).all()):
+                key = next(k for k, v in fields.items() if v.is_floating_point() and not bool(v.isfinite().all()))
+                raise ValueError(f"Nonfinite PushT render field: {key}")
+            return fields
+        fields = groups.views(_host_blocks(blocks), names)
+        if not _finite(fields.values()):
+            for key, array in fields.items():
+                if array.dtype.kind == "f" and not np.isfinite(array).all():
+                    raise ValueError(f"Nonfinite PushT render field: {key}")
         return fields
 
     def _render_state_input(self, state, *, size=None, out=None, **options):
@@ -408,18 +504,19 @@ class PushT(Env):
             raise ValueError("PushT render size must be a positive integer")
         if self._simulator.template.config["render_action"] and size < 96:
             raise ValueError("Source PushT action markers require size >= 96")
-        fields = self._render_fields_of(state, on_device=self._rasterizes(size))
-        if self._rasterizes(size):
+        count = int(state.batch_size[0]) if isinstance(state, TensorDictBase) and state.batch_size else self.B
+        cpu = self._cpu_port(size, count)
+        rasterizes = not cpu and self._rasterizes(size)
+        fields = self._render_fields_of(state, on_device=rasterizes)
+        if rasterizes:
             from . import raster
 
             if isinstance(next(iter(fields.values())), torch.Tensor):
                 frames = self._draw_device(fields, size)
             else:
                 frames = raster.render(fields, size, self.device, lambda rows: self._draw_pygame(rows, size))
-        elif self._cpu_port(size):
-            from . import raster
-
-            frames = raster.render_cpu(fields, size, lambda rows: self._draw_pygame(rows, size), out)
+        elif cpu:
+            frames = self._draw_cpu(fields, size, out)
         else:
             frames = torch.as_tensor(self._draw_pygame(fields, size), device=self.device)
         if out is not None:
@@ -445,14 +542,32 @@ class PushT(Env):
 
         return raster.HAVE_TRITON and raster.resize_supported(size)
 
-    def _cpu_port(self, size):
-        """Whether CPU output uses the Numba rasterizer, which draws the same bytes as pygame."""
-        if self.device.type != "cpu" or self._render_backend == "source":
+    def _cpu_port(self, size, count=None):
+        """Whether output uses the Numba rasterizer, which draws the same bytes as pygame.
+
+        It draws every CPU batch, and a CUDA batch of ``count`` frames below the CUDA render switch point.
+        """
+        if self._render_backend == "source":
+            return False
+        if self.device.type != "cpu" and (
+            count is None or not host_render.on_host(self, "pusht-render", count, self._render_backend)
+        ):
             return False
         from ...render import cpu_raster
         from . import raster
 
         return cpu_raster.available() and raster.resize_supported(size)
+
+    def _draw_cpu(self, fields, size, out=None):
+        """Draw host render ``fields`` with the Numba rasterizer; a CUDA env gets the frames in one pinned copy."""
+        from . import raster
+
+        fallback = lambda rows: self._draw_pygame(rows, size)  # noqa: E731
+        if self.device.type == "cpu":
+            return raster.render_cpu(fields, size, fallback, out)
+        count = len(fields["recipe/config"])
+        draw = lambda buffer: raster.render_cpu(fields, size, fallback, buffer)  # noqa: E731
+        return host_render.draw_into((count, size, size, 3), self.device, draw, out)
 
     def _draw_device(self, fields, size):
         """Draw device render fields with primitives built on the GPU."""

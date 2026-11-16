@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -111,6 +112,8 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
 
 def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
     """Describe nonfinite rows and named columns, or return None when all values are finite."""
+    if s.device.type == "cpu" and s.dtype in (torch.float32, torch.float64) and np.isfinite(s.detach().numpy()).all():
+        return None
     bad = ~torch.isfinite(s)
     if not bool(bad.any()):
         return None
@@ -365,6 +368,17 @@ class Env:
     default_size: int = 96
     #: The only ``size`` the class draws, which is the size the source library draws; None draws any size.
     native_size: int | None = None
+    #: ``/``-joined State key prefixes of solver caches, such as contact warm starts, that each simulation backend
+    #: writes its own way: they seed the next solve and are not part of the comparable physical state.
+    state_solver_caches: tuple[str, ...] = ()
+    #: ``(saved, loaded)`` simulation backend pairs whose States don't resume within tolerance on the other backend.
+    #: ``set_state`` doesn't refuse them yet (issue #63); the cross-backend State check expects them to fail.
+    state_backend_mismatches: frozenset[tuple[str, str]] = frozenset()
+    #: Most rows that ``FrameLoader`` draws in one ``render`` call: a batch size at which the family's render rate
+    #: no longer grows. Free device memory can lower it.
+    render_ahead_rows: int = 1024
+    #: The ``select_backend`` path of this environment's physics backend choice; ``stable-envs tune`` times only it.
+    simulation_backend_path: str | None = None
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
@@ -388,6 +402,10 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
+    #: ``{device type: Rungs("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
+    #: ``"cpu"`` entry: on a device whose rungs differ, a batch of fewer than ``min_rows`` frames draws with the CPU
+    #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
+    render_rungs: Mapping[str, Any] | None = None
     #: The rows ``render`` checked for the call in progress; ``_render`` does not check them again.
     _checked_rows: torch.Tensor | None = None
 
@@ -417,6 +435,9 @@ class Env:
         Raises:
             ValueError: If the class requires CUDA and ``device`` is not a CUDA device.
         """
+        from . import tuning
+
+        tuning.refresh()
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
             raise ValueError(
@@ -663,7 +684,18 @@ class Env:
                 f"{type(self).__name__}.render: got {type(rows).__name__}; {reason}. "
                 f"render accepts {self._render_forms()}."
             )
-        return check_states(self, rows, f"{type(self).__name__}.render", leading=True)
+        owner = f"{type(self).__name__}.render"
+        shape = rows.shape if isinstance(rows, (torch.Tensor, np.ndarray)) else None
+        if self.device.type != "cpu" and shape and shape[-1] == self.state_dim > 0:
+            if self._renders_on_host(math.prod(shape) // int(self.state_dim)):
+                # The CPU renderer reads the rows on the host: they stay there, and the scan runs on the host.
+                host = rows.cpu() if torch.is_tensor(rows) else rows
+                return check_states(self, host, owner, leading=True, move=False)
+        return check_states(self, rows, owner, leading=True)
+
+    def _renders_on_host(self, rows: int) -> bool:
+        """Whether ``rows`` frames on this device draw with the CPU renderer of the class."""
+        return False
 
     def _get_render_state(self) -> torch.Tensor:
         """Return a view of live compact rows, excluding unused buffer capacity."""
@@ -878,6 +910,8 @@ class Env:
         """
         B = int(self.B if batch is None else batch)
         variation, style = _split_appearance(variation, style)
+        if isinstance(style, StyleTensor) and not variation:
+            return style.for_batch(B, owner=f"{type(self).__name__}.render")
         if style is None:
             current = self._style.for_batch(B, owner=f"{type(self).__name__}.render")
             if not variation:
@@ -984,9 +1018,12 @@ class Env:
         from ._core.reset_tree import PathSeeder
 
         lanes = []
-        # Seeding replaces the generators that the lane reads, so one tree serves every lane.
-        tree = self.reset_tree_factory()
-        seeder = PathSeeder(tree, [leaf.path for leaf in self.reset_leaves])
+        # Seeding replaces the generators that the lane reads, so one tree serves every lane and every reset.
+        seeder = self.__dict__.get("_reset_seeder")
+        if seeder is None:
+            seeder = PathSeeder(self.reset_tree_factory(), [leaf.path for leaf in self.reset_leaves])
+            self.__dict__["_reset_seeder"] = seeder
+        tree = seeder.tree
         for lane in range(self.B):
             seeder.seed(None if seed is None else int(seed) + lane)
             lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
@@ -1039,12 +1076,13 @@ class Env:
         if layout is None:
             return
         from ._core.physics import state_key
+        from ._core.state_schema import get_field
 
         values = self._style.values.clone()
         cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
         rows = np.empty((self.B, int(sum(layout.widths))))
         for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
-            v = state[state_key(leaf)].detach().to(torch.float64).cpu().reshape(self.B, width)
+            v = get_field(state, "/".join(state_key(leaf))).detach().to(torch.float64).cpu().reshape(self.B, width)
             rows[:, off : off + width] = v.numpy()
             o, _ = cols[leaf]
             values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
@@ -1055,8 +1093,10 @@ class Env:
     def describe(self) -> dict[str, Any]:
         """Return a JSON-friendly dict of the environment's specs and its comparison with the upstream library.
 
-        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``visual_fidelity``,
-        ``visual_note`` and ``reference_versions`` appear only when the class declares them.
+        ``state_fields`` maps each ``/``-joined state key to its shape and dtype. ``simulation_backend`` and
+        ``execution_mode`` name the physics this instance selected; with ``simulation_backend="auto"`` they can
+        differ between machines. ``visual_fidelity``, ``visual_note`` and ``reference_versions`` appear only
+        when the class declares them.
         """
         d = {
             "class_name": type(self).__name__,
@@ -1074,6 +1114,8 @@ class Env:
             "variation_names": list(self.variation_names),
             "reference_id": self.reference_id,
             "variations": self.variation_space.names(),
+            "simulation_backend": getattr(self, "simulation_backend", None),
+            "execution_mode": getattr(self, "execution_mode", None),
         }
         if self.visual_fidelity:
             d["visual_fidelity"] = dict(self.visual_fidelity)
@@ -1382,7 +1424,7 @@ class Env:
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
+    def step(self, actions, *, states=slice(None), frames=slice(-1, None), state: bool = True) -> TensorDict:
         """Advance one action or a sequence of actions per environment.
 
         An environment that finishes mid-sequence holds its last state, and its later task outputs are zero.
@@ -1392,9 +1434,10 @@ class Env:
                 Discrete ``(1,)`` actions also accept ``(B,)``.
             states: Slice over the steps that selects which states to return, or None.
             frames: Slice over the steps that selects which frames to render, or None.
+            state: Return the final state; False skips building it, and ``get_state()`` builds it on demand.
 
         Returns:
-            A TensorDict with batch size ``(B,)``: ``state`` (the final state), the family's task
+            A TensorDict with batch size ``(B,)``: ``state`` (the final state, unless ``state=False``), the family's task
                 outputs such as ``reward`` (``(B, T, ...)`` for a sequence), the ``(B, T)`` ``valid``
                 mask, and the selected ``(B, S)`` ``states`` and ``(B, F, H, W, 3)`` uint8 ``frames``
                 with their ``state_valid`` and ``frame_valid`` masks.
@@ -1403,11 +1446,11 @@ class Env:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
             ValueError: If ``actions`` has the wrong shape, or ``frames`` is set without RGB output.
-            TypeError: If ``states`` or ``frames`` is neither a slice nor None.
+            TypeError: If ``states`` or ``frames`` is neither a slice nor None, or ``state`` is not a bool.
         """
         from ._core.stepping import step
 
-        return step(self, actions, states=states, frames=frames)
+        return step(self, actions, states=states, frames=frames, state=state)
 
     def _step(self, actions) -> TensorDict:
         """Advance one transition per environment without rendering or sequence dispatch."""
@@ -1437,6 +1480,10 @@ class Env:
         closer = getattr(self, "_close", None)
         if callable(closer):
             closer()
+        if "_host_twin" in self.__dict__:
+            from ._execution import host_render
+
+            host_render.close(self)
 
     def __enter__(self) -> Env:
         return self

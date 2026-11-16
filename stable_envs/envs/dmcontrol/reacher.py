@@ -11,6 +11,8 @@ from ._delegated import DelegatedSemantics
 class _ReacherSemantics(DelegatedSemantics):
     """Reacher with native CPU, CUDA MuJoCo Warp or CUDA MJX physics."""
 
+    simulation_backends = ("native", "mjwarp", "mjx")
+
     def make_variation_space(self):
         space = super().make_variation_space()
         space["visibility"]["target"].set_init_value(0)
@@ -29,10 +31,8 @@ class _ReacherSemantics(DelegatedSemantics):
     def _render_fields(self):
         return (("qpos",), ("task", "target_pos"))
 
-    def _pack_render_state(self, state):
-        if not isinstance(state, TensorDict):
-            raise TypeError("Expected full Reacher State")
-        return torch.cat((state["qpos"], state["task", "target_pos"][:, :2]), -1).to(self.device, torch.float32)
+    def _render_spans(self):
+        return (("qpos", 0, 2), ("task/target_pos", 0, 2))
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 4)
@@ -56,7 +56,7 @@ DMCReacher = parity_cell(
 DMCReacher.name = "dmc-reacher"
 DMCReacher.__doc__ = """Reacher with native float64 CPU or float32 MuJoCo Warp/MJX CUDA physics.
 
-On CUDA the default ``simulation_backend=None`` uses MuJoCo Warp at every batch size. ``"auto"`` uses native
-physics below ``mjwarp_min_envs`` (8 by default) and MuJoCo Warp from there. ``"native"``, ``"mjwarp"`` and
-``"mjx"`` select explicitly. ``device`` controls output and rendering.
+On CUDA the default ``simulation_backend="auto"`` uses native physics for small batches and MuJoCo Warp for large
+ones, from the measured ``large_backend_min_envs`` switch point. ``"native"``, ``"mjwarp"`` and ``"mjx"`` select
+explicitly. ``device`` controls output and rendering.
 """

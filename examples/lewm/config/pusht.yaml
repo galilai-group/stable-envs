@@ -7,7 +7,7 @@ env:
   kwargs: {}
   # The dataset column that holds the state rows.
   state_column: state
-  # State leaf <- [start, stop) columns of a state row: agent x, y, block x, y, block angle, agent vx, vy.
+  # State field <- [start, stop) columns of a state row: agent x, y, block x, y, block angle, agent vx, vy.
   leaves:
     - {leaf: current.body.agent.position, columns: [0, 2]}
     - {leaf: current.body.block.position, columns: [2, 4]}

@@ -2,6 +2,39 @@
 
 All notable changes to this project are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking changes
+
+- The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
+- `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
+- The PushT state is folded: its fixed-shape fields are slices of one `(N, size)` leaf for each section and dtype, and the action history keeps its own leaves. The state has about 20 leaves instead of 239, and it leaves out the goal image. Read and write fields with `snv.get_field` and `snv.set_field`.
+- The DM Control state has three leaves: `dmc_<task>/float64`, `dmc_<task>/int64` and `dmc_<task>/bool`, such as `dmc_reacher/float64`. Each field, such as `qpos` or `rng/keys`, is a slice of one of them. Read and write a field with `snv.get_field(state, "qpos")` and `snv.set_field`. States saved before this change do not load.
+- The `OGBCube` and `OGBScene` state has one leaf for each section and dtype, such as `physics/float64`. Each field, such as `physics/qpos` or `physics/mocap_pos`, is a slice of one of them. Read and write a field with `snv.get_field(state, "physics/qpos")` and `snv.set_field`. States saved before this change do not load.
+- The navigation classes fold their state. TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones keep the agent and target positions in one `navigation/float32` leaf, and SimplePointMaze keeps its fields in one `simple_point_maze/<dtype>` leaf for each dtype. Read and write a field with `snv.get_field(state, "agent.position")` and `snv.set_field`.
+- The `torch_min_envs` argument of the classic-control classes, the `numba_cuda_min_envs` argument of `PyFlytRocketLanding` and the `triton_min_envs` argument of `MiniWorldMovingBlockWorld` are removed, with the `NUMPY_MIN_ENVS`, `TORCH_MIN_ENVS`, `NUMBA_CUDA_MIN_ENVS` and `TRITON_MIN_ENVS` constants. `simulation_backend="auto"` is the default of these classes. It uses the switch points that each class ships, or the `large_backend_min_envs` knob and `stable-envs tune`.
+- Classic control with `simulation_backend="torch"` on CUDA resets with Gymnasium on the host. A seed gives Gymnasium's initial states on every backend, and the `rng` state fields hold the PCG64 state instead of a key and a reset count.
+- The classic-control and `MiniWorldMovingBlockWorld` states have one leaf for each dtype, such as `("cartpole", "float64")`, in place of one leaf for each field. `snv.get_field(state, "physics/gravity")` reads a field by name.
+- The `mjwarp_min_envs` argument of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes is removed, with the `MJWARP_MIN_ENVS` and `MAZE_MJWARP_MIN_ENVS` constants. Their default `simulation_backend` is `"auto"`, which uses the `large_backend_min_envs` switch; `"default"` is no longer accepted. The internal `mjbatch.resolve_backend` is replaced by `mjbatch.mujoco_backend`.
+- The state of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes has one tensor for each group of fields instead of one tensor for each field. Read and write a field by name with `stable_envs.get_field(state, name)` and `stable_envs.set_field(state, name, value)`. `state_spec` and `describe()` list the groups.
+
+### Added
+
+- `snv.FrameLoader(env, states, batch_size)` yields the frames of stored States or rows a batch at a time. It draws many batches in one `env.render` call, with a chunk size that it picks from free device memory and caps at the environment's `render_ahead_rows`, so small batches draw at the per-frame cost of a large batch. Each batch has the same bytes as `env.render` of its states, except for `OGBCube` on CUDA, where a few pixels differ by 1 level.
+- `step(..., state=False)` skips building the final state; the result then has no `state` key, and `get_state()` builds the state on demand.
+
+### Changed
+
+- CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
+- With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
+- On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and TwoRoom moves the result of a single step to the device in one copy: the state, the outputs, the `states` and the validity masks. PushT moves the outputs and the state of a single step without frames in one copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
+- On CUDA, a step result that moves from the host reuses the device memory of an earlier result when no tensor uses that result any more. A single step stacks a state whose leaves share one buffer with one copy.
+- TwoRoom and the other classes with reset leaves build their reset sampling tree once per environment, not at each `reset`. On CUDA, a TwoRoom reset moves its state to the device in one copy.
+- A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.
+- With `simulation_backend="auto"` on CUDA, PushT steps batches of fewer than 128 environments with Numba on the CPU and moves the outputs and the state of each step to the device, and larger batches with Triton.
+- PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
+- On CUDA, the `mujoco.batch` physics of Fetch, MS-Human and Roadster moves the outputs and the state of a step to the device in one copy. MS-Human converts the state to float32 before the copy.
+
 ## [0.1.0] - 2026-11-13
 
 First public release.

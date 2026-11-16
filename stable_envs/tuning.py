@@ -23,7 +23,20 @@ from ._core import environ as _environ
 from ._core.cache import cache_dir as _cache_dir
 from ._core.config import log as _log
 
-__all__ = ["Knob", "KNOBS", "RENDER_PATHS", "get", "set", "reset", "override", "describe", "cache_path"]
+__all__ = [
+    "Knob",
+    "KNOBS",
+    "RENDER_PATHS",
+    "get",
+    "set",
+    "reset",
+    "override",
+    "describe",
+    "cache_path",
+    "simulation_paths",
+    "render_paths",
+    "time_backend",
+]
 
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
 HINT_LANES = 256
@@ -140,6 +153,8 @@ KNOBS: dict[str, Knob] = {
     k.name: k
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
+        Knob("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
+        Knob("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
@@ -149,6 +164,7 @@ KNOBS: dict[str, Knob] = {
         Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
         Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
         Knob("dmc_ray_budget", 1 << 24, ("dmc-suite",), "cuda", "pow2", "rays", "Rays per CUDA render chunk of fixed-camera DMC cells.", _cuda_rays),
+        Knob("dmc_graph_rows", 48, ("dmc-suite",), "cuda", "n", "rows", "Most rows of a fixed-camera DMC CUDA render chunk that replay one captured graph; larger chunks launch kernels and draw only the rays movers reach."),
         Knob("dmc_launch_rays", 256 * 224 * 224, ("dmc-trackcom",), "cuda", "n", "rays", "Rays per MJWarp launch of DMC TrackCom cells."),
         Knob("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
         Knob("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),
@@ -176,8 +192,8 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-render", "rocket-sim"),
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
-    "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
-    "miniworld": ("miniworld-render",),
+    "classic_control": ("gfxdraw", "classic-render", "classic-sim", "classic-cpu"),
+    "miniworld": ("miniworld-render", "miniworld-sim"),
     "roadster": ("roadster-render",),
 }
 
@@ -233,7 +249,7 @@ def _cuda() -> bool:
 
 
 def _dev(device) -> str | None:
-    """Return ``"cpu"`` or ``"cuda:<index>"`` for ``device``, or None for CUDA when it is unavailable."""
+    """Return ``"cpu"`` or ``"cuda:<index>"`` for ``device``; None for a CUDA device this host doesn't have."""
     if not str(device).startswith("cuda"):
         return "cpu"
     if not _cuda():
@@ -241,6 +257,8 @@ def _dev(device) -> str | None:
     import torch
 
     index = torch.device(device).index
+    if index is not None and index >= torch.cuda.device_count():
+        return None
     return f"cuda:{torch.cuda.current_device() if index is None else index}"
 
 
@@ -257,7 +275,15 @@ def stamp(device: str) -> dict[str, str]:
 
     cuda = device.startswith("cuda")
     name = torch.cuda.get_device_name(torch.device(device)) if cuda else _cpu_name()
-    return {"device": name, "driver": _driver() if cuda else "", "cpu": _cpu_name(), "stable_envs": __version__}
+    from ._core.cpus import cpu_limit
+
+    return {
+        "device": name,
+        "driver": _driver() if cuda else "",
+        "cpu": _cpu_name(),
+        "cpus": str(cpu_limit()),
+        "stable_envs": __version__,
+    }
 
 
 @cache
@@ -282,6 +308,15 @@ def cache_path(device="cpu") -> Path | None:
     where = _dev(device)
     if where is None:
         return None
+    return _cache_file(where, os.environ.get("XDG_CACHE_HOME", ""))
+
+
+@cache
+def _cache_file(where: str, base: str) -> Path:
+    """The cache file of ``where`` while ``$XDG_CACHE_HOME`` is ``base``.
+
+    One Path per pair, so that each ``read_cache`` call reuses its string form.
+    """
     slug = re.sub(r"[^a-z0-9._-]+", "-", stamp(where)["device"].lower()).strip("-") or "device"
     return _cache_dir() / "tuning" / f"{slug}.json"
 
@@ -303,31 +338,57 @@ def entry_key(path: str, size: int, batch: int) -> str:
     return "{}|{}|{}-{}".format(path, int(size), *batch_range(batch))
 
 
-_files: dict[Path, tuple[float, dict, bool]] = {}
+_files: dict[Path, tuple[int, float | None, dict, bool]] = {}
+#: Bumped by ``write_cache``, ``set``, ``reset``, ``override`` and ``refresh``. ``read_cache`` reads a file again only
+#: after a bump, so a lookup on the step or render path costs no file system call.
+_generation = 0
+
+
+def _bump() -> None:
+    global _generation
+    _generation += 1
+
+
+def refresh() -> None:
+    """Read the cache files again at their next use. Building an environment calls it."""
+    _bump()
 
 
 def read_cache(device="cpu") -> tuple[dict, bool]:
     """Return the cache file of ``device`` and whether it is current (same device, driver, CPU and version).
 
+    The file is read again only after ``refresh`` or a change of knobs in this process. A file that another process
+    writes is read when this process builds its next environment.
+
     Args:
         device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
     """
     path = cache_path(device)
+    if path is None:
+        return {}, False
+    generation = _generation
+    hit = _files.get(path)
+    if hit is not None and hit[0] == generation:
+        return hit[2], hit[3]
     try:
         mtime = path.stat().st_mtime
-    except (OSError, AttributeError):
-        return {}, False
-    hit = _files.get(path)
-    if hit is None or hit[0] != mtime:
+    except OSError:
+        mtime = None
+    if mtime is None:
+        data, current = {}, False
+    elif hit is not None and hit[1] == mtime:
+        data, current = hit[2], hit[3]
+    else:
         try:
             data = json.loads(path.read_text())
             data["entries"].items()
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
             warnings.warn(f"ignoring tuning cache {path}: {e!r}", RuntimeWarning, stacklevel=2)
             data = {}
-        hit = _files[path] = (mtime, data, bool(data) and data.get("stamp") == stamp(_dev(device)))
-        _log("DEBUG", f"Read the tuning cache {path} (current: {hit[2]}).")
-    return hit[1], hit[2]
+        current = bool(data) and data.get("stamp") == stamp(_dev(device))
+        _log("DEBUG", f"Read the tuning cache {path} (current: {current}).")
+    _files[path] = (generation, mtime, data, current)
+    return data, current
 
 
 def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
@@ -357,6 +418,7 @@ def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
     tmp.write_text(json.dumps({"stamp": stamp(where), "entries": merged}, indent=2, sort_keys=True) + "\n")
     tmp.replace(path)
     _files.pop(path, None)
+    _bump()
     return path
 
 
@@ -411,6 +473,18 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
     return (knob.fallback, "fallback") if default is _MISSING else (default, "default")
 
 
+def sources_state(name: str, device=None) -> tuple:
+    """Return a value that changes whenever a source of knob ``name`` on ``device`` may change.
+
+    The sources are the ``override`` blocks of this thread, ``set``, the environment variable and the cache file,
+    which ``read_cache`` reads again only after a bump of the knob generation. Callers keep a choice they made from
+    the knob while this value stays equal. It calls no ``stat``.
+    """
+    knob = KNOBS[name]
+    where = _where(knob, device)
+    return (_scopes.get(), _generation, os.environ.get(knob.env_var), None if where is None else cache_path(where))
+
+
 def get(
     name: str,
     *,
@@ -446,12 +520,14 @@ def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.se
             _set.pop(name, None)
         else:
             _set[name] = value
+    _bump()
     return dict(_set)
 
 
 def reset() -> None:
     """Clear every knob set with ``set``."""
     _set.clear()
+    _bump()
 
 
 @contextlib.contextmanager
@@ -465,10 +541,12 @@ def override(**knobs: int) -> Iterator[None]:
     """
     values = {k: v for k, v in check(knobs).items() if v is not None}
     token = _scopes.set((*_scopes.get(), values))
+    _bump()
     try:
         yield
     finally:
         _scopes.reset(token)
+        _bump()
 
 
 def describe(**where) -> dict[str, tuple[int | None, str]]:
@@ -554,9 +632,52 @@ def autotune(name: str, size: int, batch: int, device: str) -> None:
 
 
 def _clear_caches() -> None:
+    _bump()
     _files.clear()
     _derived.clear()
     _noticed.clear()
     _cuda.cache_clear()
     stamp.cache_clear()
+    _cache_file.cache_clear()
     _environ._parsed.cache_clear()
+
+
+def simulation_paths(device="cuda"):
+    """Return ``(path, backends, measure)`` of the simulation paths selected for in this process on ``device``.
+
+    Environments built in this process register them; ``backends`` has the ``small`` and ``large`` backend names.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import registered
+
+    return registered(device)
+
+
+def render_paths(device="cuda"):
+    """Return ``(path, renderers, measure)`` of the render paths that drew in this process on ``device``.
+
+    Classes with a CPU and a GPU renderer register them when they draw; ``renderers`` has the ``small`` (CPU) and
+    ``large`` renderer names, and ``time_backend`` times either one.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import RENDER_KNOB, registered
+
+    return registered(device, knob=RENDER_KNOB)
+
+
+def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:
+    """Seconds per step call of ``backend`` with ``num_envs`` environments, as ``stable-envs tune`` times it.
+
+    Args:
+        measure: The ``measure`` of a ``simulation_paths`` entry.
+        backend: A backend name of that entry.
+        num_envs: Number of environments.
+        device: Device of the outputs.
+    """
+    from ._execution.backends import time_backend as timed
+
+    return timed(measure, backend, num_envs, device)

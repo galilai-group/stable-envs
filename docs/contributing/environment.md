@@ -93,6 +93,45 @@ Validate before changing any batch row: missing or extra keys, batch shape, dtyp
 
 Reset seeding follows the upstream library. Some upstream libraries reseed with fresh entropy on `reset(seed=None)` instead of continuing a single generator. State and the reset anchors must capture everything a replay you promise depends on.
 
+### Exporting state
+
+Build the state snapshot with `stable_envs._core.state_layout.StateLayout` instead of a TensorDict per call. Declare the leaves once, as `(key, per-row shape, dtype)` in state order, with keys as tuples of names or as names joined by `/`. `export(values, device)` copies the current `{key: (B, ...) value}` into one new buffer per dtype, moves the buffers to an accelerator in one copy when the values are on the host, and returns a TensorDict whose leaves are views of those buffers. The returned state owns its memory. Name the leaves that change only on reset, restore or a variation change in `static=`, and call `load_static(values)` after each of those events: each export then copies them with one copy per dtype. `columns(state)` reads a state back and checks each leaf's shape and dtype. `host_leaves(values, prefix)` returns the leaves as host arrays with the declared shapes and dtypes. If your CPU physics also serves an accelerator, define `_host_step(actions, move)` on the environment: return None when the environment steps on the device; otherwise step on the host, call `move({key path: array})` with the state under `"state"` and the task outputs, and return the step result that `move` gives first. `move` copies the state, the outputs and the step bookkeeping to the device in one copy.
+
+```python
+layout = StateLayout([("qpos", (nq,), torch.float64), ("task/target", (3,), torch.float64)], num_envs)
+state = layout.export({"qpos": qpos, "task/target": target}, device)
+```
+
+### Folding state into groups
+
+A state with many small leaves costs one tensor and one TensorDict node for each leaf on each export, slice, copy and device move. To prevent this cost, declare a `StateSchema` from `stable_envs._core.state_schema`. The schema puts fields of one dtype into one group leaf of shape `(N, size)`. Each named field is a slice of its group. A field whose shape changes between states, such as an action history, stays a leaf of its own (a "kept" field, with group `None`). `STATE.set` replaces a kept field with a value of a new width when the value has as many dimensions as the field. PushT and DM Control use a schema.
+
+1. Declare each field once, in state order, with its name, per-environment shape, dtype and group. By convention, a group path ends in the dtype name.
+2. Keep the live state in the group buffers and write the kernels into them. Make the field views once, when you make the buffers.
+3. Read and write fields by name only: `STATE.get(state, name)` and `STATE.set(state, name, value)` in the family, and `snv.get_field` and `snv.set_field` in code that has only the state. `set_state` calls `STATE.validate(state)` first. The validation names a missing group, a wrong shape or a wrong dtype.
+4. Add the family and its top-level state keys to `ADOPTED` in `tests/unit/test_state_schema.py`. The test fails on raw leaf indexing, such as `state["physics", "qpos"]`, in the family, its tests and the examples. It is in the core test profile, so run `tests/unit/test_state_schema.py` when you change a family.
+
+```python
+from stable_envs._core.state_schema import Field, StateSchema
+
+STATE = StateSchema(
+    "Reacher",
+    [
+        Field("physics/qpos", (2,), torch.float64, "physics/float64"),
+        Field("physics/qvel", (2,), torch.float64, "physics/float64"),
+        Field("task/target", (2,), torch.float64, "task/float64"),
+        Field("rng/key", (2,), torch.int64, "rng/int64"),
+    ],
+)
+
+live = STATE.new(num_envs, device)  # one zero tensor for each group
+qpos = STATE.get(live, "physics/qpos")  # a view: kernel writes change `live`
+kernel(STATE.buffers(live)["physics/float64"])  # a kernel writes a whole group
+state = live.clone()  # get_state: one copy for each group
+```
+
+To export through `StateLayout`, give it `STATE.leaves()` and export `STATE.pack(values)`, where `values` maps each field name to its `(N, ...)` array. `STATE.fold(values, batch_size)` makes a checked state from named values, and `STATE.unfold(state)` returns a TensorDict with one leaf for each field. `snv.schema_of(state)` finds the schema from the group leaves of a state, so a state needs no extra metadata. Batch indexing, slicing, `torch.stack`, `torch.cat`, `clone` and `.to(device)` are usual TensorDict operations on a folded state, and `get_field` reads the result.
+
 ### Running in worker processes
 
 To run a backend in worker processes, subclass `stable_envs._execution.process.ProcessAdapter`. The local adapter must accept `step(actions, *, active=None, capture_state=True)`, and its `validate(state)` must leave every batch row unchanged. `stable_envs/_execution/README.md` gives the full contract.

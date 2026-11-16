@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from stable_envs import get_field, tuning
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import (
     COMPILED,
@@ -35,6 +36,12 @@ def _node(env, path):
     for part in path.split("."):
         node = node[part]
     return node
+
+
+def _make(family, seed):
+    """An env whose OGBench objects stay in this process, where the gate reads them."""
+    with tuning.override(worker_min_lanes=LANES + 1):
+        return CLASSES[family](num_envs=LANES, seed=seed)
 
 
 def _lane(value, lane, path, env):
@@ -86,7 +93,7 @@ def _reset_refs(refs, seed, options):
 def _case(family, seed, options, oracle):
     refs = _refs(family, seed, oracle)
     try:
-        with CLASSES[family](num_envs=LANES, seed=seed) as env:
+        with _make(family, seed) as env:
             state = env.reset(seed=seed, options=options)
             _reset_refs(refs, seed, options)
             _compare(env, refs, oracle)
@@ -106,7 +113,7 @@ def reset_options_gate(family, seed=31) -> dict:
         sampled.append("lock_color")
     state = _case(family, seed, {"task_id": 2, "variation": sampled}, oracle)
     for path in sampled:
-        drawn = state["variation", "current", path].reshape(LANES, -1)
+        drawn = get_field(state, f"variation.current.{path}").reshape(LANES, -1)
         assert len({tuple(row.tolist()) for row in drawn}) == LANES, path
     evidence["sampled"] = sorted(sampled)
 
@@ -180,7 +187,7 @@ def set_variation_gate(family, seed=37) -> dict:
     rng = np.random.default_rng(seed)
     refs = _refs(family, seed, oracle)
     try:
-        with CLASSES[family](num_envs=LANES, seed=seed) as env:
+        with _make(family, seed) as env:
             env.reset(seed=seed, options={"task_id": 2})
             _reset_refs(refs, seed, {"task_id": 2})
             for action in rng.uniform(-1, 1, (3, LANES, 5)):
@@ -195,11 +202,12 @@ def set_variation_gate(family, seed=37) -> dict:
             immediate = [k for k in values if k not in ("agent.color", "agent.ee_start_position")]
             for path in immediate:
                 want = torch.as_tensor(np.stack([_lane(values[path], i, path, refs[i]) for i in range(LANES)]))
-                assert torch.equal(state["variation", "current", path].cpu(), want), path
+                assert torch.equal(get_field(state, f"variation.current.{path}").cpu(), want), path
                 if path in COMPILED:
-                    assert torch.equal(state["model", "compiled", path].cpu(), want), path
+                    assert torch.equal(get_field(state, f"model.compiled.{path}").cpu(), want), path
             for path in ("agent.color", "agent.ee_start_position"):
-                assert torch.equal(state["variation", "current", path], before["variation", "current", path])
+                name = f"variation.current.{path}"
+                assert torch.equal(get_field(state, name), get_field(before, name))
             for name in ("physics", "controller", "task", "rng"):
                 for key in before[name].keys(True, True):
                     assert torch.equal(state[name][key], before[name][key]), (name, key)

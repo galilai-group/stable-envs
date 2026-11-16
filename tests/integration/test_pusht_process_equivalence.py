@@ -7,6 +7,7 @@ import torch
 pytest.importorskip("pymunk")
 
 import stable_envs as se  # noqa: E402
+from stable_envs import get_field
 from stable_envs.envs.pusht.simulation import execution  # noqa: E402
 from stable_envs.envs.pusht.simulation.numba_batch import PushTNumbaAdapter  # noqa: E402
 from stable_envs.envs.pusht.simulation.process import PushTProcessAdapter  # noqa: E402
@@ -46,8 +47,8 @@ def test_invalid_last_lane_restores_no_lane():
         adapter.step(np.full((4, 2), 0.5), active=np.array([True, False, True, True]))
 
         def corrupt(state):
-            state["current", "body", "block", "position"][0, 0] += 1
-            state["recipe", "version"][-1] += 1
+            get_field(state, "current/body/block/position")[0, 0] += 1
+            get_field(state, "recipe/version")[-1] += 1
             return state
 
         assert_atomic_restore(adapter, corrupt, ValueError, lambda a: a.step(np.zeros((4, 2))))

@@ -22,53 +22,10 @@
  },
  "state": [
   {
-   "key": "qpos",
-   "shape": [23],
-   "dtype": "float64"
-  },
-  {
-   "key": "qvel",
-   "shape": [22],
-   "dtype": "float64"
-  },
-  {
-   "key": "time",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "warmstart",
-   "shape": [22],
-   "dtype": "float64"
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 2,
-   "numel": 2,
-   "dtypes": ["bool", "int64"]
-  },
-  {
-   "key": "task",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 4,
-   "numel": 627,
+   "key": "dmc_quadruped",
+   "leaves": 3,
+   "numel": 716,
    "dtypes": ["bool", "float64", "int64"]
-  },
-  {
-   "key": "activation",
-   "shape": [12],
-   "dtype": "float64"
-  },
-  {
-   "key": "physics",
-   "leaves": 6,
-   "numel": 6,
-   "dtypes": ["float64"]
   }
  ],
  "variation": [

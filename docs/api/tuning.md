@@ -16,7 +16,7 @@ print(snv.tuning.describe()["nav_render_chunk"])        # (256, 'fallback')
 
 ## How a value is chosen
 
-The library reads a knob each time it does the work, and a change applies to the next call. `workers`, `worker_min_lanes`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
+The library reads a knob each time it does the work, and a change applies to the next call. `large_backend_min_envs` is read when the environment selects its physics backend, and `large_renderer_min_rows` each time it draws. `workers`, `worker_min_lanes`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
 
 | Source | Set by |
 |---|---|
@@ -46,6 +46,8 @@ Values are ints, and "batch rows" means the batch rows of one call. Each hardwar
 | Knob | Type | Fallback | Derived default | What it controls |
 |---|---|---|---|---|
 | `workers` | int (0 or more) | 8 | min(value, CPUs in the process affinity, batch rows) | Most worker processes of a CPU simulator batch, of a PushT, `OGBCube` or `OGBScene` reset, or of a PushT render, on Linux. The value 0 steps and resets every batch row, and draws every PushT frame, in the main process, except that a `PyFlytRocketLanding` batch of more than 1022 environments always uses processes. |
+| `large_backend_min_envs` | int | none | shipped per class | Smallest batch that steps on the large-batch simulation backend with `simulation_backend="auto"`, for the classes that select their backend with it (see [Physics backends](../performance-tuning.md#physics-backends)). Without a set value, `stable-envs tune` measures it per simulation path and batch range; untuned, each class uses the value it ships. |
+| `large_renderer_min_rows` | int | none | shipped per class | Smallest render batch that draws with the CUDA renderer, for the classes that have a CPU and a CUDA renderer (see [Renderers](../performance-tuning.md#renderers)). Smaller batches draw on the CPU and move to the device in one copy. Without a set value, `stable-envs tune` measures it per render path and batch range; untuned, each class uses the value it ships. |
 | `worker_min_lanes` | int | 64 | none | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered states that uses render workers. |
 | `worker_timeout` | int | 120 | none | Seconds that a CPU simulator worker can take to answer one request before the batch fails. A worker can take up to the larger of this value and 300 seconds to start. Set a larger value for environments whose reset or step takes minutes in one worker, for example with `snv.tuning.set(worker_timeout=600)`. |
 | `fetch_threads` | int | 4 | min(value, CPUs in the process affinity, batch rows) | Most simulator threads of an in-process Fetch batch with `simulation_backend="source"`. |
@@ -53,6 +55,7 @@ Values are ints, and "batch rows" means the batch rows of one call. Each hardwar
 | `cpu3d_chunk` | int | 16 | none (body-tracking classes use a per-class table) | Frames per chunk of the Torch CPU ray caster (`cpu3d`, `backend="torch"`). The Numba kernel draws all frames in one call. The fallback was measured on a Xeon Platinum 8268. |
 | `dmc_cpu_ray_budget` | int, power of two | 2^21 | 2^21 × L3 size / 35.75 MiB, rounded to a power of two, in [2^18, 2^21] | Rays per CPU render chunk of the fixed-camera DM Control classes, counting supersamples. |
 | `dmc_ray_budget` | int, power of two | 2^24 | min(2^24, free GPU memory / 512), rounded down to a power of two | Rays per CUDA render chunk of the fixed-camera DM Control classes. |
+| `dmc_graph_rows` | int | 48 | none | Most rows of a CUDA render chunk of the fixed-camera DM Control classes that replay one captured CUDA graph. The graph draws every ray and launches once. A larger chunk launches each kernel and draws only the rays that the movers can reach. The frames are the same. |
 | `dmc_launch_rays` | int | 256 × 224 × 224 | none | Rays per MJWarp launch of the DM Control body-tracking classes and of the DM Control `backend="mjwarp"` renderer. This value sets the worlds per launch: at most 256, unless `dmc_min_worlds` is larger. The `worlds` render option overrides it. |
 | `dmc_min_worlds` | int, power of two | 64 | none | Fewest worlds per MJWarp launch of the DM Control body-tracking classes and of the DM Control `backend="mjwarp"` renderer. |
 | `fetch_mjw_worlds` | int, power of two | 256 | none | Most worlds per MJWarp launch of the Fetch classes. |
@@ -93,6 +96,16 @@ print(snv.tuning.RENDER_PATHS["navigation"])    # ('navigation', 'raster2d')
 ::: stable_envs.tuning.describe
 
 ::: stable_envs.tuning.cache_path
+
+## Time simulation backends and renderers
+
+`stable-envs tune` times the simulation backends and the renderers of the environment it tunes. `benchmarks/backend_switch.py` uses these functions to time them over a range of batch sizes.
+
+::: stable_envs.tuning.simulation_paths
+
+::: stable_envs.tuning.render_paths
+
+::: stable_envs.tuning.time_backend
 
 ## Knob definitions
 

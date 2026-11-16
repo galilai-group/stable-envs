@@ -8,6 +8,7 @@ import torch
 
 pytest.importorskip("ogbench")
 
+from stable_envs import get_field
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import ARM_START
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -112,8 +113,8 @@ def test_public_env_state_follows_ogbench(family):
                 for lane, ref in enumerate(refs):
                     ref.reset(seed=None if seed is None else seed + lane)
                     qpos = torch.as_tensor(ref.data.qpos)
-                    assert torch.equal(state["physics", "qpos"][lane], qpos)
-                    assert int(state["task", "id"][lane]) == ref.cur_task_id
+                    assert torch.equal(get_field(state, "physics/qpos")[lane], qpos)
+                    assert int(get_field(state, "task/id")[lane]) == ref.cur_task_id
         finally:
             for ref in refs:
                 ref.close()
@@ -127,12 +128,12 @@ def test_a_named_or_configured_arm_start_pins_the_arm(family):
         pinned = a.reset(4, {"variation_values": {ARM_START: start}})
         u = a._simulator.envs[0]
         assert np.allclose(u.data.site_xpos[u._pinch_site_id], start, atol=2e-3)
-        assert not torch.equal(default["physics", "qpos"], pinned["physics", "qpos"])
+        assert not torch.equal(get_field(default, "physics/qpos"), get_field(pinned, "physics/qpos"))
         # The default reset returns to OGBench's sampled start.
         assert_same_state(default, a.reset(4))
         sampled = a.reset(4, {"variation": [ARM_START]})
         assert np.allclose(u.data.site_xpos[u._pinch_site_id], u.variation_space._walk(ARM_START).value, atol=2e-3)
-        assert not torch.equal(default["physics", "qpos"], sampled["physics", "qpos"])
+        assert not torch.equal(get_field(default, "physics/qpos"), get_field(sampled, "physics/qpos"))
         # A configured anchor pins every later reset, and restore carries it.
         a.set_variation({ARM_START: start})
         b.set_state(a.get_state())

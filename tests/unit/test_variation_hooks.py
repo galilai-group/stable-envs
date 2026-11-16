@@ -10,7 +10,9 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from stable_envs._core.physics import GeomMass, ModelField, PhysicsKnobs, state_key
+from stable_envs._core.state_schema import unfold
 
 mujoco = pytest.importorskip("mujoco")
 
@@ -212,9 +214,10 @@ def test_dmc_batch_rejects_a_state_without_its_physics():
 
     adapter = make_batch("cartpole", 2)
     try:
-        stale = adapter.get_state().exclude(state_key("gravity.y"))
+        # A State of one leaf per field, without the gravity.y field.
+        stale = unfold(adapter.get_state()).exclude(state_key("gravity.y"))
         current = adapter.step(np.full((2, 1), 0.4))["state"]
-        with pytest.raises(ValueError, match="does not record the physics"):
+        with pytest.raises(ValueError, match="missing the group"):
             adapter.set_state(stale)
         assert (adapter.get_state() == current).all()
     finally:
@@ -225,7 +228,7 @@ def _gravity(env):
     state = env.get_state()
     sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.lanes.envs])
     style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
-    rows = torch.cat([state["physics", "gravity", axis] for axis in "xyz"], dim=1).numpy()
+    rows = torch.cat([se.get_field(state, f"physics/gravity/{axis}") for axis in "xyz"], dim=1).numpy()
     np.testing.assert_array_equal(rows, sim)
     np.testing.assert_array_equal(style, sim.astype(np.float32))
     return sim
@@ -246,8 +249,8 @@ def test_reset_sets_or_samples_named_physics_and_restores_the_rest(cartpole):
     np.testing.assert_array_equal(_gravity(cartpole)[:, 2:], gz)
     cartpole.reset(seed=1, options={"variation_values": {"gravity.x": [1.25]}})
     np.testing.assert_array_equal(_gravity(cartpole), np.tile([1.25, 0.0, -9.81], (3, 1)))
-    first = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
-    again = cartpole.reset(seed=9, options={"variation": ["gravity.y"]})["physics", "gravity", "y"]
+    first = se.get_field(cartpole.reset(seed=9, options={"variation": ["gravity.y"]}), "physics/gravity/y")
+    again = se.get_field(cartpole.reset(seed=9, options={"variation": ["gravity.y"]}), "physics/gravity/y")
     assert torch.equal(first, again) and len(set(first.reshape(-1).tolist())) == 3
     np.testing.assert_array_equal(_gravity(cartpole)[:, [0, 2]], registered[:, [0, 2]])
     cartpole.reset()
@@ -305,23 +308,25 @@ def test_reset_refuses_leaves_it_cannot_set_on_envs_without_reset_options():
     ],
 )
 def test_classic_state_restores_its_physics_for_the_episode(name, leaf, default, values):
-    key = state_key(leaf.removeprefix("physics."))
+    field = leaf.replace(".", "/")
     with se.make(name, num_envs=2, device="cpu") as env:
         action = torch.full((2, 1), env.action_spec.high, dtype=env.action_spec.dtype)
         env.set_variation({leaf: [default]})
         saved = env.reset(seed=5, options={"variation_values": {leaf: np.asarray([[v] for v in values], np.float32)}})
-        assert saved[key].dtype == torch.float64
-        np.testing.assert_array_equal(saved[key].numpy(), np.float32([[v] for v in values]).astype(np.float64))
+        assert get_field(saved, field).dtype == torch.float64
+        np.testing.assert_array_equal(
+            get_field(saved, field).numpy(), np.float32([[v] for v in values]).astype(np.float64)
+        )
         rollout = [env.step(action, frames=None)["state"] for _ in range(8)]
         plain = env.reset(seed=5)
-        np.testing.assert_array_equal(plain[key].numpy(), np.float32([[default]] * 2).astype(np.float64))
+        np.testing.assert_array_equal(get_field(plain, field).numpy(), np.float32([[default]] * 2).astype(np.float64))
         env.set_state(saved)
         assert env._style[leaf].reshape(-1).tolist() == np.float32(values).tolist()
         for want in rollout:
             assert (env.step(action, frames=None)["state"] == want).all()
-        assert torch.equal(env.reset(seed=5)[key], plain[key])
-        with pytest.raises(ValueError, match="physics it was produced under"):
-            env.set_state(saved.exclude(key))
+        assert torch.equal(get_field(env.reset(seed=5), field), get_field(plain, field))
+        with pytest.raises(ValueError, match="missing the group"):
+            env.set_state(saved.exclude(env._group))
 
 
 @pytest.mark.family("fetch")
@@ -351,10 +356,12 @@ def test_fetch_reset_restores_colors_and_mass():
         assert torch.equal(env.get_variation(), registered)
         np.testing.assert_array_equal(env._simulator.object_mass, mass)
         assert torch.equal(
-            env.get_state()["task", "initial_gripper_xpos"], fresh.get_state()["task", "initial_gripper_xpos"]
+            se.get_field(env.get_state(), "task/initial_gripper_xpos"),
+            se.get_field(fresh.get_state(), "task/initial_gripper_xpos"),
         )
         only_object = {"variation_values": {"object.color": np.array([0.1, 0.2, 0.3])}}
         assert torch.equal(
-            env.reset(seed=2, options=only_object)["qpos"], fresh.reset(seed=2, options=only_object)["qpos"]
+            se.get_field(env.reset(seed=2, options=only_object), "qpos"),
+            se.get_field(fresh.reset(seed=2, options=only_object), "qpos"),
         )
         assert torch.equal(env.get_variation(), fresh.get_variation())

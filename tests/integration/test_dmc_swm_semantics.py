@@ -7,6 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from stable_envs.envs.dmcontrol.simulation.continuation import CONFIG, CONTINUATION_FIELDS
 from stable_envs.envs.dmcontrol.simulation.first_family import FIRST_FAMILY_FIELDS
 from stable_envs.envs.dmcontrol.simulation.humanoid import HUMANOID_FIELDS
@@ -64,8 +65,9 @@ def test_dmc_full_state_semantics(gate):
             assert env.action_spec.shape == (nu(domain),)
             assert env.action_spec.low == -1.0
             assert env.action_spec.high == 1.0
+            state = env.get_state()
             for key, (_, dtype) in fields[domain].items():
-                assert env.state_spec[key].dtype == dtype
+                assert get_field(state, key if isinstance(key, str) else "/".join(key)).dtype == dtype
             env.set_variation({"light.diffuse_scale": [1.1]})
             assert np.array_equal(
                 env._simulator.lanes.envs[0].physics.model.opt.gravity,

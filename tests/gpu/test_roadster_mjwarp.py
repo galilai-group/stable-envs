@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.gpu]
 pytest.importorskip("mujoco_warp")
 
 import stable_envs as snv  # noqa: E402
-from stable_envs.envs.roadster.simulation.execution import MJWARP_MIN_ENVS  # noqa: E402
+from stable_envs import tuning  # noqa: E402
 from stable_envs.envs.roadster.source import GoalExpert, RoadsterPlanEnv  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
@@ -48,14 +48,21 @@ def _first_end(terminated: np.ndarray, success: np.ndarray) -> tuple[int, bool] 
     return None if not hits.size else (int(hits[0]), bool(success[hits[0]]))
 
 
-def test_cuda_batches_route_to_mujoco_warp_and_auto_keeps_small_batches_native():
+def test_cuda_batches_route_by_the_switch_point():
     _require_cuda()
-    with snv.RoadsterTrafficJam(num_envs=2, device="cuda") as env:
-        assert env.simulation_backend == "mjwarp" and env.execution_mode == "MUJOCO_WARP"
-        out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
-        assert out["state"]["sim", "qpos"].device.type == "cuda" and out["reward"].device.type == "cuda"
-    with snv.RoadsterTrafficJam(num_envs=MJWARP_MIN_ENVS - 1, device="cuda", simulation_backend="auto") as env:
-        assert env.simulation_backend == "native" and env.execution_mode == "DELEGATED_CPU"
+    with tuning.override(large_backend_min_envs=2):
+        with snv.RoadsterTrafficJam(num_envs=2, device="cuda") as env:
+            assert env.simulation_backend == "mjwarp" and env.execution_mode == "MUJOCO_WARP"
+            out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
+            assert (
+                snv.get_field(out["state"], "sim/qpos").device.type == "cuda" and out["reward"].device.type == "cuda"
+            )
+        with snv.RoadsterTrafficJam(num_envs=1, device="cuda", simulation_backend="auto") as env:
+            assert env.simulation_backend == "native" and env.execution_mode == "DELEGATED_CPU"
+            out = env.step(torch.zeros(1, 4, device="cuda"), frames=None)
+            assert (
+                snv.get_field(out["state"], "sim/qpos").device.type == "cuda" and out["reward"].device.type == "cuda"
+            )
 
 
 def test_the_native_batch_on_a_cuda_env_steps_as_on_cpu():
@@ -74,7 +81,7 @@ def test_the_native_batch_on_a_cuda_env_steps_as_on_cpu():
 
 def test_an_inactive_environment_holds_its_state_on_mujoco_warp():
     _require_cuda()
-    with snv.RoadsterCarHop(num_envs=3, device="cuda") as env:
+    with snv.RoadsterCarHop(num_envs=3, device="cuda", simulation_backend="mjwarp") as env:
         env.reset(seed=SEED, options={"variation_values": {"weather.wind": [6.0]}})
         for _ in range(3):
             env.step(torch.full((3, 4), 0.3, device="cuda"), frames=None)
@@ -85,7 +92,7 @@ def test_an_inactive_environment_holds_its_state_on_mujoco_warp():
         held = out["state"][1]
         for key in before.keys(True, True):
             assert torch.equal(held[key], before[1][key]), key
-        assert not torch.equal(out["state"]["sim", "qpos"][0], before["sim", "qpos"][0])
+        assert not torch.equal(snv.get_field(out["state"], "sim/qpos")[0], snv.get_field(before, "sim/qpos")[0])
         for key in out.exclude("state").keys(True, True):
             assert not out[key][1].any(), key
 
@@ -119,7 +126,7 @@ def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
         pos, term, success = np.zeros_like(src_pos), np.zeros_like(src_term), np.zeros_like(src_success)
         for t in range(STEPS):
             out = gpu.step(torch.as_tensor(actions[t], device="cuda"))
-            pos[t] = out["state"]["sim", "qpos"][:, :3].cpu().numpy()
+            pos[t] = snv.get_field(out["state"], "sim/qpos")[:, :3].cpu().numpy()
             term[t], success[t] = out["terminated"].cpu().numpy(), out["success"].cpu().numpy()
     finally:
         gpu.close()

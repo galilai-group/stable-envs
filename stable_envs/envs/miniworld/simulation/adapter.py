@@ -9,6 +9,7 @@ are kept for the process.
 
 from __future__ import annotations
 
+import functools
 import math
 import os
 import sys
@@ -16,6 +17,8 @@ import sys
 import numpy as np
 import torch
 from tensordict import TensorDict
+
+from ...._core.state_schema import Field, StateSchema
 
 #: Fork commit the family runs and its reference gate compares against: the head of ``flowm_release``.
 #: The fork's master changes the base palette's "gray" to "grey", which changes the drawn block colors.
@@ -263,26 +266,35 @@ def frame(env) -> np.ndarray:
     return env.render_obs(env.vis_fb)
 
 
-def state_fields(num_blocks: int) -> dict[tuple[str, str], tuple[int, torch.dtype]]:
-    """The state schema: ``{(group, name): (width, dtype)}``."""
+@functools.cache
+def state_schema(num_blocks: int) -> StateSchema:
+    """The State of environments with ``num_blocks`` block slots: one group for each dtype.
+
+    The float64 group holds the agent pose and the blocks' size, position, heading and velocity; the int64 group
+    holds the indices, the generator and the step count; the bool group marks the lane's blocks.
+    """
     f64, i64, m = torch.float64, torch.int64, int(num_blocks)
-    return {
-        ("agent", "pos"): (3, f64),
-        ("agent", "dir"): (1, f64),
-        ("agent", "carrying"): (1, i64),  # index of the carried block, -1 for none
-        ("room", "textures"): (3, i64),  # floor, wall, ceiling: indices into TEXTURES
-        ("blocks", "present"): (m, torch.bool),  # the lane's blocks first; absent slots hold fixed padding
-        ("blocks", "kind"): (m, i64),  # BOX or BALL
-        ("blocks", "color"): (m, i64),  # index into COLORS
-        ("blocks", "texture"): (m, i64),  # index into TEXTURES, -1 for a plain box or a ball
-        ("blocks", "size"): (3 * m, f64),  # box (sx, sy, sz); ball (height, height, height)
-        ("blocks", "pos"): (3 * m, f64),
-        ("blocks", "dir"): (m, f64),
-        ("blocks", "velocity"): (3 * m, f64),
-        ("rng", "seed"): (1, i64),  # the reset draws hash (seed, episode, draw index); see rng.py
-        ("rng", "episode"): (1, i64),
-        ("lifecycle", "elapsed_steps"): (1, i64),
-    }
+    floats, ints, flags = "moving_block_world/float64", "moving_block_world/int64", "moving_block_world/bool"
+    return StateSchema(
+        "MovingBlockWorld",
+        [
+            Field("agent/pos", (3,), f64, floats),
+            Field("agent/dir", (1,), f64, floats),
+            Field("blocks/size", (3 * m,), f64, floats),  # box (sx, sy, sz); ball (height, height, height)
+            Field("blocks/pos", (3 * m,), f64, floats),
+            Field("blocks/dir", (m,), f64, floats),
+            Field("blocks/velocity", (3 * m,), f64, floats),
+            Field("agent/carrying", (1,), i64, ints),  # index of the carried block, -1 for none
+            Field("room/textures", (3,), i64, ints),  # floor, wall, ceiling: indices into TEXTURES
+            Field("blocks/kind", (m,), i64, ints),  # BOX or BALL
+            Field("blocks/color", (m,), i64, ints),  # index into COLORS
+            Field("blocks/texture", (m,), i64, ints),  # index into TEXTURES, -1 for a plain box or a ball
+            Field("rng/seed", (1,), i64, ints),  # the reset draws hash (seed, episode, draw index); see rng.py
+            Field("rng/episode", (1,), i64, ints),
+            Field("lifecycle/elapsed_steps", (1,), i64, ints),
+            Field("blocks/present", (m,), torch.bool, flags),  # the lane's blocks first; absent slots hold padding
+        ],
+    )
 
 
 def _ball_colors() -> dict[int, str]:
@@ -322,23 +334,21 @@ def read_lane(env, num_blocks: int) -> dict:
     room = env.rooms[0]
     carrying = env.agent.carrying
     return {
-        ("agent", "pos"): env.agent.pos,
-        ("agent", "dir"): [env.agent.dir],
-        ("agent", "carrying"): [-1 if carrying is None else blocks.index(carrying)],
-        ("room", "textures"): [
-            TEXTURES.index(n) for n in (room.floor_tex_name, room.wall_tex_name, room.ceil_tex_name)
-        ],
-        ("blocks", "present"): [True] * len(blocks) + [False] * pad,
-        ("blocks", "kind"): kind,
-        ("blocks", "color"): color,
-        ("blocks", "texture"): texture,
-        ("blocks", "size"): size,
-        ("blocks", "pos"): np.concatenate([*(ent.pos for ent in blocks), zeros]),
-        ("blocks", "dir"): [ent.dir for ent in blocks] + [0.0] * pad,
-        ("blocks", "velocity"): np.concatenate([*(ent.velocity for ent in blocks), zeros]),
-        ("rng", "seed"): [0],
-        ("rng", "episode"): [0],
-        ("lifecycle", "elapsed_steps"): [env.step_count],
+        "agent.pos": env.agent.pos,
+        "agent.dir": [env.agent.dir],
+        "agent.carrying": [-1 if carrying is None else blocks.index(carrying)],
+        "room.textures": [TEXTURES.index(n) for n in (room.floor_tex_name, room.wall_tex_name, room.ceil_tex_name)],
+        "blocks.present": [True] * len(blocks) + [False] * pad,
+        "blocks.kind": kind,
+        "blocks.color": color,
+        "blocks.texture": texture,
+        "blocks.size": size,
+        "blocks.pos": np.concatenate([*(ent.pos for ent in blocks), zeros]),
+        "blocks.dir": [ent.dir for ent in blocks] + [0.0] * pad,
+        "blocks.velocity": np.concatenate([*(ent.velocity for ent in blocks), zeros]),
+        "rng.seed": [0],
+        "rng.episode": [0],
+        "lifecycle.elapsed_steps": [env.step_count],
     }
 
 
@@ -347,12 +357,12 @@ def _world(row: dict) -> tuple:
     return tuple(
         tuple(np.asarray(row[key]).reshape(-1).tolist())
         for key in (
-            ("room", "textures"),
-            ("blocks", "present"),
-            ("blocks", "kind"),
-            ("blocks", "color"),
-            ("blocks", "texture"),
-            ("blocks", "size"),
+            "room.textures",
+            "blocks.present",
+            "blocks.kind",
+            "blocks.color",
+            "blocks.texture",
+            "blocks.size",
         )
     )
 
@@ -366,7 +376,7 @@ def build_world(env, row: dict) -> None:
     """
     from miniworld.entity import Agent, Ball, Box
 
-    textures = tuple(int(i) for i in row["room", "textures"])
+    textures = tuple(int(i) for i in row["room.textures"])
     if getattr(env, "_se_room", (None, None))[1] != textures:
         floor, wall, ceil = (TEXTURES[i] for i in textures)
         env.rooms, env.wall_segs = [], []
@@ -382,10 +392,10 @@ def build_world(env, row: dict) -> None:
         set_room(env)
     env.agent = Agent()
     env.entities = [env.agent]
-    sizes = np.asarray(row["blocks", "size"], np.float64).reshape(-1, 3)
-    count = int(np.asarray(row["blocks", "present"]).sum())
+    sizes = np.asarray(row["blocks.size"], np.float64).reshape(-1, 3)
+    count = int(np.asarray(row["blocks.present"]).sum())
     env.num_blocks = count
-    columns = (row["blocks", "kind"], row["blocks", "color"], row["blocks", "texture"], sizes)
+    columns = (row["blocks.kind"], row["blocks.color"], row["blocks.texture"], sizes)
     for kind, color, tex, size in list(zip(*columns))[:count]:
         if int(kind) == BALL:
             ent = Ball(color=COLORS[int(color)], size=float(size[0]))
@@ -403,90 +413,80 @@ def write_lane(env, row: dict) -> None:
     if getattr(env, "_se_world", None) != _world(row):
         build_world(env, row)
     blocks = env.entities[1:]
-    env.agent.pos = np.asarray(row["agent", "pos"], np.float64).copy()
-    env.agent.dir = float(row["agent", "dir"][0])
-    carrying = int(row["agent", "carrying"][0])
+    env.agent.pos = np.asarray(row["agent.pos"], np.float64).copy()
+    env.agent.dir = float(row["agent.dir"][0])
+    carrying = int(row["agent.carrying"][0])
     env.agent.carrying = None if carrying < 0 else blocks[carrying]
-    pos = np.asarray(row["blocks", "pos"], np.float64).reshape(-1, 3)
-    vel = np.asarray(row["blocks", "velocity"], np.float64).reshape(-1, 3)
+    pos = np.asarray(row["blocks.pos"], np.float64).reshape(-1, 3)
+    vel = np.asarray(row["blocks.velocity"], np.float64).reshape(-1, 3)
     for k, ent in enumerate(blocks):
         ent.pos = pos[k].copy()
-        ent.dir = float(row["blocks", "dir"][k])
+        ent.dir = float(row["blocks.dir"][k])
         ent.velocity = vel[k].copy()
-    env.step_count = int(row["lifecycle", "elapsed_steps"][0])
+    env.step_count = int(row["lifecycle.elapsed_steps"][0])
     set_room(env)
 
 
-def validate_state(state, fields: dict, count_range: tuple[int, int], *, batch: int | None = None) -> None:
+def validate_state(state, schema: StateSchema, count_range: tuple[int, int], *, batch: int | None = None) -> None:
     """Require the complete typed schema with consistent values; nothing is changed."""
     if not isinstance(state, TensorDict):
         raise TypeError("Expected a full State TensorDict")
     if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
         raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
-    have, want = set(state.keys(True, True)), set(fields)
-    if have != want:
-        missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
-        raise ValueError(
-            "State keys do not match the MovingBlockWorld schema"
-            + (f"; missing {missing}" if missing else "")
-            + (f"; unexpected {extra}" if extra else "")
-        )
-    n = int(state.batch_size[0])
-    for key, (width, dtype) in fields.items():
-        value = state[key]
-        if tuple(value.shape) != (n, width) or value.dtype != dtype:
-            raise ValueError(
-                f"State field {key!r} must be {dtype} of shape ({n}, {width}), got {value.dtype} {tuple(value.shape)}"
-            )
+    schema.validate(state, finite=True)
     host = state.cpu()
-    for key, (_, dtype) in fields.items():
-        if dtype.is_floating_point and not bool(torch.isfinite(host[key]).all()):
-            raise ValueError(f"State field {key!r} contains non-finite values")
 
-    def within(key, lo, hi):
-        v = host[key]
+    def field(name):
+        return schema.get(host, name)
+
+    def within(name, lo, hi):
+        v = field(name)
         if bool((v < lo).any() or (v > hi).any()):
-            raise ValueError(f"State field {key!r} must lie in [{lo}, {hi}]")
+            raise ValueError(f"State field {name!r} must lie in [{lo}, {hi}]")
 
-    num_blocks = fields["blocks", "present"][0]
-    present = host["blocks", "present"]
+    num_blocks = next(g.size for g in schema.groups.values() if g.dtype == torch.bool)
+    present = field("blocks/present")
     count = present.sum(-1)
     lo, hi = count_range
     if bool((present != (torch.arange(num_blocks) < count[:, None])).any()):
-        raise ValueError("State field ('blocks', 'present') must list an environment's blocks first")
+        raise ValueError("State field 'blocks/present' must list an environment's blocks first")
     if bool(((count < lo) | (count > hi)).any()):
-        raise ValueError(f"State field ('blocks', 'present') must mark between {lo} and {hi} blocks")
-    if bool((host["agent", "carrying"][:, 0] >= count).any()):
-        raise ValueError("State field ('agent', 'carrying') must name a present block or -1")
-    within(("agent", "carrying"), -1, num_blocks - 1)
-    within(("room", "textures"), 0, len(TEXTURES) - 1)
-    within(("blocks", "kind"), BOX, BALL)
-    within(("blocks", "color"), 0, len(COLORS) - 1)
-    within(("blocks", "texture"), -1, len(TEXTURES) - 1)
-    within(("blocks", "size"), np.finfo(np.float64).tiny, np.inf)
-    within(("rng", "episode"), 0, np.iinfo(np.int64).max)
-    within(("lifecycle", "elapsed_steps"), 0, np.iinfo(np.int64).max)
-    if bool(((host["blocks", "kind"] == BALL) & (host["blocks", "texture"] >= 0)).any()):
-        raise ValueError("State field ('blocks', 'texture') must be -1 for a ball")
+        raise ValueError(f"State field 'blocks/present' must mark between {lo} and {hi} blocks")
+    if bool((field("agent/carrying")[:, 0] >= count).any()):
+        raise ValueError("State field 'agent/carrying' must name a present block or -1")
+    within("agent/carrying", -1, num_blocks - 1)
+    within("room/textures", 0, len(TEXTURES) - 1)
+    within("blocks/kind", BOX, BALL)
+    within("blocks/color", 0, len(COLORS) - 1)
+    within("blocks/texture", -1, len(TEXTURES) - 1)
+    within("blocks/size", np.finfo(np.float64).tiny, np.inf)
+    within("rng/episode", 0, np.iinfo(np.int64).max)
+    within("lifecycle/elapsed_steps", 0, np.iinfo(np.int64).max)
+    if bool(((field("blocks/kind") == BALL) & (field("blocks/texture") >= 0)).any()):
+        raise ValueError("State field 'blocks/texture' must be -1 for a ball")
 
 
-def pack_rows(state: TensorDict, fields: dict) -> np.ndarray:
+def pack_rows(state: TensorDict, schema: StateSchema) -> np.ndarray:
     """A validated state as ``(n, D)`` float64 rows for the render workers; every integer field is exact."""
-    return np.concatenate([state[key].detach().cpu().numpy().astype(np.float64) for key in fields], axis=1)
+    return np.concatenate(
+        [state.get(group.path).detach().cpu().numpy().astype(np.float64) for group in schema.groups.values()], axis=1
+    )
 
 
-def unpack_rows(rows: np.ndarray, fields: dict) -> list[dict]:
-    """Inverse of :func:`pack_rows`: one state value dict per row."""
+def unpack_rows(rows: np.ndarray, schema: StateSchema) -> list[dict]:
+    """Inverse of :func:`pack_rows`: one dict of values for each row, keyed by field name with ``.`` joins."""
     lanes, offset = [{} for _ in range(len(rows))], 0
-    for key, (width, dtype) in fields.items():
-        part = rows[:, offset : offset + width]
-        if dtype == torch.bool:
-            part = part > 0.5
-        elif not dtype.is_floating_point:
-            part = np.rint(part).astype(np.int64)
-        for lane, value in zip(lanes, part, strict=True):
-            lane[key] = value
-        offset += width
+    for group in schema.groups.values():
+        block = rows[:, offset : offset + group.size]
+        offset += group.size
+        if group.dtype == torch.bool:
+            block = block > 0.5
+        elif not group.dtype.is_floating_point:
+            block = np.rint(block).astype(np.int64)
+        for field in group.fields:
+            part = block[:, field.start : field.stop]
+            for lane, value in zip(lanes, part, strict=True):
+                lane[field.name.replace("/", ".")] = value
     return lanes
 
 
@@ -509,7 +509,7 @@ class RenderRows:
 
     def __call__(self):
         env = make_source(self.config, self.size)
-        fields = state_fields(int(self.config["num_blocks"][1]))
+        fields = state_schema(int(self.config["num_blocks"][1]))
 
         def draw(rows, frames):
             draw_rows(env, unpack_rows(rows, fields), frames)
@@ -528,5 +528,5 @@ def render_here(config: dict, size: int, rows: np.ndarray) -> np.ndarray:
     if env is None:
         env = _RENDERERS[key] = make_source(config, size)
     out = np.empty((len(rows), int(size), int(size), 3), np.uint8)
-    draw_rows(env, unpack_rows(rows, state_fields(int(config["num_blocks"][1]))), out)
+    draw_rows(env, unpack_rows(rows, state_schema(int(config["num_blocks"][1]))), out)
     return out

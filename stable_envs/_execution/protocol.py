@@ -106,6 +106,10 @@ def step_pipeline(adapter: SimulatorAdapter) -> StepPipeline | None:
     """Return ``adapter`` when it supports submit/receive stepping, else None."""
     cls = type(adapter)
     pipelined = _PIPELINE_TYPES.get(cls)
+    declared = getattr(cls, "pipelined", None)
+    if pipelined is None and declared is not None:
+        # A class that forwards attributes declares the answer.
+        pipelined = _PIPELINE_TYPES[cls] = bool(declared)
     if pipelined is None:
         pipelined = isinstance(adapter, StepPipeline)
         # The answer holds for every instance when the class alone decides it.

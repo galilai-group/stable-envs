@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+from functools import cached_property
+
 import torch
 from tensordict import TensorDict
 
 from ..._core.physics import state_key
+from ..._core.state_schema import StateSchema, get_field, schema_of
 from ..._execution.protocol import StepPipeline, step_pipeline
+from ...env import check_drawn_fields
 from ...spaces import Box, Dict
-from .simulation.execution import dmc_backend, make_dmc_adapter
+from ...specs import CompositeSpec
+from .simulation.execution import dmc_backend, dmc_path, make_dmc_adapter
 from .simulation.factory import ACTION_DIMS, FIELDS, RENDER_KEYS
 from .simulation.physics import LEAVES
+from .simulation.state import field_name, state_schema
 
 
 class DelegatedSemantics:
@@ -16,6 +22,9 @@ class DelegatedSemantics:
 
     The physics variation leaves of the simulator are reset-time leaves and travel in state."""
 
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    state_solver_caches = ("warmstart",)
     action_dtype = torch.float64
     action_low, action_high = -1.0, 1.0
     execution_mode = "AUTO_NATIVE_MJWARP"
@@ -34,16 +43,14 @@ class DelegatedSemantics:
     def _physics_paths(self) -> frozenset[str]:
         return frozenset(leaf.path for leaf in LEAVES.get(self._simulator_key(), ()))
 
-    def __init__(self, *args, simulation_backend=None, mjwarp_min_envs=None, **kwargs):
+    def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``None`` uses native physics on CPU and MuJoCo Warp on CUDA at every batch size. ``"auto"`` uses
-        native physics below ``mjwarp_min_envs`` environments and MuJoCo Warp at or above it on CUDA; the
-        default is the measured cutoff of the task. ``"native"``, ``"mjwarp"`` and (Reacher) ``"mjx"``
-        select explicitly.
+        ``"auto"`` uses native physics on CPU. On CUDA it uses native physics for small batches and MuJoCo Warp for
+        large ones, from the measured ``large_backend_min_envs`` switch point. ``"native"``, ``"mjwarp"`` and
+        (Reacher) ``"mjx"`` select explicitly.
         """
         self.simulation_backend = simulation_backend
-        self.mjwarp_min_envs = mjwarp_min_envs
         super().__init__(*args, **kwargs)
         self._simulator = self._make_simulator()
         self.execution_mode = {"native": "DELEGATED_CPU", "mjx": "JAX_MJX", "mjwarp": "MUJOCO_WARP"}[
@@ -52,12 +59,9 @@ class DelegatedSemantics:
 
     def _make_simulator(self):
         self.simulation_backend = dmc_backend(
-            self._simulator_key(),
-            self.B,
-            self.device,
-            self.simulation_backend,
-            mjwarp_min_envs=self.mjwarp_min_envs,
+            self._simulator_key(), self.B, self.device, self.simulation_backend, env_type=type(self)
         )
+        self.simulation_backend_path = dmc_path(self._simulator_key())
         return make_dmc_adapter(
             self._simulator_key(),
             self.B,
@@ -69,6 +73,40 @@ class DelegatedSemantics:
     @property
     def _resume_fields(self):
         return FIELDS[self._simulator_key()]
+
+    @property
+    def _state_schema(self) -> StateSchema:
+        """The layout of the State: its named fields, folded into one float64, one int64 and one bool group."""
+        return state_schema(self._simulator_key(), self._resume_fields)
+
+    @property
+    def state_spec(self) -> CompositeSpec:
+        """Specs of the State's group leaves, without the batch axis."""
+        return self._state_schema.spec(self.device)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self._state_schema.validate(state, finite=True)
+
+    def _validate_render_state(self, state):
+        fields = self._drawn_fields()
+        if isinstance(state, TensorDict) and schema_of(state) is not None:
+            # The drawn fields of a folded State, so that a missing or broken field the frame doesn't read passes.
+            drawn: dict = {}
+            for key, _ in fields:
+                try:
+                    value = get_field(state, field_name(key))
+                except KeyError:
+                    raise ValueError(f"State is missing {field_name(key)}, which the renderer draws") from None
+                node = drawn
+                for part in key[:-1]:
+                    node = node.setdefault(part, {})
+                node[key[-1]] = value
+            state = TensorDict(drawn, state.batch_size, device=state.device)
+        check_drawn_fields(state, fields)
 
     def make_variation_space(self):
         space = dict(super().make_variation_space().items())
@@ -106,10 +144,37 @@ class DelegatedSemantics:
     def _layout_dtypes(self):
         return {key: dtype for key, (_, dtype) in self._fields().items()}
 
+    def _render_spans(self):
+        """``(field name, start, stop)``: the State columns of each part of the compact render row, in order."""
+        fields = self._fields()
+        return tuple((field_name(key), 0, fields[key][0]) for key in self._render_keys())
+
+    @cached_property
+    def _render_runs(self):
+        """The float64 group path and size, and the ``(start, stop)`` group columns that make the render row."""
+        schema, runs = self._state_schema, []
+        for name, start, stop in self._render_spans():
+            where = schema.slices[name]
+            start, stop = where.start + start, where.start + stop
+            if runs and runs[-1][1] == start:
+                runs[-1][1] = stop
+            else:
+                runs.append([start, stop])
+        group = schema.groups[where.group]
+        return group.path, group.size, tuple(map(tuple, runs))
+
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
             raise TypeError(f"Expected full {self.DOMAIN} State")
-        return torch.cat([state[key] for key in self._render_keys()], dim=1).to(self.device, torch.float32)
+        path, size, runs = self._render_runs
+        group = state.get(path, None)
+        if torch.is_tensor(group) and group.shape[-1] == size:
+            parts = [group[:, start:stop] for start, stop in runs]
+        else:
+            # A render projection holds one leaf per field.
+            parts = [get_field(state, name)[:, start:stop] for name, start, stop in self._render_spans()]
+        rows = parts[0] if len(parts) == 1 else torch.cat(parts, 1)
+        return rows.to(self.device, torch.float32)
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
@@ -141,7 +206,7 @@ class DelegatedSemantics:
         drawn = [p for p in leaves if p not in variation]
         self._validate_render_state(state)
         if drawn:
-            values = torch.cat([state[state_key(p)] for p in drawn], 1)
+            values = torch.cat([get_field(state, field_name(state_key(p))) for p in drawn], 1)
             values = values.to(device=self.device, dtype=torch.float32)
             rows = self._style.values.shape[0]
             current = torch.cat([self._style[p].reshape(rows, -1) for p in drawn], 1)
@@ -180,6 +245,29 @@ class DelegatedSemantics:
     def _advance_without_snapshot(self, actions, *, active=None):
         self._check_open("step")
         return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _steps_on_host(self) -> bool:
+        """Whether a step of several actions runs on the host simulator and moves its result once."""
+        return self.device.type != "cpu" and getattr(self._simulator, "step_host", None) is not None
+
+    def _host_advance(self, actions, *, active=None, capture_state=True):
+        self._check_open("step")
+        return self._simulator.step_host(actions, active=active, capture_state=capture_state)
+
+    def _end_host_steps(self):
+        pass
+
+    def _host_state_leaves(self):
+        """The live host arrays of the State by key path under ``"state"``; the caller copies them."""
+        return self._simulator.state_leaves()
+
+    def _host_step(self, actions, move):
+        """One step on a host simulator: ``move`` puts its arrays on the device in one copy."""
+        step = getattr(self._simulator, "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
 
     def _close(self):
         if hasattr(self, "_simulator"):

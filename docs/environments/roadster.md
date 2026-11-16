@@ -47,10 +47,11 @@ The task's cost is the distance to the current subgoal plus the path through the
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"default"` (default) | CPU batch | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
-| `"auto"` | CPU batch | CPU batch below `mjwarp_min_envs` (64) environments, MuJoCo Warp from there |
+| `"auto"` (default) | CPU batch | CPU batch for small batches, [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) for large ones |
 | `"native"` | CPU batch | CPU batch |
 | `"mjwarp"` | error | MuJoCo Warp |
+
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
 Both backends step every environment in one batch. The source's autopilot, drag and wind forces, fuel, ring and route bookkeeping, crash checks, cost, reward and success run on arrays of environments. MuJoCo steps the 10 substeps of each 50 Hz step one at a time, because the drag and wind force of a substep depends on the velocity after the previous one. The physics model is the source's world with MuJoCo contact sensors for the contacts that the task reads (tires on anything, on the pad, on the ground and on the goal roof, the hull on anything, the car on each obstacle). The visual geoms outside the car are not in it. Sensors and these geoms do not change the dynamics.
 
@@ -62,7 +63,7 @@ Resets draw the start, goal, traffic and parked cars of each environment with th
 
 ### State
 
-The state is made of:
+The state has one tensor for each dtype: `roadster_state.float64`, `roadster_state.int64` and `roadster_state.bool`. Each field below is a slice of one of them. Read a field by name with `snv.get_field(state, "sim.qpos")`. The state is made of:
 
 - MuJoCo's integration state, split into `sim.time`, `sim.qpos`, `sim.qvel`, `sim.warmstart`, `sim.ctrl`, `sim.qfrc_applied`, `sim.xfrc_applied`, `sim.mocap_pos` and `sim.mocap_quat`. The two mocap fields place the traffic and the parked cars.
 - `sim.qpos_pre`, the pose that MuJoCo's derived quantities refer to after a step.

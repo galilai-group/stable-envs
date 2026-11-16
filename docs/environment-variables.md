@@ -20,6 +20,8 @@ Each variable sets one [tuning knob](api/tuning.md#knobs) for the whole process.
 | Variable | Sets |
 |---|---|
 | `STABLE_ENVS_WORKERS` | most worker processes |
+| `STABLE_ENVS_LARGE_BACKEND_MIN_ENVS` | smallest batch that steps on the large-batch simulation backend with `simulation_backend="auto"` |
+| `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS` | smallest render batch that draws with the CUDA renderer of a class with a CPU and a CUDA renderer |
 | `STABLE_ENVS_WORKER_MIN_LANES` | smallest batch that uses worker processes |
 | `STABLE_ENVS_WORKER_TIMEOUT` | seconds that a CPU simulator worker can take to answer one request |
 | `STABLE_ENVS_FETCH_THREADS` | most simulator threads of an in-process Fetch batch |
@@ -27,6 +29,7 @@ Each variable sets one [tuning knob](api/tuning.md#knobs) for the whole process.
 | `STABLE_ENVS_CPU3D_CHUNK` | frames per chunk of the Torch CPU ray caster |
 | `STABLE_ENVS_DMC_CPU_RAY_BUDGET` | rays per CPU render chunk of the fixed-camera DM Control classes |
 | `STABLE_ENVS_DMC_RAY_BUDGET` | rays per CUDA render chunk of the fixed-camera DM Control classes |
+| `STABLE_ENVS_DMC_GRAPH_ROWS` | most rows of a CUDA render chunk of the fixed-camera DM Control classes that replay one captured CUDA graph |
 | `STABLE_ENVS_DMC_LAUNCH_RAYS` | rays per MJWarp launch of the DM Control body-tracking classes |
 | `STABLE_ENVS_DMC_MIN_WORLDS` | fewest worlds per MJWarp launch of the DM Control body-tracking classes |
 | `STABLE_ENVS_FETCH_MJW_WORLDS` | most worlds per MJWarp launch of the Fetch classes |

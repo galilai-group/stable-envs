@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
-from tensordict import TensorDict
 
+from stable_envs._core.state_schema import get_field
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.semantics import compare_state
 
@@ -28,14 +28,13 @@ def test_ogbench_maze_replays_independent_full_state_corpus():
     pytest.importorskip("ogbench")
     data = np.load(ROOT / "swm_176d545_ogbench121_mujoco317.npz")
 
-    def state_at(t):
-        state = TensorDict({}, [3])
-        for key in data.files:
-            if key.startswith("state/"):
-                state[tuple(key[6:].split("/"))] = torch.from_numpy(data[key][t].copy())
-        return state
-
     env = OGBMazeAdapter(3)
+
+    def state_at(t):
+        """The stored State at ``t``, folded into the adapter's groups."""
+        values = {key[6:]: torch.from_numpy(data[key][t].copy()) for key in data.files if key.startswith("state/")}
+        return env.schema.fold(values, [3])
+
     try:
         env.set_state(state_at(0))
         for t, action in enumerate(data["actions"]):
@@ -57,12 +56,12 @@ def test_ogbench_maze_adapter_isolates_legacy_rng_and_validates_before_mutation(
         assert _np_state_equal(outside, np.random.get_state())
         saved = env.get_state()
         incomplete = saved.clone()
-        del incomplete["rng", "env_state"]
-        with pytest.raises(ValueError, match="Full State missing"):
+        del incomplete[next(iter(env.schema.groups.values())).path]
+        with pytest.raises(ValueError, match="missing"):
             env.set_state(incomplete)
         compare_state(env.get_state(), saved)
         invalid = saved.clone()
-        invalid["task", "id"][2, 0] = 99
+        get_field(invalid, "task/id")[2, 0] = 99
         with pytest.raises(ValueError, match="Invalid OGBench task id"):
             env.set_state(invalid)
         compare_state(env.get_state(), saved)

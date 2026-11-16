@@ -22,53 +22,10 @@
  },
  "state": [
   {
-   "key": "qpos",
-   "shape": [15],
-   "dtype": "float64"
-  },
-  {
-   "key": "qvel",
-   "shape": [15],
-   "dtype": "float64"
-  },
-  {
-   "key": "time",
-   "shape": [1],
-   "dtype": "float64"
-  },
-  {
-   "key": "task",
-   "leaves": 1,
-   "numel": 3,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "warmstart",
-   "shape": [15],
-   "dtype": "float64"
-  },
-  {
-   "key": "controller",
-   "leaves": 2,
-   "numel": 7,
-   "dtypes": ["float64"]
-  },
-  {
-   "key": "goal",
-   "shape": [3],
-   "dtype": "float64"
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 4,
-   "numel": 10,
-   "dtypes": ["int64"]
+   "key": "fetch_state",
+   "leaves": 3,
+   "numel": 70,
+   "dtypes": ["float64", "int64"]
   }
  ],
  "variation": [

@@ -10,6 +10,7 @@ import torch
 pytest.importorskip("dm_control")
 pytest.importorskip("mujoco.batch")
 
+from stable_envs._core.state_schema import get_field, set_field  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation import first_family  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES, make_batch, make_local  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation.physics import LEAVES  # noqa: E402
@@ -43,8 +44,8 @@ def test_local_lanes_keep_independent_rng_across_unseeded_reset():
     adapter = make_local("cartpole", 2, seed=17)
     try:
         for state in (adapter.get_state(), adapter.reset()):
-            assert not torch.equal(state["rng", "keys"][0], state["rng", "keys"][1])
-            assert not torch.equal(state["qpos"][0], state["qpos"][1])
+            assert not torch.equal(get_field(state, "rng/keys")[0], get_field(state, "rng/keys")[1])
+            assert not torch.equal(get_field(state, "qpos")[0], get_field(state, "qpos")[1])
     finally:
         adapter.close()
 
@@ -68,9 +69,9 @@ def _foreign_and_actions(domain):
         actions = list(np.random.default_rng(5).uniform(-1, 1, (200, 5, other.action_dim)))
     finally:
         other.close()
-    foreign["lifecycle", "step_count"] = limit - torch.tensor([[2], [3], [2], [3], [2]])
+    set_field(foreign, "lifecycle/step_count", limit - torch.tensor([[2], [3], [2], [3], [2]]))
     if domain in ("acrobot", "cartpole"):
-        foreign["qpos"].zero_()
+        get_field(foreign, "qpos").zero_()
     return foreign, actions
 
 

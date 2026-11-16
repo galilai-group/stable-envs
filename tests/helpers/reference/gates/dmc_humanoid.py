@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import get_field, set_field, unfold
 from tests.helpers.reference.dmc_semantics import DMCHumanoidReference, compare_models
 from tests.helpers.reference.saved import SWM_PIN
 from tests.helpers.reference.semantics import (
@@ -51,8 +52,8 @@ def _warmstart_experiment(env, reference):
     saved_control = env._simulator.b.ctrl.copy()
     for action in -actions[1:10]:
         env.step(action, states=None, frames=None).exclude("valid")
-    divergent_warmstart = env.get_state()["warmstart"].clone()
-    assert not torch.equal(saved["warmstart"], divergent_warmstart)
+    divergent_warmstart = get_field(env.get_state(), "warmstart").clone()
+    assert not torch.equal(get_field(saved, "warmstart"), divergent_warmstart)
     divergent_control = env._simulator.b.ctrl.copy()
     control_diverged = not np.array_equal(saved_control, divergent_control)
     assert control_diverged, {
@@ -63,7 +64,7 @@ def _warmstart_experiment(env, reference):
     }
 
     omitted = saved.clone()
-    omitted["warmstart"] = divergent_warmstart
+    set_field(omitted, "warmstart", divergent_warmstart)
     env.set_state(omitted)
     continuation = actions[1:9]
     bad_outputs = [env.step(action, states=None, frames=None).exclude("valid") for action in continuation]
@@ -161,9 +162,9 @@ def run_gate(device="cpu"):
                 for seed in (0, 17, 42):
                     check_reset_matches_reference(env, reference, seed=seed)
                     saved, live = env.get_state(), env.get_state()
-                    saved["qpos"].add_(1)
-                    saved["warmstart"].add_(1)
-                    saved["rng", "keys"].add_(1)
+                    get_field(saved, "qpos").add_(1)
+                    get_field(saved, "warmstart").add_(1)
+                    get_field(saved, "rng/keys").add_(1)
                     compare_state(env.get_state(), live)
 
                     actions = np.random.default_rng(seed + 200).uniform(-1, 1, (32, batch, 21))
@@ -224,7 +225,7 @@ def run_gate(device="cpu"):
 
                 check_reset_matches_reference(env, reference, seed=5)
                 checkpoints = {}
-                rng_before = env.get_state().select("rng").clone()
+                rng_before = unfold(env.get_state()).select("rng").clone()
                 boundary_state = None
                 for public_step in range(1, 503):
                     got, expected = env.step(zeros, states=None, frames=None).exclude("valid"), reference.step(zeros)
@@ -234,19 +235,19 @@ def run_gate(device="cpu"):
                         if public_step == 499:
                             boundary_state = state.clone()
                         checkpoints[str(public_step)] = {
-                            "step_count": int(state["lifecycle", "step_count"][0].item()),
-                            "reset_next_step": bool(state["lifecycle", "reset_next_step"][0].item()),
-                            "time": float(state["time"][0].item()),
+                            "step_count": int(get_field(state, "lifecycle/step_count")[0].item()),
+                            "reset_next_step": bool(get_field(state, "lifecycle/reset_next_step")[0].item()),
+                            "time": float(get_field(state, "time")[0].item()),
                         }
-                after = env.get_state()
+                after = unfold(env.get_state())
                 assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                 assert checkpoints["500"]["reset_next_step"]
                 assert checkpoints["501"]["step_count"] == 1
                 assert boundary_state is not None
                 other.reset(seed=77)
-                boundary_rng = boundary_state.select("rng").clone()
+                boundary_rng = unfold(boundary_state).select("rng").clone()
                 boundary_history = check_two_histories_same_state(env, other, boundary_state, np.zeros((4, batch, 21)))
-                replayed = env.get_state()
+                replayed = unfold(env.get_state())
                 replay_rng_changed = any(
                     not torch.equal(boundary_rng[key], replayed[key]) for key in boundary_rng.keys(True, True)
                 )

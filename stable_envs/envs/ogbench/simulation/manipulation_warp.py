@@ -13,8 +13,15 @@ from ogbench.manipspace import lie
 from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import WarpBatch
 from .compatibility import COMPILED_FIELDS, compiled_fields
-from .manipulation import site_ids
-from .manipulation_batch import LaneModels, OGBManipulationBatchAdapter, Snapshot, make_lanes, metadata_env
+from .manipulation import field, groups_of, site_ids, state_schema
+from .manipulation_batch import (
+    LaneModels,
+    OGBManipulationBatchAdapter,
+    live_view,
+    make_lanes,
+    metadata_env,
+    state_layout,
+)
 from .pcg import pcg_decode, pcg_encode
 
 _KERNELS = None
@@ -23,7 +30,6 @@ NACON_PER_ENV = 64
 NJMAX = 512
 #: Scene cube repairs per environment drawn ahead from its generator; the host draws more when it sees them used.
 REPAIR_DRAWS = 2
-_RNG_KEYS = ("state", "increment", "has_uint32", "uinteger")
 
 
 def contact_exclusions(model) -> list[tuple[int, int]]:
@@ -372,11 +378,16 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     The step follows ``ManipSpaceEnv.step``: the controller (one float64 Warp kernel), ``frame_skip`` substeps,
     ``rne_postconstraint`` and the family's ``post_step`` in Torch, without a host synchronization (Scene
-    synchronizes once to detect a cube that left the workspace). State has the leaves of the CPU State; its
-    physics leaves are the float32 values in float64.
+    synchronizes once to detect a cube that left the workspace). State has the groups of the CPU State; its
+    physics fields hold the float32 values in float64.
     """
 
     execution_mode = "NATIVE_MJWARP"
+    #: The lanes step on the device, so a step has no host arrays to move.
+    step_leaves = None
+    step_host = None
+    #: A step with a lane mask runs the same graphs as one without, so a sequence passes its mask without a readback.
+    masks_on_device = True
 
     def __init__(
         self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None, exclude_contacts=True
@@ -393,15 +404,29 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         try:
             self._meta = env = metadata_env(family)
             self.fields, self.nq = self.lanes.fields, self.lanes.nq
-            self._order = tuple(self.fields)
-            self._snapshot = Snapshot(self.fields, num_envs)
+            self.schema = schema = state_schema(family, self.fields)
+            self._layout = state_layout(schema, num_envs)
+            # Every group lives on the device. MuJoCo Warp steps the physics fields in _WARP_PHYSICS; the other
+            # physics fields keep their loaded values.
+            self._live = {
+                key: torch.zeros((num_envs, group.size), dtype=group.dtype, device=device)
+                for key, group in schema.groups.items()
+            }
+            self._cut_views()
+            self._physics = tuple(name for name in self.fields if name.startswith("physics/"))
+            self._physics_groups = tuple(dict.fromkeys(schema.slices[name].group for name in self._physics))
+            self._loaded = {
+                name: live_view(schema, self._live, name)
+                for name in self._physics
+                if name.split("/")[1] not in _WARP_PHYSICS
+            }
             # Variations recompile these fields per lane, and Scene's locks and targets set damping and sites.
             batched = _batchable((*COMPILED_FIELDS, "dof_damping", "site_pos"))
-            self._models = LaneModels(env, ())
+            self._models = LaneModels(env, (), schema)
             self._variants = {}
             state = self.lanes.get_state()
             self.physics = WarpBatch(
-                self._lane_models({key: state[key].numpy() for key in self._order if key[0] == "model"}),
+                self._lane_models(groups_of(schema, state)),
                 num_envs,
                 device,
                 frame_skip=int(env._n_steps),
@@ -484,15 +509,13 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     def _load(self, state):
         state = state.to(self.device)
-        # MuJoCo Warp steps the physics leaves in _WARP_PHYSICS; the others keep their loaded values.
-        self._columns = {
-            key: state[key].clone() for key in self._order if key[0] != "physics" or key[1] not in _WARP_PHYSICS
-        }
-        host = {key: state[key].cpu().numpy() for key in self._order if key[0] in ("model", "scene")}
+        for key, group in self.schema.groups.items():
+            self._live[key].copy_(state.get(group.path))
+        host = self._host_models(self._live)
         if self.family == "Scene":
             self._repair_pending = False
             self._repair_count.zero_()
-            rng = {key: state["rng", "environment", key].cpu().numpy() for key in _RNG_KEYS}
+            rng = {key: value.cpu().numpy() for key, value in self._env_rng.items()}
             self._draw_repairs(rng, np.arange(self.num_envs))
         models = self._lane_models(host)
         ids = tuple(id(m) for m in models)
@@ -500,9 +523,9 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             self.physics.set_models(models)
             self._model_ids = ids
         physics = {
-            field: state["physics", name]
-            for name, field in {**_WARP_PHYSICS, **_WARP_LOADED}.items()
-            if ("physics", name) in state.keys(True, True)
+            data: self.schema.get(self._live, field("physics", name))
+            for name, data in {**_WARP_PHYSICS, **_WARP_LOADED}.items()
+            if field("physics", name) in self.fields
         }
         for name in ("ctrl", "qfrc_applied"):
             if name in physics:
@@ -518,7 +541,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             )
         writes = {k: (v[:, 0] if k == "time" else v) for k, v in physics.items() if k in self.physics.fields}
         self.physics.set_physics(writes, forward=True)
-        success = self._columns["task", "success"][:, 0]
+        success = self._success[:, 0]
         self._outputs = {
             "reward": torch.where(success, 1.0, 0.0).double()
             if not self._reward_task
@@ -528,11 +551,13 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
         }
 
+    @staticmethod
+    def _host_models(columns):
+        """Host copies of the model and Scene groups, which ``LaneModels`` reads."""
+        return {k: v.cpu().numpy() for k, v in columns.items() if k.split("/")[0] in ("model", "scene")}
+
     def _load_models(self, columns):
-        host = {
-            k: (v.cpu().numpy() if torch.is_tensor(v) else v) for k, v in columns.items() if k[0] in ("model", "scene")
-        }
-        models = self._lane_models(host)
+        models = self._lane_models(self._host_models(columns))
         ids = tuple(id(m) for m in models)
         if ids != getattr(self, "_model_ids", None):
             self.physics.set_models(models)
@@ -540,23 +565,32 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     # State.
 
+    def _state_values(self):
+        physics = dict(self._loaded)
+        for name, data in _WARP_PHYSICS.items():
+            if field("physics", name) in self.fields:
+                physics[field("physics", name)] = self.physics.data(data).to(torch.float64)
+        return {**self._live, **self.schema.pack(physics, self._physics_groups)}
+
     def get_state(self):
         self._check_open()
-        columns = dict(self._columns)
-        for name, field in _WARP_PHYSICS.items():
-            if ("physics", name) in self.fields:
-                columns["physics", name] = self.physics.data(field).to(torch.float64)
-        return self._snapshot.build(columns, self.device)
+        return self._layout.export(self._state_values(), self.device)
+
+    def render_columns(self):
+        from .render_state import projected_keys
+
+        state = self.get_state()
+        return {key: self.schema.get(state, key).detach().cpu().numpy() for key in projected_keys(self.family)}
 
     def configure(self, values):
         self._check_open()
         self._push()
         self.lanes.configure(values)
         current = self.lanes.get_state().to(self.device)
-        for key in self._order:
-            if key[0] in ("variation", "model"):
-                self._columns[key] = current[key].clone()
-        self._load_models(self._columns)
+        for key, group in self.schema.groups.items():
+            if key.split("/")[0] in ("variation", "model"):
+                self._live[key].copy_(current.get(group.path))
+        self._load_models(self._live)
 
     def check_step(self, actions, active):
         actions = torch.as_tensor(actions, device=self.device)
@@ -585,42 +619,40 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         return build_tensordict(result, [self.num_envs], self.device)
 
     def _advance(self, actions, mask, everyone):
-        c = self._columns
+        # Masked updates write into the live groups through their field views.
         m = mask[:, None]
-        site_xpos, site_xmat = c["controller", "site_xpos"], c["controller", "site_xmat"]
+        site_xpos, site_xmat = self._site_xpos, self._site_xmat
         self._control.control(
             actions, mask, self._qpos, site_xpos[:, 0].contiguous(), site_xmat[:, 0].contiguous(), self._ctrl
         )
         scene = self.family == "Scene"
         if scene:
-            c["scene", "prev_button_states"] = torch.where(
-                m, c["scene", "cur_button_states"], c["scene", "prev_button_states"]
-            )
+            torch.where(m, self._buttons_now, self._buttons_before, out=self._buttons_before)
             button_pos = self._qpos[:, self._buttons].to(torch.float64)
-        c["output", "prev_qpos"] = torch.where(m, self._qpos.to(torch.float64), c["output", "prev_qpos"])
-        c["output", "prev_qvel"] = torch.where(m, self._qvel.to(torch.float64), c["output", "prev_qvel"])
+        torch.where(m, self._qpos.to(torch.float64), self._prev_qpos, out=self._prev_qpos)
+        torch.where(m, self._qvel.to(torch.float64), self._prev_qvel, out=self._prev_qvel)
         self.physics.step(active=None if everyone else mask)
         force = self.physics.data("cfrc_ext")[:, self._pad].to(torch.float64)
-        c["output", "gripper_force"] = torch.where(m, force, c["output", "gripper_force"])
+        torch.where(m, force, self._gripper_force, out=self._gripper_force)
         if scene:
             self._scene_post_step(mask, button_pos)
         out_pos = self.physics.data("site_xpos")[:, self._pos_sites].to(torch.float64)
         out_mat = _orthonormal(self.physics.data("site_xmat")[:, self._rot_sites].to(torch.float64))
         out_mat = out_mat.reshape(self.num_envs, -1, 9)
-        c["controller", "site_xpos"] = torch.where(m[:, :, None], out_pos, site_xpos)
-        c["controller", "site_xmat"] = torch.where(m[:, :, None], out_mat, site_xmat)
+        torch.where(m[:, :, None], out_pos, site_xpos, out=site_xpos)
+        torch.where(m[:, :, None], out_mat, site_xmat, out=site_xmat)
         qpos = self._qpos.to(torch.float64)
         delta = qpos[:, self._cube : self._cube + 3] - self._mocap_pos[:, self._target].to(torch.float64)
         cube = delta.norm(dim=-1) <= 0.04
         if scene:
-            buttons = c["scene", "cur_button_states"] == c["scene", "target_button_states"]
-            drawer = (qpos[:, self._drawer] - c["scene", "target_drawer_pos"][:, 0]).abs() <= 0.04
-            window = (qpos[:, self._window] - c["scene", "target_window_pos"][:, 0]).abs() <= 0.04
+            buttons = self._buttons_now == self._buttons_goal
+            drawer = (qpos[:, self._drawer] - self._drawer_goal[:, 0]).abs() <= 0.04
+            window = (qpos[:, self._window] - self._window_goal[:, 0]).abs() <= 0.04
             parts = torch.cat([cube[:, None], buttons, drawer[:, None], window[:, None]], dim=1)
         else:
             parts = cube[:, None]
         success = parts.all(dim=1)
-        c["task", "success"] = torch.where(m, success[:, None], c["task", "success"])
+        torch.where(m, success[:, None], self._success, out=self._success)
         if self._reward_task:
             reward = parts.sum(dim=1).to(torch.float64) - parts.shape[1]
         else:
@@ -635,15 +667,13 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             out[key] = torch.where(mask, value, out[key])
 
     def _scene_post_step(self, mask, button_pos):
-        c = self._columns
         cube = self._qpos[:, self._cube : self._cube + 3].to(torch.float64)
         unhealthy = mask & ((cube <= self._workspace[0] - 0.2) | (cube >= self._workspace[1] + 0.2)).any(dim=1)
         self._repair(unhealthy)
         current = self._qpos[:, self._buttons].to(torch.float64)
         pressed = mask[:, None] & (button_pos > -0.02) & (current <= -0.02)
-        states = c["scene", "cur_button_states"]
-        states = torch.where(pressed, (states + 1) % self._num_button_states, states)
-        c["scene", "cur_button_states"] = states
+        states = self._buttons_now
+        torch.where(pressed, (states + 1) % self._num_button_states, states, out=states)
         self._damping[:, self._lock_dofs] = torch.where(states == 0, 1e6, 2.0).to(self._damping.dtype)
         self.physics.forward()
 
@@ -654,25 +684,25 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         used them, which it checks without waiting for the device. A lane that needs more repairs before then
         repeats the last drawn one.
         """
-        c = self._columns
         slot = self._repair_count.long().clamp(max=REPAIR_DRAWS - 1)
         fire = unhealthy[:, None]
         cube = slice(self._cube, self._cube + 7)
         self._qpos[:, cube] = torch.where(fire, self._repair_qpos[self._rows, slot], self._qpos[:, cube])
         dofs = slice(self._cube_dof, self._cube_dof + 6)
         self._qvel[:, dofs] = torch.where(fire, 0, self._qvel[:, dofs])
-        for key in _RNG_KEYS:
-            column = c["rng", "environment", key]
-            c["rng", "environment", key] = torch.where(fire, self._repair_rng[key][self._rows, slot], column)
+        for key, column in self._env_rng.items():
+            torch.where(fire, self._repair_rng[key][self._rows, slot], column, out=column)
         self._repair_count += unhealthy
 
     def _draw_repairs(self, rng, lanes):
         """Draw ``REPAIR_DRAWS`` cube repairs of ``lanes`` from their environment generators, as OGBench does."""
         generator = np.random.Generator(np.random.PCG64())
         qpos = np.empty((len(lanes), REPAIR_DRAWS, 7))
-        after = {key: np.empty((len(lanes), REPAIR_DRAWS, *rng[key].shape[1:]), rng[key].dtype) for key in _RNG_KEYS}
+        after = {
+            key: np.empty((len(lanes), REPAIR_DRAWS, *value.shape[1:]), value.dtype) for key, value in rng.items()
+        }
         for row, lane in enumerate(lanes):
-            generator.bit_generator.state = pcg_decode({key: rng[key][lane] for key in _RNG_KEYS})
+            generator.bit_generator.state = pcg_decode({key: value[lane] for key, value in rng.items()})
             for k in range(REPAIR_DRAWS):
                 xy = generator.uniform(*self._object_bounds)
                 yaw = generator.uniform(0, 2 * np.pi)
@@ -706,7 +736,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             return
         for _ in range(int(counts.sum())):
             print("Numerical instability detected. Resetting cube positions.", flush=True)
-        rng = {key: self._columns["rng", "environment", key].cpu().numpy() for key in _RNG_KEYS}
+        rng = {key: value.cpu().numpy() for key, value in self._env_rng.items()}
         self._draw_repairs(rng, lanes)
         self._repair_count.zero_()
         self._dirty = True

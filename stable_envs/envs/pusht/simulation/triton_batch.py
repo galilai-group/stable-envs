@@ -63,7 +63,7 @@ class PushTTritonAdapter(PushTBatchAdapter):
 
     def step(self, actions, *, active=None, capture_state=True):
         actions = torch.as_tensor(actions, device=self.device)
-        discrete = self.template.discrete
+        discrete = self.discrete
         allowed = (torch.int32, torch.int64) if discrete else (torch.float32, torch.float64)
         if actions.shape != (self.num_envs, 2) or actions.dtype not in allowed:
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")

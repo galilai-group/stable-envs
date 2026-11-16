@@ -9,14 +9,16 @@ pytest.importorskip("pygame")
 torch = pytest.importorskip("torch")
 
 import stable_envs as se  # noqa: E402
+from stable_envs import get_field, schema_of, set_field, tuning  # noqa: E402
+from stable_envs._core.state_schema import unfold  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import (  # noqa: E402
+    COMPILED_HOST,  # noqa: E402
     MAX_EPISODE_STEPS,
-    NUMPY_MIN_ENVS,
-    TORCH_MIN_ENVS,
     BatchedClassicAdapter,
     classic_backend,
 )
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
+from stable_envs.envs.classic_control.simulation.numba_step import STEPS  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 LANES = 6
@@ -67,18 +69,18 @@ CLASSES = {
 }
 #: State fields that no step computes with sin, cos, remainder or a power.
 EXACT = {
-    "cartpole": (("task", "steps_beyond_terminated"), ("task", "has_steps_beyond_terminated")),
-    "pendulum": ("torque", ("task", "has_last_u")),
+    "cartpole": ("task/steps_beyond_terminated", "task/has_steps_beyond_terminated"),
+    "pendulum": ("torque", "task/has_last_u"),
     "acrobot": (),
     "mountain_car": (),
-    "mountain_car_continuous": (("task", "state_is_float32"),),
+    "mountain_car_continuous": ("task/state_is_float32",),
 }
-BACKENDS = ["numpy", "torch"]
+BACKENDS = ["numpy", "numba", "torch"]
 
 
 def _tol(backend, steps=1):
-    """NumPy steps call the source's C functions and match exactly; Torch steps agree to rounding."""
-    return 0.0 if backend == "numpy" else (1e-9 if steps == 1 else 1e-7)
+    """NumPy and Numba steps repeat the source's operations and match exactly; Torch steps agree to rounding."""
+    return 0.0 if backend in ("numpy", "numba") else (1e-9 if steps == 1 else 1e-7)
 
 
 def _actions(domain, steps, seed, dtype=None):
@@ -92,6 +94,8 @@ def _actions(domain, steps, seed, dtype=None):
 
 
 def _pair(domain, backend, device="cpu", seed=7):
+    if backend == "numba" and domain not in STEPS:
+        pytest.skip(f"no compiled {domain} step")
     reference = ClassicControlAdapter(domain, LANES, "cpu", seed)
     fast = BatchedClassicAdapter(domain, LANES, device, seed, backend)
     values = {name: np.asarray(rows, np.float64) for name, rows in PHYSICS[domain].items()}
@@ -103,15 +107,15 @@ def _pair(domain, backend, device="cpu", seed=7):
 
 def _assert_agree(domain, actual, expected, atol=1e-9):
     actual, expected = actual.cpu(), expected.cpu()
-    ours, theirs = actual["state"], expected["state"]
+    ours, theirs = unfold(actual["state"]), unfold(expected["state"])
     assert set(ours.keys(True, True)) == set(theirs.keys(True, True))
     for key in theirs.keys(True, True):
-        path = key if isinstance(key, tuple) else (key,)
-        if key in EXACT[domain] or path[0] in ("rng", "physics", "lifecycle"):
+        name = key if isinstance(key, str) else "/".join(key)
+        if name in EXACT[domain] or name.startswith(("rng/", "physics/", "lifecycle/")):
             assert_same_state(ours[key], theirs[key])
         else:
             torch.testing.assert_close(ours[key], theirs[key], rtol=0, atol=atol, msg=lambda m, key=key: f"{key}: {m}")
-        assert ours[key].dtype == CLASSIC_FIELDS[domain][key][1]
+        assert ours[key].dtype == CLASSIC_FIELDS[domain][name][1]
     for key in ("observation", "info_state"):
         assert actual[key].dtype == expected[key].dtype == torch.float32
         loose = 1e-6 if atol else 0.0
@@ -195,9 +199,9 @@ def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
                 rows = [cases[(lane + shift) % len(cases)] for lane in range(LANES)]
                 # Float64 values in a float32 lane: set_state rounds them as Gymnasium does.
                 values = np.asarray(rows, np.float64)
-                state["position"] = torch.as_tensor(values[:, :1])
-                state["velocity"] = torch.as_tensor(values[:, 1:])
-                state["task", "state_is_float32"].fill_(is32)
+                set_field(state, "position", torch.as_tensor(values[:, :1]))
+                set_field(state, "velocity", torch.as_tensor(values[:, 1:]))
+                get_field(state, "task/state_is_float32").fill_(is32)
                 reference.set_state(state)
                 fast.set_state(state)
                 action = torch.as_tensor(
@@ -255,8 +259,10 @@ def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
         fast.configure(values)
         reference.configure(values)
         state = fast.get_state()
-        assert_same_state(state["physics"], reference.get_state()["physics"])
-        assert_same_state(state.exclude("physics"), held.exclude("physics"))
+        expected = reference.get_state()
+        for name in schema_of(state).names:
+            same = held if not name.startswith("physics/") else expected
+            assert torch.equal(get_field(state, name), get_field(same, name)), name
         for action in _actions("cartpole", 5, 4):
             _assert_agree("cartpole", fast.step(action), reference.step(action), _tol(backend, 5))
     finally:
@@ -267,6 +273,8 @@ def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_invalid_discrete_actions_raise_like_gymnasium(backend):
     for domain, error in (("cartpole", AssertionError), ("mountain_car", AssertionError), ("acrobot", TypeError)):
+        if backend == "numba" and domain not in STEPS:
+            continue
         fast = BatchedClassicAdapter(domain, 2, "cpu", 0, backend)
         try:
             fast.reset(0)
@@ -276,10 +284,13 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
             with pytest.raises(AssertionError if domain != "acrobot" else IndexError):
                 fast.step(torch.tensor([[0], [3]]))
             fast.step(torch.tensor([[0], [7]]), active=torch.tensor([True, False]))
-            held["lifecycle", "elapsed_steps"][0] += 1
-            assert torch.equal(fast.get_state()["lifecycle", "elapsed_steps"], held["lifecycle", "elapsed_steps"])
+            get_field(held, "lifecycle/elapsed_steps")[0] += 1
+            elapsed = get_field(fast.get_state(), "lifecycle/elapsed_steps")
+            assert torch.equal(elapsed, get_field(held, "lifecycle/elapsed_steps"))
         finally:
             fast.close()
+    if backend == "numba" and "acrobot" not in STEPS:
+        return
     fast = BatchedClassicAdapter("acrobot", 3, "cpu", 0, backend)
     reference = ClassicControlAdapter("acrobot", 3, "cpu", 0)
     try:
@@ -293,28 +304,59 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
         reference.close()
 
 
-def test_backend_selection():
-    for domain, fewest in NUMPY_MIN_ENVS.items():
+def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path):
+    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, CUDA_MIN_ENVS
+
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning._clear_caches()
+    try:
+        for domain, fewest in CPU_MIN_ENVS.items():
+            for lanes in (1, 2, 4, 8, 4096):
+                host = "numpy" if fewest is None or lanes >= fewest else "gym"
+                host = "numba" if domain in COMPILED_HOST else host
+                assert classic_backend(domain, "cpu", lanes) == host
+                cutoff = CUDA_MIN_ENVS[domain]
+                assert classic_backend(domain, "cuda", lanes) == (
+                    "torch" if cutoff is None or lanes >= cutoff else host
+                )
+        assert classic_backend("cartpole", "cpu", 1) == "numba"
+        assert classic_backend("acrobot", "cpu", 1) == "gym"
+        assert classic_backend("pendulum", "cpu", 1) == "numpy"
+    finally:
+        tuning._clear_caches()
+
+
+def _shipped_host(domain, lanes):
+    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS
+
+    if domain in COMPILED_HOST:
+        return "numba"
+    fewest = CPU_MIN_ENVS[domain]
+    return "numpy" if fewest is None or lanes >= fewest else "gym"
+
+
+def test_backend_selection(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    tuning._clear_caches()
+    for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            assert classic_backend(domain, "cpu", fewest, backend) == "numpy"
-            assert classic_backend(domain, "cpu", fewest - 1, backend) == "gym"
-            assert classic_backend(domain, "cpu", 4096, backend) == "numpy"
-        # By default CUDA lanes step on the GPU at every batch size; "auto" keeps small batches on the host.
-        for lanes in (1, fewest, 4096):
-            assert classic_backend(domain, "cuda", lanes) == "torch"
+            # The knob moves the CUDA switch point and leaves the host choice to the shipped values.
+            with tuning.override(large_backend_min_envs=4):
+                for lanes in (1, 3, 4, 64):
+                    assert classic_backend(domain, "cpu", lanes, backend) == _shipped_host(domain, lanes)
+                assert classic_backend(domain, "cuda", 4, backend) == "torch"
+                assert classic_backend(domain, "cuda", 3, backend) == _shipped_host(domain, 3)
+        for lanes in (1, 4096):
             assert classic_backend(domain, "cuda:0", lanes, "gym") == "gym"
-        assert classic_backend(domain, "cuda", TORCH_MIN_ENVS, "auto") == "torch"
-        assert classic_backend(domain, "cuda", 16, "auto", torch_min_envs=16) == "torch"
-        assert classic_backend(domain, "cuda", 15, "auto", torch_min_envs=16) == "numpy"
-        assert classic_backend(domain, "cuda", fewest - 1, "auto", torch_min_envs=16) == "gym"
-    with pytest.raises(ValueError, match="torch_min_envs"):
-        classic_backend("cartpole", "cuda", 2, "auto", torch_min_envs=0)
+            assert classic_backend(domain, "cpu", lanes, "torch") == "torch"
     with pytest.raises(ValueError, match="simulation_backend"):
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():
-        with se.make(name, num_envs=8, device="cpu") as env:
-            assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
-            assert isinstance(env._simulator, BatchedClassicAdapter) and env._simulator.backend == "numpy"
+        with tuning.override(large_backend_min_envs=8), se.make(name, num_envs=8, device="cpu") as env:
+            want = "numba" if name in ("CartPole", "MountainCar") else "numpy"
+            assert env.simulation_backend == want and env.execution_mode == f"NATIVE_{want.upper()}"
+            assert isinstance(env._simulator, BatchedClassicAdapter) and env._simulator.backend == want
         with se.make(name, num_envs=2, device="cpu", simulation_backend="gym") as env:
             assert env.simulation_backend == "gym" and env.execution_mode == "DELEGATED_CPU"
             assert type(env._simulator) is ClassicControlAdapter
@@ -367,6 +409,8 @@ def test_cuda_steps_match_gymnasium(domain):
     if not torch.cuda.is_available():
         pytest.skip("CUDA required")
     for backend in BACKENDS:
+        if backend == "numba" and domain not in STEPS:
+            continue
         reference, fast = _pair(domain, backend, "cuda")
         try:
             for action in _actions(domain, MAX_EPISODE_STEPS[domain] + 5, 13):
@@ -375,8 +419,11 @@ def test_cuda_steps_match_gymnasium(domain):
         finally:
             reference.close()
             fast.close()
-    with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
-        assert env.get_state()["lifecycle", "elapsed_steps"].device.type == "cuda"
-    with se.make(CLASSES[domain], num_envs=8, device="cuda", simulation_backend="auto", torch_min_envs=16) as env:
-        assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
+        assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"
+    with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+        modes = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
+        host = _shipped_host(domain, 8)
+        assert (env.simulation_backend, env.execution_mode) == (host, modes[host])
+        assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"

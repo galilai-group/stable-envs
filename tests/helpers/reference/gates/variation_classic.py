@@ -6,6 +6,8 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
+from stable_envs._core.state_schema import unfold
 from stable_envs.envs.classic_control.simulation.local import _PHYSICS_SPACES
 from tests.helpers.reference.native_acceptance import CASES as CLASSIC_CASES
 from tests.helpers.reference.native_acceptance import _actions as _classic_actions
@@ -49,7 +51,7 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
             framed(env.reset(seed=seed, options=plain), ref.reset(seed))
             if fast:
                 start = ref.get_state()
-                start[_FAST_FIELD[domain]].fill_(_FAST_SPEED[domain])
+                get_field(start, _FAST_FIELD[domain]).fill_(_FAST_SPEED[domain])
                 env.set_state(start)
                 ref.set_state(start)
             states = [
@@ -77,7 +79,7 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
             states, worst = run(
                 env, per_lane, {"variation_values": {leaf: values}}, fast=fast, frames=leaf in drawn_leaves
             )
-            last, baseline = states[-1], baselines[fast]
+            last, baseline = unfold(states[-1]), unfold(baselines[fast])
             moved = [
                 any(
                     not torch.equal(last[k][lane], baseline[k][lane])

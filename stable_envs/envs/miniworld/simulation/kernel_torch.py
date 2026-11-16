@@ -418,7 +418,7 @@ class TorchKernel:
         if P[P_WRAP_HEADING] > 0:
             adir = torch.remainder(adir, 2.0 * math.pi)
         return {
-            "room": room,
+            "tex": room,
             "kind": kind,
             "color": color,
             "texture": texture,

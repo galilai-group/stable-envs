@@ -15,6 +15,7 @@ pytest.importorskip("mujoco.batch")
 
 import mujoco
 
+from stable_envs import tuning
 from stable_envs._execution import mjbatch
 from stable_envs._execution.mjbatch import (
     BufferOverflowError,
@@ -22,7 +23,7 @@ from stable_envs._execution.mjbatch import (
     ResetPool,
     WarpBatch,
     make_backend,
-    resolve_backend,
+    mujoco_backend,
 )
 
 XML = """
@@ -93,22 +94,23 @@ def _mocap(t, n=B):
     return pos
 
 
-def test_routing_follows_device_and_cutoff():
-    assert resolve_backend(1, "cpu") == "native"
-    assert resolve_backend(4096, "cpu", "auto") == "native"
-    assert resolve_backend(1, "cuda") == "mjwarp"
-    assert resolve_backend(1, "cuda", None) == "mjwarp"
-    assert resolve_backend(255, "cuda", "auto", 256) == "native"
-    assert resolve_backend(256, "cuda", "auto", 256) == "mjwarp"
-    assert resolve_backend(4096, "cuda", "native") == "native"
-    assert resolve_backend(1, "cuda", "mjwarp") == "mjwarp"
+def test_routing_follows_device_and_switch_point(monkeypatch):
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    assert mujoco_backend("test-sim", 1, "cpu", cuda_min_envs=8) == "native"
+    assert mujoco_backend("test-sim", 7, "cuda", cuda_min_envs=8) == "native"
+    assert mujoco_backend("test-sim", 8, "cuda", cuda_min_envs=8) == "mjwarp"
+    assert mujoco_backend("test-sim", 1, "cuda", cuda_min_envs=None) == "mjwarp"
+    assert mujoco_backend("test-sim", 4096, "cpu", "auto", cuda_min_envs=8) == "native"
+    with tuning.override(large_backend_min_envs=256):
+        assert mujoco_backend("test-sim", 255, "cuda", "auto", cuda_min_envs=8) == "native"
+        assert mujoco_backend("test-sim", 256, "cuda", None, cuda_min_envs=8) == "mjwarp"
+        assert mujoco_backend("test-sim", 4096, "cuda", "native", cuda_min_envs=8) == "native"
+        assert mujoco_backend("test-sim", 1, "cuda", "mjwarp", cuda_min_envs=8) == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
-        resolve_backend(1, "cpu", "mjwarp")
-    with pytest.raises(ValueError, match="simulation_backend must be"):
-        resolve_backend(1, "cpu", "mjx")
-    for bad in (0, True, 1.5):
-        with pytest.raises(ValueError, match="mjwarp_min_envs must be an int >= 1"):
-            resolve_backend(1, "cpu", "auto", bad)
+        mujoco_backend("test-sim", 1, "cpu", "mjwarp", cuda_min_envs=8)
+    for bad in ("mjx", "default"):
+        with pytest.raises(ValueError, match="simulation_backend must be"):
+            mujoco_backend("test-sim", 1, "cpu", bad, cuda_min_envs=8)
 
 
 def test_native_threads_follow_the_cpu_limit(monkeypatch):
@@ -311,11 +313,11 @@ def test_mjwarp_excluded_pairs_make_no_contacts():
 
 @cuda
 def test_make_backend_builds_the_routed_backend():
-    backend = resolve_backend(4, "cuda", "auto", 8)
-    with make_backend(backend, _model(), 4, "cuda") as batch:
-        assert isinstance(batch, NativeBatch)
-    with make_backend(resolve_backend(4, "cuda"), _model(), 4, "cuda") as batch:
-        assert isinstance(batch, WarpBatch)
+    for switch, kind in ((8, NativeBatch), (4, WarpBatch)):
+        with tuning.override(large_backend_min_envs=switch):
+            backend = mujoco_backend("test-sim", 4, "cuda", cuda_min_envs=8)
+        with make_backend(backend, _model(), 4, "cuda") as batch:
+            assert isinstance(batch, kind)
 
 
 def _source_factory():

@@ -10,6 +10,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from stable_envs._core.state_schema import unfold
+
 WRAPPERS = {
     "acrobot": "Acrobot",
     "pendulum": "Pendulum",
@@ -149,7 +151,7 @@ class DMCReference:
         return torch.stack(rows)
 
     def set_state(self, state):
-        for wrapper, row in zip(self.envs, state.cpu().unbind(0), strict=True):
+        for wrapper, row in zip(self.envs, unfold(state.cpu()).unbind(0), strict=True):
             env, physics = wrapper.env._env, wrapper.env.physics
             for leaf in PHYSICS_LEAVES.get(self.domain, ()):
                 value = float(row[("physics", *leaf.split("."))])

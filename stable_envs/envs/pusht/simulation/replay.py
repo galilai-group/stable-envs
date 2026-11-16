@@ -50,6 +50,21 @@ def shallow_copy(obj):
     return clone
 
 
+#: Seeds the bit generator of a copy before its state is set; one sequence serves every copy.
+_SEED = np.random.SeedSequence(0)
+
+
+def _copy_generator(generator, memo):
+    """``copy.deepcopy`` of a NumPy generator: a PCG64 generator is rebuilt from its state, which costs less."""
+    if generator is None or type(generator.bit_generator) is not np.random.PCG64:
+        return copy.deepcopy(generator, memo)
+    copied = memo.get(id(generator))
+    if copied is None:
+        copied = memo[id(generator)] = np.random.Generator(np.random.PCG64(_SEED))
+        copied.bit_generator.state = generator.bit_generator.state
+    return copied
+
+
 def copy_space(space, memo=None, generators=True):
     """Return a variation space copy that owns its values and generators, like ``copy.deepcopy``.
 
@@ -59,7 +74,7 @@ def copy_space(space, memo=None, generators=True):
     memo = {} if memo is None else memo
     clone = shallow_copy(space)
     if generators:
-        clone._np_random = copy.deepcopy(space._np_random, memo)
+        clone._np_random = _copy_generator(space._np_random, memo)
     if hasattr(space, "spaces"):
         clone.spaces = type(space.spaces)(
             (key, copy_space(child, memo, generators)) for key, child in space.spaces.items()

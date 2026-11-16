@@ -613,50 +613,58 @@ def visit_order(tree, bounds, tight, velocity, order, active, walls, circle, sha
             sequence[lane, j] = slots[j] if j < live[lane] else 0
 
 
+@njit(cache=True, inline="always")
+def _advance_lane(
+    lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
+    single, circle, active, counts, lines,
+):  # fmt: skip
+    if active[lane]:
+        total, rows = _lane(
+            body[lane],
+            bias[lane],
+            cached[lane],
+            identifiers[lane],
+            tree[lane],
+            bounds[lane],
+            order[lane],
+            vertices[lane],
+            cog[lane],
+            inverse[lane],
+            radius[lane],
+            enabled[lane],
+            target[lane],
+            single,
+            circle,
+            lines[lane],
+        )
+        counts[lane, 0], counts[lane, 1] = total, rows
+
+
 @njit(parallel=True, cache=True)
 def advance_batch(
-    body,
-    bias,
-    cached,
-    identifiers,
-    tree,
-    bounds,
-    order,
-    vertices,
-    cog,
-    inverse,
-    radius,
-    enabled,
-    target,
-    single,
-    circle,
-    active,
-    counts,
-    lines,
-):
+    body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target, single,
+    circle, active, counts, lines,
+):  # fmt: skip
     """Step every ``active`` environment in place.
 
     ``counts[:, 0]`` gets the contacts summed over substeps and ``counts[:, 1]`` the render segments
     written to ``lines``.
     """
     for lane in prange(body.shape[0]):
-        if active[lane]:
-            total, rows = _lane(
-                body[lane],
-                bias[lane],
-                cached[lane],
-                identifiers[lane],
-                tree[lane],
-                bounds[lane],
-                order[lane],
-                vertices[lane],
-                cog[lane],
-                inverse[lane],
-                radius[lane],
-                enabled[lane],
-                target[lane],
-                single,
-                circle,
-                lines[lane],
-            )
-            counts[lane, 0], counts[lane, 1] = total, rows
+        _advance_lane(
+            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+            target, single, circle, active, counts, lines,
+        )  # fmt: skip
+
+
+@njit(cache=True)
+def advance_serial(
+    body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target, single,
+    circle, active, counts, lines,
+):  # fmt: skip
+    """``advance_batch`` on the calling thread, without starting the parallel region of one environment."""
+    for lane in range(body.shape[0]):
+        _advance_lane(
+            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+            target, single, circle, active, counts, lines,
+        )  # fmt: skip

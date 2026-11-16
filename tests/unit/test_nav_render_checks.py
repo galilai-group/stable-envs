@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import unfold
 
 
 def test_hidden_target_is_checked_only_where_it_is_drawn():
@@ -11,27 +12,25 @@ def test_hidden_target_is_checked_only_where_it_is_drawn():
         state = env.reset(seed=1)
         frames = env.render(state)
         bad = state.clone()
-        bad["target", "position"][0, 0] = float("nan")
+        se.get_field(bad, "target.position")[0, 0] = float("nan")
         assert torch.equal(env.render(bad), frames)
         with pytest.raises(ValueError, match="target.position contains non-finite"):
             env.set_state(bad)
         bad = state.clone()
-        bad["agent", "position"][1, 1] = float("nan")
+        se.get_field(bad, "agent.position")[1, 1] = float("nan")
         with pytest.raises(ValueError, match="agent.position contains non-finite"):
             env.render(bad)
 
     with se.make("Piecewise", num_envs=2, device="cpu") as env:
         state = env.reset(seed=1)
         bad = state.clone()
-        bad["target", "position"][0, 0] = float("nan")
+        se.get_field(bad, "target.position")[0, 0] = float("nan")
         with pytest.raises(ValueError, match="target.position contains non-finite"):
             env.render(bad)
         with pytest.raises(ValueError, match="missing target.position"):
-            env.render(state.exclude(("target", "position")))
-        bad = state.clone()
-        bad["target", "position"] = bad["target", "position"][:, :1]
-        with pytest.raises(ValueError, match="target.position has invalid shape"):
-            env.render(bad)
+            env.render(unfold(state).exclude(("target", "position")))
+        with pytest.raises(ValueError, match="must be torch.float32"):
+            env.render(state.apply(lambda group: group[..., :3]))
 
 
 def test_simple_point_maze_render_skips_restore_only_fields():
@@ -39,11 +38,22 @@ def test_simple_point_maze_render_skips_restore_only_fields():
         state = env.reset(seed=2)
         frames = env.render(state)
         bad = state.clone()
-        bad["task", "cached_goal_agent_position"][1] = float("nan")
+        se.get_field(bad, "task.cached_goal_agent_position")[1] = float("nan")
         assert torch.equal(env.render(bad), frames)
         with pytest.raises(ValueError, match="cached_goal_agent_position contains non-finite"):
             env.set_state(bad)
         bad = state.clone()
-        bad["goal", "position"][0, 0] = float("inf")
+        se.get_field(bad, "goal.position")[0, 0] = float("inf")
         with pytest.raises(ValueError, match="goal.position contains non-finite"):
             env.render(bad)
+
+
+def test_rows_that_require_grad_render_and_nonfinite_ones_are_refused():
+    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
+        env.reset(seed=1)
+        rows = torch.as_tensor(env.sample_states(2))
+        assert torch.equal(env.render(rows.clone().requires_grad_()), env.render(rows))
+        bad = rows.clone()
+        bad[0, 0] = float("nan")
+        with pytest.raises(ValueError, match="NaN"):
+            env.render(bad.requires_grad_())

@@ -9,8 +9,8 @@ import stable_envs as snv
 env = snv.TwoRoom(num_envs=4, device="cpu")
 print(env.action_spec)                          # Spec(shape=(2,), dtype=float32, bounds=[-1, 1])
 print(env.frame_spec.batch_shape(env.num_envs)) # (4, 224, 224, 3)
-print(env.state_spec.keys(nested=True))         # [('agent', 'position'), ('target', 'position')]
-print(env.state_spec["agent", "position"].names)  # ('agent_x', 'agent_y')
+print(env.state_spec.keys(nested=True))         # [('navigation', 'float32')]
+print(env.state_spec["navigation", "float32"].shape)  # (4,)
 
 actions = env.action_spec.sample(env.num_envs, rng=np.random.default_rng(0))
 print(actions.shape, actions.dtype)               # torch.Size([4, 2]) torch.float32
@@ -23,14 +23,14 @@ env.close()
 
 | Spec | Shape | Describes |
 |---|---|---|
-| `env.state_spec` | a `CompositeSpec` with one leaf per state field | The state that `reset`, `get_state` and `step` return, with each field's dtype and, where the family declares them, bounds and names. |
+| `env.state_spec` | a `CompositeSpec` with one leaf for each state leaf | The state that `reset`, `get_state` and `step` return, with the dtype of each leaf and, where the family declares them, bounds and names. On a folded state, each leaf is a group of fields (see [Read a State field](index.md#read-a-state-field)). |
 | `env.action_spec` | `(action_dim,)` | One action. A discrete action has `discrete_n` set and an integer dtype. |
 | `env.frame_spec` | `(H, W, 3)`, uint8, bounds `[0, 255]` | One frame at the environment's size. |
 | `env.variation_spec` | `(variation_dim,)` | One compiled variation row, with one name per column, such as `agent.color[0]`. |
 
 A spec's `shape` leaves out the batch axis: `action_spec.shape == (2,)` means `step` takes `(B, 2)` or `(B, T, 2)` actions. `batch_shape(B)`, `zeros(B)` and `sample(B)` add it back. `validate` checks the trailing shape, casts to the spec's dtype, and refuses NaN, infinity and values outside the bounds or the discrete values, and `contains` returns False where `validate` would raise. `Spec.sample` needs bounds or `discrete_n`. For state fields without bounds, draw states with `env.sample_states(n)` instead.
 
-`CompositeSpec` nests specs by key path, the way state nests tensors: `spec["agent", "position"]` is the leaf for `state["agent", "position"]`. Its `zeros` and `sample` return a TensorDict with batch size `(B,)`, and its `validate` also refuses missing and unexpected keys.
+`CompositeSpec` nests specs by key path, the way state nests tensors: `spec["navigation", "float32"]` is the leaf for `state["navigation", "float32"]`. Its `zeros` and `sample` return a TensorDict with batch size `(B,)`, and its `validate` also refuses missing and unexpected keys.
 
 ::: stable_envs.specs.Spec
     options:

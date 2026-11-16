@@ -71,3 +71,18 @@ def test_user_thread_settings_win(monkeypatch):
         assert cpus.numba_threads() == 1
     finally:
         numba.set_num_threads(before)
+
+
+@pytest.mark.parametrize("value", [None, "ACTIVE"])
+def test_import_sets_a_passive_openmp_wait_unless_the_user_set_one(value):
+    import os
+    import subprocess
+    import sys
+
+    env = {k: v for k, v in os.environ.items() if k != "OMP_WAIT_POLICY"}
+    if value is not None:
+        env["OMP_WAIT_POLICY"] = value
+    code = "import os, stable_envs; print(os.environ['OMP_WAIT_POLICY'])"
+    out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=300)
+    assert out.returncode == 0, out.stderr[-2000:]
+    assert out.stdout.strip().splitlines()[-1] == (value or "PASSIVE")

@@ -14,6 +14,7 @@ pytest.importorskip("tensordict")
 import torch
 
 import stable_envs as snv
+from stable_envs._core.state_schema import get_field, schema_of
 
 pytestmark = pytest.mark.unit
 
@@ -215,7 +216,7 @@ def test_private_projection_roundtrips_the_renderer_layout_and_is_not_a_state(na
         rows = env._get_render_state()
         projection = env._unpack_render_state(rows)
         state = env.get_state()
-        assert "qvel" in state
+        assert "qvel" in schema_of(state).names
         assert env._pack_render_state(state).shape == rows.shape
         assert any(off is None for _, _, off in env._layout())
         with pytest.raises((TypeError, ValueError)):
@@ -240,18 +241,20 @@ def test_render_of_state_checks_only_the_leaves_the_frame_reads(name):
     with _build(name, num_envs=2, device="cpu") as env:
         st = env.get_state()
         frames = env.render(st)
+        schema = schema_of(st)
         unread = st.clone()
-        unread["qvel"][0, 0] = float("nan")
-        del unread["rng", "keys"]
+        get_field(unread, "qvel")[0, 0] = float("nan")
+        unread = unread.exclude(schema.groups[schema.slices["rng/keys"].group].path)
         assert torch.equal(env.render(unread), frames)
         with pytest.raises(ValueError):
             env.set_state(unread)
         for key, _ in env._drawn_fields():
+            name = "/".join(key)
             bad = st.clone()
-            bad[key][0, 0] = float("inf")
+            get_field(bad, name)[0, 0] = float("inf")
             with pytest.raises(ValueError, match="non-finite"):
                 env.render(bad)
-            del bad[key]
+            bad = bad.exclude(schema.groups[schema.slices[name].group].path)
             with pytest.raises(ValueError, match="missing"):
                 env.render(bad)
 

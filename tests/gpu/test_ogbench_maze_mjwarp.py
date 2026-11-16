@@ -8,6 +8,8 @@ import torch
 pytest.importorskip("ogbench")
 pytest.importorskip("mujoco_warp")
 
+from stable_envs import get_field, set_field
+from stable_envs._core.state_schema import unfold
 from stable_envs.envs.ogbench.simulation.maze_batch import OGBMazeBatchAdapter, OGBMazeWarpAdapter
 
 pytestmark = pytest.mark.gpu
@@ -63,8 +65,10 @@ def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
     try:
         state = cpu.get_state()
         centre = torch.tensor(cpu.task.teleport["teleport_in_xys"][0], dtype=torch.float64)
-        state["root", "position"] = centre + torch.tensor(
-            [[0.0, 0.0], [1.0, 0.0], [1.1, 1.1], [-1.1, -1.1]], dtype=torch.float64
+        set_field(
+            state,
+            "root/position",
+            centre + torch.tensor([[0.0, 0.0], [1.0, 0.0], [1.1, 1.1], [-1.1, -1.1]], dtype=torch.float64),
         )
         zero = np.zeros((lanes, 2), np.float32)
         cpu.set_state(state)
@@ -72,10 +76,13 @@ def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
         for _ in range(3):
             want, got = cpu.step(zero), gpu.step(torch.as_tensor(zero, device="cuda"))
             for key in want["state"].keys(True, True):
-                if key[0] in ("task", "rng"):
+                if key[:2] == ("maze", "host"):
                     assert torch.equal(got["state"][key].cpu(), want["state"][key]), key
             torch.testing.assert_close(
-                got["state"]["root", "position"].cpu(), want["state"]["root", "position"], rtol=0, atol=1e-4
+                get_field(got["state"], "root/position").cpu(),
+                get_field(want["state"], "root/position"),
+                rtol=0,
+                atol=1e-4,
             )
     finally:
         cpu.close()
@@ -97,6 +104,7 @@ def test_a_restored_state_resumes_to_rounding(loco):
         )
         for t in range(4):
             sa, sb = a.step(actions[t])["state"], b.step(actions[t])["state"]
+        sa, sb = unfold(sa), unfold(sb)
         for key in sa.keys(True, True):
             if key[0] in ("task", "rng") or key == ("simulator", "time"):
                 assert torch.equal(sa[key], sb[key]), key
@@ -162,7 +170,9 @@ def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
         for t in range(100):
             if t % 5 == 0:
                 state = cpu.get_state()
-                state["root", "position"] = inbound[torch.as_tensor(rng.integers(len(inbound), size=lanes))] + 0.2
+                set_field(
+                    state, "root/position", inbound[torch.as_tensor(rng.integers(len(inbound), size=lanes))] + 0.2
+                )
                 cpu.set_state(state)
                 gpu.set_state(state.to("cuda"))
             actions = rng.uniform(-0.1, 0.1, (lanes, 2)).astype(np.float32)
@@ -170,7 +180,7 @@ def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
             gpu.step(torch.as_tensor(actions, device="cuda"), capture_state=t % 3 == 0)
         want, got = cpu.get_state(), gpu.get_state().cpu()
         for key in want.keys(True, True):
-            if key[0] in ("task", "rng"):
+            if key[:2] == ("maze", "host"):
                 assert torch.equal(got[key], want[key]), key
     finally:
         cpu.close()
@@ -183,8 +193,8 @@ def _oracle_rollout(adapter, oracle, steps, on_cuda):
     state = adapter.get_state()
     first = np.full(adapter.num_envs, -1)
     for t in range(steps):
-        xy = state["root", "position"].cpu().numpy()[:, :2].astype(np.float64)
-        goal = state["task", "goal_pos"].cpu().numpy()[:, :2].astype(np.float64)
+        xy = get_field(state, "root/position").cpu().numpy()[:, :2].astype(np.float64)
+        goal = get_field(state, "task/goal_pos").cpu().numpy()[:, :2].astype(np.float64)
         actions = np.zeros((adapter.num_envs, 2), np.float32)
         for i in range(adapter.num_envs):
             direction = np.asarray(oracle.get_oracle_subgoal(xy[i], goal[i])[0]) - xy[i]

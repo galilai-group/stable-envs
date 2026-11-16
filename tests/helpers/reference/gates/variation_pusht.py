@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 
 import stable_envs as se
+from stable_envs import get_field
 
 CLASSES = {"PushT": ("env", "PushT"), "PushTDiscrete": ("env_discrete", "PushTDiscrete")}
 EXPLICIT = {
@@ -72,10 +73,9 @@ def _compare_reset(state, envs):
     for lane, env in enumerate(envs):
         for name in ("agent", "block"):
             for field in BODY_FIELDS:
-                ours = state["current", "body", name, field][lane].cpu().numpy()
+                ours = get_field(state, f"current/body/{name}/{field}")[lane].cpu().numpy()
                 np.testing.assert_array_equal(ours, _body(env, name, field), err_msg=f"{name}.{field} lane {lane}")
-        np.testing.assert_array_equal(state["current", "observation"][lane].cpu().numpy(), env._get_obs())
-        np.testing.assert_array_equal(state["current", "goal_image"][lane].cpu().numpy(), env._goal)
+        np.testing.assert_array_equal(get_field(state, "current/observation")[lane].cpu().numpy(), env._get_obs())
 
 
 def _frames(ours, envs):
@@ -104,7 +104,10 @@ def _run(env, name, seed, options) -> dict:
             expected = [e.step(a) for e, a in zip(envs, action, strict=True)]
             for lane, (obs, reward, terminated, _, _) in enumerate(expected):
                 np.testing.assert_allclose(
-                    out["state"]["current", "observation"][lane].cpu().numpy(), obs["state"], rtol=0, atol=ROLLOUT_ATOL
+                    get_field(out["state"], "current/observation")[lane].cpu().numpy(),
+                    obs["state"],
+                    rtol=0,
+                    atol=ROLLOUT_ATOL,
                 )
                 assert abs(float(out["reward"][lane]) - reward) <= ROLLOUT_ATOL
                 assert bool(out["terminated"][lane]) == terminated
@@ -192,7 +195,7 @@ def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
             env.set_state(saved)
             restored, px_restored = _frames(env.render().cpu().numpy(), envs)
             assert px_restored == 0
-            moments = saved["current", "body", "block", "moment"].cpu().numpy()
+            moments = get_field(saved, "current/body/block/moment").cpu().numpy()
             for e in envs:
                 e.close()
             envs = []
@@ -205,7 +208,7 @@ def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
                 envs.append(e)
             state = env.reset(seed=seed + 1, options={"variation": []})
             _compare_reset(state, envs)
-            assert (state["current", "body", "block", "moment"].cpu().numpy() != moments).all()
+            assert (get_field(state, "current/body/block/moment").cpu().numpy() != moments).all()
             after_reset, px_reset = _frames(env.render().cpu().numpy(), envs)
             assert px_reset == 0
         finally:

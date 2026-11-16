@@ -15,7 +15,6 @@ import math
 import numpy as np
 import pytest
 import torch
-from tensordict import TensorDict
 
 from stable_envs.envs.miniworld.simulation.adapter import TEXTURES, configure_pyglet, read_lane
 
@@ -28,6 +27,7 @@ from miniworld.envs import MovingBlockWorld  # noqa: E402
 from miniworld.params import DEFAULT_PARAMS  # noqa: E402
 
 import stable_envs as snv  # noqa: E402
+from stable_envs import get_field  # noqa: E402
 from stable_envs.envs.miniworld.simulation.world import BALL_RADIUS_PER_HEIGHT  # noqa: E402
 
 pytestmark = pytest.mark.unit
@@ -100,16 +100,17 @@ def _wrap(env):
 
 def _adopt(env, sources):
     """Restore the sources' worlds and motion into ``env``; the generator fields keep ``env``'s values."""
-    fields = env._simulator.fields
+    schema = env._simulator.schema
     rows = [read_lane(src, env._simulator.num_blocks) for src in sources]
     state = env.get_state()
-    columns = {
-        key: torch.tensor(np.asarray([row[key] for row in rows]).reshape(len(rows), width), dtype=dtype)
-        for key, (width, dtype) in fields.items()
-        if key[0] != "rng"
-    }
-    columns.update({key: state[key] for key in fields if key[0] == "rng"})
-    env.set_state(TensorDict(columns, [len(rows)]))
+    columns = {}
+    for name, field in schema.slices.items():
+        if name.startswith("rng/"):
+            columns[name] = get_field(state, name)
+        else:
+            values = np.asarray([row[name.replace("/", ".")] for row in rows])
+            columns[name] = torch.tensor(values.reshape(len(rows), *field.shape), dtype=field.dtype)
+    env.set_state(schema.fold(columns, [len(rows)]))
 
 
 def _assert_lane(state, lane, src, t, atol=0.0):
@@ -118,20 +119,20 @@ def _assert_lane(state, lane, src, t, atol=0.0):
     def close(a, b):
         np.testing.assert_allclose(a, b, rtol=0, atol=atol, err_msg=msg)
 
-    close(state["agent", "pos"][lane].numpy(), src.agent.pos)
-    close(state["agent", "dir"][lane].numpy(), [src.agent.dir])
+    close(get_field(state, "agent/pos")[lane].numpy(), src.agent.pos)
+    close(get_field(state, "agent/dir")[lane].numpy(), [src.agent.dir])
     blocks = src.entities[1:]
     n = len(blocks)
-    assert state["blocks", "present"][lane].tolist() == [True] * n + [False] * (
-        state["blocks", "present"].shape[1] - n
+    assert get_field(state, "blocks/present")[lane].tolist() == [True] * n + [False] * (
+        get_field(state, "blocks/present").shape[1] - n
     )
-    close(state["blocks", "pos"][lane].numpy().reshape(-1, 3)[:n], np.stack([b.pos for b in blocks]))
-    close(state["blocks", "velocity"][lane].numpy().reshape(-1, 3)[:n], np.stack([b.velocity for b in blocks]))
-    close(state["blocks", "dir"][lane].numpy()[:n], [b.dir for b in blocks])
-    assert state["blocks", "kind"][lane].tolist()[:n] == [0 if isinstance(b, Box) else 1 for b in blocks], msg
+    close(get_field(state, "blocks/pos")[lane].numpy().reshape(-1, 3)[:n], np.stack([b.pos for b in blocks]))
+    close(get_field(state, "blocks/velocity")[lane].numpy().reshape(-1, 3)[:n], np.stack([b.velocity for b in blocks]))
+    close(get_field(state, "blocks/dir")[lane].numpy()[:n], [b.dir for b in blocks])
+    assert get_field(state, "blocks/kind")[lane].tolist()[:n] == [0 if isinstance(b, Box) else 1 for b in blocks], msg
     carried = src.agent.carrying
-    assert state["agent", "carrying"][lane].item() == (-1 if carried is None else blocks.index(carried)), msg
-    assert state["lifecycle", "elapsed_steps"][lane].item() == src.step_count, msg
+    assert get_field(state, "agent/carrying")[lane].item() == (-1 if carried is None else blocks.index(carried)), msg
+    assert get_field(state, "lifecycle/elapsed_steps")[lane].item() == src.step_count, msg
 
 
 def _run(env, sources, actions, *, wrap, frames=True, atol=0.0):
@@ -246,7 +247,7 @@ def test_resets_sample_the_source_distribution():
     """FloWM textured resets: counts, kinds, palette, room textures, grid cells and velocities as the fork draws them."""
     episodes = 64
     source = _flowm_source(0, textured=True)
-    src = {"count": [], "ball": [], "pos": [], "vel": set(), "agent": [], "room": set()}
+    src = {"count": [], "ball": [], "pos": [], "vel": set(), "agent_pos": [], "rooms": set()}
     rng = np.random.default_rng(0)
     for e in range(episodes):
         source.num_blocks = int(rng.integers(6, 11))
@@ -256,23 +257,23 @@ def test_resets_sample_the_source_distribution():
         src["ball"] += [isinstance(b, Ball) for b in blocks]
         src["pos"] += [b.pos[[0, 2]] for b in blocks]
         src["vel"] |= {tuple(float(v) for v in b.velocity) for b in blocks}
-        src["agent"].append(source.agent.pos[[0, 2]])
-        src["room"].add((source.rooms[0].floor_tex_name, source.rooms[0].wall_tex_name))
+        src["agent_pos"].append(source.agent.pos[[0, 2]])
+        src["rooms"].add((source.rooms[0].floor_tex_name, source.rooms[0].wall_tex_name))
     with snv.MiniWorldMovingBlockWorld(num_envs=episodes, size=SIZE, device="cpu", preset="flowm-textured") as env:
         state = env.reset(seed=1000)
-    present = state["blocks", "present"]
+    present = get_field(state, "blocks/present")
     count = present.sum(-1)
-    pos = state["blocks", "pos"].reshape(episodes, -1, 3)[present][:, [0, 2]].numpy()
-    vel = state["blocks", "velocity"].reshape(episodes, -1, 3)[present].numpy()
+    pos = get_field(state, "blocks/pos").reshape(episodes, -1, 3)[present][:, [0, 2]].numpy()
+    vel = get_field(state, "blocks/velocity").reshape(episodes, -1, 3)[present].numpy()
     assert set(count.tolist()) <= set(range(6, 11)) and len(set(count.tolist())) >= 4
     cardinal = {(1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 0.0, -1.0)}
     assert {tuple(float(x) for x in v) for v in vel} == src["vel"] == cardinal
-    for p in (pos, np.stack(src["pos"]), state["agent", "pos"][:, [0, 2]].numpy(), np.stack(src["agent"])):
+    for p in (pos, np.stack(src["pos"]), get_field(state, "agent/pos")[:, [0, 2]].numpy(), np.stack(src["agent_pos"])):
         assert (p == np.round(p)).all() and p.min() >= 1 and p.max() <= 15
         assert abs(p.mean() - 8) < 1.0
-    ball = (state["blocks", "kind"][present] == 1).double().mean().item()
+    ball = (get_field(state, "blocks/kind")[present] == 1).double().mean().item()
     assert abs(ball - 1 / 3) < 0.1 and abs(np.mean(src["ball"]) - 1 / 3) < 0.1
     # ensure_base_palette: the first five blocks take the five base colours in some order.
-    assert all(len(set(row)) == 5 for row in state["blocks", "color"][:, :5].tolist())
-    rooms = {(TEXTURES[f], TEXTURES[w]) for f, w, _ in state["room", "textures"].tolist()}
-    assert rooms <= _TEXTURED_ROOMS and src["room"] <= _TEXTURED_ROOMS and len(rooms) >= 6
+    assert all(len(set(row)) == 5 for row in get_field(state, "blocks/color")[:, :5].tolist())
+    rooms = {(TEXTURES[f], TEXTURES[w]) for f, w, _ in get_field(state, "room/textures").tolist()}
+    assert rooms <= _TEXTURED_ROOMS and src["rooms"] <= _TEXTURED_ROOMS and len(rooms) >= 6

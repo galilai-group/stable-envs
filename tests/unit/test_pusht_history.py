@@ -7,6 +7,7 @@ import torch
 pytest.importorskip("pymunk")
 pytest.importorskip("cv2")
 
+from stable_envs import get_field
 from stable_envs.env import Env  # noqa: E402
 from stable_envs.envs.pusht.simulation.history import stack_states  # noqa: E402
 from stable_envs.envs.pusht.simulation.replay_batch import PushTReplayAdapter  # noqa: E402
@@ -69,10 +70,10 @@ def test_real_history_slice_roundtrip(discrete, device, sequence, selection):
             # Each selected State restores on its own, even when padded to a longer sibling's history.
             env.adapter.set_state(state)
             assert (env.get_state() == expected[time]).all()
-            lengths = state["history", "lengths"]
-            valid = state["history", "valid"]
+            lengths = get_field(state, "history/lengths")
+            valid = get_field(state, "history/valid")
             assert torch.equal(valid, torch.arange(valid.shape[1], device=device)[None] < lengths[:, None])
-            assert not state["history", "actions"][~valid].any()
+            assert not get_field(state, "history/actions")[~valid].any()
         frozen = output.clone()
         env.adapter.step(actions[:, 0])
         assert (frozen == output).all()
@@ -83,9 +84,9 @@ def test_collation_owns_storage_and_does_not_pad_inputs_in_place():
         short = env.get_state()
         long = env.adapter.step(np.zeros((2, 2), np.float64))["state"]
         result = stack_states([long, short])
-        assert short["history", "actions"].shape == (2, 0, 2)
-        assert result["history", "actions"].shape == (2, 2, 1, 2)
-        assert result["history", "lengths"].tolist() == [[1, 0], [1, 0]]
+        assert get_field(short, "history/actions").shape == (2, 0, 2)
+        assert get_field(result, "history/actions").shape == (2, 2, 1, 2)
+        assert get_field(result, "history/lengths").tolist() == [[1, 0], [1, 0]]
         saved = short.clone()
-        result["current", "observation"].fill_(0)
+        get_field(result, "current/observation").fill_(0)
         assert (saved == short).all()

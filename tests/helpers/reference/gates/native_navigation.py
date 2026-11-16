@@ -119,7 +119,7 @@ def _diagnostic_case(env, ref, domain, case):
                 state = obj.get_state()
                 context[label]["state_at_failure"] = _diagnostic_value(state)
                 goal = "goal" if domain == "simple_point_maze" else "target"
-                context[label]["goal"] = _diagnostic_value(state[goal, "position"])
+                context[label]["goal"] = _diagnostic_value(se.get_field(state, f"{goal}.position"))
             except Exception as snapshot_error:
                 context[label]["snapshot_error"] = repr(snapshot_error)
         context["candidate_variation"] = {path: _diagnostic_value(env._style[path]) for path in env._style.paths}
@@ -226,12 +226,12 @@ def _variation_case(domain, device):
                 actions = _actions(domain, 219, 32, 1)
                 _probe("trajectory")
                 steps = check_step_matches_reference(env, ref, actions)
-                varied_final = env.get_state()["agent", "position"].clone()
+                varied_final = se.get_field(env.get_state(), "agent.position").clone()
                 with se.make(CASES[domain]["stable_env"], num_envs=1, device=device) as default_env:
                     default_env.reset(seed=11)
                     for action in actions:
                         default_env.step(action, frames=None)
-                    assert not torch.equal(varied_final, default_env.get_state()["agent", "position"])
+                    assert not torch.equal(varied_final, se.get_field(default_env.get_state(), "agent.position"))
                 return {
                     "values": {k: np.asarray(v).tolist() for k, v in values.items()},
                     "steps": len(steps),
@@ -272,9 +272,9 @@ def _boundary_case(domain, device):
                 for position, action, name in probes:
                     _probe(name)
                     state = ref.get_state()
-                    state["agent", "position"] = torch.tensor([position], dtype=torch.float32)
+                    se.set_field(state, "agent.position", torch.tensor([position], dtype=torch.float32))
                     if domain != "simple_point_maze":
-                        state["target", "position"] = torch.tensor([[190.0, 190.0]], dtype=torch.float32)
+                        se.set_field(state, "target.position", torch.tensor([[190.0, 190.0]], dtype=torch.float32))
                     env.set_state(state)
                     ref.set_state(state)
                     got, expected = (
@@ -282,7 +282,7 @@ def _boundary_case(domain, device):
                         ref.step(np.asarray([action], np.float32)),
                     )
                     compare_state(got, expected)
-                    observed[name] = got["state", "agent", "position"][0].detach().cpu().tolist()
+                    observed[name] = se.get_field(got["state"], "agent.position")[0].detach().cpu().tolist()
                 return observed
         finally:
             ref.close()
@@ -309,8 +309,8 @@ def _piecewise_zone_boundaries(device):
                         rows = [positions[(index + lane) % len(positions)] for lane in range(batch)]
                         _probe(f"zone_planes_{index}_positions_{rows}")
                         state = ref.get_state()
-                        state["agent", "position"] = torch.tensor(rows, dtype=torch.float32)
-                        state["target", "position"] = torch.full((batch, 2), 190.0, dtype=torch.float32)
+                        se.set_field(state, "agent.position", torch.tensor(rows, dtype=torch.float32))
+                        se.set_field(state, "target.position", torch.full((batch, 2), 190.0, dtype=torch.float32))
                         env.set_state(state)
                         ref.set_state(state)
                         compare_state(env.get_state(), ref.get_state())
@@ -345,12 +345,12 @@ def _reward_and_lifecycle(domain, device):
                 check_reset_matches_reference(env, ref, seed=71)
                 state = ref.get_state()
                 if domain == "simple_point_maze":
-                    state["goal", "position"] = torch.tensor([[4.0, 4.0]])
-                    state["agent", "position"] = torch.tensor([[4.0, 4.0]])
+                    se.set_field(state, "goal.position", torch.tensor([[4.0, 4.0]]))
+                    se.set_field(state, "agent.position", torch.tensor([[4.0, 4.0]]))
                 else:
                     boundary = state.clone()
-                    boundary["target", "position"] = torch.tensor([[80.0, 80.0]])
-                    boundary["agent", "position"] = torch.tensor([[64.0, 80.0]])
+                    se.set_field(boundary, "target.position", torch.tensor([[80.0, 80.0]]))
+                    se.set_field(boundary, "agent.position", torch.tensor([[64.0, 80.0]]))
                     hold = (
                         np.asarray([[-0.4, 0.0]], np.float32)
                         if domain == "piecewise"
@@ -363,16 +363,18 @@ def _reward_and_lifecycle(domain, device):
                     assert not bool(got["terminated"].item())
 
                     inside = boundary.clone()
-                    inside["agent", "position"] = torch.tensor(
-                        [[np.nextafter(np.float32(64.0), np.float32(80.0)), 80.0]], dtype=torch.float32
+                    se.set_field(
+                        inside,
+                        "agent.position",
+                        torch.tensor([[np.nextafter(np.float32(64.0), np.float32(80.0)), 80.0]], dtype=torch.float32),
                     )
                     env.set_state(inside)
                     ref.set_state(inside)
                     got, expected = _step(env, hold), ref.step(hold)
                     compare_state(got, expected)
                     assert bool(got["terminated"].item())
-                    state["target", "position"] = torch.tensor([[80.0, 80.0]])
-                    state["agent", "position"] = torch.tensor([[80.0, 80.0]])
+                    se.set_field(state, "target.position", torch.tensor([[80.0, 80.0]]))
+                    se.set_field(state, "agent.position", torch.tensor([[80.0, 80.0]]))
                 env.set_state(state)
                 ref.set_state(state)
                 zero = np.zeros((1, 2), np.float32)
@@ -404,8 +406,8 @@ def _simple_goal_distinction(device):
             with _diagnostic_case(env, ref, "simple_point_maze", "_simple_goal_distinction"):
                 check_reset_matches_reference(env, ref, seed=0)
                 state = env.get_state()
-                cached = state["task", "cached_goal_agent_position"]
-                reward_goal = state["goal", "position"]
+                cached = se.get_field(state, "task.cached_goal_agent_position")
+                reward_goal = se.get_field(state, "goal.position")
                 assert not torch.equal(cached, reward_goal)
                 got, expected = (
                     _step(env, np.zeros((1, 2), np.float32)),
@@ -436,11 +438,10 @@ def _field_necessity(domain, device):
                 other_state = other.reset(seed=991)
                 wrong = snapshot.clone()
                 if domain == "simple_point_maze":
-                    wrong["task", "cached_goal_agent_position"] = other_state[
-                        "task", "cached_goal_agent_position"
-                    ].clone()
+                    cached = se.get_field(other_state, "task.cached_goal_agent_position").clone()
+                    se.set_field(wrong, "task.cached_goal_agent_position", cached)
                 else:
-                    wrong["target", "position"] = other_state["target", "position"].clone()
+                    se.set_field(wrong, "target.position", se.get_field(other_state, "target.position").clone())
                 env.set_state(wrong)
                 omitted = _step(env, np.zeros((1, 2), np.float32))
                 if domain == "simple_point_maze":
@@ -473,7 +474,7 @@ def _simple_action_dtypes(device):
                     got, expected = _step(env, action), ref.step(action)
                     compare_state(got, expected)
                     observed[np.dtype(dtype).name] = {
-                        "state_is_float64": bool(got["state", "task", "state_is_float64"].item()),
+                        "state_is_float64": bool(se.get_field(got["state"], "task.state_is_float64").item()),
                         "observation_dtype": str(got["observation"].dtype),
                     }
 
@@ -481,11 +482,12 @@ def _simple_action_dtypes(device):
                 continuation_action = np.asarray([[0.031234567, -0.017]], np.float32)
                 expected = ref.step(continuation_action)
                 wrong_flag = promoted.clone()
-                wrong_flag["task", "state_is_float64"].zero_()
+                se.get_field(wrong_flag, "task.state_is_float64").zero_()
                 env.set_state(wrong_flag)
                 omitted = _step(env, continuation_action)
                 assert not torch.equal(
-                    omitted["state", "agent", "position"].cpu(), expected["state", "agent", "position"]
+                    se.get_field(omitted["state"], "agent.position").cpu(),
+                    se.get_field(expected["state"], "agent.position"),
                 )
                 env.set_state(promoted)
                 compare_state(_step(env, continuation_action), expected)
@@ -496,10 +498,14 @@ def _simple_action_dtypes(device):
                 shape = env._style["walls.shape"][0].reshape(6, 2)[0]
                 radius = float(env._style["agent.radius"][0].item())
                 blocked = initial.clone()
-                blocked["agent", "position"] = torch.tensor(
-                    [[float(corner[0]) - radius - 0.1, float(corner[1] + shape[1] / 2)]], dtype=torch.float64
+                se.set_field(
+                    blocked,
+                    "agent.position",
+                    torch.tensor(
+                        [[float(corner[0]) - radius - 0.1, float(corner[1] + shape[1] / 2)]], dtype=torch.float64
+                    ),
                 )
-                blocked["task", "state_is_float64"].zero_()
+                se.get_field(blocked, "task.state_is_float64").zero_()
                 env.set_state(blocked)
                 ref.set_state(blocked)
                 got, expected = (
@@ -507,7 +513,7 @@ def _simple_action_dtypes(device):
                     ref.step(np.asarray([[0.1, 0.0]], np.float64)),
                 )
                 compare_state(got, expected)
-                assert not bool(got["state", "task", "state_is_float64"].item())
+                assert not bool(se.get_field(got["state"], "task.state_is_float64").item())
                 follow, expected_follow = (
                     _step(env, np.asarray([[0.0, 0.0]], np.float32)),
                     ref.step(np.asarray([[0.0, 0.0]], np.float32)),
@@ -532,9 +538,9 @@ def _simple_reward_boundary(device):
                 env.set_variation(values)
                 check_reset_matches_reference(env, ref, seed=19)
                 state = env.get_state()
-                state["goal", "position"] = torch.tensor([[4.0, 4.0]])
-                state["agent", "position"] = torch.tensor([[3.75, 4.0]], dtype=torch.float64)
-                state["task", "state_is_float64"].zero_()
+                se.set_field(state, "goal.position", torch.tensor([[4.0, 4.0]]))
+                se.set_field(state, "agent.position", torch.tensor([[3.75, 4.0]], dtype=torch.float64))
+                se.get_field(state, "task.state_is_float64").zero_()
                 env.set_state(state)
                 ref.set_state(state)
                 got, expected = (
@@ -546,7 +552,7 @@ def _simple_reward_boundary(device):
 
                 inside = state.clone()
                 inside_x = np.nextafter(np.float32(3.75), np.float32(4.0))
-                inside["agent", "position"] = torch.tensor([[inside_x, 4.0]], dtype=torch.float64)
+                se.set_field(inside, "agent.position", torch.tensor([[inside_x, 4.0]], dtype=torch.float64))
                 env.set_state(inside)
                 ref.set_state(inside)
                 got, expected = (
@@ -557,7 +563,7 @@ def _simple_reward_boundary(device):
                 assert bool(got["terminated"].item()) and float(got["reward"].item()) == 1.0
 
                 state64 = state.clone()
-                state64["task", "state_is_float64"].fill_(True)
+                se.get_field(state64, "task.state_is_float64").fill_(True)
                 env.set_state(state64)
                 ref.set_state(state64)
                 got, expected = (
@@ -567,8 +573,10 @@ def _simple_reward_boundary(device):
                 compare_state(got, expected)
                 assert not bool(got["terminated"].item())
                 inside64 = state64.clone()
-                inside64["agent", "position"] = torch.tensor(
-                    [[np.nextafter(np.float64(3.75), np.float64(4.0)), 4.0]], dtype=torch.float64
+                se.set_field(
+                    inside64,
+                    "agent.position",
+                    torch.tensor([[np.nextafter(np.float64(3.75), np.float64(4.0)), 4.0]], dtype=torch.float64),
                 )
                 env.set_state(inside64)
                 ref.set_state(inside64)

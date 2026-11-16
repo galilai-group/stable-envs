@@ -116,15 +116,15 @@ steps become much slower.
 ## Frames
 
 `state_render.py` copies a State from `env.reset(seed=0)` and writes the state row of each sample into
-these leaves (`env.leaves` in the config):
+these fields with `snv.get_field` (`env.leaves` in the config):
 
-| PushT State leaf | state columns |
+| PushT State field | state columns |
 |---|---|
 | `current.body.agent.position` | 0, 1 |
 | `current.body.block.position` | 2, 3 |
 | `current.body.block.angle` | 4 |
 
-The other leaves (goal, colours, shapes) keep their reset values. The dataset rows hold no contact points, so
+The other fields (goal, colours, shapes) keep their reset values. The dataset rows hold no contact points, so
 the frames show no contact markers. The source frames show a marker where the agent touches the block.
 
 On a PushT State, `render` draws the same bytes as the source pygame renderer, on CPU and on CUDA (see

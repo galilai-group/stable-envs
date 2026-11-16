@@ -9,6 +9,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from stable_envs._core.state_schema import schema_of, unfold
 from stable_envs.testing.metrics import leaf_difference
 
 
@@ -18,8 +19,26 @@ def _step_without_pixels(env, action):
     return env.step(action, states=None, frames=None).exclude("valid") if isinstance(env, Env) else env.step(action)
 
 
+def _fields(td):
+    """``td`` with a folded State, at the top or under ``"state"``, as one leaf per field."""
+    td = unfold(td)
+    state = td.get("state", None)
+    fields = unfold(state) if isinstance(state, TensorDict) else state
+    if fields is not state:
+        td = td.exclude("state")
+        td["state"] = fields
+    return td
+
+
+def fold_for(env, state: TensorDict) -> TensorDict:
+    """A reference State of one leaf per field in the layout of ``env``'s own State."""
+    schema = schema_of(env.get_state())
+    return state if schema is None else schema.fold(state, state.batch_size, state.device or "cpu")
+
+
 def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict:
-    """Compare every leaf, including RNG/lifecycle fields, with explicit error evidence."""
+    """Compare every field, including RNG/lifecycle fields, with explicit error evidence."""
+    actual, expected = _fields(actual), _fields(expected)
     ak = set(actual.keys(True, True))
     ek = set(expected.keys(True, True))
     assert ak == ek, f"State keys differ: {ak ^ ek}"
@@ -46,6 +65,7 @@ def assert_same_state(actual, expected):
     if torch.is_tensor(actual):
         torch.testing.assert_close(actual, expected, rtol=0, atol=0, equal_nan=True)
         return
+    actual, expected = _fields(actual), _fields(expected)
     assert actual.batch_size == expected.batch_size and actual.device == expected.device
     ak, ek = set(actual.keys(True, True)), set(expected.keys(True, True))
     assert ak == ek, f"State keys differ: {ak ^ ek}"
@@ -108,6 +128,7 @@ def assert_lossy_projection_rejected(env, snapshot):
 
 def max_state_error(actual, expected, *, exclude=()):
     """Largest absolute leaf difference (any mismatch counts 1 for bools); keys, dtypes and shapes must agree."""
+    actual, expected = _fields(actual), _fields(expected)
     assert set(actual.keys(True, True)) == set(expected.keys(True, True))
     error = 0.0
     for key in actual.keys(True, True):

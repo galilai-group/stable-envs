@@ -6,6 +6,8 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import tuning
+from stable_envs._core.state_schema import get_field, unfold
 from tests.helpers.reference.semantics import assert_same_state
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
@@ -66,29 +68,40 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
             reference.configure_physics(values)
             reference.reset(7)
             state = reference.get_state()
-            state["lifecycle", "step_count"][:, 0] = torch.tensor([997, 998, 999])
+            get_field(state, "lifecycle/step_count")[:, 0] = torch.tensor([997, 998, 999])
             reference.set_state(state)
             env.set_state(state.cuda())
             for action in np.random.default_rng(43).uniform(-1, 1, (32, 3, 2)):
                 expected = reference.step(action)
                 actual = env.step(torch.as_tensor(action, device="cuda"), frames=None).cpu()
                 for key in ("qpos", "qvel"):
-                    torch.testing.assert_close(actual["state", key], expected["state", key], rtol=0, atol=3e-6)
+                    torch.testing.assert_close(
+                        get_field(actual["state"], key), get_field(expected["state"], key), rtol=0, atol=3e-6
+                    )
                 torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-6)
                 for key in ("reward", "score", "terminated", "truncated"):
                     assert torch.equal(actual[key], expected[key])
                 for key in ("rng", "lifecycle", "time", ("task", "target_pos")):
-                    assert_same_state(actual["state"][key], expected["state"][key])
+                    assert_same_state(unfold(actual["state"])[key], unfold(expected["state"])[key])
     finally:
         reference.close()
 
 
 @pytest.mark.parametrize(
     "simulation_backend,batch,backend",
-    [(None, 1, "mjwarp"), (None, 32, "mjwarp"), ("auto", 1, "native"), ("auto", 7, "native"), ("auto", 8, "mjwarp")],
+    [
+        ("mjwarp", 1, "mjwarp"),
+        (None, 32, "mjwarp"),
+        ("auto", 1, "native"),
+        ("auto", 7, "native"),
+        ("auto", 8, "mjwarp"),
+    ],
 )
 def test_reacher_routes_physics_and_preserves_cuda_outputs(simulation_backend, batch, backend):
-    with se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env:
+    with (
+        tuning.override(large_backend_min_envs=8),
+        se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env,
+    ):
         assert env.simulation_backend == backend
         assert env.execution_mode == ("MUJOCO_WARP" if backend == "mjwarp" else "DELEGATED_CPU")
         checkpoint = env.reset(seed=7)

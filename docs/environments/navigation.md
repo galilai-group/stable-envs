@@ -18,6 +18,26 @@ TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. 
 
 The agent moves to a target. TwoRoom, Piecewise and SimplePointMaze terminate the episode when it reaches the target, and TwoRoomTarget and PiecewiseZones return only the state, with no reward or episode flags. Each class in [Classes](#classes) gives its arena and its success condition.
 
+## State
+
+The state is [folded](../api/index.md#read-a-state-field). The fields of one dtype are in one leaf:
+
+| Class | Leaf | Fields |
+|---|---|---|
+| TwoRoom, TwoRoomTarget, Piecewise | `navigation/float32` | `agent/position`, `target/position` |
+| PiecewiseZones | `navigation/float32` | `agent/position` |
+| SimplePointMaze | `simple_point_maze/float64` | `agent/position` |
+| | `simple_point_maze/float32` | `goal/position`, `task/cached_goal_agent_position` |
+| | `simple_point_maze/bool` | `task/state_is_float64` |
+
+Read a field by name:
+
+```python
+with snv.TwoRoom(num_envs=8, device="cpu") as env:
+    state = env.reset(seed=0)
+    print(snv.get_field(state, "target.position").shape)  # torch.Size([8, 2])
+```
+
 ## Simulation
 
 TwoRoomTarget, Piecewise and PiecewiseZones take `simulation_backend`. `"auto"` (the default) steps CPU batches with the Numba kernel when Numba imports and uses Torch otherwise, and `"torch"` and `"numba"` select one implementation. Both give the same state and task outputs.
@@ -39,15 +59,9 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
 
 The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
 
-`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports. Without Numba, a CPU batch steps in JAX, or in Torch below `jax_min_envs`. On CUDA, it uses Torch below `jax_min_envs` environments and JAX at or above that cutoff. The default cutoff is 1: JAX was faster in our measurements even for a single environment. If Torch is faster for small CUDA batches on your machine, raise the cutoff:
+`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports, and JAX without Numba. On CUDA, a batch of `large_backend_min_envs` or more environments steps in JAX, and a smaller batch steps in Numba (Torch without Numba). When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). On CUDA, `TwoRoom` and `TwoRoomTarget` draw a batch of fewer than `large_renderer_min_rows` frames with the Numba compositor on the CPU, and move the frames to CUDA in one copy ([Renderers](../performance-tuning.md#renderers)).
 
-```python
-# needs the navigation-gpu extra; CUDA only
-with snv.TwoRoom(num_envs=4, device="cuda", jax_min_envs=8) as env:
-    print(env.simulation_backend)  # torch
-```
-
-The choice is fixed at construction and uses these defaults rather than a benchmark of your machine. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself at any batch size. Torch and JAX use the requested device, but Numba runs on CPU only. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
+The choice is fixed at construction. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself at any batch size. Torch and JAX use the requested device. On CUDA, TwoRoom's Numba kernel steps a host copy of the batch rows that it keeps between steps: each step copies the actions to the host, then moves the new rows, the state and the outputs to the device in one copy. A reset, restore or other change of the rows on the device refreshes the host copy. TwoRoomTarget, Piecewise and PiecewiseZones run Numba on CPU only. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
 
 ## Rendering
 

@@ -7,15 +7,22 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import registry as _registry
-from . import tuning
-from .__about__ import __version__  # noqa: F401
-from ._core.config import get_config, set  # noqa: A004,F401
-from ._core.cpus import limit_thread_defaults as _limit_thread_defaults
-from .env import Env, State, StepResult, VariationLike  # noqa: F401
-from .registry import import_errors, info, list_envs, list_families  # noqa: F401
-from .registry import make as _make
-from .specs import CompositeSpec, Spec  # noqa: F401
+from ._core.cpus import passive_openmp_wait as _passive_openmp_wait
+
+# Before Torch or Numba starts an OpenMP runtime.
+_passive_openmp_wait()
+
+from . import registry as _registry  # noqa: E402
+from . import tuning  # noqa: E402
+from .__about__ import __version__  # noqa: E402,F401
+from ._core.config import get_config, set  # noqa: E402,A004,F401
+from ._core.cpus import limit_thread_defaults as _limit_thread_defaults  # noqa: E402
+from ._core.state_schema import get_field, schema_of, set_field  # noqa: E402,F401
+from .env import Env, State, StepResult, VariationLike  # noqa: E402,F401
+from .frames import FrameLoader  # noqa: E402,F401
+from .registry import import_errors, info, list_envs, list_families  # noqa: E402,F401
+from .registry import make as _make  # noqa: E402
+from .specs import CompositeSpec, Spec  # noqa: E402,F401
 
 # Size the Numba and Torch thread pools to the CPUs a container quota allows, before a family imports Numba.
 _limit_thread_defaults()
@@ -80,9 +87,13 @@ __all__ = [
     "State",
     "StepResult",
     "VariationLike",
+    "FrameLoader",
     "Spec",
     "CompositeSpec",
     "make",
+    "get_field",
+    "set_field",
+    "schema_of",
     "info",
     "list_envs",
     "list_families",

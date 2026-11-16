@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import pytest
 
@@ -15,6 +13,7 @@ if not torch.cuda.is_available():
     pytest.skip("CUDA required", allow_module_level=True)
 
 import stable_envs as se  # noqa: E402
+from stable_envs import get_field, tuning  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import MAX_EPISODE_STEPS  # noqa: E402
 from stable_envs.envs.classic_control.simulation.device import DeviceClassicAdapter  # noqa: E402
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
@@ -81,46 +80,34 @@ def test_float64_actions_match_gymnasium(domain):
 
 
 @pytest.mark.parametrize("domain", DOMAINS)
-def test_seeded_resets_repeat_and_follow_the_gymnasium_distribution(domain):
-    n = 4096
+def test_resets_equal_the_gymnasium_resets(domain):
+    """For a seed, the GPU lanes start where the CPU backends start, and later resets continue the same streams."""
+    n = 64
     fast = DeviceClassicAdapter(domain, n, "cuda", 0)
+    reference = ClassicControlAdapter(domain, n, "cpu", 0)
     try:
-        first = fast.reset(5)
-        assert_same_state(fast.reset(5), first)
-        again = fast.reset(None)
-        assert set(first.keys(True, True)) == set(CLASSIC_FIELDS[domain])
-        for key, (width, dtype) in CLASSIC_FIELDS[domain].items():
-            assert first[key].shape == (n, width) and first[key].dtype == dtype and first[key].device.type == "cuda"
-        assert torch.equal(first["lifecycle", "elapsed_steps"], torch.zeros_like(first["lifecycle", "elapsed_steps"]))
-        reference = ClassicControlAdapter(domain, 256, "cpu", 0)
-        try:
-            gym = reference.reset(5)
-        finally:
-            reference.close()
-        for key in first.keys(True, True):
-            if key[0] in ("rng", "physics", "lifecycle"):
-                continue
-            ours, theirs = first[key].double().cpu(), gym[key].double()
-            if theirs.min() == theirs.max():
-                assert torch.equal(ours, torch.full_like(ours, float(theirs[0, 0])))
-                continue
-            low, high = float(theirs.min()), float(theirs.max())
-            span = high - low
-            assert ours.min() >= low - 0.01 * span and ours.max() <= high + 0.01 * span, key
-            # A uniform on [low, high] has mean (low + high) / 2 and standard deviation span / sqrt(12).
-            assert abs(float(ours.mean()) - (low + high) / 2) < 0.05 * span, key
-            assert abs(float(ours.std()) - span / math.sqrt(12)) < 0.05 * span, key
-            assert not torch.equal(again[key], first[key]), key
-        if domain == "acrobot":
-            theta = first["theta1"]
-            assert torch.equal(theta, theta.float().double())
+        cases = ((5, None), (None, None), (None, None), (9, {"low": -0.02, "high": 0.03}), (2**32 - 3, None))
+        for seed, options in cases:
+            if domain == "pendulum" and options is not None:
+                options = {"x_init": 1.0, "y_init": 0.5}
+            first = fast.reset(seed, options)
+            for key, (width, dtype) in CLASSIC_FIELDS[domain].items():
+                field = get_field(first, key)
+                assert field.shape == (n, width) and field.dtype == dtype and field.device.type == "cuda"
+            assert_same_state(first.cpu(), reference.reset(seed, options))
+        # A restored State continues its PCG64 streams.
+        saved = reference.get_state()
+        fast.set_state(saved.cuda())
+        reference.set_state(saved)
+        assert_same_state(fast.reset(None).cpu(), reference.reset(None))
     finally:
         fast.close()
+        reference.close()
 
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
-    with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert isinstance(env._simulator, DeviceClassicAdapter)
         actions = _actions(domain, 3, 1)[:, :1].expand(3, 8, 1).cuda()
@@ -134,19 +121,21 @@ def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
         finally:
             torch.cuda.set_sync_debug_mode("default")
         state = result["state"]
-        assert state["lifecycle", "elapsed_steps"].device.type == "cuda"
-        assert torch.equal(state["lifecycle", "elapsed_steps"], torch.full((8, 1), 3, device="cuda"))
+        elapsed = get_field(state, "lifecycle/elapsed_steps")
+        assert elapsed.device.type == "cuda"
+        assert torch.equal(elapsed, torch.full((8, 1), 3, device="cuda"))
         # The step writes the render rows; they draw the returned State.
-        sim = torch.cat([state[name].reshape(8, 1) for name in env.sim_state_names], 1)
+        sim = torch.cat([get_field(state, name).reshape(8, 1) for name in env.sim_state_names], 1)
         torch.testing.assert_close(env._sim, sim, rtol=0, atol=0)
         assert torch.equal(env.render(), env.render(state))
 
 
-def test_auto_routes_small_cuda_batches_to_numpy():
-    with se.make("CartPole", num_envs=8, device="cuda", simulation_backend="auto") as env:
+def test_auto_routes_small_cuda_batches_to_the_cpu():
+    with tuning.override(large_backend_min_envs=8), se.make("CartPole", num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and isinstance(env._simulator, DeviceClassicAdapter)
-    with se.make("CartPole", num_envs=8, device="cuda", simulation_backend="auto", torch_min_envs=16) as env:
-        assert env.simulation_backend == "numpy" and env.execution_mode == "NATIVE_NUMPY"
+    with tuning.override(large_backend_min_envs=4), se.make("Acrobot", num_envs=2, device="cuda") as env:
+        assert env.simulation_backend == "gym" and env.execution_mode == "DELEGATED_CPU"
+        assert env.step(torch.zeros(2, 1, dtype=torch.int64, device="cuda"))["reward"].device.type == "cuda"
 
 
 def _policy(domain, observation):
@@ -195,7 +184,10 @@ def test_closed_loop_rollouts_keep_the_gymnasium_outcome(domain):
                 ended[name][done] = t
             if t < DEVIATION_STEPS.get(domain, 300):
                 state = ours["state"].cpu()
-                deviation = max(deviation, max(float((state[k] - theirs["state"][k]).abs().max()) for k in keys))
+                deviation = max(
+                    deviation,
+                    max(float((get_field(state, k) - get_field(theirs["state"], k)).abs().max()) for k in keys),
+                )
         assert torch.equal(ended["torch"] >= 0, ended["gym"] >= 0), ended
         if domain not in DEVIATION_STEPS:
             assert torch.equal(ended["torch"], ended["gym"]), ended

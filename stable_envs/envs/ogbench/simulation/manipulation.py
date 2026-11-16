@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import Field, StateSchema
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 from .compatibility import MODEL_VALUES, TARGET_ALPHA, CompatibleCube, CompatibleScene, LanePool, nodes, variation_tree
@@ -31,6 +32,38 @@ PARTS = (
 )
 FLAGS = {p.lower(): getattr(mujoco.mjtState, "mjSTATE_" + p) for p in PARTS}
 assert np.bitwise_or.reduce([int(f) for f in FLAGS.values()]) == int(mujoco.mjtState.mjSTATE_INTEGRATION)
+PCG_KEYS = ("state", "increment", "has_uint32", "uinteger")
+
+
+def field(*parts):
+    """The State field name of ``parts``: joined by ``/``, with a dotted Variation name split at its dots."""
+    return "/".join(parts).replace(".", "/")
+
+
+def state_schema(family, fields):
+    """The ``StateSchema`` of Cube/Scene State ``fields``, ``{name: (shape, dtype)}`` in State order.
+
+    A group holds the fields of one section and dtype, such as ``physics/float64``.
+    """
+    return StateSchema(
+        f"OGB{family}",
+        [
+            Field(name, shape, dtype, f"{name.split('/')[0]}/{str(dtype).removeprefix('torch.')}")
+            for name, (shape, dtype) in fields.items()
+        ],
+    )
+
+
+def pcg_fields(schema, state, name):
+    """``{key: value}`` of the PCG64 generator ``name`` in ``state``, a State or a ``{group: array}`` mapping."""
+    return {key: schema.get(state, field("rng", name, key)) for key in PCG_KEYS}
+
+
+def groups_of(schema, state):
+    """``{group key: (B, size) host array}`` of a State, or of a ``{group key: array}`` mapping."""
+    if isinstance(state, dict):
+        return state
+    return {key: state.get(group.path).numpy() for key, group in schema.groups.items()}
 
 
 def rngs(env):
@@ -83,8 +116,9 @@ _TASK_RANK = {"goal_observation": 4.0, "id": 4.1, "reward_id": 4.2, "success": 4
 _LATE_RANK = {"variation": 8, "model": 9}
 
 
-def _leaf_rank(key):
-    """Sort key that keeps the state leaf order of one combined capture; Python's sort is stable."""
+def _leaf_rank(name):
+    """Sort key that keeps the state field order of one combined capture; Python's sort is stable."""
+    key = name.split("/")
     group = key[0]
     if group == "task":
         return (_TASK_RANK[key[1]], 0)
@@ -105,7 +139,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
     execution_mode = "DELEGATED_CPU"
     rotation_tolerance = 1e-8
     process_methods = {"configure": PER_LANE}
-    process_attributes = ("family", "fields", "nq")
+    process_attributes = ("family", "fields", "schema", "nq")
     action_dim = 5
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None):
@@ -127,15 +161,30 @@ class OGBManipulationAdapter(SimulatorAdapter):
             + [f"{p}={version(p)}" for p in ("ogbench", "mujoco", "numpy", "gymnasium")]
         )
         self.signature = np.frombuffer(hashlib.sha256(fingerprint.encode()).digest(), np.uint8).copy()
-        self.reset(seed)
-        self.template = self._row(self.envs[0])
-        self.fields = {key: (tuple(value.shape), value.dtype) for key, value in self.template.items(True, True)}
+        self.reset_envs(seed)
+        #: ``{field name: (per-lane shape, dtype)}`` in State order.
+        self.fields = {
+            name: (tuple(value.shape), torch.from_numpy(value).dtype)
+            for name, value in self._values(self.envs[0]).items()
+        }
+        self.schema = state_schema(family, self.fields)
+        self._keys = set(self.schema.new(1).keys(True, False))
 
     def _check_open(self):
         if self._closed:
             raise RuntimeError("OGBManipulationAdapter is closed")
 
     def reset(self, seed=None, options=None):
+        self.reset_envs(seed, options)
+        return self.get_state()
+
+    def reset_columns(self, seed=None, options=None):
+        """``reset`` that returns ``columns()`` instead of a State."""
+        self.reset_envs(seed, options)
+        return self.columns()
+
+    def reset_envs(self, seed=None, options=None):
+        """``reset`` without building the State."""
         self._check_open()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
@@ -143,75 +192,74 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._forget_static(self.envs)
         for lane, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + lane, options=lanes[lane])
-        return self.get_state()
 
     def _dynamic_values(self, env):
-        """The state leaves a step can change."""
+        """The state fields a step can change, by field name."""
         values = {}
         for name, flag in FLAGS.items():
             size = mujoco.mj_stateSize(env.model, flag)
             if size:
                 value = np.empty(size, np.float64)
                 mujoco.mj_getState(env.model, env.data, value, flag)
-                values["physics", name] = value.astype(bool) if name == "eq_active" else value
+                values[field("physics", name)] = value.astype(bool) if name == "eq_active" else value
         pos, rot = site_ids(env)
         values.update(
             {
-                ("controller", "site_xpos"): env.data.site_xpos[pos].copy(),
-                ("controller", "site_xmat"): env.data.site_xmat[rot].copy(),
-                ("output", "gripper_force"): env.data.body("ur5e/robotiq/right_pad").cfrc_ext.copy(),
-                ("output", "prev_qpos"): env._prev_qpos.copy(),
-                ("output", "prev_qvel"): env._prev_qvel.copy(),
-                ("task", "success"): np.array([env._success], bool),
-                ("lifecycle", "reset_next_step"): np.array([env._reset_next_step], bool),
+                "controller/site_xpos": env.data.site_xpos[pos].copy(),
+                "controller/site_xmat": env.data.site_xmat[rot].copy(),
+                "output/gripper_force": env.data.body("ur5e/robotiq/right_pad").cfrc_ext.copy(),
+                "output/prev_qpos": env._prev_qpos.copy(),
+                "output/prev_qvel": env._prev_qvel.copy(),
+                "task/success": np.array([env._success], bool),
+                "lifecycle/reset_next_step": np.array([env._reset_next_step], bool),
             }
         )
         if self.family == "Scene":
             for key in ("cur_button_states", "prev_button_states", "target_button_states"):
-                values["scene", key] = np.asarray(getattr(env, "_" + key), np.int64).copy()
+                values[field("scene", key)] = np.asarray(getattr(env, "_" + key), np.int64).copy()
             for key in ("target_drawer_pos", "target_window_pos"):
-                values["scene", key] = np.array([getattr(env, "_" + key)], np.float64)
+                values[field("scene", key)] = np.array([getattr(env, "_" + key)], np.float64)
         # Scene's post_step draws from the environment generator when it repairs an unstable cube.
         for key, value in pcg_encode(env.np_random).items():
-            values["rng", "environment", key] = value
+            values[field("rng", "environment", key)] = value
         _, key, position, flag, cached = env.task_rng.get_state()
         values.update(
             {
-                ("rng", "task", "key"): key.astype(np.int64),
-                ("rng", "task", "position"): np.array([position], np.int64),
-                ("rng", "task", "has_gauss"): np.array([flag], np.int64),
-                ("rng", "task", "cached_gaussian"): np.array([cached], np.float64),
+                "rng/task/key": key.astype(np.int64),
+                "rng/task/position": np.array([position], np.int64),
+                "rng/task/has_gauss": np.array([flag], np.int64),
+                "rng/task/cached_gaussian": np.array([cached], np.float64),
             }
         )
         return values
 
     def _static_values(self, env):
-        """The state leaves only reset, restore and ``configure`` change, cached on the lane until then.
+        """The state fields only reset, restore and ``configure`` change, cached on the lane until then.
 
-        The leaves are copies of the PCG64 generators, the task, the variation and the compiled model values.
+        The fields are copies of the PCG64 generators, the task, the variation and the compiled model values.
         """
         cached = getattr(env, "_snv_static", None)
         if cached is not None:
             return cached
         values = {
-            ("compatibility", "signature"): self.signature,
-            ("task", "goal_observation"): env._cur_goal_ob.copy(),
-            ("task", "id"): np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
-            ("task", "reward_id"): np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
+            "compatibility/signature": self.signature,
+            "task/goal_observation": env._cur_goal_ob.copy(),
+            "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
+            "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
         }
         for key, value in task_values(env).items():
-            values["task", "payload", key] = value
+            values[field("task", "payload", key)] = value
         for name in sorted(env.supported_variations):
             node = env.variation_space._walk(name)
-            values["variation", "current", name] = np.asarray(node.value, np.float64).copy()
-            values["variation", "anchor", name] = np.asarray(node.init_value, np.float64).copy()
+            values[field("variation", "current", name)] = np.asarray(node.value, np.float64).copy()
+            values[field("variation", "anchor", name)] = np.asarray(node.init_value, np.float64).copy()
         for namespace, source in [("compiled", env._model_values), ("mjcf", env._mjcf_values)]:
             for key in MODEL_VALUES:
-                values["model", namespace, key] = source[key].copy()
+                values[field("model", namespace, key)] = source[key].copy()
         for name, rng in rngs(env).items():
             if name != "environment":
                 for key, value in pcg_encode(rng).items():
-                    values["rng", name, key] = value
+                    values[field("rng", name, key)] = value
         env._snv_static = values
         return values
 
@@ -222,174 +270,170 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return {key: values[key] for key in self._order}
 
     def _forget_static(self, envs):
-        """Drop the cached static leaves; the next capture recomputes them."""
+        """Drop the cached static fields; the next capture recomputes them."""
         self._static_columns = None
         for env in envs:
             env.__dict__.pop("_snv_static", None)
 
-    def _row(self, env):
-        return TensorDict(
-            {k: torch.as_tensor(v.copy(), device=self.device) for k, v in self._values(env).items()},
-            batch_size=[],
-            device=self.device,
-        )
-
-    def get_state(self):
+    def columns(self):
+        """The State as ``{group key: (num_envs, size) array}``, each a new array."""
         self._check_open()
         dynamic = [self._dynamic_values(env) for env in self.envs]
         if self._static_columns is None:
             rows = [self._static_values(env) for env in self.envs]
-            self._static_columns = {key: np.stack([row[key] for row in rows]) for key in rows[0]}
-        if self._order is None:
-            self._order = tuple(sorted({**self._static_columns, **dynamic[0]}, key=_leaf_rank))
-        columns = {}
-        for key in self._order:
-            if key in self._static_columns:
-                columns[key] = self._static_columns[key].copy()
-            else:
-                columns[key] = np.stack([row[key] for row in dynamic])
+            self._static_columns = {name: np.stack([row[name] for row in rows]) for name in rows[0]}
+        static = self._static_columns
+        named = {
+            name: static[name] if name in static else np.stack([row[name] for row in dynamic]) for name in self.fields
+        }
+        return self.schema.pack(named)
+
+    def get_state(self):
+        groups = self.schema.groups
         return TensorDict(
-            {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
+            {groups[key].path: torch.from_numpy(value).to(self.device) for key, value in self.columns().items()},
             [self.num_envs],
             device=self.device,
         )
 
     def render_columns(self):
-        """The state leaves a RenderState projects, as ``get_state`` holds them, as stacked NumPy columns."""
+        """``{field name: (num_envs, ...) array}`` of the State fields a RenderState projects, as State holds them."""
         self._check_open()
         rows = [self._render_values(env) for env in self.envs]
-        return {key: np.stack([row[key] for row in rows]) for key in rows[0]}
+        return {name: np.stack([row[name] for row in rows]) for name in rows[0]}
 
     def _render_values(self, env):
         # The same values mj_getState copies for these flags.
         values = {
-            ("physics", name): getattr(env.data, name).ravel().copy() for name in ("qpos", "mocap_pos", "mocap_quat")
+            field("physics", name): getattr(env.data, name).ravel().copy()
+            for name in ("qpos", "mocap_pos", "mocap_quat")
         }
         for key in MODEL_VALUES:
-            values["model", "compiled", key] = env._model_values[key].copy()
+            values[field("model", "compiled", key)] = env._model_values[key].copy()
         names = ("cube.color", "lock_color") if self.family == "Scene" else ("cube.color",)
         for name in names:
-            values["variation", "current", name] = np.asarray(env.variation_space._walk(name).value, np.float64).copy()
+            value = np.asarray(env.variation_space._walk(name).value, np.float64).copy()
+            values[field("variation", "current", name)] = value
         if self.family == "Scene":
-            values["scene", "cur_button_states"] = np.asarray(env._cur_button_states, np.int64).copy()
+            values[field("scene", "cur_button_states")] = np.asarray(env._cur_button_states, np.int64).copy()
         return values
 
     def validate(self, state, *, _batch_size=None):
+        """Check full State and return one ``{group key: array}`` row per lane, each a view of a fresh host copy."""
         batch = self.num_envs if _batch_size is None else _batch_size
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
             raise TypeError(
                 "Full Cube/Scene TensorDict State with batch [num_envs] required; RenderState cannot restore dynamics"
             )
-        if set(state.keys(True, False)) != set(self.template.keys(True, False)):
+        schema = self.schema
+        if set(state.keys(True, False)) != self._keys:
             raise ValueError("Full State has missing or extra leaves")
-        # Keep transfers and TensorDict traversal column-wise. The returned
-        # rows view fresh host columns, so neither input nor another lane aliases.
-        columns = {}
-        for key, (shape, dtype) in self.fields.items():
-            value = state[key]
-            if value.shape != (batch, *shape) or value.dtype != dtype:
-                raise ValueError(f"Invalid State shape/dtype/finite value: {key}")
-            host = value.detach().cpu()
-            if not torch.isfinite(host).all():
-                raise ValueError(f"Invalid State shape/dtype/finite value: {key}")
-            columns[key] = host.numpy().copy()
+        schema.validate(state)
+        # One transfer per group. The rows view fresh host columns, so neither the input nor another lane aliases.
+        columns = {key: state.get(group.path).detach().cpu().numpy().copy() for key, group in schema.groups.items()}
+        for key, value in columns.items():
+            if value.dtype.kind == "f" and not np.isfinite(value).all():
+                bad = next(
+                    f.name for f in schema.groups[key].fields if not np.isfinite(schema.get(columns, f.name)).all()
+                )
+                raise ValueError(f"Invalid State shape/dtype/finite value: {bad}")
         rows = [{key: value[i] for key, value in columns.items()} for i in range(batch)]
+        env = self.envs[0]
+        cube = int(env.model.joint("object_joint_0").qposadr[0])
+        at = schema.get
         for row in rows:
-            if not np.array_equal(row["compatibility", "signature"], self.signature):
+            if not np.array_equal(at(row, "compatibility/signature"), self.signature):
                 raise ValueError("Incompatible Cube/Scene model/dependency profile")
-            if row["lifecycle", "reset_next_step"][0]:
+            if at(row, "lifecycle/reset_next_step")[0]:
                 raise ValueError("Only initialized public checkpoints are supported")
-            if row["physics", "time"][0] < 0:
+            if at(row, "physics/time")[0] < 0:
                 raise ValueError("Negative simulation time")
-            for quat in [
-                row["physics", "qpos"][
-                    int(self.envs[0].model.joint("object_joint_0").qposadr[0]) + 3 : int(
-                        self.envs[0].model.joint("object_joint_0").qposadr[0]
-                    )
-                    + 7
-                ],
-                row["physics", "mocap_quat"].reshape(-1, 4),
-            ]:
+            for quat in [at(row, "physics/qpos")[cube + 3 : cube + 7], at(row, "physics/mocap_quat").reshape(-1, 4)]:
                 if not np.allclose(np.linalg.norm(quat, axis=-1), 1.0, atol=1e-6, rtol=0):
                     raise ValueError("Invalid physics quaternion")
-            for key in ("id", "reward_id"):
-                if int(row["task", key][0]) not in (-1, 1, 2, 3, 4, 5):
-                    raise ValueError("Invalid task ID")
-            payload = task_payload(self.envs[0], {k[-1]: v for k, v in row.items() if k[:2] == ("task", "payload")})
-            self.envs[0].validate_task(payload)
-            task_id, reward_id = int(row["task", "id"][0]), int(row["task", "reward_id"][0])
+            task_id, reward_id = int(at(row, "task/id")[0]), int(at(row, "task/reward_id")[0])
+            if task_id not in (-1, 1, 2, 3, 4, 5) or reward_id not in (-1, 1, 2, 3, 4, 5):
+                raise ValueError("Invalid task ID")
+            payload = self._payload(row)
+            env.validate_task(task_payload(env, payload))
             if reward_id != -1 and task_id != reward_id:
                 raise ValueError("Reward task and active task are inconsistent")
             if task_id != -1:
-                predefined = task_values(self.envs[0], self.envs[0].task_infos[task_id - 1])
-                if any(not np.array_equal(value, row["task", "payload", key]) for key, value in predefined.items()):
+                predefined = task_values(env, env.task_infos[task_id - 1])
+                if any(not np.array_equal(value, payload[key]) for key, value in predefined.items()):
                     raise ValueError("Task ID and numeric payload are inconsistent")
-            rotations = row["controller", "site_xmat"].reshape(-1, 3, 3)
+            rotations = at(row, "controller/site_xmat").reshape(-1, 3, 3)
             if not np.allclose(
                 rotations @ rotations.transpose(0, 2, 1), np.eye(3), atol=self.rotation_tolerance, rtol=0
             ) or not np.allclose(np.linalg.det(rotations), 1.0, atol=self.rotation_tolerance, rtol=0):
                 raise ValueError("Invalid cached site rotation")
             for namespace in ("current", "anchor"):
-                for name in sorted(self.envs[0].supported_variations):
-                    if not self.envs[0].variation_space._walk(name).contains(row["variation", namespace, name]):
+                for name in sorted(env.supported_variations):
+                    if not env.variation_space._walk(name).contains(at(row, field("variation", namespace, name))):
                         raise ValueError("Invalid Variation State range")
             for namespace in ("compiled", "mjcf"):
                 for name in MODEL_VALUES:
+                    value = at(row, field("model", namespace, name))
                     if not (
-                        min(0.01, float(np.float32(0.01)))
-                        <= row["model", namespace, name][0]
-                        <= max(0.03, float(np.float32(0.03)))
+                        min(0.01, float(np.float32(0.01))) <= value[0] <= max(0.03, float(np.float32(0.03)))
                         if name == "cube.size"
-                        else self.envs[0].variation_space._walk(name).contains(row["model", namespace, name])
+                        else env.variation_space._walk(name).contains(value)
                     ):
                         raise ValueError("Invalid model configuration")
             if self.family == "Scene":
                 for name in ("cur_button_states", "prev_button_states", "target_button_states"):
-                    if not np.isin(row["scene", name], (0, 1)).all():
+                    if not np.isin(at(row, field("scene", name)), (0, 1)).all():
                         raise ValueError("Invalid Scene button bit")
                 for name, low, high in [("target_drawer_pos", -0.16, 0.0), ("target_window_pos", 0.0, 0.2)]:
-                    if not low <= row["scene", name][0] <= high:
+                    if not low <= at(row, field("scene", name))[0] <= high:
                         raise ValueError("Invalid Scene target")
-            for name in rngs(self.envs[0]):
-                pcg_decode({k: row["rng", name, k] for k in ("state", "increment", "has_uint32", "uinteger")})
-            key = row["rng", "task", "key"]
+            for name in rngs(env):
+                pcg_decode(pcg_fields(schema, row, name))
+            key = at(row, "rng/task/key")
             if (
                 np.any(key < 0)
                 or np.any(key >= 2**32)
                 or not key.any()
-                or not 0 <= row["rng", "task", "position"][0] <= 624
-                or row["rng", "task", "has_gauss"][0] not in (0, 1)
+                or not 0 <= at(row, "rng/task/position")[0] <= 624
+                or at(row, "rng/task/has_gauss")[0] not in (0, 1)
             ):
                 raise ValueError("Invalid MT19937 State")
         return rows
 
+    def _payload(self, row):
+        """``{key: value}`` of the task payload fields of a row."""
+        prefix = "task/payload/"
+        return {name[len(prefix) :]: self.schema.get(row, name) for name in self.fields if name.startswith(prefix)}
+
     def _restore(self, row):
         # A temporary authoritative instance makes compilation/restore atomic even on failure.
         env = self.cls(seed=0, pool=self._pool)
+        at = self.schema.get
         try:
             for name in MODEL_VALUES:
-                env.variation_space._walk(name)._value = row["model", "compiled", name].copy()
+                env.variation_space._walk(name)._value = at(row, field("model", "compiled", name)).copy()
             env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
             env.compile_model_and_data()
             for name in MODEL_VALUES:
-                env.variation_space._walk(name)._value = row["model", "mjcf", name].copy()
+                env.variation_space._walk(name)._value = at(row, field("model", "mjcf", name)).copy()
             env._mjcf_model = env.modify_mjcf_model(env._mjcf_model)
             env._dirty = env._never_compiled = env._reset_next_step = False
             for name in sorted(env.supported_variations):
                 node = env.variation_space._walk(name)
-                node.set_init_value(row["variation", "anchor", name].copy())
-                node.set_value(row["variation", "current", name].copy())
-            env.cur_task_id = None if row["task", "id"][0] == -1 else int(row["task", "id"][0])
-            env._reward_task_id = None if row["task", "reward_id"][0] == -1 else int(row["task", "reward_id"][0])
-            env.cur_task_info = task_payload(env, {k[-1]: v for k, v in row.items() if k[:2] == ("task", "payload")})
-            env._success = bool(row["task", "success"][0])
-            env._cur_goal_ob = row["task", "goal_observation"].copy()
-            env._prev_qpos, env._prev_qvel = row["output", "prev_qpos"].copy(), row["output", "prev_qvel"].copy()
+                node.set_init_value(at(row, field("variation", "anchor", name)).copy())
+                node.set_value(at(row, field("variation", "current", name)).copy())
+            task_id, reward_id = int(at(row, "task/id")[0]), int(at(row, "task/reward_id")[0])
+            env.cur_task_id = None if task_id == -1 else task_id
+            env._reward_task_id = None if reward_id == -1 else reward_id
+            env.cur_task_info = task_payload(env, self._payload(row))
+            env._success = bool(at(row, "task/success")[0])
+            env._cur_goal_ob = at(row, "task/goal_observation").copy()
+            env._prev_qpos, env._prev_qvel = at(row, "output/prev_qpos").copy(), at(row, "output/prev_qvel").copy()
             if self.family == "Scene":
                 for name in ("cur_button_states", "prev_button_states", "target_button_states"):
-                    setattr(env, "_" + name, row["scene", name].copy())
+                    setattr(env, "_" + name, at(row, field("scene", name)).copy())
                 for name in ("target_drawer_pos", "target_window_pos"):
-                    setattr(env, "_" + name, float(row["scene", name][0]))
+                    setattr(env, "_" + name, float(at(row, field("scene", name))[0]))
                 env.model.site("drawer_handle_center_target").pos[1] = env._target_drawer_pos
                 env.model.site("window_handle_center_target").pos[0] = env._target_window_pos
                 env._apply_button_states()  # Upstream damping/forward only; no button transition.
@@ -399,31 +443,29 @@ class OGBManipulationAdapter(SimulatorAdapter):
                 env.model.geom_rgba[ids, 3] = TARGET_ALPHA
             for pass_index in range(2):
                 for name, flag in FLAGS.items():
-                    if ("physics", name) in row:
-                        mujoco.mj_setState(env.model, env.data, row["physics", name].astype(np.float64), flag)
+                    if field("physics", name) in self.fields:
+                        value = at(row, field("physics", name)).astype(np.float64)
+                        mujoco.mj_setState(env.model, env.data, value, flag)
                 if pass_index == 0:
                     mujoco.mj_forward(env.model, env.data)
             pos, rot = site_ids(env)
-            env.data.site_xpos[pos] = row["controller", "site_xpos"]
-            env.data.site_xmat[rot] = row["controller", "site_xmat"]
-            env.data.body("ur5e/robotiq/right_pad").cfrc_ext[:] = row["output", "gripper_force"]
+            env.data.site_xpos[pos] = at(row, "controller/site_xpos")
+            env.data.site_xmat[rot] = at(row, "controller/site_xmat")
+            env.data.body("ur5e/robotiq/right_pad").cfrc_ext[:] = at(row, "output/gripper_force")
             for name, rng in rngs(env).items():
-                rng.bit_generator.state = pcg_decode(
-                    {k: row["rng", name, k] for k in ("state", "increment", "has_uint32", "uinteger")}
-                )
+                rng.bit_generator.state = pcg_decode(pcg_fields(self.schema, row, name))
             env.task_rng.set_state(
                 (
                     "MT19937",
-                    row["rng", "task", "key"].astype(np.uint32),
-                    int(row["rng", "task", "position"][0]),
-                    int(row["rng", "task", "has_gauss"][0]),
-                    float(row["rng", "task", "cached_gaussian"][0]),
+                    at(row, "rng/task/key").astype(np.uint32),
+                    int(at(row, "rng/task/position")[0]),
+                    int(at(row, "rng/task/has_gauss")[0]),
+                    float(at(row, "rng/task/cached_gaussian")[0]),
                 )
             )
-            restored = self._row(env)
-            for key, value in restored.items(True, True):
-                if not np.array_equal(value.cpu().numpy(), row[key]):
-                    raise ValueError(f"State could not be reconstructed exactly: {key}")
+            for name, value in self._values(env).items():
+                if not np.array_equal(value, at(row, name)):
+                    raise ValueError(f"State could not be reconstructed exactly: {name}")
             return env
         except BaseException:
             env.close()

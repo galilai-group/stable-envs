@@ -1,4 +1,5 @@
 import time
+from multiprocessing import util
 
 import numpy as np
 
@@ -58,6 +59,9 @@ class ProcessRequests:
                 child.close()
             self._connections.append(parent)
             self._processes.append(process)
+        # An owner that is never closed stops its workers when it is collected or the interpreter exits; else the
+        # interpreter waits at exit for non-daemon workers, which wait for a request.
+        util.Finalize(self, _stop_workers, (self._processes, self._connections), exitpriority=10)
         self.worker_info = self._responses(timeout=max(300, tuning.get("worker_timeout")))
 
     def _check_idle(self):
@@ -95,16 +99,7 @@ class ProcessRequests:
         return self._receive()
 
     def _abort(self):
-        for process in self._processes:
-            if process.is_alive():
-                process.terminate()
-        for process in self._processes:
-            process.join(timeout=5)
-            if process.is_alive():
-                process.kill()
-                process.join()
-        for conn in self._connections:
-            conn.close()
+        _stop_workers(self._processes, self._connections)
         self._closed = True
         self._pending = None
 
@@ -117,3 +112,16 @@ class ProcessRequests:
                         process.join(timeout=5)
             finally:
                 self._abort()
+
+
+def _stop_workers(processes, connections):
+    for process in processes:
+        if process.is_alive():
+            process.terminate()
+    for process in processes:
+        process.join(timeout=5)
+        if process.is_alive():
+            process.kill()
+            process.join()
+    for conn in connections:
+        conn.close()

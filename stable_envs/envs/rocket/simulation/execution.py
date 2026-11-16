@@ -13,37 +13,49 @@ if TYPE_CHECKING:
     from .numba_batch import RocketNumbaAdapter
     from .process import RocketProcessAdapter
 
-#: Backends that ``simulation_backend`` accepts; ``None`` takes the device default.
-SIMULATION_BACKENDS = ("auto", "numba", "numba_cuda", "pybullet")
-#: Smallest CUDA batch that ``simulation_backend="auto"`` steps on the GPU; smaller batches step on the CPU kernel.
-NUMBA_CUDA_MIN_ENVS = 1
+#: Backends that ``simulation_backend`` accepts besides ``"auto"``.
+SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
+#: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on ``"numba_cuda"``; smaller batches step on
+#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The knob and the tuning cache take precedence.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
+CUDA_MIN_ENVS: int | None = None
+
+
+def _measure(device, config: dict | None):
+    """Build and step Rocket lanes on one backend, for ``stable-envs tune``."""
+    import torch
+
+    from ...._execution.backends import measure_adapter
+
+    return measure_adapter(
+        lambda backend, n: make_rocket_adapter(n, device, 0, config, None, backend),
+        lambda n: torch.zeros((n, 7), dtype=torch.float64, device=device),
+    )
 
 
 def rocket_backend(
-    num_envs: int,
-    device: str | torch.device,
-    backend: str | None = None,
-    numba_cuda_min_envs: int = NUMBA_CUDA_MIN_ENVS,
+    num_envs: int, device: str | torch.device, backend: str | None = "auto", config: dict | None = None
 ) -> str:
     """Return ``"numba"``, ``"numba_cuda"`` or ``"pybullet"``.
 
-    ``None`` selects the CUDA build of the kernel on CUDA and the CPU kernel on CPU. ``"auto"`` also selects the
-    CPU kernel for CUDA batches smaller than ``numba_cuda_min_envs``.
+    ``"auto"`` (or None) selects the CPU kernel on CPU. On CUDA it selects the CPU kernel below ``CUDA_MIN_ENVS`` and
+    the CUDA build of the kernel from it. ``stable-envs tune`` measures with the simulator configuration ``config``.
     """
     import torch
 
-    if backend is not None and backend not in SIMULATION_BACKENDS:
-        raise ValueError("simulation_backend must be None, 'auto', 'numba', 'numba_cuda' or 'pybullet'")
-    if isinstance(numba_cuda_min_envs, bool) or not isinstance(numba_cuda_min_envs, int) or numba_cuda_min_envs < 1:
-        raise ValueError("numba_cuda_min_envs must be an int >= 1")
-    cuda = torch.device(device).type == "cuda"
-    if backend == "auto":
-        return "numba_cuda" if cuda and num_envs >= numba_cuda_min_envs else "numba"
-    if backend is None:
-        return "numba_cuda" if cuda else "numba"
-    if backend == "numba_cuda" and not cuda:
+    from ...._execution.backends import Rungs, select_backend
+
+    if backend == "numba_cuda" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='numba_cuda' requires device='cuda'")
-    return backend
+    return select_backend(
+        "rocket-sim/landing",
+        num_envs,
+        device,
+        backend,
+        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "numba_cuda", CUDA_MIN_ENVS)},
+        choices=SIMULATION_BACKENDS,
+        measure=_measure(device, config) if type(num_envs) is int and num_envs > 0 else None,
+    )
 
 
 def require_nvvm() -> None:

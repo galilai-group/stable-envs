@@ -92,6 +92,16 @@ def cpu_limit() -> int:
     return max(1, available)
 
 
+def passive_openmp_wait() -> None:
+    """Make idle OpenMP threads sleep instead of spin, unless ``OMP_WAIT_POLICY`` is set.
+
+    Torch and Numba can each hold a pool of OpenMP threads on the same cores as the worker processes. Spinning idle
+    threads then delay each Numba parallel region by a scheduler time slice. OpenMP reads the variable when it
+    starts, so it has no effect if an OpenMP library started before ``stable_envs`` was imported.
+    """
+    os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
+
+
 def limit_thread_defaults() -> None:
     """Lower the default Numba and Torch thread counts to ``cpu_limit()``.
 

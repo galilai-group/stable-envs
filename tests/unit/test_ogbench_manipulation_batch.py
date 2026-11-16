@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs import get_field, schema_of
+
 pytest.importorskip("ogbench")
 pytest.importorskip("mujoco.batch")
 
@@ -38,8 +40,9 @@ def _same_outputs(a, b):
 
 @pytest.mark.parametrize("family", FAMILIES)
 @pytest.mark.parametrize("reward_task_id", [None, 2])
-def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
-    lanes, rng = 6, np.random.default_rng(3)
+@pytest.mark.parametrize("lanes", [1, 6])
+def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id, lanes):
+    rng = np.random.default_rng(3)
     ref = OGBManipulationAdapter(family, lanes, seed=11, reward_task_id=reward_task_id)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=11, reward_task_id=reward_task_id, threads=3)
     try:
@@ -58,8 +61,9 @@ def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-def test_batch_restore_and_variation_continue_bit_for_bit(family):
-    lanes, rng = 4, np.random.default_rng(8)
+@pytest.mark.parametrize("lanes", [1, 4])
+def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
+    rng = np.random.default_rng(8)
     ref = OGBManipulationAdapter(family, lanes, seed=2)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=2, threads=2)
     try:
@@ -81,6 +85,38 @@ def test_batch_restore_and_variation_continue_bit_for_bit(family):
         for t in range(40, 60):
             action = _actions(rng, t, lanes)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+    finally:
+        ref.close()
+        bat.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_threaded_physics_equals_one_thread(family):
+    lanes, rng = 8, np.random.default_rng(6)
+    serial = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=1)
+    threaded = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=4)
+    try:
+        assert serial.physics.b.nthread == 1 and threaded.physics.b.nthread == 4
+        for t in range(40):
+            action = _actions(rng, t, lanes)
+            assert_same_state(threaded.step(action)["state"], serial.step(action)["state"])
+    finally:
+        serial.close()
+        threaded.close()
+
+
+@pytest.mark.parametrize("lanes", [1, 2])
+def test_scene_cube_repair_equals_ogbench(lanes):
+    ref = OGBManipulationAdapter("Scene", lanes, seed=4)
+    bat = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
+    try:
+        for _ in range(2):
+            # The last lane's cube leaves the workspace; post_step puts it back from the lane's generator.
+            ref.envs[-1].data.qpos[bat._cube] = 5.0
+            bat._qpos[-1, bat._cube] = 5.0
+            action = np.zeros((lanes, 5))
+            assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+        assert_same_state(bat.reset(), ref.reset())
     finally:
         ref.close()
         bat.close()
@@ -111,6 +147,31 @@ def test_batch_with_worker_lanes_equals_ogbench_lanes(family):
 
 
 @pytest.mark.parametrize("family", FAMILIES)
+def test_state_has_one_leaf_per_section_and_dtype(family):
+    batch = OGBManipulationBatchAdapter(family, 2, seed=5)
+    try:
+        state = batch.step(np.zeros((2, 5)))["state"]
+        schema = batch.schema
+        assert schema_of(state) == schema and schema.name == "OGB" + family
+        assert [k if isinstance(k, str) else "/".join(k) for k in state.keys(True, True)] == list(schema.order)
+        assert all(
+            key == f"{key.split('/')[0]}/{str(g.dtype).removeprefix('torch.')}" for key, g in schema.groups.items()
+        )
+        assert set(schema.names) == set(batch.fields)
+        # The step writes its fields into the live groups through views cut once.
+        for name in ("output/prev_qpos", "controller/site_xpos", "task/success"):
+            assert np.shares_memory(schema.get(batch._live, name), batch._live[schema.slices[name].group])
+            assert np.array_equal(get_field(state, name).numpy(), schema.get(batch._live, name))
+        assert torch.equal(get_field(state, "physics.qpos"), torch.from_numpy(batch._qpos))
+        assert np.array_equal(get_field(state, "variation/current/cube/size").numpy(), [[0.02]] * 2)
+        before = state.clone()
+        batch.step(np.ones((2, 5)))
+        assert (state == before).all()
+    finally:
+        batch.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
 def test_batch_controller_writes_ogbench_controls(family):
     from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
 
@@ -138,13 +199,42 @@ def test_batch_controller_writes_ogbench_controls(family):
             env.close()
 
 
+@pytest.mark.parametrize("family", FAMILIES)
+def test_controller_site_jacobian_equals_mujoco(family):
+    import mujoco
+
+    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
+
+    cls = CompatibleCube if family == "Cube" else CompatibleScene
+    env = cls(seed=0, pool=LanePool())
+    env.reset(seed=0)
+    lanes = 6
+    controller = BatchController(env, lanes, 2)
+    try:
+        if controller._jacobian is None:
+            pytest.skip("Numba is not installed")
+        b, rng = controller._ik, np.random.default_rng(4)
+        controller._ik_qpos[:] = rng.uniform(-np.pi, np.pi, controller._ik_qpos.shape)
+        b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
+        site_xpos = controller._ik_site_xpos[:, controller._site]
+        for rows in (np.arange(lanes), np.array([1, 4])):
+            jacp, jacr = b.jac(controller._site_body, site_xpos[rows], None if len(rows) == lanes else rows)
+            ours = controller._jacobian(
+                controller._ik_cdof, controller._ik_subtree_com, site_xpos, rows, controller._chain, controller._root
+            )
+            assert np.array_equal(ours, np.concatenate([jacp, jacr], axis=1))
+    finally:
+        controller.close()
+        env.close()
+
+
 @pytest.mark.parametrize(
-    "batch,device,backend,threshold,expected",
+    "batch,device,backend,switch,expected",
     [
-        (1, "cpu", "default", 256, "native"),
-        (4096, "cpu", "default", 256, "native"),
-        (1, "cuda", "default", 256, "mjwarp"),
-        (8, "cuda:1", "default", 256, "mjwarp"),
+        (1, "cpu", "auto", 1, "native"),
+        (4096, "cpu", None, 1, "native"),
+        (1, "cuda", "auto", 1, "mjwarp"),
+        (8, "cuda:1", None, 1, "mjwarp"),
         (255, "cuda", "auto", 256, "native"),
         (256, "cuda", "auto", 256, "mjwarp"),
         (4096, "cpu", "auto", 256, "native"),
@@ -153,12 +243,14 @@ def test_batch_controller_writes_ogbench_controls(family):
         (1, "cuda", "mjwarp", 256, "mjwarp"),
     ],
 )
-def test_manipulation_routing(monkeypatch, batch, device, backend, threshold, expected):
+def test_manipulation_routing(monkeypatch, batch, device, backend, switch, expected):
+    from stable_envs import tuning
     from stable_envs.envs.ogbench.simulation import manipulation_batch, manipulation_warp
 
     monkeypatch.setattr(manipulation_batch, "OGBManipulationBatchAdapter", lambda *a: ("native", a))
     monkeypatch.setattr(manipulation_warp, "OGBManipulationWarpAdapter", lambda *a: ("mjwarp", a))
-    kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend, threshold)
+    with tuning.override(large_backend_min_envs=switch):
+        kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend)
     assert kind == expected and args == ("Cube", batch, device, 17, 1)
 
 
@@ -167,5 +259,5 @@ def test_manipulation_routing_rejects_bad_options():
         execution.make_manipulation_adapter("Cube", 8, "cpu", 0, None, "mjwarp")
     with pytest.raises(ValueError, match="simulation_backend"):
         execution.make_manipulation_adapter("Cube", 8, "cpu", 0, None, "mjx")
-    with pytest.raises(ValueError, match="mjwarp_min_envs"):
-        execution.make_manipulation_adapter("Cube", 8, "cuda", 0, None, "auto", 0)
+    with pytest.raises(ValueError, match="simulation_backend"):
+        execution.make_manipulation_adapter("Cube", 8, "cuda", 0, None, "default")

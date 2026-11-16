@@ -1,20 +1,90 @@
 """PushT batches with array physics, source resets, solver-cache checkpoints and rendering metadata."""
 
-import math
-
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_layout import StateLayout
+from ...._core.state_schema import Field, StateSchema, get_field, schema_of, unfold
 from ...._core.tensordicts import build_tensordict
 from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
 from .replay import HISTORY_KEYS, validate_seed
 from .replay_batch import PushTReplayAdapter, lane_options
 
+_TORCH_DTYPES: dict = {}
+
+
+def _dtype(value):
+    """The torch dtype of a tensor or NumPy array."""
+    if torch.is_tensor(value):
+        return value.dtype
+    dtype = _TORCH_DTYPES.get(value.dtype)
+    if dtype is None:
+        dtype = _TORCH_DTYPES[value.dtype] = torch.from_numpy(np.empty(0, value.dtype)).dtype
+    return dtype
+
+
+def _host_copies(fields):
+    """Owned CPU tensors of the NumPy ``fields``: one copy per dtype, each field a contiguous block of it."""
+    keys: dict = {}
+    for key, value in fields.items():
+        keys.setdefault(value.dtype, []).append(key)
+    out = {}
+    for names in keys.values():
+        flat = np.concatenate([fields[key].reshape(-1) for key in names])
+        start = 0
+        for key in names:
+            shape = fields[key].shape
+            stop = start + fields[key].size
+            out[key] = torch.from_numpy(flat[start:stop].reshape(shape))
+            start = stop
+    return out
+
 
 def _changes_with_step(key):
     return key.startswith(("current/", "history/")) and not key.startswith("current/goal")
+
+
+def group_of(name, dtype):
+    """The group of a named PushT State field, by dtype: ``static``, ``current`` or ``current/solver``.
+
+    Fields that only reset, restore or a Variation change share the ``static`` groups, which an export copies from
+    one buffer packed at reset. The fields a step changes share the ``current`` groups, except the solver cache,
+    which a RenderState leaves out. The action history keeps leaves of its own, since its width grows.
+    """
+    if name.startswith("history/"):
+        return None
+    if not _changes_with_step(name):
+        section = "static"
+    else:
+        section = "current/solver" if name.startswith("current/jax/") else "current"
+    return f"{section}/{str(dtype).removeprefix('torch.')}"
+
+
+#: Contact cache sizes of every agent and block shape: ``9 * pieces`` with the disc agent, else
+#: ``2 * pieces**2 + 16 * pieces``, for 1 to ``MAX_SHAPES`` convex pieces.
+CONTACT_COUNTS = tuple(
+    sorted(
+        {9 * pieces for pieces in range(1, MAX_SHAPES + 1)} | {2 * p * p + 16 * p for p in range(1, MAX_SHAPES + 1)}
+    )
+)
+_CONTACT_FIELDS = ("current/jax/impulse", "current/jax/identifiers")
+
+
+def _declare_contact_variants(leaves):
+    """Declare the PushT layout of ``leaves`` for every contact cache size.
+
+    ``schema_of`` then finds the layout of a State with other shapes, such as one loaded from disk.
+    """
+    for count in CONTACT_COUNTS:
+        variant = [(key, (count,) if key in _CONTACT_FIELDS else shape, dtype) for key, shape, dtype in leaves]
+        StateSchema("PushT", [Field(*leaf, group_of(leaf[0], leaf[2])) for leaf in variant])
+
+
+#: Fields a folded State leaves out. The goal image is a frame of the goal pose, which a restore draws again; an
+#: export would otherwise copy its 150 kB per environment on every step.
+UNFOLDED = frozenset({"current/goal_image"})
 
 
 class PushTBatchAdapter(PushTReplayAdapter):
@@ -25,13 +95,19 @@ class PushTBatchAdapter(PushTReplayAdapter):
     With ``processes``, owners in worker processes reset the lanes (see ``PushTResetPool``). After a
     worker reset, the workers own the lanes' CPU engines and the batch columns hold their static fields;
     ``envs`` rebuilds the parent owners from the columns when it is read.
+
+    The exported State is folded by ``group_of``.
     """
+
+    _groups: StateSchema | None = None
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None, processes=0, cpus=None):
         self._pool, self._pool_owns = None, False
         super().__init__(batch, device, seed, discrete=discrete, config=config)
         try:
             self._initialize_device()
+            # Declares the State layouts now, so a State that another process saved resolves before any export.
+            self._state_layout(self._state_fields(self._history_width()))
             if processes:
                 from .reset_pool import PushTResetPool
 
@@ -83,11 +159,14 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return self._columns if self._pool_owns else super()._static_columns()
 
     def _initialize_device(self, fields=None, geometry=None):
-        self._layout, self._buffers, self._width = None, {}, None
+        self._layout, self._width = None, None
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
-        self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
+        if self.device.type == "cpu" and all(type(value) is np.ndarray for value in fields.values()):
+            self._fixed = _host_copies(fields)
+        else:
+            self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
         self._latest_tags = torch.tensor([[4, 0], [4, 1]], dtype=torch.uint8, device=self.device)
         self._symmetries = torch.tensor(
@@ -170,83 +249,68 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return fields
 
     def _state_layout(self, fields):
-        """Per dtype: the fields that only reset, restore or a Variation change, packed once, then the others.
+        """The State layout; leaves follow the CPU owners' State order, then the solver cache.
 
-        Also a function that nests ``{key: leaf}`` into the State tree, in export order.
+        The fields that only reset, restore or a Variation change are static, and the action history has the width
+        of the longest history.
         """
         if self._layout is None:
-            groups = {}
-            for key, value in fields.items():
-                groups.setdefault(value.dtype, ([], []))[_changes_with_step(key)].append(key)
-            # Keys in the order of the CPU owners' State, then the solver cache.
-            rank = {key: index for index, key in enumerate(self._keys)}
-            tree = {}
-            for key in sorted(fields, key=lambda key: rank.get(key, len(rank))):
-                *parents, leaf = key.split("/")
-                node = tree
-                for part in parents:
-                    node = node.setdefault(part, {})
-                node[leaf] = key
-
-            def source(node):
-                items = (
-                    f"{name!r}: {source(child) if type(child) is dict else f'L[{child!r}]'}"
-                    for name, child in node.items()
-                )
-                return "{" + ", ".join(items) + "}"
-
-            nest = eval("lambda L: " + source(tree))  # noqa: S307 - the source holds only State key literals
-            # Fixed fields of one dtype and per-lane shape are packed together and become leaves with one unbind.
-            parts = []
-            for fixed, moving in groups.values():
-                shaped = {}
-                for key in fixed:
-                    shaped.setdefault(tuple(fields[key].shape[1:]), []).append(key)
-                blocks = [
-                    (torch.cat([fields[key].reshape(-1) for key in keys]), shape, keys)
-                    for shape, keys in shaped.items()
-                ]
-                parts.append((blocks, moving))
-            self._layout = parts, nest
+            rank = self.__dict__.get("_rank")
+            if rank is None or len(rank) != len(self._keys):
+                rank = self._rank = {key: index for index, key in enumerate(self._keys)}
+            order = sorted(fields, key=lambda key: rank.get(key, len(rank)))
+            leaves = tuple(
+                (key, None if key.startswith("history/") else tuple(fields[key].shape[1:]), _dtype(fields[key]))
+                for key in order
+                if key not in UNFOLDED
+            )
+            # Resets keep the leaves, so a layout built for them before serves again with new static values.
+            layouts = self.__dict__.setdefault("_layouts", {})
+            entry = layouts.get(leaves)
+            if entry is None:
+                if len(layouts) >= 8:
+                    layouts.clear()
+                groups = StateSchema("PushT", [Field(*leaf, group_of(leaf[0], leaf[2])) for leaf in leaves])
+                _declare_contact_variants(leaves)
+                declared = groups.leaves()
+                static = frozenset(key for key, _, _ in declared if not _changes_with_step(key))
+                moving = [key for key in groups.groups if _changes_with_step(key)]
+                entry = layouts[leaves] = (StateLayout(declared, self.num_envs, static=static), groups, moving)
+            self._layout, self._groups, self._moving = entry
+            static = [key for key in self._groups.groups if not _changes_with_step(key)]
+            self._static = self._groups.pack(fields, static)
+            self._layout.load_static(self._static)
         return self._layout
 
     def get_state(self):
-        fields = self._state_fields(self._history_width())
-        parts, nest = self._state_layout(fields)
-        batch = self.num_envs
-        leaves = {}
-        for blocks, moving in parts:
-            shaped = {}
-            for key in moving:
-                value = fields[key]
-                values, keys = shaped.setdefault(tuple(value.shape[1:]), ([], []))
-                values.append(value.reshape(-1))
-                keys.append(key)
-            groups = [(shape, keys) for _, shape, keys in blocks]
-            sources = [packed for packed, _, _ in blocks]
-            for shape, (values, keys) in shaped.items():
-                groups.append((shape, keys))
-                sources.extend(values)
-            sizes = [len(keys) * batch * math.prod(shape) for shape, keys in groups]
-            flat = torch.cat(sources, out=self._buffer(sources[0].dtype, sum(sizes)))
-            for (shape, keys), block in zip(groups, flat.split(sizes), strict=True):
-                leaves.update(zip(keys, block.view(len(keys), batch, *shape).unbind(0), strict=True))
-        return TensorDict._new_unsafe(nest(leaves), batch_size=torch.Size([batch]), device=self._state_device)
+        return self._export(self._state_device)
 
-    def _buffer(self, dtype, numel):
-        """A flat State buffer: on CPU, one that no earlier State still uses, to avoid new pages per step."""
-        if self.device.type != "cpu" or not hasattr(torch._C, "_storage_Use_Count"):
-            return torch.empty(numel, dtype=dtype, device=self.device)
-        pool = self._buffers.setdefault(dtype, [])
-        for buffer in pool:
-            # The pool's tensor and the temporary storage object are the only users of a free buffer.
-            if buffer.numel() >= numel and torch._C._storage_Use_Count(buffer.untyped_storage()._cdata) == 2:
-                return buffer[:numel]
-        buffer = torch.empty(numel + numel // 4, dtype=dtype, device=self.device)
-        pool.append(buffer)
-        if len(pool) > 2:
-            pool.pop(0)
-        return buffer[:numel]
+    def _export(self, device):
+        fields = self._state_fields(self._history_width())
+        layout = self._state_layout(fields)
+        groups = self._groups
+        moving = groups.pack(fields, self._moving)
+        kept = {name: fields[name] for name in groups.kept}
+        if torch.device(device).type == "cpu" and all(type(v) is np.ndarray for v in moving.values()):
+            return self._host_state(moving, {name: np.array(value) for name, value in kept.items()})
+        return layout.export({**kept, **moving}, device)
+
+    def _host_state(self, moving, kept):
+        """A host State that wraps new ``moving`` group arrays and ``kept`` field arrays, and copies the static groups.
+
+        Each array becomes a leaf without another copy.
+        """
+        leaves = {key: value.copy() for key, value in self._static.items()}
+        leaves.update(moving)
+        leaves.update(kept)
+        tree: dict = {}
+        for key in self._groups.order:
+            *parents, name = key.split("/")
+            node = tree
+            for part in parents:
+                node = node.setdefault(part, {})
+            node[name] = torch.from_numpy(leaves[key])
+        return build_tensordict(tree, [self.num_envs], "cpu")
 
     def _advance(self, target, single, active):
         """Return the stepped body, bias, impulse, identifiers, tree, tree bounds, contacts, segments and counts.
@@ -267,12 +331,14 @@ class PushTBatchAdapter(PushTReplayAdapter):
             install_latest(self.envs, *latest)
             return super().reset(seed, options)
         validate_seed(seed)
-        space = self.template.env.variation_space
-        lanes = (
-            options
-            if isinstance(options, list)
-            else [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
-        )
+        if isinstance(options, list):
+            lanes = options
+        elif isinstance((options or {}).get("variation_values"), dict):
+            # Only per-lane variation values need the space; reading it rebuilds a lane the workers own.
+            space = self.template.env.variation_space
+            lanes = [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+        else:
+            lanes = [options] * self.num_envs
         # Workers that do not own the lanes first take the owners' metadata from the columns.
         sync = None if self._pool_owns else self._static_columns()
         static, current, geometry = self._pool.reset(seed, lanes, latest, sync)
@@ -306,7 +372,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
 
     def step(self, actions, *, active=None, capture_state=True):
         actions = torch.as_tensor(actions, device=self.device)
-        discrete = self.template.discrete
+        discrete = self.discrete
         allowed = (torch.int32, torch.int64) if discrete else (torch.float32, torch.float64)
         if actions.shape != (self.num_envs, 2) or actions.dtype not in allowed:
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
@@ -415,12 +481,25 @@ class PushTBatchAdapter(PushTReplayAdapter):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise ValueError("PushT full State requires batch [num_envs]")
         base = self.template.get_state()
+        groups = schema_of(state)
+        if groups is None and ("recipe", "version") not in state.keys(True, True):
+            # A State with groups of another layout: the schema of this batch names what differs.
+            self._state_layout(self._state_fields(self._history_width()))
+            groups = self._groups
+        if groups is not None:
+            groups.validate(state)
+            # The owners draw the goal image again on reconstruction; the checks only read its shape and dtype.
+            state = groups.unfold(state)
+            for key in UNFOLDED:
+                state[tuple(key.split("/"))] = torch.zeros(
+                    (self.num_envs, *base[key].shape), dtype=torch.from_numpy(base[key]).dtype, device=state.device
+                )
         keys = [tuple(key.split("/")) for key in base]
         extras = {("current", "jax", key) for key in self._solver_state()}
         actual_keys = set(state.keys(True, True))
         if not set(keys) <= actual_keys:
             raise ValueError("PushT full State keys differ")
-        version = state["recipe", "version"]
+        version = get_field(state, "recipe/version")
         new = bool((version == 3).all())
         if actual_keys != set(keys) | (extras if new else set()):
             raise ValueError("PushT full State keys differ")
@@ -436,6 +515,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
         staged = object.__new__(type(self))
         staged.__dict__ = self.__dict__.copy()
         staged.envs, staged._sources, staged._columns, staged._prepared = [], [None] * self.num_envs, {}, None
+        # A layout holds the static values of its owner, so the staged batch builds its own.
+        staged._layouts = {}
         staged._pool, staged._pool_owns = None, False
         try:
             for row in rows:
@@ -449,10 +530,10 @@ class PushTBatchAdapter(PushTReplayAdapter):
                         [
                             torch.cat(
                                 [
-                                    state["current", "body", name, "position"],
-                                    state["current", "body", name, "velocity"],
-                                    state["current", "body", name, "angle"][:, None],
-                                    state["current", "body", name, "angular_velocity"][:, None],
+                                    get_field(state, f"current/body/{name}/position"),
+                                    get_field(state, f"current/body/{name}/velocity"),
+                                    get_field(state, f"current/body/{name}/angle")[:, None],
+                                    get_field(state, f"current/body/{name}/angular_velocity")[:, None],
                                 ],
                                 1,
                             )
@@ -464,13 +545,13 @@ class PushTBatchAdapter(PushTReplayAdapter):
                     .clone()
                 )
                 for key, sample in staged._solver_state().items():
-                    value = state["current", "jax", key]
+                    value = get_field(state, "current/jax/" + key)
                     if value.shape != sample.shape or value.dtype != sample.dtype or not bool(value.isfinite().all()):
                         raise ValueError(f"Invalid PushT JAX solver cache: {key}")
                     setattr(staged, "_" + key, value.to(self.device).clone())
                 if bool((staged._impulse < 0).any() | (staged._identifiers < -1).any()):
                     raise ValueError("Invalid PushT JAX contact cache")
-                staged._contacts = state["current", "contacts"].to(self.device).clone()
+                staged._contacts = get_field(state, "current/contacts").to(self.device).clone()
                 for key in (
                     "latest/value",
                     "latest/type",
@@ -490,7 +571,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
                         {k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")}
                     )
                 staged.variation_changed()
-                actual = staged.get_state()
+                actual = unfold(staged.get_state())
                 for key, value in actual.items(True, True):
                     expected = state[key].to(self.device)
                     if "/".join(key) in HISTORY_KEYS:

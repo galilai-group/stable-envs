@@ -49,6 +49,6 @@ def test_matches_a_plain_mujoco_rollout():
         for action, want in zip(actions, _reference(actions)):
             state = env.step(action, frames=None)["state"]
             for key, atol in _ATOL.items():
-                torch.testing.assert_close(state[key], want[key], rtol=0, atol=atol)
+                torch.testing.assert_close(se.get_field(state, key), want[key], rtol=0, atol=atol)
     finally:
         env.close()

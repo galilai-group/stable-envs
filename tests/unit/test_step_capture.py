@@ -6,6 +6,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as snv
+from stable_envs import get_field
 from tests.helpers.counter_env import Counter, PipelinedCounter
 
 
@@ -131,6 +132,15 @@ def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
     with CheapAdvance() as env:
         env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=slice(None, None, 2), frames=None)
         assert env.exports == 3  # selected 0,2, plus mandatory final State
+    with CheapAdvance() as env:
+        out = env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None, frames=None, state=False)
+        assert env.exports == 0 and "state" not in out.keys()
+        out = env.step(torch.ones(3, 1, dtype=torch.int64), states=None, frames=None, state=False)
+        assert env.exports == 0 and "state" not in out.keys()
+        out = env.step(torch.ones(3, 2, 1, dtype=torch.int64), states=slice(0, 0), frames=None, state=False)
+        assert "state" not in out.keys() and out["states"].batch_size == (3, 0)
+        with pytest.raises(TypeError, match="state must be a bool"):
+            env.step(torch.ones(3, 1, dtype=torch.int64), state=None)
 
 
 @pytest.mark.family("dmc")
@@ -196,7 +206,7 @@ def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch
         out = env.step(torch.zeros(3, 5, 1, dtype=torch.int64), frames=None)
         assert calls == [1, 2, 3]
         assert out["valid"].sum(1).tolist() == calls
-        assert out["state"]["lifecycle", "elapsed_steps"][:, 0].tolist() == calls
+        assert get_field(out["state"], "lifecycle/elapsed_steps")[:, 0].tolist() == calls
 
 
 @pytest.mark.family("navigation")
@@ -207,7 +217,7 @@ def test_navigation_sequence_matches_scalar_calls(name):
     with snv.make(name, num_envs=3, device="cpu") as env:
         state = env.reset(seed=17)
         if name in ("TwoRoom", "Piecewise"):
-            state["target", "position"].fill_(0)
+            snv.get_field(state, "target.position").fill_(0)
             env.set_state(state)
         actions = torch.zeros(3, 3, env.action_dim)
         expected = [env.step(actions[:, t], frames=None)["state"] for t in range(3)]
@@ -223,7 +233,7 @@ def test_gpu_sequence_frames_equal_repeated_steps(name):
     with snv.make(name, num_envs=3, device="cuda") as env:
         initial = env.reset(seed=17)
         if name in ("TwoRoom", "Piecewise"):
-            initial["target", "position"].fill_(0)
+            snv.get_field(initial, "target.position").fill_(0)
             env.set_state(initial)
         actions = torch.zeros(3, 3, env.action_dim, dtype=env.action_spec.dtype, device="cuda")
         reference = [env.step(actions[:, t]) for t in range(3)]

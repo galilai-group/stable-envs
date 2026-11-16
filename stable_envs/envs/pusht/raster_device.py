@@ -20,6 +20,14 @@ ANCHORS = tuple(
 )
 
 
+def _bytes(value, count):
+    """The bytes of each of ``count`` rows.
+
+    A field view of a folded State can have a stride other than 1 on a size-one axis, which ``view`` refuses.
+    """
+    return value.reshape(count, -1).clone(memory_format=torch.contiguous_format).view(torch.uint8)
+
+
 class Tables:
     """Device tables for every template seen so far, indexed by template id."""
 
@@ -61,7 +69,7 @@ class Tables:
 
     def lookup(self, fields, count):
         """``(ids, unknown)`` per row on the device, without a sync; ``learn`` adds the unknown rows."""
-        raw = torch.cat([fields[name].reshape(count, -1).contiguous().view(torch.uint8) for name in ANCHORS], 1)
+        raw = torch.cat([_bytes(fields[name], count) for name in ANCHORS], 1)
         if self.known is None or self.known[0].shape[1] != raw.shape[1]:
             return torch.zeros(count, dtype=torch.int64, device=self.device), torch.ones(
                 count, dtype=torch.bool, device=self.device

@@ -29,7 +29,7 @@ Each maze class name has three parts:
 
 ## Simulation
 
-The maze [state](../terms.md#state) holds the joint positions (`qpos`) and velocities of the body.
+The maze [state](../terms.md#state) holds the joint positions and velocities of the body, the clock and the solver warm start, the task and goal, and the generators. It has one tensor for each group: `maze.physics.float64` changes on every step, and `maze.host.float64`, `maze.host.int64`, `maze.host.uint8` and `maze.host.bool` change only at reset, restore and teleport. The fields are `root.position`, `root.orientation` and `joints.position` (the point body has only `root.position`), `root.velocity`, `joints.velocity`, `simulator.time`, `simulator.warmstart`, `task.goal_pos`, `task.id` and `rng.*`. Read a field by name with `snv.get_field(state, "root.position")`.
 
 ### Maze physics
 
@@ -37,13 +37,12 @@ One call steps all the environments of a batch, and `simulation_backend` selects
 
 | Value | Device | Physics | Agreement with OGBench |
 |---|---|---|---|
-| `"default"` (default) | CPU | `mujoco.batch`, float64 | equal, bit for bit: state, observations, task outputs, resets and RNG streams |
-| `"default"` (default) | CUDA | MuJoCo Warp, float32 | equal resets, goals, tasks, teleports and RNG streams; approximate physics |
-| `"auto"` | CUDA | `mujoco.batch` below `mjwarp_min_envs` environments, MuJoCo Warp from there | as the selected physics |
+| `"auto"` (default) | CPU | `mujoco.batch`, float64 | equal, bit for bit: state, observations, task outputs, resets and RNG streams |
+| `"auto"` (default) | CUDA | `mujoco.batch` for small batches, MuJoCo Warp for large ones | as the selected physics |
 | `"native"` | CPU or CUDA | `mujoco.batch`, float64 | equal, bit for bit |
-| `"mjwarp"` | CUDA | MuJoCo Warp, float32 | as `"default"` on CUDA |
+| `"mjwarp"` | CUDA | MuJoCo Warp, float32 | equal resets, goals, tasks, teleports and RNG streams; approximate physics |
 
-The default `mjwarp_min_envs` was measured for each body on an L40S with 8 CPU cores: 4096 for PointMaze, 256 for AntMaze and 256 for HumanoidMaze. The outputs are on the device of the environment.
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). The outputs are on the device of the environment. On CUDA, `mujoco.batch` moves the outputs and the state of a step to the device in one copy.
 
 On CPU, `mujoco.batch` steps the physics on its own threads, and the step does its Torch operations on one thread. Idle Torch threads would otherwise keep the CPU cores busy while the `mujoco.batch` threads wait for them. The frames and the state do not change with the thread count.
 
@@ -51,8 +50,8 @@ On CPU, `mujoco.batch` steps the physics on its own threads, and the step does i
 # CUDA only; needs the ogbench and mjwarp extras
 import stable_envs as snv
 
-with snv.AntMazeMediumNavigate(num_envs=64, device="cuda", simulation_backend="auto") as env:
-    print(env.simulation_backend)  # native
+with snv.AntMazeMediumNavigate(num_envs=64, device="cuda") as env:
+    print(env.simulation_backend)  # native: 64 is below the AntMaze switch point, 128
 ```
 
 MuJoCo Warp agrees with MuJoCo to float32 rounding on a step where no contact starts or stops. When contacts start or stop, the contact forces of the two solvers differ and the trajectories move apart. After 200 steps of smooth actions from the same state on 64 environments, the median distance between the `xy` positions of MuJoCo Warp and OGBench was:
@@ -69,26 +68,42 @@ On MuJoCo Warp, PointMaze integrates with Euler, where OGBench uses RK4. The poi
 
 ### Cube and Scene physics
 
-`simulation_backend` picks the physics in the same way:
+`simulation_backend` picks the physics:
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"default"` (default) | `mujoco.batch` | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
-| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from there |
+| `"auto"` (default) | `mujoco.batch` | `mujoco.batch` for small batches, [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) for large ones |
 | `"native"` | `mujoco.batch` | `mujoco.batch` |
 | `"mjwarp"` | error | MuJoCo Warp |
 
-`mujoco.batch` steps every environment in one native call on up to 8 threads. The step does the operations of OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step` substeps, `mj_rnePostConstraint` and the task's `post_step`. The state and the outputs equal OGBench's bit for bit, and a CUDA environment on `mujoco.batch` returns its state on CUDA. The default model has the OGBench physics, with a cube size of 0.02.
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
-MuJoCo Warp steps the substeps of every environment in one captured CUDA graph, in float32, and one Warp kernel computes the controller and its inverse kinematics in float64. The state has the same leaves as on CPU, and its physics leaves hold the float32 values. On the scripted OGBench Cube oracle, each episode ends with the same success at the same first-success step as OGBench (see `tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions differ from OGBench.
+With two or more environments, `mujoco.batch` steps every environment in one native call on up to 8 threads. One environment steps on one `MjData` with OGBench's own `mj_step` calls. The step does the operations of OGBench's step in the same order: the end-effector controller and its inverse kinematics, the 25 `mj_step` substeps, `mj_rnePostConstraint` and the task's `post_step`. The state and the outputs equal OGBench's bit for bit, and a CUDA environment on `mujoco.batch` returns its state on CUDA. The default model has the OGBench physics, with a cube size of 0.02.
+
+MuJoCo Warp steps the substeps of every environment in one captured CUDA graph, in float32, and one Warp kernel computes the controller and its inverse kinematics in float64. The state has the same fields as on CPU, and its physics fields hold the float32 values. On the scripted OGBench Cube oracle, each episode ends with the same success at the same first-success step as OGBench (see `tests/gpu/test_ogbench_manipulation_warp.py`). Over a few hundred steps, contacts can make the cube positions differ from OGBench.
 
 MuJoCo Warp doesn't test the links of the Robotiq gripper against each other for contact. The pads keep their contacts with each other and with all other geoms. The linkage has one degree of freedom and the pads touch before two links can, so these pairs make no contacts in OGBench either, and the step is faster without their mesh-mesh tests.
 
 The MuJoCo Warp step doesn't synchronize with the host. When a Scene cube leaves the workspace, OGBench puts it at a new position drawn from the environment's generator. The host draws the next two of these positions for each environment before the step, and the device uses them. The host draws again for an environment after it reads that the device used them, and then prints OGBench's message. If an environment needs a third position before that read, the device uses the second one again.
 
+### Cube and Scene state
+
+The Cube and Scene state has one leaf for each section and dtype, such as `physics/float64`. Each leaf holds the fields of its section side by side, for example `physics/qpos`, `physics/qvel` and `physics/mocap_pos`. Read and write a field by its name with `snv.get_field` and `snv.set_field`:
+
+```python
+import stable_envs as snv
+
+with snv.make("OGBCube", num_envs=2) as env:
+    state = env.reset(seed=0)
+    qpos = snv.get_field(state, "physics/qpos")  # (2, 21) float64
+    size = snv.get_field(state, "variation/current/cube/size")  # also "variation.current.cube.size"
+```
+
+A variation leaf name such as `cube.size` becomes the field path `cube/size`. `env.state_spec` and `describe()` list the leaves.
+
 ### Cube and Scene resets
 
-A reset is the OGBench reset: resets, restores and variations run OGBench's own code on one OGBench object per environment, and the physics backend then loads the result. On Linux, a batch of at least `worker_min_lanes` environments resets in up to `workers` [worker processes](../performance-tuning.md#worker-processes). OGBench samples the task from NumPy's global RNG, and each environment in the batch keeps its own copy of that RNG in state (`rng/task`). A seeded reset seeds the copy the way `np.random.seed(seed)` would with that environment's seed, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from an unseeded action space. stable-envs samples them from the seeded `rng/action` generator instead. Restoring a state therefore also fixes the next reset.
+A reset is the OGBench reset: resets, restores and variations run OGBench's own code on one OGBench object per environment, and the physics backend then loads the result. On Linux, a batch of two or more environments resets in up to `workers` [worker processes](../performance-tuning.md#worker-processes), which reset the environments at the same time. Set `worker_min_lanes` to change the smallest batch that uses them. OGBench samples the task from NumPy's global RNG, and each environment in the batch keeps its own copy of that RNG in state (`rng/task`). A seeded reset seeds the copy the way `np.random.seed(seed)` would with that environment's seed, and an unseeded reset continues it. OGBench samples the two settling actions of a reset from an unseeded action space. stable-envs samples them from the seeded `rng/action` generator instead. Restoring a state therefore also fixes the next reset.
 
 ## Rendering
 
@@ -112,7 +127,7 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
 - CPU OpenGL rendering refuses a hardware GL context. For `backend="opengl"`, configure [Mesa software OpenGL](../install.md#what-each-family-needs) before you import MuJoCo.
 - The default `supersample` is 1 on every device. An explicit `supersample` argument keeps its value, and so does the sampling setting stored in a render state you pass in.
 - `backend="mjwarp"` needs CUDA.
-- On Linux, a batch of states draws in OpenGL [worker processes](../performance-tuning.md#worker-processes), at most `ogb_gl_workers`. On CPU, the workers start when there are at least 2 of them and at least as many states as workers. On CUDA, there is one worker for every 8 states, and the workers start from 16 states. The frames are the same as from one process.
+- On Linux, a batch of states draws in OpenGL [worker processes](../performance-tuning.md#worker-processes), at most `ogb_gl_workers`. On CPU, the workers start when there are at least 2 of them and at least as many states as workers. On CUDA, there is one worker for every 8 states, and the workers start from 16 states. On CPU, the frames are the same as from one process. On CUDA, each worker has its own OpenGL context, so the frames can differ from one process by the driver variation in the table above: a pixel can change by 1 level, and the mean squared difference was below 2e-3 (on the 0-255 scale) on RTX A5000 and A5500 hosts.
 - `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world inputs to one MJWarp context per family. Changing them adds no contexts or compiled models.
 
 ## Variation

@@ -8,6 +8,10 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from stable_envs import get_field
+from stable_envs._core.state_schema import unfold
+from stable_envs.envs.classic_control.simulation.local import STATES
+
 WRAPPERS = {
     "cartpole": ("cartpole", "CartPoleWrapper"),
     "pendulum": ("pendulum", "PendulumWrapper"),
@@ -115,41 +119,41 @@ class NativeClassicReference:
             for key, (width, dtype) in FIELDS[self.domain].items():
                 row[key] = torch.as_tensor(values[key], dtype=dtype).reshape(width).clone()
             rows.append(row)
-        return torch.stack(rows)
+        return STATES[self.domain].fold(torch.stack(rows), [self.num_envs])
 
     def set_state(self, state):
-        host = state.cpu()
+        host = unfold(state.cpu())
         for i, wrapper in enumerate(self.envs):
             row, env, base = host[i], wrapper.env, wrapper.env.unwrapped
             for name, attribute in PHYSICS[self.domain].items():
-                setattr(base, attribute, row["physics", name].item())
+                setattr(base, attribute, get_field(row, f"physics/{name}").item())
             if self.domain == "cartpole":
                 base.total_mass = base.masspole + base.masscart
                 base.polemass_length = base.masspole * base.length
             dtype = (
                 np.float32
-                if self.domain == "mountain_car_continuous" and row["task", "state_is_float32"].item()
+                if self.domain == "mountain_car_continuous" and get_field(row, "task/state_is_float32").item()
                 else np.float64
             )
             base.state = np.asarray([row[name].item() for name in PHYSICAL[self.domain]], dtype=dtype)
             if self.domain == "cartpole":
                 base.steps_beyond_terminated = (
-                    row["task", "steps_beyond_terminated"].item()
-                    if row["task", "has_steps_beyond_terminated"].item()
+                    get_field(row, "task/steps_beyond_terminated").item()
+                    if get_field(row, "task/has_steps_beyond_terminated").item()
                     else None
                 )
             elif self.domain == "pendulum":
-                base.last_u = np.float64(row["torque"].item()) if row["task", "has_last_u"].item() else None
-            env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
+                base.last_u = np.float64(row["torque"].item()) if get_field(row, "task/has_last_u").item() else None
+            env._elapsed_steps = get_field(row, "lifecycle/elapsed_steps").item()
             env.env._has_reset = True
             base.np_random.bit_generator.state = {
                 "bit_generator": "PCG64",
                 "state": {
-                    "state": _from_limbs(row["rng", "state"].numpy()),
-                    "inc": _from_limbs(row["rng", "increment"].numpy()),
+                    "state": _from_limbs(get_field(row, "rng/state").numpy()),
+                    "inc": _from_limbs(get_field(row, "rng/increment").numpy()),
                 },
-                "has_uint32": row["rng", "has_uint32"].item(),
-                "uinteger": row["rng", "uinteger"].item(),
+                "has_uint32": get_field(row, "rng/has_uint32").item(),
+                "uinteger": get_field(row, "rng/uinteger").item(),
             }
 
     def _actions(self, actions):

@@ -2,7 +2,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import Field, StateSchema
+from ...._core.tensordicts import build_tensordict
+
 _DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
+_GROUPS = {torch.float64: "float64", torch.int64: "int64", torch.bool: "bool"}
 
 #: State fields that hold episode-drawn model entries: ``key -> (named model field, index)``.
 MODEL_FIELDS = {
@@ -13,6 +17,62 @@ MODEL_FIELDS = {
     ("model", "target_geom_xy"): ("geom_pos", ("target", ["x", "y"])),
     ("model", "target_light_xy"): ("light_pos", ("target_light", ["x", "y"])),
 }
+_SCHEMAS: dict[str, StateSchema] = {}
+
+
+def field_name(key):
+    """The schema name of a State field key: its parts joined by ``/``."""
+    return key if isinstance(key, str) else "/".join(key)
+
+
+def state_section(key):
+    """The top-level State key of simulator ``key``, which holds its groups."""
+    return "dmc_" + key.replace("-", "_")
+
+
+def state_schema(key, fields):
+    """The State of simulator ``key``: ``fields`` in one float64, one int64 and one bool group.
+
+    The groups sit under ``state_section(key)``, so States of two simulators never share a group key.
+    """
+    schema = _SCHEMAS.get(key)
+    if schema is None:
+        section = state_section(key)
+        schema = _SCHEMAS[key] = StateSchema(
+            f"DMC {key}",
+            [
+                Field(field_name(name), (width,), dtype, f"{section}/{_GROUPS[dtype]}")
+                for name, (width, dtype) in fields.items()
+            ],
+        )
+    return schema
+
+
+def new_groups(schema, batch):
+    """Empty host group arrays of ``schema`` for ``batch`` lanes, ``{group key: (batch, size)}``."""
+    return {key: np.empty((batch, group.size), _DTYPES[group.dtype]) for key, group in schema.groups.items()}
+
+
+def group_views(schema, groups, fields):
+    """``{field key: (lanes, width) view}`` of ``groups`` for each key of ``fields``."""
+    views = schema.views(groups, [field_name(key) for key in fields], numpy=True)
+    return {key: views[field_name(key)] for key in fields}
+
+
+def groups_to_state(groups, device):
+    """Own the filled group arrays as a State."""
+    tree: dict = {}
+    for key, value in groups.items():
+        section, name = key.split("/")
+        # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
+        # by a later step, reset or export; CUDA conversion also owns its storage.
+        tree.setdefault(section, {})[name] = torch.from_numpy(value).to(device)
+    return build_tensordict(tree, [len(next(iter(groups.values())))], device)
+
+
+def field_arrays(schema, state, fields):
+    """``{field key: (lanes, width) NumPy view}`` of a host State."""
+    return group_views(schema, schema.buffers(state), fields)
 
 
 def core_fields(nq, nv, na=0):
@@ -35,9 +95,12 @@ def core_fields(nq, nv, na=0):
     return fields
 
 
-def new_columns(batch, fields):
-    """Empty host state columns for ``batch`` lanes."""
-    return {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
+class Columns(dict):
+    """``{field key: (lanes, width) view}`` of fresh host group arrays; ``groups`` holds the arrays."""
+
+    def __init__(self, schema, batch, fields):
+        self.groups = new_groups(schema, batch)
+        super().__init__(group_views(schema, self.groups, fields))
 
 
 def model_columns(columns):
@@ -76,57 +139,53 @@ def write_task_row(columns, i, env, model_fields):
 
 def columns_to_state(columns, device, extra=None):
     """Own the filled columns as a State; ``extra`` columns come from elsewhere."""
-    batch = len(next(iter(columns.values())))
     for key, value in (extra or {}).items():
         columns[key][:] = value
-    # On CPU, from_numpy retains these fresh arrays. No owner/buffer is reused
-    # by a later step, reset or export; CUDA conversion also owns its storage.
-    return TensorDict(
-        {key: torch.from_numpy(value).to(device) for key, value in columns.items()}, [batch], device=device
-    )
+    return groups_to_state(columns.groups, device)
 
 
-def export_columns(envs, cumulative, fields):
-    """Read ``fields`` of live lane owners into fresh host arrays, ``{key: (lanes, width)}``."""
-    columns = new_columns(len(envs), fields)
-    model_fields = model_columns(columns)
-    for i, env in enumerate(envs):
-        write_row(columns, i, env, cumulative[i], model_fields)
-    return columns
-
-
-def export_state(envs, cumulative, fields, device, extra=None):
-    """Export fresh State columns with one device transfer per field.
+def export_state(envs, cumulative, schema, fields, device, extra=None):
+    """Export a fresh State of live lane owners with one device transfer per group.
 
     Read live lane owners into owned host arrays. CPU tensors retain those arrays;
     later simulation and exports cannot overwrite the snapshot.
     """
-    return columns_to_state(export_columns(envs, cumulative, fields), device, extra)
+    columns = Columns(schema, len(envs), fields)
+    model_fields = model_columns(columns)
+    for i, env in enumerate(envs):
+        write_row(columns, i, env, cumulative[i], model_fields)
+    return columns_to_state(columns, device, extra)
 
 
-def restore_lane(env, row, fields, cumulative, lane):
-    """Write one exported state row back into a lane, model entries before forward kinematics."""
+def restore_lane(env, values, i, cumulative):
+    """Write row ``i`` of host field arrays ``values`` back into a lane, model entries before forward kinematics."""
     physics, base = env.physics, env._env
-    for key in fields:
-        if key in MODEL_FIELDS:
-            field, index = MODEL_FIELDS[key]
-            getattr(physics.named.model, field)[index] = row[key].numpy()
-    physics.data.qpos[:] = row["qpos"].numpy()
-    physics.data.qvel[:] = row["qvel"].numpy()
-    physics.data.time = row["time"].item()
-    if "activation" in fields:
-        physics.data.act[:] = row["activation"].numpy()
+    for key, (field, index) in MODEL_FIELDS.items():
+        if key in values:
+            getattr(physics.named.model, field)[index] = values[key][i]
+    physics.data.qpos[:] = values["qpos"][i]
+    physics.data.qvel[:] = values["qvel"][i]
+    physics.data.time = values["time"][i].item()
+    if "activation" in values:
+        physics.data.act[:] = values["activation"][i]
     physics.forward()
-    physics.data.qacc_warmstart[:] = row["warmstart"].numpy()
-    base._step_count = row["lifecycle", "step_count"].item()
-    base._reset_next_step = row["lifecycle", "reset_next_step"].item()
+    physics.data.qacc_warmstart[:] = values["warmstart"][i]
+    base._step_count = values["lifecycle", "step_count"][i].item()
+    base._reset_next_step = values["lifecycle", "reset_next_step"][i].item()
     env.task.random.set_state(
         (
             "MT19937",
-            row["rng", "keys"].numpy().astype(np.uint32),
-            row["rng", "position"].item(),
-            int(row["rng", "has_gauss"].item()),
-            row["rng", "cached_gaussian"].item(),
+            values["rng", "keys"][i].astype(np.uint32),
+            values["rng", "position"][i].item(),
+            int(values["rng", "has_gauss"][i].item()),
+            values["rng", "cached_gaussian"][i].item(),
         )
     )
-    cumulative[lane] = row["task", "cumulative_reward"].item()
+    cumulative[i] = values["task", "cumulative_reward"][i].item()
+
+
+def validate_state(schema, state, num_envs, key):
+    """Check that ``state`` is a full State of simulator ``key`` with ``num_envs`` rows and finite values."""
+    if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
+        raise TypeError(f"{key} requires full TensorDict State with batch [num_envs]")
+    schema.validate(state, finite=True)

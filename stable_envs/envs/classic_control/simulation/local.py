@@ -9,18 +9,31 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._core.physics import state_key
-from ...._core.tensordicts import build_tensordict
+from ...._core.state_schema import Field, StateSchema
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.process import PER_LANE
 from ...._execution.protocol import SimulatorAdapter
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
 
+#: State field names that code outside the schema refers to.
+ELAPSED = "lifecycle/elapsed_steps"
+BEYOND = "task/steps_beyond_terminated"
+HAS_BEYOND = "task/has_steps_beyond_terminated"
+HAS_LAST_U = "task/has_last_u"
+IS_FLOAT32 = "task/state_is_float32"
+RNG_STATE, RNG_INCREMENT, RNG_HAS_UINT32, RNG_UINTEGER = (
+    "rng/state",
+    "rng/increment",
+    "rng/has_uint32",
+    "rng/uinteger",
+)
+
 _RNG_FIELDS = {
-    ("rng", "state"): (4, torch.int64),
-    ("rng", "increment"): (4, torch.int64),
-    ("rng", "has_uint32"): (1, torch.int64),
-    ("rng", "uinteger"): (1, torch.int64),
+    RNG_STATE: (4, torch.int64),
+    RNG_INCREMENT: (4, torch.int64),
+    RNG_HAS_UINT32: (1, torch.int64),
+    RNG_UINTEGER: (1, torch.int64),
 }
 
 _PHYSICS_SPACES = {
@@ -60,6 +73,10 @@ _PHYSICS_SPACES = {
     },
 }
 
+#: State fields that only a reset, a restore or a physics change sets: the PCG64 generator (classic-control steps
+#: draw no random numbers) and the physical constants.
+_STATIC_PREFIXES = ("rng/", "physics/")
+
 _PHYSICS_ATTRIBUTES = {
     "acrobot": {
         "link_length_1": "LINK_LENGTH_1",
@@ -73,12 +90,13 @@ _PHYSICS_ATTRIBUTES = {
 }
 
 
-def physics_state_key(leaf: str) -> tuple[str, ...]:
-    return state_key(leaf.removeprefix("physics."))
+def physics_field(name: str) -> str:
+    """The State field that holds the physical constant ``name``."""
+    return f"physics/{name}"
 
 
 def _physics_fields(domain: str) -> dict:
-    return {physics_state_key(name): (1, torch.float64) for name in _PHYSICS_SPACES[domain]}
+    return {physics_field(name): (1, torch.float64) for name in _PHYSICS_SPACES[domain]}
 
 
 CLASSIC_FIELDS = {
@@ -87,9 +105,9 @@ CLASSIC_FIELDS = {
         "x_dot": (1, torch.float64),
         "theta": (1, torch.float64),
         "theta_dot": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        ("task", "steps_beyond_terminated"): (1, torch.int64),
-        ("task", "has_steps_beyond_terminated"): (1, torch.bool),
+        ELAPSED: (1, torch.int64),
+        BEYOND: (1, torch.int64),
+        HAS_BEYOND: (1, torch.bool),
         **_RNG_FIELDS,
         **_physics_fields("cartpole"),
     },
@@ -98,8 +116,8 @@ CLASSIC_FIELDS = {
         "theta_dot": (1, torch.float64),
         # ``last_u`` keeps the caller's float dtype; float64 holds float32 and float64 actions losslessly.
         "torque": (1, torch.float64),
-        ("task", "has_last_u"): (1, torch.bool),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        HAS_LAST_U: (1, torch.bool),
+        ELAPSED: (1, torch.int64),
         **_RNG_FIELDS,
         **_physics_fields("pendulum"),
     },
@@ -108,14 +126,14 @@ CLASSIC_FIELDS = {
         "theta2": (1, torch.float64),
         "dtheta1": (1, torch.float64),
         "dtheta2": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        ELAPSED: (1, torch.int64),
         **_RNG_FIELDS,
         **_physics_fields("acrobot"),
     },
     "mountain_car": {
         "position": (1, torch.float64),
         "velocity": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        ELAPSED: (1, torch.int64),
         **_RNG_FIELDS,
         **_physics_fields("mountain_car"),
     },
@@ -123,11 +141,38 @@ CLASSIC_FIELDS = {
         "position": (1, torch.float64),
         "velocity": (1, torch.float64),
         # Reset installs float64 state and every step float32; the dtype changes the next NumPy update.
-        ("task", "state_is_float32"): (1, torch.bool),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        IS_FLOAT32: (1, torch.bool),
+        ELAPSED: (1, torch.int64),
         **_RNG_FIELDS,
         **_physics_fields("mountain_car_continuous"),
     },
+}
+
+_GROUP_DTYPE = {torch.float64: "float64", torch.int64: "int64", torch.bool: "bool"}
+
+
+def _schema(domain: str) -> StateSchema:
+    """The State of ``domain``: one group per dtype, with the simulation variables first in the float64 group."""
+    fields = [
+        Field(name, (width,), dtype, f"{domain}/{_GROUP_DTYPE[dtype]}")
+        for dtype in _GROUP_DTYPE
+        for name, (width, kind) in CLASSIC_FIELDS[domain].items()
+        if kind == dtype
+    ]
+    return StateSchema(f"ClassicControl.{domain}", fields)
+
+
+#: The State schema of each domain.
+STATES = {domain: _schema(domain) for domain in CLASSIC_FIELDS}
+
+
+#: The State fields that hold each task's ``state`` array, in its order.
+_STATE_NAMES = {
+    "cartpole": ("x", "x_dot", "theta", "theta_dot"),
+    "pendulum": ("theta", "theta_dot"),
+    "acrobot": ("theta1", "theta2", "dtheta1", "dtheta2"),
+    "mountain_car": ("position", "velocity"),
+    "mountain_car_continuous": ("position", "velocity"),
 }
 
 _ENV_IDS = {
@@ -150,38 +195,28 @@ def _from_limbs(value) -> int:
     return sum(int(part) << (32 * i) for i, part in enumerate(parts))
 
 
+def _host_fields(domain: str, state: TensorDict) -> dict[str, np.ndarray]:
+    """``{field name: (rows, width) array}`` of a validated State, as views of its host group tensors."""
+    return STATES[domain].views(state.cpu(), numpy=True)
+
+
+def _rng_state(fields: dict[str, np.ndarray], lane: int) -> dict:
+    """The PCG64 state of one lane, as NumPy's ``bit_generator.state`` takes it."""
+    return {
+        "bit_generator": "PCG64",
+        "state": {"state": _from_limbs(fields[RNG_STATE][lane]), "inc": _from_limbs(fields[RNG_INCREMENT][lane])},
+        "has_uint32": fields[RNG_HAS_UINT32][lane, 0].item(),
+        "uinteger": fields[RNG_UINTEGER][lane, 0].item(),
+    }
+
+
 def validate_classic_state(domain: str, state, *, batch: int | None = None) -> None:
     """Require the complete, typed resume schema; compact render rows fail."""
-    fields = CLASSIC_FIELDS[domain]
     if not isinstance(state, TensorDict):
         raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
     if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
         raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
-    have, want = set(state.keys(True, True)), set(fields)
-    if have != want:
-        physics = sorted((want - have) & set(_physics_fields(domain)))
-        if physics and have >= want - set(physics):
-            registered = {f"physics.{name}": value[2] for name, value in _PHYSICS_SPACES[domain].items()}
-            raise ValueError(
-                f"State has no {['.'.join(key) for key in physics]}: it does not record the physics it was "
-                f"produced under, and restoring it would keep this environment's current physics instead. Add "
-                f"the fields (the registered values are {registered}) or restore a State this environment produced."
-            )
-        missing, extra = sorted(want - have, key=str), sorted(have - want, key=str)
-        raise ValueError(
-            "Full State keys do not match the classic-control resume schema"
-            + (f"; missing {missing}" if missing else "")
-            + (f"; unexpected {extra}" if extra else "")
-        )
-    n = int(state.batch_size[0])
-    for key, (width, dtype) in fields.items():
-        value = state[key]
-        if value.shape != (n, width):
-            raise ValueError(f"State field {key!r} has invalid shape {tuple(value.shape)}")
-        if value.dtype != dtype:
-            raise ValueError(f"State field {key!r} has dtype {value.dtype}; expected {dtype}")
-        if value.is_floating_point() and not bool(torch.isfinite(value).all()):
-            raise ValueError(f"State field {key!r} contains non-finite values")
+    STATES[domain].validate(state, finite=True)
 
 
 class ClassicControlAdapter(SimulatorAdapter):
@@ -209,8 +244,13 @@ class ClassicControlAdapter(SimulatorAdapter):
             ],
             np.float64,
         ).reshape(self.num_envs, len(self._physics_names))
-        self._physics_keys = tuple(physics_state_key(name) for name in self._physics_names)
-        self._lane_fields = tuple(key for key in self.fields if key not in self._physics_keys)
+        self._physics_keys = tuple(physics_field(name) for name in self._physics_names)
+        self._static_keys = frozenset(key for key in self.fields if key.startswith(_STATIC_PREFIXES))
+        from .packed import PackedState
+
+        self._packed = PackedState(domain, self.num_envs)
+        self._bases = [env.unwrapped for env in self.envs]
+        self._static_loaded = False
         self._closed = False
 
     def _check_open(self) -> None:
@@ -225,6 +265,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             self._apply_physics(i, {name: float(rows[i]) for name, rows in columns.items()})
 
     def _apply_physics(self, lane: int, values: Mapping[str, float]) -> None:
+        self._static_loaded = False
         base = self.envs[lane].unwrapped
         for name, value in values.items():
             setattr(base, self._physics_attributes[name], value)
@@ -237,128 +278,140 @@ class ClassicControlAdapter(SimulatorAdapter):
         self._check_open()
         for i, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + i, options=options)
+        self._static_loaded = False
         return ClassicControlAdapter.get_state(self)
 
-    def _state_values(self, env):
+    def _state_values(self, env, static: bool = True):
+        """The State values of one lane; ``static=False`` leaves out the generator."""
         base = env.unwrapped
-        rng = base.np_random.bit_generator.state
-        if rng["bit_generator"] != "PCG64":
-            raise RuntimeError(f"Expected PCG64, got {rng['bit_generator']!r}")
-        values: dict = {
-            ("lifecycle", "elapsed_steps"): [env._elapsed_steps],
-            ("rng", "state"): _limbs(rng["state"]["state"]),
-            ("rng", "increment"): _limbs(rng["state"]["inc"]),
-            ("rng", "has_uint32"): [rng["has_uint32"]],
-            ("rng", "uinteger"): [rng["uinteger"]],
-        }
+        values: dict = {ELAPSED: [env._elapsed_steps]}
+        if static:
+            rng = base.np_random.bit_generator.state
+            if rng["bit_generator"] != "PCG64":
+                raise RuntimeError(f"Expected PCG64, got {rng['bit_generator']!r}")
+            values[RNG_STATE] = _limbs(rng["state"]["state"])
+            values[RNG_INCREMENT] = _limbs(rng["state"]["inc"])
+            values[RNG_HAS_UINT32] = [rng["has_uint32"]]
+            values[RNG_UINTEGER] = [rng["uinteger"]]
         if self.domain == "cartpole":
             values.update(dict(zip(("x", "x_dot", "theta", "theta_dot"), np.asarray(base.state))))
             beyond = base.steps_beyond_terminated
-            values[("task", "steps_beyond_terminated")] = [0 if beyond is None else beyond]
-            values[("task", "has_steps_beyond_terminated")] = [beyond is not None]
+            values[BEYOND] = [0 if beyond is None else beyond]
+            values[HAS_BEYOND] = [beyond is not None]
         elif self.domain == "pendulum":
             values["theta"], values["theta_dot"] = np.asarray(base.state)
             last_u = getattr(base, "last_u", None)
             values["torque"] = [0.0 if last_u is None else last_u]
-            values[("task", "has_last_u")] = [last_u is not None]
+            values[HAS_LAST_U] = [last_u is not None]
         elif self.domain == "acrobot":
             values.update(dict(zip(("theta1", "theta2", "dtheta1", "dtheta2"), np.asarray(base.state))))
         else:
             values["position"], values["velocity"] = np.asarray(base.state)
             if self.domain == "mountain_car_continuous":
-                values[("task", "state_is_float32")] = [np.asarray(base.state).dtype == np.float32]
+                values[IS_FLOAT32] = [np.asarray(base.state).dtype == np.float32]
 
         return values
 
-    def get_state(self) -> TensorDict:
-        self._check_open()
+    def _columns(self, keys) -> dict:
+        """``{key: (num_envs, width) array}`` of ``keys``, read from each lane's Gymnasium environment."""
         columns = {
-            key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
-            for key, (width, dtype) in self.fields.items()
+            key: np.empty((self.num_envs, self.fields[key][0]), dtype=_NUMPY_DTYPES[self.fields[key][1]])
+            for key in keys
+            if key not in self._physics_keys
         }
-        lane_columns = [(key, columns[key]) for key in self._lane_fields]
+        lane_columns = list(columns.items())
         for index, env in enumerate(self.envs):
-            values = self._state_values(env)
+            values = self._state_values(env, static=any(key.startswith("rng/") for key in columns))
             for key, column in lane_columns:
                 column[index] = values[key]
         for j, key in enumerate(self._physics_keys):
-            columns[key][:, 0] = self._physics[:, j]
-        tree: dict = {}
-        for key, value in columns.items():
-            value = torch.from_numpy(value).to(self.device)
-            if isinstance(key, str):
-                tree[key] = value
-            else:
-                tree.setdefault(key[0], {})[key[1]] = value
-        return build_tensordict(tree, [self.num_envs], self.device)
+            if key in keys:
+                columns[key] = self._physics[:, j : j + 1].copy()
+        return columns
+
+    def _load_static(self) -> None:
+        if not self._static_loaded:
+            views = self._packed.views
+            for key, value in self._columns(self._static_keys).items():
+                views[key][...] = value
+            self._static_loaded = True
+
+    def _write_moving(self) -> None:
+        """Copy the fields that steps change from all lanes into the packed State."""
+        n, bases, views = self.num_envs, self._bases, self._packed.views
+        state = np.array([base.state for base in bases], dtype=np.float64).reshape(n, -1)
+        for i, name in enumerate(_STATE_NAMES[self.domain]):
+            views[name][:, 0] = state[:, i]
+        views[ELAPSED][:, 0] = np.fromiter((env._elapsed_steps for env in self.envs), np.int64, n)
+        if self.domain == "cartpole":
+            beyond = [base.steps_beyond_terminated for base in bases]
+            views[BEYOND][:, 0] = [b or 0 for b in beyond]
+            views[HAS_BEYOND][:, 0] = [b is not None for b in beyond]
+        elif self.domain == "pendulum":
+            last = [getattr(base, "last_u", None) for base in bases]
+            views["torque"][:, 0] = [0.0 if u is None else u for u in last]
+            views[HAS_LAST_U][:, 0] = [u is not None for u in last]
+        elif self.domain == "mountain_car_continuous":
+            narrow = [np.asarray(base.state).dtype == np.float32 for base in bases]
+            views[IS_FLOAT32][:, 0] = narrow
+
+    def get_state(self) -> TensorDict:
+        self._check_open()
+        self._load_static()
+        self._write_moving()
+        return self._packed.export(self.device)
+
+    def stack_states(self, states) -> TensorDict | None:
+        """Stack States that ``get_state`` made with one copy per dtype; None for other States."""
+        return self._packed.stack(states)
 
     def validate(self, state: TensorDict) -> None:
         """Check the schema and every lane's PCG64 state; change no simulator."""
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
         probe = np.random.PCG64(0)
-        for row in state.cpu():
-            probe.state = {
-                "bit_generator": "PCG64",
-                "state": {
-                    "state": _from_limbs(row["rng", "state"].numpy()),
-                    "inc": _from_limbs(row["rng", "increment"].numpy()),
-                },
-                "has_uint32": row["rng", "has_uint32"].item(),
-                "uinteger": row["rng", "uinteger"].item(),
-            }
+        for i in range(self.num_envs):
+            probe.state = _rng_state(_host_fields(self.domain, state), i)
 
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
-        host = state.cpu()
+        host = _host_fields(self.domain, state)
         for i, env in enumerate(self.envs):
-            row, base = host[i], env.unwrapped
+            base = env.unwrapped
             self._apply_physics(
-                i, {name: row[key].item() for name, key in zip(self._physics_names, self._physics_keys, strict=True)}
+                i,
+                {
+                    name: host[key][i, 0].item()
+                    for name, key in zip(self._physics_names, self._physics_keys, strict=True)
+                },
             )
             if self.domain == "cartpole":
-                base.state = np.asarray(
-                    [row[name].item() for name in ("x", "x_dot", "theta", "theta_dot")], np.float64
-                )
-                base.steps_beyond_terminated = (
-                    row["task", "steps_beyond_terminated"].item()
-                    if row["task", "has_steps_beyond_terminated"].item()
-                    else None
-                )
+                base.state = np.asarray([host[name][i, 0].item() for name in _STATE_NAMES["cartpole"]], np.float64)
+                base.steps_beyond_terminated = host[BEYOND][i, 0].item() if host[HAS_BEYOND][i, 0].item() else None
             elif self.domain == "pendulum":
-                base.state = np.asarray([row["theta"].item(), row["theta_dot"].item()], np.float64)
-                if row["task", "has_last_u"].item():
-                    base.last_u = np.float64(row["torque"].item())
+                base.state = np.asarray([host["theta"][i, 0].item(), host["theta_dot"][i, 0].item()], np.float64)
+                if host[HAS_LAST_U][i, 0].item():
+                    base.last_u = np.float64(host["torque"][i, 0].item())
                 else:
                     base.last_u = None
             elif self.domain == "acrobot":
-                base.state = np.asarray(
-                    [row[name].item() for name in ("theta1", "theta2", "dtheta1", "dtheta2")], np.float64
-                )
+                base.state = np.asarray([host[name][i, 0].item() for name in _STATE_NAMES["acrobot"]], np.float64)
             else:
                 dtype = (
                     np.float32
-                    if self.domain == "mountain_car_continuous" and row["task", "state_is_float32"].item()
+                    if self.domain == "mountain_car_continuous" and host[IS_FLOAT32][i, 0].item()
                     else np.float64
                 )
-                values = [row["position"].item(), row["velocity"].item()]
+                values = [host["position"][i, 0].item(), host["velocity"][i, 0].item()]
                 # Only the continuous variant's array dtype affects continuation.
                 base.state = np.asarray(values, dtype=dtype)
 
-            env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
+            env._elapsed_steps = host[ELAPSED][i, 0].item()
             # A state exists only after reset, so restore the wrapper's reset flag too.
             env.env._has_reset = True
-            rng_state = {
-                "bit_generator": "PCG64",
-                "state": {
-                    "state": _from_limbs(row["rng", "state"].numpy()),
-                    "inc": _from_limbs(row["rng", "increment"].numpy()),
-                },
-                "has_uint32": row["rng", "has_uint32"].item(),
-                "uinteger": row["rng", "uinteger"].item(),
-            }
-            base.np_random.bit_generator.state = rng_state
+            base.np_random.bit_generator.state = _rng_state(host, i)
+        self._static_loaded = False
 
     def _actions(self, actions):
         if torch.is_tensor(actions):
@@ -403,19 +456,20 @@ class ClassicControlAdapter(SimulatorAdapter):
             for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
         ]
         observations = np.stack([out[0] for out in outputs])
-        return build_tensordict(
-            {
-                **({"state": self.get_state()} if capture_state else {}),
-                "reward": torch.tensor([out[1] for out in outputs], dtype=torch.float64, device=self.device),
-                "terminated": torch.tensor([out[2] for out in outputs], dtype=torch.bool, device=self.device),
-                "truncated": torch.tensor([out[3] for out in outputs], dtype=torch.bool, device=self.device),
-                "observation": torch.as_tensor(observations, device=self.device).clone(),
-                # ``info['state']`` is a float32 copy of the observation.
-                "info_state": torch.as_tensor(observations, dtype=torch.float32, device=self.device).clone(),
-            },
-            [self.num_envs],
-            self.device,
-        )
+        host = {
+            "reward": torch.from_numpy(np.fromiter((out[1] for out in outputs), np.float64, self.num_envs)),
+            "terminated": torch.from_numpy(np.fromiter((out[2] for out in outputs), np.bool_, self.num_envs)),
+            "truncated": torch.from_numpy(np.fromiter((out[3] for out in outputs), np.bool_, self.num_envs)),
+            "observation": torch.from_numpy(observations),
+            # ``info['state']`` is a float32 copy of the observation.
+            "info_state": torch.from_numpy(observations.astype(np.float32)),
+        }
+        out = build_tensordict(host, [self.num_envs], "cpu")
+        if self.device.type != "cpu":
+            out = to_device(out, self.device)
+        if capture_state:
+            out["state"] = self.get_state()
+        return out
 
     def close(self) -> None:
         if not self._closed:

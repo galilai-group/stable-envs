@@ -35,16 +35,18 @@ def test_cell_builds_resets_steps_and_restores_state(cell):
     nq = SCENES[scene]
     with snv.make(cell, num_envs=2, device="cpu", seed=3) as env:
         state = env.reset(seed=3)
-        assert state["qpos"].shape == (2, nq) and state["goal"].shape == (2, 3)
+        assert snv.get_field(state, "qpos").shape == (2, nq) and snv.get_field(state, "goal").shape == (2, 3)
         assert env.state_dim == nq + 3
         actions = np.random.default_rng(0).uniform(-1, 1, (2, 3, 4)).astype(np.float32)
         out = env.step(actions, frames=None)
         assert out["valid"].all()
-        assert torch.isfinite(out["state"]["qpos"]).all()
-        assert not torch.equal(out["state"]["qpos"], state["qpos"]), "the arm did not move"
+        assert torch.isfinite(snv.get_field(out["state"], "qpos")).all()
+        assert not torch.equal(snv.get_field(out["state"], "qpos"), snv.get_field(state, "qpos")), (
+            "the arm did not move"
+        )
         env.set_state(state)
         again = env.step(actions, frames=None)
-        assert torch.equal(again["state"]["qpos"], out["state"]["qpos"])
+        assert torch.equal(snv.get_field(again["state"], "qpos"), snv.get_field(out["state"], "qpos"))
 
 
 def test_dense_reward_differs_from_sparse_reward():

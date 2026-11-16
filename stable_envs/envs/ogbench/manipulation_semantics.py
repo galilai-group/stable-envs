@@ -5,10 +5,10 @@ import torch
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor, rows_are_equal
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _split_appearance
-from ...specs import CompositeSpec, Spec
 
 
 class _OwnStates:
@@ -30,6 +30,9 @@ class _OwnStates:
 
 
 class ManipulationSemantics:
+    #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
+    simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    state_solver_caches = ("physics/warmstart",)
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
     cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
@@ -53,22 +56,21 @@ class ManipulationSemantics:
         seed=0,
         *,
         reward_task_id=None,
-        simulation_backend="default",
-        mjwarp_min_envs=None,
+        simulation_backend="auto",
     ):
         """Select physics at construction.
 
-        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp (float32) and CPU batches on native
-        ``mujoco.batch``, equal to OGBench bit for bit. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or
-        more on MuJoCo Warp and every other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"``
-        select explicitly.
+        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``, equal to OGBench bit for bit. On
+        CUDA it steps small batches on native ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the
+        measured ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        from ..._execution.mjbatch import resolve_backend
-        from .simulation.execution import MJWARP_MIN_ENVS, make_manipulation_adapter
+        from .simulation.execution import make_manipulation_adapter, manipulation_backend, manipulation_path
 
         device = Env.resolve_device(device)
-        mjwarp_min_envs = MJWARP_MIN_ENVS if mjwarp_min_envs is None else mjwarp_min_envs
-        self.simulation_backend = resolve_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
+        self.simulation_backend = manipulation_backend(
+            self.CELL, num_envs, device, simulation_backend, env_type=type(self)
+        )
+        self.simulation_backend_path = manipulation_path(self.CELL)
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, self.simulation_backend
         )
@@ -120,27 +122,27 @@ class ManipulationSemantics:
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
     def _layout(self):
-        offsets = {
-            ("physics", "qpos"): 0,
-            ("physics", "mocap_pos"): self._nq,
-            ("scene", "cur_button_states"): self._nq + 3,
-        }
+        """``(field path, width, render offset)`` of each State field; State leaves are groups of these fields."""
+        offsets = {"physics/qpos": 0, "physics/mocap_pos": self._nq, "scene/cur_button_states": self._nq + 3}
         return tuple(
-            (key, int(np.prod(shape)), offsets.get(key)) for key, (shape, _) in self._simulator.fields.items()
+            (tuple(name.split("/")), int(np.prod(shape)), offsets.get(name))
+            for name, (shape, _) in self._simulator.fields.items()
         )
 
     def _layout_dtypes(self):
-        return {k: dtype for k, (_, dtype) in self._simulator.fields.items()}
+        return {tuple(name.split("/")): dtype for name, (_, dtype) in self._simulator.fields.items()}
 
     @property
     def state_spec(self):
-        fields = {}
-        for key, (shape, dtype) in self._simulator.fields.items():
-            node = fields
-            for part in key[:-1]:
-                node = node.setdefault(part, {})
-            node[key[-1]] = Spec(shape, dtype=dtype, device=self.device)
-        return CompositeSpec(fields, device=self.device)
+        """Specs of the State's group leaves, without the batch axis; ``describe()`` lists them."""
+        return self._simulator.schema.spec(self.device)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self._simulator.schema.validate(state, finite=True)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
@@ -169,6 +171,34 @@ class ManipulationSemantics:
         self._check_open("step")
         self._rows_installed = False
         return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _steps_on_host(self) -> bool:
+        """Whether a step of several actions runs on the host simulator and moves its result once."""
+        return self.device.type != "cpu" and getattr(self._simulator, "step_host", None) is not None
+
+    def _masks_on_device(self) -> bool:
+        """Whether the simulator masks finished lanes of a sequence on the device, so steps need no readback."""
+        return getattr(self._simulator, "masks_on_device", False)
+
+    def _host_advance(self, actions, *, active=None, capture_state=True):
+        self._check_open("step")
+        self._rows_installed = False
+        # The host State is not the one the step returns.
+        self._own_state = None
+        return self._simulator.step_host(actions, active=active, capture_state=capture_state)
+
+    def _end_host_steps(self):
+        pass
+
+    def _host_step(self, actions, move):
+        """One step on a host simulator: ``move`` puts its arrays on the env's device in one copy."""
+        step = getattr(self._simulator, "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        self._rows_installed = False
+        result, self._own_state = move(step(actions, state=getattr(move, "needs_state", True)))
+        return result
 
     def _step_pipeline(self) -> StepPipeline | None:
         pipeline = step_pipeline(self._simulator)
@@ -206,19 +236,18 @@ class ManipulationSemantics:
         return self._simulator.variation_values(self.variation_space.flat_layout(), anchor=True)
 
     def _pack_render_state(self, state):
-        columns = [state["physics", "qpos"], state["physics", "mocap_pos"]]
-        if self.CELL == "Scene":
-            columns.append(state["scene", "cur_button_states"])
+        names = ("physics/qpos", "physics/mocap_pos", *(("scene/cur_button_states",) if self.CELL == "Scene" else ()))
+        columns = [get_field(state, name) for name in names]
         return torch.cat(columns, dim=-1).to(device=self.device, dtype=torch.float32)
 
     def _unpack_render_state(self, rows):
+        """The drawn fields of compact rows, one leaf per field; the other State fields stay absent."""
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
         values = {
             ("physics", "qpos"): rows[:, : self._nq].clone(),
             ("physics", "mocap_pos"): rows[:, self._nq : self._nq + 3].clone(),
+            **({("scene", "cur_button_states"): rows[:, -2:].clone()} if self.CELL == "Scene" else {}),
         }
-        if self.CELL == "Scene":
-            values["scene", "cur_button_states"] = rows[:, -2:].clone()
         return TensorDict(values, batch_size=[len(rows)], device=self.device)
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
@@ -238,7 +267,7 @@ class ManipulationSemantics:
             # The frame reads only the projected leaves; set_state checks the leaves that restore simulation.
             pixels.require_leaves(self.CELL, state)
         if host:
-            state = state.select(*pixels.projected_keys(self.CELL)).cpu()
+            state = state.select(*pixels.projected_groups(self.CELL, state)).cpu()
         return pixels.project(self.CELL, state, size, supersample, check=not trusted)
 
     def _render_state_input(self, state, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):

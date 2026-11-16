@@ -43,22 +43,30 @@ def _forced_backend(backend: str | None):
 
 
 @contextlib.contextmanager
+def _class_attrs(cls, **values):
+    """Set the attributes of ``cls`` that it has to ``values`` for the duration."""
+    saved = {k: getattr(cls, k) for k in values if hasattr(cls, k)}
+    for k in saved:
+        setattr(cls, k, values[k])
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            setattr(cls, k, v)
+
+
+def _eager(cls):
+    """Draw CUDA frames with eager launches instead of the captured graph, which shades every ray."""
+    return _class_attrs(cls, CUDA_GRAPHS=False)
+
+
 def _unbounded(cls):
     """Disable mover windows and ray-set compaction on ``cls`` for the duration.
 
     Compaction is switched off too: envs whose movers span most of the image already decline every
     window, so clearing ``MOVER_TILES`` alone would leave both legs on the same path.
     """
-    saved = {k: getattr(cls, k) for k in ("MOVER_TILES", "SHADOW_COMPACTION", "COVER_COMPACTION") if hasattr(cls, k)}
-    cls.MOVER_TILES = ()
-    for k in ("SHADOW_COMPACTION", "COVER_COMPACTION"):
-        if k in saved:
-            setattr(cls, k, False)
-    try:
-        yield
-    finally:
-        for k, v in saved.items():
-            setattr(cls, k, v)
+    return _class_attrs(cls, MOVER_TILES=(), SHADOW_COMPACTION=False, COVER_COMPACTION=False, CUDA_GRAPHS=False)
 
 
 def _scene(env, batch: int, seed: int):
@@ -121,9 +129,12 @@ def _raycast_frames(env, states, fast: bool):
 
 
 def _mover_frames(env, states, fast: bool):
-    if fast:
+    with _eager(type(env)) if fast else _unbounded(type(env)):
         return env._render(states).clone()
-    with _unbounded(type(env)):
+
+
+def _graph_frames(env, states, fast: bool):
+    with contextlib.nullcontext() if fast else _eager(type(env)):
         return env._render(states).clone()
 
 
@@ -303,6 +314,21 @@ CASES: tuple[FastPath, ...] = (
         prepare=_states_prepare(0),
         frames=_mover_frames,
         inapplicable=lambda env: None if hasattr(env, "_mover_idx") else "does not use the windowed mover path",
+    ),
+    FastPath(
+        id="cuda-graph-vs-eager",
+        why=(
+            "The captured CUDA graph shades every ray with no windows or ray-set compaction; a difference "
+            "means a window or a compaction changed a pixel, or a replay read stale poses."
+        ),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("DMC", "MuJoCo"))),
+        modules=MOVER_MODULES,
+        num_envs=16,
+        seed=0,
+        sizes=(84, 256),
+        prepare=_states_prepare(0),
+        frames=_graph_frames,
+        inapplicable=lambda env: None if hasattr(env, "CUDA_GRAPHS") else "does not draw through a captured graph",
     ),
     FastPath(
         id="raycast3d-primitive-bounds",
@@ -657,3 +683,53 @@ def test_raycast_overrides_route_to_distinct_paths(monkeypatch):
         {"path": "window", "cover_compaction": False},
     ]
     assert R3.composite is production
+
+
+def test_a_graph_replay_draws_the_new_poses():
+    """A second batch through the same captured graph matches eager frames of that batch, not the first."""
+    name = "DMCReacher"
+    if name not in se.registry.REGISTRY:
+        pytest.skip(f"{name} is not registered")
+    env = make_or_skip(name, num_envs=4, device="cuda")
+    try:
+        first, second = (sampled_states(env, 4, seed) for seed in (2, 3))
+        env._render(first)
+        replay = env._render(second).clone()
+        with _eager(type(env)):
+            eager = env._render(second).clone()
+        assert_frames_identical(replay, eager, what="graph replay vs eager", why="the replay read the first poses")
+        assert not torch.equal(env._render(first), replay)
+    finally:
+        env.close()
+
+
+#: Largest mean squared 0-255 difference between frames shaded by the Triton kernel and by the Torch ops, and the
+#: largest difference of one value. The kernel matches the Torch ops op for op; a few values a rollout differ by one
+#: where a last-place float difference crosses a rounding boundary.
+FUSED_SHADE_MSE = 1e-4
+FUSED_SHADE_MAX = 1
+
+
+@pytest.mark.parametrize(
+    "name,size",
+    [(n, size) for n in sorted(se.registry.REGISTRY) if n.startswith("DMC") for size in (84, 224)],
+)
+def test_fused_shading_stays_within_its_measured_mse(name, size):
+    from stable_envs.envs.dmcontrol import _shade_triton
+
+    env = make_or_skip(name, num_envs=8, size=size, device="cuda")
+    try:
+        if not hasattr(env, "CUDA_GRAPHS") or not _shade_triton.HAVE_TRITON:
+            pytest.skip(f"{name} does not shade through _textured")
+        states = sampled_states(env, 8, 4)
+        with _eager(type(env)):
+            fused = env._render(states).clone().float()
+            with patch.object(_shade_triton, "ENABLED", False):
+                ops = env._render(states).clone().float()
+        diff = fused - ops
+        mse = float((diff * diff).mean())
+        assert mse <= FUSED_SHADE_MSE and float(diff.abs().max()) <= FUSED_SHADE_MAX, (
+            f"{name} at {size}px: Triton vs Torch shading MSE {mse:.3g}, max difference {float(diff.abs().max())}"
+        )
+    finally:
+        env.close()

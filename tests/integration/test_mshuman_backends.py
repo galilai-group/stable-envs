@@ -1,4 +1,4 @@
-"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch and CUDA lanes on MuJoCo Warp by default.
+"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch, and CUDA lanes on it or on MuJoCo Warp.
 
 Covers backend dispatch, float32 State at the API boundary, fidelity against single-MjData MuJoCo,
 State restore and replay, action clamping, and release of the batch's native threads.
@@ -20,6 +20,7 @@ pytest.importorskip("mujoco_warp")
 import mujoco
 
 import stable_envs as se
+from stable_envs import tuning
 from stable_envs._execution import mjbatch
 from stable_envs.envs.mshuman.assets import model
 from stable_envs.envs.mshuman.simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
@@ -43,9 +44,10 @@ DEVICES = ["cpu", pytest.param("cuda", marks=cuda_only), pytest.param("cuda/mjwa
 
 
 def _make(lanes=LANES, device="cpu"):
-    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend."""
+    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend, native at ``lanes``."""
     device, _, backend = device.partition("/")
-    return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
+    with tuning.override(large_backend_min_envs=lanes + 1):
+        return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
 
 
 def _actions(env, steps=STEPS, seed=SEED):
@@ -94,9 +96,11 @@ def test_cpu_env_steps_on_the_native_batch():
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
-def test_cuda_env_steps_on_mujoco_warp_by_default_at_every_batch_size(device):
+def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point_by_default(device):
     for lanes in (1, LANES):
-        with se.make("MSHumanLocomotion", num_envs=lanes, device=device) as env:
+        with tuning.override(large_backend_min_envs=lanes):
+            env = se.make("MSHumanLocomotion", num_envs=lanes, device=device)
+        with env:
             assert env.simulation_backend == "mjwarp"
             assert type(env._simulator) is MSHumanWarpAdapter
 
@@ -109,13 +113,21 @@ def test_small_cuda_env_steps_on_the_native_batch(device):
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
-def test_cuda_env_steps_on_mujoco_warp_from_the_cutoff(device):
-    with se.make("MSHumanLocomotion", num_envs=2, device=device, simulation_backend="auto", mjwarp_min_envs=2) as env:
+def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point(device):
+    with tuning.override(large_backend_min_envs=2):
+        env = se.make("MSHumanLocomotion", num_envs=2, device=device, simulation_backend="auto")
+    with env:
         assert env.simulation_backend == "mjwarp"
         assert type(env._simulator) is MSHumanWarpAdapter
         assert env._simulator.batch._step_graph is not None
     with se.make("MSHumanLocomotion", num_envs=1, device=device, simulation_backend="mjwarp") as env:
         assert type(env._simulator) is MSHumanWarpAdapter
+
+
+def test_the_shipped_switch_point_is_16():
+    from stable_envs.envs.mshuman.envs import CUDA_MIN_ENVS
+
+    assert CUDA_MIN_ENVS == 16
 
 
 def test_mjwarp_backend_requires_cuda():
@@ -128,9 +140,10 @@ def test_state_and_step_outputs_are_float32_on_the_env_device(device):
     with _make(device=device) as env:
         assert env.action_spec.dtype == torch.float32
         for state in (env.reset(seed=SEED), env.get_state()):
-            assert set(state.keys()) == set(FIELDS)
+            assert se.schema_of(state) is not None and len(list(state.keys(True, True))) == 1
             for key in FIELDS:
-                assert state[key].dtype == torch.float32 and state[key].device.type == env.device.type, key
+                value = se.get_field(state, key)
+                assert value.dtype == torch.float32 and value.device.type == env.device.type, key
         out = env.step(_actions(env, steps=1)[0], frames=None)
         for key, value in out.items(True, True):
             assert value.dtype in (torch.float32, torch.bool), (key, value.dtype)
@@ -138,10 +151,12 @@ def test_state_and_step_outputs_are_float32_on_the_env_device(device):
 
 
 @pytest.mark.parametrize("device", DEVICES)
-def test_action_and_state_dtypes_are_cast_at_the_boundary(device):
+def test_action_dtypes_are_cast_and_state_dtypes_are_checked_at_the_boundary(device):
     with _make(device=device) as env:
         start = env.reset()
-        env.set_state(start.apply(lambda v: v.double()))
+        with pytest.raises(ValueError, match="float32"):
+            env.set_state(start.apply(lambda v: v.double()))
+        env.set_state(start)
         assert_same_state(env.get_state(), start)
         if device != "cpu":
             return
@@ -168,7 +183,7 @@ def test_native_batch_matches_single_env_mujoco_with_float32_rounding_bit_for_bi
         for action, want in zip(actions, _single_env_rollout(actions)):
             state = env.step(action, frames=None)["state"]
             for key in FIELDS:
-                assert torch.equal(state[key], want[key].to(torch.float32)), key
+                assert torch.equal(se.get_field(state, key), want[key].to(torch.float32)), key
 
 
 def test_native_batch_results_do_not_depend_on_the_thread_count(monkeypatch):
@@ -193,7 +208,7 @@ def test_reset_is_deterministic(device):
         for action in _actions(env, steps=3):
             env.step(action, frames=None)
         assert_same_state(env.reset(seed=SEED), first)
-        assert torch.equal(first["time"], torch.zeros_like(first["time"]))
+        assert torch.equal(se.get_field(first, "time"), torch.zeros_like(se.get_field(first, "time")))
 
 
 @pytest.mark.parametrize("device", DEVICES)
@@ -244,7 +259,7 @@ def test_a_diverging_lane_raises_until_the_state_is_restored(tmp_path, monkeypat
             start = env.reset()
             action = _actions(env, steps=1)[0]
             bad = start.clone()
-            bad["qvel"][1] = 1e12
+            se.get_field(bad, "qvel")[1] = 1e12
             env.set_state(bad)
             for _ in range(2):
                 with pytest.raises(RuntimeError, match=r"Physics state is invalid in lanes \[1\]"):

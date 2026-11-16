@@ -221,6 +221,15 @@ def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
 
+@pytest.mark.parametrize(("knobs", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_lanes": 64}, 32, 0)])
+def test_the_caller_sets_the_smallest_worker_batch_unless_the_knob_does(monkeypatch, knobs, batch, expected):
+    monkeypatch.setattr(policy.sys, "platform", "linux")
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
+    monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
+    with tuning.override(**knobs):
+        assert policy.process_count(batch, list(range(16)), path="ogb-sim", min_lanes=2) == expected
+
+
 @pytest.mark.parametrize(("knobs", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
 def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expected):
     from stable_envs._execution import requests
@@ -306,3 +315,33 @@ def test_a_failing_autotune_never_reaches_the_render(autotuning, caplog, monkeyp
     monkeypatch.setattr(_tune, "tune", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
     assert _draw(Probe(num_envs=tuning.HINT_LANES)).shape[0] == tuning.HINT_LANES
     assert _logged(caplog, "autotune of Probe failed")
+
+
+def test_cache_changes_in_the_process_apply_at_the_next_call_without_a_stat(monkeypatch):
+    """``override`` and ``write_cache`` apply at the next lookup; lookups between changes call no ``stat``."""
+    env = Probe(num_envs=4, device="cpu")
+    calls = []
+    real_stat = type(tuning.cache_path("cpu")).stat
+
+    def counting_stat(self, *args, **kwargs):
+        calls.append(self)
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(type(tuning.cache_path("cpu")), "stat", counting_stat)
+    default = env.chunk()
+    tuning.write_cache({tuning.entry_key("navigation", env.size, env.B): {"nav_render_chunk": 8}}, "cpu")
+    assert env.chunk() == 8 != default
+    with tuning.override(nav_render_chunk=16):
+        assert env.chunk() == 16
+    assert env.chunk() == 8
+    calls.clear()
+    for _ in range(100):
+        env.chunk()
+        tuning.sources_state("nav_render_chunk", "cpu")
+    assert calls == []
+
+
+def test_a_cuda_index_this_host_lacks_has_no_cache_and_no_device_query():
+    assert tuning.cache_path("cuda:99") is None
+    state = tuning.sources_state("large_backend_min_envs", "cuda:99")
+    assert state[-1] is None

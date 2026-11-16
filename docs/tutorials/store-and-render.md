@@ -49,6 +49,20 @@ print(frames.shape, frames.dtype)  # torch.Size([4, 32, 224, 224, 3]) torch.uint
 
 `PyFlytRocketLanding` needs exactly `num_envs` rows, as [Env](../api/env.md#rendering) says.
 
+## Render a dataset in small batches
+
+A training loop often takes a few frames at a time from many stored states. `snv.FrameLoader` gives you the frames of stored states `batch_size` at a time, in order. It draws many batches with one `render` call and hands out their slices, so a small batch costs the same per frame as a large one. It picks how many states to draw per call from the free memory of the device. You don't set it.
+
+```python
+loader = snv.FrameLoader(viewer, episodes["states"].reshape(-1), batch_size=8)
+print(len(loader), loader.chunk_size)  # 16 128
+for frames in loader:
+    print(frames.shape)                # torch.Size([8, 224, 224, 3])
+    break
+```
+
+Each batch has the same bytes as `viewer.render` of its 8 states. A few renderers give bytes that depend on the batch size. `OGBCube` and `OGBScene` on CUDA draw 16 or more states in OpenGL worker processes, and a few pixels of those frames can differ by 1 level from frames drawn in one process. Pass `indices=` to draw the states in another order, for example a shuffled order that you draw before the epoch. Other keyword arguments, such as `size` and `variation`, go to every `render` call.
+
 ## Store the variation too
 
 A frame depends on the state and the variation, so store the variation rows you collected under and pass them back when you render. Each stored state needs the row of the batch row it came from, which `repeat_interleave` gives you after flattening:
@@ -76,21 +90,21 @@ Rendering is enough for training on pixels, but to continue an episode you need 
 midpoint = out["states"][:, 3]  # the state after 4 actions, batch (4,)
 env.set_state(midpoint)
 branch = env.step(torch.zeros(4, 2))
-print(branch["state"]["agent", "position"].shape)  # torch.Size([4, 2])
+print(snv.get_field(branch["state"], "agent.position").shape)  # torch.Size([4, 2])
 ```
 
 To branch several futures from one state, restore it into a second environment and step that one.
 
 ## Hand a rollout to a model
 
-stable-envs stops at frames and states, and you pick the [observation](../terms.md#observation) a model sees. Here the batch keeps the pixels, the agent position and the actions, and leaves out `state["target", "position"]` on purpose: TwoRoom never draws its target, so its position is privileged information that a pixel model doesn't see.
+stable-envs stops at frames and states, and you pick the [observation](../terms.md#observation) a model sees. Here the batch keeps the pixels, the agent position and the actions, and leaves out the `target.position` field on purpose: TwoRoom never draws its target, so its position is privileged information that a pixel model doesn't see.
 
 ```python
 start = env.reset(seed=0)
 actions = torch.rand(4, 16, 2) * 2 - 1
 out = env.step(actions, frames=slice(None))  # every state and frame
 pixels = torch.cat([env.render(start)[:, None], out["frames"]], dim=1)
-agent = torch.cat([start["agent", "position"][:, None], out["states"]["agent", "position"]], dim=1)
+agent = torch.cat([snv.get_field(start, "agent.position")[:, None], snv.get_field(out["states"], "agent.position")], dim=1)
 first = torch.full((4, 1, 2), float("nan"))  # no action comes before reset
 batch = {"pixels": pixels.permute(0, 1, 4, 2, 3).float() / 255, "proprio": agent, "action": torch.cat([first, actions], dim=1)}
 print(batch["pixels"].shape)   # torch.Size([4, 17, 3, 224, 224])

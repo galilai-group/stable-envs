@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env, _lane_value
 from ...spaces import Box, Dict, Discrete
-from .simulation.adapter import VISUAL_LEAVES
-from .simulation.execution import MJWARP_MIN_ENVS, fetch_backend, make_fetch_adapter
+from .simulation.adapter import PHYSICS, VISUAL_LEAVES
+from .simulation.execution import fetch_backend, fetch_path, make_fetch_adapter
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 #: Render backend names; ``auto`` draws with MJWarp on CUDA and with ``numba``, or ``opengl`` without Numba, on CPU.
@@ -51,6 +54,8 @@ class FetchSemantics:
         "camera.angle_delta",
         "rendering.transparent_arm",
     }
+    simulation_backends = ("native", "mjwarp", "source")
+    state_solver_caches = ("warmstart",)
 
     def __init__(
         self,
@@ -61,18 +66,20 @@ class FetchSemantics:
         backend="auto",
         seed=0,
         *,
-        simulation_backend="default",
-        mjwarp_min_envs=MJWARP_MIN_ENVS,
+        simulation_backend="auto",
     ):
         """``simulation_backend`` selects the physics; see ``fetch_backend``.
 
-        ``"default"`` steps on MuJoCo Warp on CUDA and on the CPU batch, bit-exact with gymnasium-robotics, on
-        CPU. ``"auto"`` steps CUDA batches smaller than ``mjwarp_min_envs`` on the CPU batch.
+        ``"auto"`` steps on the CPU batch, bit-exact with gymnasium-robotics, on CPU. On CUDA it steps small batches
+        on the CPU batch and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs`` switch point.
         """
         _check_render_backend(backend)
         device = Env.resolve_device(device)
-        self.simulation_backend = fetch_backend(num_envs, device, simulation_backend, mjwarp_min_envs)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
+        self.simulation_backend = fetch_backend(
+            num_envs, device, simulation_backend, self.SCENE, reward_type, env_type=type(self)
+        )
+        self.simulation_backend_path = fetch_path(self.SCENE)
         if self.simulation_backend == "source":
             self._simulator = FetchAdapter(num_envs, device, seed, self.SCENE, reward_type)
         else:
@@ -83,7 +90,7 @@ class FetchSemantics:
         # The batched backends return new output tensors on every step.
         self._step_outputs_owned = self.simulation_backend != "source"
         self._has_object = self._simulator.has_object
-        self._nq = self._simulator.fields["qpos"][0]
+        self._nq = self._simulator.schema.slices["qpos"].shape[0]
         self._reset_keys = set(type(self)._reset_keys)
         if not self._has_object:
             self._reset_keys -= {"block.mass", "block.angle", "block.start_position", "object.color"}
@@ -144,27 +151,56 @@ class FetchSemantics:
             )
         return Dict(result)
 
+    @property
+    def _schema(self):
+        return self._simulator.schema
+
     def _layout(self):
         return tuple(
             (
-                key if isinstance(key, tuple) else (key,),
-                width,
-                0 if key == "qpos" else self._nq if key == "goal" else None,
+                tuple(name.split("/")),
+                math.prod(where.shape),
+                0 if name == "qpos" else self._nq if name == "goal" else None,
             )
-            for key, (width, _) in self._simulator.fields.items()
+            for name, where in self._schema.slices.items()
         )
 
     def _layout_dtypes(self):
-        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in self._simulator.fields.items()}
+        return {tuple(name.split("/")): where.dtype for name, where in self._schema.slices.items()}
 
     def _pack_render_state(self, state):
-        return torch.cat([state["qpos"], state["goal"]], dim=-1).to(device=self.device, dtype=torch.float32)
+        if state.get(tuple(PHYSICS.split("/")), None) is None:
+            qpos, goal = get_field(state, "qpos"), get_field(state, "goal")
+        else:
+            views = self._schema.views(state, ["qpos", "goal"])
+            qpos, goal = views["qpos"], views["goal"]
+        return torch.cat([qpos, goal], dim=-1).to(device=self.device, dtype=torch.float32)
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
         return TensorDict(
             {"qpos": rows[:, : self._nq].clone(), "goal": rows[:, self._nq :].clone()}, [len(rows)], device=self.device
         )
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self._schema.validate(state, finite=True)
+
+    def _validate_render_state(self, state):
+        if not isinstance(state, TensorDict) or len(state.batch_size) != 1:
+            raise ValueError(f"Expected State batch [N], got {list(getattr(state, 'batch_size', []))}")
+        self._schema.validate(state)
+        drawn = self._schema.views(state, ["qpos", "goal"])
+        if not bool(torch.stack([torch.isfinite(v).all() for v in drawn.values()]).all()):
+            bad = next(name for name, v in drawn.items() if not torch.isfinite(v).all())
+            raise ValueError(f"State field {bad} contains non-finite values")
+
+    @property
+    def state_spec(self):
+        return self._schema.spec(self.device)
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")

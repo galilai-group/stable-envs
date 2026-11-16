@@ -22,29 +22,10 @@
  },
  "state": [
   {
-   "key": "qpos",
-   "shape": [36],
-   "dtype": "float32"
-  },
-  {
-   "key": "qvel",
-   "shape": [36],
-   "dtype": "float32"
-  },
-  {
-   "key": "act",
-   "shape": [100],
-   "dtype": "float32"
-  },
-  {
-   "key": "time",
-   "shape": [1],
-   "dtype": "float32"
-  },
-  {
-   "key": "warmstart",
-   "shape": [36],
-   "dtype": "float32"
+   "key": "mshuman",
+   "leaves": 1,
+   "numel": 209,
+   "dtypes": ["float32"]
   }
  ],
  "variation": [],

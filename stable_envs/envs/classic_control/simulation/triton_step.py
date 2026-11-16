@@ -13,6 +13,7 @@ import math
 import torch
 
 from .batched import _F32_GOAL, _F32_LEFT, _F32_RIGHT
+from .local import ELAPSED, STATES
 
 try:
     import triton
@@ -49,52 +50,52 @@ COLUMNS = {
         "XD": "x_dot",
         "TH": "theta",
         "THD": "theta_dot",
-        "GRAV": ("physics", "gravity"),
-        "MCART": ("physics", "masscart"),
-        "MPOLE": ("physics", "masspole"),
-        "LEN": ("physics", "length"),
-        "FMAG": ("physics", "force_mag"),
-        "TAU": ("physics", "tau"),
-        "BEY": ("task", "steps_beyond_terminated"),
-        "HAS": ("task", "has_steps_beyond_terminated"),
+        "GRAV": "physics/gravity",
+        "MCART": "physics/masscart",
+        "MPOLE": "physics/masspole",
+        "LEN": "physics/length",
+        "FMAG": "physics/force_mag",
+        "TAU": "physics/tau",
+        "BEY": "task/steps_beyond_terminated",
+        "HAS": "task/has_steps_beyond_terminated",
     },
     "pendulum": {
         "TH": "theta",
         "THD": "theta_dot",
         "TQ": "torque",
-        "HAS": ("task", "has_last_u"),
-        "GRAV": ("physics", "g"),
-        "MASS": ("physics", "m"),
-        "LEN": ("physics", "l"),
-        "MAXT": ("physics", "max_torque"),
-        "MAXS": ("physics", "max_speed"),
-        "DT": ("physics", "dt"),
+        "HAS": "task/has_last_u",
+        "GRAV": "physics/g",
+        "MASS": "physics/m",
+        "LEN": "physics/l",
+        "MAXT": "physics/max_torque",
+        "MAXS": "physics/max_speed",
+        "DT": "physics/dt",
     },
     "acrobot": {
         "T1": "theta1",
         "T2": "theta2",
         "D1": "dtheta1",
         "D2": "dtheta2",
-        "L1": ("physics", "link_length_1"),
-        "M1": ("physics", "link_mass_1"),
-        "M2": ("physics", "link_mass_2"),
-        "LC1": ("physics", "link_com_pos_1"),
-        "LC2": ("physics", "link_com_pos_2"),
-        "MOI": ("physics", "link_moi"),
+        "L1": "physics/link_length_1",
+        "M1": "physics/link_mass_1",
+        "M2": "physics/link_mass_2",
+        "LC1": "physics/link_com_pos_1",
+        "LC2": "physics/link_com_pos_2",
+        "MOI": "physics/link_moi",
     },
     "mountain_car": {
         "POS": "position",
         "VEL": "velocity",
-        "GRAV": ("physics", "gravity"),
-        "FORCE": ("physics", "force"),
-        "MAXS": ("physics", "max_speed"),
+        "GRAV": "physics/gravity",
+        "FORCE": "physics/force",
+        "MAXS": "physics/max_speed",
     },
     "mountain_car_continuous": {
         "POS": "position",
         "VEL": "velocity",
-        "IS32": ("task", "state_is_float32"),
-        "POWER": ("physics", "power"),
-        "MAXS": ("physics", "max_speed"),
+        "IS32": "task/state_is_float32",
+        "POWER": "physics/power",
+        "MAXS": "physics/max_speed",
     },
 }
 
@@ -112,9 +113,8 @@ if HAVE_TRITON:
 
     @triton.jit
     def _finish(
-        I, O, Bo, rows, ok, live, reward, term, F,
-        WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr, REW: tl.constexpr,
-        EL: tl.constexpr, TERM: tl.constexpr, TRUNC: tl.constexpr, MASKED: tl.constexpr, MAX_STEPS: tl.constexpr,
+        I, FL, RW, rows, ok, live, reward, term,
+        WI: tl.constexpr, EL: tl.constexpr, MASKED: tl.constexpr, MAX_STEPS: tl.constexpr,
     ):  # fmt: skip
         """Write the reward, the episode flags and the elapsed steps."""
         elapsed = tl.load(I + rows * WI + EL, mask=ok, other=0)
@@ -127,9 +127,9 @@ if HAVE_TRITON:
             elapsed = elapsed + 1
             truncated = elapsed >= MAX_STEPS
         tl.store(I + rows * WI + EL, elapsed, mask=ok)
-        tl.store(F + rows * WF + REW, reward, mask=ok)
-        tl.store(Bo + rows * WB + TERM, term, mask=ok)
-        tl.store(Bo + rows * WB + TRUNC, truncated, mask=ok)
+        tl.store(RW + rows, reward, mask=ok)
+        tl.store(FL + rows * 2, term, mask=ok)
+        tl.store(FL + rows * 2 + 1, truncated, mask=ok)
 
     @triton.jit
     def _observe(
@@ -144,12 +144,12 @@ if HAVE_TRITON:
 
     @triton.jit
     def _cartpole_kernel(
-        F, I, O, Bo, A, M, SIM, R, K, n,
+        F, I, Bo, RW, O, FL, A, M, SIM, R, K, n,
         WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr,
         X: tl.constexpr, XD: tl.constexpr, TH: tl.constexpr, THD: tl.constexpr, GRAV: tl.constexpr,
         MCART: tl.constexpr, MPOLE: tl.constexpr, LEN: tl.constexpr, FMAG: tl.constexpr, TAU: tl.constexpr,
-        BEY: tl.constexpr, HAS: tl.constexpr, REW: tl.constexpr, EL: tl.constexpr, TERM: tl.constexpr,
-        TRUNC: tl.constexpr, OBS: tl.constexpr, INFO: tl.constexpr,
+        BEY: tl.constexpr, HAS: tl.constexpr, EL: tl.constexpr,
+        OBS: tl.constexpr, INFO: tl.constexpr,
         MASKED: tl.constexpr, NARROW: tl.constexpr, MAX_STEPS: tl.constexpr, BLOCK: tl.constexpr,
     ):  # fmt: skip
         rows = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
@@ -188,7 +188,7 @@ if HAVE_TRITON:
         tl.store(f + THD, theta_dot, mask=ok)
         tl.store(I + rows * WI + BEY, _keep(new_beyond, beyond, live, MASKED), mask=ok)
         tl.store(Bo + rows * WB + HAS, _keep(has | term, has, live, MASKED), mask=ok)
-        _finish(I, O, Bo, rows, ok, live, reward, term, F, WF, WI, WO, WB, REW, EL, TERM, TRUNC, MASKED, MAX_STEPS)
+        _finish(I, FL, RW, rows, ok, live, reward, term, WI, EL, MASKED, MAX_STEPS)
         _observe(O, rows, ok, live, 0, x, WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 1, x_dot, WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 2, theta, WO, OBS, INFO, MASKED)
@@ -202,11 +202,11 @@ if HAVE_TRITON:
 
     @triton.jit
     def _pendulum_kernel(
-        F, I, O, Bo, A, M, SIM, R, K, n,
+        F, I, Bo, RW, O, FL, A, M, SIM, R, K, n,
         WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr,
         TH: tl.constexpr, THD: tl.constexpr, TQ: tl.constexpr, HAS: tl.constexpr, GRAV: tl.constexpr,
         MASS: tl.constexpr, LEN: tl.constexpr, MAXT: tl.constexpr, MAXS: tl.constexpr, DT: tl.constexpr,
-        REW: tl.constexpr, EL: tl.constexpr, TERM: tl.constexpr, TRUNC: tl.constexpr, OBS: tl.constexpr,
+        EL: tl.constexpr, OBS: tl.constexpr,
         INFO: tl.constexpr, MASKED: tl.constexpr, NARROW: tl.constexpr, MAX_STEPS: tl.constexpr,
         BLOCK: tl.constexpr,
     ):  # fmt: skip
@@ -246,7 +246,7 @@ if HAVE_TRITON:
         torque = _keep(u, torque0, live, MASKED)
         tl.store(f + TQ, torque, mask=ok)
         tl.store(Bo + rows * WB + HAS, _keep(ok, has0, live, MASKED), mask=ok)
-        _finish(I, O, Bo, rows, ok, live, -costs, ok & ~ok, F, WF, WI, WO, WB, REW, EL, TERM, TRUNC, MASKED, MAX_STEPS)
+        _finish(I, FL, RW, rows, ok, live, -costs, ok & ~ok, WI, EL, MASKED, MAX_STEPS)
         _observe(O, rows, ok, live, 0, tl.cos(newth), WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 1, tl.sin(newth), WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 2, newthdot, WO, OBS, INFO, MASKED)
@@ -283,11 +283,11 @@ if HAVE_TRITON:
 
     @triton.jit
     def _acrobot_kernel(
-        F, I, O, Bo, A, M, SIM, R, K, n,
+        F, I, Bo, RW, O, FL, A, M, SIM, R, K, n,
         WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr,
         T1: tl.constexpr, T2: tl.constexpr, D1: tl.constexpr, D2: tl.constexpr, L1: tl.constexpr,
         M1: tl.constexpr, M2: tl.constexpr, LC1: tl.constexpr, LC2: tl.constexpr, MOI: tl.constexpr,
-        REW: tl.constexpr, EL: tl.constexpr, TERM: tl.constexpr, TRUNC: tl.constexpr, OBS: tl.constexpr,
+        EL: tl.constexpr, OBS: tl.constexpr,
         INFO: tl.constexpr, MASKED: tl.constexpr, NARROW: tl.constexpr, MAX_STEPS: tl.constexpr,
         BLOCK: tl.constexpr,
     ):  # fmt: skip
@@ -351,7 +351,7 @@ if HAVE_TRITON:
         tl.store(f + T2, theta2, mask=ok)
         tl.store(f + D1, dtheta1, mask=ok)
         tl.store(f + D2, dtheta2, mask=ok)
-        _finish(I, O, Bo, rows, ok, live, reward, term, F, WF, WI, WO, WB, REW, EL, TERM, TRUNC, MASKED, MAX_STEPS)
+        _finish(I, FL, RW, rows, ok, live, reward, term, WI, EL, MASKED, MAX_STEPS)
         _observe(O, rows, ok, live, 0, tl.cos(theta1), WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 1, tl.sin(theta1), WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 2, tl.cos(theta2), WO, OBS, INFO, MASKED)
@@ -367,10 +367,10 @@ if HAVE_TRITON:
 
     @triton.jit
     def _mountain_car_kernel(
-        F, I, O, Bo, A, M, SIM, R, K, n,
+        F, I, Bo, RW, O, FL, A, M, SIM, R, K, n,
         WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr,
         POS: tl.constexpr, VEL: tl.constexpr, GRAV: tl.constexpr, FORCE: tl.constexpr, MAXS: tl.constexpr,
-        REW: tl.constexpr, EL: tl.constexpr, TERM: tl.constexpr, TRUNC: tl.constexpr, OBS: tl.constexpr,
+        EL: tl.constexpr, OBS: tl.constexpr,
         INFO: tl.constexpr, MASKED: tl.constexpr, NARROW: tl.constexpr, MAX_STEPS: tl.constexpr,
         BLOCK: tl.constexpr,
     ):  # fmt: skip
@@ -392,7 +392,7 @@ if HAVE_TRITON:
         tl.store(f + POS, position, mask=ok)
         tl.store(f + VEL, velocity, mask=ok)
         reward = tl.full([BLOCK], -1.0, tl.float64)
-        _finish(I, O, Bo, rows, ok, live, reward, term, F, WF, WI, WO, WB, REW, EL, TERM, TRUNC, MASKED, MAX_STEPS)
+        _finish(I, FL, RW, rows, ok, live, reward, term, WI, EL, MASKED, MAX_STEPS)
         _observe(O, rows, ok, live, 0, position, WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 1, velocity, WO, OBS, INFO, MASKED)
         tl.store(SIM + rows * 2, position, mask=ok)
@@ -401,10 +401,10 @@ if HAVE_TRITON:
 
     @triton.jit
     def _mountain_car_continuous_kernel(
-        F, I, O, Bo, A, M, SIM, R, K, n,
+        F, I, Bo, RW, O, FL, A, M, SIM, R, K, n,
         WF: tl.constexpr, WI: tl.constexpr, WO: tl.constexpr, WB: tl.constexpr,
         POS: tl.constexpr, VEL: tl.constexpr, IS32: tl.constexpr, POWER: tl.constexpr, MAXS: tl.constexpr,
-        REW: tl.constexpr, EL: tl.constexpr, TERM: tl.constexpr, TRUNC: tl.constexpr, OBS: tl.constexpr,
+        EL: tl.constexpr, OBS: tl.constexpr,
         INFO: tl.constexpr, MASKED: tl.constexpr, NARROW: tl.constexpr, MAX_STEPS: tl.constexpr,
         BLOCK: tl.constexpr,
     ):  # fmt: skip
@@ -458,7 +458,7 @@ if HAVE_TRITON:
         tl.store(f + POS, position, mask=ok)
         tl.store(f + VEL, velocity, mask=ok)
         tl.store(Bo + rows * WB + IS32, _keep(ok, is32, live, MASKED), mask=ok)
-        _finish(I, O, Bo, rows, ok, live, reward, term, F, WF, WI, WO, WB, REW, EL, TERM, TRUNC, MASKED, MAX_STEPS)
+        _finish(I, FL, RW, rows, ok, live, reward, term, WI, EL, MASKED, MAX_STEPS)
         _observe(O, rows, ok, live, 0, position, WO, OBS, INFO, MASKED)
         _observe(O, rows, ok, live, 1, velocity, WO, OBS, INFO, MASKED)
         tl.store(SIM + rows * 2, position, mask=ok)
@@ -474,30 +474,31 @@ if HAVE_TRITON:
     }
 
 
-def launcher(domain: str, columns: dict, widths, num_envs: int, device: torch.device, max_steps: int):
-    """Return ``launch(blocks, actions, active, sim, render, masked, narrow)`` for the domain kernel."""
+def launcher(domain: str, num_envs: int, device: torch.device, max_steps: int, observation_width: int):
+    """Return ``launch(groups, actions, active, sim, render, masked, narrow)`` for the domain kernel.
+
+    ``groups`` is the float64, int64 and bool State groups, then the reward, the observation and the flags.
+    """
+    schema = STATES[domain]
     constants = torch.tensor(CONSTANTS[domain], dtype=torch.float64, device=device)
-    fixed = {name: columns[key][1] for name, key in COLUMNS[domain].items()}
+    fixed = {arg: schema.slices[name].start for arg, name in COLUMNS[domain].items()}
     fixed.update(
-        REW=columns["reward"][1],
-        EL=columns[("lifecycle", "elapsed_steps")][1],
-        TERM=columns["terminated"][1],
-        TRUNC=columns["truncated"][1],
-        OBS=columns["observation"][1],
-        INFO=columns["info_state"][1],
-        WF=widths[0],
-        WI=widths[1],
-        WO=widths[2],
-        WB=widths[3],
+        EL=schema.slices[ELAPSED].start,
+        OBS=0,
+        INFO=observation_width,
+        WF=schema.groups[f"{domain}/float64"].size,
+        WI=schema.groups[f"{domain}/int64"].size,
+        WO=2 * observation_width,
+        WB=schema.groups[f"{domain}/bool"].size if f"{domain}/bool" in schema.groups else 1,
         MAX_STEPS=max_steps,
         BLOCK=128,
     )
     kernel = KERNELS[domain]
     grid = (triton.cdiv(num_envs, 128),)
 
-    def launch(blocks, actions, active, sim, render, masked: bool, narrow: bool):
+    def launch(groups, actions, active, sim, render, masked: bool, narrow: bool):
         kernel[grid](
-            *blocks, actions, active, sim, render, constants, num_envs,
+            *groups, actions, active, sim, render, constants, num_envs,
             MASKED=masked, NARROW=narrow, enable_fp_fusion=False, **fixed,
         )  # fmt: skip
 

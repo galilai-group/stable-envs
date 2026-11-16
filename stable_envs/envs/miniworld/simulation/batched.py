@@ -2,75 +2,87 @@
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._core.tensordicts import build_tensordict
+from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
-from .adapter import COLORS, TEXTURES, state_fields, validate_state
+from .adapter import COLORS, TEXTURES, state_schema, validate_state
 from .world import P_BALL_RADIUS, World
 
 BACKENDS = ("numba", "triton", "torch")
-#: CUDA batches below this size step on the Numba kernel under ``simulation_backend="auto"``. On an L40S the
-#: Triton step is as fast as the Numba step from one environment.
-TRITON_MIN_ENVS = 1
 #: Environments from which the Numba step runs on several threads.
 PARALLEL_MIN_ENVS = 64
 _EXECUTION_MODES = {"numba": "NATIVE_NUMBA", "triton": "NATIVE_TRITON", "torch": "NATIVE_TORCH"}
+#: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on Triton; smaller batches step with Numba.
+#: None uses Triton at every batch size. The knob and the tuning cache take precedence.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
+CUDA_MIN_ENVS: int | None = None
+
+
+def _measure(config: dict, size: int, device):
+    """Build and step MovingBlockWorld environments on one backend, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_adapter
+
+    return measure_adapter(
+        lambda backend, n: BatchedMovingBlockWorldAdapter(config, n, size, device, backend),
+        lambda n: torch.full((n,), 2, dtype=torch.int64, device=device),
+    )
 
 
 def miniworld_backend(
-    device: str | torch.device, num_envs: int, backend: str | None = None, triton_min_envs: int = TRITON_MIN_ENVS
+    device: str | torch.device,
+    num_envs: int,
+    backend: str | None = "auto",
+    config: dict | None = None,
+    size: int | None = None,
 ) -> str:
     """The step backend of a batch.
 
-    ``None`` takes Triton on CUDA and Numba on CPU; ``"auto"`` also takes Numba for CUDA batches below
-    ``triton_min_envs``. ``"torch"`` runs on any device; ``"triton"`` needs CUDA.
+    ``"auto"`` (or None) takes Numba on CPU. On CUDA it takes Numba below ``CUDA_MIN_ENVS`` and Triton from it.
+    ``stable-envs tune`` measures with environments of ``config`` and frame ``size``. ``"torch"``
+    runs on any device; ``"triton"`` needs CUDA.
     """
-    if backend not in (None, "auto", *BACKENDS):
-        raise ValueError(f"simulation_backend must be None, 'auto', 'numba', 'triton' or 'torch', got {backend!r}")
-    if isinstance(triton_min_envs, bool) or not isinstance(triton_min_envs, int) or triton_min_envs < 1:
-        raise ValueError("triton_min_envs must be an int >= 1")
-    cuda = torch.device(device).type == "cuda"
-    if backend == "triton" and not cuda:
+    from ...._execution.backends import Rungs, select_backend
+
+    if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    if backend is None:
-        return "triton" if cuda else "numba"
-    if backend == "auto":
-        return "triton" if cuda and num_envs >= triton_min_envs else "numba"
-    return backend
+    valid = type(num_envs) is int and num_envs > 0 and config is not None and size is not None
+    measure = _measure(config, size, device) if valid else None
+    return select_backend(
+        "miniworld-sim/moving_blockworld",
+        num_envs,
+        device,
+        backend,
+        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "triton", CUDA_MIN_ENVS)},
+        choices=BACKENDS,
+        measure=measure,
+    )
 
 
 def execution_mode(backend: str) -> str:
     return _EXECUTION_MODES[backend]
 
 
-#: Arrays of the State dict by dtype, with their shapes after the environment axis.
-_F64 = (("apos", (3,)), ("adir", ()), ("size", (-1, 3)), ("bpos", (-1, 3)), ("bdir", (-1,)), ("vel", (-1, 3)),
-        ("rad", (-1,)), ("height", (-1,)))  # fmt: skip
-_I64 = (("room", (3,)), ("kind", (-1,)), ("color", (-1,)), ("texture", (-1,)), ("count", ()), ("carry", ()),
-        ("steps", ()), ("seed", ()), ("episode", ()))  # fmt: skip
-
-
-def _layout(B: int, M: int) -> tuple:
-    """Per dtype buffer: the arrays' names, shapes and sizes."""
-    out = []
-    for spec in (_F64, _I64):
-        shapes = [(name, (B, *(M if n == -1 else n for n in tail))) for name, tail in spec]
-        out.append((shapes, [math.prod(shape) for _, shape in shapes]))
-    return tuple(out)
-
-
-def _views(f64: torch.Tensor, i64: torch.Tensor, layout: tuple) -> dict:
-    """The named arrays as contiguous views of the two flat buffers."""
-    out = {}
-    for flat, (shapes, sizes) in zip((f64, i64), layout, strict=True):
-        for (name, shape), part in zip(shapes, flat.split(sizes), strict=True):
-            out[name] = part.view(shape)
-    return out
+#: The State fields that the kernels read and write, by the name the kernels give them, and the shape of each
+#: after the environment axis (-1 stands for the block count). Each is a view of a column range of its group.
+_LIVE = {
+    "apos": ("agent/pos", (3,)),
+    "adir": ("agent/dir", ()),
+    "size": ("blocks/size", (-1, 3)),
+    "bpos": ("blocks/pos", (-1, 3)),
+    "bdir": ("blocks/dir", (-1,)),
+    "vel": ("blocks/velocity", (-1, 3)),
+    "carry": ("agent/carrying", ()),
+    "tex": ("room/textures", (3,)),
+    "kind": ("blocks/kind", (-1,)),
+    "color": ("blocks/color", (-1,)),
+    "texture": ("blocks/texture", (-1,)),
+    "seed": ("rng/seed", ()),
+    "episode": ("rng/episode", ()),
+    "steps": ("lifecycle/elapsed_steps", ()),
+}
 
 
 #: State dict entries the kernels change in a step.
@@ -97,14 +109,21 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         self.num_blocks = M = int(self.count_range[1])
         self.frame_shape = (self.size, self.size, 3)
         self.device = torch.device(device)
-        self.fields = state_fields(M)
+        self.schema = schema = state_schema(M)
         self.sim_device = torch.device("cpu") if backend == "numba" else self.device
         B, f64, i64, dev = num_envs, torch.float64, torch.int64, self.sim_device
         z = lambda *shape, dtype=f64: torch.zeros(shape, dtype=dtype, device=dev)  # noqa: E731
-        # One float64 and one int64 buffer hold every array, so a State snapshot is two copies.
-        self._layout = _layout(B, M)
-        self._flat = tuple(z(sum(sizes), dtype=dtype) for (_, sizes), dtype in zip(self._layout, (f64, i64)))
-        self.s = _views(*self._flat, self._layout)
+        # The kernels write the float64 and int64 groups of the State. A State snapshot copies the two groups and
+        # derives the bool group from the block counts, which the collision tests also read with the radii and
+        # heights.
+        self._flat = tuple(
+            z(B, group.size, dtype=group.dtype) for group in schema.groups.values() if group.dtype != torch.bool
+        )
+        self._groups = dict(zip((g.key for g in schema.groups.values() if g.dtype != torch.bool), self._flat))
+        self._present = next(g.path for g in schema.groups.values() if g.dtype == torch.bool)
+        views = schema.views(self._groups, [name for name, _ in _LIVE.values()])
+        self.s = {key: self._shaped(views[name], tail) for key, (name, tail) in _LIVE.items()}
+        self.s.update(count=z(B, dtype=i64), rad=z(B, M), height=z(B, M))
         self._truncated = z(B, dtype=torch.bool)
         if backend == "triton":
             from . import kernel_triton
@@ -142,6 +161,11 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         self._graph = self._reset_graph = None
         self._closed = False
 
+    def _shaped(self, view: torch.Tensor, tail: tuple[int, ...]) -> torch.Tensor:
+        """A column range of a group as the array the kernels take: ``(B, *tail)`` with the block count filled in."""
+        shape = tuple(self.num_blocks if n == -1 else n for n in tail)
+        return view[:, 0] if not shape else view.view(self.num_envs, *shape)
+
     def _check_open(self) -> None:
         if self._closed:
             raise RuntimeError("MovingBlockWorld simulator is closed")
@@ -162,7 +186,7 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
             n, w = self._np, self.world
             lo, hi = self.count_range
             self.kernel.reset_all(
-                n["seed"], n["episode"], n["room"], n["kind"], n["color"], n["texture"], n["size"], n["apos"],
+                n["seed"], n["episode"], n["tex"], n["kind"], n["color"], n["texture"], n["size"], n["apos"],
                 n["adir"], n["carry"], n["count"], n["rad"], n["height"], n["bpos"], n["bdir"], n["vel"], n["steps"],
                 w.P, lo, hi, w.pool, w.base_palette, w.floor_pool, w.wall_pool, w.box_pool,
             )  # fmt: skip
@@ -192,76 +216,51 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
         self._check_open()
         dev = self.device
         self._last = tuple(flat.to(dev, copy=True) for flat in self._flat)
-        return self._snapshot(*self._last)
+        return self._snapshot(*self._last, count=self.s["count"].to(dev))
 
-    def _snapshot(self, f64: torch.Tensor, i64: torch.Tensor, present: torch.Tensor | None = None, time=False):
-        """A State whose leaves are views of the owned flat buffers ``f64`` and ``i64``.
+    def _snapshot(
+        self, f64: torch.Tensor, i64: torch.Tensor, present: torch.Tensor | None = None, *, count=None, time=False
+    ):
+        """A State whose leaves are the owned group buffers ``f64`` and ``i64`` and the block flags.
 
-        ``time`` adds a time axis of one.
+        ``present`` or ``count`` gives the flags. ``time`` adds a time axis of one.
         """
-        B, M = self.num_envs, self.num_blocks
-        s = _views(f64, i64, self._layout)
+        M = self.num_blocks
         if present is None:
-            present = torch.arange(M, device=f64.device) < s["count"][:, None]
-        tree = {
-            "agent": {"pos": s["apos"], "dir": s["adir"][:, None], "carrying": s["carry"][:, None]},
-            "room": {"textures": s["room"]},
-            "blocks": {
-                "present": present,
-                "kind": s["kind"],
-                "color": s["color"],
-                "texture": s["texture"],
-                "size": s["size"].view(B, 3 * M),
-                "pos": s["bpos"].view(B, 3 * M),
-                "dir": s["bdir"],
-                "velocity": s["vel"].view(B, 3 * M),
-            },
-            "rng": {"seed": s["seed"][:, None], "episode": s["episode"][:, None]},
-            "lifecycle": {"elapsed_steps": s["steps"][:, None]},
-        }
+            present = torch.arange(M, device=f64.device) < count[:, None]
+        leaves = {group.path: value for group, value in zip(self.schema.groups.values(), (f64, i64, present))}
         if time:
-            tree = {group: {k: v[:, None] for k, v in leaves.items()} for group, leaves in tree.items()}
-        return build_tensordict(tree, [B, 1] if time else [B], f64.device)
+            leaves = {path: value[:, None] for path, value in leaves.items()}
+        tree: dict = {}
+        for path, value in leaves.items():
+            node = tree
+            for part in path[:-1]:
+                node = node.setdefault(part, {})
+            node[path[-1]] = value
+        return build_tensordict(tree, [self.num_envs, 1] if time else [self.num_envs], f64.device)
 
     def stack_one(self, state: TensorDict) -> TensorDict | None:
         """An owned copy of the last ``get_state`` snapshot ``state`` with a time axis of one, else None."""
         last = getattr(self, "_last", None)
-        if last is None or state["agent", "pos"]._base is not last[0] or state["rng", "seed"]._base is not last[1]:
+        first = state.get(next(iter(self.schema.groups.values())).path, None)
+        if last is None or not torch.is_tensor(first) or first.data_ptr() != last[0].data_ptr():
             return None
         f64, i64 = last
-        return self._snapshot(f64.clone(), i64.clone(), state["blocks", "present"].clone(), time=True)
+        return self._snapshot(f64.clone(), i64.clone(), state.get(self._present).clone(), time=True)
 
     def validate(self, state, *, batch: int | None = None) -> None:
-        validate_state(state, self.fields, self.count_range, batch=batch)
+        validate_state(state, self.schema, self.count_range, batch=batch)
 
     def set_state(self, state: TensorDict) -> None:
         self._check_open()
         self.validate(state, batch=self.num_envs)
-        s, B, M, dev = self.s, self.num_envs, self.num_blocks, self.sim_device
-        get = lambda key: state[key].to(dev)  # noqa: E731
-        kind, size = get(("blocks", "kind")), get(("blocks", "size")).reshape(B, M, 3)
-        rad, height = block_radius(kind, size, self.world.P[P_BALL_RADIUS])
-        values = {
-            "apos": get(("agent", "pos")),
-            "adir": get(("agent", "dir"))[:, 0],
-            "carry": get(("agent", "carrying"))[:, 0],
-            "room": get(("room", "textures")),
-            "count": get(("blocks", "present")).sum(-1),
-            "kind": kind,
-            "color": get(("blocks", "color")),
-            "texture": get(("blocks", "texture")),
-            "size": size,
-            "rad": rad,
-            "height": height,
-            "bpos": get(("blocks", "pos")).reshape(B, M, 3),
-            "bdir": get(("blocks", "dir")),
-            "vel": get(("blocks", "velocity")).reshape(B, M, 3),
-            "seed": get(("rng", "seed"))[:, 0],
-            "episode": get(("rng", "episode"))[:, 0],
-            "steps": get(("lifecycle", "elapsed_steps"))[:, 0],
-        }
-        for key, value in values.items():
-            s[key].copy_(value)
+        s, dev = self.s, self.sim_device
+        for key, flat in self._groups.items():
+            flat.copy_(state.get(tuple(key.split("/"))))
+        s["count"].copy_(state.get(self._present).to(dev).sum(-1))
+        rad, height = block_radius(s["kind"], s["size"], self.world.P[P_BALL_RADIUS])
+        s["rad"].copy_(rad)
+        s["height"].copy_(height)
 
     def check_step(self, actions, active):
         """Actions as ``(num_envs,)`` int64 on the simulation device.
@@ -320,6 +319,16 @@ class BatchedMovingBlockWorldAdapter(SimulatorAdapter):
                 self.s[key].copy_(out[key])
             truncated = out["truncated"]
         dev, B = self.device, self.num_envs
+        if self.sim_device != dev:
+            # The outputs and the State move from the host in one copy.
+            out = {
+                "reward": torch.zeros(B, dtype=torch.float64),
+                "terminated": torch.zeros(B, dtype=torch.bool),
+                "truncated": truncated,
+            }
+            if capture_state:
+                out["state"] = self._snapshot(*(flat.clone() for flat in self._flat), count=self.s["count"].clone())
+            return to_device(build_tensordict(out, [B], self.sim_device), dev)
         out = {
             "reward": torch.zeros(B, dtype=torch.float64, device=dev),
             "terminated": torch.zeros(B, dtype=torch.bool, device=dev),

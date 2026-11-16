@@ -23,6 +23,8 @@ import traceback
 import numpy as np
 import torch
 
+from stable_envs import get_field
+
 EXECUTION = {
     "classic_control": "stable_envs.envs.classic_control.simulation.execution",
     "fetch": "stable_envs.envs.fetch.simulation.execution",
@@ -92,15 +94,14 @@ def keep_engines_off(env, actions):
 
 def finish_some_lanes(env, state):
     """Edit State so some lanes end inside the next chunks, where the family allows it."""
-    keys = set(state.keys(True, True))
     state = state.clone()
     lanes = torch.arange(env.num_envs)
-    if ("lifecycle", "elapsed_steps") in keys and env.family == "classic_control":
+    if env.family == "classic_control":
         limit = CLASSIC_LIMITS[env.CLASSIC_DOMAIN]
-        state["lifecycle", "elapsed_steps"][:, 0] = limit - 1 - (lanes % 7) * 3
-    if ("root", "position") in keys and ("task", "goal_pos") in keys:
+        get_field(state, "lifecycle/elapsed_steps")[:, 0] = limit - 1 - (lanes % 7) * 3
+    if env.family == "ogbench" and env.domain.endswith("maze"):
         even = lanes[lanes % 2 == 0]
-        state["root", "position"][even, :2] = state["task", "goal_pos"][even, :2]
+        get_field(state, "root/position")[even, :2] = get_field(state, "task/goal_pos")[even, :2]
     return state
 
 
