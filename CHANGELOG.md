@@ -6,6 +6,8 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Breaking changes
 
+- Renamed tuning names: `snv.tuning.Knob` is `snv.tuning.Setting`, `snv.tuning.KNOBS` is `snv.tuning.SETTINGS`, the `knobs` argument of `snv.tune` is `settings` and the `--knob` option of `stable-envs tune` is `--setting`. The `worker_min_lanes` setting is `worker_min_envs`, and its variable `STABLE_ENVS_WORKER_MIN_LANES` is `STABLE_ENVS_WORKER_MIN_ENVS`.
+- The `render_rungs` class attribute of `Env` is `render_backends`, and its entries are `BackendPair` values in place of `Rungs` values.
 - The Craftax state has three leaves, one for each dtype, such as `craftax/int32` or `craftax_classic/int32`, in place of one leaf for each upstream field. Each field, such as `engine/player_health` or `physics/zombie/health`, is a slice of one of them. Read and write a field with `snv.get_field` and `snv.set_field`. States saved before this change do not load.
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning setting (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
