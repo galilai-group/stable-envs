@@ -292,7 +292,6 @@ def test_stacking_one_packed_state_copies_it_once_into_new_storage(device):
     assert stacked["r", "s"].sum().item() == 4 + 5 + 6 + 7 + 8 + 9
 
 
-
 def test_stacking_one_packed_state_keeps_leaves_at_offsets_that_are_not_a_multiple_of_the_first():
     raw = torch.zeros(40, dtype=torch.uint8)
     raw[16:40].view(torch.float32).copy_(torch.arange(1.0, 7.0))

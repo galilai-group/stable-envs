@@ -7,7 +7,6 @@ import torch
 from ...._execution.backends import measure_env
 from ...._execution.mjbatch import mujoco_backend
 
-
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
 #: The knob and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
@@ -37,9 +36,10 @@ def roadster_backend(
     ``"auto"`` steps on the native batch on CPU. On CUDA it steps small batches on the native batch and large ones
     on MuJoCo Warp; see ``mujoco_backend``.
     """
-
-    measure = None if env_type is None else measure_env(
-        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    measure = (
+        None
+        if env_type is None
+        else measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend))
     )
     path = roadster_path(task)
     min_envs = CUDA_MIN_ENVS[task]

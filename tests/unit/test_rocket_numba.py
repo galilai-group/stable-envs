@@ -51,9 +51,10 @@ def test_routing():
             assert (env.simulation_backend, env.execution_mode) == ("numba_cuda", "NATIVE_NUMBA_CUDA")
             assert env.get_state()["physics", "float"].device.type == "cuda"
         for batch, backend in ((7, "numba"), (8, "numba_cuda")):
-            with tuning.override(large_backend_min_envs=8), make(
-                "PyFlytRocketLanding", num_envs=batch, device="cuda", simulation_backend="auto"
-            ) as env:
+            with (
+                tuning.override(large_backend_min_envs=8),
+                make("PyFlytRocketLanding", num_envs=batch, device="cuda", simulation_backend="auto") as env,
+            ):
                 assert env.simulation_backend == backend
         with make("PyFlytRocketLanding", num_envs=2, device="cuda", simulation_backend="numba") as env:
             assert (env.simulation_backend, env.execution_mode) == ("numba", "HOST_NUMBA")

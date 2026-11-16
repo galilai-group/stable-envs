@@ -21,8 +21,10 @@ _RECENT = 32
 
 
 def _getter(paths) -> Callable[[TensorDict], tuple]:
-    """``get(state)``: the leaves of a State at ``paths``, read straight from its nodes; KeyError if one is
-    missing."""
+    """``get(state)``: the leaves of a State at ``paths``, read straight from its nodes.
+
+    ``get`` raises KeyError if one is missing.
+    """
     reads = []
     for path in paths:
         expr = "S"

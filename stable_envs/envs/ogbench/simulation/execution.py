@@ -45,8 +45,10 @@ def maze_backend(
     from ...._execution.backends import measure_env
     from ...._execution.mjbatch import mujoco_backend
 
-    measure = None if env_type is None else measure_env(
-        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    measure = (
+        None
+        if env_type is None
+        else measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend))
     )
     path = maze_path(loco, maze)
     return mujoco_backend(

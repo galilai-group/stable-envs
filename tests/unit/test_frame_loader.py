@@ -150,7 +150,9 @@ def test_a_chunk_of_every_row_draws_the_states_unsliced():
 
 def test_chunk_rows_reads_size_and_supersample():
     env = _env()
-    assert frames_mod.chunk_rows(env, 1, 10**9, size=8192, supersample=2) <= frames_mod.MAX_CHUNK_BYTES // (8192 * 8192 * 3)
+    assert frames_mod.chunk_rows(env, 1, 10**9, size=8192, supersample=2) <= frames_mod.MAX_CHUNK_BYTES // (
+        8192 * 8192 * 3
+    )
 
 
 @pytest.mark.parametrize(

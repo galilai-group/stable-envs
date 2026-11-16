@@ -958,7 +958,6 @@ CELLS = (
 
 from .semantics import FetchSemantics as _FetchSemantics
 
-
 #: Slide's MuJoCo Warp model replaces the puck and its contact margins, so a State resumes on other contact forces
 #: on the other backend (issue #63).
 _SLIDE_MISMATCH = frozenset({("native", "mjwarp"), ("mjwarp", "native"), ("source", "mjwarp"), ("mjwarp", "source")})

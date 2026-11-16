@@ -596,8 +596,11 @@ def _measure(domain: str, device: torch.device):
 
 
 def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices, measure) -> str:
-    """The host backend. The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here:
-    the tuning cache that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point."""
+    """The host backend.
+
+    The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here: the tuning cache
+    that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point.
+    """
     from ...._execution import backends
 
     cpu = torch.device("cpu")

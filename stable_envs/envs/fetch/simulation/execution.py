@@ -46,8 +46,10 @@ def fetch_backend(
     if simulation_backend not in (None, "auto", *SIMULATION_BACKENDS):
         raise ValueError("simulation_backend must be 'auto', 'native', 'mjwarp' or 'source'")
 
-    measure = None if env_type is None else measure_env(
-        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    measure = (
+        None
+        if env_type is None
+        else measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend))
     )
     path = fetch_path(task)
     min_envs = CUDA_MIN_ENVS[task]

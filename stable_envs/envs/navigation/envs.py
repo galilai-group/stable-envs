@@ -568,8 +568,10 @@ class _GymReferencePort(Env):
 
     @property
     def state_spec(self) -> CompositeSpec:
-        """Specs of the State groups, without the batch axis, with bounds and column names where every field of
-        the group declares them."""
+        """Specs of the State groups, without the batch axis.
+
+        A group has bounds and column names when every field of the group declares them.
+        """
         out = self.STATE.spec(self.device)
         for group in self.STATE.groups.values():
             if not all(field.name in self.STATE_FIELD_BOUNDS for field in group.fields):

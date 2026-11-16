@@ -7,7 +7,6 @@ env's column-based exporter so the two can be compared.
 import mujoco
 import numpy as np
 import torch
-from tensordict import TensorDict
 
 from stable_envs.envs.ogbench.simulation.manipulation import (
     FLAGS,

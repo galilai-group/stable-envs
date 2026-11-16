@@ -190,8 +190,10 @@ class FrameLoader:
         return style is not None and not bool(getattr(style, "shared", True))
 
     def _chunks_allowed(self) -> bool:
-        """Whether a chunk may hold more rows than a batch and keep the same frames. Rows that draw under a
-        per-environment variation keep one batch per call."""
+        """Whether a chunk may hold more rows than a batch and keep the same frames.
+
+        Rows that draw under a per-environment variation keep one batch per call.
+        """
         return not self._per_environment()
 
     def _take(self, values, start: int, stop: int):
