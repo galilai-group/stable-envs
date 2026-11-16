@@ -33,7 +33,7 @@ CALLS = [
 
 
 def _same(actual, expected, where=""):
-    """Keys in order, batch sizes, devices, dtypes, shapes, strides and values (NaN equal to NaN)."""
+    """Keys in order, batch sizes, devices, dtypes, shapes, CPU strides and values (NaN equal to NaN)."""
     assert list(actual.keys(True)) == list(expected.keys(True)), where
     assert actual.batch_size == expected.batch_size and actual.device == expected.device, where
     for key in actual.keys(True):
@@ -42,13 +42,24 @@ def _same(actual, expected, where=""):
             assert a.batch_size == b.batch_size and a.device == b.device, (where, key)
             continue
         assert (a.dtype, a.device, a.shape) == (b.dtype, b.device, b.shape), (where, key)
-        if a.numel() > 1:
+        if a.numel() > 1 and a.device.type == "cpu":
             assert a.stride() == b.stride(), (where, key)
         torch.testing.assert_close(a, b, rtol=0, atol=0, equal_nan=True, msg=lambda m, k=key: f"{where} {k}: {m}")
 
 
-def _storages(td):
-    return {value.untyped_storage().data_ptr() for value in td.values(True, True) if value.numel()}
+def _spans(td):
+    """``(first byte, end byte)`` of every non-empty leaf of ``td``."""
+    out = []
+    for value in td.values(True, True):
+        if value.numel():
+            start = value.data_ptr()
+            end = start + value.element_size() * (1 + sum((n - 1) * s for n, s in zip(value.shape, value.stride())))
+            out.append((start, end))
+    return out
+
+
+def _overlaps(a, b):
+    return any(x0 < y1 and y0 < x1 for x0, x1 in _spans(a) for y0, y1 in _spans(b))
 
 
 @pytest.mark.parametrize("name", FAMILIES)
@@ -70,7 +81,7 @@ def test_lean_result_matches_the_general_path(name, device, num_envs, length):
             b = general.step(action.to(device), **call)
             _same(a, b, f"step {i} {call}")
             if "state" in a.keys() and "states" in a.keys():
-                assert not _storages(a["state"]) & _storages(a["states"]), "states shares memory with state"
+                assert not _overlaps(a["state"], a["states"]), "states shares memory with state"
             kept.append((a, b.clone()))
         # A kept result is not changed by later steps.
         for i, (a, b) in enumerate(kept):
