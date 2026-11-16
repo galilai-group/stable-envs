@@ -418,7 +418,9 @@ def test_classic_reports_authoritative_outputs_and_typed_state(name):
         } == set(result.keys())
         assert result["reward"].dtype == torch.float64
         assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
-        assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
+        assert env.execution_mode == {"gym": "DELEGATED_CPU", "numba": "NATIVE_NUMBA"}.get(
+            env.simulation_backend, "NATIVE_NUMPY"
+        )
         schema = schema_of(result["state"])
         assert sorted(schema.names) == sorted("/".join(key) for key in FULL_KEYS[name])
         assert set(result["state"].keys(True, True)) == {tuple(group.path) for group in schema.groups.values()}

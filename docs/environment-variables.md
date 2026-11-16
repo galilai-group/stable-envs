@@ -29,6 +29,7 @@ Each variable sets one [tuning knob](api/tuning.md#knobs) for the whole process.
 | `STABLE_ENVS_CPU3D_CHUNK` | frames per chunk of the Torch CPU ray caster |
 | `STABLE_ENVS_DMC_CPU_RAY_BUDGET` | rays per CPU render chunk of the fixed-camera DM Control classes |
 | `STABLE_ENVS_DMC_RAY_BUDGET` | rays per CUDA render chunk of the fixed-camera DM Control classes |
+| `STABLE_ENVS_DMC_GRAPH_ROWS` | most rows of a CUDA render chunk of the fixed-camera DM Control classes that replay one captured CUDA graph |
 | `STABLE_ENVS_DMC_LAUNCH_RAYS` | rays per MJWarp launch of the DM Control body-tracking classes |
 | `STABLE_ENVS_DMC_MIN_WORLDS` | fewest worlds per MJWarp launch of the DM Control body-tracking classes |
 | `STABLE_ENVS_FETCH_MJW_WORLDS` | most worlds per MJWarp launch of the Fetch classes |

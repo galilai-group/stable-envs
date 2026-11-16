@@ -174,22 +174,6 @@ class RoadsterBase(Env):
     def state_spec(self):
         return self._schema.spec(self.device)
 
-    def _adopt_physics_state(self, state):
-        layout = self._physics_layout()
-        if layout is None:
-            return
-        values = self._style.values.clone()
-        cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
-        rows = np.empty((self.B, int(sum(layout.widths))))
-        for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
-            v = get_field(state, "/".join(state_key(leaf))).detach().to(torch.float64).cpu().reshape(self.B, width)
-            rows[:, off : off + width] = v.numpy()
-            o, _ = cols[leaf]
-            values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
-        self._style = StyleTensor(values, self.variation_space.flat_layout())
-        self._physics_installed = rows
-        self._variation_is_default = False
-
     def reset(self, seed=None, options=None):
         """Reset every lane; ``options`` take ``variation`` / ``variation_values`` for the weather leaves."""
         self._check_open("reset")

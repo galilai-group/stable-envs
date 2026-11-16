@@ -11,22 +11,41 @@ import sys
 
 import torch
 
-from stable_envs._execution import backends
-from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, _measure
-from stable_envs.envs.classic_control.simulation.numba_step import STEPS
+import stable_envs as snv
+from stable_envs import tuning
+
+#: Class of each classic-control task, and whether the task has the compiled ``"numba"`` step.
+CLASSES = {
+    "cartpole": ("CartPole", True),
+    "pendulum": ("Pendulum", False),
+    "acrobot": ("Acrobot", False),
+    "mountain_car": ("MountainCar", True),
+    "mountain_car_continuous": ("MountainCarContinuous", False),
+}
+
+
+def _measure(name: str, path: str, dev: str):
+    """The ``measure`` that building ``name`` on ``dev`` registers for ``path``."""
+    with snv.make(name, num_envs=2, device=dev):
+        pass
+    return next(measure for p, _, measure in tuning.simulation_paths(dev) if p == path)
 
 
 def main():
-    domains = sys.argv[1].split(",") if len(sys.argv) > 1 else list(CPU_MIN_ENVS)
+    domains = sys.argv[1].split(",") if len(sys.argv) > 1 else list(CLASSES)
     out = {}
     for domain in domains:
-        compiled = ("numba",) if domain in STEPS else ()
-        for dev, names in (("cpu", ("gym", "numpy", *compiled)), ("cuda", ("gym", "numpy", *compiled, "torch"))):
+        name, compiled = CLASSES[domain]
+        extra = ("numba",) if compiled else ()
+        for dev, names, path in (
+            ("cpu", ("gym", "numpy", *extra), f"classic-cpu/{domain}"),
+            ("cuda", ("gym", "numpy", *extra, "torch"), f"classic-sim/{domain}"),
+        ):
             device = torch.device(dev)
-            measure = _measure(domain, device)
+            measure = _measure(name, path, dev)
             rows = []
             for b in [1 << k for k in range(13)]:
-                times = {name: backends.time_backend(measure, name, b, device) * 1e6 for name in names}
+                times = {backend: tuning.time_backend(measure, backend, b, device) * 1e6 for backend in names}
                 rows.append((b, times))
                 print(domain, dev, b, {k: round(v) for k, v in times.items()}, flush=True)
             out[f"{domain}/{dev}"] = rows

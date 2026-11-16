@@ -608,7 +608,8 @@ def get_field(state: TensorDictBase, name: str) -> torch.Tensor:
 def set_field(state: TensorDictBase, name: str, value) -> None:
     """Write ``value`` into the field ``name`` of any State, broadcast to the field's shape.
 
-    On a folded State, a kept field can take a new non-batch shape, as ``StateSchema.set`` says.
+    On a folded State, a kept field can take a new non-batch shape, as ``StateSchema.set`` says. On a State with
+    one leaf per field, a value of a new non-batch shape replaces the leaf.
 
     Args:
         state: A State, with any batch shape.
@@ -626,7 +627,13 @@ def set_field(state: TensorDictBase, name: str, value) -> None:
         schema.set(state, name, value)
         return
     field = get_field(state, name)
-    field.copy_(_cast(f"State field {name!r}", value, field.dtype, field.device).expand(field.shape))
+    value = _cast(f"State field {name!r}", value, field.dtype, field.device)
+    batch = tuple(state.batch_size)
+    if value.ndim == field.ndim and tuple(value.shape[: len(batch)]) == batch and value.shape != field.shape:
+        # Each field of a State that isn't folded is its own leaf, so a new width replaces the leaf.
+        state.set(_path(name.replace(".", "/")), value.clone())
+        return
+    field.copy_(value.expand(field.shape))
 
 
 def unfold(state: TensorDictBase) -> TensorDictBase:

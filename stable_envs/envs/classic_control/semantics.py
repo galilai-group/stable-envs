@@ -139,7 +139,8 @@ class ClassicControlSemantics:
             return super()._pack_render_state(state)
         group = state.get(self._group, None)
         if not torch.is_tensor(group):
-            raise KeyError(f"{type(self).__name__}.pack: the state is missing the group {'/'.join(self._group)}")
+            # A render projection (``_unpack_render_state``) holds the drawn fields, not the group.
+            return super()._pack_render_state(state)
         return group[..., list(self.render_from_sim)].to(self.device, torch.float32)
 
     @property

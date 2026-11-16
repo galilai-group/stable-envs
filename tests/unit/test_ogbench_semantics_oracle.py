@@ -28,14 +28,13 @@ def test_ogbench_maze_replays_independent_full_state_corpus():
     pytest.importorskip("ogbench")
     data = np.load(ROOT / "swm_176d545_ogbench121_mujoco317.npz")
 
-    def state_at(t):
-        state = TensorDict({}, [3])
-        for key in data.files:
-            if key.startswith("state/"):
-                state[tuple(key[6:].split("/"))] = torch.from_numpy(data[key][t].copy())
-        return state
-
     env = OGBMazeAdapter(3)
+
+    def state_at(t):
+        """The stored State at ``t``, folded into the adapter's groups."""
+        values = {key[6:]: torch.from_numpy(data[key][t].copy()) for key in data.files if key.startswith("state/")}
+        return env.schema.fold(values, [3])
+
     try:
         env.set_state(state_at(0))
         for t, action in enumerate(data["actions"]):

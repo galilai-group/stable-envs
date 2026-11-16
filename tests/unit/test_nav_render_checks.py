@@ -51,7 +51,7 @@ def test_simple_point_maze_render_skips_restore_only_fields():
 def test_rows_that_require_grad_render_and_nonfinite_ones_are_refused():
     with se.make("TwoRoom", num_envs=2, device="cpu") as env:
         env.reset(seed=1)
-        rows = env.sample_states(2)
+        rows = torch.as_tensor(env.sample_states(2))
         assert torch.equal(env.render(rows.clone().requires_grad_()), env.render(rows))
         bad = rows.clone()
         bad[0, 0] = float("nan")

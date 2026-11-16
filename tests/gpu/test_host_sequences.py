@@ -83,13 +83,12 @@ def test_a_device_masked_sequence_where_every_lane_ends_early_equals_the_readbac
             monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
             env.reset(seed=4)
             # Every task target moves onto the current pose, so every lane succeeds at once.
-            sim, c = env._simulator, env._simulator._columns
+            sim = env._simulator
             sim._mocap_pos[:, sim._target] = sim._qpos[:, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
             if name == "OGBScene":
-                c["scene", "target_button_states"].copy_(c["scene", "cur_button_states"])
-                drawer, window = c["scene", "target_drawer_pos"], c["scene", "target_window_pos"]
-                drawer[:, 0] = sim._qpos[:, sim._drawer].to(drawer.dtype)
-                window[:, 0] = sim._qpos[:, sim._window].to(window.dtype)
+                sim._buttons_goal.copy_(sim._buttons_now)
+                sim._drawer_goal[:, 0] = sim._qpos[:, sim._drawer].to(sim._drawer_goal.dtype)
+                sim._window_goal[:, 0] = sim._qpos[:, sim._window].to(sim._window_goal.dtype)
             runs.append(env.step(actions, frames=None))
         monkeypatch.undo()
     masked, readback = runs
