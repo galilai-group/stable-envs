@@ -537,9 +537,10 @@ def test_owned_variation_child_streams_and_no_recompilation_branch(family, oracl
             assert_oracle(a, b, oracle)
             assert (a._model is old_a) == (b._model is old_b)
             theirs = dict(oracle.spaces(b.variation_space))
-            # agent.opacity and target.opacity have no swm counterpart.
+            # agent.opacity and target.opacity have no swm counterpart. They sort last, so every swm leaf keeps
+            # its stream; only the two Dicts that hold them draw one more child seed.
             for name, node in oracle.spaces(a.variation_space):
-                if name in ("variation/agent/opacity", "variation/target", "variation/target/opacity"):
+                if name not in theirs or name in ("variation", "variation/agent"):
                     continue
                 counterpart = theirs[name]
                 assert node.np_random.bit_generator.state == counterpart.np_random.bit_generator.state
