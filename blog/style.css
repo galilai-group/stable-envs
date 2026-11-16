@@ -1,0 +1,902 @@
+/*
+  stable-envs project page
+
+  FONTS (match the paper: NeurIPS Times body, Computer Modern typewriter for code)
+    Text, headings, captions, figure labels:  "STIX Two Text", weights 400 / 600, italic 400
+        LaTeX: \usepackage{stix2}  (or keep \usepackage{times})
+    Code and BibTeX:  "Latin Modern Mono" 10 Regular  (lmodern / cm-super \ttfamily)
+    Both are self-hosted in assets/fonts (STIX: SIL OFL 1.1; Latin Modern: GUST Font License).
+
+  TYPE SCALE (px, desktop / below 720px). These are the only font sizes on the page.
+    --fs-display  40 / 32   project name
+    --fs-h2       26 / 22   section headings, the Abstract heading
+    --fs-lead     22 / 19   subtitle
+    --fs-body     18 / 17   body text, abstract, contributions, h3 (semibold), authors
+    --fs-ui       16        buttons, affiliations, venue
+    --fs-caption  15        figure captions, figure labels and values, code blocks, BibTeX, footer
+    --fs-small    13        figure details: the Figure 2 readout, notes
+    Inline code takes the size of the text around it (1em).
+
+  WIDTHS
+    --w-text    680px  prose, code, the abstract box
+    --w-figure  880px  hero and every figure; captions span the figure width
+
+  COLORS
+    --ink      #1b1b1b  text
+    --muted    #5c5c5c  captions, secondary labels
+    --rule     #dcdcd8  hairlines
+    --paper    #ffffff  background
+    --wash     #f8f8f8  abstract box, code blocks (the LeWM page's abstract gray)
+    --accent   #1f5c99  the one accent: links, stable-envs bars, the stored state
+                        (darker cut of matplotlib tab:blue #1f77b4, the "snv CPU" color in the paper's Figure 1)
+    --ref      #b4b4ae  the reference in every figure: original-library segment, baseline bars, frame bytes
+    --todo     #b3261e  placeholders only; remove with the [TODO] markers before publishing
+
+  STROKES  1px hairlines only.
+
+  MOTION  Figures animate once when scrolled into view: 800 ms, ease-out, no overshoot.
+    Only the Figure 2 factor cycle repeats. prefers-reduced-motion shows final states and stops the cycle.
+*/
+
+@font-face {
+  font-family: "STIX Two Text";
+  src: url("assets/fonts/stix-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "STIX Two Text";
+  src: url("assets/fonts/stix-latin-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Latin Modern Mono";
+  src: url("assets/fonts/lmmono10-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --serif: "STIX Two Text", "Times New Roman", Times, serif;
+  --mono: "Latin Modern Mono", "Courier New", monospace;
+
+  --fs-display: 40px;
+  --fs-h2: 26px;
+  --fs-lead: 22px;
+  --fs-body: 18px;
+  --fs-ui: 16px;
+  --fs-caption: 15px;
+  --fs-small: 13px;
+
+  --lh-tight: 1.2;
+  --lh-body: 1.6;
+  --lh-caption: 1.5;
+  --lh-small: 1.35;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 72px;
+
+  --w-text: 680px;
+  --w-figure: 880px;
+
+  --ink: #1b1b1b;
+  --muted: #5c5c5c;
+  --rule: #dcdcd8;
+  --paper: #ffffff;
+  --wash: #f8f8f8;
+  --accent: #1f5c99;
+  --ref: #b4b4ae;
+  --todo: #b3261e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-kerning: normal;
+  font-variant-numeric: lining-nums;
+  text-rendering: optimizeLegibility;
+}
+
+/* Layout */
+
+header,
+main,
+footer {
+  padding-left: var(--s5);
+  padding-right: var(--s5);
+}
+
+main > *,
+footer > * {
+  max-width: var(--w-text);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+main > figure,
+main > .figure {
+  max-width: var(--w-figure);
+}
+
+/* Text */
+
+p {
+  margin-top: 0;
+  margin-bottom: var(--s4);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin-top: var(--s8);
+  margin-bottom: var(--s4);
+}
+
+h3 {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: var(--lh-body);
+  margin-top: var(--s6);
+  margin-bottom: var(--s2);
+}
+
+h2 + h3 {
+  margin-top: var(--s4);
+}
+
+em {
+  font-style: italic;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 1em;
+}
+
+p code,
+li code {
+  white-space: nowrap;
+}
+
+sup {
+  font-size: var(--fs-small);
+  line-height: 0;
+}
+
+ol.contributions {
+  margin-top: 0;
+  margin-bottom: var(--s4);
+  padding-left: var(--s5);
+}
+
+ol.contributions li {
+  padding-left: var(--s1);
+  margin-bottom: var(--s3);
+}
+
+ol.contributions li::marker {
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--muted);
+}
+
+.nw {
+  white-space: nowrap;
+}
+
+/* Placeholders. Delete every element with class "todo" before publishing. */
+.todo {
+  color: var(--todo);
+  border: 1px dashed var(--todo);
+  border-radius: 2px;
+  padding: 0 var(--s1);
+  font-family: var(--serif);
+  font-size: var(--fs-caption);
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--lh-caption);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Abstract, after the LeWM project page: #f8f8f8 box, 8px radius, 32px 40px padding, 680px wide */
+
+.abstract {
+  background: var(--wash);
+  border-radius: 8px;
+  padding: var(--s6) calc(var(--s6) + var(--s2));
+  margin-top: var(--s7);
+}
+
+.abstract h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: var(--s4);
+}
+
+.abstract p {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+.abstract a {
+  overflow-wrap: anywhere;
+}
+
+.abstract p:last-child {
+  margin-bottom: 0;
+}
+
+/* Header */
+
+header {
+  text-align: center;
+  padding-top: var(--s7);
+}
+
+header .name {
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+header .subtitle {
+  font-size: var(--fs-lead);
+  font-weight: 400;
+  line-height: 1.35;
+  max-width: 600px;
+  margin: var(--s2) auto 0;
+}
+
+header .authors {
+  font-size: var(--fs-body);
+  margin: var(--s4) 0 0;
+}
+
+header .meta {
+  font-size: var(--fs-ui);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+  margin: var(--s1) 0 0;
+}
+
+header .authors,
+header .affiliations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: var(--s4);
+}
+
+header .author {
+  white-space: nowrap;
+}
+
+header sup {
+  font-size: 0.7em;
+  line-height: 0;
+}
+
+/* Institution logos: heights set so each logo covers about the same area */
+
+.logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s4) var(--s6);
+  margin: var(--s4) 0 var(--s3);
+  padding: 0;
+  list-style: none;
+}
+
+.logos img {
+  display: block;
+  width: auto;
+}
+
+.logos .logo-brown {
+  height: 44px;
+}
+
+.logos .logo-oxford {
+  height: 35px;
+}
+
+.logos .logo-rice {
+  height: 24px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  margin: var(--s4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-block;
+  min-width: 88px;
+  padding: 5px var(--s4) 4px;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: var(--fs-ui);
+  line-height: var(--lh-caption);
+  text-decoration: none;
+}
+
+.links a:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.links a.todo-link {
+  border-style: dashed;
+  border-color: var(--todo);
+  color: var(--todo);
+}
+
+.links a.todo-link:hover {
+  background: none;
+}
+
+/* Hero: the paper's Figure 1 */
+
+.hero {
+  max-width: var(--w-figure);
+  margin: var(--s5) auto 0;
+}
+
+.hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hero figcaption {
+  text-align: center;
+  max-width: var(--w-text);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Figures */
+
+figure {
+  margin: var(--s7) auto;
+  padding: 0;
+}
+
+figcaption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+  margin-top: var(--s4);
+}
+
+figcaption .label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Animated figures. Without JavaScript, or with reduced motion, every figure shows its final state.
+   Color code in every figure: blue is stable-envs or what it stores, gray is the reference or the frame. */
+
+.anim {
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 800ms;
+}
+
+main > #fig-speed,
+main > #fig-dataset,
+main > #fig-training,
+main > #tab1 {
+  max-width: var(--w-text);
+}
+
+main > figure > figcaption {
+  max-width: var(--w-text);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Quiet text button: Figure 2 pause */
+
+.fs-pause {
+  font: inherit;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.fs-pause:hover {
+  color: var(--ink);
+}
+
+/* Figure 2: one stored state, cycled through six factor rows */
+
+.fs-grid {
+  display: grid;
+  grid-template-columns: 304px minmax(0, 400px);
+  justify-content: center;
+  column-gap: var(--s7);
+  align-items: start;
+}
+
+.fs-frame {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  box-shadow: 0 0 0 1px var(--rule);
+}
+
+.fs-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+}
+
+.fs-frame img.on {
+  opacity: 1;
+}
+
+.fs-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.fs-picker button:not(.fs-pause) {
+  margin: 0;
+  padding: 0 0 5px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  transition: border-color 400ms var(--ease);
+}
+
+.fs-picker button img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 0 0 1px var(--rule);
+}
+
+.fs-picker button[aria-pressed="true"] {
+  border-bottom-color: var(--accent);
+}
+
+.fs-picker .fs-pause {
+  margin-left: auto;
+  padding-bottom: 7px;
+}
+
+.fs-readout {
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.fs-block + .fs-block {
+  margin-top: var(--s5);
+}
+
+.fs-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s4);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  padding-bottom: var(--s1);
+  margin-bottom: var(--s2);
+  border-bottom: 1px solid var(--rule);
+}
+
+.fs-size {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.fs-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) repeat(3, 44px);
+  column-gap: var(--s2);
+  align-items: center;
+  padding: 1px 0;
+}
+
+.fs-row > span {
+  text-align: right;
+  color: var(--muted);
+}
+
+.fs-row.state > span {
+  color: var(--accent);
+}
+
+.fs-row.changed > span {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.fs-row code {
+  font-size: var(--fs-small);
+  color: var(--ink);
+}
+
+.fs-row .sw {
+  width: 10px;
+  height: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.fs-note {
+  color: var(--muted);
+  margin-top: var(--s1);
+}
+
+.fs-bytes {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 56px;
+  column-gap: var(--s3);
+  row-gap: var(--s1);
+  align-items: center;
+}
+
+.fs-bytes > span:nth-child(3n + 1) {
+  color: var(--muted);
+}
+
+.fs-bytes > span:nth-child(3n) {
+  text-align: right;
+}
+
+.fs-bytes > span:last-child {
+  color: var(--muted);
+}
+
+.byte {
+  display: block;
+  height: 12px;
+  width: calc(var(--v) / 150528 * 100%);
+  min-width: 2px;
+  background: var(--ref);
+  transition: width var(--dur) var(--ease);
+}
+
+.byte.accent {
+  background: var(--accent);
+}
+
+/* Bar charts: labels above bars, values at the bar ends, no axes */
+
+.bc {
+  --val-w: 132px;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.bc-title {
+  font-weight: 600;
+  margin-bottom: var(--s3);
+}
+
+.bc-row + .bc-row {
+  margin-top: var(--s3);
+}
+
+.bc-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  height: 12px;
+  margin-top: var(--s1);
+}
+
+.bc-bar {
+  --v: var(--cpu);
+  flex: 0 0 auto;
+  height: 100%;
+  width: calc((100% - var(--val-w)) * var(--v) / var(--max));
+  min-width: 2px;
+  background: var(--accent);
+  transition: width var(--dur) var(--ease) calc(var(--i, 0) * 90ms), opacity 300ms var(--ease);
+}
+
+.bc-bar.ref {
+  background: var(--ref);
+  transition: none;
+}
+
+.bc-val {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--accent);
+  transition: opacity 300ms var(--ease) calc(var(--i, 0) * 90ms + 500ms);
+}
+
+.bc-val.muted {
+  color: var(--muted);
+}
+
+.bc-val .todo {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Figure 3: the gray 1x segment is stable-worldmodel */
+
+#fig-speed .bc-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: calc((100% - var(--val-w)) / var(--max));
+  background: var(--ref);
+  z-index: 1;
+}
+
+/* Before a figure scrolls into view. html.js is set in the page head. In Figure 4 the
+   reference bars stay put and the stable-envs bars shrink from the reference length. */
+
+.js .anim:not(.is-in) .byte:not(.accent),
+.js .anim:not(.is-in) .bc-bar:not(.ref) {
+  width: 0;
+}
+
+.js #fig-dataset:not(.is-in) .bc-bar:not(.ref) {
+  width: calc((100% - var(--val-w)) * var(--from) / var(--max));
+}
+
+#fig-dataset {
+  --dur: 900ms;
+}
+
+/* Figure 5 and Table 1 */
+
+#fig-training img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.results th,
+.results td {
+  padding: var(--s1) var(--s3);
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+}
+
+.results th:first-child {
+  text-align: left;
+}
+
+.results thead th {
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.results tbody th {
+  font-weight: 400;
+}
+
+.js .anim:not(.is-in) .bc-val:not(.muted) {
+  opacity: 0;
+}
+
+.anim.is-done .bc-bar:not(.ref),
+.anim.is-done .bc-val {
+  transition-delay: 0ms;
+  transition-duration: 600ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim *,
+  .anim *::before {
+    transition: none !important;
+  }
+}
+
+/* Keyboard focus */
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Code */
+
+pre {
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  background: var(--wash);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--s3) var(--s4);
+  overflow-x: auto;
+  margin-top: var(--s3);
+  margin-bottom: var(--s5);
+}
+
+pre code {
+  white-space: pre;
+}
+
+pre .c {
+  color: var(--muted);
+}
+
+pre .todo {
+  font-family: var(--serif);
+}
+
+.bibtex {
+  position: relative;
+}
+
+.bibtex pre {
+  padding-right: 80px;
+}
+
+.bibtex button {
+  position: absolute;
+  top: var(--s2);
+  right: var(--s2);
+  font-family: var(--serif);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 3px var(--s3);
+  cursor: pointer;
+}
+
+.bibtex button:hover {
+  border-color: var(--ink);
+}
+
+footer {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--muted);
+  padding-top: var(--s7);
+  padding-bottom: var(--s7);
+}
+
+footer > div {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--s5);
+}
+
+footer p {
+  margin-bottom: var(--s2);
+}
+
+/* Small screens */
+
+@media (max-width: 720px) {
+  :root {
+    --fs-display: 32px;
+    --fs-h2: 22px;
+    --fs-lead: 19px;
+    --fs-body: 17px;
+    --s8: 56px;
+  }
+
+  header,
+  main,
+  footer {
+    padding-left: var(--s4);
+    padding-right: var(--s4);
+  }
+
+  header {
+    padding-top: var(--s7);
+  }
+
+  .abstract {
+    padding: var(--s5) var(--s4);
+  }
+
+  .abstract p {
+    text-align: left;
+    -webkit-hyphens: manual;
+    hyphens: manual;
+  }
+
+  .fs-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s5);
+  }
+
+  .logos .logo-brown {
+    height: 37px;
+  }
+
+  .logos .logo-oxford {
+    height: 29px;
+  }
+
+  .logos .logo-rice {
+    height: 20px;
+  }
+}
+
+@media print {
+  .bibtex button {
+    display: none;
+  }
+}

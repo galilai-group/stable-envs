@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>stable-envs: Fast and Reproducible Environments with Controllable Variations</title>
+<meta name="description" content="stable-envs is a library of 80 batched simulation environments with complete states and, in 74 of them, explicit factors of variation. Datasets can store states instead of frames and render them on the training device.">
+<meta property="og:title" content="stable-envs: Fast and Reproducible Environments with Controllable Variations">
+<meta property="og:description" content="80 batched simulation environments with complete states and, in 74 of them, explicit factors of variation. Store states instead of frames and render them on the training device.">
+<!-- TODO: social cards need an absolute URL; replace with the published address of this image. -->
+<meta property="og:image" content="assets/img/fig1.png">
+<link rel="preload" href="assets/fonts/stix-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<header>
+  <h1 class="name">stable-envs</h1>
+  <p class="subtitle">Fast and Reproducible Environments with Controllable&nbsp;Variations</p>
+  <p class="authors">
+    <span class="author">Sami BuGhanem<sup>1</sup></span>
+    <span class="author">Francesco Capuano<sup>2</sup></span>
+    <span class="author">Ahitagni Das<sup>3</sup></span>
+    <span class="author">Richard Gao<sup>1</sup></span>
+    <span class="author">Randall Balestriero<sup>1</sup></span>
+  </p>
+  <p class="meta affiliations">
+    <span><sup>1</sup>Brown University</span>
+    <span><sup>2</sup>University of Oxford</span>
+    <span><sup>3</sup>Rice University</span>
+  </p>
+  <ul class="logos">
+    <li><img class="logo-brown" src="assets/img/logos/brown.svg" width="580" height="287" alt="Brown University"></li>
+    <li><img class="logo-oxford" src="assets/img/logos/oxford.png" width="557" height="174" alt="University of Oxford"></li>
+    <li><img class="logo-rice" src="assets/img/logos/rice.svg" width="525" height="75" alt="Rice University"></li>
+  </ul>
+  <p class="meta">Preprint, 2026</p>
+  <ul class="links">
+    <li><a class="todo-link" href="#" title="Add the arXiv link">Paper [TODO: arXiv link]</a></li>
+    <li><a href="https://github.com/galilai-group/stable-envs">Code</a></li>
+    <li><a href="https://galilai-group.github.io/stable-envs/">Docs</a></li>
+    <li><a href="https://pypi.org/project/stable-envs/">PyPI</a></li>
+    <li><a href="#bibtex">BibTeX</a></li>
+  </ul>
+
+  <figure id="fig1" class="hero">
+    <img src="assets/img/fig1.png" width="1760" height="1038" alt="The stable-envs logo above three panels. Left: twelve frames from the 80 CPU and GPU environments, including Roadster, DM Control, MS-Human-700, Fetch, Craftax and Robosuite. Top right: rendering speed against stable-worldmodel, averaged over four environments: 5.6 times faster with 1 environment, 6.1 times with 16 and 8.5 times with 128, on GPU. Bottom right: PushT frames with a different block shape or agent shape.">
+    <figcaption><span class="label">Figure 1.</span> <span class="nw">stable-envs</span> has 80 CPU and GPU environments with controlled visual variations. On one NVIDIA L40S with 128 environments, its GPU renderers are 8.5× faster than <span class="nw">stable-worldmodel</span>, on average over TwoRoom, PushT, Reacher and Cube.</figcaption>
+  </figure>
+</header>
+
+<main>
+
+<section class="abstract" aria-labelledby="abstract-title">
+  <h2 id="abstract-title">Abstract</h2>
+  <p>Scaling World Models (WMs) requires processing large amounts of image frames data, and conventional training pipelines typically require (1) physically storing large amounts of image data on disk, (2) reading data from disk into memory, and (3) move from memory to compute units possibly thousands of potentially large image frames. In principle, GPU-native rendering directly allows to speed up training by avoiding moving large image tensors from memory to compute cores, allowing for better GPU utilization. To this aim, we introduce <span class="nw">stable-envs</span>, an open-source library for fast, GPU-native rendering of multiple simulation environments used to train state-of-the-art WMs. By rendering image observations directly on GPU, <span class="nw">stable-envs</span> renders frames 8.5× faster than <span class="nw">stable-worldmodel</span> on average and allows end-to-end training speed-ups of up to 1.33× with no loss of performance. Besides faster training runs, <span class="nw">stable-envs</span> also enables reproducible, large-scale evaluations through batched physics maintaining full determinism. <span class="nw">stable-envs</span> currently supports 80 environments across multiple simulation GPU-backends, and is openly available at: <a href="https://github.com/galilai-group/stable-envs">https://github.com/galilai-group/stable-envs</a>.</p>
+</section>
+
+<h2 id="contributions">Contributions</h2>
+
+<ol class="contributions">
+  <li>A complete state for every class. On CPU, a saved state restored under the factor values it was collected with continues its episode exactly and renders the same frame.</li>
+  <li>Explicit factors of variation in 74 of the 80 classes, set or sampled per batch row in most of them.</li>
+  <li>Batched CPU and GPU renderers, compared with <span class="nw">stable-worldmodel</span> on speed, frames and dynamics.</li>
+  <li>A LeWM pipeline whose dataset holds only states and actions.</li>
+</ol>
+
+<h2 id="problem">Motivation</h2>
+
+<p>LeWM's PushT training set, for example, takes 46&nbsp;GB once decompressed, almost all of it frames. DataLoader workers read the frames from disk and normalize and resize them on the CPU before each batch goes to the GPU.</p>
+
+<p>Each of those frames came from a simulator state, which a dataset could store instead if the state is complete and rendering keeps up with training. <span class="nw">stable-envs</span> puts 11 families behind one API, including classic control, DM Control, OGBench, PushT, Craftax and Roadster, a new suite of jet-car planning tasks.</p>
+
+<h2 id="idea">Approach</h2>
+
+<h3>Complete states</h3>
+
+<p>The state holds what the simulator needs to continue an episode. Depending on the class, that includes positions and velocities, contact-solver caches, task counters, random-number-generator state and the step count. It is a <a href="https://pytorch.org/tensordict/">TensorDict</a>, which <code>torch.save</code> writes directly. On CPU, <code>set_state</code> restores it exactly, provided the factor values are the ones it was collected with.</p>
+
+<p>Some classes, such as CartPole, record their physical factors in the state. PushT, PyFlyt Rocket Landing and OGBench Cube and Scene also keep their visual factors there. In the other classes, the visual factors form a short row per state, passed to <code>render(state, variation=row)</code>.</p>
+
+<p>On CPU, a stored state and its factor values always render the same pixels. Our GPU test suite checks, for each class, that no frame depends on anything unstored and that a saved state renders the same frame in a fresh process. The environment pages list the few GPU renderers whose pixels can change by one or two levels between two draws of the same state.</p>
+
+<h3>Factors of variation</h3>
+
+<p>A factor of variation is a configuration value that a step does not change, such as CartPole's gravity or the colors of its cart, pole and track. PushT varies its shapes, colors and goal pose. In OGBench Cube the factors include cube size, camera angle and light intensity. The variation spaces come from <a href="https://github.com/galilai-group/stable-worldmodel"><span class="nw">stable-worldmodel</span></a>. Their defaults match the reference, the library each class reimplements. Each factor is a leaf of a tree, addressed by a dotted path such as <code>physics.gravity</code>. In most classes, each batch row can hold its own values:</p>
+
+<pre><code>env = snv.CartPole(num_envs=4)
+<span class="c"># sample gravity for each batch row</span>
+state = env.reset(seed=0, options={"variation": ["physics.gravity"]})
+<span class="c"># or set it: g holds one value per row</span>
+state = env.reset(seed=1, options={"variation_values": {"physics.gravity": g}})
+<span class="c"># render a stored state in another color, without stepping</span>
+env.render(state, variation={"pole.color": [220, 40, 40]})</code></pre>
+
+<p>An episode can then be replayed under the appearance it was collected with, or with a single factor changed (Figure&nbsp;2).</p>
+
+<figure id="fig-factors" class="fs anim">
+  <div class="fs-grid">
+    <div class="fs-view">
+      <div class="fs-frame" role="img" aria-label="A TwoRoom frame: two rooms side by side, a wall between them with a door near the top, and the agent in the left room. It is redrawn under six factor rows, which change only the colors.">
+        <img src="assets/img/tworoom-factors-1.png" width="224" height="224" alt="" class="on">
+        <img src="assets/img/tworoom-factors-2.png" width="224" height="224" alt="">
+        <img src="assets/img/tworoom-factors-3.png" width="224" height="224" alt="">
+        <img src="assets/img/tworoom-factors-4.png" width="224" height="224" alt="">
+        <img src="assets/img/tworoom-factors-5.png" width="224" height="224" alt="">
+        <img src="assets/img/tworoom-factors-6.png" width="224" height="224" alt="">
+      </div>
+      <div class="fs-picker" role="group" aria-label="Factor row">
+        <button type="button" aria-pressed="true" aria-label="Factor row: default" data-row="default" data-agent="255 0 0" data-background="255 255 255" data-door="255 255 255" data-wall="0 0 0"><img src="assets/img/tworoom-factors-1.png" width="224" height="224" alt=""></button>
+        <button type="button" aria-pressed="false" aria-label="Factor row: agent.color changed" data-row="agent.color changed" data-agent="21 155 96" data-background="255 255 255" data-door="255 255 255" data-wall="0 0 0"><img src="assets/img/tworoom-factors-2.png" width="224" height="224" alt=""></button>
+        <button type="button" aria-pressed="false" aria-label="Factor row: background.color changed" data-row="background.color changed" data-agent="255 0 0" data-background="240 170 34" data-door="255 255 255" data-wall="0 0 0"><img src="assets/img/tworoom-factors-3.png" width="224" height="224" alt=""></button>
+        <button type="button" aria-pressed="false" aria-label="Factor row: door.color changed" data-row="door.color changed" data-agent="255 0 0" data-background="255 255 255" data-door="55 177 197" data-wall="0 0 0"><img src="assets/img/tworoom-factors-4.png" width="224" height="224" alt=""></button>
+        <button type="button" aria-pressed="false" aria-label="Factor row: wall.color changed" data-row="wall.color changed" data-agent="255 0 0" data-background="255 255 255" data-door="255 255 255" data-wall="89 248 110"><img src="assets/img/tworoom-factors-5.png" width="224" height="224" alt=""></button>
+        <button type="button" aria-pressed="false" aria-label="Factor row: all four colors changed" data-row="all four colors changed" data-agent="21 155 96" data-background="240 170 34" data-door="55 177 197" data-wall="89 248 110"><img src="assets/img/tworoom-factors-6.png" width="224" height="224" alt=""></button>
+        <button type="button" class="fs-pause" hidden>Pause</button>
+      </div>
+    </div>
+
+    <div class="fs-readout">
+      <div class="fs-block">
+        <div class="fs-head"><span>Stored state</span></div>
+        <div class="fs-row state"><i></i><code>agent.position</code><span></span><span>55.86</span><span>39.19</span></div>
+        <div class="fs-row state"><i></i><code>target.position</code><span></span><span>50.25</span><span>119.59</span></div>
+      </div>
+      <div class="fs-block">
+        <div class="fs-head"><span>Factor row</span><span class="fs-size fs-name">default</span></div>
+        <div class="fs-row" data-key="agent"><i class="sw" style="background: rgb(255, 0, 0)"></i><code>agent.color</code><span>255</span><span>0</span><span>0</span></div>
+        <div class="fs-row" data-key="background"><i class="sw" style="background: rgb(255, 255, 255)"></i><code>background.color</code><span>255</span><span>255</span><span>255</span></div>
+        <div class="fs-row" data-key="door"><i class="sw" style="background: rgb(255, 255, 255)"></i><code>door.color</code><span>255</span><span>255</span><span>255</span></div>
+        <div class="fs-row" data-key="wall"><i class="sw" style="background: rgb(0, 0, 0)"></i><code>wall.color</code><span>0</span><span>0</span><span>0</span></div>
+        <div class="fs-note">and 11 size, speed and layout values</div>
+      </div>
+      <div class="fs-block">
+        <div class="fs-head"><span>Bytes per sample</span><span class="fs-size">frame: 224 × 224 RGB, uint8</span></div>
+        <div class="fs-bytes">
+          <span>state</span><span class="track"><span class="byte accent" style="--v: 16"></span></span><span class="accent">16</span>
+          <span>factor row</span><span class="track"><span class="byte accent" style="--v: 92"></span></span><span class="accent">92</span>
+          <span>frame</span><span class="track"><span class="byte" style="--v: 150528"></span></span><span>150,528</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <figcaption><span class="label">Figure 2.</span> One TwoRoom state, saved 31 actions into an episode and rendered on CPU under six factor rows: the default, four sampled colors one at a time, and all four together. The state is the same in every frame. TwoRoom records a target position but does not draw it. The factor row holds 23 float32 values, rounded here to integers.</figcaption>
+</figure>
+
+<h2 id="speed">Speed</h2>
+
+<p><span class="nw">stable-envs</span> steps and renders whole batches at once. Static scenery is drawn once per configuration and shared across the batch, so only moving bodies are redrawn. On CPU the custom kernels mostly use Numba and Torch. On GPU they mostly use Triton, MuJoCo Warp and nvdiffrast. Most GPU renderers write frames straight into tensors on the training device. Craftax keeps its upstream JAX simulator, batched with <code>vmap</code>. Roadster and MS-Human-700 draw with MuJoCo's OpenGL renderer.</p>
+
+<p>We compare <span class="nw">stable-envs</span> with <span class="nw">stable-worldmodel</span> in four environments, TwoRoom, PushT, Reacher and Cube, on one NVIDIA L40S. With 128 environments on GPU, <span class="nw">stable-envs</span> renders 8.5× faster on average, and up to 24× faster in TwoRoom (Figure&nbsp;3).</p>
+
+<figure id="fig-speed" class="bc anim">
+  <div class="bc-title">Rendering speedup over <span class="nw">stable-worldmodel</span>, GPU, 128 environments</div>
+  <div class="bc-rows" style="--max: 25">
+    <div class="bc-row" style="--i: 0">
+      <div class="bc-label">TwoRoom</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 24.1"></span><span class="bc-val">24.1×</span></div>
+    </div>
+    <div class="bc-row" style="--i: 1">
+      <div class="bc-label">PushT</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 5.3"></span><span class="bc-val">5.3×</span></div>
+    </div>
+    <div class="bc-row" style="--i: 2">
+      <div class="bc-label">Reacher</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 3.1"></span><span class="bc-val">3.1×</span></div>
+    </div>
+    <div class="bc-row" style="--i: 3">
+      <div class="bc-label">Cube</div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 1.4"></span><span class="bc-val">1.4×</span></div>
+    </div>
+  </div>
+
+  <figcaption><span class="label">Figure 3.</span> Rendering speedup of <span class="nw">stable-envs</span> over <span class="nw">stable-worldmodel</span> (gray segment, 1×), with 128 environments on GPU, one NVIDIA L40S. The average over the four environments is 8.5×.</figcaption>
+</figure>
+
+<h2 id="fidelity">Fidelity</h2>
+
+<p>Matching frames does not show that a state is complete, so we compare dynamics as well as frames. We compare <span class="nw">stable-envs</span> with <span class="nw">stable-worldmodel</span> in TwoRoom, PushT, Reacher and Cube.</p>
+
+<p><em>Dynamics.</em> From the same start state, we apply the same 20 actions in both libraries and compare the states. The state error is 0 in TwoRoom, Reacher and Cube, and 4&nbsp;×&nbsp;10<sup>−13</sup> in PushT.</p>
+
+<p><em>Frames.</em> We render the same states with both libraries. The pixel mean squared error (MSE) is at most 2.2 on the 0–255 scale.</p>
+
+<h2 id="lewm">Training LeWM</h2>
+
+<p>In <a href="https://github.com/galilai-group/stable-envs/tree/main/examples/lewm"><code>examples/lewm</code></a> the dataset keeps only states and actions. Just before the forward pass, <code>env.render(state)</code> draws the frames on the GPU. The model, loss, optimizer and planning settings follow <span class="nw">stable-worldmodel</span>'s LeWM scripts.</p>
+
+<p>Without its <code>pixels</code> column, the PushT training set shrinks to about 160&nbsp;MB (Figure&nbsp;4). The DataLoader workers no longer handle images. Only states and actions reach the GPU.</p>
+
+<p>The PushT dataset does not record contact points, so frames rendered from it miss the small marker the reference renderer draws where the agent touches the block. Full <span class="nw">stable-envs</span> states include them.</p>
+
+<figure id="fig-dataset" class="bc anim">
+  <div class="bc-rows" style="--max: 46">
+    <div class="bc-title">PushT dataset on disk</div>
+    <div class="bc-row" style="--i: 0">
+      <div class="bc-label">With frames</div>
+      <div class="bc-line"><span class="bc-bar ref" style="--cpu: 46"></span><span class="bc-val muted">46 GB</span></div>
+    </div>
+    <div class="bc-row" style="--i: 1">
+      <div class="bc-label">States only<span class="muted">, about 290× smaller</span></div>
+      <div class="bc-line"><span class="bc-bar" style="--cpu: 0.16; --from: 46"></span><span class="bc-val accent">0.16 GB</span></div>
+    </div>
+  </div>
+
+  <figcaption><span class="label">Figure 4.</span> Size of the LeWM PushT dataset after decompression, with frames and with states only.</figcaption>
+</figure>
+
+<p>We train the full-size LeWM on TwoRoom, PushT, Reacher and Cube on one NVIDIA L40S, once with <span class="nw">stable-worldmodel</span> rendering and once with <span class="nw">stable-envs</span> rendering. Both pipelines render the frames during training. With <span class="nw">stable-envs</span>, training is 1.16× to 1.33× faster (Figure&nbsp;5).</p>
+
+<figure id="fig-training">
+  <img src="assets/img/snv_training_speedups.png" width="2040" height="1155" alt="Bar chart of LeWM training speed in optimizer steps per second, stable-worldmodel against stable-envs. stable-envs is 1.16 times faster in TwoRoom, 1.33 times in PushT, 1.24 times in Reacher and 1.21 times in Cube.">
+  <figcaption><span class="label">Figure 5.</span> Training speed of the full-size LeWM, in optimizer steps per second on one NVIDIA L40S, with <span class="nw">stable-worldmodel</span> rendering and with <span class="nw">stable-envs</span> rendering. The labels give the speedup.</figcaption>
+</figure>
+
+<p>The planning success rates of the two pipelines are within 2.7 points of each other in every environment (Table&nbsp;1).</p>
+
+<figure id="tab1" class="results">
+  <table>
+    <thead>
+      <tr><th scope="col">Environment</th><th scope="col"><span class="nw">stable-worldmodel</span></th><th scope="col"><span class="nw">stable-envs</span></th></tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">TwoRoom</th><td>88.7</td><td>88.0</td></tr>
+      <tr><th scope="row">PushT</th><td>94.0</td><td>93.3</td></tr>
+      <tr><th scope="row">Reacher</th><td>80.0</td><td>79.3</td></tr>
+      <tr><th scope="row">Cube</th><td>74.0</td><td>71.3</td></tr>
+    </tbody>
+  </table>
+  <figcaption><span class="label">Table 1.</span> Planning success rate (%) of the full-size LeWM, trained with <span class="nw">stable-worldmodel</span> rendering and with <span class="nw">stable-envs</span> rendering.</figcaption>
+</figure>
+
+<h2 id="use">Usage</h2>
+
+<p>The core package runs CartPole, Acrobot and most navigation classes. The other families are installed as extras. <code>stable-envs doctor</code> reports what works on your machine and what is missing. The <a href="https://galilai-group.github.io/stable-envs/environments/">environments page</a> lists all 80 classes.</p>
+
+<pre><code>pip install stable-envs
+pip install "stable-envs[pusht]"      <span class="c"># add family extras as needed</span>
+stable-envs doctor                    <span class="c"># check what works on this machine</span></code></pre>
+
+<p>To collect states now and render them later:</p>
+
+<pre><code>import numpy as np
+import torch
+import stable_envs as snv
+
+env = snv.TwoRoom(num_envs=4, device="cpu")
+env.reset(seed=0)
+actions = torch.rand(4, 32, 2) * 2 - 1          <span class="c"># (B, T, A) in [-1, 1]</span>
+out = env.step(actions, frames=None)            <span class="c"># physics only, no frames rendered</span>
+torch.save(out["states"], "tworoom.pt")         <span class="c"># 4 x 32 states, about 4 KB</span>
+
+states = torch.load("tworoom.pt").reshape(-1)
+frames = env.render(states)                     <span class="c"># (128, 224, 224, 3) uint8</span>
+
+looks = [n for n in env.variation_names if n not in env.dynamics_variation_leaves]
+rows = env.sample_variation(128, paths=looks, rng=np.random.default_rng(0))
+recolored = env.render(states, variation=torch.as_tensor(rows))</code></pre>
+
+<p>With <code>device="cuda"</code> the same calls run on the GPU. The <a href="https://galilai-group.github.io/stable-envs/install/">install page</a> lists the families that need a GPU extra. Tutorials cover <a href="https://galilai-group.github.io/stable-envs/tutorials/store-and-render/">storing and rendering</a>, <a href="https://galilai-group.github.io/stable-envs/tutorials/variation/">variation</a>, <a href="https://galilai-group.github.io/stable-envs/tutorials/custom-env/">custom environments</a> and <a href="https://galilai-group.github.io/stable-envs/tutorials/lewm/">LeWM</a>. Policies, datasets and training loops are in <a href="https://github.com/galilai-group/stable-worldmodel"><span class="nw">stable-worldmodel</span></a>, which is built on <span class="nw">stable-envs</span>.</p>
+
+<h2 id="bibtex">BibTeX</h2>
+
+<div class="bibtex">
+<button type="button" data-copy="bib">Copy</button>
+<pre><code id="bib">@misc{stableenvs2026,
+  title         = {stable-envs: Fast and Reproducible Environments
+                   with Controllable Variations},
+  author        = {BuGhanem, Sami and Capuano, Francesco and Das, Ahitagni
+                   and Gao, Richard and Balestriero, Randall},
+  year          = {2026},
+  eprint        = {<span class="todo">[TODO: arXiv id]</span>},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://github.com/galilai-group/stable-envs},
+}</code></pre>
+</div>
+
+</main>
+
+<footer>
+  <div>
+    <p><span class="nw">stable-envs</span> is released under the MIT license, with some ported files under their upstream licenses. Code at <a href="https://github.com/galilai-group/stable-envs">github.com/galilai-group/stable-envs</a>.</p>
+    <p>Related: <a href="https://github.com/galilai-group/stable-worldmodel"><span class="nw">stable-worldmodel</span></a>, <a href="https://le-wm.github.io/">LeWM</a>, <a href="https://arxiv.org/abs/2511.19484">stable-pretraining</a>.</p>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll("[data-copy]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var text = document.getElementById(button.dataset.copy).innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        button.textContent = "Copied";
+        setTimeout(function () { button.textContent = "Copy"; }, 1500);
+      });
+    });
+  });
+
+  (function () {
+    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var watch = "IntersectionObserver" in window;
+
+    function reveal(figure) {
+      figure.classList.add("is-in");
+      setTimeout(function () { figure.classList.add("is-done"); }, 1400);
+    }
+
+    var figures = document.querySelectorAll(".anim");
+    if (reduced || !watch) {
+      figures.forEach(reveal);
+    } else {
+      var once = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            reveal(entry.target);
+            once.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.25 });
+      figures.forEach(function (figure) { once.observe(figure); });
+    }
+
+    var fig = document.getElementById("fig-factors");
+    var frames = fig.querySelectorAll(".fs-frame img");
+    var picks = fig.querySelectorAll(".fs-picker [data-row]");
+    var pause = fig.querySelector(".fs-pause");
+    var current = 0, timer = null, playing = !reduced && watch, visible = false;
+
+    function show(k) {
+      current = k;
+      frames.forEach(function (img, i) { img.classList.toggle("on", i === k); });
+      picks.forEach(function (b, i) { b.setAttribute("aria-pressed", i === k); });
+      fig.querySelector(".fs-name").textContent = picks[k].dataset.row;
+      ["agent", "background", "door", "wall"].forEach(function (key) {
+        var row = fig.querySelector('.fs-row[data-key="' + key + '"]');
+        var v = picks[k].dataset[key];
+        row.classList.toggle("changed", v !== picks[0].dataset[key]);
+        v = v.split(" ");
+        row.querySelector(".sw").style.background = "rgb(" + v.join(", ") + ")";
+        row.querySelectorAll("span").forEach(function (cell, i) { cell.textContent = v[i]; });
+      });
+    }
+
+    function sync() {
+      clearInterval(timer);
+      timer = playing && visible ? setInterval(function () { show((current + 1) % picks.length); }, 2800) : null;
+      pause.textContent = playing ? "Pause" : "Play";
+    }
+
+    picks.forEach(function (button, i) {
+      button.addEventListener("click", function () { playing = false; show(i); sync(); });
+    });
+    pause.addEventListener("click", function () { playing = !playing; sync(); });
+    fig.addEventListener("focusin", function (event) {
+      if (event.target.matches(":focus-visible") && event.target !== pause) { playing = false; sync(); }
+    });
+    pause.hidden = false;
+
+    if (watch) {
+      new IntersectionObserver(function (entries) {
+        visible = entries[0].isIntersecting;
+        sync();
+      }, { threshold: 0.25 }).observe(fig);
+    }
+    sync();
+  })();
+</script>
+</body>
+</html>
