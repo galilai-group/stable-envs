@@ -26,6 +26,7 @@ import numpy as np
 import torch
 import stable_envs as se
 import jax
+from stable_envs import get_field
 from stable_envs.envs.craftax import kernel
 
 kernel.MIN_LANES_PER_HOST_DEVICE = 1
@@ -43,7 +44,7 @@ with se.make(name, num_envs=7, device="cpu") as env:
         saved[key] = result[key].numpy()
     for key, value in result["states"].items(include_nested=True, leaves_only=True):
         saved["states/" + "/".join(key)] = value.numpy()
-    first["engine", "player_health"][2] = 0
+    get_field(first, "engine/player_health")[2] = 0
     env.set_state(first)
     masked = env.step(acts[:, :4], states=None, frames=slice(None))
     saved["masked_frames"] = masked["frames"].numpy()

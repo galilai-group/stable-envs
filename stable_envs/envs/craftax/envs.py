@@ -17,7 +17,6 @@ from tensordict import TensorDict
 
 from ..._core import jax_runtime
 from ..._core.config import get_config, log
-from ..._core.stepping import _stack_states
 from ..._core.tensordicts import build_tensordict
 from ...env import Env, require_contiguous_out
 from ...registry import register
@@ -137,28 +136,25 @@ class CraftaxEnv(Env):
     def _layout_dtypes(self):
         return {f.key: f.dtype for f in self._k.fields}
 
+    @property
+    def state_spec(self):
+        """Specs of the State's blocks, without the batch axis."""
+        return self._k.schema.spec(self.device)
+
     def _live(self, what: str):
         self._check_open(what)
         if self._state is None:
             raise RuntimeError(f"{type(self).__name__}.{what}: call reset() first")
         return self._state
 
-    def _snapshot(self, views, batch_size=None) -> TensorDict:
+    def _snapshot(self, leaves, batch_size=None) -> TensorDict:
         tree: dict = {}
-        for key, value in views.items():
+        for key, value in leaves.items():
             node = tree
             for part in key[:-1]:
                 node = node.setdefault(part, {})
             node[key[-1]] = value
         return build_tensordict(tree, [self.B] if batch_size is None else batch_size, self.device)
-
-    def _stack_states(self, values):
-        """Stack the packed blocks behind step snapshots instead of each leaf."""
-        rows = [self._k.bases(value) for value in values]
-        if any(row is None for row in rows):
-            return _stack_states(values)
-        blocks = [torch.stack(column, dim=1) for column in zip(*rows, strict=True)]
-        return self._snapshot(self._k.split(blocks), [self.B, len(values)])
 
     def _checked(self, state, what: str, batch: int | None = None):
         self._check_open(what)
@@ -171,7 +167,7 @@ class CraftaxEnv(Env):
         return state
 
     def get_state(self):
-        """An independent snapshot: each leaf a ``(num_envs, width)`` view of blocks only it uses."""
+        """An independent snapshot: one ``(num_envs, columns)`` block per dtype, which only it uses."""
         return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._lanes))
 
     def set_state(self, state):
@@ -199,7 +195,7 @@ class CraftaxEnv(Env):
         values = self._lane_values()
         self._varied = self._k.varied(values)
         self._state, self._keys, blocks = self._k.reset(self._keys, values, self._lanes, self._varied)
-        return self._snapshot(self._k.views(blocks))
+        return self._snapshot(self._k.leaves(blocks))
 
     def _actions(self, actions, shape: tuple[int, ...] | None = None):
         """Device actions of ``shape`` (default ``(B,)``), and whether only the step itself can check their range.
@@ -250,15 +246,15 @@ class CraftaxEnv(Env):
         out = self._k.step(self._keys, state, a, active, self._lanes, snapshot, frame, self._varied)
         # The call donated the old buffers, so the new ones are held before anything else can raise.
         self._state, self._keys = out[0], out[1]
-        reward, done, observation, views, frames, invalid = self._k.outputs(out, self._lanes)
+        reward, done, observation, leaves, frames, invalid = self._k.outputs(out, self._lanes)
         self._defer(invalid, deferred)
         result = {
             "reward": reward,
             "terminated": done,
             "truncated": torch.zeros(self.B, dtype=torch.bool, device=self.device),
         }
-        if views is not None:
-            result["state"] = self._snapshot(views)
+        if leaves is not None:
+            result["state"] = self._snapshot(leaves)
         if observation is not None:
             result["observation"] = observation
         if frames is not None:
@@ -306,7 +302,7 @@ class CraftaxEnv(Env):
         out = self._k.sequence(self._keys, state, a, self._lanes, every, frame, packed, self._varied)
         # The call donated the old buffers, so the new ones are held before anything else can raise.
         self._state, self._keys = out[0], out[1]
-        valid, reward, done, observation, blocks, drawn, views, last_frames, invalid = self._k.sequence_outputs(
+        valid, reward, done, observation, blocks, drawn, end, last_frames, invalid = self._k.sequence_outputs(
             out, self._lanes
         )
         self._defer(invalid, deferred)
@@ -319,13 +315,13 @@ class CraftaxEnv(Env):
         if observation is not None:
             result["observation"] = observation[:, :length]
         if final_state:
-            result["state"] = self._snapshot(views)
+            result["state"] = self._snapshot(end)
         if every:
-            picked = self._k.split([_steps(b, states, length) for b in blocks])
+            picked = self._k.leaves([_steps(b, states, length) for b in blocks])
             result["states"] = self._snapshot(picked, [self.B, len(states)])
         elif states is not None:
             # The final state and the selected one are separate tensors, as in the step loop.
-            result["states"] = self._snapshot(views).unsqueeze(1)
+            result["states"] = self._snapshot(end).unsqueeze(1)
             if final_state:
                 result["states"] = result["states"].clone()
         if frame == "last":

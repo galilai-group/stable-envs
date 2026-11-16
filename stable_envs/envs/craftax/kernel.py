@@ -18,6 +18,8 @@ import torch
 from craftax.craftax_env import make_craftax_env_from_name
 
 from ..._core.physics import PhysicsLayout
+from ..._core.state_schema import Field as SchemaField
+from ..._core.state_schema import StateSchema
 from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS
 from .render import renderer
 
@@ -189,12 +191,17 @@ class Kernel:
             [*((key_of(path), leaf) for path, leaf in paths), (("key",), jax.eval_shape(jax.random.PRNGKey, 0))]
         )
         fields = self.fields
-        self._slices = tuple((f.key, f.block, f.start, f.width) for f in fields)
-        #: The first field of each block and the block's width.
-        self._leads = tuple(
-            (next(f.key for f in fields if f.block == b), sum(f.width for f in fields if f.block == b))
-            for b in range(len(self.blocks))
+        section = "craftax_classic" if classic else "craftax"
+        #: The State: one group per packed block, each field a slice of its block.
+        self.schema = StateSchema(
+            env_id,
+            [
+                SchemaField("/".join(f.key), f.shape, f.dtype, f"{section}/{str(f.dtype).removeprefix('torch.')}")
+                for f in fields
+            ],
         )
+        #: The State key of each block, in block order.
+        self._groups = tuple(group.path for group in self.schema.groups.values())
 
         def pack(state, key):
             columns = [[] for _ in self.blocks]
@@ -382,24 +389,9 @@ class Kernel:
                 keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
         return lanes.put(np.asarray(keys))
 
-    def views(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
-        """``(lanes, width)`` views of each leaf in freshly written torch blocks, which nothing else holds."""
-        return self.split(list(blocks))
-
-    def split(self, blocks: list[torch.Tensor]) -> dict[tuple[str, ...], torch.Tensor]:
-        """``(..., width)`` views of each leaf in torch blocks of shape ``(..., columns)``."""
-        return {key: blocks[block].narrow(-1, start, width) for key, block, start, width in self._slices}
-
-    def bases(self, td) -> list[torch.Tensor] | None:
-        """The ``(lanes, columns)`` blocks behind a state that ``views`` made, or None for any other state."""
-        n = int(td.batch_size[0])
-        out = []
-        for (key, width), dtype in zip(self._leads, self.blocks, strict=True):
-            base = td.get(key)._base
-            if base is None or base.dtype != dtype or tuple(base.shape) != (n, width) or not base.is_contiguous():
-                return None
-            out.append(base)
-        return out
+    def leaves(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:
+        """The State leaves of torch blocks of shape ``(..., columns)``: each block under its group key."""
+        return dict(zip(self._groups, blocks, strict=True))
 
     def varied(self, values: dict[str, np.ndarray]) -> bool:
         """Whether any lane has a parameter value other than the default."""
@@ -447,13 +439,13 @@ class Kernel:
         return self._jit(("step", snapshot, frame, varied), lanes)(keys, state, actions, active)
 
     def outputs(self, out, lanes: Lanes):
-        """The reward, ends, observation, packed-state views and frames of a step in torch, and its range flag.
+        """The reward, ends, observation, State leaves and frames of a step in torch, and its range flag.
 
         The flag stays on the device.
         """
         _, _, reward, done, obs, invalid, blocks, frames = out
         reward, done, obs, blocks, frames = lanes.torch((reward, done, obs, blocks, frames))
-        views = None if blocks is None else self.views(blocks)
+        views = None if blocks is None else self.leaves(blocks)
         return reward, done, obs, views, frames, invalid
 
     def sequence(
@@ -480,11 +472,11 @@ class Kernel:
         """The outputs of ``sequence`` in torch, with the range flag still on the device.
 
         Returns the ``(lanes, P)`` valid flags, rewards and ends, the observations, the packed states of every
-        step, the frames of every step, views of the last state, the last frames, and the flag.
+        step, the frames of every step, the State leaves of the last state, the last frames, and the flag.
         """
         _, _, *rest, invalid = out
         valid, reward, done, obs, blocks, every, final, last = lanes.torch(tuple(rest))
-        return valid, reward, done, obs, blocks, every, None if final is None else self.views(final), last, invalid
+        return valid, reward, done, obs, blocks, every, None if final is None else self.leaves(final), last, invalid
 
     @staticmethod
     def read_flag(flag) -> bool:
@@ -492,30 +484,19 @@ class Kernel:
         return bool(np.any(jax.device_get(flag)))
 
     def export(self, state, keys, lanes: Lanes) -> dict[tuple[str, ...], torch.Tensor]:
-        return self.views(lanes.torch(self._jit("pack", lanes)(state, keys)))
+        return self.leaves(lanes.torch(self._jit("pack", lanes)(state, keys)))
 
     def _torch_blocks(self, td, device: torch.device) -> list[torch.Tensor]:
-        """Copy a state TensorDict into fresh per-dtype blocks, checking its keys, shapes and values."""
-        n = int(td.batch_size[0])
-        columns = [[] for _ in self.blocks]
-        for f in self.fields:
-            try:
-                value = td[f.key]
-            except KeyError:
-                raise ValueError(f"State is missing {'.'.join(f.key)}") from None
-            if tuple(value.shape) != (n, f.width):
-                raise ValueError(f"State field {'.'.join(f.key)} has shape {tuple(value.shape)}, not {(n, f.width)}")
-            columns[f.block].append(value.to(device=device, dtype=f.dtype))
-        blocks = [torch.cat(c, dim=1) for c in columns]
-        if not all(bool(torch.isfinite(b).all()) for b in blocks if b.is_floating_point()):
-            raise ValueError("State contains non-finite values")
-        return blocks
+        """Copy the blocks of a state TensorDict to ``device``, checking its groups, shapes and values."""
+        self.schema.validate(td, finite=True)
+        # A copy, so that the jitted calls that donate the blocks never free the caller's State.
+        return [td.get(key).to(device, copy=True).contiguous() for key in self._groups]
 
     def values(self, td) -> dict[str, np.ndarray]:
         """The per-lane parameter values that a checked state TensorDict holds, copied to the host at once."""
         n = int(td.batch_size[0])
         leaves = [
-            td[("physics", *path.split("."))].detach().reshape(n, 1).to(torch.float64) for path, *_ in self.params
+            self.schema.get(td, f"physics.{path}").detach().reshape(n, 1).to(torch.float64) for path, *_ in self.params
         ]
         return self.from_rows(torch.cat(leaves, dim=1).cpu().numpy())
 

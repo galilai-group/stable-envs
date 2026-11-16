@@ -44,7 +44,7 @@ A sequence of actions, `step` with actions of shape `(B, T, 1)`, runs in one jit
 
 Actions from the host are checked before the step, all the actions of a sequence before its first step. Actions in a CUDA tensor are checked on the device, so that the host does not wait for the step. A step or a sequence with an action outside the range leaves every environment unchanged, and the next `step`, `reset`, `set_state` or `close` raises `ValueError`. The rejected step or sequence itself returns `valid` set to true for each environment, zero rewards and observations, no ends, and the unchanged state.
 
-The [state](../terms.md#state) holds each leaf of the upstream `EnvState` under `engine`, the variation values of the environment under `physics` and the wrapper's PRNG key under `key`, one row per environment. Leaves that are uint32 PRNG words are stored bit for bit as int32.
+The [state](../terms.md#state) has three leaves, one for each dtype: `craftax/bool`, `craftax/float32` and `craftax/int32` (`craftax_classic/...` for the Classic classes), with one row per environment. Each field is a slice of one of them. The fields are each leaf of the upstream `EnvState` under `engine`, such as `engine/player_health`, the variation values of the environment under `physics`, such as `physics/zombie/health`, and the wrapper's PRNG key, `key`. Fields that are uint32 PRNG words are stored bit for bit as int32. Read a field with `snv.get_field(state, "engine/player_health")` and write a field with `snv.set_field`.
 
 ## Rendering
 

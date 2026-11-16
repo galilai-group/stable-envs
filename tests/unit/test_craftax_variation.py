@@ -7,6 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from tests.helpers.reference.semantics import assert_same_state
 
 jax = pytest.importorskip("jax")
@@ -79,7 +80,7 @@ def test_per_lane_values_step_as_upstream_steps_with_those_params(name):
             assert_lane(state, lane, engine, key)
             lanes.append([engine, key, step])
         for path, column in values.items():
-            stored = state[("physics", *path.split("."))].reshape(-1).double().numpy()
+            stored = get_field(state, f"physics.{path}").reshape(-1).double().numpy()
             np.testing.assert_allclose(stored, np.asarray(column, np.float32), rtol=0, atol=0, err_msg=path)
         for action in actions(env, 12, SEED):
             result = env.step(action, frames=None)
@@ -116,7 +117,7 @@ def test_values_outside_a_leaf_are_refused_by_set_state():
     with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
         state = env.reset(seed=SEED)
         before = env.get_state()
-        state["physics", "zombie", "health"][1] = 0
+        get_field(state, "physics/zombie/health")[1] = 0
         with pytest.raises(ValueError, match="physics.zombie.health"):
             env.set_state(state)
         assert_same_state(env.get_state(), before)
@@ -126,8 +127,9 @@ def test_a_state_without_its_values_is_refused_by_set_state():
     with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
         state = env.reset(seed=SEED)
         before = env.get_state()
-        with pytest.raises(ValueError, match="State is missing physics"):
-            env.set_state(state.exclude("physics"))
+        group = env._k.schema.slices["physics/zombie/health"].group
+        with pytest.raises(ValueError, match=f"missing the group '{group}'"):
+            env.set_state(state.exclude(tuple(group.split("/"))))
         assert_same_state(env.get_state(), before)
 
 
@@ -137,7 +139,7 @@ def test_sampled_values_stay_inside_their_leaves():
         state = env.reset(seed=SEED, options={"variation": paths})
         for path in paths:
             space = env.variation_space._walk(path)
-            value = state[("physics", *path.split("."))].reshape(-1).double().numpy()
+            value = get_field(state, f"physics.{path}").reshape(-1).double().numpy()
             low, high = (space.start, space.start + space.n - 1) if hasattr(space, "n") else (space.low, space.high)
             assert ((value >= low) & (value <= high)).all(), path
         rows = env.sample_variation(64)

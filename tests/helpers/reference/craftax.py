@@ -39,12 +39,15 @@ def upstream(reference_id: str):
 
 def assert_lane(state, lane: int, engine, key) -> None:
     """Lane ``lane`` of a State equals an upstream ``EnvState`` and wrapper key, leaf for leaf."""
+    from stable_envs import get_field
+
     for path, leaf in [*jax.tree_util.tree_flatten_with_path(engine)[0], ((), key)]:
-        name = ("engine", *(entry.name for entry in path)) if path else ("key",)
+        name = "/".join(("engine", *(entry.name for entry in path))) if path else "key"
         expected = np.asarray(leaf).reshape(-1)
         if expected.dtype == np.uint32:
             expected = expected.view(np.int32)
-        np.testing.assert_array_equal(state[name][lane].cpu().numpy(), expected, err_msg=".".join(name))
+        got = get_field(state, name)[lane].reshape(-1).cpu().numpy()
+        np.testing.assert_array_equal(got, expected, err_msg=name)
 
 
 def per_step(env):

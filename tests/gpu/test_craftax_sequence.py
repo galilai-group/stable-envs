@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 
 jax = pytest.importorskip("jax")
 pytest.importorskip("craftax")
@@ -37,7 +38,7 @@ def _pair(name: str):
     for env in (fused, stepped):
         state = env.reset(seed=SEED)
         # Lane 2 dies on its first step, so it holds its state and gives zero outputs after it.
-        state["engine", "player_health"][2] = 0
+        get_field(state, "engine/player_health")[2] = 0
         env.set_state(state)
     return fused, stepped
 

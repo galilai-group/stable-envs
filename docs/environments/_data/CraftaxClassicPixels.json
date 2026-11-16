@@ -22,21 +22,10 @@
  },
  "state": [
   {
-   "key": "engine",
-   "leaves": 49,
-   "numel": 8343,
+   "key": "craftax_classic",
+   "leaves": 3,
+   "numel": 8355,
    "dtypes": ["bool", "float32", "int32"]
-  },
-  {
-   "key": "physics",
-   "leaves": 10,
-   "numel": 10,
-   "dtypes": ["bool", "float32", "int32"]
-  },
-  {
-   "key": "key",
-   "shape": [2],
-   "dtype": "int32"
   }
  ],
  "variation": [

@@ -7,6 +7,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 
 jax = pytest.importorskip("jax")
 pytest.importorskip("craftax")
@@ -29,8 +30,8 @@ def test_a_lane_that_dies_and_a_lane_at_the_step_limit_end_as_upstream_ends_them
         reset, step = upstream(env.reference_id)
         lanes = [list(reset(jax.random.PRNGKey(SEED + lane))[1:]) for lane in range(LANES)]
         state = env.reset(seed=SEED)
-        state["engine", "player_health"][1] = 0
-        state["engine", "timestep"][2] = limit - 1
+        get_field(state, "engine/player_health")[1] = 0
+        get_field(state, "engine/timestep")[2] = limit - 1
         lanes[1][0] = lanes[1][0].replace(player_health=lanes[1][0].player_health * 0)
         lanes[2][0] = lanes[2][0].replace(timestep=lanes[2][0].timestep * 0 + limit - 1)
         env.set_state(state)
@@ -60,7 +61,7 @@ def test_finished_lanes_reuse_the_compiled_step():
         sequence = torch.as_tensor(actions(env, 3, SEED)).permute(1, 0, 2)
         env.step(sequence, frames=None)
         compiled = _compiled_steps(env)
-        state["engine", "player_health"][0] = 0
+        get_field(state, "engine/player_health")[0] = 0
         env.set_state(state)
         out = env.step(sequence, frames=None)
         assert not out["valid"][0, 1:].any()

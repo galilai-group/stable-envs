@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 
 pytest.importorskip("jax")
 pytest.importorskip("craftax")
@@ -36,7 +37,7 @@ def _pair(name):
     for env in (fused, stepped):
         state = env.reset(seed=SEED)
         # Lane 1 dies on its first step, so the rest of its sequence is padding.
-        state["engine", "player_health"][1] = 0
+        get_field(state, "engine/player_health")[1] = 0
         env.set_state(state)
     return fused, stepped
 
