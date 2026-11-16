@@ -286,3 +286,15 @@ def test_cuda_host_steps_reuse_the_transfer_plan():
         assert get_field(out["state"], "history/actions").shape[1] == int(width) == 7
         assert get_field(out["states"], "history/actions").shape[2] == 7
         env.set_state(state)
+
+
+def test_a_step_without_frames_keeps_the_key_order_of_a_step_with_frames():
+    with closing(PushT(num_envs=2, device="cpu", simulation_backend="numba")) as a, closing(
+        PushT(num_envs=2, device="cpu", simulation_backend="numba")
+    ) as b:
+        a.reset(seed=0)
+        b.reset(seed=0)
+        action = torch.zeros(2, 2)
+        lean, framed = a.step(action, frames=None), b.step(action)
+        assert list(lean["state"].keys(True, True)) == list(framed["state"].keys(True, True))
+        assert list(lean["state"].keys(True, True)) == list(a.get_state().keys(True, True))

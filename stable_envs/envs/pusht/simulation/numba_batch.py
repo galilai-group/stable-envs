@@ -142,9 +142,10 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         return self._host_state({key: groups[key] for key in self._moving}, kept)
 
     def _host_groups(self, history=None):
-        """``{leaf key: array}`` of the State: new arrays of the step-changed groups, and views of the others.
+        """``{leaf key: array}`` of the State, in State order.
 
-        Each step-changed group is gathered from ``(num_envs, -1)`` views of its fields, cut once per reset.
+        The step-changed groups are new arrays and the others are views. Each step-changed group is gathered from
+        ``(num_envs, -1)`` views of its fields, cut once per reset.
         """
         host = self._views()
         width = self._history_width()
@@ -158,7 +159,8 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         else:
             moving = self._groups.pack(self._state_fields(width), self._moving)
         kept = self._history_fields(width if history is None else history)
-        return {**self._static, **moving, **{name: kept[name] for name in self._groups.kept}}
+        leaves = {**self._static, **moving, **{name: kept[name] for name in self._groups.kept}}
+        return {key: leaves[key] for key in self._groups.order}
 
     def _export_plan(self, fields):
         """``{group key: [(num_envs, -1) view of each field]}`` of the step-changed groups; empty if a view copies."""
