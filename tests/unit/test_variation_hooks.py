@@ -356,10 +356,12 @@ def test_fetch_reset_restores_colors_and_mass():
         assert torch.equal(env.get_variation(), registered)
         np.testing.assert_array_equal(env._simulator.object_mass, mass)
         assert torch.equal(
-            env.get_state()["task", "initial_gripper_xpos"], fresh.get_state()["task", "initial_gripper_xpos"]
+            se.get_field(env.get_state(), "task/initial_gripper_xpos"),
+            se.get_field(fresh.get_state(), "task/initial_gripper_xpos"),
         )
         only_object = {"variation_values": {"object.color": np.array([0.1, 0.2, 0.3])}}
         assert torch.equal(
-            env.reset(seed=2, options=only_object)["qpos"], fresh.reset(seed=2, options=only_object)["qpos"]
+            se.get_field(env.reset(seed=2, options=only_object), "qpos"),
+            se.get_field(fresh.reset(seed=2, options=only_object), "qpos"),
         )
         assert torch.equal(env.get_variation(), fresh.get_variation())
