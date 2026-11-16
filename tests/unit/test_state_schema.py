@@ -126,6 +126,7 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
     "mshuman": (("mshuman",), []),
     "ogbench": (("maze", "joints"), []),
     "roadster": (("roadster_state",), []),
+    "craftax": (("craftax", "craftax_classic"), []),
 }
 
 FIELDS = [

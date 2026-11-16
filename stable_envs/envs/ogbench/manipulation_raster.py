@@ -21,7 +21,7 @@ from ...render import mujoco_raster as core
 from ...render import mujoco_scene as ms
 from ...render._resources import BoundedCache
 from .simulation import render_state as pixels
-from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
+from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, target_alpha
 
 _LOCK = threading.RLock()
 _RIGS = BoundedCache(32, name="ogbench.raster_rig", on_evict=lambda rig: rig.env.close())
@@ -53,7 +53,7 @@ class _Rig:
         self.family, self.env = family, env
         m, d = env.model, env.data
         for ids in env._cube_target_geom_ids_list:
-            m.geom_rgba[ids, 3] = pixels.TARGET_ALPHA
+            m.geom_rgba[ids, 3] = target_alpha(env)
         if family == "Scene":
             env._cur_button_states = np.zeros(2, np.int64)
             env._apply_button_states()
@@ -86,7 +86,7 @@ class _Rig:
             m.material(material).rgba[:3] = np.frombuffer(agent, np.float32)
         env._cube_colors_from_variation()
         for ids in env._cube_target_geom_ids_list:
-            m.geom_rgba[ids, 3] = pixels.TARGET_ALPHA
+            m.geom_rgba[ids, 3] = target_alpha(env)
         if self.family == "Scene":
             from .manipulation_opengl import _apply_render_button_colors
 
