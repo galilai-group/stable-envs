@@ -12,7 +12,7 @@ from tests.helpers.reference.semantics import assert_same_state
 
 
 class Instances(SimulatorAdapter):
-    """Environments that add a scaled action to a position and count their own steps."""
+    """Instances that add a scaled action to a position and count their own steps."""
 
     process_methods = {"scale": PER_INSTANCE, "total": BROADCAST, "offset": BROADCAST}
     process_attributes = ("action_dim",)
@@ -48,7 +48,7 @@ class Instances(SimulatorAdapter):
     def check_step(self, actions, active):
         actions = np.asarray(actions)
         if actions.shape != (self.num_envs, 1) or not np.isfinite(actions).all():
-            raise ValueError("Environments action must have finite shape (num_envs, 1)")
+            raise ValueError("Instances action must have finite shape (num_envs, 1)")
         return actions, None if active is None else np.asarray(active, bool)
 
     def step(self, actions, *, active=None, capture_state=True):
@@ -112,7 +112,7 @@ def test_rejected_environment_restores_no_environment():
         bad["position"][2] = float("nan")
         with pytest.raises(ValueError, match="Invalid State field"):
             adapter.set_state(bad)
-        with pytest.raises(TypeError, match="Environments requires full TensorDict State"):
+        with pytest.raises(TypeError, match="Instances requires full TensorDict State"):
             adapter.set_state(adapter.get_state()[:2])
         assert not adapter._closed and adapter._pending is None
     finally:
@@ -149,7 +149,7 @@ def test_capture_state_skips_the_snapshot_and_requests_are_exclusive():
         held = result.clone()
         adapter.step(np.ones((4, 1)))
         assert_same_state(result, held)
-        with pytest.raises(RuntimeError, match="No Environments step in flight"):
+        with pytest.raises(RuntimeError, match="No Instances step in flight"):
             adapter.receive_step()
         with pytest.raises(ValueError, match="action must have finite shape"):
             adapter.step(np.ones((3, 1)))
