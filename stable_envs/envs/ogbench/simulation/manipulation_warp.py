@@ -576,6 +576,12 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         self._check_open()
         return self._layout.export(self._state_values(), self.device)
 
+    def render_columns(self):
+        from .render_state import projected_keys
+
+        state = self.get_state()
+        return {key: self.schema.get(state, key).detach().cpu().numpy() for key in projected_keys(self.family)}
+
     def configure(self, values):
         self._check_open()
         self._push()

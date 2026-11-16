@@ -127,7 +127,7 @@ The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and 
 - CPU OpenGL rendering refuses a hardware GL context. For `backend="opengl"`, configure [Mesa software OpenGL](../install.md#what-each-family-needs) before you import MuJoCo.
 - The default `supersample` is 1 on every device. An explicit `supersample` argument keeps its value, and so does the sampling setting stored in a render state you pass in.
 - `backend="mjwarp"` needs CUDA.
-- On Linux, a batch of states draws in OpenGL [worker processes](../performance-tuning.md#worker-processes), at most `ogb_gl_workers`. On CPU, the workers start when there are at least 2 of them and at least as many states as workers. On CUDA, there is one worker for every 8 states, and the workers start from 16 states. The frames are the same as from one process.
+- On Linux, a batch of states draws in OpenGL [worker processes](../performance-tuning.md#worker-processes), at most `ogb_gl_workers`. On CPU, the workers start when there are at least 2 of them and at least as many states as workers. On CUDA, there is one worker for every 8 states, and the workers start from 16 states. On CPU, the frames are the same as from one process. On CUDA, each worker has its own OpenGL context, so the frames can differ from one process by the driver variation in the table above: a pixel can change by 1 level, and the mean squared difference was below 2e-3 (on the 0-255 scale) on RTX A5000 and A5500 hosts.
 - `light.intensity`, `camera.angle_delta`, `cube.size` and Scene `lock_color` are per-world inputs to one MJWarp context per family. Changing them adds no contexts or compiled models.
 
 ## Variation

@@ -396,8 +396,10 @@ class OGBManipulationBatchAdapter:
         return {**self._live, **self.schema.pack(physics, self._physics_groups)}
 
     def render_columns(self):
+        """Host copies of the State leaves a frame reads, with the State's dtypes and shapes, without a State."""
         from .render_state import projected_keys
 
+        self._check_open()
         values = self._state_values()
         return {name: self.schema.get(values, name).copy() for name in projected_keys(self.family)}
 

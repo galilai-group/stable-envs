@@ -6,7 +6,8 @@ Set a knob for one block with `snv.tuning.override(...)`, or for the whole proce
 
 ## What to sweep
 
-- Out of GPU memory: lower `dmc_ray_budget`, `nvd_budget_bytes`, `dmc_launch_rays`, `fetch_mjw_worlds`, `ogb_mjw_worlds` or `ogb_context_cache_bytes`.
+- Out of GPU memory: lower `dmc_ray_budget`, `dmc_graph_rows`, `nvd_budget_bytes`, `dmc_launch_rays`, `fetch_mjw_worlds`, `ogb_mjw_worlds` or `ogb_context_cache_bytes`.
+- Slow CUDA rendering of small batches of the fixed-camera DM Control classes: try `dmc_graph_rows`. Its default, 48, was chosen from timings on an RTX 3090 host and an RTX A5000 host on 15 November 2026.
 - Slow CPU rendering of DM Control: try `dmc_cpu_ray_budget` (fixed-camera classes) in powers of two; smaller chunks stay in the CPU cache. With `backend="torch"`, also try `cpu3d_chunk` (body-tracking classes).
 - Slow CPU stepping: try `workers` between 0 and the number of cores, and `worker_min_lanes` for small batches. For DM Control, try `dmc_threads` between 1 and the number of cores, and for Fetch with `simulation_backend="source"` when it steps without worker processes, `fetch_threads`.
 - Several DM Control environments in one process, or one beside data-loader workers: set `dmc_threads` so that all their threads fit in the CPU affinity.
