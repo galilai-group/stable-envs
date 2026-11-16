@@ -118,7 +118,7 @@ class Monitor(threading.Thread):
 
     def __init__(self):
         super().__init__(daemon=True)
-        self.records, self._stop = [], threading.Event()
+        self.records, self._halt = [], threading.Event()
 
     def run(self):
         import psutil
@@ -132,7 +132,7 @@ class Monitor(threading.Thread):
             self.records.append({"t": time.time(), "nvml_error": repr(e)})
             return
         me, last_ts, last_pts = psutil.Process(), 0, 0
-        while not self._stop.is_set():
+        while not self._halt.is_set():
             t = time.time()
             rec: dict = {"t": t}
             try:
@@ -154,10 +154,10 @@ class Monitor(threading.Thread):
                 for u in pu
             ]
             self.records.append(rec)
-            self._stop.wait(max(0.0, 1.0 - (time.time() - t)))
+            self._halt.wait(max(0.0, 1.0 - (time.time() - t)))
 
     def stop(self):
-        self._stop.set()
+        self._halt.set()
         self.join(5)
 
 
