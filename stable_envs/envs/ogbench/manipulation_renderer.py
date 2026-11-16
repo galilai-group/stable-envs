@@ -54,15 +54,20 @@ def _groups(host, names):
     return list(keys), first, group
 
 
-def configured_bundle(family, sample_pattern="grid"):
-    """Compile the family's render model once, at default configuration."""
+def configured_bundle(family, sample_pattern="grid", opacity=0.0):
+    """Compile the family's render model once per ``agent.opacity``, at default configuration otherwise."""
     token = f"stable-envs-{family}" + ("" if sample_pattern == "grid" else "/" + sample_pattern)
+    if opacity != 0.0:
+        token += f"/opacity={float(opacity)!r}"
     with _LOCK:
         bundle = core.get_bundle(token)
         if bundle is None:
             import mujoco
 
-            env = pixels.build_model(family)
+            row = None
+            if opacity != 0.0:
+                row = {("appearance", "agent.opacity"): torch.tensor([float(opacity)], dtype=torch.float64)}
+            env = pixels.build_model(family, row, ("agent.opacity",) if row else None)
             if int(env.model.joint("object_joint_0").qposadr[0]) != pixels.OBJECT_QPOS_ADR:
                 raise ValueError(f"{family}: object_joint_0 has an unexpected qpos address")
             fixed = mujoco.mjtCamLight.mjCAMLIGHT_FIXED
@@ -82,11 +87,12 @@ class _View:
 
 def _view(family, bundle, host, index, value):
     """Camera and light arrays of a configuration, from its own compile at default cube size."""
-    key = (family, value)
+    opacity = host["appearance", "agent.opacity"][index].numpy().tobytes()
+    key = (family, value, opacity)
     hit = _VIEWS.get(key)
     if hit is not None:
         return hit
-    env = pixels.build_model(family, host[index], VIEW)
+    env = pixels.build_model(family, host[index], (*VIEW, "agent.opacity"))
     try:
         changed = [
             name
@@ -292,11 +298,19 @@ def render(family, state, device, backend="auto", chunk_size=None, validated=Fal
         raise ValueError("chunk_size must be a positive integer")
     size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
     result = torch.empty((len(state), size, size, 3), dtype=torch.uint8, device=device)
+    opacity = host["appearance", "agent.opacity"].numpy()[:, 0]
+    values = np.unique(opacity)
+    if len(values) > 1:
+        # Each agent.opacity has its own compiled bundle, since the arm alphas select the transparent passes.
+        for value in values:
+            rows = torch.as_tensor(np.flatnonzero(opacity == value))
+            result[rows.to(device)] = render(family, state[rows], device, backend, chunk_size, validated)
+        return result
     # Shared caches hold mutable render buffers; serialize callers.
     wp = require_warp_cuda("OGBench manipulation GPU rendering")
     with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
         pattern = "gl4" if family == "Scene" and backend == "mjwarp_fidelity" and ss == 2 else "grid"
-        token, bundle = configured_bundle(family, pattern)
+        token, bundle = configured_bundle(family, pattern, float(values[0]))
         worlds = _worlds(family, token, bundle, host, device)
         limit = chunk_size or len(state)
         active = set()

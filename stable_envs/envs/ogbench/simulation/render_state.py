@@ -66,6 +66,7 @@ def fields(family):
         ("pose", "mocap_quat"): ((4,), torch.float64),
         ("appearance", "cube.size"): ((1,), torch.float64),
         ("appearance", "agent.color"): ((3,), torch.float64),
+        ("appearance", "agent.opacity"): ((1,), torch.float64),
         ("appearance", "camera.angle_delta"): ((1, 2), torch.float64),
         ("appearance", "light.intensity"): ((1,), torch.float64),
         ("appearance", "floor.color"): ((2, 3), torch.float64),
@@ -94,7 +95,7 @@ def header(family, b, size, supersample, device):
 def sources(family):
     """The State field each RenderState leaf of ``project`` copies, keyed by the RenderState leaf."""
     result = {("pose", name): field("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")}
-    for name in (*STATIC, "agent.color", "floor.color"):
+    for name in (*STATIC, "agent.color", "agent.opacity", "floor.color"):
         result["appearance", name] = field("model", "compiled", name)
     result["appearance", "cube.color"] = field("variation", "current", "cube.color")
     if family == "Scene":
@@ -201,6 +202,7 @@ def validate(family, state, labels=None):
     for name in (
         "cube.color",
         "agent.color",
+        "agent.opacity",
         "floor.color",
         "light.intensity",
         *(("lock_color",) if family == "Scene" else ()),
@@ -258,6 +260,7 @@ def _validate_host(family, state, schema, labels=None):
     for name in (
         "cube.color",
         "agent.color",
+        "agent.opacity",
         "floor.color",
         "light.intensity",
         *(("lock_color",) if family == "Scene" else ()),
