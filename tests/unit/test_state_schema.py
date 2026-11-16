@@ -310,3 +310,32 @@ def test_raw_field_access_finds_the_indexing_forms(tmp_path):
         )
     )
     assert [line.rsplit(":", 1)[1] for line in raw_field_access([source], ["current"])] == ["1", "3", "4"]
+
+
+def test_a_saved_state_resolves_in_a_new_process_that_declares_its_schema(tmp_path):
+    """``schema_of`` needs no metadata in the State: a process that declares the same layout reads a loaded State."""
+    import subprocess
+    import sys
+
+    values = _values(3)
+    torch.save(_schema().fold(values, [3]), tmp_path / "state.pt")
+    child = f"""
+import sys, torch
+sys.path.insert(0, {str(ROOT)!r})
+from stable_envs import get_field, schema_of
+from tests.unit.test_state_schema import _schema
+state = torch.load({str(tmp_path / "state.pt")!r}, weights_only=False)
+try:
+    get_field(state, "t/pose")
+    raise SystemExit("a State resolved before its schema was declared")
+except KeyError as error:
+    assert "declared in this process" in str(error)
+schema = _schema()
+assert schema_of(state) == schema
+torch.save({{name: get_field(state, name) for name in schema.names}}, {str(tmp_path / "fields.pt")!r})
+"""
+    result = subprocess.run([sys.executable, "-c", child], capture_output=True, text=True, timeout=300)
+    assert result.returncode == 0, result.stderr[-2000:]
+    fields = torch.load(tmp_path / "fields.pt", weights_only=False)
+    for name, value in values.items():
+        _same(fields[name], value)

@@ -29,7 +29,9 @@ Adoption
        )
 
    A layout that depends on the configuration (for example on a shape count) declares a schema per
-   configuration. Equal declarations share one registry entry.
+   configuration. Equal declarations share one registry entry. ``schema_of`` finds only declared schemas, and a
+   State loaded from disk carries no schema. So declare the schema when the module loads, or, for a layout that
+   depends on the configuration, when the environment is built, for every layout that a saved State can have.
 
 2. Keep the live simulator state in group buffers and write kernels into them. Cut the field views once, when
    the buffers are made, not on every step::
@@ -596,7 +598,10 @@ def get_field(state: TensorDictBase, name: str) -> torch.Tensor:
         return schema.get(state, name)
     value = state.get(_path(name.replace(".", "/")), None)
     if not torch.is_tensor(value):
-        raise KeyError(f"State has no field {name!r}")
+        raise KeyError(
+            f"State has no field {name!r}, and its leaves match no StateSchema declared in this process; "
+            "build the environment that made the State first"
+        )
     return value
 
 
