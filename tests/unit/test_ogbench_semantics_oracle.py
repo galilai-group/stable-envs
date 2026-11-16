@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs._core.state_schema import get_field
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from tests.helpers.reference.semantics import compare_state
 
@@ -55,12 +56,12 @@ def test_ogbench_maze_adapter_isolates_legacy_rng_and_validates_before_mutation(
         assert _np_state_equal(outside, np.random.get_state())
         saved = env.get_state()
         incomplete = saved.clone()
-        del incomplete["rng", "env_state"]
-        with pytest.raises(ValueError, match="Full State missing"):
+        del incomplete[next(iter(env.schema.groups.values())).path]
+        with pytest.raises(ValueError, match="missing"):
             env.set_state(incomplete)
         compare_state(env.get_state(), saved)
         invalid = saved.clone()
-        invalid["task", "id"][2, 0] = 99
+        get_field(invalid, "task/id")[2, 0] = 99
         with pytest.raises(ValueError, match="Invalid OGBench task id"):
             env.set_state(invalid)
         compare_state(env.get_state(), saved)
