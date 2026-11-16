@@ -125,3 +125,32 @@ def test_row_kernel_draws_the_frame_kernel_bytes():
         navdot_cpu._frames(plates, idx, pos, sigma, colour, by_frame)
         navdot_cpu._frames_by_rows(plates, idx, pos, sigma, colour, by_rows)
         assert np.array_equal(by_frame, by_rows), (B, ND)
+
+
+@pytest.mark.parametrize("per_lane", [False, True], ids=["shared", "per-lane"])
+@pytest.mark.parametrize("cfg", ["TwoRoom", "TwoRoomTarget"])
+def test_sequence_frames_are_the_renders_of_the_states(cfg, per_lane):
+    """A step draws the frames of all its actions in one call; each is the render of its State."""
+    with se.make(cfg, num_envs=5, device="cpu") as env:
+        env.reset(seed=4)
+        if per_lane:
+            env.set_variation({"agent.radius": torch.tensor([[7.0], [9.0], [11.0], [13.0], [14.0]])})
+        actions = torch.as_tensor(np.random.default_rng(1).uniform(-1, 1, (5, 9, 2)), dtype=torch.float32)
+        out = env.step(actions, states=slice(None), frames=slice(None))
+        want = torch.stack([env.render(out["states"][:, t]) for t in range(9)], 1)
+        assert torch.equal(out["frames"], want)
+        every_other = env.step(actions[:, :5], states=slice(None), frames=slice(0, None, 2))
+        want = torch.stack([env.render(every_other["states"][:, t]) for t in (0, 2, 4)], 1)
+        assert torch.equal(every_other["frames"], want)
+
+
+def test_kept_frames_are_not_reused():
+    """The frame buffer of a step is reused only after no tensor holds it."""
+    with se.make("TwoRoom", num_envs=3, device="cpu") as env:
+        env.reset(seed=0)
+        actions = torch.ones((3, 1, 2))
+        first = env.step(actions, states=None, frames=slice(None))["frames"]
+        kept = first.clone()
+        second = env.step(actions, states=None, frames=slice(None))["frames"]
+        assert first.data_ptr() != second.data_ptr()
+        assert torch.equal(first, kept)

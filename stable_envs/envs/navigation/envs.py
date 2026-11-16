@@ -1218,6 +1218,25 @@ class _TwoRoomBase(_TorchNavBase):
         "door.size",
     )
 
+    def _render_frame_rows(self, rows: torch.Tensor) -> torch.Tensor:
+        """Draw (B, F, state_dim) rows of the live lanes to (B, F, H, W, 3) frames in one render call.
+
+        The frames go straight into one buffer, without a copy per action. On the CPU the buffer is the memory of a
+        previous step's frames once no tensor uses it, so the renderer writes to pages that are already mapped.
+        """
+        from ..._core.stepping import _padded_buffer
+
+        b, f = rows.shape[:2]
+        if not bool(torch.isfinite(rows).all()):
+            check_states(self, rows.reshape(b * f, -1), f"{type(self).__name__}.render")
+        spares = self.__dict__.setdefault("_frame_buffers", {})
+        like = torch.empty(0, dtype=torch.uint8, device=self.device)
+        out = _padded_buffer(spares, "frames", like, (b, f, IMG, IMG, 3))
+        style = self._style
+        if f == 1 or style.shared:
+            return self._render_checked(rows, out=out)
+        return self._render_checked(rows, style=style.values.repeat_interleave(f, 0), out=out)
+
     def _structure_space(self) -> dict:
         return {
             "background": Dict({"color": RGBBox(init_value=BG_C)}),
