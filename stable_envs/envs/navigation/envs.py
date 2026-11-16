@@ -9,7 +9,7 @@ from tensordict import TensorDict
 
 from ... import tuning
 from ..._core.state_layout import StateLayout
-from ..._core.tensordicts import build_tensordict, to_device
+from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution.backends import Rungs, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_states
 from ...registry import register
@@ -491,10 +491,23 @@ class _HiddenTargetSemantics:
                 agent_rows[lane] = self._option_position(options["state"], lane, self.B)
             if "target_state" in options:
                 target_rows[lane] = self._option_position(options["target_state"], lane, self.B)
-        self._set_render_state(np.stack(agent_rows))
-        self._target_position.copy_(torch.as_tensor(np.stack(target_rows), device=self.device))
+        if self.state_dim != 2:
+            self._set_render_state(np.stack(agent_rows))
+            self._target_position.copy_(torch.as_tensor(np.stack(target_rows), device=self.device))
+            self._live_rows = self.B
+            return self.get_state()
+        agent = check_states(self, np.stack(agent_rows), f"{type(self).__name__}.set_state", move=False)
+        leaves = [(("agent", "position"), agent.numpy()), (("target", "position"), np.stack(target_rows))]
+        leaves = [(key, value.astype(np.float32, copy=False)) for key, value in leaves]
+        if self.device.type == "cpu":
+            state = build_tensordict(leaf_tree(dict(leaves)), [self.B], self.device)
+        else:
+            # The State moves in one copy; the live rows and target come from it, with no host wait.
+            state = pack_to_device(leaves, (self.B,), self.device)
+        self._render_state.copy_(state["agent", "position"])
+        self._target_position.copy_(state["target", "position"])
         self._live_rows = self.B
-        return self.get_state()
+        return state
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
@@ -550,45 +563,84 @@ class _HiddenTargetSemantics:
         # the public get_state() validation would synchronize CUDA every step.
         return self._outputs(self._full_state(self._render_state))
 
-    def _numba_step(self, action, active):
+    @torch.no_grad()
+    def _host_step(self, action, move):
+        """Step with Numba and hand the host arrays to ``move``, which puts them on the device in one copy.
+
+        ``move({key path: array})`` returns the step result and the moved State. None when this env doesn't step
+        with Numba.
+        """
+        if self.simulation_backend != "numba":
+            return None
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        return self._numba_step(act, None, move)
+
+    def _steps_on_host(self) -> bool:
+        """Whether a step of several actions advances host copies of the lanes and moves its result once."""
+        return self.simulation_backend == "numba" and self.device.type != "cpu"
+
+    @torch.no_grad()
+    def _host_advance(self, action, *, active=None, capture_state=True):
+        """``_step`` on the host copies of the lanes: the actions, the mask and the result stay on the CPU.
+
+        The result always holds the State, which the kernel builds anyway. The device rows are behind until
+        ``_end_host_steps``.
+        """
+        self._check_open("step")
+        act = torch.as_tensor(action, dtype=torch.float32).reshape(self.B, self.action_dim)
+        return self._numba_step(act, active, host=True)
+
+    def _end_host_steps(self):
+        """Put the rows that ``_host_advance`` advanced on the device."""
+        hit = self.__dict__.get("_host_arrays", {}).get("rows")
+        if hit is not None and hit[0] is self._render_state and hit[1] == self._render_state._version:
+            self._render_state.copy_(torch.from_numpy(hit[2]))
+            self._host_arrays["rows"] = (self._render_state, self._render_state._version, hit[2])
+
+    def _numba_step(self, action, active, move=None, host=False):
         """Advance the lanes and build state and task outputs in one Numba call.
 
-        On an accelerator the call runs on host copies; the new rows and the outputs move to the device after it.
+        On an accelerator the call runs on host copies. ``move`` builds the result from the host arrays when it is
+        given. With ``host``, the result stays on the CPU and the device rows are not updated.
         """
         from . import navstep_cpu
 
         inputs = self._numba_inputs(action, active)
         target = self._host_array("target", self._target_position)
         values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
-        agent, target, observation, proprio, state, goal_state, distance, terminated = map(torch.from_numpy, values)
+        agent, target, observation, proprio, state, goal_state, distance, terminated = values
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
-            observation = self._observation(agent, target)
+            observation = self._observation(torch.from_numpy(agent), torch.from_numpy(target)).numpy()
         n = self.B
-        host = self.device.type != "cpu"
-        result = build_tensordict(
-            {
-                "state": {"agent": {"position": agent}, "target": {"position": target}},
-                "reward": torch.zeros(n, dtype=torch.float64),
-                "terminated": terminated,
-                "truncated": torch.zeros(n, dtype=torch.bool),
-                "observation": observation,
-                "info": {
-                    "proprio": proprio,
-                    "state": state,
-                    "goal_state": goal_state,
-                    "distance_to_target": distance,
-                },
-            },
-            [n],
-            "cpu",
-        )
-        if not host:
+        leaves = {
+            ("state", "agent", "position"): agent,
+            ("state", "target", "position"): target,
+            ("reward",): np.zeros(n, np.float64),
+            ("terminated",): terminated,
+            ("truncated",): np.zeros(n, np.bool_),
+            ("observation",): observation,
+            ("info", "proprio"): proprio,
+            ("info", "state"): state,
+            ("info", "goal_state"): goal_state,
+            ("info", "distance_to_target"): distance,
+        }
+        if move is not None:
+            result, moved = move(leaves)
+        else:
+            result = build_tensordict(leaf_tree(leaves), [n], "cpu")
+            if host:
+                return result
+            if self.device.type != "cpu":
+                result = to_device(result, self.device)
+            moved = result["state"]
+        if self.device.type == "cpu":
+            # The kernel advanced the live rows in place.
             return result
-        result = to_device(result, self.device)
         rows = inputs[0]
         if self.state_dim == 2:
             # The rows are the agent positions, already on the device: a device copy, without a host wait.
-            self._render_state.copy_(result["state", "agent", "position"])
+            self._render_state.copy_(moved["agent", "position"])
         else:
             self._render_state.copy_(torch.from_numpy(rows))
         # The host rows already hold the new values: the next step reads them without a device copy.

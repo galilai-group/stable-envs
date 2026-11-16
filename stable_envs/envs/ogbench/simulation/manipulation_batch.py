@@ -270,10 +270,16 @@ class OGBManipulationBatchAdapter:
 
     def get_state(self):
         self._check_open()
+        return self._state_on(self.device)
+
+    def _state_on(self, device):
+        return self._layout.export(self._state_values(), device)
+
+    def _state_values(self):
         columns = dict(self._columns)
         for name, value in self._views.items():
             columns["physics", name] = (value != 0) if name == "eq_active" else value
-        return self._layout.export(columns, self.device)
+        return columns
 
     def render_columns(self):
         from .render_state import projected_keys
@@ -346,20 +352,34 @@ class OGBManipulationBatchAdapter:
         return actions, active
 
     def step(self, actions, *, active=None, capture_state=True):
+        result = self.step_host(actions, active=active, capture_state=capture_state)
+        # The State and the outputs move to the device in one copy.
+        return result if self.device.type == "cpu" else to_device(result, self.device)
+
+    def step_host(self, actions, *, active=None, capture_state=True):
+        """``step`` with the result on the CPU, for a caller that moves several steps to the device at once."""
         self._check_open()
         actions, active = self.check_step(actions, active)
         ids = self._all if active is None else np.flatnonzero(active)
         if len(ids):
             self._advance(actions if active is None else actions[ids], ids)
             self._stale = True
-        result = build_tensordict(
-            {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}, [self.num_envs], _CPU
-        )
-        if self.device.type != "cpu":
-            result = to_device(result, self.device)
+        result = {key: torch.from_numpy(value.copy()) for key, value in self._outputs.items()}
         if capture_state:
-            result = build_tensordict({**result, "state": self.get_state()}, [self.num_envs], self.device)
-        return result
+            result["state"] = self._state_on(_CPU)
+        return build_tensordict(result, [self.num_envs], _CPU)
+
+    def step_leaves(self, actions):
+        """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
+
+        The arrays may be live buffers: the caller copies them before the next call.
+        """
+        self._check_open()
+        actions, _ = self.check_step(actions, None)
+        self._advance(actions, self._all)
+        self._stale = True
+        outputs = {(key,): value for key, value in self._outputs.items()}
+        return {**outputs, **self._layout.host_leaves(self._state_values(), ("state",))}
 
     def _advance(self, actions, ids):
         c = self._columns

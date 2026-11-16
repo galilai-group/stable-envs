@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import build_tensordict, exclude_leaves, stack_leaves, to_device
+from .tensordicts import build_tensordict, exclude_leaves, new_node, pack_to_device, stack_leaves, to_device
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -205,6 +205,11 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True
 
 def _single_step(env, action, sequence, state_indices, final_state, advance):
     """One action without frames or a step pipeline: one transition, no masks to route and no history to stack."""
+    host_step = getattr(env, "_host_step", None)
+    if host_step is not None:
+        out = host_step(action, lambda leaves: _moved_leaves(env, leaves, sequence, state_indices, final_state))
+        if out is not None:
+            return out
     needs_state = final_state or state_indices is not None
     result = (env._step if needs_state else advance)(action)
     live_state = result.get("state", None) if needs_state else None
@@ -218,8 +223,7 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
         if sequence:
             # The outputs are a copy or owned: a time axis of views costs no copy and no device kernel.
             outputs = stack_leaves([outputs], view=True)
-    count = 1 + (state_indices is not None)
-    flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=env.device).unbind(0)
+    flags = _true_flags(env, 1 + (state_indices is not None), env.device)
     out = {"state": live_state} if final_state else {}
     out.update(outputs.items())
     out["valid"] = flags[0]
@@ -228,6 +232,73 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
         out["states"] = stack([live_state]) if state_indices else live_state.unsqueeze(1)[:, :0].clone()
         out["state_valid"] = flags[1] if state_indices else flags[1][:, :0]
     return build_tensordict(out, [env.num_envs], env.device)
+
+
+#: Bytes of all-true flags that one accelerator slab holds; a step takes a fresh slice of it.
+_FLAG_SLAB_BYTES = 64 * 1024
+
+
+def _true_flags(env, count, device):
+    """``count`` all-true ``(num_envs, 1)`` bool flags that no other result shares.
+
+    On an accelerator each call slices unused flags from a slab filled once, instead of a fill per step.
+    """
+    n = env.num_envs
+    if device.type == "cpu":
+        return torch.ones((count, n, 1), dtype=torch.bool).unbind(0)
+    slab = env.__dict__.get("_true_flag_slab")
+    if slab is None or slab[1] + count > len(slab[0]) or slab[2] != device:
+        rows = max(count, _FLAG_SLAB_BYTES // max(n, 1))
+        slab = env.__dict__["_true_flag_slab"] = [torch.ones((rows, n, 1), dtype=torch.bool, device=device), 0, device]
+    start = slab[1]
+    slab[1] = start + count
+    return slab[0][start : start + count].unbind(0)
+
+
+#: All-true ``(num_envs, 1)`` host flags per lane count; packing copies them, so the result never shares them.
+_HOST_TRUE: dict = {}
+#: ``copies`` of ``pack_to_device`` that give the ``states`` of one action from the State.
+_STATE_COPIES = (("state",), ("states",), ("state_valid",))
+
+
+def _moved_leaves(env, leaves, sequence, state_indices, final_state):
+    """The step result of host NumPy ``leaves`` on the device, from one copy, and the moved State.
+
+    ``leaves`` maps key paths to ``(num_envs, ...)`` arrays: the State under ``"state"`` and the task outputs. The
+    State is packed even when the result leaves it out, so the family can read the moved State.
+    """
+    n = env.num_envs
+    ones = _HOST_TRUE.get(n)
+    if ones is None:
+        ones = _HOST_TRUE[n] = np.ones((n, 1), np.bool_)
+    out, batches, state = [], [], []
+    for key, value in leaves.items():
+        if key[0] == "state":
+            state.append((key, value))
+        elif sequence:
+            out.append((key, value.reshape(n, 1, *value.shape[1:])))
+            if len(key) > 1:
+                batches.append((key[:1], (n, 1)))
+        else:
+            out.append((key, value))
+    out = state + out
+    out.append((("valid",), ones))
+    copies = None
+    if state_indices is not None:
+        width = len(state_indices)
+        if width == 1:
+            # The State of the one action: copies of the State leaves from the same transfer, in (B, 1, ...) shape.
+            copies = _STATE_COPIES
+        else:
+            out += [(("states", *key[1:]), value.reshape(n, 1, *value.shape[1:])[:, :width]) for key, value in state]
+        out.append((("state_valid",), ones[:, :width]))
+        batches.append((("states",), (n, width)))
+    moved = pack_to_device(out, (n,), env.device, tuple(dict.fromkeys(batches)), copies)
+    source = moved._tensordict
+    live = source["state"]
+    if not final_state:
+        moved = new_node({k: v for k, v in source.items() if k != "state"}, moved.batch_size, moved.device)
+    return moved, live
 
 
 def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
@@ -258,15 +329,19 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     all_active = True
     result, live_state, live_frame = None, None, None
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
-    # the end of the step; then the outputs move to the device.
-    host = _host_pipeline(env, pipeline)
+    # the end of the step; then the outputs move to the device. So does a family that steps host copies of an
+    # accelerator's lanes (``_steps_on_host``): its transitions stay on the host and the result moves in one copy.
+    host_steps = pipeline is None and env.device.type != "cpu" and getattr(env, "_steps_on_host", bool)()
+    host = host_steps or _host_pipeline(env, pipeline)
     work = torch.device("cpu") if host else env.device
+    if host_steps:
+        acts = acts.detach().cpu() if torch.is_tensor(acts) else acts
     # One action needs one all-true flag column per output; a single allocation serves them all.
     single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
     flags = None
     if single:
         count = 1 + (state_indices is not None) + (frame_indices is not None)
-        flags = torch.ones((count, env.num_envs, 1), dtype=torch.bool, device=work).unbind(0)
+        flags = _true_flags(env, count, work)
         active = flags[0].view(-1)
     else:
         active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
@@ -299,6 +374,12 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                     result = pipeline.receive_step(host=True) if host else pipeline.receive_step()
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
+            elif host_steps:
+                wanted = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
+                result = env._host_advance(
+                    acts[:, t] if sequence else acts, active=None if all_active else active, capture_state=wanted
+                )
+                live_state, live_frame = result.get("state", None), None
             elif all_active:
                 # A single step that needs its State exports it with the outputs, in one call.
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
@@ -341,6 +422,9 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
         if pending:
             pipeline.abort_step()
         raise
+    finally:
+        if host_steps:
+            env._end_host_steps()
 
     valid = flags[0] if single else torch.stack(validity, dim=1)
     out = {"state": live_state} if final_state else {}

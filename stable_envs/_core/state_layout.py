@@ -9,6 +9,7 @@ them once, and each export copies them with one copy per dtype. ``columns`` read
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Mapping, Sequence
 
@@ -16,7 +17,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import nested_builder, new_node
+from .tensordicts import nested_builder, new_node, to_device
 
 #: A leaf key: a tuple of names, or names joined by ``/``. ``export`` reads values under the key as declared.
 Key = tuple[str, ...] | str
@@ -31,10 +32,12 @@ def _path(key: Key) -> tuple[str, ...]:
 #: and reuse costs them more than it saves: the reused buffer needs a ``reshape`` per leaf and tensor views instead
 #: of NumPy slices (measured on a PushT State of 239 leaves and a DMC Reacher State of 14 leaves).
 _FRESH_PAGES = 128 * 1024
+_CPU = torch.device("cpu")
 #: Byte alignment of each dtype's buffer inside the pinned transfer buffer; a multiple of every dtype's size.
 _ALIGN = 16
 
 
+@functools.cache
 def _numpy_dtype(dtype: torch.dtype) -> np.dtype:
     return torch.empty((), dtype=dtype).numpy().dtype
 
@@ -59,6 +62,8 @@ class StateLayout:
         self.keys: tuple[Key, ...] = tuple(key for key, _, _ in leaves)
         self.shapes = {key: None if shape is None else (self.num_envs, *shape) for key, shape, _ in leaves}
         self.dtypes = {key: dtype for key, _, dtype in leaves}
+        self._kinds = {key: _numpy_dtype(dtype) for key, dtype in self.dtypes.items()}
+        self._host_plans: dict[tuple[str, ...], list] = {}
         groups: dict[torch.dtype, tuple[list[int], list[int]]] = {}
         for index, (key, _, dtype) in enumerate(leaves):
             groups.setdefault(dtype, ([], []))[key not in static].append(index)
@@ -132,6 +137,11 @@ class StateLayout:
         Values already on ``device`` are packed there.
         """
         device = torch.device(device)
+        fixed = all(sizes is not None for sizes in self._sizes)
+        if device.type == "cuda" and fixed and _on_host(values.values()) and _on_host(self._static.values()):
+            # Packed on the host, then one copy whose split into leaves is one call per dtype; a leaf whose width
+            # changes would need a new transfer plan for each width.
+            return to_device(self.export(values, _CPU), device)
         flats, layout = [], []
         for (dtype, kind, fixed, _, runs), keys, sizes in zip(
             self.groups, self._moving_keys, self._sizes, strict=True
@@ -186,6 +196,31 @@ class StateLayout:
         batch, where = self._batch, _recorded(flats, device)
         return self._build(leaves, lambda node: new_node(node, batch, where))
 
+    def host_leaves(self, values: Mapping[Key, torch.Tensor | np.ndarray], prefix: tuple[str, ...] = ()) -> dict:
+        """``{prefix + key path: array}`` of the current host ``values`` with the declared shapes and dtypes.
+
+        The arrays may share memory with ``values``; ``pack_to_device`` copies them at once. A layout with static
+        leaves has no such form.
+        """
+        if any(fixed for _, _, fixed, _, _ in self.groups):
+            raise RuntimeError("StateLayout.host_leaves needs a layout without static leaves")
+        plan = self._host_plans.get(prefix)
+        if plan is None:
+            plan = self._host_plans[prefix] = [
+                (key, (*prefix, *_path(key)), self._kinds[key], self.shapes[key]) for key in self.keys
+            ]
+        out = {}
+        for key, path, kind, shape in plan:
+            value = values[key]
+            if type(value) is not np.ndarray:
+                value = value.numpy() if torch.is_tensor(value) else np.asarray(value)
+            if value.dtype != kind:
+                value = value.astype(kind)
+            if shape is not None and value.shape != shape:
+                value = value.reshape(shape)
+            out[path] = value
+        return out
+
     def _buffer(self, dtype: torch.dtype, numel: int) -> torch.Tensor:
         """A flat host buffer that no earlier State still uses: a large new buffer costs page faults on each export."""
         if not _REUSE:
@@ -236,6 +271,10 @@ class StateLayout:
                 )
             out[key] = value
         return out
+
+
+def _on_host(values) -> bool:
+    return not any(torch.is_tensor(v) and v.device.type != "cpu" for v in values)
 
 
 def _free(buffer: torch.Tensor) -> bool:

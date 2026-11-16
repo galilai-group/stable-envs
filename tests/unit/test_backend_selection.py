@@ -2,12 +2,13 @@
 
 import functools
 
+import numpy as np
 import pytest
 import torch
 from tensordict import TensorDict
 
 from stable_envs import tuning
-from stable_envs._core.tensordicts import to_device
+from stable_envs._core.tensordicts import pack_to_device, stack_leaves, to_device
 from stable_envs._execution import backends
 from stable_envs._execution.host import HostAdapter
 
@@ -167,6 +168,89 @@ def test_to_device_keeps_the_leaves_already_on_the_device():
     assert to_device(only, "cuda")["x"] is on_device
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_to_device_returns_a_tensordict_already_on_the_device():
+    leaves = {"a": torch.ones(2, 3, device="cuda"), "b": {"c": torch.zeros(2, device="cuda")}}
+    td = TensorDict(leaves, [2], device="cuda")
+    assert to_device(td, "cuda") is td
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_to_device_keeps_the_batch_size_of_a_node_with_a_time_axis():
+    td = TensorDict({"a": torch.ones(2, 3), "states": {"x": torch.arange(4.0).reshape(2, 1, 2)}}, [2])
+    td["states"].batch_size = [2, 1]
+    moved = to_device(td, "cuda")
+    assert moved["states"].batch_size == torch.Size([2, 1])
+    assert torch.equal(moved["states", "x"].cpu(), td["states", "x"])
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_pack_to_device_owns_its_memory_and_later_packs_leave_it_alone():
+    a = np.arange(6, dtype=np.float32).reshape(2, 3)
+    flags = np.array([True, False])
+    nested = np.arange(4, dtype=np.float64).reshape(2, 1, 2)
+    leaves = [(("a",), a), (("info", "flag"), flags), (("states", "x"), nested), (("b",), a[:, :2])]
+    first = pack_to_device(leaves, (2,), "cuda", ((("states",), (2, 1)),))
+    assert first["states"].batch_size == torch.Size([2, 1]) and first["info"].batch_size == torch.Size([2])
+    a += 100
+    second = pack_to_device(leaves, (2,), "cuda", ((("states",), (2, 1)),))
+    torch.cuda.synchronize()
+    assert torch.equal(first["a"].cpu(), torch.arange(6, dtype=torch.float32).reshape(2, 3))
+    assert torch.equal(second["a"].cpu(), torch.from_numpy(a))
+    assert torch.equal(first["b"].cpu(), first["a"][:, :2].cpu())
+    assert first["info", "flag"].dtype == torch.bool and first["states", "x"].dtype == torch.float64
+    assert first["a"].untyped_storage().data_ptr() != second["a"].untyped_storage().data_ptr()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_pack_to_device_reuses_only_a_block_that_no_tensor_uses():
+    leaves = [(("x",), np.zeros((2, 3), np.float32)), (("y",), np.zeros(2, np.float64))]
+    first = pack_to_device(leaves, (2,), "cuda")
+    pointer = first["x"].data_ptr()
+    view = first["y"][:1]
+    del first
+    leaves[0][1][:] = 1
+    held = pack_to_device(leaves, (2,), "cuda")
+    assert held["x"].data_ptr() != pointer
+    del view
+    leaves[0][1][:] = 2
+    again = pack_to_device(leaves, (2,), "cuda")
+    assert again["x"].data_ptr() == pointer
+    assert torch.equal(again["x"].cpu(), torch.full((2, 3), 2.0)) and torch.equal(held["x"].cpu(), torch.ones(2, 3))
+    leaves[0][1][:] = 3
+    while_held = pack_to_device(leaves, (2,), "cuda")
+    assert while_held["x"].data_ptr() not in (pointer, held["x"].data_ptr())
+    assert torch.equal(again["x"].cpu(), torch.full((2, 3), 2.0))
+
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_stacking_one_packed_state_copies_it_once_into_new_storage(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    flat = torch.arange(10.0, device=device)
+    state = TensorDict(
+        {"p": flat[0:2].view(2, 1), "q": flat[2:4].view(2, 1), "r": {"s": flat[4:10].view(2, 3)}}, [2], device=device
+    )
+    stacked = stack_leaves([state])
+    assert stacked.batch_size == torch.Size([2, 1])
+    for key in state.keys(True, True):
+        assert torch.equal(stacked[key], state[key].unsqueeze(1))
+        assert stacked[key].untyped_storage().data_ptr() != flat.untyped_storage().data_ptr()
+    flat.zero_()
+    assert stacked["r", "s"].sum().item() == 4 + 5 + 6 + 7 + 8 + 9
+
+
+
+def test_stacking_one_packed_state_keeps_leaves_at_offsets_that_are_not_a_multiple_of_the_first():
+    raw = torch.zeros(40, dtype=torch.uint8)
+    raw[16:40].view(torch.float32).copy_(torch.arange(1.0, 7.0))
+    raw[3:6] = 1
+    state = TensorDict({"flag": raw[3:6].view(torch.bool), "x": raw[16:40].view(torch.float32).view(3, 2)}, [3])
+    stacked = stack_leaves([state])
+    assert torch.equal(stacked["x"], state["x"].unsqueeze(1))
+    assert torch.equal(stacked["flag"], state["flag"].unsqueeze(1))
+
+
 class _Adapter:
     num_envs = 2
     template = object()
@@ -185,3 +269,26 @@ def test_host_adapter_moves_arguments_to_the_host_and_results_to_the_device():
     assert out["reward"].tolist() == [2.0, 2.0]
     assert set(adapter.render_fields()) == {"a", "b"}
     assert adapter.template is _Adapter.template
+
+
+@pytest.mark.parametrize("device", ["cpu", pytest.param("cuda", marks=pytest.mark.gpu)])
+def test_pack_to_device_copies_the_state_under_states_with_a_time_axis(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA required")
+    leaves = [
+        (("state", "x"), np.arange(6, dtype=np.float32).reshape(2, 3)),
+        (("state", "n"), np.array([4, 5], np.int64)),
+        (("reward",), np.array([0.5, 1.5])),
+        (("state_valid",), np.ones((2, 1), np.bool_)),
+    ]
+    copies = (("state",), ("states",), ("state_valid",))
+    result = pack_to_device(leaves, (2,), device, ((("states",), (2, 1)),), copies)
+    assert list(result.keys()) == ["state", "reward", "states", "state_valid"]
+    assert result["states"].batch_size == torch.Size([2, 1])
+    for key in ("x", "n"):
+        state, states = result["state", key], result["states", key]
+        assert states.shape == (2, 1, *state.shape[1:])
+        assert torch.equal(states[:, 0], state)
+        assert states.data_ptr() != state.data_ptr()
+    result["state", "x"].zero_()
+    assert torch.equal(result["states", "x"][:, 0].cpu(), torch.arange(6.0).reshape(2, 3))
