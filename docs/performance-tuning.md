@@ -13,6 +13,7 @@ Set a knob for one block with `snv.tuning.override(...)`, or for the whole proce
 - Several DM Control environments in one process, or one beside data-loader workers: set `dmc_threads` so that all their threads fit in the CPU affinity.
 - Slow classic control CPU rendering without Numba, or slow Fetch (`backend="opengl"`), Miniworld, Roadster or `PyFlytRocketLanding` CPU rendering with `backend="pybullet"`: try `render_workers` between 0 and the number of cores, and `render_worker_min_rows` for small batches.
 - Numba render kernels (DM Control, classic control, navigation, Fetch and PushT on CPU) use one thread for each CPU in the process affinity. To use fewer, set `NUMBA_NUM_THREADS` before Numba is imported, that is, before you construct the environment.
+- `import stable_envs` sets `OMP_WAIT_POLICY=PASSIVE` when the variable is not set. Idle OpenMP threads of Torch and Numba then sleep instead of spin, so they do not delay the Numba parallel step on the same cores. To keep spinning threads, set `OMP_WAIT_POLICY=ACTIVE` before you start Python. OpenMP reads the variable when it starts, so if you import Torch and run an OpenMP operation before `import stable_envs`, the setting has no effect: import `stable_envs` first, or set the variable in the environment.
 - Triton kernels on a new GPU: try the `*_warps` knobs (1, 2, 4, 8) and the `*_block` knobs in powers of two.
 
 ## Worker processes
