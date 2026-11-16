@@ -1,14 +1,10 @@
 """PushT batches stepped by the JAX contact solver, on CUDA or on the JAX CPU backend."""
 
-import os
-
-import torch
-
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
-
 import jax
 import jax.dlpack
+import torch
 
+from ...._core import jax_runtime
 from .batch import PushTBatchAdapter
 from .jax_physics import advance
 
@@ -27,6 +23,7 @@ class PushTJaxAdapter(PushTBatchAdapter):
 
     def __init__(self, batch, device="cpu", seed=0, **kwargs):
         device = torch.device(device)
+        jax_runtime.prepare()
         if device.type == "cuda":
             try:
                 devices = jax.devices("gpu")

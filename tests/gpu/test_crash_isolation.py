@@ -46,32 +46,6 @@ def test_the_resource_guard_is_attached_to_the_classes_the_driver_goes_through()
     )
 
 
-def test_building_an_env_does_not_release_anything():
-    """Building, rendering and dropping an EGL-backed env releases no context or renderer.
-
-    ``GLContext.__del__`` calls ``free``, so dropping the last reference must not reach it.
-    """
-    cells = sorted(n for n, c in se.registry.REGISTRY.items() if "ogbench" in c.__module__)
-    if not cells:
-        pytest.skip("no EGL-backed env registered")
-    before = resource_guard.take()
-    env = se.make(
-        "PointMazeMediumNavigate" if "PointMazeMediumNavigate" in cells else cells[0], num_envs=2, device="cuda"
-    )
-    env._render(env.sample_states(2, rng=np.random.default_rng(0)))
-    del env
-    import gc
-
-    gc.collect()
-    d = resource_guard.delta(before)
-    assert d["context_freed"] == 0, (
-        f"building and dropping one env released {d['context_freed']} EGL context(s), which corrupts "
-        f"other live renderers in the process:\n"
-        f"{resource_guard.format_sites([s for s in d['sites'] if s[0].endswith('freed')])}"
-    )
-    assert d["renderer_closed"] == 0
-
-
 @pytest.mark.selftest
 def test_selftest_segfault_with_live_egl_contexts():
     """SIGSEGV while a real env and its GPU contexts are live; the supervisor must lose only this test."""
@@ -86,14 +60,3 @@ def test_selftest_abort_with_live_egl_contexts():
     env = se.make("PushT", num_envs=4, device="cuda")
     env._render(env.sample_states(4, rng=np.random.default_rng(0)))
     os.abort()
-
-
-@pytest.mark.selftest
-def test_selftest_releasing_a_real_egl_context_is_caught_as_a_failure():
-    """Expected to fail with ``EGL_CONTEXT_RELEASED``: frees a real EGL context through the driver.
-
-    A pass means the guard does not detect context release.
-    """
-    mujoco = pytest.importorskip("mujoco")
-    ctx = mujoco.egl.GLContext(64, 64)
-    ctx.free()

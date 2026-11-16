@@ -12,7 +12,7 @@ with snv.TwoRoom(num_envs=8, device="cpu") as env:
 
 ## Install
 
-TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. SimplePointMaze needs the `navigation` extra for Matplotlib, and so does Piecewise's `rendering.render_bias_field` leaf. The extra also installs Numba for the CPU kernels, and TwoRoom on CUDA needs the `navigation-gpu` extra.
+TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. SimplePointMaze needs the `navigation` extra for Matplotlib, and so does Piecewise's `rendering.render_bias_field` leaf. The extra also installs Numba for the CPU kernels, and TwoRoom on CUDA needs the `navigation-gpu` extra. When a JAX TwoRoom is built, stable-envs turns off JAX's GPU memory preallocation, so that Torch keeps its GPU memory. See [JAX GPU memory](../environment-variables.md#jax-gpu-memory).
 
 ## Task
 

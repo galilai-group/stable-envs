@@ -27,6 +27,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
+- stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` when it builds an environment that steps in JAX, before JAX starts, and no longer when it imports a JAX backend module. A value that you set is kept. If JAX already started on a GPU without the variable, stable-envs logs one warning with the fix. See [JAX GPU memory](https://galilai-group.github.io/stable-envs/environment-variables/#jax-gpu-memory).
 - CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 - On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and TwoRoom moves the result of a single step to the device in one copy: the state, the outputs, the `states` and the validity masks. PushT moves the outputs and the state of a single step without frames in one copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
@@ -36,6 +37,10 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - With `simulation_backend="auto"` on CUDA, PushT steps batches of fewer than 128 environments with Numba on the CPU and moves the outputs and the state of each step to the device, and larger batches with Triton.
 - PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
 - On CUDA, the `mujoco.batch` physics of Fetch, MS-Human and Roadster moves the outputs and the state of a step to the device in one copy. MS-Human converts the state to float32 before the copy.
+
+### Fixed
+
+- OpenGL contexts of OGBench environments are released. `env.close()` frees the shared OGBench renderers and stops the Cube and Scene OpenGL worker processes when the last environment closes, and interpreter exit frees any that remain before MuJoCo ends its EGL display. This removes the `EGLError` that `mujoco.Renderer.__del__` raised at exit.
 
 ## [0.1.0] - 2026-11-13
 

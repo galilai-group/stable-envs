@@ -1,9 +1,8 @@
 """Explicit ownership and accounting for renderer resources.
 
 Instances release exclusively owned buffers on close. Caches own shared values
-and choose whether eviction releases them. EGL/GL contexts remain alive for the
-process lifetime: destroying one can corrupt other live contexts on supported
-drivers. Foreign views also require their backing storage to outlive every use.
+and choose whether eviction releases them. EGL/GL contexts are owned through
+``stable_envs._core.mujoco_gl``. Foreign views require their backing storage to outlive every use.
 
 These helpers use only the standard library and can run without a GPU backend.
 """
@@ -150,7 +149,7 @@ class Closeable:
             )
 
     def _release(self) -> None:
-        """Release exclusively owned resources; leave shared caches and EGL contexts alive."""
+        """Release exclusively owned resources; leave shared caches alive."""
 
     def close(self) -> None:
         """Attempt release once, recording and re-raising any release failure."""

@@ -9,8 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..._core.mujoco_gl import mujoco_renderer
-from ...render._resources import retain_process_lifetime
+from ..._core.mujoco_gl import mujoco_renderer, release_gl
 from .simulation import render_state as pixels
 from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
@@ -72,11 +71,22 @@ def _renderer(family, row, resolution):
         vendor = GL.glGetString(GL.GL_VENDOR).decode()
         device = GL.glGetString(GL.GL_RENDERER).decode()
         entry = (env, renderer, vendor, device)
-        retain_process_lifetime(
-            entry, "Cube/Scene fidelity OpenGL context: releasing one invalidates other live contexts"
-        )
         _CACHE[key] = entry
     return _CACHE[key]
+
+
+def release_renderers() -> None:
+    """Release the cached OpenGL renderers; the next draw builds them again."""
+    with _LOCK:
+        entries = list(_CACHE.values())
+        _CACHE.clear()
+        _ENTRIES.clear()
+        # Keyed by id(env): a released env's id can return with a new env.
+        _APPLIED.clear()
+        _BUTTONS.clear()
+        _KINEMATICS.clear()
+    for _, renderer, _, _ in entries:
+        release_gl(renderer)
 
 
 def cluster_meshes(model, cell):

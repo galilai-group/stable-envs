@@ -14,15 +14,13 @@ masking, observations and task outputs remain in the shared navigation code.
 from __future__ import annotations
 
 import functools
-import os
 
+import jax
+import jax.dlpack
+import jax.numpy as jnp
 import torch
 
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
-
-import jax  # noqa: E402
-import jax.dlpack  # noqa: E402
-import jax.numpy as jnp  # noqa: E402
+from ..._core import jax_runtime
 
 try:
     from jax import enable_x64
@@ -95,6 +93,7 @@ class Kernel:
     def __init__(self, device, layout):
         if device.type not in ("cpu", "cuda"):
             raise ValueError("TwoRoom supports cpu or cuda devices")
+        jax_runtime.prepare()
         try:
             devices = jax.devices("gpu" if device.type == "cuda" else "cpu")
             self.device = devices[
