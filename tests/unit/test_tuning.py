@@ -337,4 +337,5 @@ def test_cache_changes_in_the_process_apply_at_the_next_call_without_a_stat(monk
     calls.clear()
     for _ in range(100):
         env.chunk()
+        tuning.sources_state("nav_render_chunk", "cpu")
     assert calls == []

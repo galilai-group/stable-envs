@@ -1011,10 +1011,17 @@ class _TorchNavBase(_GymReferencePort):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = int(s.shape[0])
+        # Rows that render() checked and left on the host are for the CPU renderer.
+        if self.device.type == "cpu":
+            host = False
+        else:
+            host = (s.device.type == "cpu" and states is self._checked_rows) or self._renders_on_host(n)
+        if not host:
+            s = s.to(self.device)
         t = int(size or self.size)
         if t != self.native_size:
             raise ValueError(
@@ -1037,7 +1044,7 @@ class _TorchNavBase(_GymReferencePort):
             img = out.view(n, IMG, IMG, 3)
         else:
             img = None
-        if host_render.on_host(self, "navigation", n, self.backend):
+        if host:
             img = host_render.draw_rows(self, s, sty, IMG, 1, img)
             return img.view(*lead, IMG, IMG, 3) if lead else img
         if img is None:
@@ -1052,6 +1059,9 @@ class _TorchNavBase(_GymReferencePort):
             if part is not dst:
                 dst.copy_(part)
         return img.view(*lead, IMG, IMG, 3) if lead else img
+
+    def _renders_on_host(self, rows: int) -> bool:
+        return host_render.on_host(self, "navigation", rows, self.backend)
 
     def _numba_dots(self) -> bool:
         """Draw CPU dots with the Numba compositor; ``backend="torch"`` selects the Torch path."""

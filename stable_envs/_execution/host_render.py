@@ -101,17 +101,41 @@ def draw_rows(
     """
     n = int(rows.shape[0])
     values = style.values
-    if rows.dtype == values.dtype and rows.device == values.device:
+    if rows.device.type == "cpu":
+        values = _host_values(env, values)
+    elif rows.dtype == values.dtype and rows.device == values.device:
         both = torch.cat((rows, values.reshape(n, -1)), 1).cpu()
         rows, values = both[:, : rows.shape[1]], both[:, rows.shape[1] :]
     else:
         rows, values = rows.cpu(), values.cpu()
     host = StyleTensor(values, style._layout_list(), shared=style._shared)
     frames = pinned((n, size, size, 3))
-    drawn = _twin(env)._render(rows, size=size, supersample=supersample, style=host, out=frames)
+    # The rows were checked by the call on the device; the CPU copy draws them without a second scan.
+    drawn = _twin(env)._render_checked(rows, size=size, supersample=supersample, style=host, out=frames)
     if drawn is not frames and drawn.data_ptr() != frames.data_ptr():
         frames.copy_(drawn.reshape(frames.shape))
     return upload(frames, env.device, out)
+
+
+def _host_values(env, values: torch.Tensor) -> torch.Tensor:
+    """A host copy of appearance ``values``, kept on ``env`` until the values change in place or move.
+
+    The cache holds the device tensor, so its memory is not reused by another tensor while the copy is kept.
+    """
+    if values.device.type == "cpu":
+        return values
+    hit = env.__dict__.get("_host_style")
+    if (
+        hit is not None
+        and hit[0].data_ptr() == values.data_ptr()
+        and hit[0].shape == values.shape
+        and hit[0].stride() == values.stride()
+        and hit[1] == values._version
+    ):
+        return hit[2]
+    host = values.cpu()
+    env.__dict__["_host_style"] = (values, values._version, host)
+    return host
 
 
 def draw_into(shape: tuple[int, ...], device: torch.device, draw: Callable[[torch.Tensor], torch.Tensor], out=None):

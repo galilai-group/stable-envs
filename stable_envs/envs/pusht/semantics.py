@@ -313,7 +313,8 @@ class PushT(Env):
 
     def _render_live(self):
         if self.device.type == "cuda" and self._cpu_port(self.size, self.B):
-            live = self._simulator.render_fields()
+            # A host simulator's fields stay on the host for the CPU renderer.
+            live = getattr(self._simulator, "host_adapter", self._simulator).render_fields()
             keys = ["/".join(key) for key, _, _ in self._render_fields]
             devices = {k: live[k] for k in keys if torch.is_tensor(live[k])}
             host = _host_arrays(devices)

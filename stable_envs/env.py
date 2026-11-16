@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -111,6 +112,8 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
 
 def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
     """Describe nonfinite rows and named columns, or return None when all values are finite."""
+    if s.device.type == "cpu" and s.dtype in (torch.float32, torch.float64) and np.isfinite(s.detach().numpy()).all():
+        return None
     bad = ~torch.isfinite(s)
     if not bool(bad.any()):
         return None
@@ -678,7 +681,18 @@ class Env:
                 f"{type(self).__name__}.render: got {type(rows).__name__}; {reason}. "
                 f"render accepts {self._render_forms()}."
             )
-        return check_states(self, rows, f"{type(self).__name__}.render", leading=True)
+        owner = f"{type(self).__name__}.render"
+        shape = rows.shape if isinstance(rows, (torch.Tensor, np.ndarray)) else None
+        if self.device.type != "cpu" and shape and shape[-1] == self.state_dim > 0:
+            if self._renders_on_host(math.prod(shape) // int(self.state_dim)):
+                # The CPU renderer reads the rows on the host: they stay there, and the scan runs on the host.
+                host = rows.cpu() if torch.is_tensor(rows) else rows
+                return check_states(self, host, owner, leading=True, move=False)
+        return check_states(self, rows, owner, leading=True)
+
+    def _renders_on_host(self, rows: int) -> bool:
+        """Whether ``rows`` frames on this device draw with the CPU renderer of the class."""
+        return False
 
     def _get_render_state(self) -> torch.Tensor:
         """Return a view of live compact rows, excluding unused buffer capacity."""

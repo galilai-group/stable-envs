@@ -46,3 +46,14 @@ def test_simple_point_maze_render_skips_restore_only_fields():
         se.get_field(bad, "goal.position")[0, 0] = float("inf")
         with pytest.raises(ValueError, match="goal.position contains non-finite"):
             env.render(bad)
+
+
+def test_rows_that_require_grad_render_and_nonfinite_ones_are_refused():
+    with se.make("TwoRoom", num_envs=2, device="cpu") as env:
+        env.reset(seed=1)
+        rows = env.sample_states(2)
+        assert torch.equal(env.render(rows.clone().requires_grad_()), env.render(rows))
+        bad = rows.clone()
+        bad[0, 0] = float("nan")
+        with pytest.raises(ValueError, match="NaN"):
+            env.render(bad.requires_grad_())

@@ -108,3 +108,20 @@ def test_render_writes_into_out():
         got = env.render(state, out=out)
         assert got.data_ptr() == out.data_ptr()
         assert torch.equal(out, env.render(state))
+
+
+def test_row_kernel_draws_the_frame_kernel_bytes():
+    """A batch smaller than the thread count splits rows across threads; the bytes do not change."""
+    from stable_envs.envs.navigation import navdot_cpu
+
+    rng = np.random.default_rng(0)
+    for B, ND in ((1, 1), (3, 2), (5, 1)):
+        plates = rng.integers(0, 255, (2, 224, 224, 3), dtype=np.uint8)
+        idx = rng.integers(0, 2, B).astype(np.int64)
+        pos = rng.uniform(-20, 244, (B, ND, 2)).astype(np.float32)
+        sigma = rng.uniform(0.0, 25.0, (B, ND)).astype(np.float32)
+        colour = rng.uniform(0, 255, (B, ND, 3)).astype(np.float32)
+        by_frame, by_rows = (np.empty((B, 224, 224, 3), np.uint8) for _ in range(2))
+        navdot_cpu._frames(plates, idx, pos, sigma, colour, by_frame)
+        navdot_cpu._frames_by_rows(plates, idx, pos, sigma, colour, by_rows)
+        assert np.array_equal(by_frame, by_rows), (B, ND)
