@@ -7,7 +7,10 @@ import torch
 pytest.importorskip("ogbench")
 
 from stable_envs.envs.ogbench.simulation import render_state as pixels
+from stable_envs.render._resources import retain_process_lifetime
 from stable_envs.envs.ogbench.simulation.compatibility import PIXEL_ALPHAS
+
+pytestmark = pytest.mark.family("ogbench")
 
 LOOK = ("agent.opacity", "target.opacity")
 
@@ -52,6 +55,8 @@ def test_opacity_one_matches_swm_frames():
 
     source = gym.make("swm/OGBCube-v0", width=224, height=224).unwrapped
     source.reset(seed=0)
+    # Closing the source renderer would release its GL context, which corrupts the other live contexts.
+    retain_process_lifetime(source, "swm OGBCube-v0 reference renderer")
     env = snv.make("OGBCube", num_envs=4, device="cpu", seed=0)
     try:
         env.set_variation({"agent.opacity": [1.0], "target.opacity": [1.0]})
@@ -80,4 +85,3 @@ def test_opacity_one_matches_swm_frames():
         assert ((see_through - expected) ** 2).mean() > 100
     finally:
         env.close()
-        source.close()
