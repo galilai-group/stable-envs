@@ -8,6 +8,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
+- The PushT state is folded: its fixed-shape fields are slices of one `(N, size)` leaf for each section and dtype, and the action history keeps its own leaves. The state has about 20 leaves instead of 239, and it leaves out the goal image. Read and write fields with `snv.get_field` and `snv.set_field`.
 
 ### Added
 
@@ -16,8 +17,10 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Changed
 
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
-- On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and PushT moves the outputs of a step to the device in one copy and the state in one more copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
+- On CUDA, the CPU physics of DM Control, `OGBCube` and `OGBScene` moves the outputs of a step to the device in one copy and the state in one more copy. PushT moves the outputs and the state of a single step without frames in one copy. PushT's Numba backend keeps its live state on the CPU and copies only the exported state and the outputs to the device at each step.
 - A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.
+- With `simulation_backend="auto"` on CUDA, PushT steps batches of fewer than 128 environments with Numba on the CPU and moves the outputs and the state of each step to the device, and larger batches with Triton.
+- PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
 
 ## [0.1.0] - 2026-11-13
 

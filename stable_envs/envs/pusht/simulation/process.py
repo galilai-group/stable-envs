@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 import torch
 
+from ...._core.state_schema import get_field
 from ...._execution.process import FRAME_FIELDS, ProcessAdapter, leaf_tensordict
 from ...._execution.shared_memory import key_path
 from .replay import ACTION_DTYPES, reset_options, validate_seed
@@ -111,7 +112,7 @@ class PushTProcessAdapter(ProcessAdapter):
     def set_state(self, state):
         super().set_state(state)
         host = state.cpu()
-        self._lengths = host["history", "lengths"].numpy().astype(np.int64)
+        self._lengths = get_field(host, "history/lengths").numpy().astype(np.int64)
         self._actions = host[_ACTIONS].numpy().copy()
         self._codes = host[_CODES].numpy().copy()
 

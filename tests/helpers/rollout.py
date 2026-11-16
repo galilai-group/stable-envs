@@ -125,8 +125,10 @@ def sample(
     policy.set_env(env)
     policy.reset(B)
 
-    # Classic control resets in Gymnasium for every step backend, so its rows cannot seed a rollout.
-    if getattr(env, "execution_mode", None) == "DELEGATED_CPU" or hasattr(env, "CLASSIC_DOMAIN"):
+    # Classic control resets in Gymnasium for every step backend, so its rows cannot seed a rollout. An env
+    # without render rows starts from a reset as well.
+    delegated = getattr(env, "execution_mode", None) == "DELEGATED_CPU" or hasattr(env, "CLASSIC_DOMAIN")
+    if delegated or not has_render_rows(env):
         if style is not None:
             env.set_variation(style)
         env.reset(seed=seed)

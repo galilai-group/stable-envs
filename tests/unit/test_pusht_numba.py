@@ -8,6 +8,8 @@ import torch
 
 pytest.importorskip("numba")
 
+from stable_envs import get_field
+from stable_envs._core.state_schema import unfold
 from stable_envs.envs.pusht.semantics import PushT  # noqa: E402
 from stable_envs.envs.pusht.simulation.execution import pusht_backend  # noqa: E402
 from stable_envs.envs.pusht.simulation.numba_batch import PushTNumbaAdapter  # noqa: E402
@@ -36,11 +38,12 @@ def test_backend_routing(monkeypatch):
         pusht_backend(1, "cpu", "triton")
     with pytest.raises(ValueError, match="simulation_backend"):
         pusht_backend(1, "cpu", "pymunk")
-    # Untuned, CUDA batches step on the GPU from one environment.
+    # Untuned, CUDA batches step with Numba below the shipped switch point and on the GPU from it.
     from stable_envs.envs.pusht.simulation.execution import CUDA_MIN_ENVS
 
-    assert CUDA_MIN_ENVS is None
-    assert pusht_backend(1, "cuda") == "triton"
+    assert CUDA_MIN_ENVS == 128
+    assert pusht_backend(CUDA_MIN_ENVS - 1, "cuda") == "numba"
+    assert pusht_backend(CUDA_MIN_ENVS, "cuda") == "triton"
     # Without Triton, CUDA physics runs in JAX.
     monkeypatch.setattr(raster, "HAVE_TRITON", False)
     with tuning.override(large_backend_min_envs=4):
@@ -60,7 +63,7 @@ def test_public_env_records_its_backend():
         with tuning.override(large_backend_min_envs=4), PushT(num_envs=2, device="cuda", size=32) as env:
             assert env.simulation_backend == "numba" and env.execution_mode == "NATIVE_NUMBA"
             out = env.step(torch.full((2, 2), 0.3, device="cuda"), frames=None)
-            assert out["reward"].is_cuda and out["state"]["current", "observation"].is_cuda
+            assert out["reward"].is_cuda and get_field(out["state"], "current/observation").is_cuda
 
 
 @pytest.mark.parametrize("variety", [False, True])
@@ -147,7 +150,10 @@ def test_relative_controls_and_contact_track_pymunk(initial, action, steps, atol
             got = env.step(torch.tensor([action], dtype=torch.float32))
             want = ref.step(np.array([action], np.float32))
             np.testing.assert_allclose(
-                got["state", "current", "observation"], want["state", "current", "observation"], atol=atol, rtol=0
+                get_field(got["state"], "current/observation"),
+                get_field(want["state"], "current/observation"),
+                atol=atol,
+                rtol=0,
             )
             assert got["reward"].item() == pytest.approx(want["reward"].item(), abs=atol)
             assert got["success"].item() == want["success"].item()
@@ -172,8 +178,8 @@ def test_masked_steps_checkpoints_and_cuda_tensors(discrete):
             before = env.get_state()
             mask = torch.tensor([True, False, True], device=device)
             out = env.step(a, active=mask)
-            for key, value in before["current"].items(True, True):
-                assert torch.equal(value[1], out["state", "current"][key][1]), key
+            for key, value in unfold(before)["current"].items(True, True):
+                assert torch.equal(value[1], unfold(out["state"])["current"][key][1]), key
             checkpoint = out["state"]
             expected = env.step(a)
             env.set_state(checkpoint)
@@ -182,7 +188,9 @@ def test_masked_steps_checkpoints_and_cuda_tensors(discrete):
             results.append(expected)
     for result in results[1:]:
         np.testing.assert_allclose(
-            result["state", "current", "observation"].cpu(), results[0]["state", "current", "observation"], atol=0.05
+            get_field(result["state"], "current/observation").cpu(),
+            get_field(results[0]["state"], "current/observation"),
+            atol=0.05,
         )
 
 
@@ -211,8 +219,12 @@ def test_triton_steps_like_numba(variety):
             gpu.set_state(cpu.get_state().to("cuda"))
             action = torch.as_tensor(rng.uniform(-1, 1, (count, 2)), dtype=torch.float32)
             got, want = gpu.step(action.cuda()), cpu.step(action)
-            observation = ("current", "observation")
-            torch.testing.assert_close(got["state"][observation].cpu(), want["state"][observation], rtol=0, atol=0.05)
+            torch.testing.assert_close(
+                get_field(got["state"], "current/observation").cpu(),
+                get_field(want["state"], "current/observation"),
+                rtol=0,
+                atol=0.05,
+            )
             torch.testing.assert_close(got["reward"].cpu(), want["reward"], rtol=0, atol=0.05)
 
 
@@ -236,3 +248,41 @@ def test_cpu_frames_and_states_do_not_depend_on_the_step_thread_counts():
     other_frames, other_states = rollout(False)
     assert torch.equal(frames, other_frames)
     assert (states == other_states).all()
+
+
+def test_host_leaves_at_buffer_width_keep_their_shapes_between_steps():
+    """A CUDA host step moves leaves whose shapes don't change, so the transfer plan for them is reused."""
+    with closing(PushTNumbaAdapter(2, "cpu", 0, config=dict(resolution=32))) as env:
+        env.reset(9)
+        action = np.full((2, 2), 0.1, np.float32)
+        shapes = None
+        for _ in range(5):
+            leaves = env.step_leaves(action, capacity=True)
+            now = {key: (value.shape, value.dtype) for key, value in leaves.items()}
+            assert shapes is None or now == shapes
+            shapes = now
+        assert env.history_width() == 5
+        assert leaves["state", "history", "actions"].shape[1] >= 5
+        assert not leaves["state", "history", "valid"][:, 5:].any()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
+def test_cuda_host_steps_reuse_the_transfer_plan():
+    from stable_envs._core import tensordicts
+
+    if not hasattr(tensordicts, "pack_to_device"):
+        pytest.skip("this tree moves host steps without pack_to_device")
+    with PushT(num_envs=2, device="cuda", size=32, simulation_backend="numba") as env:
+        env.reset(seed=0)
+        action = torch.full((2, 2), 0.1, device="cuda")
+        state = env.get_state()
+        for _ in range(2):
+            out = env.step(action, frames=None)
+        held = len(tensordicts._transfers)
+        for _ in range(5):
+            out = env.step(action, frames=None)
+        assert len(tensordicts._transfers) == held
+        width = get_field(out["state"], "history/lengths").max()
+        assert get_field(out["state"], "history/actions").shape[1] == int(width) == 7
+        assert get_field(out["states"], "history/actions").shape[2] == 7
+        env.set_state(state)

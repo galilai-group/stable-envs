@@ -10,7 +10,7 @@ This tutorial trains LeWM, the latent world model of [stable-worldmodel](https:/
 | `state_render.py` | Writes dataset state rows into a full stable-envs state and calls `env.render(state)`. |
 | `config/pusht.yaml` | The environment, the state-row layout, the model, the training values and the planning values. |
 
-The model, the loss, the optimizer, the data split and the planning values are those of stable-worldmodel `scripts/train/lewm.py` and `scripts/plan/eval_wm.py` at commit `21446f1`. The scripts use only the public stable-envs API: `snv.make`, `reset`, `get_state`, `step` and `render`.
+The model, the loss, the optimizer, the data split and the planning values are those of stable-worldmodel `scripts/train/lewm.py` and `scripts/plan/eval_wm.py` at commit `21446f1`. The scripts use only the public stable-envs API: `snv.make`, `snv.get_field`, `reset`, `get_state`, `step` and `render`.
 
 ## Prerequisites
 
@@ -28,32 +28,32 @@ On CUDA, PushT draws with Triton, which comes with the Linux PyTorch wheels.
 
 ## Draw frames from state rows
 
-A LeWM PushT dataset holds one state row per step: agent x and y, block x and y, block angle, and agent velocity. `state_render.py` copies a full state from `env.reset(seed=0)` and writes the columns of each row into these leaves (`env.leaves` in the config):
+A LeWM PushT dataset holds one state row per step: agent x and y, block x and y, block angle, and agent velocity. `state_render.py` copies a full state from `env.reset(seed=0)` and writes the columns of each row into these fields with `snv.get_field` (`env.leaves` in the config):
 
-| PushT state leaf | Row columns |
+| PushT state field | Row columns |
 |---|---|
 | `current.body.agent.position` | 0, 1 |
 | `current.body.block.position` | 2, 3 |
 | `current.body.block.angle` | 4 |
 
-The other leaves (goal, colors, shapes) keep their reset values. This block does the same steps on CPU:
+The other fields (goal, colors, shapes) keep their reset values. This block does the same steps on CPU:
 
 ```python
 import torch
 import stable_envs as snv
 
 rows = torch.tensor([[200.0, 300.0, 250.0, 250.0, 0.5], [320.0, 180.0, 260.0, 240.0, 1.2]])
-leaves = {("current", "body", "agent", "position"): (0, 2),
-          ("current", "body", "block", "position"): (2, 4),
-          ("current", "body", "block", "angle"): (4, 5)}
+fields = {"current/body/agent/position": (0, 2),
+          "current/body/block/position": (2, 4),
+          "current/body/block/angle": (4, 5)}
 with snv.PushT(num_envs=1, device="cpu") as env:
     env.reset(seed=0)
     state = env.get_state().expand(len(rows)).clone()  # one batch row per state row
-    for key, (start, stop) in leaves.items():
-        leaf = state.get(key)
-        leaf.copy_(rows[:, start:stop].reshape(leaf.shape).to(leaf.dtype))
-    for key in (("current", "render_segments"), ("current", "render_segment_count")):
-        state.get(key).zero_()                         # the rows hold no contact points
+    for name, (start, stop) in fields.items():
+        field = snv.get_field(state, name)             # a view: writes change the state
+        field.copy_(rows[:, start:stop].reshape(field.shape).to(field.dtype))
+    for name in ("current/render_segments", "current/render_segment_count"):
+        snv.get_field(state, name).zero_()             # the rows hold no contact points
     frames = env.render(state, size=224)
 print(frames.shape, frames.dtype)  # torch.Size([2, 224, 224, 3]) torch.uint8
 ```
@@ -137,8 +137,8 @@ The [README](https://github.com/galilai-group/stable-envs/blob/main/examples/lew
 
 ## Checklist
 
-- Copy a full state from `reset` and write only the leaves that the dataset columns hold. The other leaves keep their reset values.
-- Set to zero the leaves that the dataset does not hold and that change the frame, such as the PushT contact points.
+- Copy a full state from `reset` and write only the fields that the dataset columns hold. The other fields keep their reset values.
+- Set to zero the fields that the dataset does not hold and that change the frame, such as the PushT contact points.
 - Draw after the batch moves to the training device, so that the frames do not go across the bus.
 - For another environment, make a new config with new `env.id`, `env.leaves`, `env.zero`, `eval` values and `data.frameskip`. `eval.py` calls `env.reset(seed, options)` with `eval.reset_options`, so the environment must accept them.
 

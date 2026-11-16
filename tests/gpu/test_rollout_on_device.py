@@ -163,7 +163,7 @@ def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
 
 def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
     """Rolling out an env without ``_step`` raises ``NotImplementedError`` pointing to supplied states."""
-    without = [n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" not in c.__dict__]
+    without = [n for n, c in sorted(se.registry.REGISTRY.items()) if c._step is se.Env._step]
     assert without, "every registered env declares a step, which makes this check vacuous"
     env = make_or_skip(without[0], num_envs=2, device="cuda")
     with pytest.raises(NotImplementedError) as e:

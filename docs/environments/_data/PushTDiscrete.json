@@ -23,10 +23,10 @@
  },
  "state": [
   {
-   "key": "recipe",
-   "leaves": 2,
-   "numel": 5,
-   "dtypes": ["int64"]
+   "key": "static",
+   "leaves": 4,
+   "numel": 869,
+   "dtypes": ["bool", "float64", "int64", "uint8"]
   },
   {
    "key": "history",
@@ -35,22 +35,10 @@
    "dtypes": ["bool", "float64", "int64", "uint8"]
   },
   {
-   "key": "anchor",
-   "leaves": 101,
-   "numel": 438,
-   "dtypes": ["bool", "float64", "int64", "uint8"]
-  },
-  {
    "key": "current",
-   "leaves": 37,
-   "numel": 151475,
+   "leaves": 6,
+   "numel": 938,
    "dtypes": ["bool", "float64", "int64", "uint8"]
-  },
-  {
-   "key": "owned",
-   "leaves": 95,
-   "numel": 417,
-   "dtypes": ["float64", "int64", "uint8"]
   }
  ],
  "variation": [

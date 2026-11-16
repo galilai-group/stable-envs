@@ -10,6 +10,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from stable_envs.render import cpu_raster
 
 pytestmark = [
@@ -61,16 +62,16 @@ def _sampled(name):
 def _states(name):
     """Seeded States after random pushes, with edge cases written into the first lanes."""
     state = _seeded(name).clone()
-    block = state["current", "body", "block", "position"]
-    agent = state["current", "body", "agent", "position"]
-    angle = state["current", "body", "block", "angle"]
+    block = get_field(state, "current/body/block/position")
+    agent = get_field(state, "current/body/agent/position")
+    angle = get_field(state, "current/body/block/angle")
     block[0] = torch.tensor([300.0, 20.0], dtype=block.dtype)
     angle[0] = math.pi + 0.05
     block[1] = torch.tensor([-10.0, 505.0], dtype=block.dtype)
     angle[1] = 0.7
     agent[2] = torch.tensor([-60.0, 600.0], dtype=agent.dtype)
     agent[3] = block[3].clone()
-    state["owned", "variation", "rendering", "render_goal", "current", "value"][4] = 0
+    get_field(state, "owned/variation/rendering/render_goal/current/value")[4] = 0
     angle[5] = math.pi / 2
     angle[6] = -math.pi
     # The agent far from the block, so their redrawn boxes stay apart.
@@ -82,8 +83,8 @@ def _states(name):
 def _with_lines(state, seed, lanes):
     """Write contact lines into ``lanes``: some clipped by the canvas, some steep, one of zero length per lane."""
     rng = np.random.default_rng(seed)
-    segments = state["current", "render_segments"]
-    counts = state["current", "render_segment_count"]
+    segments = get_field(state, "current/render_segments")
+    counts = get_field(state, "current/render_segment_count")
     for lane in lanes:
         k = int(rng.integers(1, 6))
         ends = rng.uniform(-40.0, 552.0, (k, 4))
@@ -128,7 +129,7 @@ def test_the_numba_frames_equal_the_pygame_frames(name, size):
 @pytest.mark.parametrize("kind", ["seeded", "sampled"])
 def test_varied_frames_and_contact_lines_equal_the_pygame_frames(name, kind):
     state = _all_states(name)[kind]
-    assert int((state["current", "render_segment_count"] > 0).sum()) >= 8
+    assert int((get_field(state, "current/render_segment_count") > 0).sum()) >= 8
     want = _pygame(name, state, 224)
     with se.make(name, num_envs=LANES, size=224, device="cpu") as env:
         # The second render copies the goal-and-wall frames that the first one kept.
@@ -195,7 +196,7 @@ def test_action_markers_equal_the_pygame_frames(name):
         states = [env.get_state()]
         env.step(_actions(name, rng, 3, lanes=8), frames=None)
         states.append(env.get_state())
-        assert bool(states[1]["current", "latest_present"].all())
+        assert bool(get_field(states[1], "current/latest_present").all())
         for state in states:
             for size in (96, 224):
                 got, want = env.render(state, size=size), source.render(state, size=size)

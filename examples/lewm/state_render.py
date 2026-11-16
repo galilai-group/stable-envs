@@ -5,22 +5,23 @@ from __future__ import annotations
 import torch
 
 import stable_envs as snv
+from stable_envs import get_field
 
 
 class StateRenderer:
     """Write dataset state rows into full States and draw them with ``env.render(state)``.
 
-    ``leaves`` holds ``(leaf, start, stop)``: a dotted State leaf and the ``[start, stop)`` columns of a state
-    row that hold it. The leaves in ``zero`` are set to zero. Every other leaf keeps its value from
-    ``env.reset(seed)``.
+    ``leaves`` holds ``(field, start, stop)``: a dotted State field name and the ``[start, stop)`` columns of a
+    state row that hold it. The fields in ``zero`` are set to zero. Every other field keeps its value from
+    ``env.reset(seed)``. ``get_field`` returns a field as a view, so writes to it change the State.
     """
 
     def __init__(self, env_id, leaves, zero=(), *, device="cpu", size=None, env_kwargs=None, seed=0):
         self.env = snv.make(env_id, num_envs=1, device=device, **dict(env_kwargs or {}))
         self.env.reset(seed=seed)
         self.size = size
-        self.leaves = [(tuple(key.split(".")), int(start), int(stop)) for key, start, stop in leaves]
-        self.zero = [tuple(key.split(".")) for key in zero]
+        self.leaves = [(key, int(start), int(stop)) for key, start, stop in leaves]
+        self.zero = list(zero)
         self._template = self.env.get_state()
         self._batch = None
 
@@ -36,10 +37,10 @@ class StateRenderer:
             self._batch = self._template.expand(n).clone()
         state = self._batch
         for key, start, stop in self.leaves:
-            leaf = state.get(key)
-            leaf.copy_(rows[:, start:stop].reshape(leaf.shape).to(leaf.dtype))
+            field = get_field(state, key)
+            field.copy_(rows[:, start:stop].reshape(field.shape).to(field.dtype))
         for key in self.zero:
-            state.get(key).zero_()
+            get_field(state, key).zero_()
         return state
 
     @torch.no_grad()
