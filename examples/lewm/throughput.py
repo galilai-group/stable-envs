@@ -6,7 +6,8 @@
 
 Inputs:
   stored  the DataLoader reads and decodes the ``pixels`` column of the dataset.
-  source  DataLoader workers write each state row into a stable-worldmodel (swm) env and draw it on the CPU.
+  source  DataLoader workers write each state row into a stable-worldmodel (swm) env and draw it: PushT and TwoRoom
+          on the CPU, DM Control and OGBench through MuJoCo OpenGL (EGL), which also uses the GPU.
   ours    the DataLoader reads only state rows; ``Env.render`` draws the frames on the training GPU.
 
 The model is the full size of stable-worldmodel ``lewm.yaml`` (``config/pusht.yaml``); ``--model-overrides`` changes
