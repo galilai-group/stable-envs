@@ -9,9 +9,10 @@ import torch
 pytest.importorskip("gymnasium_robotics")
 
 import stable_envs as snv  # noqa: E402
+from stable_envs import tuning  # noqa: E402
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter  # noqa: E402
 from stable_envs.envs.fetch.simulation.batch import FetchBatchAdapter  # noqa: E402
-from stable_envs.envs.fetch.simulation.execution import MJWARP_MIN_ENVS, fetch_backend  # noqa: E402
+from stable_envs.envs.fetch.simulation.execution import fetch_backend  # noqa: E402
 from tests.helpers.reference.fetch_policy import scripted_actions, source_rollouts  # noqa: E402
 
 TASKS = ("Reach", "Push", "Slide", "PickAndPlace")
@@ -38,19 +39,30 @@ def assert_identical(expected, actual, what):
 
 def test_routing():
     assert fetch_backend(1, "cpu") == "native"
-    assert fetch_backend(1, "cuda") == "mjwarp"
     assert fetch_backend(4096, "cpu", "auto") == "native"
-    assert fetch_backend(MJWARP_MIN_ENVS - 1, "cuda", "auto") == "native"
-    assert fetch_backend(MJWARP_MIN_ENVS, "cuda", "auto") == "mjwarp"
-    assert fetch_backend(8, "cuda", "auto", 8) == "mjwarp"
-    assert fetch_backend(8, "cuda", "native") == "native"
-    assert fetch_backend(8, "cuda", "source") == "source"
+    with tuning.override(large_backend_min_envs=8):
+        assert fetch_backend(7, "cuda", "auto") == "native"
+        assert fetch_backend(8, "cuda", None) == "mjwarp"
+        assert fetch_backend(8, "cuda", "native") == "native"
+        assert fetch_backend(8, "cuda", "source") == "source"
     with pytest.raises(ValueError, match="requires device='cuda'"):
         fetch_backend(8, "cpu", "mjwarp")
-    with pytest.raises(ValueError, match="simulation_backend"):
-        fetch_backend(8, "cpu", "mjx")
-    with pytest.raises(ValueError, match="mjwarp_min_envs"):
-        fetch_backend(8, "cuda", "auto", 0)
+    for bad in ("mjx", "default"):
+        with pytest.raises(ValueError, match="simulation_backend"):
+            fetch_backend(8, "cpu", bad)
+
+
+def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch):
+    from stable_envs.envs.fetch.simulation.execution import CUDA_MIN_ENVS
+
+    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    assert CUDA_MIN_ENVS == {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
+    for task, switch in CUDA_MIN_ENVS.items():
+        assert fetch_backend(switch - 1, "cuda", "auto", task) == "native"
+        assert fetch_backend(switch, "cuda", "auto", task) == "mjwarp"
 
 
 def test_public_env_steps_on_the_cpu_batch():
@@ -108,7 +120,7 @@ def _replay(adapter, actions):
     qpos, success = [], None
     for step in range(actions.shape[1]):
         out = adapter.step(actions[:, step])
-        qpos.append(out["state"]["qpos"].cpu().numpy())
+        qpos.append(snv.get_field(out["state"], "qpos").cpu().numpy())
         success = out["success"].cpu().numpy()
     return np.stack(qpos, 1), success
 
@@ -117,7 +129,7 @@ def _closed_loop(adapter, task, steps):
     """The controller closed loop on ``adapter``, from its sites; returns the final success per environment."""
     t = adapter.task
     adapter.reset(seed=0)
-    goal = adapter.get_state()["goal"].cpu().numpy()
+    goal = snv.get_field(adapter.get_state(), "goal").cpu().numpy()
     phase, count = np.zeros(adapter.num_envs, int), np.zeros(adapter.num_envs, int)
     for _ in range(steps):
         sites = adapter._site_xpos
@@ -187,22 +199,26 @@ def test_mjwarp_resets_masks_and_routing():
         reference = FetchBatchAdapter(6, seed=3, task="PickAndPlace")
         # Resets draw the same starts and goals as the CPU batch, up to float32 storage.
         expected = reference.get_state()
-        for key in ("goal", ("task", "initial_gripper_xpos"), ("rng", "state_words")):
-            assert torch.equal(start[key].cpu(), expected[key])
-        assert torch.allclose(start["qpos"].cpu(), expected["qpos"], atol=1e-6)
+        for name in ("goal", "task/initial_gripper_xpos", "rng/state_words"):
+            assert torch.equal(snv.get_field(start, name).cpu(), snv.get_field(expected, name))
+        assert torch.allclose(snv.get_field(start, "qpos").cpu(), snv.get_field(expected, "qpos"), atol=1e-6)
         reference.close()
         actions = torch.rand(6, 4, device="cuda") * 2 - 1
         active = torch.tensor([True, False, True, False, True, True], device="cuda")
         out = adapter.step(actions, active=active)
         held = ~active.cpu()
-        for key in ("qpos", "qvel", ("controller", "position"), ("lifecycle", "elapsed_steps")):
-            assert torch.equal(out["state"][key].cpu()[held], start[key].cpu()[held]), key
-        assert out["state"]["lifecycle", "elapsed_steps"].cpu()[~held].eq(1).all()
+        for name in ("qpos", "qvel", "controller/position", "lifecycle/elapsed_steps"):
+            assert torch.equal(
+                snv.get_field(out["state"], name).cpu()[held], snv.get_field(start, name).cpu()[held]
+            ), name
+        assert snv.get_field(out["state"], "lifecycle/elapsed_steps").cpu()[~held].eq(1).all()
     finally:
         adapter.close()
-    with snv.make("FetchReach", num_envs=2, device="cuda") as env:
+    with tuning.override(large_backend_min_envs=2), snv.make("FetchReach", num_envs=2, device="cuda") as env:
         assert env.simulation_backend == "mjwarp"
-    with snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="auto") as env:
+    with tuning.override(large_backend_min_envs=3):
+        env = snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="auto")
+    with env:
         assert env.simulation_backend == "native"
         out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
-        assert out["state"]["qpos"].device.type == "cuda" and out["reward"].device.type == "cuda"
+        assert snv.get_field(out["state"], "qpos").device.type == "cuda" and out["reward"].device.type == "cuda"

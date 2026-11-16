@@ -17,7 +17,7 @@ from stable_envs._execution import render_pool
 from stable_envs.envs.roadster import render as roadster_render
 from stable_envs.envs.roadster.simulation.adapter import _from_limbs
 from stable_envs.envs.roadster.simulation.batch import RoadsterNativeAdapter
-from stable_envs.envs.roadster.simulation.execution import MJWARP_MIN_ENVS, roadster_backend
+from stable_envs.envs.roadster.simulation.execution import roadster_backend
 from stable_envs.envs.roadster.source import RoadsterPlanEnv
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -34,21 +34,36 @@ def _actions(steps: int, seed: int = 0) -> list[np.ndarray]:
     return [rng.uniform(-1, 1, (LANES, 4)).astype(np.float32) for _ in range(steps)]
 
 
-def test_the_backend_follows_the_device_and_the_cutoff():
+def test_the_backend_follows_the_device_and_the_switch_point():
     assert roadster_backend(8, "cpu") == "native"
     assert roadster_backend(8, "cpu", "auto") == "native"
-    assert roadster_backend(1, "cuda") == "mjwarp"
-    assert roadster_backend(MJWARP_MIN_ENVS - 1, "cuda", "auto") == "native"
-    assert roadster_backend(MJWARP_MIN_ENVS, "cuda", "auto") == "mjwarp"
-    assert roadster_backend(4, "cuda", "auto", mjwarp_min_envs=4) == "mjwarp"
+    with tuning.override(large_backend_min_envs=1):
+        assert roadster_backend(1, "cuda") == "mjwarp"
+    with tuning.override(large_backend_min_envs=4):
+        assert roadster_backend(3, "cuda", "auto") == "native"
+        assert roadster_backend(4, "cuda", None) == "mjwarp"
     assert roadster_backend(4096, "cuda", "native") == "native"
     with pytest.raises(ValueError, match="cuda"):
         roadster_backend(8, "cpu", "mjwarp")
-    with pytest.raises(ValueError, match="simulation_backend"):
-        roadster_backend(8, "cpu", "source")
+    for bad in ("source", "default"):
+        with pytest.raises(ValueError, match="simulation_backend"):
+            roadster_backend(8, "cpu", bad)
     with snv.RoadsterLoop(num_envs=2, device="cpu") as env:
         assert env.simulation_backend == "native" and env.execution_mode == "DELEGATED_CPU"
         assert isinstance(env._simulator, RoadsterNativeAdapter)
+
+
+def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch):
+    from stable_envs.envs.roadster.simulation.execution import CUDA_MIN_ENVS
+
+    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    assert CUDA_MIN_ENVS == {"loop": 32, "mission": 16, "traffic": 32, "rooftop": 64, "carhop": 32}
+    for task, switch in CUDA_MIN_ENVS.items():
+        assert roadster_backend(switch - 1, "cuda", "auto", task) == "native"
+        assert roadster_backend(switch, "cuda", "auto", task) == "mjwarp"
 
 
 def test_environments_that_end_within_an_action_continue_as_the_source():
@@ -72,10 +87,12 @@ def test_environments_that_end_within_an_action_continue_as_the_source():
             for i, src in enumerate(sources):
                 reward, terminated, _, _ = src.step(actions[i])
                 ended[i] |= terminated
-                np.testing.assert_array_equal(state["sim", "qpos"][i].numpy(), src.data.qpos, err_msg=str(t))
-                np.testing.assert_array_equal(state["weather", "gust"][i].numpy(), src.sim.weather.gust)
+                np.testing.assert_array_equal(
+                    snv.get_field(state, "sim/qpos")[i].numpy(), src.data.qpos, err_msg=str(t)
+                )
+                np.testing.assert_array_equal(snv.get_field(state, "weather/gust")[i].numpy(), src.sim.weather.gust)
                 rng_state = src.sim.weather._wind_rng.bit_generator.state["state"]["state"]
-                assert _from_limbs(state["weather", "rng_state"][i].numpy()) == rng_state
+                assert _from_limbs(snv.get_field(state, "weather/rng_state")[i].numpy()) == rng_state
                 assert out["reward"][i].item() == reward and out["terminated"][i].item() == terminated
         assert ended[0], "the windy environment should crash under random commands"
     finally:

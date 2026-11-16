@@ -22,16 +22,17 @@ This is a control sandbox with no task reward. The action has 100 values in `[0,
 
 ## Simulation
 
-The [state](../terms.md#state) holds `qpos` (36 values), `qvel` (36), the muscle activations `act` (100), `time` and the solver's `warmstart` (36), all in float32.
+The [state](../terms.md#state) holds `qpos` (36 values), `qvel` (36), the muscle activations `act` (100), `time` and the solver's `warmstart` (36), all in float32. They are fields of one tensor, `mshuman.float32`. Read a field by name with `snv.get_field(state, "qpos")`.
 
 `simulation_backend` picks the physics when you construct the environment:
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"default"` (default) | `mujoco.batch` | MuJoCo Warp |
-| `"auto"` | `mujoco.batch` | `mujoco.batch` below `mjwarp_min_envs` (256) environments, MuJoCo Warp from there |
+| `"auto"` (default) | `mujoco.batch` | `mujoco.batch` for small batches, MuJoCo Warp for large ones |
 | `"native"` | `mujoco.batch` | `mujoco.batch` |
 | `"mjwarp"` | error | MuJoCo Warp |
+
+With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the knob is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
 
 `mujoco.batch` steps every environment in one native call, on up to 8 threads, at most one per CPU in the process affinity and one per environment. It runs MuJoCo in float64 and rounds the integration state to float32 after every step, so a state restores bit for bit, and the steps equal a per-environment `mj_step` loop with the same rounding. A CUDA environment on `mujoco.batch` returns its state on CUDA. MuJoCo Warp steps every environment in float32 in one captured CUDA graph.
 

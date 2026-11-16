@@ -122,6 +122,10 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
             ROOT / "tests" / "helpers" / "reference" / "gates" / "variation_classic.py",
         ],
     ),
+    "fetch": (("fetch_state",), []),
+    "mshuman": (("mshuman",), []),
+    "ogbench": (("maze", "joints"), []),
+    "roadster": (("roadster_state",), []),
 }
 
 FIELDS = [

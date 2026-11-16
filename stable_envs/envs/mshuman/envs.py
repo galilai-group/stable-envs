@@ -7,22 +7,31 @@ import threading
 import mujoco
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from ..._core.mujoco_gl import mujoco_renderer
+from ..._core.state_schema import get_field
 from ..._core.stepping import _stack_states, _threads
-from ..._execution.mjbatch import resolve_backend
+from ..._execution.backends import measure_env
+from ..._execution.mjbatch import mujoco_backend
 from ...env import Env, require_contiguous_out
 from ...registry import register
 from ...render._resources import retain_process_lifetime
 from ...spaces import Dict
 from .assets import _COMMIT, _XML
 from .assets import model as _model
-from .simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
+from .simulation.adapter import NA as _NA
+from .simulation.adapter import NQ as _NQ
+from .simulation.adapter import NU as _NU
+from .simulation.adapter import NV as _NV
+from .simulation.adapter import STATE, MSHumanBatchAdapter, MSHumanWarpAdapter
 
-_NQ, _NV, _NA, _NU = 36, 36, 100, 100
-#: With ``simulation_backend="auto"``, the smallest CUDA batch that steps on MuJoCo Warp; smaller CUDA batches
-#: step faster on mujoco.batch.
-MJWARP_MIN_ENVS = 256
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
+#: The simulation path, which keys the switch point in the tuning cache.
+SIMULATION_PATH = "mshuman-sim/locomotion"
+CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
@@ -40,6 +49,8 @@ class MSHumanLocomotion(Env):
     """MS-Human-700 whole-body locomotion: 100 muscles actuate 36 DoF, controls in ``[0, 1]``."""
 
     family = "mshuman"
+    simulation_backends = ("native", "mjwarp")
+    state_solver_caches = ("warmstart",)
     reference_id = f"LNSGroup/MS-Human-700/{_XML}@{_COMMIT}"
     default_size = 128
     action_dim = _NU
@@ -53,22 +64,31 @@ class MSHumanLocomotion(Env):
         ("warmstart", _NV, None),
     )
 
-    def __init__(self, num_envs: int = 1, *, simulation_backend="default", mjwarp_min_envs=MJWARP_MIN_ENVS, **kwargs):
+    def __init__(self, num_envs: int = 1, *, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``simulation_backend="default"`` steps CUDA batches on MuJoCo Warp and CPU batches on native
-        ``mujoco.batch``. ``"auto"`` steps CUDA batches of ``mjwarp_min_envs`` or more on MuJoCo Warp and every
-        other batch on native ``mujoco.batch``. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``. On CUDA it steps small batches
+        on native ``mujoco.batch`` and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs``
+        switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        resolve_backend(1, "cpu", "native", mjwarp_min_envs)
-        if simulation_backend not in (None, "default", "auto", "native", "mjwarp"):
-            raise ValueError("simulation_backend must be 'default', 'auto', 'native' or 'mjwarp'")
+        if simulation_backend not in (None, "auto", "native", "mjwarp"):
+            raise ValueError("simulation_backend must be 'auto', 'native' or 'mjwarp'")
+        if simulation_backend == "mjwarp" and torch.device(Env.resolve_device(kwargs.get("device"))).type != "cuda":
+            raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
         super().__init__(num_envs, **kwargs)
-        self.simulation_backend = resolve_backend(self.B, self.device, simulation_backend, mjwarp_min_envs)
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
+
+        device = self.device
+        cls = type(self)
+        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
+        path, requested = SIMULATION_PATH, simulation_backend
+        self.simulation_backend_path = path
+        self.simulation_backend = mujoco_backend(
+            path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure
+        )
         # nq == nv: every joint is a hinge or a slide with one qpos.
         self.state_names = tuple(
             mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"
@@ -97,6 +117,24 @@ class MSHumanLocomotion(Env):
     def _step(self, actions):
         self._check_open("step")
         return self._simulator.step(actions)
+
+    def _validate_state(self, state, *, batch=None):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        STATE.validate(state, finite=True)
+
+    def _pack_render_state(self, state):
+        if not isinstance(state, TensorDict):
+            return super()._pack_render_state(state)
+        n = int(state.batch_size[0]) if state.batch_size else 1
+        qpos = get_field(state, "qpos").reshape(n, _NQ)
+        return qpos.to(device=self.device, dtype=torch.float32, copy=True)
+
+    @property
+    def state_spec(self):
+        return STATE.spec(self.device)
 
     def _stack_states(self, values):
         # Torch copies tensors over 32768 elements on OpenMP threads, which then spin against the batch's threads.

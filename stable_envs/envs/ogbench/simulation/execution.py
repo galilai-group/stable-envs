@@ -13,23 +13,45 @@ if TYPE_CHECKING:
 
 _AdapterT = TypeVar("_AdapterT", bound=SimulatorAdapter)
 
-#: Smallest CUDA maze batch that ``simulation_backend="auto"`` steps on MuJoCo Warp, per body: the smallest measured
-#: batch (of 1, 8, 64, 256, 1024, 4096; L40S, 8 cores) at which MuJoCo Warp steps faster than mujoco.batch.
-MAZE_MJWARP_MIN_ENVS = {"point": 4096, "ant": 256, "humanoid": 256}
+#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
+#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
+MAZE_CUDA_MIN_ENVS: dict[str, int | None] = {
+    # RTX 3090 8 (Medium), 2 (Giant); RTX A5000 16, 16. 8 keeps a batch of 8 at or above OGBench's own speed on
+    # both GPU types: at 8, mujoco.batch on CUDA ran below it on an RTX 3090 (5164 against 6637 env steps per second).
+    "point": 8,
+    "ant": 128,  # 64, 64; 128, 128
+    "humanoid": 128,  # 64, 64; 128, 64
+}
+
+
+def maze_path(loco: str, maze: str) -> str:
+    """The simulation path of a maze body and size, which keys its switch point in the tuning cache."""
+    return f"ogb-sim/{loco}maze-{maze}"
 
 
 def maze_backend(
     num_envs: int,
     device: str | torch.device,
     loco: str,
-    simulation_backend: str | None = "default",
-    mjwarp_min_envs: int | None = None,
+    simulation_backend: str | None = "auto",
+    maze: str = "large",
+    env_type: type | None = None,
 ) -> str:
-    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``resolve_backend``."""
-    from ...._execution.mjbatch import resolve_backend
+    """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` for a maze batch; see ``mujoco_backend``.
 
-    threshold = MAZE_MJWARP_MIN_ENVS[loco] if mjwarp_min_envs is None else mjwarp_min_envs
-    return resolve_backend(num_envs, device, simulation_backend, threshold)
+    ``stable-envs tune`` times ``env_type`` on both backends; without it this call registers nothing to time.
+    """
+    from ...._execution.backends import measure_env
+    from ...._execution.mjbatch import mujoco_backend
+
+    measure = None if env_type is None else measure_env(
+        lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend)
+    )
+    path = maze_path(loco, maze)
+    return mujoco_backend(
+        path, num_envs, device, simulation_backend, cuda_min_envs=MAZE_CUDA_MIN_ENVS[loco], measure=measure
+    )
 
 
 def make_maze_adapter(
@@ -39,10 +61,9 @@ def make_maze_adapter(
     *,
     loco: str = "point",
     maze: str = "large",
-    simulation_backend: str | None = "default",
-    mjwarp_min_envs: int | None = None,
+    simulation_backend: str | None = "auto",
 ) -> OGBMazeBatchAdapter | OGBMazeWarpAdapter:
-    if maze_backend(num_envs, device, loco, simulation_backend, mjwarp_min_envs) == "mjwarp":
+    if maze_backend(num_envs, device, loco, simulation_backend, maze) == "mjwarp":
         from .maze_batch import OGBMazeWarpAdapter
 
         return OGBMazeWarpAdapter(num_envs, device, seed, loco=loco, maze=maze)

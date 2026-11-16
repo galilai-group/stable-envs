@@ -6,6 +6,7 @@ import torch
 
 pytest.importorskip("gymnasium_robotics")
 
+from stable_envs import get_field  # noqa: E402
 from stable_envs.envs.fetch.simulation.adapter import FetchAdapter  # noqa: E402
 from stable_envs.envs.fetch.simulation.process import FetchProcessAdapter  # noqa: E402
 from tests.helpers.process_equivalence import assert_atomic_restore, assert_process_matches_local  # noqa: E402
@@ -34,8 +35,8 @@ def test_invalid_last_lane_restores_no_lane():
     try:
 
         def corrupt(state):
-            state["qpos"][0, 0] += 0.01
-            state["rng", "has_uint32"][-1] = 2
+            get_field(state, "qpos")[0, 0] += 0.01
+            get_field(state, "rng/has_uint32")[-1] = 2
             return state
 
         assert_atomic_restore(adapter, corrupt, ValueError, lambda a: a.step(np.zeros((5, 4))))

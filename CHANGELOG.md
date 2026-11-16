@@ -15,6 +15,8 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - The `torch_min_envs` argument of the classic-control classes, the `numba_cuda_min_envs` argument of `PyFlytRocketLanding` and the `triton_min_envs` argument of `MiniWorldMovingBlockWorld` are removed, with the `NUMPY_MIN_ENVS`, `TORCH_MIN_ENVS`, `NUMBA_CUDA_MIN_ENVS` and `TRITON_MIN_ENVS` constants. `simulation_backend="auto"` is the default of these classes. It uses the switch points that each class ships, or the `large_backend_min_envs` knob and `stable-envs tune`.
 - Classic control with `simulation_backend="torch"` on CUDA resets with Gymnasium on the host. A seed gives Gymnasium's initial states on every backend, and the `rng` state fields hold the PCG64 state instead of a key and a reset count.
 - The classic-control and `MiniWorldMovingBlockWorld` states have one leaf for each dtype, such as `("cartpole", "float64")`, in place of one leaf for each field. `snv.get_field(state, "physics/gravity")` reads a field by name.
+- The `mjwarp_min_envs` argument of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes is removed, with the `MJWARP_MIN_ENVS` and `MAZE_MJWARP_MIN_ENVS` constants. Their default `simulation_backend` is `"auto"`, which uses the `large_backend_min_envs` switch; `"default"` is no longer accepted. The internal `mjbatch.resolve_backend` is replaced by `mjbatch.mujoco_backend`.
+- The state of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes has one tensor for each group of fields instead of one tensor for each field. Read and write a field by name with `stable_envs.get_field(state, name)` and `stable_envs.set_field(state, name, value)`. `state_spec` and `describe()` list the groups.
 
 ### Added
 
@@ -30,6 +32,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - A step that returns its state exports it with the outputs in one call, and a single step stacks its outputs without the TensorDict dispatch. This lowers the cost of each `step` call.
 - With `simulation_backend="auto"` on CUDA, PushT steps batches of fewer than 128 environments with Numba on the CPU and moves the outputs and the state of each step to the device, and larger batches with Triton.
 - PushT resets batches of 8 or more environments in worker processes (the `worker_min_lanes` knob still sets the size). Its Numba step does its bookkeeping in one Numba call, keeps the state layout across resets and, on CUDA, returns the outputs already on the device.
+- On CUDA, the `mujoco.batch` physics of Fetch, MS-Human and Roadster moves the outputs and the state of a step to the device in one copy. MS-Human converts the state to float32 before the copy.
 
 ## [0.1.0] - 2026-11-13
 

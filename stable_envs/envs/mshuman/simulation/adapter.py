@@ -6,11 +6,32 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.state_schema import Field, StateSchema
+from ...._core.tensordicts import build_tensordict
 from ...._execution.mjbatch import NativeBatch, WarpBatch
 from ...._execution.protocol import SimulatorAdapter
 
-#: State keys and the MjData fields they hold.
+#: Model dimensions: positions, velocities, muscle activations and controls.
+NQ, NV, NA, NU = 36, 36, 100, 100
+#: The State group: every field is float32.
+GROUP = "mshuman/float32"
+STATE = StateSchema(
+    "MSHuman",
+    [
+        Field("qpos", (NQ,), torch.float32, GROUP),
+        Field("qvel", (NV,), torch.float32, GROUP),
+        Field("act", (NA,), torch.float32, GROUP),
+        Field("time", (1,), torch.float32, GROUP),
+        Field("warmstart", (NV,), torch.float32, GROUP),
+    ],
+)
+#: State fields and the MjData fields they hold.
 _FIELDS = {"qpos": "qpos", "qvel": "qvel", "act": "act", "time": "time", "warmstart": "qacc_warmstart"}
+
+
+def state_of(group: torch.Tensor) -> TensorDict:
+    """The State that holds ``group``, a ``(batch, size)`` tensor."""
+    return build_tensordict({"mshuman": {"float32": group}}, [len(group)], group.device)
 
 
 class _MSHumanAdapter(SimulatorAdapter):
@@ -26,18 +47,9 @@ class _MSHumanAdapter(SimulatorAdapter):
         if self._closed:
             raise RuntimeError(f"{type(self).__name__} is closed")
 
-    def get_state(self) -> TensorDict:
-        self._check_open()
-        physics = self.batch.read(_FIELDS.values())
-        physics["time"] = physics["time"][:, None]
-        return TensorDict(
-            {key: physics[name].to(torch.float32) for key, name in _FIELDS.items()},
-            batch_size=[self.num_envs],
-            device=self.device,
-        )
-
     def _physics(self, state) -> dict:
-        return {name: state[key] for key, name in _FIELDS.items()}
+        views = STATE.views(state)
+        return {name: views[key] for key, name in _FIELDS.items()}
 
     def close(self) -> None:
         if self._closed:
@@ -51,7 +63,10 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
 
     def __init__(self, num_envs: int, device, model):
         super().__init__(num_envs, device, model)
-        self.batch = NativeBatch(model, self.num_envs, self.device, keyframe=0)
+        self.batch = NativeBatch(model, self.num_envs, "cpu", keyframe=0)
+        # Float32 copy of the batch's State, in one group; the field views are cut once.
+        self._live = np.zeros((self.num_envs, STATE.groups[GROUP].size), np.float32)
+        self._fields = STATE.views({GROUP: self._live}, numpy=True)
         limited = model.actuator_ctrllimited.astype(bool)
         self._ctrl_low = np.where(limited, model.actuator_ctrlrange[:, 0], -np.inf)
         self._ctrl_high = np.where(limited, model.actuator_ctrlrange[:, 1], np.inf)
@@ -62,17 +77,30 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         """The ``mujoco.batch.Batch``, or None once closed."""
         return None if self._closed else self.batch.b
 
-    def _quantize_state(self) -> None:
-        """Keep the complete public checkpoint lossless at its float32 dtype."""
-        for name in _FIELDS.values():
+    def _sync(self, write_back: bool = False) -> None:
+        """Copy the batch's State into the float32 group; with ``write_back``, keep the batch lossless at float32."""
+        for key, name in _FIELDS.items():
             value = self.batch.numpy(name)
-            value[...] = value.astype(np.float32)
+            field = self._fields[key]
+            np.copyto(field, value.reshape(field.shape), casting="same_kind")
+            if write_back:
+                value[...] = field.reshape(value.shape)
+
+    def _snapshot(self) -> TensorDict:
+        """The State of the float32 group, on the env device, in new memory."""
+        group = torch.from_numpy(self._live.copy() if self.device.type == "cpu" else self._live)
+        return state_of(group.to(self.device))
 
     def reset(self, seed: int | None = None) -> TensorDict:
         self._check_open()
         self.batch.reset()
-        self._quantize_state()
-        return self.get_state()
+        self._sync(write_back=True)
+        return self._snapshot()
+
+    def get_state(self) -> TensorDict:
+        self._check_open()
+        self._sync()
+        return self._snapshot()
 
     def set_state(self, state) -> None:
         self._check_open()
@@ -87,10 +115,10 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         # Clamp as MuJoCo Warp does, NaN to the lower bound: native MuJoCo would instead zero the
         # lane's controls on a NaN, inf or huge value and warn, which raises below.
         self.batch.step(np.fmin(np.fmax(ctrl, self._ctrl_low), self._ctrl_high))
-        self._quantize_state()
+        self._sync(write_back=True)
         if (bad := self.batch.unstable_envs()).size:
             raise RuntimeError(f"Physics state is invalid in lanes {bad.tolist()}")
-        return TensorDict({"state": self.get_state()}, batch_size=[self.num_envs], device=self.device)
+        return TensorDict({"state": self._snapshot()}, batch_size=[self.num_envs], device=self.device)
 
 
 class MSHumanWarpAdapter(_MSHumanAdapter):
@@ -104,6 +132,13 @@ class MSHumanWarpAdapter(_MSHumanAdapter):
         self._check_open()
         self.batch.reset()
         return self.get_state()
+
+    def get_state(self) -> TensorDict:
+        self._check_open()
+        data = self.batch.data
+        values = {key: data(name).to(torch.float32) for key, name in _FIELDS.items()}
+        values["time"] = values["time"][:, None]
+        return state_of(STATE.pack(values)[GROUP])
 
     def set_state(self, state) -> None:
         self._check_open()

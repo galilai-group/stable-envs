@@ -959,6 +959,11 @@ CELLS = (
 from .semantics import FetchSemantics as _FetchSemantics
 
 
+#: Slide's MuJoCo Warp model replaces the puck and its contact margins, so a State resumes on other contact forces
+#: on the other backend (issue #63).
+_SLIDE_MISMATCH = frozenset({("native", "mjwarp"), ("mjwarp", "native"), ("source", "mjwarp"), ("mjwarp", "source")})
+
+
 def _make_classes() -> dict[str, type]:
     made = {}
     for cname, scene, ref in CELLS:
@@ -969,6 +974,7 @@ def _make_classes() -> dict[str, type]:
                 (_FetchSemantics, FetchBase),
                 dict(
                     SCENE=scene,
+                    **({"state_backend_mismatches": _SLIDE_MISMATCH} if scene == "Slide" else {}),
                     REF_ID=ref,
                     name=f"fetch-{scene.lower()}" + (f"-{suffix.lower()}" if suffix else ""),
                     domain=scene.lower(),

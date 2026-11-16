@@ -9,6 +9,7 @@ import torch
 pytest.importorskip("ogbench")
 
 import stable_envs as se
+from stable_envs import get_field, set_field
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter, _resting_lanes
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from tests.helpers.reference.semantics import assert_same_state
@@ -22,10 +23,10 @@ def test_complete_state_rng_outputs_and_inactive_lanes(dtype, body):
     try:
         assert_same_state(local.get_state(), remote.get_state())
         initial = local.get_state()
-        initial["rng", "global_has_gauss"][4] = True
-        initial["rng", "global_cached_gaussian"][4] = 0.125
-        initial["rng", "env_has_uint32"][4] = 1
-        initial["rng", "env_uinteger"][4] = 2**32 - 1
+        get_field(initial, "rng/global_has_gauss")[4] = True
+        get_field(initial, "rng/global_cached_gaussian")[4] = 0.125
+        get_field(initial, "rng/env_has_uint32")[4] = 1
+        get_field(initial, "rng/env_uinteger")[4] = 2**32 - 1
         for adapter in (local, remote):
             adapter.set_state(initial)
         actions = np.random.default_rng(31).uniform(-0.5, 0.5, (5, 8, local.action_dim)).astype(dtype)
@@ -43,7 +44,7 @@ def test_complete_state_rng_outputs_and_inactive_lanes(dtype, body):
         assert_same_state(local.reset(), remote.reset())
         assert_same_state(local.reset(42), remote.reset(42))
         edited = remote.get_state()
-        edited["root", "position"].zero_()
+        get_field(edited, "root/position").zero_()
         assert_same_state(local.get_state(), remote.get_state())
     finally:
         local.close()
@@ -56,8 +57,8 @@ def test_rejected_restore_keeps_every_shard_usable():
     try:
         initial = adapter.get_state()
         invalid = initial.clone()
-        invalid["root", "position"][0] += 0.25  # First shard must not commit this.
-        invalid["task", "id"][4] = 999  # Last shard rejects preparation.
+        get_field(invalid, "root/position")[0] += 0.25  # First shard must not commit this.
+        get_field(invalid, "task/id")[4] = 999  # Last shard rejects preparation.
         with pytest.raises(ValueError, match="task id"):
             adapter.set_state(invalid)
         assert not adapter._closed and adapter._pending is None
@@ -131,8 +132,8 @@ def test_public_chunks_and_early_stop(monkeypatch):
     try:
         initial = local.get_state()
         # An already reached goal produces an early stop on only the first lane.
-        initial["root", "position"][0] = initial["task", "goal_pos"][0, :2]
-        initial["root", "velocity"][0].zero_()
+        get_field(initial, "root/position")[0] = get_field(initial, "task/goal_pos")[0, :2]
+        get_field(initial, "root/velocity")[0].zero_()
         for horizon in (1, 8):
             actions = np.zeros((3, 2) if horizon == 1 else (3, horizon, 2), np.float64)
             for states in (None, slice(None), slice(None, None, -2), slice(9, 9)):
@@ -163,8 +164,8 @@ def test_point_lanes_step_as_the_source_step_does(dtype, maze):
         # Distances to the goal on both sides of the success tolerance, including exactly on it.
         offsets = torch.zeros(lanes, 2)
         offsets[:6] = torch.tensor([[0.0, 0.0], [0.6, 0.8], [1.0, 0.0], [0.0, -1.0000001], [3.0, 0.0], [0.7, 0.7]])
-        state["root", "position"] = state["task", "goal_pos"][:, :2] + offsets.to(torch.float64)
-        state["root", "velocity"].zero_()
+        set_field(state, "root/position", get_field(state, "task/goal_pos")[:, :2] + offsets.to(torch.float64))
+        get_field(state, "root/velocity").zero_()
         for adapter in (batched, source):
             adapter.set_state(state)
         actions = np.random.default_rng(5).uniform(-1, 1, (lanes, steps, 2)).astype(dtype)

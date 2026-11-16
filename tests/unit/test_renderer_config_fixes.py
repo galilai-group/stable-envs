@@ -112,17 +112,18 @@ def test_maze_goal_is_rendered_from_supplied_state():
     pytest.importorskip("ogbench")
     import torch
 
+    from stable_envs import get_field
     from stable_envs.envs.ogbench import PointMazeLargeNavigate
 
     with PointMazeLargeNavigate(seed=17, device="cpu") as env:
         state = env.get_state().expand(2).clone()
-        state["task", "goal_pos"][1, :2] += 3
+        get_field(state, "task/goal_pos")[1, :2] += 3
         packed = env._pack_render_state(state)
         assert packed.shape == (2, 5)
         scene = env._scene()
         positions, _ = env._fk(packed, scene)
         target = scene.agent_ids.index(scene.model.geom("target").id)
-        torch.testing.assert_close(positions[:, target], state["task", "goal_pos"].float())
+        torch.testing.assert_close(positions[:, target], get_field(state, "task/goal_pos").float())
         assert len(scene.lights.dirs) == len(scene.lights.diffuse) == len(scene.lights.ambient)
         sampled = env.sample_states(3, np.random.default_rng(0))
         assert sampled.shape == (3, 5)

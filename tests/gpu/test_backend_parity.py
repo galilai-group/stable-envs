@@ -65,3 +65,38 @@ def test_miniworld_numba_and_triton(preset):
     check_backend_parity(
         "MiniWorldMovingBlockWorld", ("numba", "triton"), size=32, preset=preset, reset_atol=1e-12, step_atol=1e-9
     )
+
+
+@pytest.mark.family("ogbench")
+@pytest.mark.parametrize("name", ["PointMazeMediumNavigate", "AntMazeTeleportNavigate", "HumanoidMazeMediumNavigate"])
+def test_maze_native_and_mjwarp(name):
+    pytest.importorskip("mujoco_warp")
+    # MuJoCo Warp integrates PointMaze with Euler where OGBench uses RK4, and its contacts differ in AntMaze.
+    steps = 3 if name.startswith("Humanoid") else 0
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), steps=steps, exclude=exclude)
+
+
+@pytest.mark.family("fetch")
+@pytest.mark.parametrize("name", ["FetchReach", "FetchPickAndPlace"])
+def test_fetch_native_and_mjwarp(name):
+    pytest.importorskip("mujoco_warp")
+    # The MuJoCo Warp model of Fetch changes the contact settings (docs/environments/fetch.md), so only resets agree.
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), steps=0, size=32, exclude=exclude)
+
+
+@pytest.mark.family("mshuman")
+def test_mshuman_native_and_mjwarp():
+    pytest.importorskip("mujoco_warp")
+    exclude = se.MSHumanLocomotion.state_solver_caches
+    check_backend_parity("MSHumanLocomotion", ("native", "mjwarp"), size=32, exclude=exclude)
+
+
+@pytest.mark.family("roadster")
+@pytest.mark.parametrize("name", ["RoadsterTrafficJam", "RoadsterCarHop"])
+def test_roadster_native_and_mjwarp(name):
+    pytest.importorskip("mujoco_warp")
+    # Mocap positions are a few hundred metres, where float32 rounding is about 2e-5.
+    exclude = se.registry.REGISTRY[name].state_solver_caches
+    check_backend_parity(name, ("native", "mjwarp"), size=32, reset_atol=5e-5, exclude=exclude)

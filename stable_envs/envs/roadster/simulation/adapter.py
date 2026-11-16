@@ -8,10 +8,13 @@ the weather with its gust RNG, the exhaust history the smoke is drawn from, and 
 
 from __future__ import annotations
 
+from functools import cache
+
 import numpy as np
 import torch
 
 from ...._core.physics import PhysicsLayout, state_key
+from ...._core.state_schema import Field, StateSchema
 from ..source.fx import ENTRY_DIM, HISTORY
 from ..source.tasks import TASKS as TASKS
 
@@ -61,8 +64,6 @@ _COMPONENTS = (
     ("plugin", "mjSTATE_PLUGIN"),
 )
 
-_NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
-
 #: State fields a render row is packed from (``render.row_layout``): what a frame needs and nothing more.
 RENDER_FIELDS = (
     ("sim", "time"),
@@ -95,65 +96,84 @@ def integration_layout(model) -> dict[str, tuple[int, int]]:
     return out
 
 
-def state_fields(model) -> dict[tuple[str, str], tuple[int, torch.dtype]]:
-    """The state schema for ``model``: ``{(group, name): (width, dtype)}``."""
-    nq = int(model.nq)
+#: State groups, one per dtype.
+GROUPS = {
+    torch.float64: "roadster_state/float64",
+    torch.int64: "roadster_state/int64",
+    torch.bool: "roadster_state/bool",
+}
+
+
+def name_of(key: tuple[str, ...]) -> str:
+    """The ``/``-joined field name of a State key path."""
+    return "/".join(key)
+
+
+def state_schema(model) -> StateSchema:
+    """The State layout for ``model``: float64, int64 and bool groups of the named fields."""
+    return _schema(tuple((name, width) for name, (_, width) in integration_layout(model).items()), int(model.nq))
+
+
+@cache
+def _schema(layout: tuple[tuple[str, int], ...], nq: int) -> StateSchema:
     f64, i64, b = torch.float64, torch.int64, torch.bool
-    fields: dict = {("sim", name): (width, f64) for name, (_, width) in integration_layout(model).items()}
+    fields: dict[str, tuple[int, torch.dtype]] = {f"sim/{name}": (width, f64) for name, width in layout}
     fields.update(
         {
             # Pose that xpos/xmat/contacts refer to after a step (one substep behind qpos), when it differs.
-            ("sim", "qpos_pre"): (nq, f64),
-            ("sim", "has_qpos_pre"): (1, b),
-            ("autopilot", "yaw_cmd"): (1, f64),
+            "sim/qpos_pre": (nq, f64),
+            "sim/has_qpos_pre": (1, b),
+            "autopilot/yaw_cmd": (1, f64),
             # The barrel-roll target; NaN upstream means "hold level", carried here as has_roll_cmd=False.
-            ("autopilot", "roll_cmd"): (1, f64),
-            ("autopilot", "has_roll_cmd"): (1, b),
-            ("task", "id"): (1, i64),
-            ("task", "fuel"): (1, f64),
-            ("task", "target_idx"): (1, i64),
-            ("task", "airborne_once"): (1, b),
-            ("task", "status"): (1, i64),
-            ("task", "sim_steps"): (1, i64),
-            ("task", "prev_cost"): (1, f64),
-            ("task", "loop_top_seen"): (1, b),
-            ("task", "ground_hold"): (1, i64),
-            ("task", "route_idx"): (1, i64),
-            ("task", "roll_t0"): (1, f64),
-            ("task", "has_roll_t0"): (1, b),
-            ("task", "roll_done"): (1, b),
-            ("task", "region_y"): (1, f64),
-            ("task", "allow_ground_landing"): (1, b),
-            ("goal", "position"): (3, f64),
-            ("goal", "yaw"): (1, f64),
-            ("goal", "velocity"): (3, f64),
-            ("route", "count"): (1, i64),
-            ("route", "positions"): (3 * MAX_ROUTE, f64),
-            ("route", "velocities"): (3 * MAX_ROUTE, f64),
-            ("route", "up"): (MAX_ROUTE, f64),
-            ("route", "touch"): (MAX_ROUTE, b),  # touchdown waypoints
-            ("jam", "present"): (1, b),
-            ("jam", "extent"): (3, f64),  # x_start, x_end, top
+            "autopilot/roll_cmd": (1, f64),
+            "autopilot/has_roll_cmd": (1, b),
+            "task/id": (1, i64),
+            "task/fuel": (1, f64),
+            "task/target_idx": (1, i64),
+            "task/airborne_once": (1, b),
+            "task/status": (1, i64),
+            "task/sim_steps": (1, i64),
+            "task/prev_cost": (1, f64),
+            "task/loop_top_seen": (1, b),
+            "task/ground_hold": (1, i64),
+            "task/route_idx": (1, i64),
+            "task/roll_t0": (1, f64),
+            "task/has_roll_t0": (1, b),
+            "task/roll_done": (1, b),
+            "task/region_y": (1, f64),
+            "task/allow_ground_landing": (1, b),
+            "goal/position": (3, f64),
+            "goal/yaw": (1, f64),
+            "goal/velocity": (3, f64),
+            "route/count": (1, i64),
+            "route/positions": (3 * MAX_ROUTE, f64),
+            "route/velocities": (3 * MAX_ROUTE, f64),
+            "route/up": (MAX_ROUTE, f64),
+            "route/touch": (MAX_ROUTE, b),  # touchdown waypoints
+            "jam/present": (1, b),
+            "jam/extent": (3, f64),  # x_start, x_end, top
             # The weather seed in two 24-bit halves, each exact in a float32 render row (seed < 2**48).
-            ("weather", "seed_hi"): (1, i64),
-            ("weather", "seed_lo"): (1, i64),
-            ("weather", "rain"): (1, f64),
-            ("weather", "wind_mean"): (3, f64),
-            ("weather", "gust"): (3, f64),
-            ("weather", "gust_std"): (1, f64),
-            ("weather", "grip"): (1, f64),
-            ("weather", "rng_state"): (4, i64),
-            ("weather", "rng_increment"): (4, i64),
-            ("weather", "rng_has_uint32"): (1, i64),
-            ("weather", "rng_uinteger"): (1, i64),
-            ("fx", "count"): (1, i64),
-            ("fx", "history"): (FX_HISTORY * FX_ENTRY, f64),
-            ("lifecycle", "elapsed_steps"): (1, i64),
+            "weather/seed_hi": (1, i64),
+            "weather/seed_lo": (1, i64),
+            "weather/rain": (1, f64),
+            "weather/wind_mean": (3, f64),
+            "weather/gust": (3, f64),
+            "weather/gust_std": (1, f64),
+            "weather/grip": (1, f64),
+            "weather/rng_state": (4, i64),
+            "weather/rng_increment": (4, i64),
+            "weather/rng_has_uint32": (1, i64),
+            "weather/rng_uinteger": (1, i64),
+            "fx/count": (1, i64),
+            "fx/history": (FX_HISTORY * FX_ENTRY, f64),
+            "lifecycle/elapsed_steps": (1, i64),
             # The physics leaves the episode runs under (installed at its reset; float64, exact).
-            **{state_key(leaf): (1, f64) for leaf in PHYSICS_LEAVES},
+            **{name_of(state_key(leaf)): (1, f64) for leaf in PHYSICS_LEAVES},
         }
     )
-    return fields
+    return StateSchema(
+        "Roadster", [Field(name, (width,), dtype, GROUPS[dtype]) for name, (width, dtype) in fields.items()]
+    )
 
 
 def _limbs(value: int) -> np.ndarray:

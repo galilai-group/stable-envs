@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .adapter import nest
 from .batch import FetchLanes
 
 #: Contacts per world: a grasp of the block on the table makes fewer than twenty.
@@ -157,36 +158,39 @@ class FetchWarpAdapter(FetchLanes):
         self._check_open()
         words = self._words_dev()
         data = self.batch.data
-        f64 = lambda x: x.to(torch.float64, copy=True)  # noqa: E731
-        columns = {
-            "qpos": f64(self._qpos),
-            "qvel": f64(data("qvel")),
-            "time": f64(data("time")[:, None]),
-            ("task", "initial_gripper_xpos"): self._anchor64.clone(),
-            "warmstart": f64(data("qacc_warmstart")),
-            ("controller", "position"): f64(self._grip_pos),
-            ("controller", "quaternion"): f64(self._grip_quat),
-            "goal": self._goal64.clone(),
-            ("lifecycle", "elapsed_steps"): self._elapsed[:, None].clone(),
-            ("rng", "state_words"): words[:, 0:4].clone(),
-            ("rng", "increment_words"): words[:, 4:8].clone(),
-            ("rng", "has_uint32"): words[:, 8:9].clone(),
-            ("rng", "uinteger"): words[:, 9:10].clone(),
-        }
-        return TensorDict(columns, [self.num_envs], device=self.device)
+        f64 = lambda x: x.to(torch.float64)  # noqa: E731
+        groups = self.schema.pack(
+            {
+                "qpos": f64(self._qpos),
+                "qvel": f64(data("qvel")),
+                "time": f64(data("time")[:, None]),
+                "task/initial_gripper_xpos": self._anchor64,
+                "warmstart": f64(data("qacc_warmstart")),
+                "controller/position": f64(self._grip_pos),
+                "controller/quaternion": f64(self._grip_quat),
+                "goal": self._goal64,
+                "lifecycle/elapsed_steps": self._elapsed[:, None],
+                "rng/state_words": words[:, 0:4],
+                "rng/increment_words": words[:, 4:8],
+                "rng/has_uint32": words[:, 8:9],
+                "rng/uinteger": words[:, 9:10],
+            }
+        )
+        return nest(groups, self.num_envs, self.device)
 
     def set_state(self, state: TensorDict) -> None:
         self.validate(state)
         dev = self.device
-        f32 = lambda key: state[key].to(dev, torch.float32)  # noqa: E731
+        v = self.schema.views(state)
+        f32 = lambda name: v[name].to(dev, torch.float32)  # noqa: E731
         self.batch.set_physics({"qpos": f32("qpos"), "qvel": f32("qvel"), "time": f32("time")[:, 0]})
         self.batch.set_physics({"qacc_warmstart": f32("warmstart")}, forward=False)
-        self._grip_pos.copy_(f32(("controller", "position")))
-        self._grip_quat.copy_(f32(("controller", "quaternion")))
-        self._elapsed.copy_(state["lifecycle", "elapsed_steps"][:, 0].to(dev))
-        host = state.cpu()
-        self._goal[:] = host["goal"].numpy()
-        self._anchor[:] = host["task", "initial_gripper_xpos"].numpy()
+        self._grip_pos.copy_(f32("controller/position"))
+        self._grip_quat.copy_(f32("controller/quaternion"))
+        self._elapsed.copy_(v["lifecycle/elapsed_steps"][:, 0].to(dev))
+        host = self.schema.views(state.cpu(), numpy=True)
+        self._goal[:] = host["goal"]
+        self._anchor[:] = host["task/initial_gripper_xpos"]
         self._restore_rngs(host)
         self._words_tensor = None
         self._upload_lanes()

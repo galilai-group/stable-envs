@@ -91,7 +91,7 @@ def test_invalid_state_and_actions_do_not_mutate():
     try:
         initial = adapter.get_state()
         invalid = initial.clone()
-        invalid["qpos"][4, 0] = float("nan")  # Invalid in the last shard.
+        snv.get_field(invalid, "qpos")[4, 0] = float("nan")  # Invalid in the last shard.
         with pytest.raises(ValueError):
             adapter.set_state(invalid)
         assert_same_state(initial, adapter.get_state())
@@ -102,7 +102,7 @@ def test_invalid_state_and_actions_do_not_mutate():
         assert_same_state(initial, adapter.get_state())
         assert_same_state(initial, adapter.step(np.zeros((5, 4)), active=np.zeros(5, dtype=bool))["state"])
         owned = adapter.get_state()
-        owned["qpos"].fill_(99)
+        snv.get_field(owned, "qpos").fill_(99)
         assert_same_state(initial, adapter.get_state())
     finally:
         adapter.close()
@@ -184,14 +184,15 @@ def test_workers_finish_next_step_while_parent_consumes_owned_frame_state(monkey
         overlapped = []
 
         def render(state):
-            elapsed = state["lifecycle", "elapsed_steps"].clone()
+            elapsed = snv.get_field(state, "lifecycle/elapsed_steps").clone()
             owner = env._simulator
             if owner._pending is not None:
                 # Waiting only for readiness does not consume acknowledgments.
                 assert all(conn.poll(10) for conn in owner._connections)
-                shared = owner._views["state", ("lifecycle", "elapsed_steps")]
+                where = owner.schema.slices["lifecycle/elapsed_steps"]
+                shared = owner._views["state", tuple(where.group.split("/"))][:, where.start : where.stop]
                 assert np.array_equal(shared, elapsed.numpy() + 1)
-                assert torch.equal(elapsed, state["lifecycle", "elapsed_steps"])
+                assert torch.equal(elapsed, snv.get_field(state, "lifecycle/elapsed_steps"))
                 overlapped.append(int(elapsed[0, 0]))
             return elapsed.to(torch.uint8).reshape(5, 1, 1, 1).expand(5, 2, 2, 3).clone()
 

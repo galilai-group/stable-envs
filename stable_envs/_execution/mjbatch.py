@@ -53,7 +53,7 @@ Up to ``fused_tree_max_envs`` worlds, the graphs compute subtree centers of mass
 internal forces with one launch per pass instead of one per body tree level, and kinematics, body velocities and
 RNE with one thread block per world (:mod:`.mjwarp_fused`), on the MuJoCo Warp versions it supports.
 
-Routing: :func:`resolve_backend`. Per-environment source resets: :class:`ResetPool`.
+Routing: :func:`mujoco_backend`. Per-environment source resets: :class:`ResetPool`.
 
 The native batch's threads do not survive ``fork``: build backends after forking, or in spawned processes.
 """
@@ -71,6 +71,7 @@ import numpy as np
 import torch
 
 from .._core.cpus import cpu_limit
+from .backends import Measure, Rungs, select_backend
 
 if TYPE_CHECKING:
     from .mjwarp_fused import TreeWalks
@@ -82,7 +83,8 @@ PHYSICS_FIELDS = ("qpos", "qvel", "act", "time", "qacc_warmstart", "mocap_pos", 
 MAX_NATIVE_THREADS = 8
 #: Fields that ``mj_rnePostConstraint`` computes.
 RNE_POST_FIELDS = ("cacc", "cfrc_int", "cfrc_ext")
-BACKENDS = ("default", "auto", "native", "mjwarp")
+#: Backends that ``simulation_backend`` may name besides ``"auto"``.
+BACKENDS = ("native", "mjwarp")
 #: Largest MuJoCo Warp batch whose graphs use :mod:`.mjwarp_fused` tree passes.
 FUSED_TREE_MAX_ENVS = 4096
 
@@ -91,34 +93,29 @@ class BufferOverflowError(RuntimeError):
     """A MuJoCo Warp contact or constraint buffer is too small for the batch."""
 
 
-def resolve_backend(
+def mujoco_backend(
+    path: str,
     num_envs: int,
     device: str | torch.device,
-    simulation_backend: str | None = "default",
-    min_envs: int = 256,
+    requested: str | None = "auto",
     *,
-    min_envs_name: str = "mjwarp_min_envs",
+    cuda_min_envs: int | None,
+    measure: Measure | None = None,
 ) -> str:
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` (MuJoCo Warp) for a batch.
 
-    ``"default"`` (or None) selects MuJoCo Warp on CUDA and native on CPU. ``"auto"`` selects MuJoCo Warp for
-    CUDA batches of ``min_envs`` or more and native for every other batch. ``"native"`` and ``"mjwarp"`` select
-    explicitly; ``"mjwarp"`` requires a CUDA device.
+    ``"auto"`` (or None) selects native on CPU. On CUDA it selects native below the switch point and MuJoCo Warp from
+    it, with :func:`~stable_envs._execution.backends.select_backend` and the simulation path ``path``;
+    ``cuda_min_envs`` is the switch point the family ships. ``"native"`` and ``"mjwarp"`` select explicitly;
+    ``"mjwarp"`` requires a CUDA device.
+
+    Raises:
+        ValueError: If ``requested`` is not one of these, or is ``"mjwarp"`` on a device other than CUDA.
     """
-    if simulation_backend is None:
-        simulation_backend = "default"
-    if simulation_backend not in BACKENDS:
-        raise ValueError("simulation_backend must be 'default', 'auto', 'native' or 'mjwarp'")
-    if isinstance(min_envs, bool) or not isinstance(min_envs, int) or min_envs < 1:
-        raise ValueError(f"{min_envs_name} must be an int >= 1")
-    cuda = torch.device(device).type == "cuda"
-    if simulation_backend == "mjwarp" and not cuda:
+    if requested == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
-    if simulation_backend == "default":
-        return "mjwarp" if cuda else "native"
-    if simulation_backend == "auto":
-        return "mjwarp" if cuda and num_envs >= min_envs else "native"
-    return simulation_backend
+    backends = {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", cuda_min_envs)}
+    return select_backend(path, num_envs, device, requested, backends, choices=BACKENDS, measure=measure)
 
 
 def native_threads(num_envs: int) -> int:
@@ -128,7 +125,7 @@ def native_threads(num_envs: int) -> int:
 
 
 def make_backend(backend: str, models, num_envs: int, device, **kwargs) -> MjBatch:
-    """Build the ``backend`` (``"native"`` or ``"mjwarp"``) that :func:`resolve_backend` returned."""
+    """Build the ``backend`` (``"native"`` or ``"mjwarp"``) that :func:`mujoco_backend` returned."""
     if backend == "native":
         return NativeBatch(models, num_envs, device, **kwargs)
     if backend == "mjwarp":

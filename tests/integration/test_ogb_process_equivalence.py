@@ -6,6 +6,7 @@ import torch
 
 pytest.importorskip("ogbench")
 
+from stable_envs import get_field  # noqa: E402
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter  # noqa: E402
 from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter  # noqa: E402
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter  # noqa: E402
@@ -57,8 +58,8 @@ def test_maze_invalid_last_lane_restores_no_lane():
     try:
 
         def corrupt(state):
-            state["root", "position"][0] += 0.25
-            state["task", "id"][-1] = 999
+            get_field(state, "root/position")[0] += 0.25
+            get_field(state, "task/id")[-1] = 999
             return state
 
         assert_atomic_restore(adapter, corrupt, ValueError, lambda a: a.step(np.zeros((5, 2))))

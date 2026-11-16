@@ -7,6 +7,7 @@ import torch
 pytest.importorskip("ogbench")
 pytest.importorskip("mujoco.batch")
 
+from stable_envs import get_field, set_field
 from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter
 from stable_envs.envs.ogbench.simulation.maze_batch import OGBMazeBatchAdapter
 from tests.helpers.reference.semantics import assert_same_state
@@ -67,15 +68,15 @@ def test_teleport_lanes_teleport_as_the_source_does():
         state = batch.get_state()
         centre = torch.tensor(batch.task.teleport["teleport_in_xys"][0], dtype=torch.float64)
         offsets = torch.tensor([[0.0, 0.0], [1.0, 0.0], [1.1, 1.1], [-1.1, -1.1]], dtype=torch.float64)
-        state["root", "position"] = centre + offsets
+        set_field(state, "root/position", centre + offsets)
         for adapter in (batch, source):
             adapter.set_state(state)
         zero = np.zeros((lanes, 2), np.float32)
         out = batch.step(zero)
         assert_same_state(out, source.step(zero))
-        moved = (out["state"]["root", "position"] - state["root", "position"]).abs().sum(-1) > 0.5
+        moved = (get_field(out["state"], "root/position") - get_field(state, "root/position")).abs().sum(-1) > 0.5
         assert moved.tolist() == [True, True, False, False]
-        drew = (out["state"]["rng", "global_position"] != state["rng", "global_position"]).reshape(-1)
+        drew = (get_field(out["state"], "rng/global_position") != get_field(state, "rng/global_position")).reshape(-1)
         assert drew.tolist() == [True, True, False, False]
     finally:
         batch.close()
@@ -83,33 +84,49 @@ def test_teleport_lanes_teleport_as_the_source_does():
 
 
 @pytest.mark.parametrize(
-    "batch,device,backend,threshold,expected",
+    "batch,device,backend,switch,expected",
     [
-        (1, "cpu", "default", None, "native"),
-        (4096, "cpu", "default", None, "native"),
-        (4096, "cpu", "auto", None, "native"),
-        (1, "cuda", "default", None, "mjwarp"),
+        (1, "cpu", "auto", 1, "native"),
+        (4096, "cpu", None, 1, "native"),
+        (4096, "cpu", "auto", 8, "native"),
+        (1, "cuda", "auto", 1, "mjwarp"),
         (1, "cuda:1", "auto", 8, "native"),
         (7, "cuda", "auto", 8, "native"),
-        (8, "cuda", "auto", 8, "mjwarp"),
-        (4096, "cuda", "native", None, "native"),
-        (1, "cuda", "mjwarp", None, "mjwarp"),
+        (8, "cuda", None, 8, "mjwarp"),
+        (4096, "cuda", "native", 1, "native"),
+        (1, "cuda", "mjwarp", 8, "mjwarp"),
     ],
 )
-def test_maze_backend_routing(batch, device, backend, threshold, expected):
+def test_maze_backend_routing(batch, device, backend, switch, expected):
+    from stable_envs import tuning
     from stable_envs.envs.ogbench.simulation.execution import maze_backend
 
-    assert maze_backend(batch, device, "ant", backend, threshold) == expected
+    with tuning.override(large_backend_min_envs=switch):
+        assert maze_backend(batch, device, "ant", backend) == expected
 
 
-def test_auto_uses_the_measured_cutoff_of_each_body():
-    from stable_envs.envs.ogbench.simulation.execution import MAZE_MJWARP_MIN_ENVS, maze_backend
+def test_auto_uses_the_shipped_switch_point_of_each_body(monkeypatch):
+    from stable_envs import tuning
+    from stable_envs.envs.ogbench.simulation.execution import MAZE_CUDA_MIN_ENVS, maze_backend
 
-    for loco, cutoff in MAZE_MJWARP_MIN_ENVS.items():
-        assert maze_backend(cutoff - 1, "cuda", loco, "auto") == "native"
-        assert maze_backend(cutoff, "cuda", loco, "auto") == "mjwarp"
+    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
+    tuning.reset()
+    assert MAZE_CUDA_MIN_ENVS == {"point": 8, "ant": 128, "humanoid": 128}
+    for loco, switch in MAZE_CUDA_MIN_ENVS.items():
+        assert maze_backend(switch - 1, "cuda", loco) == "native"
+        assert maze_backend(switch, "cuda", loco) == "mjwarp"
+
+
+def test_maze_backend_rejects_bad_options():
+    from stable_envs.envs.ogbench.simulation.execution import maze_backend
+
     with pytest.raises(ValueError, match="requires device='cuda'"):
         maze_backend(8, "cpu", "point", "mjwarp")
+    for bad in ("default", "mjx"):
+        with pytest.raises(ValueError, match="simulation_backend"):
+            maze_backend(8, "cuda", "point", bad)
 
 
 def test_legacy_streams_draw_as_random_state():
