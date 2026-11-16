@@ -15,7 +15,10 @@ writes ``summary.json`` and one CSV row to ``--out``:
 
   steps_per_s         training steps per second in the steady state.
   train_busy_frac     GPU time of the training step alone (CUDA events around the step, without frame drawing)
-                      divided by the steady-state wall time.
+                      divided by the steady-state wall time. The events measure a span on the GPU: when other
+                      processes share the GPU (the OpenGL workers of ``source`` for DM Control and OGBench), the
+                      span also holds their time slices.
+  step_gpu_ms         the median GPU time of one training step, without frame drawing.
   render_busy_frac    GPU time of the frame drawing of ``ours`` divided by the steady-state wall time.
   render_ms           mean GPU time of the frame drawing of ``ours`` per batch.
   data_wait_frac      wall time between the end of one step and the start of the next (DataLoader wait and the
@@ -24,7 +27,9 @@ writes ``summary.json`` and one CSV row to ``--out``:
                       included).
   proc_sm_train / proc_sm_workers / proc_sm_other
                       the mean per-process NVML SM utilisation of the training process, of its DataLoader workers,
-                      and of other processes.
+                      and of other processes. The frame drawing of ``ours`` is in the training process.
+
+The driver records one NVML sample per period (about 200 ms), so polls faster than that repeat values.
 
 On a GPU it also writes three traces for the whole run: ``nvml-*.csv`` (NVML polled at ``--nvml-hz``),
 ``proc-*.csv`` (per-process SM samples) and ``steps-*.csv`` (the times of each step).
@@ -385,6 +390,7 @@ def main() -> None:
         "steps_per_s": steady / wall,
         "samples_per_s": steady * int(cfg.loader.batch_size) / wall,
         "train_busy_frac": (gpu_ms[w:].sum() - render_sum) / 1000 / wall if gpu else None,
+        "step_gpu_ms": float(np.median(gpu_ms[w:] - step_render_ms[w:])) if gpu else None,
         "render_busy_frac": render_sum / 1000 / wall if render_ms else None,
         "render_ms": render_sum / steady if render_ms else None,
         "data_wait_frac": float((starts[w + 1 :] - ends[w:-1]).sum() / wall),
