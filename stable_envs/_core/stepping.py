@@ -415,6 +415,40 @@ def _host_result(env, leaves, sequence, state_indices, final_state):
     return result, live
 
 
+def _sequence_hook(env, acts, sequence, state_indices, frame_indices, *, final_state, final):
+    """Step through the family's ``_step_sequence`` hook, or return None when the family has none or declines.
+
+    The hook gets ``(B, T, *action_shape)`` actions, the selected step indices of states and frames (None for
+    no selection), and ``final``: whether to build the final state, which the result returns unless
+    ``final_state`` is False and an empty ``states`` selection copies. It returns None, or a dict of
+    ``(B, T, ...)`` task outputs with ``valid``, and ``state``, ``states`` and ``frames`` when they are asked
+    for. Finished lanes hold their state and their later task outputs are zero, as in the step loop.
+    """
+    hook = getattr(env, "_step_sequence", None)
+    if hook is None:
+        return None
+    got = hook(acts if sequence else acts[:, None], state_indices or None, frame_indices or None, final)
+    if got is None:
+        return None
+    valid = got.pop("valid")
+    live_state, saved_states, saved_frames = got.pop("state", None), got.pop("states", None), got.pop("frames", None)
+    out = {"state": live_state} if final_state else {}
+    out.update(got.items() if sequence else ((key, value[:, 0]) for key, value in got.items()))
+    out["valid"] = valid
+    if state_indices is not None:
+        out["states"] = saved_states if state_indices else live_state.unsqueeze(1)[:, :0].clone()
+        out["state_valid"] = _columns(valid, state_indices)
+    if frame_indices is not None:
+        if frame_indices:
+            out["frames"] = saved_frames
+        else:
+            out["frames"] = torch.empty(
+                (env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device
+            )
+        out["frame_valid"] = _columns(valid, frame_indices)
+    return build_tensordict(out, [env.num_envs], env.device)
+
+
 def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
@@ -430,6 +464,11 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
     # The final State: returned unless ``state=False``, and the source of an empty ``states`` selection.
     final = final_state or state_indices == ()
+    if pipeline is None:
+        # A family that steps the whole sequence in one call takes it here; the step loop serves the rest.
+        fused = _sequence_hook(env, acts, sequence, state_indices, frame_indices, final_state=final_state, final=final)
+        if fused is not None:
+            return fused
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
     advance = getattr(env, "_advance_without_snapshot", env._step)

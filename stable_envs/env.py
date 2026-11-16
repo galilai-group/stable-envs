@@ -831,7 +831,7 @@ class Env:
     ) -> np.ndarray:
         """Sample ``(batch, variation_dim)`` float32 variation rows without installing them.
 
-        Box leaves are uniform between their bounds and Discrete leaves uniform over ``0`` to ``n - 1``.
+        Box leaves are uniform between their bounds and Discrete leaves uniform over ``start`` to ``start + n - 1``.
 
         Args:
             batch: Number of rows (``num_envs`` if None).
@@ -866,7 +866,8 @@ class Env:
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64).reshape(-1)
                 out[:, off : off + w] = rng.uniform(lo, hi, size=(B, w))
             elif hasattr(node, "n"):
-                out[:, off : off + w] = rng.integers(0, int(node.n), size=(B, w))
+                start = int(getattr(node, "start", 0))
+                out[:, off : off + w] = rng.integers(start, start + int(node.n), size=(B, w))
         return out.astype(np.float32)
 
     @property
@@ -1081,9 +1082,16 @@ class Env:
         values = self._style.values.clone()
         cols = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
         rows = np.empty((self.B, int(sum(layout.widths))))
-        for leaf, off, width in zip(layout.leaves, layout.offsets, layout.widths, strict=True):
-            v = get_field(state, "/".join(state_key(leaf))).detach().to(torch.float64).cpu().reshape(self.B, width)
-            rows[:, off : off + width] = v.numpy()
+        leaves = [
+            get_field(state, "/".join(state_key(leaf))).detach().reshape(self.B, width).to(torch.float64)
+            for leaf, width in zip(layout.leaves, layout.widths, strict=True)
+        ]
+        # One host copy serves every leaf.
+        host = torch.cat(leaves, dim=1).cpu().numpy()
+        start = 0
+        for leaf, off, width, v in zip(layout.leaves, layout.offsets, layout.widths, leaves, strict=True):
+            rows[:, off : off + width] = host[:, start : start + width]
+            start += width
             o, _ = cols[leaf]
             values[:, o : o + width] = v.to(device=values.device, dtype=values.dtype)
         self._style = StyleTensor(values, self.variation_space.flat_layout())

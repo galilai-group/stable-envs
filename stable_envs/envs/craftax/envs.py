@@ -1,8 +1,8 @@
 """Craftax and Craftax-Classic: the whole batch in one stacked JAX pytree, advanced by one jitted vmap.
 
 Batch row ``i`` follows stable-worldmodel's ``CraftaxWrapper`` built with ``seed + i``. State holds each
-leaf of the upstream ``EnvState`` under ``engine`` and the wrapper's PRNG key under ``key``, one row
-per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
+leaf of the upstream ``EnvState`` under ``engine``, the lane's ``EnvParams`` variation values under
+``physics`` and the wrapper's PRNG key under ``key``, one row per environment; uint32 PRNG words are stored bit for bit as int32. Frames are Craftax's pixel observation
 scaled to uint8 as stable-worldmodel renders it. The symbolic tasks render the same frames from their
 state with the pixel renderer of their game, and return the symbolic vector as ``observation``.
 """
@@ -16,11 +16,13 @@ import torch
 from tensordict import TensorDict
 
 from ..._core import jax_runtime
+from ..._core.config import get_config, log
 from ..._core.stepping import _stack_states
 from ..._core.tensordicts import build_tensordict
-from ...env import Env
+from ...env import Env, require_contiguous_out
 from ...registry import register
-from ...spaces import Dict
+from ...spaces import Box, Dict, Discrete
+from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS, INT_RANGES
 
 if importlib.util.find_spec("craftax") is None or importlib.util.find_spec("jax") is None:
     raise ImportError("Craftax needs the craftax extra: pip install 'stable-envs[craftax]'")
@@ -33,9 +35,35 @@ class CraftaxEnv(Env):
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
+    _step_outputs_owned = True
+    _frames_owned = True
+    visual_fidelity = {
+        "mse_mean": 0.0,
+        "mse_p95": 0.0,
+        "mse_max": 0.0,
+        "measured_at": (
+            "native size, per-frame MSE over pixels and channels on the 0-255 scale, over 2048 frames: 8 "
+            "environments stepped 256 times with default_rng(20260811) actions from reset(seed=20260811), against "
+            "upstream Craftax 1.6.1 single-environment jit frames on the same device; NVIDIA RTX A5000, "
+            "jax 0.11.2, torch 2.14.1+cu126. The CPU frames give the same values"
+        ),
+        "reference_versions": {"craftax": "1.6.1"},
+        "measured_with": {"jax": "0.11.2", "torch": "2.14.1+cu126"},
+    }
+    visual_note = (
+        "The frames are upstream Craftax's pixel observation, drawn by a port of its renderer for the whole "
+        "batch in one vmap and truncated to uint8 as stable-worldmodel does. They equal upstream frames bit "
+        "for bit on CUDA and on the CPU."
+    )
 
     def __init__(self, num_envs=1, size=None, supersample=1, device=None, backend="auto", seed=0):
         jax_runtime.prepare()
+        device = self.resolve_device(device)
+        if torch.device(device).type == "cpu":
+            from .devices import use_host_devices
+
+            # Importing the kernel imports Craftax, which starts JAX, so the CPU device count is asked first.
+            use_host_devices()
         from .kernel import kernel
 
         if size not in (None, self.default_size) or supersample != 1:
@@ -45,13 +73,63 @@ class CraftaxEnv(Env):
         if backend not in ("auto", "jax"):
             raise ValueError(f"{type(self).__name__} runs on the JAX backend, not {backend!r}")
         self._k = kernel(self.reference_id)
+        self._simulator = _ParamRows(self._k.physics_layout)
         super().__init__(num_envs, size, supersample, device, backend, seed)
+        # Installs the default parameter rows, which each lane reads at reset.
+        self.set_variation()
         self._device = self._k.device(self.device)
-        self._keys = self._k.seed_keys(int(seed), self.B, self._device)
+        # XLA steps on CPU threads of its own, so the bookkeeping around a CPU step runs in one torch thread.
+        # A CUDA step leaves the torch threads alone.
+        self.native_step_threads = self.device.type == "cpu"
+        self._lanes = self._k.lanes(self.B, self._device)
+        self._keys = self._k.seed_keys(int(seed), self._lanes)
         self._state = None
+        self._varied = False
+        #: The device flag of the last step with device actions, read by the next step, reset or set_state.
+        self._pending = None
+
+    @staticmethod
+    def resolve_device(device: str | None) -> str:
+        """Resolve the device as ``Env`` does, but let ``"auto"`` pick the CPU when JAX has no GPU backend.
+
+        Args:
+            device: A device string, ``"auto"``, or None for the global ``default_device``.
+
+        Returns:
+            The device string to use.
+        """
+        requested = device if device is not None else (get_config()["default_device"] or "auto")
+        resolved = Env.resolve_device(device)
+        if str(requested) == "auto" and resolved.startswith("cuda"):
+            from .devices import gpu_backend_installed, has_gpu
+
+            if not gpu_backend_installed() or not has_gpu():
+                log(
+                    "INFO",
+                    "JAX has no GPU backend, so device='auto' chose the CPU for Craftax. "
+                    "Install the craftax-gpu extra to step Craftax on CUDA.",
+                )
+                return "cpu"
+        return resolved
 
     def make_variation_space(self):
-        return Dict({})
+        """Upstream ``EnvParams`` fields as physics leaves; each lane takes its values at reset."""
+        leaves: dict[str, dict] = {}
+        for path, _, dtype, default in self._k.params:
+            group, name = path.split(".")
+            if dtype == np.bool_:
+                space = Discrete(2, init_value=int(default))
+            elif dtype == np.int32:
+                low, high = INT_RANGES[path]
+                space = Discrete(high - low + 1, start=low, init_value=int(default))
+            else:
+                space = Box(low=0.0, high=1.0, shape=(1,), init_value=[default])
+            leaves.setdefault(group, {})[name] = space
+        return Dict({group: Dict(spaces) for group, spaces in leaves.items()})
+
+    def _lane_values(self) -> dict[str, np.ndarray]:
+        """The installed physics rows as per-lane parameter values."""
+        return self._k.from_rows(self._physics_installed)
 
     def _layout(self):
         return tuple((f.key, f.width, None) for f in self._k.fields)
@@ -94,70 +172,221 @@ class CraftaxEnv(Env):
 
     def get_state(self):
         """An independent snapshot: each leaf a ``(num_envs, width)`` view of blocks only it uses."""
-        return self._snapshot(self._k.export(self._live("get_state"), self._keys))
+        return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._lanes))
 
     def set_state(self, state):
         """Restore every lane from a state with ``num_envs`` lanes; the state is copied."""
-        self._state, self._keys = self._k.restore(self._checked(state, "set_state", self.B), self.device)
+        self._check_pending()
+        state = self._checked(state, "set_state", self.B)
+        restored = self._k.restore(state, self.device, self._lanes)
+        values = self._k.values(state)
+        for path, value in values.items():
+            space = self.variation_space._walk(path)
+            low, high = (space.start, space.start + space.n - 1) if hasattr(space, "n") else (space.low, space.high)
+            if not ((value >= low) & (value <= high)).all():
+                raise ValueError(f"State field physics.{path} is outside [{low}, {high}]")
+        self._state, self._keys = restored
+        self._varied = self._k.varied(values)
+        self._adopt_physics_state(state)
 
     def reset(self, seed=None, options=None):
         """Reset every lane; lane ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
         self._check_open("reset")
+        self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
-            self._keys = self._k.seed_keys(int(seed), self.B, self._device)
-        self._state, self._keys, views = self._k.reset(self._keys)
-        return self._snapshot(views)
+            self._keys = self._k.seed_keys(int(seed), self._lanes)
+        values = self._lane_values()
+        self._varied = self._k.varied(values)
+        self._state, self._keys, blocks = self._k.reset(self._keys, values, self._lanes, self._varied)
+        return self._snapshot(self._k.views(blocks))
 
-    def _actions(self, actions):
-        """Device actions, and for device inputs a pending flag that is true when any is out of range."""
+    def _actions(self, actions, shape: tuple[int, ...] | None = None):
+        """Device actions of ``shape`` (default ``(B,)``), and whether only the step itself can check their range.
+
+        Host actions are checked here, all of them before any step. Device actions outside the range are
+        clamped to one step past it, so int32 cannot wrap them into the range, and the step rejects them on
+        the device.
+        """
+        shape = (self.B,) if shape is None else shape
         if torch.is_tensor(actions) and actions.device.type != "cpu" and self.device.type != "cpu":
-            a = actions.to(self.device).reshape(self.B)
+            a = actions.to(self.device).reshape(shape)
             if a.is_floating_point():
                 raise self._invalid_actions()
-            # Read after the step is queued, so the check does not stall the host before dispatch.
-            return a, ((a < 0) | (a > self.action_high)).any()
+            return a.to(torch.int64).clamp(-1, self.action_high + 1), True
         host = actions.cpu() if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
-        host = host.reshape(self.B)
+        host = host.reshape(shape)
         if host.is_floating_point() or bool(((host < 0) | (host > self.action_high)).any()):
             raise self._invalid_actions()
         if self.device.type == "cpu":
-            return host, None
+            return host, False
         # Pageable host memory is staged before the call returns, so the copy need not wait for the stream.
-        return host.to(self.device, non_blocking=not host.is_pinned()), None
+        return host.to(self.device, non_blocking=not host.is_pinned()), False
 
     def _invalid_actions(self):
         return ValueError(f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]")
 
-    def _step(self, actions, *, active=None):
+    def _check_pending(self):
+        """Raise for a step whose device actions were out of range; that step left every lane unchanged."""
+        pending, self._pending = self._pending, None
+        if pending is not None and self._k.read_flag(pending):
+            raise ValueError(
+                f"{type(self).__name__}: actions must be integers in [0, {self.action_high}]; "
+                "the last step got others and left every environment unchanged"
+            )
+
+    def _defer(self, invalid, deferred: bool) -> None:
+        """Keep the device range flag of a step with device actions for the next call to read."""
+        if deferred:
+            # A JAX read waits for this step only; a torch read would wait for all queued GPU work.
+            invalid.copy_to_host_async()
+            self._pending = invalid
+
+    def _advance(self, actions, active, snapshot: bool, frame: bool = False):
+        self._check_open("step")
+        self._check_pending()
         state = self._live("step")
-        a, invalid = self._actions(actions)
-        out = self._k.step(self._keys, state, a, active)
-        # A rejected step leaves the live lanes as they were: JAX arrays are immutable.
-        if invalid is not None and bool(invalid):
-            raise self._invalid_actions()
-        self._state, self._keys, reward, done, observation, views = out
+        a, deferred = self._actions(actions)
+        out = self._k.step(self._keys, state, a, active, self._lanes, snapshot, frame, self._varied)
+        # The call donated the old buffers, so the new ones are held before anything else can raise.
+        self._state, self._keys = out[0], out[1]
+        reward, done, observation, views, frames, invalid = self._k.outputs(out, self._lanes)
+        self._defer(invalid, deferred)
         result = {
-            "state": self._snapshot(views),
             "reward": reward,
             "terminated": done,
             "truncated": torch.zeros(self.B, dtype=torch.bool, device=self.device),
         }
+        if views is not None:
+            result["state"] = self._snapshot(views)
         if observation is not None:
             result["observation"] = observation
+        if frames is not None:
+            result["frame"] = frames
         return build_tensordict(result, [self.B], self.device)
 
-    def _render_state_input(self, state):
-        """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes."""
+    def _step(self, actions, *, active=None):
+        return self._advance(actions, active, snapshot=True)
+
+    def _step_sequence(self, actions, states, frames, final_state: bool):
+        """Step ``(B, T, 1)`` actions in one jitted call, with the states and frames that are asked for.
+
+        A sequence runs as one ``lax.scan``, padded to a power-of-two length so that few lengths compile.
+        Every selection of states or frames uses the same call: the last state and frame come from the
+        end of the scan, and other selections take their steps from the states or frames of every step.
+        """
+        length = actions.shape[1]
+        if length > 1:
+            return self._fused_sequence(actions, length, states, frames, final_state)
+        snapshot = final_state or states is not None
+        result = self._advance(actions[:, 0], None, snapshot=snapshot, frame=frames is not None)
+        out = {key: value.unsqueeze(1) for key, value in result.items() if key not in ("state", "frame")}
+        out["valid"] = torch.ones((self.B, 1), dtype=torch.bool, device=self.device)
+        if final_state:
+            out["state"] = result["state"]
+        if states is not None:
+            # The final state and the selected one are separate tensors, as in the step loop.
+            out["states"] = result["state"].unsqueeze(1).clone() if final_state else result["state"].unsqueeze(1)
+        if frames is not None:
+            out["frames"] = result["frame"].unsqueeze(1)
+        return out
+
+    def _fused_sequence(self, actions, length: int, states, frames, final_state: bool):
+        self._check_open("step")
+        self._check_pending()
+        state = self._live("step")
+        a, deferred = self._actions(actions, (self.B, length))
+        last = (length - 1,)
+        every = states is not None and states != last
+        frame = "none" if frames is None else "last" if frames == last else "all"
+        padded = 1 << (length - 1).bit_length()
+        if padded != length:
+            a = torch.cat([a, a.new_full((self.B, padded - length), self._k.pad_action)], dim=1)
+        packed = final_state or states == last
+        out = self._k.sequence(self._keys, state, a, self._lanes, every, frame, packed, self._varied)
+        # The call donated the old buffers, so the new ones are held before anything else can raise.
+        self._state, self._keys = out[0], out[1]
+        valid, reward, done, observation, blocks, drawn, views, last_frames, invalid = self._k.sequence_outputs(
+            out, self._lanes
+        )
+        self._defer(invalid, deferred)
+        result = {
+            "reward": reward[:, :length],
+            "terminated": done[:, :length],
+            "truncated": torch.zeros((self.B, length), dtype=torch.bool, device=self.device),
+            "valid": valid[:, :length],
+        }
+        if observation is not None:
+            result["observation"] = observation[:, :length]
+        if final_state:
+            result["state"] = self._snapshot(views)
+        if every:
+            picked = self._k.split([_steps(b, states, length) for b in blocks])
+            result["states"] = self._snapshot(picked, [self.B, len(states)])
+        elif states is not None:
+            # The final state and the selected one are separate tensors, as in the step loop.
+            result["states"] = self._snapshot(views).unsqueeze(1)
+            if final_state:
+                result["states"] = result["states"].clone()
+        if frame == "last":
+            result["frames"] = last_frames.unsqueeze(1)
+        elif frame == "all":
+            result["frames"] = _steps(drawn, frames, length)
+        return result
+
+    def _render_state_input(self, state, *, size=None, supersample=None, variation=None, style=None, out=None):
+        """Draw ``(N, H, W, 3)`` uint8 frames from a state of any batch, or from the live lanes.
+
+        Every leaf is physics, so ``variation`` is checked and does not change the frames.
+        """
+        name = type(self).__name__
+        if size not in (None, self.default_size) or supersample not in (None, 1):
+            raise ValueError(
+                f"{name}.render draws Craftax's own {self.frame_shape} frame; size and supersample are fixed"
+            )
+        require_contiguous_out(f"{name}.render", out)
         if state is None:
-            return self._k.render(self._live("render"))
-        return self._k.render_state(self._checked(state, "render"), self.device)
+            frames = self._k.render(self._live("render"), self._lanes)
+        else:
+            frames = self._k.render_state(self._checked(state, "render"), self.device)
+        if variation is not None or style is not None:
+            self.resolve_style(style, variation, batch=len(frames))
+        if out is None:
+            return frames
+        target = torch.as_tensor(out)
+        if tuple(target.shape) != tuple(frames.shape):
+            raise ValueError(f"{name}.render: out has shape {tuple(target.shape)}, the frames {tuple(frames.shape)}")
+        target.copy_(frames)
+        return out
 
     def _render_live(self):
-        return self._k.render(self._live("render"))
+        return self._k.render(self._live("render"), self._lanes)
 
     def _close(self):
         self._state = None
+        # A step whose device actions were out of range still raises when nothing else reads its flag.
+        self._check_pending()
+
+
+def _steps(x: torch.Tensor, indices: tuple[int, ...], length: int) -> torch.Tensor:
+    """The selected steps of a ``(B, P, ...)`` output of a sequence padded from ``length`` to ``P`` steps."""
+    if indices == tuple(range(length)):
+        return x[:, :length]
+    return x[:, list(indices)]
+
+
+class _ParamRows:
+    """The layout of the per-lane ``EnvParams`` values, for the physics variation that ``Env`` installs."""
+
+    def __init__(self, layout):
+        self.physics_layout = layout
+
+    def configure_physics(self, values) -> None:
+        """Do nothing: ``Env`` keeps the installed rows, and each lane reads its values at its next reset."""
+
+
+_CLASSIC_LEAVES = frozenset(path for path, _ in CLASSIC_PARAMS)
+_CRAFTAX_LEAVES = frozenset(path for path, _ in CRAFTAX_PARAMS)
 
 
 @register
@@ -168,6 +397,7 @@ class CraftaxClassicPixels(CraftaxEnv):
     frame_shape = (63, 63)
     default_size = native_size = 63
     action_high = 16
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CLASSIC_LEAVES
 
 
 @register
@@ -178,6 +408,7 @@ class CraftaxClassicSymbolic(CraftaxEnv):
     frame_shape = (63, 63)
     default_size = native_size = 63
     action_high = 16
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CLASSIC_LEAVES
 
 
 @register
@@ -188,6 +419,7 @@ class CraftaxPixels(CraftaxEnv):
     frame_shape = (130, 110)
     default_size = native_size = 130
     action_high = 42
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CRAFTAX_LEAVES
 
 
 @register
@@ -198,3 +430,4 @@ class CraftaxSymbolic(CraftaxEnv):
     frame_shape = (130, 110)
     default_size = native_size = 130
     action_high = 42
+    dynamics_variation_leaves = reset_value_paths = reset_sample_paths = _CRAFTAX_LEAVES

@@ -28,12 +28,103 @@
    "dtypes": ["bool", "float32", "int32"]
   },
   {
+   "key": "physics",
+   "leaves": 10,
+   "numel": 10,
+   "dtypes": ["bool", "float32", "int32"]
+  },
+  {
    "key": "key",
    "shape": [2],
    "dtype": "int32"
   }
  ],
- "variation": [],
+ "variation": [
+  {
+   "path": "cow.health",
+   "type": "Discrete",
+   "reset": false,
+   "n": 9,
+   "start": 1,
+   "default": 3
+  },
+  {
+   "path": "mobs.despawn_distance",
+   "type": "Discrete",
+   "reset": false,
+   "n": 25,
+   "start": 6,
+   "default": 14
+  },
+  {
+   "path": "skeleton.health",
+   "type": "Discrete",
+   "reset": false,
+   "n": 9,
+   "start": 1,
+   "default": 3
+  },
+  {
+   "path": "spawn.cow",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0.1
+  },
+  {
+   "path": "spawn.skeleton",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0.05
+  },
+  {
+   "path": "spawn.zombie_base",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0.02
+  },
+  {
+   "path": "spawn.zombie_night",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0.1
+  },
+  {
+   "path": "world.always_diamond",
+   "type": "Discrete",
+   "reset": false,
+   "n": 2,
+   "start": 0,
+   "default": 1
+  },
+  {
+   "path": "world.day_length",
+   "type": "Discrete",
+   "reset": false,
+   "n": 951,
+   "start": 50,
+   "default": 300
+  },
+  {
+   "path": "zombie.health",
+   "type": "Discrete",
+   "reset": false,
+   "n": 9,
+   "start": 1,
+   "default": 5
+  }
+ ],
  "devices": {
   "cpu": "ok",
   "cuda": "RuntimeError: device='cuda' needs a CUDA build of JAX: pip install 'stable-envs[craftax-gpu]'"
