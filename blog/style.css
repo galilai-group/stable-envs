@@ -315,7 +315,7 @@ header sup {
   line-height: 0;
 }
 
-/* Institution logos: one height for all */
+/* Institution logos: heights set so each logo covers about the same area */
 
 .logos {
   display: flex;
@@ -330,8 +330,19 @@ header sup {
 
 .logos img {
   display: block;
-  height: 48px;
   width: auto;
+}
+
+.logos .logo-brown {
+  height: 44px;
+}
+
+.logos .logo-oxford {
+  height: 60px;
+}
+
+.logos .logo-rice {
+  height: 24px;
 }
 
 .links {
@@ -871,8 +882,16 @@ footer p {
     row-gap: var(--s5);
   }
 
-  .logos img {
-    height: 40px;
+  .logos .logo-brown {
+    height: 37px;
+  }
+
+  .logos .logo-oxford {
+    height: 50px;
+  }
+
+  .logos .logo-rice {
+    height: 20px;
   }
 }
 
