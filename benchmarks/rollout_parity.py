@@ -68,6 +68,8 @@ def _load(env, fields: dict) -> tuple[list[str], list[str]]:
                 field = get_field(state, name)
             except KeyError:
                 continue
+            if field.numel() != value.size:
+                continue
             set_field(state, name, torch.as_tensor(value, dtype=field.dtype).reshape(field.shape))
             written.append(name)
             break

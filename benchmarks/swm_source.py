@@ -83,6 +83,12 @@ FIELDS = {
     "block_angular_velocity": ("current.body.block.angular_velocity",),
     "qpos": ("qpos", "physics.qpos"),
     "qvel": ("qvel", "physics.qvel"),
+    "observation": ("current.observation",),
+    "time": ("time", "physics.time"),
+    "warmstart": ("warmstart", "physics.warmstart"),
+    "ctrl": ("ctrl", "physics.ctrl"),
+    "mocap_pos": ("mocap_pos", "physics.mocap_pos"),
+    "mocap_quat": ("mocap_quat", "physics.mocap_quat"),
 }
 
 
@@ -201,6 +207,7 @@ class SwmSource:
                 "angle": np.array([u.block.angle], np.float64),
                 "block_velocity": np.array(u.block.velocity, np.float64),
                 "block_angular_velocity": np.array([u.block.angular_velocity], np.float64),
+                "observation": np.asarray(u._get_obs(), np.float64),
             }
         if hasattr(u, "agent_position"):
             return {"agent": np.asarray(u.agent_position, np.float64).reshape(-1)[:2]}
@@ -208,10 +215,18 @@ class SwmSource:
         if mj is None:
             raise NotImplementedError(f"no swm state mapping for {self.name}")
         model, data = mj
-        return {
+        out = {
             "qpos": np.array(data.qpos[: model.nq], np.float64),
             "qvel": np.array(data.qvel[: model.nv], np.float64),
+            "time": np.array([data.time], np.float64),
+            "warmstart": np.array(data.qacc_warmstart, np.float64),
+            "ctrl": np.array(data.ctrl, np.float64),
         }
+        if model.nmocap:
+            out.update(
+                mocap_pos=np.array(data.mocap_pos, np.float64), mocap_quat=np.array(data.mocap_quat, np.float64)
+            )
+        return out
 
     def get_state(self, like: dict) -> np.ndarray:
         """Read the swm env's state as the vector that :func:`state_vector` makes of the row ``like``."""
