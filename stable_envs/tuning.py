@@ -249,7 +249,7 @@ def _cuda() -> bool:
 
 
 def _dev(device) -> str | None:
-    """Return ``"cpu"`` or ``"cuda:<index>"`` for ``device``, or None for CUDA when it is unavailable."""
+    """Return ``"cpu"`` or ``"cuda:<index>"`` for ``device``; None for a CUDA device this host doesn't have."""
     if not str(device).startswith("cuda"):
         return "cpu"
     if not _cuda():
@@ -257,6 +257,8 @@ def _dev(device) -> str | None:
     import torch
 
     index = torch.device(device).index
+    if index is not None and index >= torch.cuda.device_count():
+        return None
     return f"cuda:{torch.cuda.current_device() if index is None else index}"
 
 
