@@ -65,6 +65,7 @@ COLUMNS = [
     "cores",
     "stable_envs_sha",
     "source_versions",
+    "frame_check",
 ]
 WORKLOADS = ("step", "step-and-render", "render")
 #: Episode length and seed of the stored action sequences.
@@ -519,9 +520,112 @@ def source_online(spec) -> dict:
         units = cycle(play)
         t = timed(units, **_timing(spec, lanes))
         units.close()
+        got = _worker_frames(pool, seeds, actions, lanes) if render and spec.get("check_frames") else None
     finally:
         pool.close()
-    return {**out, **t, "estimated": False}
+    res = {**out, **t, "estimated": False}
+    if got is not None:
+        res["frame_check"] = check = _frame_check(spec, got, seeds, actions, lanes)
+        if check["reproducible"] and check["mismatched"]:
+            res["status"] = "invalid"
+    return res
+
+
+def _check_steps(length: int) -> list[int]:
+    """Steps whose frames the frame check compares."""
+    return sorted({t for t in (0, 1, 20, length - 1) if 0 <= t < length})
+
+
+def _worker_frames(pool, seeds, actions, lanes) -> dict:
+    """Digests of the pool workers' frames of a few instances, spread across workers, at the check steps."""
+    import hashlib
+
+    steps = _check_steps(actions.shape[1])
+    check_lanes = sorted({0, lanes // 2, lanes - 1})
+    got = {}
+    pool.reset(int(seeds[0]))
+    for step in range(max(steps) + 1):
+        pool.submit_step(actions[:lanes, step], capture_frame=True)
+        frame = pool.receive_step()
+        if step in steps:
+            for lane in check_lanes:
+                got[lane, step] = hashlib.sha1(np.ascontiguousarray(frame[lane]).tobytes()).hexdigest()
+    return got
+
+
+def _replay(name, seed, actions):
+    """Every frame of one episode played by a single swm env, and the first step that ends it."""
+    from benchmarks.swm_source import SwmSource
+
+    env = SwmSource(name)
+    try:
+        env.reset(seed=seed)
+        frames, end = [], None
+        for t, a in enumerate(actions):
+            done = env.step(a)
+            frames.append(env.render().copy())
+            if done and end is None:
+                end = t
+        return np.stack(frames), end
+    finally:
+        env.close()
+
+
+def _replay_in_new_process(name, seed, actions):
+    # Some sources keep their GL context alive, and a second context in one process changes the frames it draws.
+    with mp.get_context("spawn").Pool(1) as p:
+        return p.apply(_replay, (name, seed, actions))
+
+
+def _frame_check(spec, got, seeds, actions, lanes) -> dict:
+    """Compare the pool workers' frames with one-env replays, and ours' frames with the replays.
+
+    A second replay of the first instance tells whether swm's seeded reset is reproducible; without that the
+    comparison says nothing. Ours resets an instance when its episode ends and swm keeps stepping it, so the
+    rollout MSE compares frames up to the end of the episode.
+    """
+    import hashlib
+
+    import torch
+
+    import stable_envs as snv
+
+    name, steps = spec["env"], _check_steps(actions.shape[1])
+    check_lanes = sorted({0, lanes // 2, lanes - 1})
+    theirs = {lane: _replay_in_new_process(name, int(seeds[lane]), actions[lane]) for lane in check_lanes}
+    again = _replay_in_new_process(name, int(seeds[check_lanes[0]]), actions[check_lanes[0]])[0]
+    reproducible = bool(again.shape == theirs[check_lanes[0]][0].shape and (again == theirs[check_lanes[0]][0]).all())
+    digest = lambda f: hashlib.sha1(np.ascontiguousarray(f).tobytes()).hexdigest()  # noqa: E731
+    bad = [f"{lane}/{t}" for lane in check_lanes for t in steps if got[lane, t] != digest(theirs[lane][0][t])]
+    device = "cuda" if spec.get("gl") == "egl" else "cpu"
+    per_frame = []
+    for lane in check_lanes:
+        source, source_end = theirs[lane]
+        with snv.make(name, num_envs=1, size=source.shape[1], device=device) as env:
+            env.reset(seed=int(seeds[lane]))
+            out = env.step(torch.as_tensor(actions[lane][None], device=device), states=None, frames=slice(None))
+            ours = out["frames"][0].cpu().numpy()
+            ended = np.zeros(len(actions[lane]), bool)
+            for k in ("terminated", "truncated", "done"):
+                if k in out.keys():
+                    ended |= out[k][0].reshape(len(ended), -1).any(-1).cpu().numpy().astype(bool)
+        hits = np.flatnonzero(ended)
+        stop = min(x for x in (hits[0] if len(hits) else None, source_end, len(source) - 1) if x is not None) + 1
+        if ours.shape == source[..., :3].shape:
+            diff = ours[:stop].astype(np.float64) - source[:stop, ..., :3].astype(np.float64)
+            per_frame.append((diff**2).mean(axis=(1, 2, 3)))
+    mse = np.concatenate(per_frame) if per_frame else None
+    return {
+        "reproducible": reproducible,
+        "instances": check_lanes,
+        "steps": steps,
+        "frames": len(got),
+        "mismatched": len(bad),
+        "examples": bad[:5],
+        "ours_device": device,
+        "rollout_mse_mean": None if mse is None else float(mse.mean()),
+        "rollout_mse_max": None if mse is None else float(mse.max()),
+    }
 
 
 def _partial(pool, spec, seeds, actions, lanes, render) -> dict:
@@ -691,6 +795,8 @@ class Runner:
             source_cap=a.source_cap,
             partial_window=a.partial_window,
             repeats=spec.get("repeats", a.repeats),
+            check_frames=a.check_frames,
+            gl="egl" if gpu_gl else "cpu",
         )
         self.count += 1
         spec_path, result_path = self.work / f"spec-{self.count}.json", self.work / f"result-{self.count}.json"
@@ -761,6 +867,11 @@ def main(argv=None) -> None:
     )
     p.add_argument("--source-cap", type=float, default=900.0, help="seconds above which an swm cell is estimated")
     p.add_argument("--partial-window", type=float, default=100.0, help="seconds per window of an estimate")
+    p.add_argument(
+        "--check-frames",
+        action="store_true",
+        help="step-and-render: compare the swm workers' frames with one-env replays, and ours' frames with them",
+    )
     p.add_argument("--side-timeout", type=float, default=1200.0, help="seconds before one side is stopped")
     p.add_argument("--cores", default=None, help="CPU list, e.g. 0-7 (default: the first 8 cores of this process)")
     p.add_argument("--work", default=None, help="directory for the stored inputs (default: a temporary one)")
@@ -864,8 +975,19 @@ def _cell(runner, name, dev, wl, b, t, reps, data, states, step_states) -> tuple
         "windows": f"{ours.get('repeats', '')}/{best.get('repeats', '')}",
         "status": status,
         "source_versions": best.get("source_versions", ""),
+        "frame_check": _check_text(best.get("frame_check")),
     }
     return row, {"ours_detail": ours, "source_detail": src}
+
+
+def _check_text(check) -> str:
+    if not check:
+        return ""
+    if not check["reproducible"]:
+        return "unverified: swm seeded reset is not reproducible"
+    mse = check["rollout_mse_mean"]
+    tail = "" if mse is None else f"; ours vs replay MSE mean {mse:.4g} max {check['rollout_mse_max']:.4g}"
+    return f"{check['mismatched']}/{check['frames']} worker frames differ from replays{tail}"
 
 
 def _fmt(x):

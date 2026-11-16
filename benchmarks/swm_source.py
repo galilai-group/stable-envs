@@ -118,8 +118,9 @@ def _mujoco(u):
             ) else p.data
         except AttributeError:
             pass
-    if hasattr(u, "model") and hasattr(u, "data"):
-        return u.model, u.data
+    for m, d in (("model", "data"), ("_model", "_data")):
+        if hasattr(u, m) and hasattr(u, d):
+            return getattr(u, m), getattr(u, d)
     return None
 
 
