@@ -22,7 +22,7 @@ def failing_restore_worker(*args):
 
     def restore(adapter, row):
         candidate = original(adapter, row)
-        if start > 0 and row["physics", "time"][0] == 123:
+        if start > 0 and adapter.schema.get(row, "physics/time")[0] == 123:
             candidate.close()
             raise RuntimeError("injected late-shard compilation failure")
         return candidate
@@ -39,10 +39,10 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         assert len(remote._metadata.envs) == 1 and not hasattr(remote, "envs")
         initial = local.get_state()
         assert_same_state(initial, remote.get_state())
-        initial["rng", "task", "has_gauss"][2] = 1
-        initial["rng", "task", "cached_gaussian"][2] = 0.25
-        initial["rng", "environment", "has_uint32"][2] = 1
-        initial["rng", "environment", "uinteger"][2] = 2**32 - 1
+        se.get_field(initial, "rng/task/has_gauss")[2] = 1
+        se.get_field(initial, "rng/task/cached_gaussian")[2] = 0.25
+        se.get_field(initial, "rng/environment/has_uint32")[2] = 1
+        se.get_field(initial, "rng/environment/uinteger")[2] = 2**32 - 1
         for adapter in (local, remote):
             adapter.set_state(initial)
         actions = np.random.default_rng(41).uniform(-0.3, 0.3, (3, 8, 5))
@@ -99,7 +99,7 @@ def test_all_shards_discard_after_real_late_restore_failure(family, monkeypatch)
     try:
         before = remote.get_state()
         requested = before.clone()
-        requested["physics", "time"][:] = 123
+        se.get_field(requested, "physics/time")[:] = 123
         with pytest.raises(RuntimeError, match="late-shard compilation"):
             remote.set_state(requested)
         assert not remote._closed and remote._pending is None

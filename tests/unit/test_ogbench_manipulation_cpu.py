@@ -17,7 +17,7 @@ from tensordict import TensorDict
 pytest.importorskip("ogbench")
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 
-from stable_envs import tuning
+from stable_envs import get_field, tuning
 from stable_envs.envs.ogbench import OGBCube, OGBScene
 from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene
 from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
@@ -133,31 +133,32 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         bad = anchor.clone()
         bad["extra"] = torch.zeros(2, 1)
         bads.append(bad)
-        for key, value in [
-            (("physics", "time"), -1.0),
-            (("task", "id"), 6),
-            (("rng", "action", "increment"), 0),
-            (("rng", "environment", "has_uint32"), 2),
-            (("rng", "action", "uinteger"), 2**32),
-            (("rng", "task", "position"), 625),
-            (("rng", "task", "key"), 2**32),
-            (("rng", "task", "has_gauss"), 2),
-            (("compatibility", "signature"), 0),
-            (("variation", "current", "cube.size"), 0.3),
-            (("lifecycle", "reset_next_step"), True),
+        for name, value in [
+            ("physics/time", -1.0),
+            ("task/id", 6),
+            ("rng/action/increment", 0),
+            ("rng/environment/has_uint32", 2),
+            ("rng/action/uinteger", 2**32),
+            ("rng/task/position", 625),
+            ("rng/task/key", 2**32),
+            ("rng/task/has_gauss", 2),
+            ("compatibility/signature", 0),
+            ("variation/current/cube/size", 0.3),
+            ("lifecycle/reset_next_step", True),
         ]:
             bad = anchor.clone()
-            bad[key][-1] = value
+            get_field(bad, name)[-1] = value
             bads.append(bad)
         bad = anchor.clone()
-        bad["physics", "qvel"][-1, 0] = float("nan")
+        get_field(bad, "physics/qvel")[-1, 0] = float("nan")
         bads.append(bad)
-        bad = anchor.clone()
-        bad["physics", "qpos"] = bad["physics", "qpos"][:, :-1]
-        bads.append(bad)
+        for key in anchor.keys(True, True):
+            bad = anchor.clone()
+            bad[key] = bad[key][:, :-1]
+            bads.append(bad)
         if family == "Scene":
             bad = anchor.clone()
-            bad["scene", "cur_button_states"][-1, 1] = 2
+            get_field(bad, "scene/cur_button_states")[-1, 1] = 2
             bads.append(bad)
         for bad in bads:
             with pytest.raises((ValueError, TypeError)):
@@ -169,7 +170,9 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         with pytest.raises(ValueError):
             a.set_state(a._unpack_render_state(packed))
         assert torch.equal(packed, a._pack_render_state(a._unpack_render_state(packed)))
-        assert a.state_spec[("physics", "qpos")].shape == tuple(anchor["physics", "qpos"].shape[1:])
+        spec = a.state_spec
+        assert all(spec[key].shape == anchor[key].shape[1:] for key in anchor.keys(True, True))
+        assert {key for key, _ in spec.items(nested=True)} == set(anchor.keys(True, True))
         numpy_equal(outside, np.random.get_state())
 
 
@@ -179,9 +182,9 @@ def test_variation_anchors_model_restore_and_rejections(family):
         original = a.get_state()
         a.set_variation({"cube.size": np.array([0.025]), "agent.ee_start_position": np.array([0.43, 0.04, 0.29])})
         pending = a.get_state()
-        start = ("variation", "current", "agent.ee_start_position")
-        assert torch.equal(original[start], pending[start])
-        assert (pending["variation", "current", "cube.size"] == 0.025).all()
+        start = "variation/current/agent/ee_start_position"
+        assert torch.equal(get_field(original, start), get_field(pending, start))
+        assert (get_field(pending, "variation/current/cube/size") == 0.025).all()
         b.set_state(pending)
         assert_same_state(a.reset(), b.reset())
         saved = a.get_state()
@@ -223,8 +226,8 @@ def test_variation_values_take_one_row_per_lane(family):
     with CLASSES[family](num_envs=2, seed=3) as env:
         sizes = np.array([[0.012], [0.028]])
         state = env.reset(3, {"variation_values": {"cube.size": sizes, "cube.goal_yaw": np.array([0.5])}})
-        assert np.array_equal(state["model", "compiled", "cube.size"].numpy(), sizes)
-        assert (state["variation", "current", "cube.goal_yaw"] == 0.5).all()
+        assert np.array_equal(get_field(state, "model/compiled/cube/size").numpy(), sizes)
+        assert (get_field(state, "variation/current/cube/goal_yaw") == 0.5).all()
         with pytest.raises(ValueError):
             env.reset(3, {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}})
         assert_same_state(state, env.get_state())
@@ -308,10 +311,10 @@ def test_step_delegation_substeps_and_no_implicit_restore(family):
         assert raw.set_control.__func__ is ManipSpaceEnv.set_control
         # The batch steps OGBench's 25 substeps of one control step.
         assert simulator.physics.frame_skip == raw._n_steps == 25
-        before = float(simulator.get_state()["physics", "time"][0, 0])
+        before = float(get_field(simulator.get_state(), "physics/time")[0, 0])
         with patch.object(simulator, "set_state", side_effect=AssertionError("implicit restore")):
             out = env.step(np.array([[2.0, -3.0, 0.2, 0.8, -0.7]], np.float64), frames=None)
-        assert float(out["state", "physics", "time"][0, 0]) == pytest.approx(before + 0.05)
+        assert float(get_field(out["state"], "physics/time")[0, 0]) == pytest.approx(before + 0.05)
         assert np.array_equal(raw.unnormalize_action(np.ones(5)), np.array([0.05, 0.05, 0.05, 0.3, 1.0]))
 
 
@@ -411,8 +414,8 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
 
         def cube_and_pinch(state):
             return (
-                state["physics", "qpos"][0, cube : cube + 3].numpy().copy(),
-                state["controller", "site_xpos"][0, 0].numpy().copy(),
+                get_field(state, "physics/qpos")[0, cube : cube + 3].numpy().copy(),
+                get_field(state, "controller/site_xpos")[0, 0].numpy().copy(),
             )
 
         fixed_target = cube_and_pinch(state)[0]
@@ -429,7 +432,7 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
         saved = a.get_state()
         # The cached pinch pose and the warmstart are State leaves that the next step reads.
         moved = saved.clone()
-        moved["controller", "site_xpos"][0, 0, 0] += 0.001
+        get_field(moved, "controller/site_xpos")[0, 0, 0] += 0.001
         b.set_state(moved)
         action = np.array([[0.2, -0.3, -0.1, 0.35, 0.4]])
         if family == "Cube":
@@ -437,16 +440,20 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
             action[0, 3:] = [0.0, -1.0]
         baseline = a.step(action, frames=None)
         changed = b.step(action, frames=None)
-        assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
+        assert not torch.equal(
+            get_field(baseline["state"], "physics/qpos"), get_field(changed["state"], "physics/qpos")
+        )
         a.set_state(saved)
         warm = saved.clone()
         if family == "Cube":
-            warm["physics", "warmstart"].zero_()
+            get_field(warm, "physics/warmstart").zero_()
         else:
-            warm["physics", "warmstart"] += 1e6
+            get_field(warm, "physics/warmstart").add_(1e6)
         b.set_state(warm)
         baseline, changed = a.step(action, frames=None), b.step(action, frames=None)
-        assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
+        assert not torch.equal(
+            get_field(baseline["state"], "physics/qpos"), get_field(changed["state"], "physics/qpos")
+        )
 
 
 @pytest.mark.parametrize("family", CLASSES)
@@ -574,9 +581,9 @@ def test_restore_failure_cannot_partially_commit_a_batch(family):
     # The test patches and reads the OGBench objects, so they stay in this process.
     with tuning.override(worker_min_lanes=64), CLASSES[family](num_envs=2, seed=17) as a:
         saved = a.get_state()
-        for field, value in [(("controller", "site_xmat"), 0.0), (("task", "reward_id"), 5)]:
+        for name, value in [("controller/site_xmat", 0.0), ("task/reward_id", 5)]:
             bad = saved.clone()
-            bad[field][1] = value
+            get_field(bad, name)[1] = value
             with pytest.raises(ValueError):
                 a.set_state(bad)
             assert_same_state(saved, a.get_state())

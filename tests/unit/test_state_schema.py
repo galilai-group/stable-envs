@@ -16,6 +16,38 @@ ROOT = Path(__file__).resolve().parents[2]
 #: Adopted families: the top-level State keys that only the schema may index, and the files to scan besides the
 #: family package and the tests named after the family.
 ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
+    # Cube and Scene share stable_envs/envs/ogbench with the mazes, so the key names no package and the files are
+    # listed. "variation" is also the reset option key, so it is not a section here.
+    "ogbench_manipulation": (
+        ("compatibility", "physics", "controller", "output", "task", "lifecycle", "scene", "model", "rng"),
+        [
+            *sorted((ROOT / "stable_envs/envs/ogbench").glob("manipulation*.py")),
+            *(
+                ROOT / "stable_envs/envs/ogbench/simulation" / name
+                for name in (
+                    "compatibility.py",
+                    "manipulation.py",
+                    "manipulation_batch.py",
+                    "manipulation_control.py",
+                    "manipulation_process.py",
+                    "manipulation_warp.py",
+                    "render_state.py",
+                )
+            ),
+            *(
+                ROOT / "tests" / name
+                for name in (
+                    "unit/test_ogb_source_reset.py",
+                    "unit/test_ogbench_render_state.py",
+                    "unit/test_ogbench_state_export.py",
+                    "unit/test_ogbench_validation_columns.py",
+                    "unit/test_ogbench_lane_pool.py",
+                    "helpers/reference/gates/ogb_variation.py",
+                    "helpers/reference/ogbench_state_export.py",
+                )
+            ),
+        ],
+    ),
     "dmcontrol": (
         tuple(
             f"dmc_{key}"

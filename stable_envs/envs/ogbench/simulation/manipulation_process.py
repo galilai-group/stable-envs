@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from ...._execution.process import ProcessAdapter, process_worker
-from .manipulation import OGBManipulationAdapter
+from .manipulation import OGBManipulationAdapter, field
 
 _worker = process_worker
 
@@ -64,8 +64,12 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
     def variation_values(self, layout, *, anchor=False):
         self._check_idle()
         namespace = "anchor" if anchor else "current"
+        groups = {key: self._views[("state", *group.path)] for key, group in self.schema.groups.items()}
         values = np.concatenate(
-            [self._views["state", "variation", namespace, name].reshape(self.num_envs, -1) for name, _, _ in layout],
+            [
+                self.schema.get(groups, field("variation", namespace, name)).reshape(self.num_envs, -1)
+                for name, _, _ in layout
+            ],
             axis=1,
         )
         return torch.from_numpy(values).to(self.device)
