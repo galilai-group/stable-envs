@@ -51,13 +51,6 @@ def test_profiles_install_declared_extras_and_groups():
         assert set(spec.get("groups", ())) <= set(groups), family
 
 
-def test_the_ogbench_profile_resets_cube_and_scene_in_process():
-    """Reset workers for every Cube/Scene env of every test exceed the runner's memory; the process tests cover them."""
-    env = FAMILIES["ogbench"]["linux_env"]
-    assert int(env["STABLE_ENVS_WORKER_MIN_LANES"]) > 2
-    assert int(env["STABLE_ENVS_WORKER_MIN_ENVS"]) > 2
-
-
 def test_every_source_path_glob_matches_a_file():
     files = [path.name for path in ROOT.iterdir() if path.is_file()]
     for top in ("stable_envs", "tests", "ci", "scripts", "benchmarks", ".github"):

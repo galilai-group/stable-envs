@@ -19,7 +19,7 @@ NUMBA_NUM_THREADS=N OMP_NUM_THREADS=N MKL_NUM_THREADS=N python -m benchmarks.ren
 
 ## DM Control ray casting
 
-The [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) draws DM Control frames from saved states on CPU and CUDA. To compare it with the upstream renderer, give both the same states, output destination and device class, and leave the rollout, state loading, restoring and render-state preparation out of the timing. The [comparison with the upstream libraries](#comparison-with-the-upstream-libraries) does this and also writes the frame MSE.
+The [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) draws DM Control frames from saved states on CPU and CUDA. To compare it with the upstream renderer, give both the same states, output destination and device class, and leave the rollout, state loading, restoring and render-state preparation out of the timing. The [comparison with stable-worldmodel](#comparison-with-stable-worldmodel) does this and also writes the frame MSE.
 
 ## DM Control physics
 
@@ -49,14 +49,15 @@ Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github
 - The upstream renderers run in one process and have no batched entry point.
 - Use the class's native supersampling. Forcing `1` on a class that declares `2` measures a cheaper picture than `snv.make(name)` returns.
 
-## Comparison with the upstream libraries
+## Comparison with stable-worldmodel
 
-`benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py` measure the speed of stable-envs against the upstream library of each family, and the frame MSE between them. They use only the public `stable_envs` API. Pin each measurement to the same CPU cores. They have these measurements:
+`benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel at commit `21446f1`. They have these measurements:
 
-- offline: stable-envs draws stored inputs with `env.render` at each batch size. The inputs are rows from `sample_states`, or full states from random-action rollouts for a class without rows. The upstream library draws the same inputs. The frame MSE compares the two on the 0-255 scale.
-- online: physics steps at each batch size, and steps with a frame after each step, against the upstream library stepping the same number of environments on CPU.
+- speed: steps, steps with a frame after each step, and frames of stored States, at each batch size, with stable-envs and stable-worldmodel on the same CPU cores in the same run.
+- render MSE: the frame MSE on the 0-255 scale between the two renderers, for the same States, at the frame size and default appearance of stable-worldmodel.
+- rollout parity: the state error after each of the same actions, from the same seeded reset, and from the state of a stable-worldmodel rollout loaded into stable-envs.
 
-`benchmarks/draw.py` is the call that draws the stable-envs frames. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#comparison-with-the-source-libraries) gives the options and the output files.
+[benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#comparison-with-stable-worldmodel) gives the commands, the timing method and the output columns.
 
 ## Reproduce
 

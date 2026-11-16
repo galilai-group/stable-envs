@@ -13,6 +13,7 @@ on that device. Thus the dataset does not store pixels, and the CPU does not dec
 | [`train.py`](train.py) | Trains LeWM. `--render online` (default) draws the frames from the state rows on the training device. `--render offline` reads the `pixels` column. |
 | [`eval.py`](eval.py) | Plans with CEM and the trained model on stable-envs environments, through stable-worldmodel's `World`. |
 | [`state_render.py`](state_render.py) | Writes dataset state rows into a full stable-envs State and calls `env.render(state)`. |
+| [`throughput.py`](throughput.py) | Measures the training speed and the GPU use with stored frames, with the stable-worldmodel renderer in the DataLoader workers, and with stable-envs on the GPU. |
 | [`config/pusht.yaml`](config/pusht.yaml) | The environment, the state-row layout, the model, training and planning values. |
 
 The model, the loss, the optimizer, the data split and the planning values are those of stable-worldmodel
@@ -144,6 +145,24 @@ With the first two sources, the epoch time depends on the number of DataLoader w
 stable-envs on the GPU, the workers read only the states and the actions, so the epoch time does not change
 with the number of workers. Leave the process start and the compile time of the first steps out of the
 timing, and measure on your own hardware.
+
+## Training speed and GPU use
+
+`throughput.py` trains the full-size model for 1000 steps with one frame input and writes `summary-ENV-INPUT.json`
+and one row of `throughput.csv`. The inputs are `stored` (the `pixels` column), `source` (the stable-worldmodel
+env draws each state row in the DataLoader workers) and `ours` (`render` on the GPU). `--env` is `pusht`,
+`tworoom`, `reacher` or `cube`. It needs `psutil` and `nvidia-ml-py` (the `bench` dependency group).
+
+```bash
+python examples/lewm/throughput.py --env pusht --input stored --data data/pusht_expert_train.h5 --out runs/tp
+python examples/lewm/throughput.py --env pusht --input source --data data/pusht_state.h5 --out runs/tp
+python examples/lewm/throughput.py --env pusht --input ours --data data/pusht_state.h5 --out runs/tp
+```
+
+The first 200 steps (compile and worker start) are not in the results. The results are the steps per second,
+the GPU time of the training step alone as a fraction of the wall time (`train_busy_frac`), the mean NVML GPU
+utilisation, and the mean NVML SM utilisation of the training process, of the DataLoader workers and of other
+processes. `--model-overrides` changes the model, for example `model.predictor.depth=3`.
 
 ## Other environments
 

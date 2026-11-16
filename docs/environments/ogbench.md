@@ -115,8 +115,6 @@ On CPU, `PointMazeLargeNavigate` draws the tracking light on the static pixels w
 
 The frames have the look of the OGBench pixel tasks `visual-cube-single-v0` and `visual-scene-v0`: the `front_pixels` camera, a purple gripper, a see-through arm and no goal cube.
 
-The variation leaf `agent.opacity` sets the opacity of the arm. At the default value 0, the arm has the alphas of the OGBench pixel tasks. At 1, the arm is opaque, as in the OGBench state tasks and in swm's `swm/OGBCube-v0` and `swm/OGBScene-v0`. The variation leaf `target.opacity` shows the goal cube. At the default value 0, the goal cube is hidden, as in the OGBench pixel tasks. At 1, the goal cube has alpha 0.2, as with OGBench's `visualize_info=True` and in swm's environments. Set the leaves with `set_variation`, then call `reset`. Each value of `agent.opacity` and `target.opacity` compiles its own render model on the MJWarp backends.
-
 | Device and setting | `backend="auto"` draws with | Frames |
 |---|---|---|
 | CPU | the MuJoCo rasterizer in Numba, as `backend="numba"` | differ from MuJoCo OpenGL; a draw of the same state gives the same frame each time, in any batch |
@@ -134,7 +132,7 @@ The variation leaf `agent.opacity` sets the opacity of the arm. At the default v
 
 ## Variation
 
-The maze [variation leaves](../tutorials/variation.md) set the colors of the body, the walls and the floor, the camera, the light and the body's `agent.scale`. Cube and Scene vary colors, the opacity of the arm and of the goal cube, the camera, the light, the cube size and the start and goal poses of the cube.
+The maze [variation leaves](../tutorials/variation.md) set the colors of the body, the walls and the floor, the camera, the light and the body's `agent.scale`. Cube and Scene vary colors, the camera, the light, the cube size and the start and goal poses of the cube.
 
 In Cube and Scene, the arm starts at the position OGBench samples. It starts at the [variation](../terms.md#variation) leaf `agent.ee_start_position` only when the reset options name this leaf, or when `set_variation` sets it to a non-default value.
 

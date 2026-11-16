@@ -65,11 +65,6 @@ def new_node(source: dict, batch: torch.Size, device) -> TensorDict:
     return TensorDict._new_unsafe(source, batch_size=batch, device=device)
 
 
-def node_factory():
-    """``new_node`` itself, or the function it calls when that is the direct constructor: one call less per node."""
-    return _direct_node if _DIRECT_NODES else new_node
-
-
 def nested_builder(paths, *, with_paths: bool = False, indices=None):
     """``build(leaves, node)``: the nested TensorDict from leaves in ``paths`` order; ``node(dict)`` makes one node.
 

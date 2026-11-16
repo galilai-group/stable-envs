@@ -11,7 +11,7 @@ from tensordict import TensorDict
 
 from ..._core.mujoco_gl import mujoco_renderer, release_gl
 from .simulation import render_state as pixels
-from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene, target_alpha
+from .simulation.compatibility import MODEL_VALUES, CompatibleCube, CompatibleScene
 
 # agent.color is applied per row to the agent materials, so it does not select a compiled model.
 COMPILED_VALUES = tuple(name for name in MODEL_VALUES if name != "agent.color")
@@ -452,7 +452,7 @@ def draw(family, host, device_type, images):
                         env.model.material(material).rgba[:3] = agent_colors[index]
                     env._cube_colors_from_variation()
                     for ids in env._cube_target_geom_ids_list:
-                        env.model.geom_rgba[ids, 3] = target_alpha(env)
+                        env.model.geom_rgba[ids, 3] = pixels.TARGET_ALPHA
                     _APPLIED[id(env)] = look
                 if family == "Scene":
                     env.variation_space._walk("lock_color")._value = lock_colors[index].copy()

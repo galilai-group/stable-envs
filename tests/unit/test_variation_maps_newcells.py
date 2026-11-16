@@ -189,7 +189,7 @@ def test_ogb_maps_recovered_public_configuration(swm_id):
     """The public semantic adapter has a wider configuration than the frozen renderer."""
     m = _map_for(swm_id)
     cell = "OGBCube" if "Cube" in swm_id else "OGBScene"
-    assert set(m.pairs()) | set(m.ours_only) == set(RECORDED_OURS_LEAVES[cell])
+    assert set(m.pairs()) == set(RECORDED_OURS_LEAVES[cell])
     assert set(m.pairs()) == set(RECORDED_SWM_LEAVES[swm_id])
     assert not m.swm_only
 

@@ -124,10 +124,6 @@ def _drawn(key):
 CUDA_RENDER_MIN_ROWS: int | None = 32  # RTX 3090 64, RTX A5000 32
 
 
-#: The State fields whose second axis is the action history, as key paths.
-_HISTORY_WIDE = tuple(tuple(name.split("/")) for name in ("history/actions", "history/dtypes", "history/valid"))
-
-
 class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric state.
 
@@ -302,17 +298,11 @@ class PushT(Env):
         result = move(leaves)[0]
         if moved:
             width = host.history_width()
-            # The nodes are new and plain, so their leaves are replaced in place, without a validated set.
-            for root, dim in (("state", 1), ("states", 2)):
-                for *path, leaf in _HISTORY_WIDE:
-                    node = result._tensordict.get(root)
-                    for part in path:
-                        node = None if node is None else node._tensordict.get(part)
-                    if node is None:
-                        continue
-                    value = node._tensordict[leaf]
-                    if value.shape[dim] != width:
-                        node._tensordict[leaf] = value.narrow(dim, 0, width)
+            for node, axes in (("state", (slice(None),)), ("states", (slice(None), slice(None)))):
+                history = result.get((node, "history"), None)
+                if history is not None:
+                    for name in ("actions", "dtypes", "valid"):
+                        history.set(name, history.get(name)[(*axes, slice(0, width))])
         return result
 
     def _advance_without_snapshot(self, actions, *, active=None):
