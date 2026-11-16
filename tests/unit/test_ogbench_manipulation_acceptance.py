@@ -14,7 +14,7 @@ def test_variation_configuration_matches_readiness(family, count):
     cls = OGBCube if family == "Cube" else OGBScene
     with cls(seed=17) as env:
         mapping = VARIATION_MAPS[cls.__name__]
-        assert set(env.variation_space.names()) == set(mapping.pairs())
+        assert set(env.variation_space.names()) == set(mapping.pairs()) | set(mapping.ours_only)
         assert len(mapping.pairs()) == count
         assert execution_for(mapping.swm_id) == "DELEGATED_CPU"
         assert status_for(mapping.swm_id) == "READY"
