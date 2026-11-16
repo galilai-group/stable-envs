@@ -7,8 +7,8 @@ import torch
 pytest.importorskip("ogbench")
 
 from stable_envs.envs.ogbench.simulation import render_state as pixels
-from stable_envs.render._resources import retain_process_lifetime
 from stable_envs.envs.ogbench.simulation.compatibility import PIXEL_ALPHAS
+from stable_envs.render._resources import retain_process_lifetime
 
 pytestmark = pytest.mark.family("ogbench")
 
@@ -48,10 +48,9 @@ def test_opacity_one_matches_swm_frames():
     """A plain swm OGBCube-v0 (goal cube shown) against ours at agent.opacity = target.opacity = 1."""
     pytest.importorskip("stable_worldmodel")
     import gymnasium as gym
+    import mujoco
 
     import stable_envs as snv
-
-    import mujoco
 
     source = gym.make("swm/OGBCube-v0", width=224, height=224).unwrapped
     source.reset(seed=0)
