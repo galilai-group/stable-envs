@@ -19,7 +19,7 @@ NUMBA_NUM_THREADS=N OMP_NUM_THREADS=N MKL_NUM_THREADS=N python -m benchmarks.ren
 
 ## DM Control ray casting
 
-The [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) draws DM Control frames from saved states on CPU and CUDA. To compare it with the upstream renderer, give both the same states, output destination and device class, and leave the rollout, state loading, restoring and render-state preparation out of the timing. The [comparison with the upstream libraries](#comparison-with-the-upstream-libraries) does this and also writes the frame MSE.
+The [ray caster](contributing/renderers.md#ray-casting-and-cpu3d) draws DM Control frames from saved states on CPU and CUDA. To compare it with the upstream renderer, give both the same states, output destination and device class, and leave the rollout, state loading, restoring and render-state preparation out of the timing. The [comparison with stable-worldmodel](#comparison-with-stable-worldmodel) does this and also writes the frame MSE.
 
 ## DM Control physics
 
