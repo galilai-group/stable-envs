@@ -1,4 +1,4 @@
-"""Rocket lanes in worker processes."""
+"""Rocket environments in worker processes."""
 
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ import torch
 from ...._execution.process import FRAME_DRAW, FRAME_FIELDS, ProcessAdapter, process_worker
 from .adapter import RocketAdapter, check_values, state_columns
 
-#: Lanes one process may own. Reset and restoration hold one more PyBullet client than the lanes, frames
+#: Environments one process may own. Reset and restoration hold one more PyBullet client than the environments, frames
 #: use one more client, and PyBullet allows 1024 clients in one process.
-LANES_PER_PROCESS = 1022
+ENVS_PER_PROCESS = 1022
 
 
-def _lanes(config, frame, count, seed):
+def _instances(config, frame, count, seed):
     return RocketAdapter(count, "cpu", seed, config, frame)
 
 
@@ -52,13 +52,13 @@ class RocketProcessAdapter(ProcessAdapter):
             raise ValueError("num_envs must be a positive integer")
         if torch.device(device).type not in ("cpu", "cuda"):
             raise ValueError("Rocket supports CPU dynamics and CPU/CUDA State storage")
-        if type(processes) is int and processes > 0 and -(-batch // processes) > LANES_PER_PROCESS:
-            raise ValueError(f"Rocket processes may own at most {LANES_PER_PROCESS} lanes each")
+        if type(processes) is int and processes > 0 and -(-batch // processes) > ENVS_PER_PROCESS:
+            raise ValueError(f"Rocket processes may own at most {ENVS_PER_PROCESS} environments each")
         #: ``{name: host array}`` ``frame_fields`` -> frames on the device; the env installs it for CUDA frames.
         self.draw_fields = None
         if frame is not None:
             self.frame_mode = FRAME_DRAW
-        super().__init__(partial(_lanes, config, frame), batch, device, seed, processes=processes, cpus=cpus)
+        super().__init__(partial(_instances, config, frame), batch, device, seed, processes=processes, cpus=cpus)
 
     @property
     def live_frames(self):
@@ -70,7 +70,7 @@ class RocketProcessAdapter(ProcessAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration and variation space describe the batch."""
+        """An environment whose configuration and variation space describe the batch."""
         self._check_open()
         return self._metadata.template
 
@@ -90,10 +90,10 @@ class RocketProcessAdapter(ProcessAdapter):
         self._check_idle()
         template = self._metadata.template
         if values is not None and len(values) != self.num_envs:
-            raise ValueError("Expected one Rocket Variation row per lane")
-        for lane in range(self.num_envs):
+            raise ValueError("Expected one Rocket Variation row per environment")
+        for instance in range(self.num_envs):
             template.check_reset(
-                None if seed is None else seed + lane, options, None if values is None else values[lane]
+                None if seed is None else seed + instance, options, None if values is None else values[instance]
             )
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
 

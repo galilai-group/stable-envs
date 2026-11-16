@@ -1,4 +1,4 @@
-"""PushT lanes in worker processes."""
+"""PushT environments in worker processes."""
 
 from __future__ import annotations
 
@@ -11,19 +11,19 @@ from ...._core.state_schema import get_field
 from ...._execution.process import FRAME_FIELDS, ProcessAdapter, leaf_tensordict
 from ...._execution.shared_memory import key_path
 from .replay import ACTION_DTYPES, reset_options, validate_seed
-from .replay_batch import PushTReplayAdapter, lane_options, reject_jax_state, state_columns
+from .replay_batch import PushTReplayAdapter, instance_options, reject_jax_state, state_columns
 
 _ACTIONS, _CODES, _VALID = ("history", "actions"), ("history", "dtypes"), ("history", "valid")
 
 
-def _lanes(discrete, config, count, seed):
+def _instances(discrete, config, count, seed):
     return PushTReplayAdapter(count, "cpu", seed, discrete=discrete, config=config)
 
 
 class PushTProcessAdapter(ProcessAdapter):
     """Run PushT replay owners in worker processes.
 
-    The parent records each lane's action history, so the shared buffers hold
+    The parent records each environment's action history, so the shared buffers hold
     only fixed-size state fields. Restore replays the history in the workers.
     """
 
@@ -39,7 +39,7 @@ class PushTProcessAdapter(ProcessAdapter):
         self._lengths = np.zeros(batch, np.int64)
         self._actions = np.zeros((batch, 0, 2), np.float64)
         self._codes = np.zeros((batch, 0), np.uint8)
-        super().__init__(partial(_lanes, discrete, config), batch, device, seed, processes=processes, cpus=cpus)
+        super().__init__(partial(_instances, discrete, config), batch, device, seed, processes=processes, cpus=cpus)
         self._keys = [key_path(key) for key in self._metadata.get_state().keys(True, True)]
         self._fallback = None
         from .. import raster
@@ -51,7 +51,7 @@ class PushTProcessAdapter(ProcessAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration, variation space and state fields describe the batch."""
+        """An environment whose configuration, variation space and state fields describe the batch."""
         self._check_open()
         return self._metadata.template
 
@@ -120,23 +120,23 @@ class PushTProcessAdapter(ProcessAdapter):
         self._check_idle()
         validate_seed(seed)
         space = self.template.env.variation_space
-        lanes = (
+        instances = (
             options
             if isinstance(options, list)
-            else [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+            else [instance_options(space, options, self.num_envs, instance) for instance in range(self.num_envs)]
         )
-        for lane in lanes:
-            reset_options(None, lane)
+        for instance in instances:
+            reset_options(None, instance)
         self._lengths = np.zeros(self.num_envs, np.int64)
         self._actions = np.zeros((self.num_envs, 0, 2), np.float64)
         self._codes = np.zeros((self.num_envs, 0), np.uint8)
-        return self._reset(seed, [(lanes[rows],) for rows in self._slices])
+        return self._reset(seed, [(instances[rows],) for rows in self._slices])
 
     def _submitted(self, actions, active):
-        lanes = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
-        if not len(lanes):
+        instances = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        if not len(instances):
             return
-        positions = self._lengths[lanes]
+        positions = self._lengths[instances]
         if int(positions.max()) >= self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])
             self._actions = np.concatenate(
@@ -145,6 +145,6 @@ class PushTProcessAdapter(ProcessAdapter):
             self._codes = np.concatenate(
                 [self._codes, np.zeros((self.num_envs, capacity - self._codes.shape[1]), np.uint8)], axis=1
             )
-        self._actions[lanes, positions] = actions[lanes]
-        self._codes[lanes, positions] = ACTION_DTYPES.index(actions.dtype)
-        self._lengths[lanes] += 1
+        self._actions[instances, positions] = actions[instances]
+        self._codes[instances, positions] = ACTION_DTYPES.index(actions.dtype)
+        self._lengths[instances] += 1

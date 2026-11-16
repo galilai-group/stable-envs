@@ -52,7 +52,7 @@ The Numba and JAX backends compute in float64 and agree with Pymunk to rounding.
 
 On CPU, the `"numba"` step does its Torch operations on one thread, and the physics runs on the Numba threads. The render uses the Torch and Numba thread counts. Idle Torch threads keep cores busy while the Numba threads work, and a parallel region waits for all of its threads, so one busy core makes a step slow. The frames and the state do not change with the thread count.
 
-Pymunk on the CPU resets the environments with the source reset distribution. On Linux, a batch of at least `worker_min_lanes` environments resets in up to `workers` [worker processes](../performance-tuning.md#worker-processes), which give the same state, frames and task outputs as one process.
+Pymunk on the CPU resets the environments with the source reset distribution. On Linux, a batch of at least `worker_min_envs` environments resets in up to `workers` [worker processes](../performance-tuning.md#worker-processes), which give the same state, frames and task outputs as one process.
 
 ### Checkpoints
 
@@ -85,7 +85,7 @@ Every PushT frame is byte-identical to gym-pusht's pygame frame for the same sta
 
 One Numba call draws all the frames of a batch. Each thread builds the primitive records of a frame, the same records as the GPU path, and draws them. The renderer keeps the frames of the background, goal and walls alone between calls: one for each set of goal pose, goal color and background color, and at most 64. A frame copies its kept frame and then draws again only the boxes of the agent, of each block part and of the contact lines. A frame without a kept frame is drawn completely. Action markers are drawn with the OpenCV call of the source. The first render in a process loads the compiled kernels, and compiles them if Numba has no cache yet.
 
-The frames that `step` returns come from the live simulation, so a step doesn't export a state only to draw it. On Linux, pygame draws a batch of at least `worker_min_lanes` states in up to `workers` [worker processes](../performance-tuning.md#worker-processes), with the same frames as one process. Rendering a saved state leaves the live physics untouched. The constructor keywords `with_target=True` and `render_action=False` are the defaults: `with_target=False` hides the goal in every frame whatever `rendering.render_goal` says, and `render_action=True` draws action markers and needs a size of at least 96.
+The frames that `step` returns come from the live simulation, so a step doesn't export a state only to draw it. On Linux, pygame draws a batch of at least `worker_min_envs` states in up to `workers` [worker processes](../performance-tuning.md#worker-processes), with the same frames as one process. Rendering a saved state leaves the live physics untouched. The constructor keywords `with_target=True` and `render_action=False` are the defaults: `with_target=False` hides the goal in every frame whatever `rendering.render_goal` says, and `render_action=True` draws action markers and needs a size of at least 96.
 
 ## Variation
 

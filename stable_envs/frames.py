@@ -180,7 +180,7 @@ class FrameLoader:
         return chunk_rows(self.env, self.batch_size, self._count, kw.get("size"), kw.get("supersample"))
 
     def _per_environment(self) -> bool:
-        """Whether compact rows draw under a per-environment variation: row ``i`` of a batch with lane ``i``."""
+        """Whether compact rows draw under a per-environment variation: row ``i`` of a batch with environment ``i``."""
         variation = self.render_kwargs.get("variation")
         if isinstance(self.states, TensorDictBase) or self._variation is not None:
             return False
@@ -207,7 +207,7 @@ class FrameLoader:
         if self._variation is not None:
             return {**self.render_kwargs, "variation": self._take(self._variation, start, stop)}
         if stop - start < self.batch_size and self._per_environment():
-            # A short last batch draws its rows with the first lanes' variation, as a full batch does.
+            # A short last batch draws its rows with the first environments' variation, as a full batch does.
             return {**self.render_kwargs, "variation": self.env._style.values[: stop - start]}
         return self.render_kwargs
 

@@ -1,4 +1,4 @@
-"""Cube/Scene on native ``mujoco.batch``: equal to OGBench's per-lane step bit for bit, and the backend routing."""
+"""Cube/Scene on native ``mujoco.batch``: equal to OGBench's per-environment step bit for bit, and the backend routing."""
 
 from __future__ import annotations
 
@@ -20,14 +20,14 @@ from tests.helpers.reference.semantics import assert_same_state
 FAMILIES = ("Cube", "Scene")
 
 
-def _actions(rng, t, lanes):
+def _actions(rng, t, instances):
     """Smooth sweeps, with pushes toward the table that reach the Scene buttons and full-scale jumps."""
-    action = np.clip(0.9 * np.sin(t / 9 + np.arange(5)[None] + np.arange(lanes)[:, None]), -1, 1)
+    action = np.clip(0.9 * np.sin(t / 9 + np.arange(5)[None] + np.arange(instances)[:, None]), -1, 1)
     action = action + rng.normal(0, 0.3, action.shape)
     if t % 10 < 4:
         action[:, 2] = -1.0
     if t % 13 == 0:
-        action[: lanes // 2] = rng.choice([-1.0, 1.0], (lanes // 2, 5))
+        action[: instances // 2] = rng.choice([-1.0, 1.0], (instances // 2, 5))
     if t % 17 == 0:
         action[-1] = 0.0
     return np.clip(action, -1, 1).astype(np.float32 if t % 2 else np.float64)
@@ -40,16 +40,16 @@ def _same_outputs(a, b):
 
 @pytest.mark.parametrize("family", FAMILIES)
 @pytest.mark.parametrize("reward_task_id", [None, 2])
-@pytest.mark.parametrize("lanes", [1, 6])
-def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id, lanes):
+@pytest.mark.parametrize("instances", [1, 6])
+def test_batch_step_equals_ogbench_environments_bit_for_bit(family, reward_task_id, instances):
     rng = np.random.default_rng(3)
-    ref = OGBManipulationAdapter(family, lanes, seed=11, reward_task_id=reward_task_id)
-    bat = OGBManipulationBatchAdapter(family, lanes, seed=11, reward_task_id=reward_task_id, threads=3)
+    ref = OGBManipulationAdapter(family, instances, seed=11, reward_task_id=reward_task_id)
+    bat = OGBManipulationBatchAdapter(family, instances, seed=11, reward_task_id=reward_task_id, threads=3)
     try:
         assert_same_state(bat.get_state(), ref.get_state())
         for t in range(120):
-            action = _actions(rng, t, lanes)
-            active = None if t % 7 or t == 0 else torch.from_numpy(rng.random(lanes) < 0.6)
+            action = _actions(rng, t, instances)
+            active = None if t % 7 or t == 0 else torch.from_numpy(rng.random(instances) < 0.6)
             want, got = ref.step(action, active=active), bat.step(action, active=active)
             assert_same_state(got["state"], want["state"])
             _same_outputs(got, want)
@@ -61,29 +61,29 @@ def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id, lan
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-@pytest.mark.parametrize("lanes", [1, 4])
-def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
+@pytest.mark.parametrize("instances", [1, 4])
+def test_batch_restore_and_variation_continue_bit_for_bit(family, instances):
     rng = np.random.default_rng(8)
-    ref = OGBManipulationAdapter(family, lanes, seed=2)
-    bat = OGBManipulationBatchAdapter(family, lanes, seed=2, threads=2)
+    ref = OGBManipulationAdapter(family, instances, seed=2)
+    bat = OGBManipulationBatchAdapter(family, instances, seed=2, threads=2)
     try:
         for t in range(15):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             ref.step(action)
             bat.step(action)
         saved = bat.get_state()
-        sizes = np.array([0.015, 0.02, 0.025, 0.03])[:lanes, None]
+        sizes = np.array([0.015, 0.02, 0.025, 0.03])[:instances, None]
         for adapter in (ref, bat):
             adapter.configure([{"cube.size": size} for size in sizes])
         assert_same_state(bat.get_state(), ref.get_state())
         for t in range(15, 40):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
         for adapter in (ref, bat):
             adapter.set_state(saved)
         assert_same_state(bat.get_state(), ref.get_state())
         for t in range(40, 60):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
     finally:
         ref.close()
@@ -92,29 +92,29 @@ def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
 
 @pytest.mark.parametrize("family", FAMILIES)
 def test_threaded_physics_equals_one_thread(family):
-    lanes, rng = 8, np.random.default_rng(6)
-    serial = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=1)
-    threaded = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=4)
+    instances, rng = 8, np.random.default_rng(6)
+    serial = OGBManipulationBatchAdapter(family, instances, seed=7, threads=1)
+    threaded = OGBManipulationBatchAdapter(family, instances, seed=7, threads=4)
     try:
         assert serial.physics.b.nthread == 1 and threaded.physics.b.nthread == 4
         for t in range(40):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             assert_same_state(threaded.step(action)["state"], serial.step(action)["state"])
     finally:
         serial.close()
         threaded.close()
 
 
-@pytest.mark.parametrize("lanes", [1, 2])
-def test_scene_cube_repair_equals_ogbench(lanes):
-    ref = OGBManipulationAdapter("Scene", lanes, seed=4)
-    bat = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
+@pytest.mark.parametrize("instances", [1, 2])
+def test_scene_cube_repair_equals_ogbench(instances):
+    ref = OGBManipulationAdapter("Scene", instances, seed=4)
+    bat = OGBManipulationBatchAdapter("Scene", instances, seed=4)
     try:
         for _ in range(2):
-            # The last lane's cube leaves the workspace; post_step puts it back from the lane's generator.
+            # The last environment's cube leaves the workspace; post_step puts it back from the environment's generator.
             ref.envs[-1].data.qpos[bat._cube] = 5.0
             bat._qpos[-1, bat._cube] = 5.0
-            action = np.zeros((lanes, 5))
+            action = np.zeros((instances, 5))
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
         assert_same_state(bat.reset(), ref.reset())
     finally:
@@ -123,18 +123,18 @@ def test_scene_cube_repair_equals_ogbench(lanes):
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-def test_batch_with_worker_lanes_equals_ogbench_lanes(family):
-    """Worker processes reset, restore and vary the lanes of large batches; the batch steps them."""
+def test_batch_with_worker_environments_equals_ogbench_environments(family):
+    """Worker processes reset, restore and vary the environments of large batches; the batch steps them."""
     from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter
 
-    lanes, rng = 4, np.random.default_rng(4)
-    ref = OGBManipulationAdapter(family, lanes, seed=9)
-    workers = OGBManipulationProcessAdapter(family, lanes, "cpu", 9, None, processes=2)
-    bat = OGBManipulationBatchAdapter(family, lanes, seed=9, threads=2, lanes=workers)
+    instances, rng = 4, np.random.default_rng(4)
+    ref = OGBManipulationAdapter(family, instances, seed=9)
+    workers = OGBManipulationProcessAdapter(family, instances, "cpu", 9, None, processes=2)
+    bat = OGBManipulationBatchAdapter(family, instances, seed=9, threads=2, instances=workers)
     try:
         assert_same_state(bat.get_state(), ref.get_state())
         for t in range(60):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
             if t == 29:
                 assert_same_state(bat.reset(), ref.reset())
@@ -173,23 +173,23 @@ def test_state_has_one_leaf_per_section_and_dtype(family):
 
 @pytest.mark.parametrize("family", FAMILIES)
 def test_batch_controller_writes_ogbench_controls(family):
-    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
+    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, InstancePool
 
     cls = CompatibleCube if family == "Cube" else CompatibleScene
-    lanes, rng, pool = 5, np.random.default_rng(1), LanePool()
-    envs = [cls(seed=i, pool=pool) for i in range(lanes)]
+    instances, rng, pool = 5, np.random.default_rng(1), InstancePool()
+    envs = [cls(seed=i, pool=pool) for i in range(instances)]
     for i, env in enumerate(envs):
         env.reset(seed=i)
-    controller = BatchController(envs[0], lanes, 2)
+    controller = BatchController(envs[0], instances, 2)
     pinch = envs[0]._pinch_site_id
     try:
         for t in range(60):
-            action = _actions(rng, t, lanes)
+            action = _actions(rng, t, instances)
             qpos = np.stack([env.data.qpos for env in envs])
             ctrl = np.stack([env.data.ctrl for env in envs])
             pos = np.stack([env.data.site_xpos[pinch] for env in envs])
             mat = np.stack([env.data.site_xmat[pinch] for env in envs])
-            controller.control(action, qpos, pos, mat, ctrl, np.arange(lanes))
+            controller.control(action, qpos, pos, mat, ctrl, np.arange(instances))
             for i, env in enumerate(envs):
                 env.transition(action[i])
                 assert np.array_equal(ctrl[i], env.data.ctrl), (t, i)
@@ -203,13 +203,13 @@ def test_batch_controller_writes_ogbench_controls(family):
 def test_controller_site_jacobian_equals_mujoco(family):
     import mujoco
 
-    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
+    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, InstancePool
 
     cls = CompatibleCube if family == "Cube" else CompatibleScene
-    env = cls(seed=0, pool=LanePool())
+    env = cls(seed=0, pool=InstancePool())
     env.reset(seed=0)
-    lanes = 6
-    controller = BatchController(env, lanes, 2)
+    instances = 6
+    controller = BatchController(env, instances, 2)
     try:
         if controller._jacobian is None:
             pytest.skip("Numba is not installed")
@@ -217,8 +217,8 @@ def test_controller_site_jacobian_equals_mujoco(family):
         controller._ik_qpos[:] = rng.uniform(-np.pi, np.pi, controller._ik_qpos.shape)
         b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
         site_xpos = controller._ik_site_xpos[:, controller._site]
-        for rows in (np.arange(lanes), np.array([1, 4])):
-            jacp, jacr = b.jac(controller._site_body, site_xpos[rows], None if len(rows) == lanes else rows)
+        for rows in (np.arange(instances), np.array([1, 4])):
+            jacp, jacr = b.jac(controller._site_body, site_xpos[rows], None if len(rows) == instances else rows)
             ours = controller._jacobian(
                 controller._ik_cdof, controller._ik_subtree_com, site_xpos, rows, controller._chain, controller._root
             )

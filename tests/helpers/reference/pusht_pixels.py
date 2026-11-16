@@ -1,4 +1,4 @@
-"""Forward source witnesses for replay-State PushT, including held terminal lanes."""
+"""Forward source witnesses for replay-State PushT, including held terminal environments."""
 
 import importlib
 from contextlib import ExitStack, closing
@@ -64,14 +64,14 @@ def pusht_trace(case: Registration, seed: int, dtype: str, horizon: int, scenari
         reference = stack.enter_context(se.make(case.name, num_envs=2, size=64, device="cpu"))
         reference.reset(seed=seed, options=options)
         sources = [stack.enter_context(closing(source_class(resolution=64))) for _ in range(2)]
-        for lane, (source, prefix) in enumerate(zip(sources, prefixes, strict=True)):
-            source.reset(seed=seed + lane, options=options)
+        for instance, (source, prefix) in enumerate(zip(sources, prefixes, strict=True)):
+            source.reset(seed=seed + instance, options=options)
             for _ in range(prefix):
                 action = np.zeros(2, dtype=dtype)
                 expected = source.step(action.copy())
-                actual = reference._simulator.envs[lane].step(action.copy())
+                actual = reference._simulator.envs[instance].step(action.copy())
                 equal(expected, actual)
-            equal(diagnostics(source), diagnostics(reference._simulator.envs[lane].env))
+            equal(diagnostics(source), diagnostics(reference._simulator.envs[instance].env))
         initial = reference.get_state()
         states, frames, tasks, validity = [], [], [], []
         active = np.ones(2, bool)
@@ -79,20 +79,20 @@ def pusht_trace(case: Registration, seed: int, dtype: str, horizon: int, scenari
             validity.append(active.copy())
             row = np.zeros((2, 4), np.float64)
             images = []
-            for lane, source in enumerate(sources):
-                if active[lane]:
-                    output = source.step(actions[lane, step].copy())
-                    row[lane] = output[1], output[2], output[3], output[2]
+            for instance, source in enumerate(sources):
+                if active[instance]:
+                    output = source.step(actions[instance, step].copy())
+                    row[instance] = output[1], output[2], output[3], output[2]
                 before = diagnostics(source)
-                if scenario == "contact" and step == 0 and lane == 0:
+                if scenario == "contact" and step == 0 and instance == 0:
                     assert source.n_contact_points > 0, "Contact scenario did not exercise a collision"
                 frame = source.render().copy()
                 assert frame.shape == (64, 64, 3) and frame.dtype == np.uint8
                 equal(before, diagnostics(source))
                 images.append(frame)
             reference._simulator.step(actions[:, step], active=torch.from_numpy(active))
-            for lane, source in enumerate(sources):
-                equal(diagnostics(source), diagnostics(reference._simulator.envs[lane].env))
+            for instance, source in enumerate(sources):
+                equal(diagnostics(source), diagnostics(reference._simulator.envs[instance].env))
             states.append(reference.get_state())
             frames.append(np.stack(images))
             tasks.append(row)
@@ -101,10 +101,10 @@ def pusht_trace(case: Registration, seed: int, dtype: str, horizon: int, scenari
         if scenario == "terminal":
             assert not np.stack(validity, axis=1)[0, 1:].any()
             assert np.stack(validity, axis=1)[1].all()
-        for lane, source in enumerate(sources):
-            action = actions[lane, -1].copy()
-            equal(source.step(action.copy()), reference._simulator.envs[lane].step(action.copy()))
-            equal(diagnostics(source), diagnostics(reference._simulator.envs[lane].env))
+        for instance, source in enumerate(sources):
+            action = actions[instance, -1].copy()
+            equal(source.step(action.copy()), reference._simulator.envs[instance].step(action.copy()))
+            equal(diagnostics(source), diagnostics(reference._simulator.envs[instance].env))
         return PixelTrace(
             initial,
             states,

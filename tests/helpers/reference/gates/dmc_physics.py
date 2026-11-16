@@ -1,10 +1,10 @@
 """Every DM Control physics Variation leaf against the pinned stable_worldmodel wrappers.
 
-For each leaf, three lanes run the registered value, a low and a high value. stable-worldmodel sets each
-lane's value through ``reset(options={"variation_values": ...})`` and recompiles or writes
-the model; ours writes the same value into each lane's compiled model. The reset State and a
-short rollout must agree within ``PHYSICS_TOL``, and the varied lanes must move stable-worldmodel's own
-trajectory far beyond it. Then every leaf is sampled per lane at once, and a restored State
+For each leaf, three environments run the registered value, a low and a high value. stable-worldmodel sets each
+environment's value through ``reset(options={"variation_values": ...})`` and recompiles or writes
+the model; ours writes the same value into each environment's compiled model. The reset State and a
+short rollout must agree within ``PHYSICS_TOL``, and the varied environments must move stable-worldmodel's own
+trajectory far beyond it. Then every leaf is sampled per environment at once, and a restored State
 keeps the physics it was produced under.
 
 Errors are ``|ours - swm| / (1 + |swm|)`` over every floating State leaf, so the solver
@@ -97,8 +97,8 @@ def _swm_dtype(leaf, value):
     return np.asarray(value, np.float64 if wide else np.float32).reshape(-1)
 
 
-class _Lanes:
-    """One stable-worldmodel wrapper per lane, each reset with its own explicit physics values."""
+class _Instances:
+    """One stable-worldmodel wrapper per environment, each reset with its own explicit physics values."""
 
     def __init__(self, name, values):
         wrapper = _balance_wrapper() if name == "DMCCartpoleBalance" else None
@@ -106,17 +106,19 @@ class _Lanes:
             DMCReference(
                 CELLS[name],
                 1,
-                options={"variation_values": {k: _swm_dtype(k, v[lane]) for k, v in values.items()}},
+                options={"variation_values": {k: _swm_dtype(k, v[instance]) for k, v in values.items()}},
                 wrapper=wrapper,
             )
-            for lane in range(3)
+            for instance in range(3)
         ]
 
     def reset(self, seed):
-        return torch.cat([ref.reset(seed=seed + lane) for lane, ref in enumerate(self.refs)])
+        return torch.cat([ref.reset(seed=seed + instance) for instance, ref in enumerate(self.refs)])
 
     def step(self, actions):
-        return torch.cat([ref.step(actions[lane : lane + 1])["state"] for lane, ref in enumerate(self.refs)])
+        return torch.cat(
+            [ref.step(actions[instance : instance + 1])["state"] for instance, ref in enumerate(self.refs)]
+        )
 
     def close(self):
         for ref in self.refs:
@@ -126,7 +128,7 @@ class _Lanes:
 def _swm_values(name, leaf):
     """stable-worldmodel's registered value and two interior values of its range, in stable-worldmodel's dtype
     for the leaf."""
-    ref = _Lanes(name, {}).refs
+    ref = _Instances(name, {}).refs
     try:
         node = ref[0].envs[0].variation_space
         for part in leaf.split("."):
@@ -154,24 +156,24 @@ def _compare(ours, theirs) -> float:
     return error
 
 
-def _rollout(env, lanes, actions):
+def _rollout(env, instances, actions):
     error = 0.0
     states = []
     for action in actions:
-        ours, theirs = env.step(action, states=None, frames=None)["state"], lanes.step(action)
+        ours, theirs = env.step(action, states=None, frames=None)["state"], instances.step(action)
         error = max(error, _compare(ours, theirs))
         states.append(theirs)
     return error, states
 
 
-def _kick(name, env, lanes):
+def _kick(name, env, instances):
     """Spin the finger's spinner on both sides; random actions rarely reach it within a short rollout."""
     if name != "DMCFingerTurnHard":
         return
     state = env.get_state()
     get_field(state, "qvel")[:, -1] = KICK
     env.set_state(state)
-    for ref in lanes.refs:
+    for ref in instances.refs:
         physics = ref.envs[0].env.physics
         warmstart = physics.data.qacc_warmstart.copy()
         physics.named.data.qvel["hinge"] = KICK
@@ -186,14 +188,14 @@ def leaf_gate(name, leaf, seed=11):
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
         values = _swm_values(name, leaf)
         reset = env.reset(seed=seed, options={"variation_values": {leaf: values}})
-        lanes = _Lanes(name, {leaf: values})
+        instances = _Instances(name, {leaf: values})
         try:
-            _compare(reset, lanes.reset(seed))
-            _kick(name, env, lanes)
-            error, varied = _rollout(env, lanes, actions)
+            _compare(reset, instances.reset(seed))
+            _kick(name, env, instances)
+            error, varied = _rollout(env, instances, actions)
         finally:
-            lanes.close()
-        default = _Lanes(name, {})
+            instances.close()
+        default = _Instances(name, {})
         try:
             env.reset(seed=seed)
             default.reset(seed)
@@ -202,7 +204,7 @@ def leaf_gate(name, leaf, seed=11):
         finally:
             default.close()
     moved = torch.stack([get_field(v, "qpos") - b for v, b in zip(varied, base, strict=True)]).abs().amax(dim=(0, 2))
-    assert float(moved[0]) == 0.0, "lane 0 runs the registered value on both sides"
+    assert float(moved[0]) == 0.0, "environment 0 runs the registered value on both sides"
     return {
         "values": values.reshape(-1).tolist(),
         "max_state_error": error,
@@ -212,7 +214,7 @@ def leaf_gate(name, leaf, seed=11):
 
 
 def sampled_and_restored_gate(name, seed=29, steps=20):
-    """Sample every physics leaf per lane, step against stable-worldmodel, then restore a mid-rollout State."""
+    """Sample every physics leaf per environment, step against stable-worldmodel, then restore a mid-rollout State."""
     with _make(name) as env:
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
         leaves = list(env.physics_variation_leaves)
@@ -223,17 +225,17 @@ def sampled_and_restored_gate(name, seed=29, steps=20):
             if not (leaf.startswith("gravity.") or leaf == "floor.rotation_y"):
                 # stable-worldmodel holds these leaves in float32; our draw is a float32 style value.
                 assert np.array_equal(value, value.astype(np.float32).astype(np.float64)), (leaf, value)
-        lanes = _Lanes(name, values)
+        instances = _Instances(name, values)
         try:
-            _compare(drawn, lanes.reset(seed))
-            error, _ = _rollout(env, lanes, actions[: steps // 2])
+            _compare(drawn, instances.reset(seed))
+            error, _ = _rollout(env, instances, actions[: steps // 2])
             saved = env.get_state()
             env.reset(seed=seed + 1)
             env.set_state(saved)
             compare_state(env.get_state(), saved)
-            restored, _ = _rollout(env, lanes, actions[steps // 2 :])
+            restored, _ = _rollout(env, instances, actions[steps // 2 :])
         finally:
-            lanes.close()
+            instances.close()
     return {"leaves": leaves, "max_state_error": error, "restored_max_state_error": restored}
 
 
@@ -248,34 +250,35 @@ def reset_rule_gate(name="DMCCartpoleSwingup", seed=23, steps=10) -> dict:
     configured = -5.0
     with _make(name) as env:
         actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, env.action_dim))
-        lanes = _Lanes(name, {"gravity.z": gz})
+        instances = _Instances(name, {"gravity.z": gz})
         try:
             assert (
-                _compare(env.reset(seed=seed, options={"variation_values": {"gravity.z": gz}}), lanes.reset(seed)) == 0
+                _compare(env.reset(seed=seed, options={"variation_values": {"gravity.z": gz}}), instances.reset(seed))
+                == 0
             )
-            for ref in lanes.refs:
+            for ref in instances.refs:
                 ref.options = None
             ours = env.reset(seed=seed + 1)
-            assert _compare(ours, lanes.reset(seed + 1)) == 0
+            assert _compare(ours, instances.reset(seed + 1)) == 0
             assert bool((get_field(ours, "physics/gravity/z") == -9.81).all())
-            registered, _ = _rollout(env, lanes, actions)
+            registered, _ = _rollout(env, instances, actions)
 
             env.set_variation({"gravity.z": [configured]})
-            for lane, ref in enumerate(lanes.refs):
+            for instance, ref in enumerate(instances.refs):
                 leaf = ref.envs[0].variation_space["gravity"]["z"]
                 leaf.set_init_value(np.asarray([configured], leaf.dtype))
-                ref.options = {"variation_values": {"gravity.x": _swm_dtype("gravity.x", gx[lane])}}
+                ref.options = {"variation_values": {"gravity.x": _swm_dtype("gravity.x", gx[instance])}}
             ours = env.reset(seed=seed + 2, options={"variation_values": {"gravity.x": gx}})
-            assert _compare(ours, lanes.reset(seed + 2)) == 0
-            for ref in lanes.refs:
+            assert _compare(ours, instances.reset(seed + 2)) == 0
+            for ref in instances.refs:
                 ref.options = None
             ours = env.reset(seed=seed + 3)
-            assert _compare(ours, lanes.reset(seed + 3)) == 0
+            assert _compare(ours, instances.reset(seed + 3)) == 0
             assert bool((get_field(ours, "physics/gravity/x") == 0.0).all())
             assert bool((get_field(ours, "physics/gravity/z") == configured).all())
-            configured_error, _ = _rollout(env, lanes, actions)
+            configured_error, _ = _rollout(env, instances, actions)
         finally:
-            lanes.close()
+            instances.close()
     return {
         "registered_defaults": {"max_state_error": registered},
         "set_variation_defaults": {"value": configured, "max_state_error": configured_error},

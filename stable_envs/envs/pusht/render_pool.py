@@ -8,7 +8,7 @@ from multiprocessing import shared_memory
 
 import numpy as np
 
-from ..._execution.requests import ProcessRequests, lane_slices
+from ..._execution.requests import ProcessRequests, instance_slices
 from ..._execution.workers import pin_worker, send_failure, send_ready
 
 
@@ -38,7 +38,7 @@ def render_worker(conn, cpus):
                     # Spawned workers share the parent's resource tracker; the parent unlinks the block.
                     block = shared_memory.SharedMemory(name=name)
                 count = len(fields["recipe/config"])
-                rows = [{key: value[lane] for key, value in fields.items()} for lane in range(count)]
+                rows = [{key: value[instance] for key, value in fields.items()} for instance in range(count)]
                 frames = np.ndarray((start + count, size, size, 3), np.uint8, buffer=block.buf)[start:]
                 try:
                     projection.render(rows, size, out=frames)
@@ -68,7 +68,7 @@ class PushTRenderPool(ProcessRequests):
     def __init__(self, processes, cpus=None):
         self._closed, self._pending = False, None
         self._connections, self._processes = [], []
-        self._slices = lane_slices(processes, processes)
+        self._slices = instance_slices(processes, processes)
         self._block = None
         try:
             self._spawn_workers(mp.get_context("spawn"), render_worker, cpus, lambda rows, group: (group,))
@@ -91,7 +91,7 @@ class PushTRenderPool(ProcessRequests):
         if self._block is None or self._block.size < nbytes:
             self._release()
             self._block = shared_memory.SharedMemory(create=True, size=max(nbytes, 1))
-        parts = lane_slices(count, min(count, self.processes))
+        parts = instance_slices(count, min(count, self.processes))
         payloads = [(self._block.name, rows.start, {k: v[rows] for k, v in fields.items()}, size) for rows in parts]
         replies = self._request("render", payloads + [None] * (self.processes - len(parts)))
         failures = [reply for reply in replies if reply is not None]

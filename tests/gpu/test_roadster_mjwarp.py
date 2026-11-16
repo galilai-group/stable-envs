@@ -20,7 +20,7 @@ from stable_envs import tuning  # noqa: E402
 from stable_envs.envs.roadster.source import GoalExpert, RoadsterPlanEnv  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
-LANES, STEPS, SEED = 8, 300, 100
+NUM_ENVS, STEPS, SEED = 8, 300, 100
 WIND, RAIN = 5.0, 0.3
 #: Largest distance in metres between the source's and MuJoCo Warp's car, up to the end of each episode. On an
 #: RTX 4090 the gaps over 8 environments were 0.006 m (traffic), 0.011 m (carhop), 0.27-0.33 m (rooftop) and
@@ -102,26 +102,26 @@ def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
     _require_cuda()
     from stable_envs.envs.roadster.simulation.warp import RoadsterWarpAdapter
 
-    sources = [RoadsterPlanEnv(task=task) for _ in range(LANES)]
+    sources = [RoadsterPlanEnv(task=task) for _ in range(NUM_ENVS)]
     for i, src in enumerate(sources):
         if task == "loop":
             src._loop_goal_state()  # the batch takes the reference run once, before any episode
         src.reset(seed=SEED + i, wind=WIND, rain=RAIN)
     expert = GoalExpert()
-    actions = np.zeros((STEPS, LANES, 4), np.float32)
+    actions = np.zeros((STEPS, NUM_ENVS, 4), np.float32)
     src_pos, src_term, src_success = (
-        np.zeros((STEPS, LANES, 3)),
-        np.zeros((STEPS, LANES), bool),
-        np.zeros((STEPS, LANES), bool),
+        np.zeros((STEPS, NUM_ENVS, 3)),
+        np.zeros((STEPS, NUM_ENVS), bool),
+        np.zeros((STEPS, NUM_ENVS), bool),
     )
     for t in range(STEPS):
         for i, src in enumerate(sources):
             actions[t, i] = expert(src)
             _, terminated, _, info = src.step(actions[t, i])
             src_pos[t, i], src_term[t, i], src_success[t, i] = src.data.qpos[:3], terminated, info["success"]
-    gpu = RoadsterWarpAdapter(task, LANES, "cuda")
+    gpu = RoadsterWarpAdapter(task, NUM_ENVS, "cuda")
     try:
-        gpu.configure_physics(np.tile([WIND, RAIN], (LANES, 1)))
+        gpu.configure_physics(np.tile([WIND, RAIN], (NUM_ENVS, 1)))
         gpu.reset(SEED)
         pos, term, success = np.zeros_like(src_pos), np.zeros_like(src_term), np.zeros_like(src_success)
         for t in range(STEPS):
@@ -131,7 +131,7 @@ def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
     finally:
         gpu.close()
     flips = 0
-    for i in range(LANES):
+    for i in range(NUM_ENVS):
         want, got = _first_end(src_term[:, i], src_success[:, i]), _first_end(term[:, i], success[:, i])
         same = (want is None and got is None) or (
             want is not None and got is not None and want[1] == got[1] and abs(want[0] - got[0]) <= OUTCOME_SLACK
@@ -144,7 +144,7 @@ def test_mujoco_warp_replays_the_source_expert_with_its_outcome(task):
             gap = float(np.abs(pos[:end, i] - src_pos[:end, i]).max())
             assert gap <= PATH_BOUNDS[task], f"{task} environment {i}: {gap:.3f} m from the source's path"
     if task in CHAOTIC:
-        assert flips <= 1, f"{task}: {flips} of {LANES} environments changed outcome"
+        assert flips <= 1, f"{task}: {flips} of {NUM_ENVS} environments changed outcome"
     if task == "mission":
         gap = float(np.abs(pos[:MISSION_STEPS_BEFORE_LOOP] - src_pos[:MISSION_STEPS_BEFORE_LOOP]).max())
         assert gap <= MISSION_BOUND, f"mission: {gap:.3f} m from the source's path before the loop"

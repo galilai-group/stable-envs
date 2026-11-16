@@ -2,7 +2,7 @@
 
 OGBench draws the task from NumPy's global RNG and the settling actions from a new, unseeded action Box at
 each read. Each reference env here keeps its own global RNG, seeded as ``np.random.seed(seed)`` at each seeded
-reset, and one action Box seeded as a stable-envs lane seeds its action stream. Everything else is OGBench.
+reset, and one action Box seeded as a stable-envs environment seeds its action stream. Everything else is OGBench.
 """
 
 import mujoco

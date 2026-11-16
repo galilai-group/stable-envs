@@ -20,23 +20,23 @@ def process_count(
     *,
     eligible: bool = True,
     path: str | None = None,
-    lanes_per_process: int | None = None,
-    min_lanes: int | None = None,
+    envs_per_process: int | None = None,
+    min_envs: int | None = None,
 ) -> int:
     """Return the number of worker processes to use, or 0 to step in this process.
 
-    Workers are used only on Linux, outside daemon processes, for at least ``worker_min_lanes`` lanes
+    Workers are used only on Linux, outside daemon processes, for at least ``worker_min_envs`` environments
     and 4 CPUs, up to the ``workers`` setting. ``path`` is the simulation path whose measured values apply.
-    ``min_lanes`` is the path's own ``worker_min_lanes`` default. A batch larger than ``lanes_per_process``
+    ``min_envs`` is the path's own ``worker_min_envs`` default. A batch larger than ``envs_per_process``
     uses at least enough workers to hold it on any platform.
     """
     available = min(len(cpus), cpu_limit()) if cpus is not None else 1
     if not eligible or mp.current_process().daemon:
         return 0
-    needed = -(-num_envs // lanes_per_process) if lanes_per_process and num_envs > lanes_per_process else 0
+    needed = -(-num_envs // envs_per_process) if envs_per_process and num_envs > envs_per_process else 0
     if sys.platform != "linux" or available < 4:
         return needed
-    default = {} if min_lanes is None else {"default": min_lanes}
-    if num_envs < int(tuning.get("worker_min_lanes", path=path, size=0, batch=num_envs, **default) or 0):
+    default = {} if min_envs is None else {"default": min_envs}
+    if num_envs < int(tuning.get("worker_min_envs", path=path, size=0, batch=num_envs, **default) or 0):
         return needed
     return max(needed, min(int(tuning.get("workers", path=path, size=0, batch=num_envs) or 0), available, num_envs))

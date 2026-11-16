@@ -1,4 +1,4 @@
-"""Craftax variation leaves set upstream EnvParams per lane, and the State keeps them."""
+"""Craftax variation leaves set upstream EnvParams per environment, and the State keeps them."""
 
 from __future__ import annotations
 
@@ -13,12 +13,12 @@ from tests.helpers.reference.semantics import assert_same_state
 jax = pytest.importorskip("jax")
 pytest.importorskip("craftax")
 
-from tests.helpers.reference.craftax import actions, assert_lane  # noqa: E402
+from tests.helpers.reference.craftax import actions, assert_instance  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
 SEED = 7
-LANES = 3
+NUM_ENVS = 3
 VALUES = {
     "CraftaxClassicSymbolic": {
         "world.day_length": [300, 60, 900],
@@ -41,8 +41,8 @@ VALUES = {
 }
 
 
-def _upstream(env, lane: int, values: dict):
-    """Single-lane upstream reset and step with the wrapper key handling, given these EnvParams values.
+def _upstream(env, instance: int, values: dict):
+    """Single-environment upstream reset and step with the wrapper key handling, given these EnvParams values.
 
     The values are arguments of the jitted calls, as when a caller varies EnvParams upstream.
     """
@@ -51,7 +51,11 @@ def _upstream(env, lane: int, values: dict):
     upstream = make_craftax_env_from_name(env.reference_id, auto_reset=False)
     cast = {bool: bool, int: int, float: np.float32}
     params = upstream.default_params.replace(
-        **{attr: cast[type(default)](values[path][lane]) for path, attr, _, default in env._k.params if path in values}
+        **{
+            attr: cast[type(default)](values[path][instance])
+            for path, attr, _, default in env._k.params
+            if path in values
+        }
     )
     params = jax.tree.map(jax.numpy.asarray, params)
 
@@ -69,34 +73,34 @@ def _upstream(env, lane: int, values: dict):
 
 
 @pytest.mark.parametrize("name", sorted(VALUES))
-def test_per_lane_values_step_as_upstream_steps_with_those_params(name):
+def test_per_environment_values_step_as_upstream_steps_with_those_params(name):
     values = VALUES[name]
-    with se.make(name, num_envs=LANES, device="cpu") as env, jax.default_device(jax.devices("cpu")[0]):
+    with se.make(name, num_envs=NUM_ENVS, device="cpu") as env, jax.default_device(jax.devices("cpu")[0]):
         state = env.reset(seed=SEED, options={"variation_values": values})
-        lanes = []
-        for lane in range(LANES):
-            reset, step = _upstream(env, lane, values)
-            engine, key = reset(jax.random.PRNGKey(SEED + lane))
-            assert_lane(state, lane, engine, key)
-            lanes.append([engine, key, step])
+        instances = []
+        for instance in range(NUM_ENVS):
+            reset, step = _upstream(env, instance, values)
+            engine, key = reset(jax.random.PRNGKey(SEED + instance))
+            assert_instance(state, instance, engine, key)
+            instances.append([engine, key, step])
         for path, column in values.items():
             stored = get_field(state, f"physics.{path}").reshape(-1).double().numpy()
             np.testing.assert_allclose(stored, np.asarray(column, np.float32), rtol=0, atol=0, err_msg=path)
         for action in actions(env, 12, SEED):
             result = env.step(action, frames=None)
-            for lane, (engine, key, step) in enumerate(lanes):
-                engine, reward, done, key = step(key, engine, int(action[lane, 0]))
-                lanes[lane][:2] = [engine, key]
-                assert_lane(result["state"], lane, engine, key)
-                assert result["reward"][lane].item() == float(reward)
-                assert result["terminated"][lane].item() == bool(done)
+            for instance, (engine, key, step) in enumerate(instances):
+                engine, reward, done, key = step(key, engine, int(action[instance, 0]))
+                instances[instance][:2] = [engine, key]
+                assert_instance(result["state"], instance, engine, key)
+                assert result["reward"][instance].item() == float(reward)
+                assert result["terminated"][instance].item() == bool(done)
 
 
 @pytest.mark.parametrize("name", sorted(VALUES))
 def test_a_state_carries_its_values_into_another_env(name):
     with (
-        se.make(name, num_envs=LANES, device="cpu") as env,
-        se.make(name, num_envs=LANES, device="cpu") as other,
+        se.make(name, num_envs=NUM_ENVS, device="cpu") as env,
+        se.make(name, num_envs=NUM_ENVS, device="cpu") as other,
     ):
         env.reset(seed=SEED, options={"variation_values": VALUES[name]})
         first, *later = actions(env, 4, SEED)
@@ -109,12 +113,12 @@ def test_a_state_carries_its_values_into_another_env(name):
             assert_same_state(other.step(action, frames=None), env.step(action, frames=None))
         # The next reset without options returns to the installed defaults.
         state = env.reset(seed=SEED)
-        with se.make(name, num_envs=LANES, device="cpu") as fresh:
+        with se.make(name, num_envs=NUM_ENVS, device="cpu") as fresh:
             assert_same_state(state, fresh.reset(seed=SEED))
 
 
 def test_values_outside_a_leaf_are_refused_by_set_state():
-    with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
+    with se.make("CraftaxClassicSymbolic", num_envs=NUM_ENVS, device="cpu") as env:
         state = env.reset(seed=SEED)
         before = env.get_state()
         get_field(state, "physics/zombie/health")[1] = 0
@@ -124,7 +128,7 @@ def test_values_outside_a_leaf_are_refused_by_set_state():
 
 
 def test_a_state_without_its_values_is_refused_by_set_state():
-    with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cpu") as env:
+    with se.make("CraftaxClassicSymbolic", num_envs=NUM_ENVS, device="cpu") as env:
         state = env.reset(seed=SEED)
         before = env.get_state()
         group = env._k.schema.slices["physics/zombie/health"].group
@@ -150,7 +154,7 @@ def test_sampled_values_stay_inside_their_leaves():
 
 
 def test_render_fills_out_and_checks_variation():
-    with se.make("CraftaxClassicPixels", num_envs=LANES, device="cpu") as env:
+    with se.make("CraftaxClassicPixels", num_envs=NUM_ENVS, device="cpu") as env:
         state = env.reset(seed=SEED)
         frames = env.render(state)
         out = torch.zeros_like(frames)
@@ -162,4 +166,4 @@ def test_render_fills_out_and_checks_variation():
         with pytest.raises(KeyError):
             env.render(state, variation={"no.such_leaf": 1})
         with pytest.raises(ValueError):
-            env.render(state, out=torch.zeros((LANES, 2, 2, 3), dtype=torch.uint8))
+            env.render(state, out=torch.zeros((NUM_ENVS, 2, 2, 3), dtype=torch.uint8))

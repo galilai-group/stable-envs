@@ -41,7 +41,7 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
                     "unit/test_ogbench_render_state.py",
                     "unit/test_ogbench_state_export.py",
                     "unit/test_ogbench_validation_columns.py",
-                    "unit/test_ogbench_lane_pool.py",
+                    "unit/test_ogbench_environment_pool.py",
                     "helpers/reference/gates/ogb_variation.py",
                     "helpers/reference/ogbench_state_export.py",
                 )

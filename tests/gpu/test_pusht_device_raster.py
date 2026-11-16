@@ -18,7 +18,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 NAMES = ("PushT", "PushTDiscrete")
-LANES = 64
+NUM_ENVS = 64
 
 
 @pytest.fixture(autouse=True)
@@ -30,13 +30,13 @@ def _in_process():
 
 def _actions(name, rng, steps):
     if name == "PushTDiscrete":
-        return torch.as_tensor(rng.integers(0, 16, (LANES, steps, 2), dtype=np.int64))
-    return torch.as_tensor(rng.uniform(-1.0, 1.0, (LANES, steps, 2)))
+        return torch.as_tensor(rng.integers(0, 16, (NUM_ENVS, steps, 2), dtype=np.int64))
+    return torch.as_tensor(rng.uniform(-1.0, 1.0, (NUM_ENVS, steps, 2)))
 
 
 @functools.cache
 def _seeded(name):
-    with se.make(name, num_envs=LANES, size=224, device="cpu") as env:
+    with se.make(name, num_envs=NUM_ENVS, size=224, device="cpu") as env:
         env.reset(seed=11)
         rng = np.random.default_rng(5)
         for _ in range(4):
@@ -45,7 +45,7 @@ def _seeded(name):
 
 
 def _states(name):
-    """64 seeded States after random pushes, then edge cases written into the first lanes."""
+    """64 seeded States after random pushes, then edge cases written into the first environments."""
     state = _seeded(name).clone()
     block = get_field(state, "current/body/block/position")
     agent = get_field(state, "current/body/agent/position")
@@ -82,15 +82,15 @@ def test_device_frames_equal_the_pygame_frames(name):
     state = _states(name)
     assert int((get_field(state, "current/render_segment_count") > 0).sum()) > 0, "no State has contact lines"
     with (
-        se.make(name, num_envs=LANES, size=224, device="cuda") as env,
-        se.make(name, num_envs=LANES, size=224, device="cpu") as ref,
+        se.make(name, num_envs=NUM_ENVS, size=224, device="cuda") as env,
+        se.make(name, num_envs=NUM_ENVS, size=224, device="cpu") as ref,
     ):
         fallback = _counting(env)
         for size in (224, 96):
             got = env.render(state.to("cuda"), size=size).cpu()
             want = ref.render(state, size=size)
             bad = torch.nonzero((got != want).flatten(1).any(1)).view(-1).tolist()
-            assert not bad, f"{name} size {size}: lanes {bad} differ from pygame"
+            assert not bad, f"{name} size {size}: environments {bad} differ from pygame"
         assert env._device_renderer is not None, "render did not use the device renderer"
         assert sum(fallback) == 0, f"{name}: {sum(fallback)} rows used pygame"
 
@@ -100,8 +100,8 @@ def test_step_frames_equal_the_pygame_frames(name):
     rng = np.random.default_rng(9)
     actions = _actions(name, rng, 8)
     with (
-        se.make(name, num_envs=LANES, size=224, device="cuda") as env,
-        se.make(name, num_envs=LANES, size=224, device="cpu") as ref,
+        se.make(name, num_envs=NUM_ENVS, size=224, device="cuda") as env,
+        se.make(name, num_envs=NUM_ENVS, size=224, device="cpu") as ref,
     ):
         env.reset(seed=4)
         ref.reset(seed=4)

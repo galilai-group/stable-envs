@@ -1,4 +1,4 @@
-"""OGBench Maze lanes in worker processes."""
+"""OGBench Maze environments in worker processes."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from ...._execution.process import ProcessAdapter
 from .maze import OGBMazeAdapter
 
 
-def _lanes(loco, maze, count, seed):
+def _instances(loco, maze, count, seed):
     return OGBMazeAdapter(count, seed=seed, loco=loco, maze=maze)
 
 
@@ -20,13 +20,13 @@ class OGBMazeProcessAdapter(ProcessAdapter):
     name = "OGBMaze"
 
     def __init__(self, num_envs, device="cpu", seed=0, *, processes=8, cpus=None, loco="point", maze="large"):
-        super().__init__(partial(_lanes, loco, maze), num_envs, device, int(seed), processes=processes, cpus=cpus)
+        super().__init__(partial(_instances, loco, maze), num_envs, device, int(seed), processes=processes, cpus=cpus)
 
     def reset(self, seed=None):
         self._check_idle()
         if seed is not None:
             seed = int(seed)
-            # Check the complete lane range before any worker resets.
+            # Check the complete environment range before any worker resets.
             np.random.RandomState(seed)
             np.random.RandomState(seed + self.num_envs - 1)
         return self._reset(seed)

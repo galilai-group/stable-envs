@@ -41,7 +41,7 @@ def _rollout(env, n: int, rng: np.random.Generator, variation=None) -> TensorDic
 def rollout_states(env, n: int, rng: np.random.Generator, variation=None) -> TensorDict:
     """Draw ``n`` full states with the public API: seeded ``reset``, random ``step``, ``get_state``.
 
-    Each chunk of ``num_envs`` lanes takes a reset seed from ``rng``. Every chunk takes the same number
+    Each chunk of ``num_envs`` environments takes a reset seed from ``rng``. Every chunk takes the same number
     of steps, so the chunks have the same history width and concatenate. ``env`` keeps its state.
     ``variation`` holds ``(n, variation_dim)`` rows installed for each chunk before its reset; those
     states come from a new env of the same class, so ``env`` also keeps its variation.
@@ -131,5 +131,5 @@ def sample_inputs(env, n: int):
 
 
 def styled_inputs(env, n: int, style) -> TensorDict:
-    """The full states of :func:`sample_inputs`, drawn under the per-lane variation rows ``style``."""
+    """The full states of :func:`sample_inputs`, drawn under the per-environment variation rows ``style``."""
     return rollout_states(env, n, np.random.default_rng(STATE_SEED), variation=style)

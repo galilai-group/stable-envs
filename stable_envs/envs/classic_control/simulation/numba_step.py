@@ -1,6 +1,6 @@
-"""Classic-control steps of every lane in one compiled call, in place on the packed State.
+"""Classic-control steps of every environment in one compiled call, in place on the packed State.
 
-Each kernel repeats the source ``step`` in float64 with the same operation order, one lane after another. NumPy
+Each kernel repeats the source ``step`` in float64 with the same operation order, one environment after another. NumPy
 evaluates the trigonometric functions on the arrays before the call, as the NumPy kernels do, so the values equal
 the source's; the kernels do only IEEE arithmetic and comparisons, and Numba compiles them without fast-math, so
 nothing is reassociated or fused.
@@ -97,7 +97,7 @@ if HAVE_NUMBA:
 
 
 def mountain_car_step(views, params, actions, live, max_steps):
-    """Step every MountainCar lane in place; return ``(reward, terminated, truncated, observation)``."""
+    """Step every MountainCar environment in place; return ``(reward, terminated, truncated, observation)``."""
     n = actions.shape[0]
     position = views["position"][:, 0]
     cosine = np.cos(3 * position)
@@ -113,7 +113,7 @@ def mountain_car_step(views, params, actions, live, max_steps):
 
 
 def cartpole_step(views, params, actions, live, max_steps):
-    """Step every CartPole lane in place; return ``(reward, terminated, truncated, observation)``."""
+    """Step every CartPole environment in place; return ``(reward, terminated, truncated, observation)``."""
     n = actions.shape[0]
     theta = views["theta"][:, 0]
     cos, sin = np.cos(theta), np.sin(theta)

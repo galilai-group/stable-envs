@@ -11,7 +11,7 @@ from tensordict import TensorDict
 
 from ...._core.state_schema import Field, StateSchema
 from ...._core.tensordicts import build_tensordict, to_device
-from ...._execution.process import PER_LANE
+from ...._execution.process import PER_INSTANCE
 from ...._execution.protocol import SimulatorAdapter
 
 _NUMPY_DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool_}
@@ -200,13 +200,16 @@ def _host_fields(domain: str, state: TensorDict) -> dict[str, np.ndarray]:
     return STATES[domain].views(state.cpu(), numpy=True)
 
 
-def _rng_state(fields: dict[str, np.ndarray], lane: int) -> dict:
-    """The PCG64 state of one lane, as NumPy's ``bit_generator.state`` takes it."""
+def _rng_state(fields: dict[str, np.ndarray], instance: int) -> dict:
+    """The PCG64 state of one environment, as NumPy's ``bit_generator.state`` takes it."""
     return {
         "bit_generator": "PCG64",
-        "state": {"state": _from_limbs(fields[RNG_STATE][lane]), "inc": _from_limbs(fields[RNG_INCREMENT][lane])},
-        "has_uint32": fields[RNG_HAS_UINT32][lane, 0].item(),
-        "uinteger": fields[RNG_UINTEGER][lane, 0].item(),
+        "state": {
+            "state": _from_limbs(fields[RNG_STATE][instance]),
+            "inc": _from_limbs(fields[RNG_INCREMENT][instance]),
+        },
+        "has_uint32": fields[RNG_HAS_UINT32][instance, 0].item(),
+        "uinteger": fields[RNG_UINTEGER][instance, 0].item(),
     }
 
 
@@ -222,7 +225,7 @@ def validate_classic_state(domain: str, state, *, batch: int | None = None) -> N
 class ClassicControlAdapter(SimulatorAdapter):
     """B independent pinned Gymnasium simulators, with no rendering responsibility."""
 
-    process_methods = {"configure": PER_LANE}
+    process_methods = {"configure": PER_INSTANCE}
     process_attributes = ("domain", "fields")
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0):
@@ -258,18 +261,18 @@ class ClassicControlAdapter(SimulatorAdapter):
             raise RuntimeError("ClassicControlAdapter is closed")
 
     def configure(self, values: Mapping[str, np.ndarray]) -> None:
-        """Apply each lane's physics variation values to its Gymnasium env."""
+        """Apply each environment's physics variation values to its Gymnasium env."""
         self._check_open()
         columns = {name: np.asarray(rows) for name, rows in values.items()}
         for i in range(self.num_envs):
             self._apply_physics(i, {name: float(rows[i]) for name, rows in columns.items()})
 
-    def _apply_physics(self, lane: int, values: Mapping[str, float]) -> None:
+    def _apply_physics(self, instance: int, values: Mapping[str, float]) -> None:
         self._static_loaded = False
-        base = self.envs[lane].unwrapped
+        base = self.envs[instance].unwrapped
         for name, value in values.items():
             setattr(base, self._physics_attributes[name], value)
-            self._physics[lane, self._physics_names.index(name)] = value
+            self._physics[instance, self._physics_names.index(name)] = value
         if self.domain == "cartpole":
             base.total_mass = base.masspole + base.masscart
             base.polemass_length = base.masspole * base.length
@@ -282,7 +285,7 @@ class ClassicControlAdapter(SimulatorAdapter):
         return ClassicControlAdapter.get_state(self)
 
     def _state_values(self, env, static: bool = True):
-        """The State values of one lane; ``static=False`` leaves out the generator."""
+        """The State values of one environment; ``static=False`` leaves out the generator."""
         base = env.unwrapped
         values: dict = {ELAPSED: [env._elapsed_steps]}
         if static:
@@ -313,16 +316,16 @@ class ClassicControlAdapter(SimulatorAdapter):
         return values
 
     def _columns(self, keys) -> dict:
-        """``{key: (num_envs, width) array}`` of ``keys``, read from each lane's Gymnasium environment."""
+        """``{key: (num_envs, width) array}`` of ``keys``, read from each environment's Gymnasium environment."""
         columns = {
             key: np.empty((self.num_envs, self.fields[key][0]), dtype=_NUMPY_DTYPES[self.fields[key][1]])
             for key in keys
             if key not in self._physics_keys
         }
-        lane_columns = list(columns.items())
+        instance_columns = list(columns.items())
         for index, env in enumerate(self.envs):
             values = self._state_values(env, static=any(key.startswith("rng/") for key in columns))
-            for key, column in lane_columns:
+            for key, column in instance_columns:
                 column[index] = values[key]
         for j, key in enumerate(self._physics_keys):
             if key in keys:
@@ -337,7 +340,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             self._static_loaded = True
 
     def _write_moving(self) -> None:
-        """Copy the fields that steps change from all lanes into the packed State."""
+        """Copy the fields that steps change from all environments into the packed State."""
         n, bases, views = self.num_envs, self._bases, self._packed.views
         state = np.array([base.state for base in bases], dtype=np.float64).reshape(n, -1)
         for i, name in enumerate(_STATE_NAMES[self.domain]):
@@ -366,7 +369,7 @@ class ClassicControlAdapter(SimulatorAdapter):
         return self._packed.stack(states)
 
     def validate(self, state: TensorDict) -> None:
-        """Check the schema and every lane's PCG64 state; change no simulator."""
+        """Check the schema and every environment's PCG64 state; change no simulator."""
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
         probe = np.random.PCG64(0)
@@ -433,7 +436,7 @@ class ClassicControlAdapter(SimulatorAdapter):
             if active.shape != (self.num_envs,) or active.dtype != np.bool_:
                 raise ValueError("active must be a bool vector with shape [num_envs]")
         if self.domain == "acrobot":
-            # Index the torque table as Acrobot does, so an invalid action raises before any lane steps.
+            # Index the torque table as Acrobot does, so an invalid action raises before any environment steps.
             for i, action in enumerate(converted):
                 if active is None or active[i]:
                     [-1.0, 0.0, 1.0][action]
@@ -450,7 +453,7 @@ class ClassicControlAdapter(SimulatorAdapter):
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
-        # An inactive lane does not advance and reports zero task outputs, as Env.step does.
+        # An inactive environment does not advance and reports zero task outputs, as Env.step does.
         outputs = [
             env.step(action) if active is None or active[i] else self._idle_output(env)
             for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))

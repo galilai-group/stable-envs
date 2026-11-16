@@ -12,16 +12,16 @@ class SimulatorAdapter(Protocol):
     """Internal interface for an owned batch of simulators.
 
     Concrete adapters inherit this interface. Env handles action sequences and
-    rendering; adapters advance one transition per lane. Family-specific options
+    rendering; adapters advance one transition per environment. Family-specific options
     and asynchronous execution are additional capabilities. Restore has two
     phases so that a process batch restores every worker or none.
     """
 
     num_envs: int
     _staged_restore: TensorDict | None = None
-    #: Family methods that a process adapter runs on every worker: name -> "per_lane" or "broadcast".
+    #: Family methods that a process adapter runs on every worker: name -> "per_instance" or "broadcast".
     process_methods: dict[str, str] = {}
-    #: Attributes that a process adapter copies from a one-lane prototype.
+    #: Attributes that a process adapter copies from a one-environment prototype.
     process_attributes: tuple[str, ...] = ()
 
     @abstractmethod
@@ -36,11 +36,11 @@ class SimulatorAdapter(Protocol):
 
     @abstractmethod
     def set_state(self, state: TensorDict) -> None:
-        """Restore a complete snapshot for all lanes."""
+        """Restore a complete snapshot for all environments."""
         ...
 
     def validate(self, state: TensorDict) -> object:
-        """Raise if ``state`` cannot restore every lane; change no simulator."""
+        """Raise if ``state`` cannot restore every environment; change no simulator."""
         raise NotImplementedError(f"{type(self).__name__} has no State validation")
 
     def prepare_restore(self, state: TensorDict) -> None:
@@ -61,7 +61,7 @@ class SimulatorAdapter(Protocol):
         self._staged_restore = None
 
     def check_step(self, actions, active):
-        """Return host ``(actions, active)`` for ``step``, or raise without changing a lane.
+        """Return host ``(actions, active)`` for ``step``, or raise without changing an environment.
 
         A process adapter calls this method with itself as ``self`` before it sends a step to
         any worker, so it may read only ``num_envs`` and ``process_attributes``.
@@ -69,12 +69,12 @@ class SimulatorAdapter(Protocol):
         return actions, active
 
     def probe_actions(self) -> np.ndarray:
-        """Return valid actions for one lane; a process adapter steps them once to size its buffers."""
+        """Return valid actions for one environment; a process adapter steps them once to size its buffers."""
         return np.zeros((1, getattr(self, "action_dim")))
 
     @abstractmethod
     def step(self, actions: Tensor | np.ndarray) -> TensorDict:
-        """Advance one action per lane and return state and the defined task outputs."""
+        """Advance one action per environment and return state and the defined task outputs."""
         ...
 
     @abstractmethod

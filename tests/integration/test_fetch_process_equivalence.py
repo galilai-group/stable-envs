@@ -1,4 +1,4 @@
-"""Fetch process lanes match local lanes for every worker count, and a rejected State restores no lane."""
+"""Fetch process environments match local environments for every worker count, and a rejected State restores no environment."""
 
 import numpy as np
 import pytest
@@ -30,7 +30,7 @@ def test_process_matches_local(task):
     )
 
 
-def test_invalid_last_lane_restores_no_lane():
+def test_invalid_last_environment_restores_no_environment():
     adapter = FetchProcessAdapter(5, task="Push", processes=2)
     try:
 

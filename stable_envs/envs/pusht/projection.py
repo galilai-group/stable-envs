@@ -20,7 +20,7 @@ def variation_values(row, prefix):
 
 
 class PushTProjection:
-    """Render numeric state through a separate CPU Pygame scene per lane.
+    """Render numeric state through a separate CPU Pygame scene per environment.
 
     Geometry changes rebuild the scene; other frames install poses, colors and
     captured contact segments. Rendering never steps the physics owner or replays
@@ -30,7 +30,7 @@ class PushTProjection:
     def __init__(self):
         self.scenes = []
 
-    def _scene(self, lane, row):
+    def _scene(self, instance, row):
         # Only body shapes and scales are baked into the pymunk scene; poses,
         # colors and the goal pose are installed on every render.
         key = tuple(
@@ -40,9 +40,9 @@ class PushTProjection:
             for part in ("value", "type")
         )
         key += (row["recipe/config"].tobytes(),)
-        while len(self.scenes) <= lane:
+        while len(self.scenes) <= instance:
             self.scenes.append(None)
-        cached = self.scenes[lane]
+        cached = self.scenes[instance]
         if cached is None or cached[0] != key:
             discrete, resolution, marker, target = row["recipe/config"]
             scene = (PushTDiscrete if discrete else PushT)(
@@ -65,14 +65,14 @@ class PushTProjection:
                 cached[1].close()
             leaves = [("owned/variation" + path + "/current", node) for path, node in nodes(scene.variation_space)]
             leaves = [(field, node) for field, node in leaves if not hasattr(node, "spaces")]
-            self.scenes[lane] = [key, scene, leaves, [None] * len(leaves)]
-        return self.scenes[lane]
+            self.scenes[instance] = [key, scene, leaves, [None] * len(leaves)]
+        return self.scenes[instance]
 
     def render(self, rows, size, out=None):
         """Return ``[len(rows), size, size, 3]`` frames, or write them into ``out``."""
         frames = []
-        for lane, row in enumerate(rows):
-            cached = self._scene(lane, row)
+        for instance, row in enumerate(rows):
+            cached = self._scene(instance, row)
             scene, leaves, installed = cached[1], cached[2], cached[3]
             for i, (field, node) in enumerate(leaves):
                 current = (row[field + "/value"].tobytes(), row[field + "/type"].tobytes())
@@ -114,7 +114,7 @@ class PushTProjection:
             if out is None:
                 frames.append(frame)
             else:
-                out[lane] = frame
+                out[instance] = frame
         return out if out is not None else np.stack(frames)
 
     def close(self):

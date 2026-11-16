@@ -90,7 +90,7 @@ def test_reset_retains_action_marker_and_owned_rng(discrete):
 
 
 @pytest.mark.parametrize("discrete", [False, True])
-def test_batch_padding_active_lanes_ownership_and_restore(discrete):
+def test_batch_padding_active_environments_ownership_and_restore(discrete):
     env = PushTReplayAdapter(16, discrete=discrete, config={"resolution": 32})
     try:
         action = np.ones((16, 2), np.int64 if discrete else np.float32)
@@ -112,7 +112,7 @@ def test_batch_padding_active_lanes_ownership_and_restore(discrete):
 
 
 @pytest.mark.parametrize("damage", ["late_diagnostic", "dtype", "padding", "mask", "rng", "version", "variation"])
-def test_invalid_state_never_partially_installs_lanes(damage):
+def test_invalid_state_never_partially_installs_environments(damage):
     env = PushTReplayAdapter(2, config={"resolution": 32})
     try:
         env.step(np.ones((2, 2), np.float64), active=np.array([True, False]))

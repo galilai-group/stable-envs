@@ -1,4 +1,4 @@
-"""Per-lane physics parameters and the reset rule: unnamed Variation leaves return to their defaults."""
+"""Per-environment physics parameters and the reset rule: unnamed Variation leaves return to their defaults."""
 
 import copy
 import importlib
@@ -226,7 +226,7 @@ def test_dmc_batch_rejects_a_state_without_its_physics():
 
 def _gravity(env):
     state = env.get_state()
-    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.lanes.envs])
+    sim = np.stack([e.physics.model.opt.gravity for e in env._simulator.instances.envs])
     style = np.concatenate([env._style[f"gravity.{axis}"].reshape(-1, 1).cpu().numpy() for axis in "xyz"], axis=1)
     rows = torch.cat([se.get_field(state, f"physics/gravity/{axis}") for axis in "xyz"], dim=1).numpy()
     np.testing.assert_array_equal(rows, sim)

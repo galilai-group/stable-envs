@@ -6,7 +6,7 @@ import numpy as np
 
 from . import physics as _physics
 from .batch import XX, XZ, ZZ, scalar_tolerance, tolerance
-from .lanes import DMCLanes
+from .instances import DMCInstances
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
@@ -70,8 +70,8 @@ def _make_env(domain, seed):
     return normalized(control.Environment(physics, task, **kwargs))
 
 
-class DMCContinuationAdapter(DMCLanes):
-    """Cheetah, Hopper and Walker lanes."""
+class DMCContinuationAdapter(DMCInstances):
+    """Cheetah, Hopper and Walker environments."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in CONFIG:
@@ -82,7 +82,7 @@ class DMCContinuationAdapter(DMCLanes):
             domain, num_envs, device, seed, lambda s: _make_env(domain, s), core_fields(cfg["nq"], cfg["nv"])
         )
 
-    def _info(self, env, lane):
+    def _info(self, env, instance):
         physics, domain = env.physics, self.domain
         if domain == "cheetah":
             extra = {
@@ -113,7 +113,7 @@ class DMCContinuationAdapter(DMCLanes):
 
 
 class HopperBatch:
-    """Hopper Hop batch lanes."""
+    """Hopper Hop batch environments."""
 
     def __init__(self, b, models):
         m = models[0]
@@ -146,7 +146,7 @@ class HopperBatch:
 
 
 class CheetahBatch:
-    """Cheetah Run batch lanes."""
+    """Cheetah Run batch environments."""
 
     #: Settling steps of dm_control's reset that the batch runs between ``begin_reset`` and ``end_reset``.
     RESET_STEPS = 199
@@ -174,7 +174,7 @@ class CheetahBatch:
         limited = m.jnt_limited == 1
         return m, limited, *m.jnt_range[limited].T.copy()
 
-    def begin_reset(self, env, lane):
+    def begin_reset(self, env, instance):
         """dm_control's Cheetah reset up to its 200 settling steps, and ``mj_step2`` of the first one.
 
         dm_control's legacy step ends the first settling step with ``mj_step2`` on the stages of the state before the
@@ -187,7 +187,7 @@ class CheetahBatch:
         physics = env.physics
         assert physics.legacy_step
         m, d = physics.model.ptr, physics.data.ptr
-        limits = self._limits[lane]
+        limits = self._limits[instance]
         _, limited, lower, upper = limits if limits[0] is m else self._joint_limits(m)
         mujoco.mj_resetData(m, d)
         flags = m.opt.disableflags
@@ -197,28 +197,28 @@ class CheetahBatch:
         warnings = physics._warnings.copy()
         d.qpos[limited] = env.task.random.uniform(lower, upper)
         mujoco.mj_step2(m, d)
-        mujoco.mj_getState(m, d, self.b.state[lane], self._spec)
+        mujoco.mj_getState(m, d, self.b.state[instance], self._spec)
         return warnings
 
     def batch_reset(self, ids, begun):
-        """The settling steps of lanes ``ids`` on the batch threads."""
+        """The settling steps of environments ``ids`` on the batch threads."""
         import mujoco
         from dm_control.rl.control import PhysicsError
 
         warnings = self.b.warning[ids, :, 1].copy()
         self.b.step(ids, self.RESET_STEPS, stage=mujoco.mjtStage.mjSTAGE_VEL)
         if (bad := ids[(self.b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
-            raise PhysicsError(f"Physics state is invalid in lanes {bad.tolist()}")
+            raise PhysicsError(f"Physics state is invalid in environments {bad.tolist()}")
         return begun
 
-    def end_reset(self, env, lane, value):
+    def end_reset(self, env, instance, value):
         """The rest of dm_control's Cheetah reset after the settling steps: time 0 and a forward pass."""
         import mujoco
         from dm_control.rl.control import PhysicsError
 
         physics, task = env.physics, env.task
         m, d = physics.model.ptr, physics.data.ptr
-        mujoco.mj_setState(m, d, self.b.state[lane], self._spec)
+        mujoco.mj_setState(m, d, self.b.state[instance], self._spec)
         d.time = 0
         task._timeout_progress = 0
         if task.visualize_reward:
@@ -228,7 +228,7 @@ class CheetahBatch:
         mujoco.mj_forward(m, d)
         m.opt.disableflags = flags
         if (physics._warnings > value).any():
-            raise PhysicsError(f"Physics state is invalid in lane {lane}")
+            raise PhysicsError(f"Physics state is invalid in environment {instance}")
 
     def reward(self):
         speed = self.sensordata[:, self.speed_adr]
@@ -250,7 +250,7 @@ class CheetahBatch:
 
 
 class WalkerBatch:
-    """Walker Walk batch lanes."""
+    """Walker Walk batch environments."""
 
     def __init__(self, b, models):
         m = models[0]

@@ -80,7 +80,7 @@ def test_invalid_switch_point(threshold):
 
 
 @pytest.mark.parametrize("backend", ["torch", "jax", "numba"])
-def test_collisions_with_fractional_per_lane_geometry(backend):
+def test_collisions_with_fractional_per_environment_geometry(backend):
     positions = [[95, 100], [130, 100], [100, 49], [50, 21], [202, 100], [49, 100], [100, 130]]
     actions = torch.tensor([[1, 0], [-1, 0], [1, 0], [0, -5], [5, 0], [0, 1], [0, -1]], dtype=torch.float64)
     variation = {
@@ -111,7 +111,7 @@ def test_collisions_with_fractional_per_lane_geometry(backend):
             assert_same_state(se.get_field(result["state"], "agent.position"), expected)
 
 
-def test_sequence_masks_freeze_each_lane_after_success():
+def test_sequence_masks_freeze_each_environment_after_success():
     options = {"state": [[60, 112], [60, 112], [60, 112]], "target_state": [[60, 112], [85, 112], [180, 112]]}
     actions = torch.tensor([[[1.0, 0.0]] * 6] * 3)
     with se.TwoRoom(num_envs=3, device="cpu") as env:
@@ -172,7 +172,7 @@ def test_task_snapshots_and_output_leaves_have_independent_storage(name, device)
         assert_same_state(result, modified)
 
 
-def test_noncontiguous_actions_and_one_lane_offset_views():
+def test_noncontiguous_actions_and_one_environment_offset_views():
     with se.TwoRoom(num_envs=1, device="cpu") as env:
         env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
         action = torch.arange(8, dtype=torch.float32).reshape(4, 2)[1:2]

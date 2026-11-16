@@ -205,8 +205,8 @@ def dmc_factory(monkeypatch, tmp_path):
     monkeypatch.delenv("STABLE_ENVS_DMC_THREADS", raising=False)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.setattr(factory, "make_local", lambda *args: None)
-    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda lanes, task, threads: threads)
-    monkeypatch.setattr(factory, "LANES_PER_THREAD", {})
+    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda instances, task, threads: threads)
+    monkeypatch.setattr(factory, "ENVS_PER_THREAD", {})
     tuning.reset()
     tuning._clear_caches()
     yield factory
@@ -225,7 +225,7 @@ def dmc_factory(monkeypatch, tmp_path):
         ({"dmc_threads": 8}, None, 1024, 6),
     ],
 )
-def test_dmc_batch_threads_follow_the_setting_within_cpus_and_lanes(
+def test_dmc_batch_threads_follow_the_setting_within_cpus_and_environments(
     monkeypatch, dmc_factory, settings, cpus, batch, expected
 ):
     monkeypatch.setattr(dmc_factory, "cpu_limit", lambda: 6 if cpus is None else cpus)
@@ -235,10 +235,10 @@ def test_dmc_batch_threads_follow_the_setting_within_cpus_and_lanes(
 
 @pytest.mark.family("dmc")
 def test_dmc_rows_per_thread_cover_every_batch_domain():
-    from stable_envs.envs.dmcontrol.simulation.factory import BATCH_TASKS, LANES_PER_THREAD, step_threads
+    from stable_envs.envs.dmcontrol.simulation.factory import BATCH_TASKS, ENVS_PER_THREAD, step_threads
 
-    assert LANES_PER_THREAD.keys() == BATCH_TASKS.keys()
-    assert min(LANES_PER_THREAD.values()) >= 2
+    assert ENVS_PER_THREAD.keys() == BATCH_TASKS.keys()
+    assert min(ENVS_PER_THREAD.values()) >= 2
     assert step_threads("reacher", 8, 8) == 1
     assert step_threads("walker", 8, 8) == 4
     assert step_threads("walker", 64, 8) == 8

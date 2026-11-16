@@ -178,7 +178,7 @@ def _variation(env) -> list[dict]:
 
 
 def metadata(name: str, device: str = "cpu") -> dict:
-    """Snapshot of ``name`` built from its registry entry and a one-lane env on ``device``."""
+    """Snapshot of ``name`` built from its registry entry and a one-environment env on ``device``."""
     import stable_envs as snv
 
     info = snv.info(name)
@@ -269,7 +269,7 @@ class _Policy:
 
 
 def _frames(env, steps: int, seed: int) -> np.ndarray:
-    """``(steps + 1, B, H, W, 3)`` frames of a random rollout; finished lanes hold until all finish."""
+    """``(steps + 1, B, H, W, 3)`` frames of a random rollout; finished environments hold until all finish."""
     env.reset(seed=seed)
     frames = [env.render().cpu().numpy()]
     if not env.has_dynamics:
@@ -300,7 +300,7 @@ def _filter(h: int, w: int, oh: int, ow: int) -> str:
 
 
 def _tile(frames: np.ndarray, side: int) -> np.ndarray:
-    """Lay out ``(T, 4, H, W, 3)`` lanes in a 2x2 grid, each resized to fit ``side``."""
+    """Lay out ``(T, 4, H, W, 3)`` environments in a 2x2 grid, each resized to fit ``side``."""
     t, b, h, w, _ = frames.shape
     th, tw = _fit(h, w, side)
     x = torch.as_tensor(frames).reshape(t * b, h, w, 3).permute(0, 3, 1, 2).float()

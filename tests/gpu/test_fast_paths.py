@@ -217,7 +217,7 @@ def _bounds_frames(env, states, fast: bool):
 
 
 def _trackcom_prepare(seed: int):
-    """The env's states and a per-lane variation that recolors the floor, from one generator."""
+    """The env's states and a per-environment variation that recolors the floor, from one generator."""
 
     def prepare(env):
         import numpy as np

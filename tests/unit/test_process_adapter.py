@@ -5,16 +5,16 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from stable_envs._execution.process import BROADCAST, PER_LANE, ProcessAdapter
+from stable_envs._execution.process import BROADCAST, PER_INSTANCE, ProcessAdapter
 from stable_envs._execution.protocol import SimulatorAdapter
 from tests.helpers.process_equivalence import assert_atomic_restore, assert_process_matches_local
 from tests.helpers.reference.semantics import assert_same_state
 
 
-class Lanes(SimulatorAdapter):
-    """Lanes that add a scaled action to a position and count their own steps."""
+class Instances(SimulatorAdapter):
+    """Environments that add a scaled action to a position and count their own steps."""
 
-    process_methods = {"scale": PER_LANE, "total": BROADCAST, "offset": BROADCAST}
+    process_methods = {"scale": PER_INSTANCE, "total": BROADCAST, "offset": BROADCAST}
     process_attributes = ("action_dim",)
     action_dim = 1
 
@@ -48,13 +48,13 @@ class Lanes(SimulatorAdapter):
     def check_step(self, actions, active):
         actions = np.asarray(actions)
         if actions.shape != (self.num_envs, 1) or not np.isfinite(actions).all():
-            raise ValueError("Lanes action must have finite shape (num_envs, 1)")
+            raise ValueError("Environments action must have finite shape (num_envs, 1)")
         return actions, None if active is None else np.asarray(active, bool)
 
     def step(self, actions, *, active=None, capture_state=True):
-        lanes = np.ones(self.num_envs, bool) if active is None else np.asarray(active, bool)
-        self.position[lanes] += self.gain[lanes] * np.asarray(actions)[lanes, 0]
-        self.steps[lanes] += 1
+        instances = np.ones(self.num_envs, bool) if active is None else np.asarray(active, bool)
+        self.position[instances] += self.gain[instances] * np.asarray(actions)[instances, 0]
+        self.steps[instances] += 1
         out = {"reward": torch.tensor(self.position.copy()), "terminated": torch.tensor(self.position > 4)}
         if capture_state:
             out["state"] = self.get_state()
@@ -73,8 +73,8 @@ class Lanes(SimulatorAdapter):
         pass
 
 
-class LanesProcess(ProcessAdapter):
-    name = "Lanes"
+class InstancesProcess(ProcessAdapter):
+    name = "Instances"
 
 
 def _actions(count=8, batch=5):
@@ -87,17 +87,17 @@ def _actions(count=8, batch=5):
 def test_outputs_match_local_for_every_worker_count():
     actions, masks = _actions()
     assert_process_matches_local(
-        lambda: Lanes(5, 3),
-        lambda count: LanesProcess(Lanes, 5, seed=3, processes=count),
+        lambda: Instances(5, 3),
+        lambda count: InstancesProcess(Instances, 5, seed=3, processes=count),
         actions,
         masks=masks,
         counts=(1, 2, 5),
-        foreign=Lanes(5, 11).get_state(),
+        foreign=Instances(5, 11).get_state(),
     )
 
 
-def test_rejected_lane_restores_no_lane():
-    adapter = LanesProcess(Lanes, 5, seed=3, processes=2)
+def test_rejected_environment_restores_no_environment():
+    adapter = InstancesProcess(Instances, 5, seed=3, processes=2)
     try:
 
         def corrupt(state):
@@ -112,16 +112,16 @@ def test_rejected_lane_restores_no_lane():
         bad["position"][2] = float("nan")
         with pytest.raises(ValueError, match="Invalid State field"):
             adapter.set_state(bad)
-        with pytest.raises(TypeError, match="Lanes requires full TensorDict State"):
+        with pytest.raises(TypeError, match="Environments requires full TensorDict State"):
             adapter.set_state(adapter.get_state()[:2])
         assert not adapter._closed and adapter._pending is None
     finally:
         adapter.close()
 
 
-def test_declared_methods_split_lanes_and_join_results():
-    adapter = LanesProcess(Lanes, 5, seed=0, processes=2)
-    local = Lanes(5)
+def test_declared_methods_split_environments_and_join_results():
+    adapter = InstancesProcess(Instances, 5, seed=0, processes=2)
+    local = Instances(5)
     try:
         for owner in (local, adapter):
             owner.scale(np.arange(5.0), 0.5)
@@ -139,7 +139,7 @@ def test_declared_methods_split_lanes_and_join_results():
 
 
 def test_capture_state_skips_the_snapshot_and_requests_are_exclusive():
-    adapter = LanesProcess(Lanes, 4, processes=2)
+    adapter = InstancesProcess(Instances, 4, processes=2)
     try:
         adapter.submit_step(np.ones((4, 1)), capture_state=False)
         with pytest.raises(RuntimeError, match="in flight"):
@@ -149,11 +149,11 @@ def test_capture_state_skips_the_snapshot_and_requests_are_exclusive():
         held = result.clone()
         adapter.step(np.ones((4, 1)))
         assert_same_state(result, held)
-        with pytest.raises(RuntimeError, match="No Lanes step in flight"):
+        with pytest.raises(RuntimeError, match="No Environments step in flight"):
             adapter.receive_step()
         with pytest.raises(ValueError, match="action must have finite shape"):
             adapter.step(np.ones((3, 1)))
-        assert_same_state(adapter.reset(10), Lanes(4, 10).get_state())
+        assert_same_state(adapter.reset(10), Instances(4, 10).get_state())
     finally:
         adapter.close()
     assert all(not process.is_alive() for process in adapter._processes)
@@ -162,7 +162,7 @@ def test_capture_state_skips_the_snapshot_and_requests_are_exclusive():
 
 
 def test_worker_death_closes_every_worker():
-    adapter = LanesProcess(Lanes, 4, processes=2)
+    adapter = InstancesProcess(Instances, 4, processes=2)
     adapter._processes[0].terminate()
     adapter._processes[0].join()
     with pytest.raises((RuntimeError, EOFError, BrokenPipeError, ConnectionError)):

@@ -64,7 +64,7 @@ def test_classic_export_continuation_and_ownership(domain, device):
 
 
 @pytest.mark.parametrize("domain", CLASSIC_FIELDS)
-def test_an_inactive_lane_on_the_first_step_holds_its_state_and_reports_zeros(domain):
+def test_an_inactive_environment_on_the_first_step_holds_its_state_and_reports_zeros(domain):
     adapter = ClassicControlAdapter(domain, 2, "cpu", 17)
     try:
         initial = adapter.reset(17)

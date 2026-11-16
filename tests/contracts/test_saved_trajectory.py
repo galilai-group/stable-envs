@@ -84,7 +84,7 @@ def test_disk_restore_continuation_and_capture(case, device):
             for t in range(horizon):
                 index = 7 + t
                 endpoint[active] = index + 1
-                expected_state = torch.stack([saved.state(int(k))[lane] for lane, k in enumerate(endpoint)])
+                expected_state = torch.stack([saved.state(int(k))[instance] for instance, k in enumerate(endpoint)])
                 assert_frozen_state(chunk["states"][:, t], expected_state)
                 torch.testing.assert_close(chunk["valid"][:, t].cpu(), torch.tensor(active))
                 for key in ("reward", "terminated", "truncated", "observation", "info_state"):

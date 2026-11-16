@@ -633,16 +633,16 @@ _CULL_MIN_PRIMS = 24
 #: Wide tiles balance local culling with contiguous RGB writes; values are (height, width).
 _CULL_TILE = (8, 128)
 
-#: Maximum masked-lane fraction before selecting a narrower tile.
+#: Maximum masked-environment fraction before selecting a narrower tile.
 TILE_WASTE_MAX = 0.125
 
 
-def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
-    """Choose a ``(height, width)`` tile within the ``lanes`` and ``max_width`` budgets."""
+def tile_shape(H: int, W: int, instances: int, max_width: int) -> tuple[int, int]:
+    """Choose a ``(height, width)`` tile within the ``instances`` and ``max_width`` budgets."""
     bw = min(max_width, 1 << max(0, (W - 1).bit_length()))
     while bw > 1 and (bw * -(-W // bw) - W) > TILE_WASTE_MAX * W:
         bw //= 2
-    bh = max(1, min(lanes // bw, 1 << max(0, (H - 1).bit_length())))
+    bh = max(1, min(instances // bw, 1 << max(0, (H - 1).bit_length())))
     return bh, bw
 
 
@@ -651,7 +651,7 @@ def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, 
     if not cull:
         return 1, block, triton.cdiv(H * W, block), 1, 4
     warps = tuning.get("raster2d_cull_warps")
-    bh, bw = tile_shape(H, W, lanes=_CULL_TILE[0] * _CULL_TILE[1], max_width=_CULL_TILE[1])
+    bh, bw = tile_shape(H, W, instances=_CULL_TILE[0] * _CULL_TILE[1], max_width=_CULL_TILE[1])
     ntx = triton.cdiv(W, bw)
     return bh, bw, ntx * triton.cdiv(H, bh), ntx, warps
 

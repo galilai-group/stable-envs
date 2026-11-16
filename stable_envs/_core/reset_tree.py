@@ -1,7 +1,7 @@
 """Seed and sample a Gymnasium reset tree only along the paths that a reset reads.
 
 ``Dict.seed(seed)`` seeds the Dict, draws one sub-seed for each child in key order and seeds each
-child with its sub-seed. A lane of a reset reads a few leaves, so seeding the nodes on their paths
+child with its sub-seed. An environment of a reset reads a few leaves, so seeding the nodes on their paths
 gives the same generators as seeding the whole tree, with fewer generators to construct.
 """
 

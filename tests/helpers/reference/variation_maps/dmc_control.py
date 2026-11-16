@@ -57,16 +57,17 @@ _RECOLOR_NOTE = (
 
 
 _DYNAMICS_MAPPED = (
-    "MAPPED, identical path and units: the value is written onto each lane's Gymnasium env exactly as "
-    "swm writes it (a float32 Box value widened to float64), sampled per lane under `variation` or set "
+    "MAPPED, identical path and units: the value is written onto each environment's Gymnasium env exactly as "
+    "swm writes it (a float32 Box value widened to float64), sampled per environment under `variation` or set "
     "under `variation_values`, and plain resets restore the default. Gated by "
     "tests/integration/test_classic_variation.py::test_classic_physics_matches_swm: reset State and every "
-    "step output equal swm's exactly over 24 steps, with lanes at 10/50/90 % of the range."
+    "step output equal swm's exactly over 24 steps, with environments at 10/50/90 % of the range."
 )
 
 
 _GEOMETRY_MAPPED = (
-    _DYNAMICS_MAPPED + " The official render also draws this leaf ({what}), and so does ours, per lane; the same gate "
+    _DYNAMICS_MAPPED
+    + " The official render also draws this leaf ({what}), and so does ours, per environment; the same gate "
     "compares every reset and step frame with swm's own, explicit and sampled, at worst-frame "
     "normalized MSE 0."
 )
@@ -276,11 +277,11 @@ _FLOOR_TRACKCOM = (
 
 _PHYSICS_MAPPED = (
     "MAPPED through the physics hook (stable_envs._core.physics): the value is written into each "
-    "lane's compiled model as swm writes it after its recompile (a direct field write, or an analytic "
+    "environment's compiled model as swm writes it after its recompile (a direct field write, or an analytic "
     "mass change that agrees with the recompile to 1e-12), and travels in State under "
     "('physics', *leaf) as float64, so a restored State keeps its physics. The style column is "
     "float32; an explicit float64 value set through reset options or State is kept exactly. Gated by "
-    "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-lane values: "
+    "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-environment values: "
     "direct writes 0 State error, mass leaves at most 3e-7 (relative, humanoid's torso over 40 "
     "contact-rich steps; 1e-12 in the model itself), while the leaf moves swm's own trajectory by 3e-3 "
     "to 2.7"

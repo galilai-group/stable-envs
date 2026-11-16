@@ -1,4 +1,4 @@
-"""Classic-control lanes held and stepped on a CUDA device, with each step replayed as one CUDA graph.
+"""Classic-control environments held and stepped on a CUDA device, with each step replayed as one CUDA graph.
 
 The live State is the group tensors of its schema, one per dtype. A step copies the actions into a fixed buffer
 and replays a graph. The graph runs one Triton kernel for the domain, which also writes the step outputs into a
@@ -6,7 +6,7 @@ packed byte buffer and the environment's render rows, and copies the group tenso
 copy of that buffer gives the State and outputs that the step returns, so they own their memory. The step reads
 nothing back to the host. Without Triton, the graph replays the batched Torch kernel.
 
-A reset draws from each lane's PCG64 stream on the host, with NumPy's seeding and ``uniform`` repeated on arrays
+A reset draws from each environment's PCG64 stream on the host, with NumPy's seeding and ``uniform`` repeated on arrays
 of generators (``pcg``). It gives Gymnasium's initial states and generator states, as the CPU backends do, so a
 seed gives the same initial states on every backend. One copy moves them to the device; a reset reads nothing back.
 """
@@ -106,9 +106,9 @@ def _outputs_of(blocks: dict, width: int) -> dict[str, torch.Tensor]:
 
 
 def _advance(domain, fields, out, a, active, sim, render, sim_names, render_columns):
-    """One step of every lane, written into the live ``fields``, the outputs ``out`` and the render rows.
+    """One step of every environment, written into the live ``fields``, the outputs ``out`` and the render rows.
 
-    ``active=None`` steps all lanes.
+    ``active=None`` steps all environments.
     """
     old = {key: fields[_FIELD.get(key, key)][:, 0] for key in _DYNAMIC[domain]}
     params = {name: fields[physics_field(name)][:, 0] for name in _PHYSICS_SPACES[domain]}
@@ -164,7 +164,7 @@ def _reset_bounds(domain: str, options: dict | None):
 
 
 class DeviceClassicAdapter(SimulatorAdapter):
-    """Batched classic-control lanes whose State and steps stay on one CUDA device; Gymnasium draws the resets.
+    """Batched classic-control environments whose State and steps stay on one CUDA device; Gymnasium draws the resets.
 
     ``sink`` is ``(sim, render_rows, sim_names, render_columns)`` of the environment. Each step also
     writes the new ``sim`` rows and their render rows, so the environment needs no copy of the State.
@@ -219,7 +219,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
             and self._render.is_contiguous()
         )
         self._launch = None
-        # Each lane's PCG64 generator, held on the host for resets: (state, inc, has_uint32, uinteger).
+        # Each environment's PCG64 generator, held on the host for resets: (state, inc, has_uint32, uinteger).
         self._seed = int(seed)
         self._rng: tuple | None = None
         self._active = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
@@ -264,12 +264,12 @@ class DeviceClassicAdapter(SimulatorAdapter):
         return build_tensordict(tree, batch, self.device)
 
     def configure(self, values: Mapping[str, np.ndarray]) -> None:
-        """Set each lane's physical constants; the live lanes keep their state."""
+        """Set each environment's physical constants; the live environments keep their state."""
         self._check_open()
         for name, rows in values.items():
             rows = np.asarray(rows, np.float64)
             if rows.shape != (self.num_envs,):
-                raise ValueError("Physical parameters must have one scalar per lane")
+                raise ValueError("Physical parameters must have one scalar per environment")
             self._fields[physics_field(name)][:, 0].copy_(torch.from_numpy(rows))
 
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
@@ -343,7 +343,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
         self._check_open()
         validate_classic_state(self.domain, state, batch=self.num_envs)
         self._load(state)
-        # The next reset continues each lane's restored PCG64 stream.
+        # The next reset continues each environment's restored PCG64 stream.
         key = f"{self.domain}/int64"
         rng = self._schema.views(
             {key: state.get(self._paths[key]).cpu()},

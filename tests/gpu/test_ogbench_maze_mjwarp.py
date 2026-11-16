@@ -1,4 +1,4 @@
-"""Maze lanes on MuJoCo Warp follow the bit-exact CPU batch to float32 rounding, with the same task bookkeeping."""
+"""Maze environments on MuJoCo Warp follow the bit-exact CPU batch to float32 rounding, with the same task bookkeeping."""
 
 import mujoco
 import numpy as np
@@ -26,10 +26,10 @@ def _cuda():
 
 @pytest.mark.parametrize("loco,maze", [("point", "medium"), ("ant", "medium"), ("humanoid", "medium")])
 def test_reset_step_and_restore_follow_the_cpu_batch(loco, maze):
-    lanes = 8
+    instances = 8
     cpu, gpu = (
-        OGBMazeBatchAdapter(lanes, seed=4, loco=loco, maze=maze),
-        OGBMazeWarpAdapter(lanes, "cuda", seed=4, loco=loco, maze=maze),
+        OGBMazeBatchAdapter(instances, seed=4, loco=loco, maze=maze),
+        OGBMazeWarpAdapter(instances, "cuda", seed=4, loco=loco, maze=maze),
     )
     try:
         a, b = cpu.get_state(), gpu.get_state().cpu()
@@ -38,7 +38,7 @@ def test_reset_step_and_restore_follow_the_cpu_batch(loco, maze):
                 assert torch.equal(a[key], b[key]), key
             else:
                 torch.testing.assert_close(b[key], a[key], rtol=0, atol=1e-5)
-        actions = np.random.default_rng(0).uniform(-1, 1, (lanes, cpu.action_dim)).astype(np.float32)
+        actions = np.random.default_rng(0).uniform(-1, 1, (instances, cpu.action_dim)).astype(np.float32)
         gpu.set_state(cpu.get_state().to("cuda"))
         want, got = cpu.step(actions), gpu.step(torch.as_tensor(actions, device="cuda"))
         assert got.device.type == "cuda"
@@ -56,11 +56,11 @@ def test_reset_step_and_restore_follow_the_cpu_batch(loco, maze):
         gpu.close()
 
 
-def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
-    lanes = 4
+def test_teleports_draw_from_each_environments_rng_as_the_source_does():
+    instances = 4
     cpu, gpu = (
-        OGBMazeBatchAdapter(lanes, seed=3, maze="teleport"),
-        OGBMazeWarpAdapter(lanes, "cuda", seed=3, maze="teleport"),
+        OGBMazeBatchAdapter(instances, seed=3, maze="teleport"),
+        OGBMazeWarpAdapter(instances, "cuda", seed=3, maze="teleport"),
     )
     try:
         state = cpu.get_state()
@@ -70,7 +70,7 @@ def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
             "root/position",
             centre + torch.tensor([[0.0, 0.0], [1.0, 0.0], [1.1, 1.1], [-1.1, -1.1]], dtype=torch.float64),
         )
-        zero = np.zeros((lanes, 2), np.float32)
+        zero = np.zeros((instances, 2), np.float32)
         cpu.set_state(state)
         gpu.set_state(state.to("cuda"))
         for _ in range(3):
@@ -89,18 +89,21 @@ def test_teleports_draw_from_each_lanes_rng_as_the_source_does():
         gpu.close()
 
 
-#: Largest |qpos| difference after 4 steps between a lane and its restored copy (contact order differs by run).
+#: Largest |qpos| difference after 4 steps between an environment and its restored copy (contact order differs by run).
 RESTORE_QPOS = 1e-3
 
 
 @pytest.mark.parametrize("loco", ["point", "ant", "humanoid"])
 def test_a_restored_state_resumes_to_rounding(loco):
-    lanes = 16
-    a, b = OGBMazeWarpAdapter(lanes, "cuda", seed=5, loco=loco), OGBMazeWarpAdapter(lanes, "cuda", seed=11, loco=loco)
+    instances = 16
+    a, b = (
+        OGBMazeWarpAdapter(instances, "cuda", seed=5, loco=loco),
+        OGBMazeWarpAdapter(instances, "cuda", seed=11, loco=loco),
+    )
     try:
         b.set_state(a.get_state())
         actions = torch.as_tensor(
-            np.random.default_rng(6).uniform(-1, 1, (4, lanes, a.action_dim)), dtype=torch.float32, device="cuda"
+            np.random.default_rng(6).uniform(-1, 1, (4, instances, a.action_dim)), dtype=torch.float32, device="cuda"
         )
         for t in range(4):
             sa, sb = a.step(actions[t])["state"], b.step(actions[t])["state"]
@@ -115,12 +118,12 @@ def test_a_restored_state_resumes_to_rounding(loco):
         b.close()
 
 
-def test_inactive_lanes_keep_their_state_and_last_outputs():
-    lanes = 4
-    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=2, loco="ant", maze="medium")
+def test_inactive_environments_keep_their_state_and_last_outputs():
+    instances = 4
+    gpu = OGBMazeWarpAdapter(instances, "cuda", seed=2, loco="ant", maze="medium")
     try:
         actions = torch.as_tensor(
-            np.random.default_rng(1).uniform(-1, 1, (2, lanes, gpu.action_dim)), dtype=torch.float32, device="cuda"
+            np.random.default_rng(1).uniform(-1, 1, (2, instances, gpu.action_dim)), dtype=torch.float32, device="cuda"
         )
         first = gpu.step(actions[0])
         mask = torch.tensor([True, False, True, False], device="cuda")
@@ -137,11 +140,11 @@ def test_inactive_lanes_keep_their_state_and_last_outputs():
 def test_step_states_stack_with_one_copy_as_the_core_does():
     from stable_envs._core.stepping import _stack_states
 
-    lanes = 4
-    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=3, loco="ant", maze="medium")
+    instances = 4
+    gpu = OGBMazeWarpAdapter(instances, "cuda", seed=3, loco="ant", maze="medium")
     try:
         actions = torch.as_tensor(
-            np.random.default_rng(2).uniform(-1, 1, (3, lanes, gpu.action_dim)), dtype=torch.float32, device="cuda"
+            np.random.default_rng(2).uniform(-1, 1, (3, instances, gpu.action_dim)), dtype=torch.float32, device="cuda"
         )
         states = [gpu.step(action)["state"] for action in actions]
         for count in (1, 3):
@@ -159,10 +162,10 @@ def test_step_states_stack_with_one_copy_as_the_core_does():
 
 def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
     """More teleport draws than one draw-ahead table holds, with State reads in between."""
-    lanes = 32
+    instances = 32
     cpu, gpu = (
-        OGBMazeBatchAdapter(lanes, seed=3, maze="teleport"),
-        OGBMazeWarpAdapter(lanes, "cuda", seed=3, maze="teleport"),
+        OGBMazeBatchAdapter(instances, seed=3, maze="teleport"),
+        OGBMazeWarpAdapter(instances, "cuda", seed=3, maze="teleport"),
     )
     try:
         inbound = torch.tensor(cpu.task.teleport["teleport_in_xys"], dtype=torch.float64)
@@ -171,11 +174,11 @@ def test_many_teleports_keep_the_rng_streams_of_the_cpu_batch():
             if t % 5 == 0:
                 state = cpu.get_state()
                 set_field(
-                    state, "root/position", inbound[torch.as_tensor(rng.integers(len(inbound), size=lanes))] + 0.2
+                    state, "root/position", inbound[torch.as_tensor(rng.integers(len(inbound), size=instances))] + 0.2
                 )
                 cpu.set_state(state)
                 gpu.set_state(state.to("cuda"))
-            actions = rng.uniform(-0.1, 0.1, (lanes, 2)).astype(np.float32)
+            actions = rng.uniform(-0.1, 0.1, (instances, 2)).astype(np.float32)
             cpu.step(actions, capture_state=t % 3 == 0)
             gpu.step(torch.as_tensor(actions, device="cuda"), capture_state=t % 3 == 0)
         want, got = cpu.get_state(), gpu.get_state().cpu()
@@ -210,15 +213,15 @@ def test_point_maze_oracle_reaches_the_goal_at_the_source_step():
     """PointMaze steps with Euler on MuJoCo Warp (``WARP_INTEGRATORS``); the oracle's outcomes stay those of RK4."""
     from stable_envs.envs.ogbench.simulation.maze_batch import _make_maze
 
-    lanes, steps = 16, 600
+    instances, steps = 16, 600
     oracle = _make_maze("point", "medium")
-    cpu = OGBMazeBatchAdapter(lanes, seed=7, loco="point", maze="medium")
-    gpu = OGBMazeWarpAdapter(lanes, "cuda", seed=7, loco="point", maze="medium")
+    cpu = OGBMazeBatchAdapter(instances, seed=7, loco="point", maze="medium")
+    gpu = OGBMazeWarpAdapter(instances, "cuda", seed=7, loco="point", maze="medium")
     try:
         assert gpu.sim._m.opt.integrator == mujoco.mjtIntegrator.mjINT_EULER
         want = _oracle_rollout(cpu, oracle, steps, False)
         got = _oracle_rollout(gpu, oracle, steps, True)
-        assert (want >= 0).sum() >= lanes // 2
+        assert (want >= 0).sum() >= instances // 2
         assert got.tolist() == want.tolist()
     finally:
         cpu.close()

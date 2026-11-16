@@ -20,23 +20,23 @@ pytestmark = pytest.mark.unit
 SIZES = [1, 3, 14, 42, 63, 64, 84, 96, 100, 128, 144, 224, 300, 400, 500, 600, 800, 1000]
 
 
-def test_navdot_tile_is_raster2d_tile_shape_at_its_lane_budget():
-    """``navdot._tile`` is ``raster2d.tile_shape`` at navdot's lane budget, plus the tile counts."""
+def test_navdot_tile_is_raster2d_tile_shape_at_its_environment_budget():
+    """``navdot._tile`` is ``raster2d.tile_shape`` at navdot's environment budget, plus the tile counts."""
     for H in SIZES:
         for W in SIZES:
             bh, bw, ntx, nt = NV._tile(H, W)
             block = tuning.get("navdot_block")
-            assert (bh, bw) == R2.tile_shape(H, W, lanes=block, max_width=block), (H, W)
+            assert (bh, bw) == R2.tile_shape(H, W, instances=block, max_width=block), (H, W)
             assert ntx == -(-W // bw) and nt == ntx * (-(-H // bh)), (H, W)
 
 
-def test_a_tile_never_wastes_more_lanes_than_the_bound_allows():
-    """The loop's exit condition, as a property: either the tile is one lane wide, or it is inside
+def test_a_tile_never_wastes_more_environments_than_the_bound_allows():
+    """The loop's exit condition, as a property: either the tile is one environment wide, or it is inside
     the waste bound the constant names. A tile that hangs off the right edge still runs the whole
-    primitive loop for the lanes it masks, which is what the bound is protecting."""
+    primitive loop for the environments it masks, which is what the bound is protecting."""
     for max_width in (128, 1024):
         for W in SIZES:
-            bh, bw = R2.tile_shape(64, W, lanes=1024, max_width=max_width)
+            bh, bw = R2.tile_shape(64, W, instances=1024, max_width=max_width)
             assert bw & (bw - 1) == 0, f"tile width {bw} is not a power of two"
             assert bw <= max_width
             assert bw == 1 or (bw * -(-W // bw) - W) <= R2.TILE_WASTE_MAX * W, (W, bw)

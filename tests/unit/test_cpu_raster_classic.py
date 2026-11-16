@@ -53,7 +53,7 @@ GEOMETRY = {
 
 
 def _variation(env, n, seed):
-    """Per-lane colors from a small palette, random anti-aliasing and varied geometry where the class has any."""
+    """Per-environment colors from a small palette, random anti-aliasing and varied geometry where the class has any."""
     rng = np.random.default_rng(seed)
     palette = rng.integers(0, 256, (12, 3))
     out = {}

@@ -1,7 +1,7 @@
-"""Cube/Scene Variation leaves against pinned stable_worldmodel, per lane.
+"""Cube/Scene Variation leaves against pinned stable_worldmodel, per environment.
 
-Each lane of ours is compared with its own stable-worldmodel env (``OwnedCube``/``OwnedScene``
-owns entropy the way our lane does): MuJoCo integration state, observations,
+Each environment of ours is compared with its own stable-worldmodel env (``OwnedCube``/``OwnedScene``
+owns entropy the way our environment does): MuJoCo integration state, observations,
 infos, model arrays, every RNG stream and every Variation node, at reset and
 along a short rollout.
 """
@@ -27,7 +27,7 @@ from stable_envs.envs.ogbench.simulation.compatibility import (
 from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
 
 CLASSES = {"Cube": OGBCube, "Scene": OGBScene}
-LANES = 3
+NUM_ENVS = 3
 STEPS = 8
 
 
@@ -40,13 +40,13 @@ def _node(env, path):
 
 def _make(family, seed):
     """An env whose OGBench objects stay in this process, where the gate reads them."""
-    with tuning.override(worker_min_lanes=LANES + 1):
-        return CLASSES[family](num_envs=LANES, seed=seed)
+    with tuning.override(worker_min_envs=NUM_ENVS + 1):
+        return CLASSES[family](num_envs=NUM_ENVS, seed=seed)
 
 
-def _lane(value, lane, path, env):
+def _instance(value, instance, path, env):
     value = np.asarray(value, np.float64)
-    return value[lane] if value.ndim > np.ndim(_node(env, path).value) else value
+    return value[instance] if value.ndim > np.ndim(_node(env, path).value) else value
 
 
 #: Variation nodes of ours that swm does not have: agent.opacity and target.opacity.
@@ -72,34 +72,34 @@ def _same_variation(ours, theirs, oracle):
 
 
 def _compare(env, refs, oracle):
-    for lane, ref in enumerate(refs):
-        assert_oracle(env._simulator.envs[lane], ref, oracle)
-        _same_variation(env._simulator.envs[lane], ref, oracle)
+    for instance, ref in enumerate(refs):
+        assert_oracle(env._simulator.envs[instance], ref, oracle)
+        _same_variation(env._simulator.envs[instance], ref, oracle)
 
 
 def _rollout(env, refs, oracle, seed):
     actions = np.random.default_rng(seed).uniform(-1, 1, (STEPS, len(refs), 5))
     for action in actions:
         env.step(action, frames=None)
-        for lane, ref in enumerate(refs):
-            ref.step(action[lane])
+        for instance, ref in enumerate(refs):
+            ref.step(action[instance])
     _compare(env, refs, oracle)
 
 
 def _refs(family, seed, oracle):
     cls = oracle.OwnedCube if family == "Cube" else oracle.OwnedScene
-    return [cls(entropy_seed=seed + lane) for lane in range(LANES)]
+    return [cls(entropy_seed=seed + instance) for instance in range(NUM_ENVS)]
 
 
 def _reset_refs(refs, seed, options):
-    """stable-worldmodel per lane: per-lane ``variation_values`` rows are split, everything else is shared."""
-    for lane, ref in enumerate(refs):
-        lane_options = dict(options)
+    """stable-worldmodel per environment: per-environment ``variation_values`` rows are split, everything else is shared."""
+    for instance, ref in enumerate(refs):
+        instance_options = dict(options)
         if "variation_values" in options:
-            lane_options["variation_values"] = {
-                k: _lane(v, lane, k, ref) for k, v in options["variation_values"].items()
+            instance_options["variation_values"] = {
+                k: _instance(v, instance, k, ref) for k, v in options["variation_values"].items()
             }
-        ref.reset(seed=seed + lane, options=lane_options)
+        ref.reset(seed=seed + instance, options=instance_options)
 
 
 def _case(family, seed, options, oracle):
@@ -117,16 +117,16 @@ def _case(family, seed, options, oracle):
 
 
 def reset_options_gate(family, seed=31) -> dict:
-    """Sampled and explicit per-lane leaves through reset options."""
+    """Sampled and explicit per-environment leaves through reset options."""
     oracle = load_oracle()
-    evidence = {"family": family, "seed": seed, "lanes": LANES, "steps": STEPS}
+    evidence = {"family": family, "seed": seed, "instances": NUM_ENVS, "steps": STEPS}
     sampled = [*CUBE_SAMPLES, "cube.size", "cube.color", "light.intensity", "camera.angle_delta", "floor.color"]
     if family == "Scene":
         sampled.append("lock_color")
     state = _case(family, seed, {"task_id": 2, "variation": sampled}, oracle)
     for path in sampled:
-        drawn = get_field(state, f"variation.current.{path}").reshape(LANES, -1)
-        assert len({tuple(row.tolist()) for row in drawn}) == LANES, path
+        drawn = get_field(state, f"variation.current.{path}").reshape(NUM_ENVS, -1)
+        assert len({tuple(row.tolist()) for row in drawn}) == NUM_ENVS, path
     evidence["sampled"] = sorted(sampled)
 
     explicit = {
@@ -142,7 +142,7 @@ def reset_options_gate(family, seed=31) -> dict:
     if family == "Scene":
         explicit["lock_color"] = np.array([[0.1, 0.2, 0.3], [0.9, 0.8, 0.1]])
     _case(family, seed + 1, {"task_id": 4, "variation": [], "variation_values": explicit}, oracle)
-    evidence["explicit_per_lane"] = sorted(explicit)
+    evidence["explicit_per_instance"] = sorted(explicit)
     evidence["placement_leaves_read_in_task_mode"] = _placement_moves_engine(family, oracle, seed)
     return evidence
 
@@ -202,10 +202,10 @@ def set_variation_gate(family, seed=37) -> dict:
         with _make(family, seed) as env:
             env.reset(seed=seed, options={"task_id": 2})
             _reset_refs(refs, seed, {"task_id": 2})
-            for action in rng.uniform(-1, 1, (3, LANES, 5)):
+            for action in rng.uniform(-1, 1, (3, NUM_ENVS, 5)):
                 env.step(action, frames=None)
-                for lane, ref in enumerate(refs):
-                    ref.step(action[lane])
+                for instance, ref in enumerate(refs):
+                    ref.step(action[instance])
             before = env.get_state()
             env.set_variation(values)
             state = env.get_state()
@@ -213,7 +213,7 @@ def set_variation_gate(family, seed=37) -> dict:
             # Immediate: current values, the compiled record and the live model move now.
             immediate = [k for k in values if k not in ("agent.color", "agent.ee_start_position")]
             for path in immediate:
-                want = torch.as_tensor(np.stack([_lane(values[path], i, path, refs[i]) for i in range(LANES)]))
+                want = torch.as_tensor(np.stack([_instance(values[path], i, path, refs[i]) for i in range(NUM_ENVS)]))
                 assert torch.equal(get_field(state, f"variation.current.{path}").cpu(), want), path
                 if path in COMPILED:
                     assert torch.equal(get_field(state, f"model.compiled.{path}").cpu(), want), path
@@ -233,7 +233,7 @@ def set_variation_gate(family, seed=37) -> dict:
             evidence["model_equals_fresh_compile"] = list(COMPILED_FIELDS)
 
             # The running episode equals one restored from its State, which recompiles from scratch.
-            actions = rng.uniform(-1, 1, (STEPS, LANES, 5))
+            actions = rng.uniform(-1, 1, (STEPS, NUM_ENVS, 5))
             continued = [env.step(action, frames=None)["state"] for action in actions]
             env.set_state(state)
             restored = [env.step(action, frames=None)["state"] for action in actions]
@@ -243,9 +243,9 @@ def set_variation_gate(family, seed=37) -> dict:
             evidence["continuation_equals_restore_steps"] = STEPS
 
             # stable-worldmodel spells set_variation as set_init_value; the next reset must match it exactly.
-            for lane, ref in enumerate(refs):
+            for instance, ref in enumerate(refs):
                 for path, value in values.items():
-                    _node(ref, path).set_init_value(_lane(value, lane, path, ref))
+                    _node(ref, path).set_init_value(_instance(value, instance, path, ref))
             env.reset(seed=seed + 10, options={"task_id": 3})
             _reset_refs(refs, seed + 10, {"task_id": 3})
             _compare(env, refs, oracle)

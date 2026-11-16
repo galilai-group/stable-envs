@@ -7,7 +7,7 @@ import torch
 
 from . import physics as _physics
 from .batch import XZ, ZZ, scalar_tolerance, tolerance
-from .lanes import DMCLanes
+from .instances import DMCInstances
 from .registered import compile_physics, normalized, source_model
 from .state import core_fields
 
@@ -71,8 +71,8 @@ def _make_first_family(domain, seed):
     return normalized(control.Environment(physics, task, time_limit=time_limit))
 
 
-class FirstFamilyAdapter(DMCLanes):
-    """Acrobot, Pendulum and Cartpole lanes."""
+class FirstFamilyAdapter(DMCInstances):
+    """Acrobot, Pendulum and Cartpole environments."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in FIRST_FAMILY_FIELDS:
@@ -82,7 +82,7 @@ class FirstFamilyAdapter(DMCLanes):
 
 
 class CartpoleBatch:
-    """Cartpole swingup-sparse and smooth balance batch lanes."""
+    """Cartpole swingup-sparse and smooth balance batch environments."""
 
     def __init__(self, b, models, sparse):
         self.sparse = sparse
@@ -106,7 +106,7 @@ class CartpoleBatch:
 
 
 class AcrobotBatch:
-    """Acrobot swingup-sparse batch lanes."""
+    """Acrobot swingup-sparse batch environments."""
 
     def __init__(self, b, models):
         m = models[0]
@@ -128,7 +128,7 @@ class AcrobotBatch:
 
 
 class PendulumBatch:
-    """Pendulum swingup batch lanes."""
+    """Pendulum swingup batch environments."""
 
     def __init__(self, b, models):
         self.pole = models[0].body("pole").id
@@ -166,15 +166,15 @@ def _make_reacher(seed):
     return normalized(control.Environment(physics, task, time_limit=20))
 
 
-class ReacherAdapter(DMCLanes):
-    """Reacher lanes; state includes the target, which an implicit reset redraws."""
+class ReacherAdapter(DMCInstances):
+    """Reacher environments; state includes the target, which an implicit reset redraws."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         super().__init__("reacher", num_envs, device, seed, _make_reacher, _REACHER_CORE)
 
 
 class ReacherBatch:
-    """Reacher batch lanes."""
+    """Reacher batch environments."""
 
     def __init__(self, b, models):
         m = models[0]

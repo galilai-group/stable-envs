@@ -42,17 +42,17 @@ def _source_episodes():
     actions = np.zeros((EPISODES, STEPS, 2), np.float32)
     poses = np.zeros((EPISODES, STEPS + 1, 7))
     success = np.zeros((EPISODES, STEPS), bool)
-    for lane in range(EPISODES):
+    for instance in range(EPISODES):
         env = gym.make("swm/PushT-v1", resolution=64)
-        obs, _ = env.reset(seed=SEED + lane)
+        obs, _ = env.reset(seed=SEED + instance)
         goal = np.asarray(env.unwrapped.goal_state, np.float64)
-        poses[lane, 0] = obs["state"]
+        poses[instance, 0] = obs["state"]
         action = np.zeros(2)
         for t in range(STEPS):
             action = _policy(obs["state"], goal, t, action)
-            actions[lane, t] = action
-            obs, _, success[lane, t], *_ = env.step(actions[lane, t])
-            poses[lane, t + 1] = obs["state"]
+            actions[instance, t] = action
+            obs, _, success[instance, t], *_ = env.step(actions[instance, t])
+            poses[instance, t + 1] = obs["state"]
         env.close()
     return actions, poses, success
 

@@ -30,7 +30,7 @@ def exercise(adapter, actions, masks=None, foreign=None):
     assert_same_state(adapter.get_state(), middle)
     end = outputs[-1]
     again = [step(t) for t in range(half, len(actions))]
-    # Inactive lanes repeat the previous task outputs, which State does not hold; compare State only.
+    # Inactive environments repeat the previous task outputs, which State does not hold; compare State only.
     for expected, actual in zip(first, again, strict=True):
         assert ("state" in expected.keys()) == ("state" in actual.keys())
         if "state" in expected.keys():
@@ -68,7 +68,7 @@ def assert_process_matches_local(make_local, make_process, actions, *, masks=Non
 
 
 def assert_atomic_restore(adapter, corrupt, error, step):
-    """A State that ``corrupt`` makes invalid in its last lane raises ``error`` and changes no lane."""
+    """A State that ``corrupt`` makes invalid in its last environment raises ``error`` and changes no environment."""
     before = adapter.get_state()
     with pytest.raises(error):
         adapter.set_state(corrupt(before.clone()))

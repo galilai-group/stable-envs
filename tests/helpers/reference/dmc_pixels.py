@@ -37,7 +37,7 @@ def _dmc_trace(
             software = any(name in renderer.lower() for name in ("llvmpipe", "softpipe", "swrast"))
             assert software if device == "cpu" else "nvidia" in vendor.lower() and not software, (vendor, renderer)
             identities.append(dict(vendor=vendor, renderer=renderer, software=software))
-        assert identities[0] == identities[1], "Source lanes use different GL backends"
+        assert identities[0] == identities[1], "Source environments use different GL backends"
         compare_state(source.get_state(), initial)
         for wrapper, prefix in zip(source.envs, (0, 7), strict=True):
             for _ in range(prefix):

@@ -10,7 +10,7 @@ pytest.importorskip("ogbench")
 
 import stable_envs as se
 from stable_envs import get_field, set_field
-from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter, _resting_lanes
+from stable_envs.envs.ogbench.simulation.maze import OGBMazeAdapter, _resting_instances
 from stable_envs.envs.ogbench.simulation.maze_process import OGBMazeProcessAdapter
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -18,7 +18,7 @@ from tests.helpers.reference.semantics import assert_same_state
 @pytest.mark.parametrize(
     "dtype,body", [(np.float32, {}), (np.float64, {}), (np.float32, dict(loco="ant", maze="teleport"))]
 )
-def test_complete_state_rng_outputs_and_inactive_lanes(dtype, body):
+def test_complete_state_rng_outputs_and_inactive_environments(dtype, body):
     local, remote = OGBMazeAdapter(5, seed=17, **body), OGBMazeProcessAdapter(5, seed=17, processes=2, **body)
     try:
         assert_same_state(local.get_state(), remote.get_state())
@@ -131,7 +131,7 @@ def test_public_chunks_and_early_stop(monkeypatch):
         remote = se.make("PointMazeLargeNavigate", num_envs=3, device="cpu", seed=17)
     try:
         initial = local.get_state()
-        # An already reached goal produces an early stop on only the first lane.
+        # An already reached goal produces an early stop on only the first environment.
         get_field(initial, "root/position")[0] = get_field(initial, "task/goal_pos")[0, :2]
         get_field(initial, "root/velocity")[0].zero_()
         for horizon in (1, 8):
@@ -152,29 +152,29 @@ def test_public_chunks_and_early_stop(monkeypatch):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("maze", ["large", "medium"])
-def test_point_lanes_step_as_the_source_step_does(dtype, maze):
-    """Point lanes step in one loop and skip MuJoCo for a resting ball; every leaf equals the source step."""
-    lanes, steps = 16, 40
-    batched, source = OGBMazeAdapter(lanes, seed=23, maze=maze), OGBMazeAdapter(lanes, seed=23, maze=maze)
+def test_point_environments_step_as_the_source_step_does(dtype, maze):
+    """Point environments step in one loop and skip MuJoCo for a resting ball; every leaf equals the source step."""
+    instances, steps = 16, 40
+    batched, source = OGBMazeAdapter(instances, seed=23, maze=maze), OGBMazeAdapter(instances, seed=23, maze=maze)
     source._point = False
     try:
         assert batched._point and batched.process_static_leaves and batched._rest is not None
         assert_same_state(batched.get_state(), source.get_state())
         state = batched.get_state()
         # Distances to the goal on both sides of the success tolerance, including exactly on it.
-        offsets = torch.zeros(lanes, 2)
+        offsets = torch.zeros(instances, 2)
         offsets[:6] = torch.tensor([[0.0, 0.0], [0.6, 0.8], [1.0, 0.0], [0.0, -1.0000001], [3.0, 0.0], [0.7, 0.7]])
         set_field(state, "root/position", get_field(state, "task/goal_pos")[:, :2] + offsets.to(torch.float64))
         get_field(state, "root/velocity").zero_()
         for adapter in (batched, source):
             adapter.set_state(state)
-        actions = np.random.default_rng(5).uniform(-1, 1, (lanes, steps, 2)).astype(dtype)
+        actions = np.random.default_rng(5).uniform(-1, 1, (instances, steps, 2)).astype(dtype)
         actions[:, 0] = 0
         resting = []
         for t in range(steps):
-            mask = None if t < 2 else torch.tensor([t % (lane % 4 + 1) == 0 for lane in range(lanes)])
+            mask = None if t < 2 else torch.tensor([t % (instance % 4 + 1) == 0 for instance in range(instances)])
             prev = np.stack([env.data.qpos for env in batched.envs])
-            resting.append(_resting_lanes(batched._rest, batched.envs, prev + 0.2 * actions[:, t]))
+            resting.append(_resting_instances(batched._rest, batched.envs, prev + 0.2 * actions[:, t]))
             assert_same_state(batched.step(actions[:, t], active=mask), source.step(actions[:, t], active=mask))
         resting = np.stack(resting)
         assert resting.any() and not resting.all()

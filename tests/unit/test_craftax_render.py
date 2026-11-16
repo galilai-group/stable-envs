@@ -160,15 +160,15 @@ def test_rollout_frames_equal_upstream(name, device):
     dev = _device(device)
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("torch has no CUDA device")
-    lanes, steps = 8, 64
-    with se.make(name, num_envs=lanes, device=device) as env:
+    instances, steps = 8, 64
+    with se.make(name, num_envs=instances, device=device) as env:
         renderers = _renderers(env.reference_id)
         with jax.default_device(dev):
             for seed in (0, 1):
                 env.reset(seed=seed)
                 rng = np.random.default_rng(seed)
                 for t in range(steps):
-                    action = rng.integers(0, env.action_high + 1, (lanes, 1))
+                    action = rng.integers(0, env.action_high + 1, (instances, 1))
                     if t % 4:
                         env.step(action, frames=None)
                         continue
@@ -191,8 +191,8 @@ def test_varied_states_equal_upstream(game, device):
     params = env.default_params
     vary = _vary_classic if "Classic" in game else _vary_craftax
     varied = jax.jit(jax.vmap(lambda reset_key, key: vary(env.reset(reset_key, params)[1], key)))
-    lanes = 64
+    instances = 64
     with jax.default_device(dev):
         for batch in range(3):
-            keys = jax.random.split(jax.random.PRNGKey(100 + batch), 2 * lanes)
-            _assert_same(renderers, varied(keys[:lanes], keys[lanes:]), f"batch {batch}")
+            keys = jax.random.split(jax.random.PRNGKey(100 + batch), 2 * instances)
+            _assert_same(renderers, varied(keys[:instances], keys[instances:]), f"batch {batch}")

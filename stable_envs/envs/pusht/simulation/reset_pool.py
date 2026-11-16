@@ -1,4 +1,4 @@
-"""Reset the PushT lanes of the CUDA physics in worker processes."""
+"""Reset the PushT environments of the CUDA physics in worker processes."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ import multiprocessing as mp
 
 import numpy as np
 
-from ...._execution.requests import ProcessRequests, lane_slices
+from ...._execution.requests import ProcessRequests, instance_slices
 from ...._execution.shared_memory import allocate_buffers, buffer_views
 from ...._execution.workers import pin_worker, send_failure, send_ready
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
 from .replay_batch import PushTReplayAdapter
 
 
-class _Lanes(PushTReplayAdapter):
+class _Instances(PushTReplayAdapter):
     """Worker owners whose reset keeps the previous owners until ``settle``."""
 
     _previous = None
@@ -38,11 +38,11 @@ class _Lanes(PushTReplayAdapter):
 
 
 def reset_worker(conn, discrete, config, start, count, batch, seed, cpus, buffers, specs):
-    """Own lanes ``start:start + count`` and write the columns of each reset into the shared buffers."""
-    lanes = None
+    """Own environments ``start:start + count`` and write the columns of each reset into the shared buffers."""
+    instances = None
     try:
         pin_worker(cpus)
-        lanes = _Lanes(count, "cpu", None if seed is None else seed + start, discrete=discrete, config=config)
+        instances = _Instances(count, "cpu", None if seed is None else seed + start, discrete=discrete, config=config)
         views = buffer_views(buffers, specs, batch)
         rows = slice(start, start + count)
         owned = [key for group, key in specs if group == "static" and key.startswith("owned/")]
@@ -59,28 +59,31 @@ def reset_worker(conn, discrete, config, start, count, batch, seed, cpus, buffer
                 conn.send((True, None))
                 break
             if command == "reset":
-                sync, lane_seed, options, latest = payload
+                sync, instance_seed, options, latest = payload
                 if sync:
-                    for lane, env in enumerate(lanes.envs):
+                    for instance, env in enumerate(instances.envs):
                         env._install_metadata(
-                            {key.removeprefix("owned/"): views[("static", key)][start + lane].copy() for key in owned}
+                            {
+                                key.removeprefix("owned/"): views[("static", key)][start + instance].copy()
+                                for key in owned
+                            }
                         )
-                install_latest(lanes.envs, *latest)
+                install_latest(instances.envs, *latest)
                 try:
-                    lanes.reset(lane_seed, options)
+                    instances.reset(instance_seed, options)
                 except Exception as exc:  # noqa: BLE001 - the parent discards the reset and raises it
                     reply = (type(exc).__name__, str(exc))
                 else:
-                    write("static", lanes._static_columns())
-                    write("current", lanes._current_columns())
-                    write("geometry", geometry_columns(lanes.envs, MAX_SHAPES))
+                    write("static", instances._static_columns())
+                    write("current", instances._current_columns())
+                    write("geometry", geometry_columns(instances.envs, MAX_SHAPES))
             elif command == "settle":
-                lanes.settle(payload)
+                instances.settle(payload)
             elif command == "install_variation":
-                lanes.install_variation(*payload)
-                write("static", lanes._static_columns())
+                instances.install_variation(*payload)
+                write("static", instances._static_columns())
             elif command == "variation_rows":
-                reply = lanes.variation_rows(*payload)
+                reply = instances.variation_rows(*payload)
             else:
                 raise ValueError(f"Unknown worker command {command!r}")
             conn.send((True, reply))
@@ -88,17 +91,17 @@ def reset_worker(conn, discrete, config, start, count, batch, seed, cpus, buffer
         send_failure(conn)
     finally:
         try:
-            if lanes is not None:
-                lanes.close()
+            if instances is not None:
+                instances.close()
         finally:
             conn.close()
 
 
 class PushTResetPool(ProcessRequests):
-    """Reset contiguous lane slices in spawned workers that own the lanes' CPU engines.
+    """Reset contiguous environment slices in spawned workers that own the environments' CPU engines.
 
-    ``groups`` maps ``static``, ``current`` and ``geometry`` to one-lane-per-row sample columns,
-    which fix the shared buffers. Lane ``i`` gets ``seed + i``, as in one local batch. A reset that
+    ``groups`` maps ``static``, ``current`` and ``geometry`` to one-environment-per-row sample columns,
+    which fix the shared buffers. Environment ``i`` gets ``seed + i``, as in one local batch. A reset that
     fails in any worker changes no worker.
     """
 
@@ -107,7 +110,7 @@ class PushTResetPool(ProcessRequests):
     def __init__(self, discrete, config, num_envs, seed, groups, *, processes, cpus=None):
         self._closed, self._pending = False, None
         self._connections, self._processes = [], []
-        self._slices = lane_slices(num_envs, processes)
+        self._slices = instance_slices(num_envs, processes)
         specs = {
             (group, key): (value.shape[1:], value.dtype)
             for group, columns in groups.items()
@@ -146,7 +149,7 @@ class PushTResetPool(ProcessRequests):
         return {key: view.copy() for (name, key), view in self._views.items() if name == group}
 
     def reset(self, seed, options, latest, sync=None):
-        """Reset every lane with ``options[i]`` and the ``latest`` action columns; return owned columns.
+        """Reset every environment with ``options[i]`` and the ``latest`` action columns; return owned columns.
 
         ``sync`` holds static columns whose ``owned`` fields the workers install before the reset.
         Returns the ``static``, ``current`` and ``geometry`` columns.
@@ -174,9 +177,9 @@ class PushTResetPool(ProcessRequests):
         self._request("settle", [True] * len(self._slices))
         return columns
 
-    def install_variation(self, lanes, immediate):
+    def install_variation(self, instances, immediate):
         """Apply ``PushTReplayAdapter.install_variation`` in the workers; return the static columns."""
-        self._request("install_variation", [(lanes[rows], immediate) for rows in self._slices])
+        self._request("install_variation", [(instances[rows], immediate) for rows in self._slices])
         return self._columns("static")
 
     def variation_rows(self, attribute, keys):

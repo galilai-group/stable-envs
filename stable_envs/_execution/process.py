@@ -1,4 +1,4 @@
-"""Run the lanes of a local simulator adapter in persistent spawned worker processes."""
+"""Run the environments of a local simulator adapter in persistent spawned worker processes."""
 
 from __future__ import annotations
 
@@ -14,26 +14,26 @@ from tensordict import TensorDict
 
 from .._core.tensordicts import build_tensordict
 from .protocol import SimulatorAdapter
-from .requests import ProcessRequests, lane_slices
+from .requests import ProcessRequests, instance_slices
 from .shared_memory import allocate_buffers, buffer_views, key_path, owned_group
 from .state_columns import require_columns
 from .workers import pin_worker, send_failure, send_ready
 
 #: Step frame requests: workers draw the frame, or write the state leaves a step changes for the parent to draw.
 FRAME_DRAW, FRAME_FIELDS = 1, 2
-#: ``process_methods`` kinds: split the first argument by lane, or send every worker the same arguments.
-PER_LANE, BROADCAST = "per_lane", "broadcast"
+#: ``process_methods`` kinds: split the first argument by environment, or send every worker the same arguments.
+PER_INSTANCE, BROADCAST = "per_instance", "broadcast"
 
 
-def lane_rows(value, rows):
-    """Return the ``rows`` lanes of a per-lane argument; mappings split each value."""
+def instance_rows(value, rows):
+    """Return the ``rows`` environments of a per-environment argument; mappings split each value."""
     if isinstance(value, dict):
-        return {key: lane_rows(item, rows) for key, item in value.items()}
+        return {key: instance_rows(item, rows) for key, item in value.items()}
     return value[rows]
 
 
 def gather(replies):
-    """Join the per-worker return values of one request in lane order."""
+    """Join the per-worker return values of one request in environment order."""
     first = replies[0]
     if first is None:
         return None
@@ -90,7 +90,7 @@ def _shared_state(views, rows, count, leaves):
 
 
 def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, specs):
-    """Own lanes ``start:start + count`` of ``factory(count, seed + start)`` and serve parent requests."""
+    """Own environments ``start:start + count`` of ``factory(count, seed + start)`` and serve parent requests."""
     adapter = None
     try:
         pin_worker(cpus)
@@ -138,8 +138,8 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
             elif command == "get_state":
                 write("state", adapter.get_state())
             elif command == "reset":
-                lane_seed, args = payload
-                write("state", adapter.reset(lane_seed, *args))
+                instance_seed, args = payload
+                write("state", adapter.reset(instance_seed, *args))
             elif command == "prepare_restore":
                 try:
                     adapter.prepare_restore(_shared_state(views, rows, count, payload))
@@ -170,13 +170,13 @@ def process_worker(conn, factory, start, count, batch, seed, cpus, buffers, spec
 
 
 class ProcessAdapter(ProcessRequests, SimulatorAdapter):
-    """Split a local adapter's lanes across spawned workers with shared state and task buffers.
+    """Split a local adapter's environments across spawned workers with shared state and task buffers.
 
     ``factory(count, seed)`` builds the local adapter that one worker owns; it
-    must be picklable. Lane ``i`` gets ``seed + i``, as in one local batch.
+    must be picklable. Environment ``i`` gets ``seed + i``, as in one local batch.
     The local adapter declares ``process_methods``, which run on every worker
     through ``call``, and ``process_attributes``, which the parent copies from
-    a one-lane prototype. The parent runs the local ``check_step`` before a
+    a one-environment prototype. The parent runs the local ``check_step`` before a
     step reaches any worker. Restore prepares every worker before any worker
     commits. Received outputs are copies that the next request cannot change.
     """
@@ -212,7 +212,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         self._static_device, self._static_zero = None, frozenset()
         self.process_methods: dict[str, str] = {}
         try:
-            # The one-lane prototype stays open for parent-side queries and checks.
+            # The one-environment prototype stays open for parent-side queries and checks.
             self._metadata = prototype = factory(1, seed)
             self._local = type(prototype)
             self.process_methods = dict(prototype.process_methods)
@@ -232,7 +232,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
                     if key_path(key) not in self._pipe_leaves
                 }
             )
-            # Local adapters that draw their running lanes draw step frames in the workers.
+            # Local adapters that draw their running environments draw step frames in the workers.
             frame_shape = getattr(prototype, "frame_shape", None) if hasattr(prototype, "render_live") else None
             if frame_shape is not None:
                 self._specs[("frame",)] = (tuple(frame_shape), np.dtype(np.uint8))
@@ -248,7 +248,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
                 for key, value in state.items(True, True)
                 if key_path(key) not in self._pipe_leaves
             }
-            self._slices = lane_slices(num_envs, processes)
+            self._slices = instance_slices(num_envs, processes)
             context = mp.get_context("spawn")
             self._buffers = allocate_buffers(context, self._specs, num_envs)
             self._views = _Views(buffer_views(self._buffers, self._specs, num_envs))
@@ -348,17 +348,18 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
 
     def call(self, name: str, *args):
-        """Run the declared local method ``name`` on every worker and join the results in lane order.
+        """Run the declared local method ``name`` on every worker and join the results in environment order.
 
-        A ``per_lane`` method receives the rows of its first argument that its worker owns
+        A ``per_instance`` method receives the rows of its first argument that its worker owns
         and every other argument unchanged.
         """
         kind = self.process_methods.get(name)
-        if kind not in (PER_LANE, BROADCAST):
+        if kind not in (PER_INSTANCE, BROADCAST):
             raise ValueError(f"{name!r} is not a declared process method")
         self._static_cache = None
         payloads = [
-            (name, (lane_rows(args[0], rows), *args[1:]) if kind == PER_LANE else args) for rows in self._slices
+            (name, (instance_rows(args[0], rows), *args[1:]) if kind == PER_INSTANCE else args)
+            for rows in self._slices
         ]
         return gather(self._request("call", payloads))
 
@@ -367,7 +368,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return self._state()
 
     def _reset(self, seed, args=None):
-        """Reset every worker with ``seed + first lane`` and its entry of ``args``."""
+        """Reset every worker with ``seed + first instance`` and its entry of ``args``."""
         payloads = [
             (None if seed is None else int(seed) + rows.start, () if args is None else tuple(args[index]))
             for index, rows in enumerate(self._slices)
@@ -388,7 +389,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         )
 
     def set_state(self, state: TensorDict) -> None:
-        """Restore every lane, or no lane when any worker rejects its rows."""
+        """Restore every environment, or no environment when any worker rejects its rows."""
         self._check_idle()
         self.validate(state)
         self._static_cache = None
@@ -420,7 +421,7 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
 
     @property
     def live_frames(self) -> bool:
-        """Whether ``submit_step(capture_frame=True)`` returns the frame of the running lanes."""
+        """Whether ``submit_step(capture_frame=True)`` returns the frame of the running environments."""
         return ("frame",) in self._specs and (self.frame_mode == FRAME_DRAW or bool(self._static))
 
     def _frame_fields(self) -> object:

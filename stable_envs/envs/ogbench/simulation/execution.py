@@ -130,7 +130,7 @@ def make_manipulation_adapter(
     reward_task_id: int | None,
     simulation_backend: str | None = "auto",
 ) -> OGBManipulationBatchAdapter | OGBManipulationWarpAdapter:
-    """Cube/Scene lanes on the backend that ``manipulation_backend`` selects: MuJoCo Warp or ``mujoco.batch``."""
+    """Cube/Scene environments on the backend that ``manipulation_backend`` selects: MuJoCo Warp or ``mujoco.batch``."""
     backend = manipulation_backend(family, num_envs, device, simulation_backend)
     if backend == "mjwarp":
         from .manipulation_warp import OGBManipulationWarpAdapter

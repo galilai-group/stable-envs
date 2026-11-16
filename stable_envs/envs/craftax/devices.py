@@ -54,7 +54,7 @@ def use_host_devices() -> None:
     if reason is not None and count > 1 and len(jax.devices("cpu")) == 1:
         log(
             "WARNING",
-            f"JAX has one CPU device ({reason}), so Craftax steps its CPU lanes on one device instead of {count}. "
+            f"JAX has one CPU device ({reason}), so Craftax steps its CPU environments on one device instead of {count}. "
             "Make the first CPU Craftax env before other JAX work, or set "
             f"XLA_FLAGS=--xla_force_host_platform_device_count={count} before you start Python.",
         )

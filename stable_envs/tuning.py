@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
-HINT_LANES = 256
+HINT_MIN_ENVS = 256
 #: Cache entry of the settings read without a render path (Triton kernel shapes).
 DEVICE_ENTRY = "*"
 
@@ -155,7 +155,7 @@ SETTINGS: dict[str, Setting] = {
         Setting("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
         Setting("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
         Setting("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
-        Setting("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
+        Setting("worker_min_envs", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Setting("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Setting("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
         Setting("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
@@ -574,7 +574,7 @@ def on_render(path: str, size: int, batch: int, env) -> None:
     """
     try:
         key = (path, str(env.device))
-        if batch < HINT_LANES or key in _noticed:
+        if batch < HINT_MIN_ENVS or key in _noticed:
             return
         _noticed[key] = None
         settings = [k for k in SETTINGS.values() if path in k.paths and k.unit is not None]

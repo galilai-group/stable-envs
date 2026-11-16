@@ -17,7 +17,7 @@ measurement:
     off, an appearance that is our State rather than our style).
 
 ``LEAF_CLASSIFICATION`` carries each verdict with its evidence, which a flat ``swm_only`` reason
-string cannot. Cube/Scene reset configuration is part of Variation, one value per lane through
+string cannot. Cube/Scene reset configuration is part of Variation, one value per environment through
 ``variation_values``.
 """
 
@@ -79,16 +79,16 @@ _OGB_PLACEMENT_NOTES = {
 }
 
 
-#: Reset distributions for the drop pose. They are Variation on both sides (per lane, sampled with
-#: ``seed + lane`` or set through ``variation_values``) and reach pixels by moving the rocket.
+#: Reset distributions for the drop pose. They are Variation on both sides (per environment, sampled with
+#: ``seed + instance`` or set through ``variation_values``) and reach pixels by moving the rocket.
 ROCKET_START_LEAVES = (
     "environment.start_height_ratio",
     "environment.start_horizontal_offset",
     "environment.start_tilt",
 )
 ROCKET_GATE = (
-    "tests/helpers/reference/gates/variation_rocket.py::rocket_reset_leaf_gate -- explicit per-lane "
-    "values, seeded per-lane samples and a plain reset back to the defaults give bit-identical "
+    "tests/helpers/reference/gates/variation_rocket.py::rocket_reset_leaf_gate -- explicit per-environment "
+    "values, seeded per-environment samples and a plain reset back to the defaults give bit-identical "
     "observations to swm over a 40-step rollout"
 )
 
@@ -300,13 +300,13 @@ _MAZE_PROBES = {
 }
 
 #: Gate evidence for the appearance leaves, measured on the CPU ray-caster against MuJoCo 3.12.0 /
-#: ogbench 1.2.1 / swm 176d545 at 224x224 (three state-scene lanes, two pixel-scene lanes per case),
-#: each lane a fresh swm env.
+#: ogbench 1.2.1 / swm 176d545 at 224x224 (three state-scene environments, two pixel-scene environments per case),
+#: each environment a fresh swm env.
 _OGBMAZE_GATE = (
     "tests/helpers/reference/gates/ogbench_maze.py: appearance_gate (state scene, PointMazeLargeNavigate: "
-    "same seed and per-lane variation_values give the exact reset State and a 20-step rollout, since the "
+    "same seed and per-environment variation_values give the exact reset State and a 20-step rollout, since the "
     "recompile never reaches physics) and pixel_appearance_gate (pixel scenes, point/ant/humanoid at swm's "
-    "qpos). Worst-frame normalized MSE <= 1e-3 and every varied lane moves swm's frame off our default by more than "
+    "qpos). Worst-frame normalized MSE <= 1e-3 and every varied environment moves swm's frame off our default by more than "
     "our residual"
 )
 
@@ -332,8 +332,8 @@ _OGBMAZE_OURS_ONLY = {
 }
 
 _SPM_AGENT_POSITION = (
-    "a per-lane reset distribution (Env.reset_leaves) that seeds State, not a style column: "
-    "reset(options={'variation': ['agent.position']}) draws it per lane from the same seeded "
+    "a per-environment reset distribution (Env.reset_leaves) that seeds State, not a style column: "
+    "reset(options={'variation': ['agent.position']}) draws it per environment from the same seeded "
     "tree swm samples, and options['variation_values'] sets it explicitly. swm's "
     "SimplePointMazeEnv ignores options['variation_values'], so the matching swm start is the "
     "leaf's value. Gated by tests/integration/test_variation_navigation.py: reset State exact and "
@@ -341,8 +341,8 @@ _SPM_AGENT_POSITION = (
 )
 
 _SPM_GOAL_POSITION = (
-    "a per-lane reset leaf (Env.reset_leaves) that seeds State columns goal_x, goal_y. Not drawn by "
-    "default, as in swm: reset(options={'variation': ['goal.position']}) draws it per lane from the "
+    "a per-environment reset leaf (Env.reset_leaves) that seeds State columns goal_x, goal_y. Not drawn by "
+    "default, as in swm: reset(options={'variation': ['goal.position']}) draws it per environment from the "
     "seeded tree with swm's wall-collision rejection at the goal radius, and "
     "options['variation_values'] sets it explicitly (swm ignores variation_values, so the matching "
     "swm goal is the leaf's value). Gated by tests/integration/test_variation_navigation.py: reset "
@@ -418,7 +418,7 @@ LEAF_CLASSIFICATION.update(
                 "PointMazeLargeNavigate renders; the other cells render ob_type='pixels'. UPSTREAM FINDING: "
                 "swm's compile_model() rebuilds ogbench's `custom_renderer` only for 'pixels', so in "
                 "'states' a leaf reaches swm's frame only if that env had not rendered before the "
-                "recompile; the gate uses a fresh swm env per lane and case"
+                "recompile; the gate uses a fresh swm env per batch row and case"
             ),
             "leaves": {
                 "agent.color": _cls(

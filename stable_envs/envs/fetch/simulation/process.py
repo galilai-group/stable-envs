@@ -1,4 +1,4 @@
-"""Fetch lanes in worker processes."""
+"""Fetch environments in worker processes."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from ...._execution.process import ProcessAdapter
 from .adapter import FetchAdapter, episode_limits
 
 
-def _lanes(task, reward_type, threads, count, seed):
+def _instances(task, reward_type, threads, count, seed):
     adapter = FetchAdapter(count, "cpu", seed, task, reward_type)
     try:
         adapter._set_workers(min(threads, count))
@@ -47,7 +47,7 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
         if type(threads_per_process) is not int or threads_per_process < 1:
             raise ValueError("threads_per_process must be positive")
         self._workers = processes * threads_per_process
-        factory = partial(_lanes, task, reward_type, threads_per_process)
+        factory = partial(_instances, task, reward_type, threads_per_process)
         super().__init__(factory, num_envs, device, seed, processes=processes, cpus=cpus)
         self._mass = np.repeat(self._metadata.object_mass, self.num_envs)
 
@@ -69,7 +69,7 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
     def reset_visual_colors(self, values):
         self._check_open()
         if len(values) != self.num_envs:
-            raise ValueError("Expected one variation dictionary per lane")
+            raise ValueError("Expected one variation dictionary per environment")
         return self.call("reset_visual_colors", values)
 
     def _set_episode_limits(self, limits):
@@ -79,7 +79,7 @@ class FetchProcessAdapter(ProcessAdapter, FetchAdapter):
     def reset(self, seed: int | None = None, variations=None) -> TensorDict:
         self._check_open()
         if variations is not None and len(variations) != self.num_envs:
-            raise ValueError("Expected one variation dictionary per lane")
+            raise ValueError("Expected one variation dictionary per environment")
         state = self._reset(seed, [(None if variations is None else variations[rows],) for rows in self._slices])
         self._mass = self.call("object_mass")
         return state

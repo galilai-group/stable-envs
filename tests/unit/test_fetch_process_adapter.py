@@ -120,7 +120,7 @@ def test_worker_death_fails_closed_and_reaps_every_owner():
     adapter.close()
 
 
-def test_inactive_lanes_match_local_owner_before_first_step():
+def test_inactive_environments_match_local_owner_before_first_step():
     local, remote = FetchAdapter(5, task="Push"), FetchProcessAdapter(5, task="Push", processes=2)
     try:
         actions = np.zeros((5, 4), dtype=np.float32)

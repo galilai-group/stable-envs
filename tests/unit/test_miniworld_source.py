@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.envs.miniworld.simulation.adapter import TEXTURES, configure_pyglet, read_lane
+from stable_envs.envs.miniworld.simulation.adapter import TEXTURES, configure_pyglet, read_instance
 
 configure_pyglet()  # before miniworld imports pyglet.gl
 pytest.importorskip("miniworld.envs.moving_blockworld")
@@ -32,7 +32,7 @@ from stable_envs.envs.miniworld.simulation.world import BALL_RADIUS_PER_HEIGHT  
 
 pytestmark = pytest.mark.unit
 
-LANES = 2
+NUM_ENVS = 2
 SEED = 11
 SIZE = 48
 #: Source envs, kept for the process: each holds a GL context.
@@ -40,9 +40,9 @@ _SOURCES: dict = {}
 _TEXTURED_ROOMS = {(f, w) for f in ("cardboard", "grass", "concrete") for w in ("brick_wall", "wood_planks", "wood")}
 
 
-def _flowm_source(lane: int, textured: bool):
+def _flowm_source(instance: int, textured: bool):
     """``generate_videos.build_env`` for the paper's dynamic ("SUNDAY V2") or textured ("TEX") split."""
-    key = ("flowm", textured, lane)
+    key = ("flowm", textured, instance)
     if key not in _SOURCES:
         tex = dict.fromkeys(("box_tex_randomize", "wall_tex_randomize", "floor_tex_randomize", "box_and_ball"), True)
         params = DEFAULT_PARAMS.no_random()
@@ -77,8 +77,8 @@ def _flowm_source(lane: int, textured: bool):
     return env
 
 
-def _upstream_source(lane: int, max_episode_steps: int = 250):
-    key = ("upstream", lane)
+def _upstream_source(instance: int, max_episode_steps: int = 250):
+    key = ("upstream", instance)
     if key not in _SOURCES:
         _SOURCES[key] = MovingBlockWorld(render_mode="rgb_array", window_width=SIZE, window_height=SIZE)
     env = _SOURCES[key]
@@ -101,7 +101,7 @@ def _wrap(env):
 def _adopt(env, sources):
     """Restore the sources' worlds and motion into ``env``; the generator fields keep ``env``'s values."""
     schema = env._simulator.schema
-    rows = [read_lane(src, env._simulator.num_blocks) for src in sources]
+    rows = [read_instance(src, env._simulator.num_blocks) for src in sources]
     state = env.get_state()
     columns = {}
     for name, field in schema.slices.items():
@@ -113,57 +113,64 @@ def _adopt(env, sources):
     env.set_state(schema.fold(columns, [len(rows)]))
 
 
-def _assert_lane(state, lane, src, t, atol=0.0):
-    msg = f"environment {lane}, step {t}"
+def _assert_instance(state, instance, src, t, atol=0.0):
+    msg = f"environment {instance}, step {t}"
 
     def close(a, b):
         np.testing.assert_allclose(a, b, rtol=0, atol=atol, err_msg=msg)
 
-    close(get_field(state, "agent/pos")[lane].numpy(), src.agent.pos)
-    close(get_field(state, "agent/dir")[lane].numpy(), [src.agent.dir])
+    close(get_field(state, "agent/pos")[instance].numpy(), src.agent.pos)
+    close(get_field(state, "agent/dir")[instance].numpy(), [src.agent.dir])
     blocks = src.entities[1:]
     n = len(blocks)
-    assert get_field(state, "blocks/present")[lane].tolist() == [True] * n + [False] * (
+    assert get_field(state, "blocks/present")[instance].tolist() == [True] * n + [False] * (
         get_field(state, "blocks/present").shape[1] - n
     )
-    close(get_field(state, "blocks/pos")[lane].numpy().reshape(-1, 3)[:n], np.stack([b.pos for b in blocks]))
-    close(get_field(state, "blocks/velocity")[lane].numpy().reshape(-1, 3)[:n], np.stack([b.velocity for b in blocks]))
-    close(get_field(state, "blocks/dir")[lane].numpy()[:n], [b.dir for b in blocks])
-    assert get_field(state, "blocks/kind")[lane].tolist()[:n] == [0 if isinstance(b, Box) else 1 for b in blocks], msg
+    close(get_field(state, "blocks/pos")[instance].numpy().reshape(-1, 3)[:n], np.stack([b.pos for b in blocks]))
+    close(
+        get_field(state, "blocks/velocity")[instance].numpy().reshape(-1, 3)[:n],
+        np.stack([b.velocity for b in blocks]),
+    )
+    close(get_field(state, "blocks/dir")[instance].numpy()[:n], [b.dir for b in blocks])
+    assert get_field(state, "blocks/kind")[instance].tolist()[:n] == [
+        0 if isinstance(b, Box) else 1 for b in blocks
+    ], msg
     carried = src.agent.carrying
-    assert get_field(state, "agent/carrying")[lane].item() == (-1 if carried is None else blocks.index(carried)), msg
-    assert get_field(state, "lifecycle/elapsed_steps")[lane].item() == src.step_count, msg
+    assert get_field(state, "agent/carrying")[instance].item() == (-1 if carried is None else blocks.index(carried)), (
+        msg
+    )
+    assert get_field(state, "lifecycle/elapsed_steps")[instance].item() == src.step_count, msg
 
 
 def _run(env, sources, actions, *, wrap, frames=True, atol=0.0):
     state = env.get_state()
-    for lane, src in enumerate(sources):
-        _assert_lane(state, lane, src, 0)
+    for instance, src in enumerate(sources):
+        _assert_instance(state, instance, src, 0)
     if frames:
         np.testing.assert_array_equal(env.render().numpy(), np.stack([_source_frame(src) for src in sources]))
     result = None
     for t, action in enumerate(actions, start=1):
         result = env.step(action[:, None], frames=slice(-1, None) if frames else None)
-        for lane, src in enumerate(sources):
-            _, reward, terminated, truncated, _ = src.step(int(action[lane]))
+        for instance, src in enumerate(sources):
+            _, reward, terminated, truncated, _ = src.step(int(action[instance]))
             if wrap:
                 _wrap(src)
-            _assert_lane(result["state"], lane, src, t, atol)
-            assert result["reward"][lane].item() == reward
-            assert result["terminated"][lane].item() == terminated
-            assert result["truncated"][lane].item() == truncated
+            _assert_instance(result["state"], instance, src, t, atol)
+            assert result["reward"][instance].item() == reward
+            assert result["terminated"][instance].item() == terminated
+            assert result["truncated"][instance].item() == truncated
             if frames:
                 np.testing.assert_array_equal(
-                    result["frames"][lane, -1].numpy(), _source_frame(src), err_msg=f"step {t}"
+                    result["frames"][instance, -1].numpy(), _source_frame(src), err_msg=f"step {t}"
                 )
     return result
 
 
 def _flowm_sources(preset, wrap):
-    sources = [_flowm_source(lane, textured=preset == "flowm-textured") for lane in range(LANES)]
-    for lane, src in enumerate(sources):
-        src.num_blocks = 6 + 2 * lane  # --num-blocks-min 6 --num-blocks-max 10
-        src.reset(seed=SEED + lane)
+    sources = [_flowm_source(instance, textured=preset == "flowm-textured") for instance in range(NUM_ENVS)]
+    for instance, src in enumerate(sources):
+        src.num_blocks = 6 + 2 * instance  # --num-blocks-min 6 --num-blocks-max 10
+        src.reset(seed=SEED + instance)
         src.agent.dir = 0.0  # --heading-zero
         if wrap:
             _wrap(src)
@@ -171,9 +178,9 @@ def _flowm_sources(preset, wrap):
 
 
 def _upstream_sources(max_episode_steps=250):
-    sources = [_upstream_source(lane, max_episode_steps) for lane in range(LANES)]
-    for lane, src in enumerate(sources):
-        src.reset(seed=SEED + lane)
+    sources = [_upstream_source(instance, max_episode_steps) for instance in range(NUM_ENVS)]
+    for instance, src in enumerate(sources):
+        src.reset(seed=SEED + instance)
     return sources
 
 
@@ -188,34 +195,34 @@ def test_environments_step_as_the_source_called_directly(preset, wrap):
     ``wrap`` adds the [0, 2pi) heading wrap of the fork's later script (``wrap_heading=True``).
     """
     with snv.MiniWorldMovingBlockWorld(
-        num_envs=LANES, size=SIZE, device="cpu", preset=preset, wrap_heading=wrap
+        num_envs=NUM_ENVS, size=SIZE, device="cpu", preset=preset, wrap_heading=wrap
     ) as env:
         assert env.simulation_backend == "numba"
         sources = _flowm_sources(preset, wrap)
         _adopt(env, sources)
         rng = np.random.default_rng(SEED)
-        actions = rng.integers(0, 9, size=(24, LANES))
+        actions = rng.integers(0, 9, size=(24, NUM_ENVS))
         actions[:4] = [2, 5]  # walk, and try to pick up a block
         _run(env, sources, actions, wrap=wrap)
 
 
 def test_the_upstream_preset_steps_as_the_registered_env():
     """``preset="upstream"``: continuous motion in a 12 x 12 room, random block sizes, untextured boxes."""
-    with snv.MiniWorldMovingBlockWorld(num_envs=LANES, size=SIZE, device="cpu", preset="upstream") as env:
+    with snv.MiniWorldMovingBlockWorld(num_envs=NUM_ENVS, size=SIZE, device="cpu", preset="upstream") as env:
         sources = _upstream_sources()
         _adopt(env, sources)
-        actions = np.random.default_rng(SEED + 1).integers(0, 5, size=(16, LANES))
+        actions = np.random.default_rng(SEED + 1).integers(0, 5, size=(16, NUM_ENVS))
         _run(env, sources, actions, wrap=False)
 
 
 def test_the_step_limit_truncates_as_the_source_does():
     """The truncating step returns before the blocks move, as ``MovingBlockWorld.step`` does."""
     with snv.MiniWorldMovingBlockWorld(
-        num_envs=LANES, size=SIZE, device="cpu", preset="upstream", max_episode_steps=3
+        num_envs=NUM_ENVS, size=SIZE, device="cpu", preset="upstream", max_episode_steps=3
     ) as env:
         sources = _upstream_sources(max_episode_steps=3)
         _adopt(env, sources)
-        result = _run(env, sources, np.full((3, LANES), 4), wrap=False)
+        result = _run(env, sources, np.full((3, NUM_ENVS), 4), wrap=False)
         assert result["truncated"].all() and not result["terminated"].any()
 
 
@@ -229,11 +236,11 @@ def test_a_scripted_200_step_rollout_stays_on_the_source(backend, preset):
     """200 steps of a fixed policy from the source's reset: Numba gives the source's values; Torch agrees to 1e-9."""
     atol = 0.0 if backend == "numba" else 1e-9
     with snv.MiniWorldMovingBlockWorld(
-        num_envs=LANES, size=SIZE, device="cpu", preset=preset, simulation_backend=backend
+        num_envs=NUM_ENVS, size=SIZE, device="cpu", preset=preset, simulation_backend=backend
     ) as env:
         sources = _upstream_sources() if preset == "upstream" else _flowm_sources(preset, False)
         _adopt(env, sources)
-        actions = np.tile(np.stack([np.roll(SCRIPT, 3 * lane) for lane in range(LANES)], 1), (10, 1))
+        actions = np.tile(np.stack([np.roll(SCRIPT, 3 * instance) for instance in range(NUM_ENVS)], 1), (10, 1))
         result = _run(env, sources, actions, wrap=False, frames=False, atol=atol)
         assert not result["truncated"].any()
 

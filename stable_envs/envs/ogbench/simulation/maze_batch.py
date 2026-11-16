@@ -28,7 +28,7 @@ from .pcg import uint128_bytes
 INFO_KEYS = ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
 #: ``HumanoidEnv.get_ob`` limb bodies (left hand, left foot, right hand, right foot) relative to the torso.
 _LIMBS = (16, 10, 13, 7)
-#: Teleport destinations drawn ahead per lane on CUDA; the host refills them at least this often.
+#: Teleport destinations drawn ahead per environment on CUDA; the host refills them at least this often.
 TELEPORT_DRAWS = 32
 #: MuJoCo Warp constraint rows per environment and contacts per environment, by body: four times the most that
 #: native MuJoCo made in 400 steps of uniform random actions on 512 environments (8 and 3, 24 and 5, 64 and 17).
@@ -69,7 +69,7 @@ class MazeTask:
         return np.stack([ij[:, 1] * self.maze_unit - self.offset[0], ij[:, 0] * self.maze_unit - self.offset[1]], 1)
 
     def add_noise(self, xy, mt, ids):
-        """``MazeEnv.add_noise`` for lanes ``ids``, drawing from their legacy streams."""
+        """``MazeEnv.add_noise`` for environments ``ids``, drawing from their legacy streams."""
         random_x = mt.uniform(ids, -self.noise, self.noise) * self.maze_unit / 4
         random_y = mt.uniform(ids, -self.noise, self.noise) * self.maze_unit / 4
         return np.stack([xy[:, 0] + random_x, xy[:, 1] + random_y], 1)
@@ -84,10 +84,10 @@ def norm_within(diff, limit):
 
 
 class LegacyMT:
-    """NumPy's legacy ``RandomState`` (MT19937) streams of many lanes, drawn together.
+    """NumPy's legacy ``RandomState`` (MT19937) streams of many environments, drawn together.
 
     ``seed``, ``randint`` and ``uniform`` give the values and the stream positions of the same
-    ``np.random.RandomState`` calls on each lane, bit for bit. The Gaussian cache is kept as it is.
+    ``np.random.RandomState`` calls on each environment, bit for bit. The Gaussian cache is kept as it is.
     """
 
     N, M = 624, 397
@@ -99,7 +99,7 @@ class LegacyMT:
         self.gauss = np.zeros(num_envs)
 
     def seed(self, ids, seeds):
-        """``RandomState(seed)`` for each lane of ``ids``: MT19937's ``init_genrand``."""
+        """``RandomState(seed)`` for each environment of ``ids``: MT19937's ``init_genrand``."""
         value = np.asarray(seeds, np.uint64) & 0xFFFFFFFF
         key = np.empty((len(ids), self.N), np.uint32)
         for pos in range(self.N):
@@ -116,7 +116,7 @@ class LegacyMT:
         return (y >> np.uint32(1)) ^ np.where(y & np.uint32(1), np.uint32(0x9908B0DF), np.uint32(0))
 
     def _twist(self, rows):
-        """MT19937's ``mt19937_gen`` for lanes ``rows``."""
+        """MT19937's ``mt19937_gen`` for environments ``rows``."""
         N, M = self.N, self.M
         old = self.key[rows]
         new = old.copy()
@@ -132,7 +132,7 @@ class LegacyMT:
         self.pos[rows] = 0
 
     def next32(self, rows):
-        """One tempered 32-bit output for each lane of ``rows`` (distinct lanes)."""
+        """One tempered 32-bit output for each environment of ``rows`` (distinct environments)."""
         rows = np.asarray(rows, np.int64)
         spent = rows[self.pos[rows] >= self.N]
         if spent.size:
@@ -146,13 +146,13 @@ class LegacyMT:
         return y
 
     def uniform(self, rows, low, high):
-        """``RandomState.uniform(low, high)`` for each lane of ``rows``."""
+        """``RandomState.uniform(low, high)`` for each environment of ``rows``."""
         a = (self.next32(rows) >> np.uint32(5)).astype(np.float64)
         b = (self.next32(rows) >> np.uint32(6)).astype(np.float64)
         return low + (high - low) * ((a * 67108864.0 + b) / 9007199254740992.0)
 
     def randint(self, rows, low, high):
-        """``RandomState.randint(low, high)`` for each lane of ``rows``: masked rejection sampling."""
+        """``RandomState.randint(low, high)`` for each environment of ``rows``: masked rejection sampling."""
         rows = np.asarray(rows, np.int64)
         span = high - 1 - low
         out = np.zeros(len(rows), np.int64)
@@ -169,7 +169,7 @@ class LegacyMT:
 
 
 class MazeRandom:
-    """Each lane's OGBench RNGs: the env's PCG64 ``np_random`` and its own copy of NumPy's global MT19937.
+    """Each environment's OGBench RNGs: the env's PCG64 ``np_random`` and its own copy of NumPy's global MT19937.
 
     The State columns follow the generators and change only at reset, restore and teleport.
     """
@@ -190,7 +190,7 @@ class MazeRandom:
         self.mt.seed(ids, int(seed) + np.asarray(ids, np.int64))
 
     def sync(self, ids):
-        """Write the generators of lanes ``ids`` into the State columns."""
+        """Write the generators of environments ``ids`` into the State columns."""
         c = self.columns
         for i in ids:
             pcg = self.pcg[i].bit_generator.state
@@ -217,11 +217,11 @@ class MazeRandom:
 
 
 class MazeReset:
-    """OGBench ``MazeEnv.reset`` for many lanes, sampled from each lane's own RNGs.
+    """OGBench ``MazeEnv.reset`` for many environments, sampled from each environment's own RNGs.
 
     The settling steps between the two inner resets draw from the action space's own unseeded RNG and are
     discarded by the second reset, so they do not change the reset State and are not run. Humanoid starts
-    are rejection-sampled with a position-stage forward of ``rb``, a ``mujoco.batch`` of the lanes.
+    are rejection-sampled with a position-stage forward of ``rb``, a ``mujoco.batch`` of the environments.
     """
 
     def __init__(self, task: MazeTask, num_envs: int, rb=None):
@@ -258,7 +258,7 @@ class MazeReset:
             pending = pending[self._ncon[pending].reshape(-1) > 0]
 
     def sample(self, ids, rand: MazeRandom, seeded: bool):
-        """Return ``(qpos, qvel, goal_pos, task_id)`` rows for lanes ``ids`` and advance their RNGs."""
+        """Return ``(qpos, qvel, goal_pos, task_id)`` rows for environments ``ids`` and advance their RNGs."""
         t = self.task
         n = len(ids)
         goal = np.zeros((n, 3))
@@ -288,7 +288,7 @@ class MazeReset:
 
 
 class MazeOutputs:
-    """``MazeEnv.step`` task outputs for every lane from the step's qpos and qvel."""
+    """``MazeEnv.step`` task outputs for every environment from the step's qpos and qvel."""
 
     def __init__(self, task: MazeTask):
         self.task = task
@@ -314,21 +314,23 @@ class MazeOutputs:
         }
 
     def teleports(self, xy, ids, rand: MazeRandom):
-        """Return ``(lanes, destinations)`` that the source teleports after this step, drawing their RNGs."""
+        """Return ``(environments, destinations)`` that the source teleports after this step, drawing their RNGs."""
         if self.task.teleport is None or not len(ids):
             return np.zeros(0, np.int64), np.zeros((0, 2))
         near = np.zeros(len(xy), bool)
         for centre in self.teleport_in:
             near |= norm_within(xy - centre, self.teleport_reach)
-        lanes = np.asarray(ids)[near[ids]]
-        return lanes, np.stack(self.teleport_out)[rand.mt.randint(lanes, 0, len(self.teleport_out))].reshape(-1, 2)
+        instances = np.asarray(ids)[near[ids]]
+        return instances, np.stack(self.teleport_out)[rand.mt.randint(instances, 0, len(self.teleport_out))].reshape(
+            -1, 2
+        )
 
 
 def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
-    """``HumanoidEnv.get_ob`` for every lane, in the source's operation order (NumPy or Torch rows)."""
+    """``HumanoidEnv.get_ob`` for every environment, in the source's operation order (NumPy or Torch rows)."""
     torso_frame = xmat[:, 1].reshape(-1, 3, 3)
     torso_pos = xpos[:, 1]
-    # A stacked matmul rounds as the source's per-lane ``ndarray.dot``; einsum sums in another order.
+    # A stacked matmul rounds as the source's per-environment ``ndarray.dot``; einsum sums in another order.
     positions = [((xpos[:, idx] - torso_pos)[:, None] @ torso_frame)[:, 0] for idx in _LIMBS]
     cat = np.concatenate if isinstance(qpos, np.ndarray) else torch.cat
     return cat(
@@ -338,7 +340,7 @@ def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
 
 
 class RestGrid:
-    """``_resting_lanes``'s wall clearance test against only the walls near each ball.
+    """``_resting_instances``'s wall clearance test against only the walls near each ball.
 
     The walls are bucketed by grid cell. A cell's bucket holds every wall whose box, grown by the clearance
     distance, meets the cell in the plane, so the walls left out of a ball's test are farther than the
@@ -387,7 +389,7 @@ class RestGrid:
         return out
 
 
-class _MazeLanes(SimulatorAdapter):
+class _MazeInstances(SimulatorAdapter):
     """Host task bookkeeping shared by the batched maze adapters."""
 
     def _setup(self, num_envs, device, loco, maze, task):
@@ -408,7 +410,7 @@ class _MazeLanes(SimulatorAdapter):
     def _sample_reset(self, seed):
         ids = np.arange(self.num_envs)
         if seed is not None:
-            # Check the complete lane range before any lane resets.
+            # Check the complete environment range before any environment resets.
             np.random.RandomState(int(seed))
             np.random.RandomState(int(seed) + self.num_envs - 1)
             self._random.seed(ids, seed)
@@ -443,8 +445,8 @@ class _MazeLanes(SimulatorAdapter):
         return actions, active
 
 
-class OGBMazeBatchAdapter(_MazeLanes):
-    """OGBench maze lanes stepped together in one float64 ``mujoco.batch`` (``NativeBatch``).
+class OGBMazeBatchAdapter(_MazeInstances):
+    """OGBench maze environments stepped together in one float64 ``mujoco.batch`` (``NativeBatch``).
 
     Physics, observations, task outputs, resets and RNG streams equal the source's bit for bit. ``device``
     selects output placement. The State is the format of ``OGBMazeAdapter``.
@@ -456,7 +458,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._setup(num_envs, device, loco, maze, task)
         outputs = ("xpos", "xmat", "sensordata", "ncon") if loco == "humanoid" else ()
         self.sim = NativeBatch(self.task.model, self.num_envs, "cpu", frame_skip=self.task.frame_skip, outputs=outputs)
-        # The task steps a subset of lanes, and the humanoid observation needs the velocity stage after the step,
+        # The task steps a subset of environments, and the humanoid observation needs the velocity stage after the step,
         # as ``HumanoidEnv`` runs ``mj_step1``: these use the batch directly.
         self.b = self.sim.b
         # Live arrays over the batch's rows, looked up once.
@@ -541,7 +543,7 @@ class OGBMazeBatchAdapter(_MazeLanes):
         self._last = None
 
     def _resting(self, target, ids):
-        """Point lanes whose step leaves the ball where it is (see ``_resting_lanes``)."""
+        """Point environments whose step leaves the ball where it is (see ``_resting_instances``)."""
         return self._rest_grid.resting(target[ids])
 
     def _advance(self, actions, ids):
@@ -596,10 +598,10 @@ class OGBMazeBatchAdapter(_MazeLanes):
             "qpos": qpos,
             "qvel": qvel,
         }
-        lanes, dest = out.teleports(qpos[:, :2], ids, self._random)
-        if lanes.size:
-            b.qpos[lanes, :2] = dest
-            self._random.sync_legacy(lanes)
+        instances, dest = out.teleports(qpos[:, :2], ids, self._random)
+        if instances.size:
+            b.qpos[instances, :2] = dest
+            self._random.sync_legacy(instances)
         if active is not None:
             idle = ~active
             values = {
@@ -622,11 +624,11 @@ class OGBMazeBatchAdapter(_MazeLanes):
             self.b = self._live = self._xpos = self._xmat = self._sensordata = None
 
 
-class OGBMazeWarpAdapter(_MazeLanes):
-    """OGBench maze lanes as MuJoCo Warp worlds on CUDA (``WarpBatch``): float32 physics.
+class OGBMazeWarpAdapter(_MazeInstances):
+    """OGBench maze environments as MuJoCo Warp worlds on CUDA (``WarpBatch``): float32 physics.
 
     Task outputs follow the source's step on the device. Resets sample the source's start and goal from each
-    lane's own RNGs on the host. Teleport destinations are drawn ahead from each lane's RNG, so the step needs
+    environment's own RNGs on the host. Teleport destinations are drawn ahead from each environment's RNG, so the step needs
     no host draw; the host advances the RNGs by the draws used when it returns State, and refills the draws
     every ``TELEPORT_DRAWS`` steps. These are the only host synchronizations of a step.
     """
@@ -659,7 +661,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
             self._tp_in = torch.as_tensor(np.stack(out.teleport_in), **f64)
             self._tp_out = torch.as_tensor(np.stack(out.teleport_out), device=self.device, dtype=self._qpos_v.dtype)
             self._draws = torch.zeros(self.num_envs, TELEPORT_DRAWS, device=self.device, dtype=torch.int64)
-            # Draws each lane's steps took from its row of ``_draws``; the host has applied ``_applied`` of them.
+            # Draws each environment's steps took from its row of ``_draws``; the host has applied ``_applied`` of them.
             self._used = torch.zeros(self.num_envs, device=self.device, dtype=torch.int64)
             self._applied = np.zeros(self.num_envs, np.int64)
             self._steps_since_refill = 0
@@ -681,7 +683,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
                 self._rng_columns[key][index] = torch.from_numpy(value[ids]).to(self.device)
 
     def _refill(self, ids):
-        """Draw the next teleport destinations of lanes ``ids`` from copies of their RNGs."""
+        """Draw the next teleport destinations of environments ``ids`` from copies of their RNGs."""
         ids = np.asarray(ids, np.int64)
         if not ids.size:
             return
@@ -697,7 +699,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
         self._applied[ids] = 0
 
     def _settle_teleports(self, refill=False):
-        """Advance each lane's RNG by the teleport draws its steps took; with ``refill``, draw ahead again."""
+        """Advance each environment's RNG by the teleport draws its steps took; with ``refill``, draw ahead again."""
         used = self._used.cpu().numpy()
         delta = used - self._applied
         count = len(self._outputs.teleport_out)
@@ -863,7 +865,7 @@ class OGBMazeWarpAdapter(_MazeLanes):
             "qvel": qvel,
         }
         if self._teleport:
-            self._teleport_lanes(qpos[:, :2], active)
+            self._teleport_instances(qpos[:, :2], active)
         if active is not None:
             idle = ~active
             values = {
@@ -877,8 +879,8 @@ class OGBMazeWarpAdapter(_MazeLanes):
             tensors["state"] = self.get_state()
         return build_tensordict(tensors, [self.num_envs], self.device)
 
-    def _teleport_lanes(self, xy, active):
-        """Move lanes within reach of an inbound teleport to their next drawn outbound teleport."""
+    def _teleport_instances(self, xy, active):
+        """Move environments within reach of an inbound teleport to their next drawn outbound teleport."""
         diff = xy[:, None] - self._tp_in
         near = (
             torch.sqrt(diff[..., 0] * diff[..., 0] + diff[..., 1] * diff[..., 1]) <= self._outputs.teleport_reach

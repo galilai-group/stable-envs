@@ -24,10 +24,10 @@ CUDA_MIN_ENVS: int | None = 128
 
 #: The ``select_backend`` path of the PushT physics backend choice.
 PATH = "pusht-sim"
-#: Smallest batch whose resets run in worker processes, unless the ``worker_min_lanes`` setting is set. A lane's source
+#: Smallest batch whose resets run in worker processes, unless the ``worker_min_envs`` setting is set. An environment's source
 #: reset takes milliseconds of Python. From this batch size, parallel resets save more time than the round trip to
 #: the workers costs. docs/performance-tuning.md (Worker processes) says how the value was measured.
-RESET_WORKER_MIN_LANES = 8
+RESET_WORKER_MIN_ENVS = 8
 
 
 def _measure(env_type, device, config: dict):
@@ -88,7 +88,7 @@ def make_pusht_adapter(
 ) -> PushTBatchAdapter:
     cpus = cpu_affinity()
     valid = type(num_envs) is int and num_envs > 0
-    count = process_count(num_envs, cpus, path=PATH, min_lanes=RESET_WORKER_MIN_LANES) if valid else 0
+    count = process_count(num_envs, cpus, path=PATH, min_envs=RESET_WORKER_MIN_ENVS) if valid else 0
     backend = pusht_backend(num_envs, device, simulation_backend, discrete=discrete, config=config)
     if backend == "triton":
         from .triton_batch import PushTTritonAdapter as adapter
@@ -106,5 +106,5 @@ def make_pusht_adapter(
             return host
         host.export_device = torch.device(device)
         return HostAdapter(host, device)
-    # Workers reset the lanes; one batched call steps them.
+    # Workers reset the environments; one batched call steps them.
     return adapter(num_envs, device, seed, discrete=discrete, config=config, processes=count, cpus=cpus)

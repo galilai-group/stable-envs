@@ -59,7 +59,7 @@ def test_style_leaves_follow_the_rule():
         assert env._style["agent.color"].tolist() == [[10.0, 20.0, 30.0]] * 2
 
 
-def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
+def test_reset_leaves_take_one_value_per_environment_and_follow_the_rule():
     starts = np.asarray([[31.25, 47.5], [180.0, 60.0]], np.float32)
     with snv.make("TwoRoom", num_envs=2, device="cpu") as env:
         assert [leaf.path for leaf in env.reset_leaves] == ["agent.position", "target.position"]
@@ -70,7 +70,7 @@ def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
         state = env.reset(seed=3, options={"variation": []})
         np.testing.assert_array_equal(snv.get_field(state, "agent.position").numpy(), [[60.0, 112.0]] * 2)
         np.testing.assert_array_equal(snv.get_field(state, "target.position").numpy(), [[164.0, 112.0]] * 2)
-        with pytest.raises(ValueError, match="per lane"):
+        with pytest.raises(ValueError, match="per environment"):
             env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
     with snv.make("SimplePointMaze", num_envs=2, device="cpu") as env:
         goals = snv.get_field(env.reset(seed=4, options={"variation": ["goal.position"]}), "goal.position").numpy()

@@ -86,7 +86,7 @@ def test_every_leaf_structure_dtype_shape_and_nonfinite_value_is_rejected(adapte
     rejected(adapter, bad)
 
 
-def test_out_of_range_values_in_the_final_lane_are_rejected(adapter):
+def test_out_of_range_values_in_the_final_environment_are_rejected(adapter):
     state = adapter.get_state()
     edits = [
         ("physics/time", -1),

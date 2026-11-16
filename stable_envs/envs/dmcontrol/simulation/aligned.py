@@ -9,7 +9,7 @@ import torch
 from . import physics as _physics
 from .batch import ZZ, scalar_tolerance, tolerance
 from .first_family import suite_env
-from .lanes import DMCLanes
+from .instances import DMCInstances
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
@@ -101,10 +101,10 @@ def _non_contacting_height(physics, orientation):
 
 
 def _batch_heights(b, ids, orientations, models):
-    """The heights ``_non_contacting_height`` finds for lanes ``ids`` of mujoco.batch ``b``, searched together.
+    """The heights ``_non_contacting_height`` finds for environments ``ids`` of mujoco.batch ``b``, searched together.
 
-    Each attempt computes the position stage, which includes collision, of the lanes still in contact on the batch
-    threads. Every lane adds 0.01 to its height in the order of dm_control's search.
+    Each attempt computes the position stage, which includes collision, of the environments still in contact on the batch
+    threads. Every environment adds 0.01 to its height in the order of dm_control's search.
     """
     import mujoco
 
@@ -209,8 +209,8 @@ def _make_env(domain, seed):
     return normalized(control.Environment(physics, task, time_limit=cfg["time_limit"], control_timestep=cfg["dt"]))
 
 
-class DMCAlignedAdapter(DMCLanes):
-    """BallInCup, Finger, Manipulator, Quadruped, PointMass and Swimmer lanes."""
+class DMCAlignedAdapter(DMCInstances):
+    """BallInCup, Finger, Manipulator, Quadruped, PointMass and Swimmer environments."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in CONFIG:
@@ -218,7 +218,7 @@ class DMCAlignedAdapter(DMCLanes):
         self.domain = domain
         super().__init__(domain, num_envs, device, seed, lambda s: _make_env(domain, s), _core(domain))
 
-    def _info(self, env, lane):
+    def _info(self, env, instance):
         physics = env.physics
         info = {"qpos": physics.data.qpos.copy(), "qvel": physics.data.qvel.copy()}
         success = float(physics.in_target()) if self.domain == "ball_in_cup" else float("nan")
@@ -234,12 +234,12 @@ class DMCAlignedAdapter(DMCLanes):
 
 
 def _norm(v):
-    """A vector's np.linalg.norm, sqrt(dot), per lane."""
+    """A vector's np.linalg.norm, sqrt(dot), per environment."""
     return np.sqrt(np.vecdot(v, v))
 
 
 class BallInCupBatch:
-    """Ball-in-cup catch batch lanes."""
+    """Ball-in-cup catch batch environments."""
 
     def __init__(self, b, models):
         m = models[0]
@@ -260,7 +260,7 @@ class BallInCupBatch:
 
 
 class FingerBatch:
-    """Finger turn and spin batch lanes."""
+    """Finger turn and spin batch environments."""
 
     def __init__(self, b, models, spin):
         m, self.spin = models[0], spin
@@ -300,7 +300,7 @@ class FingerBatch:
 
 
 class ManipulatorBatch:
-    """Manipulator bring-ball batch lanes, fully observable."""
+    """Manipulator bring-ball batch environments, fully observable."""
 
     def __init__(self, b, models):
         m = models[0]
@@ -332,7 +332,7 @@ class ManipulatorBatch:
 
 
 class QuadrupedBatch:
-    """Quadruped walk batch lanes."""
+    """Quadruped walk batch environments."""
 
     def __init__(self, b, models):
         import mujoco
@@ -352,7 +352,7 @@ class QuadrupedBatch:
         self.xmat, self.s = b.bind("xmat"), b.bind("sensordata")
 
     @staticmethod
-    def begin_reset(env, lane):
+    def begin_reset(env, instance):
         """dm_control's Quadruped reset up to its start-height search; returns the drawn orientation."""
         from dm_control.rl.control import PhysicsError
 
@@ -365,12 +365,12 @@ class QuadrupedBatch:
         return orientation
 
     def batch_reset(self, ids, orientations):
-        """The start-height searches of lanes ``ids`` on the batch threads."""
+        """The start-height searches of environments ``ids`` on the batch threads."""
         heights = _batch_heights(self.b, ids, np.array(orientations), self.models)
         return list(zip(orientations, heights, strict=True))
 
     @staticmethod
-    def end_reset(env, lane, value):
+    def end_reset(env, instance, value):
         """The rest of dm_control's Quadruped reset after the start-height search."""
         from dm_control.suite import quadruped
 
@@ -399,7 +399,7 @@ class QuadrupedBatch:
 
 
 class PointMassBatch:
-    """Point-mass easy batch lanes."""
+    """Point-mass easy batch environments."""
 
     def __init__(self, b, models):
         m = models[0]
@@ -422,7 +422,7 @@ class PointMassBatch:
 
 
 class SwimmerBatch:
-    """Swimmer6 batch lanes."""
+    """Swimmer6 batch environments."""
 
     def __init__(self, b, models):
         m = models[0]

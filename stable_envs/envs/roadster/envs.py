@@ -172,7 +172,7 @@ class RoadsterBase(Env):
         return self._schema.spec(self.device)
 
     def reset(self, seed=None, options=None):
-        """Reset every lane; ``options`` take ``variation`` / ``variation_values`` for the weather leaves."""
+        """Reset every environment; ``options`` take ``variation`` / ``variation_values`` for the weather leaves."""
         self._check_open("reset")
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
@@ -232,9 +232,9 @@ class RoadsterBase(Env):
                 s[:, off : off + 3] = torch.tensor([value("weather.wind"), 0.0, 0.0])
         res = int(size or self.size)
         frames = torch.empty((n, res, res, 3), dtype=torch.uint8)
-        for look, lanes in (("wm", ~cinematic), ("cinematic", cinematic)):
-            if lanes.any():
-                index = torch.from_numpy(lanes.nonzero()[0])
+        for look, instances in (("wm", ~cinematic), ("cinematic", cinematic)):
+            if instances.any():
+                index = torch.from_numpy(instances.nonzero()[0])
                 frames[index] = roadster_render.render_rows(s[index.to(s.device)], res, "cpu", look=look)
         if out is not None:
             out.view(-1, res, res, 3).copy_(frames.to(out.device))
@@ -258,7 +258,7 @@ class RoadsterBase(Env):
         return self._render(self._rows_from_fields(fields))
 
     def _render_live(self):
-        """Draw the running lanes from their render-row fields, without building a state snapshot."""
+        """Draw the running environments from their render-row fields, without building a state snapshot."""
         if hasattr(self._simulator, "render_fields"):
             return self._draw_fields(self._simulator.render_fields())
         return self._render(self._pack_render_state(self.get_state()))

@@ -1,7 +1,7 @@
 """Navigation variation leaves against pinned stable_worldmodel.
 
-``reset_leaf_gate`` covers a per-lane reset distribution (start and target/goal positions):
-explicit values and seeded per-lane draws must give the same reset State and first frame as
+``reset_leaf_gate`` covers a per-environment reset distribution (start and target/goal positions):
+explicit values and seeded per-environment draws must give the same reset State and first frame as
 stable-worldmodel, and a short rollout must keep matching. ``appearance_gate`` covers Piecewise leaves that
 only the frame reads. ``navigation_reset_rule_gate`` checks that a plain reset restores a leaf the
 previous reset's options set.
@@ -51,10 +51,10 @@ def _start_frames(domain, starts, ours, theirs, ceiling) -> dict:
     diff = np.abs(ours.astype(np.int16) - theirs.astype(np.int16)).max(-1)
     interior = interior_mask(theirs)
     window = []
-    for lane, start in enumerate(starts):
+    for instance, start in enumerate(starts):
         r, c = _pixel(domain, start)
         rows, cols = slice(max(r - WINDOW, 0), r + WINDOW + 1), slice(max(c - WINDOW, 0), c + WINDOW + 1)
-        patch, flat = diff[lane, rows, cols], interior[lane, rows, cols]
+        patch, flat = diff[instance, rows, cols], interior[instance, rows, cols]
         window.append(
             {
                 "pixels_differing": int((patch > 0).sum()),
@@ -93,20 +93,20 @@ def _references(domain, leaf, explicit, options):
         # SimplePointMazeEnv ignores options['variation_values']; an explicit value is the leaf's init value.
         return [
             NativeNavigationReference(
-                domain, 1, options=options, persistent_values=None if explicit is None else {leaf: explicit[lane]}
+                domain, 1, options=options, persistent_values=None if explicit is None else {leaf: explicit[instance]}
             )
-            for lane in range(3)
+            for instance in range(3)
         ]
     if explicit is None:
         return [NativeNavigationReference(domain, 1, options=options) for _ in range(3)]
     return [
-        NativeNavigationReference(domain, 1, options={**options, "variation_values": {leaf: explicit[lane]}})
-        for lane in range(3)
+        NativeNavigationReference(domain, 1, options={**options, "variation_values": {leaf: explicit[instance]}})
+        for instance in range(3)
     ]
 
 
 def _swm_reset(refs, seed):
-    states = [ref.reset(seed=seed + lane) for lane, ref in enumerate(refs)]
+    states = [ref.reset(seed=seed + instance) for instance, ref in enumerate(refs)]
     frames = np.stack(
         [
             np.asarray(ref.envs[0].render(*(("rgb_array",) if ref.domain == "simple_point_maze" else ())))
@@ -121,7 +121,7 @@ def _rollout(env, refs, seed, steps):
     actions = np.random.default_rng(seed).uniform(-limit, limit, (steps, 3, 2)).astype(np.float32)
     for action in actions:
         ours = env.step(action, frames=None)["state"]
-        theirs = torch.cat([ref.step(action[lane : lane + 1])["state"] for lane, ref in enumerate(refs)])
+        theirs = torch.cat([ref.step(action[instance : instance + 1])["state"] for instance, ref in enumerate(refs)])
         compare_state(ours, theirs)
     return steps
 
@@ -163,7 +163,7 @@ def reset_leaf_gate(domain: str, leaf: str, seed: int = 17) -> dict:
     return evidence
 
 
-#: One Piecewise configuration per lane: the target alone, the bias arrows alone, then both together.
+#: One Piecewise configuration per environment: the target alone, the bias arrows alone, then both together.
 LAYERS = (
     {"rendering.render_target": 1, "target.color": [10, 20, 200], "target.radius": [11.0]},
     {"rendering.render_bias_field": 1, "zones.bias_0": [3.5, -1.0], "zones.bias_3": [-0.5, 4.0]},
@@ -171,7 +171,7 @@ LAYERS = (
 )
 
 
-def _lane_values(configs):
+def _instance_values(configs):
     paths = sorted({path for config in configs for path in config})
     with se.make("Piecewise", num_envs=1, device="cpu") as probe:
         default = {path: probe._style[path][0].cpu().numpy() for path in paths}
@@ -191,25 +191,27 @@ def _swm_value(path, value):
 
 
 def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
-    """Piecewise target and bias-field leaves, per lane, against stable-worldmodel's frames through a rollout."""
-    values = _lane_values(LAYERS)
+    """Piecewise target and bias-field leaves, per environment, against stable-worldmodel's frames through a rollout."""
+    values = _instance_values(LAYERS)
     refs = [
         NativeNavigationReference(
             "piecewise",
             1,
-            options={"variation": [], "variation_values": {k: _swm_value(k, v[lane]) for k, v in values.items()}},
+            options={"variation": [], "variation_values": {k: _swm_value(k, v[instance]) for k, v in values.items()}},
         )
-        for lane in range(3)
+        for instance in range(3)
     ]
     actions = np.random.default_rng(seed).uniform(-1, 1, (steps, 3, 2)).astype(np.float32)
-    evidence = {"stable_env": "Piecewise", "lanes": [sorted(c) for c in LAYERS], "seed": seed, "frames": []}
+    evidence = {"stable_env": "Piecewise", "instances": [sorted(c) for c in LAYERS], "seed": seed, "frames": []}
     with se.make("Piecewise", num_envs=3, device="cpu") as env:
         try:
             expected = _swm_reset(refs, seed)[0]
             compare_state(env.reset(seed=seed, options={"variation": [], "variation_values": values}), expected)
             for t in range(steps + 1):
                 if t:
-                    theirs = [ref.step(actions[t - 1][lane : lane + 1])["state"] for lane, ref in enumerate(refs)]
+                    theirs = [
+                        ref.step(actions[t - 1][instance : instance + 1])["state"] for instance, ref in enumerate(refs)
+                    ]
                     compare_state(env.step(actions[t - 1], frames=None)["state"], torch.cat(theirs))
                 ours = env.render().cpu().numpy()
                 theirs = np.stack([np.asarray(ref.envs[0].render()) for ref in refs])
@@ -223,7 +225,7 @@ def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
                 ref.close()
     moved = (np.abs(ours.astype(np.int16) - plain.astype(np.int16)).max(-1) > 0).reshape(3, -1).sum(1)
     assert (moved > 0).all(), moved
-    evidence["px_moved_by_leaves_per_lane"] = moved.tolist()
+    evidence["px_moved_by_leaves_per_instance"] = moved.tolist()
     return evidence
 
 

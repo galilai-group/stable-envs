@@ -71,7 +71,7 @@ def test_cell_matches_the_source_task_and_restores_into_a_fresh_env(name):
             compare_state(_source_fields(env.reset(seed=seed)), ref.reset(seed))
             _rollout(env, ref, actions[:8])
             saved = env.get_state()
-            # Both lanes cross the source's time limit inside the next actions.
+            # Both environments cross the source's time limit inside the next actions.
             near_limit = saved.clone()
             get_field(near_limit, "lifecycle/step_count")[:] = ref.step_limit - 3
             for wrapper in ref.envs:

@@ -153,7 +153,7 @@ def test_every_state_dim_reaches_the_render(env):
     if not has_render_rows(env):
         r = RS.check_state_reaches_the_render(env)
         assert r["duplicate_frames"] == 0 and r["steps_change_the_frame"], (
-            f"the State does not reach the frame: lanes reset from different seeds give "
+            f"the State does not reach the frame: environments reset from different seeds give "
             f"{r['duplicate_frames']} duplicate frame(s), and steps change the frame: {r['steps_change_the_frame']}"
         )
         return

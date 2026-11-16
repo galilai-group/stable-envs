@@ -156,7 +156,7 @@ class TiltParams(_physics.PhysicsParams):
             _physics._refresh_bvh(model, 0)
 
 
-class SphereLanes(_physics.PhysicsLanes):
+class SphereInstances(_physics.PhysicsInstances):
     PARAMS = SphereParams
 
     def __init__(self, params, models, **options):
@@ -166,7 +166,7 @@ class SphereLanes(_physics.PhysicsLanes):
         self.values = np.tile(self.spec.nominal, (len(self.models), 1))
 
 
-class TiltLanes(SphereLanes):
+class TiltInstances(SphereInstances):
     PARAMS = TiltParams
 
 
@@ -279,14 +279,14 @@ def compile_options(key: str) -> dict:
     return {"total_mass": 14.0, "unscaled_total": float(unscaled.body_mass[1:].sum())}
 
 
-def make_lanes(key: str, models):
+def make_instances(key: str, models):
     declared = params(key)
     if not declared:
         return None
     if any(isinstance(k, (SphereRadius, SphereDensity)) for k in declared):
-        lanes = SphereLanes
+        instances = SphereInstances
     elif any(isinstance(k, PlaneTilt) for k in declared):
-        lanes = TiltLanes
+        instances = TiltInstances
     else:
-        lanes = _physics.PhysicsLanes
-    return lanes(declared, models, **compile_options(key))
+        instances = _physics.PhysicsInstances
+    return instances(declared, models, **compile_options(key))

@@ -22,7 +22,7 @@ CUDA_MIN_ENVS: int | None = None
 
 
 def _measure(device, config: dict | None):
-    """Build and step Rocket lanes on one backend, for ``stable-envs tune``."""
+    """Build and step Rocket environments on one backend, for ``stable-envs tune``."""
     import torch
 
     from ...._execution.backends import measure_adapter
@@ -97,11 +97,11 @@ def make_rocket_adapter(
 
         return RocketCudaAdapter(num_envs, device, seed, config, frame)
     from .adapter import RocketAdapter
-    from .process import LANES_PER_PROCESS
+    from .process import ENVS_PER_PROCESS
 
     cpus = cpu_affinity()
     count = (
-        process_count(num_envs, cpus, path="rocket-sim", lanes_per_process=LANES_PER_PROCESS)
+        process_count(num_envs, cpus, path="rocket-sim", envs_per_process=ENVS_PER_PROCESS)
         if type(num_envs) is int and num_envs > 0
         else 0
     )

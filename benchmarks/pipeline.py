@@ -78,10 +78,10 @@ def _read_state(path: Path, batch: int) -> TensorDict:
     if not isinstance(loaded, np.lib.npyio.NpzFile):
         raise ValueError(f"{path}: expected an .npz full State with one array per field, not one array")
     try:
-        lanes = min(len(loaded[k]) for k in loaded.files)
-        if lanes < batch:
+        instances = min(len(loaded[k]) for k in loaded.files)
+        if instances < batch:
             raise ValueError(
-                f"{path}: contains {lanes} states, fewer than --batch={batch}; "
+                f"{path}: contains {instances} states, fewer than --batch={batch}; "
                 "the benchmark will not duplicate states silently"
             )
         fields = {tuple(k.split("/")): torch.tensor(loaded[k][:batch]) for k in loaded.files}

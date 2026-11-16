@@ -1,4 +1,4 @@
-"""Assemble and validate state columns from per-lane simulator rows."""
+"""Assemble and validate state columns from per-environment simulator rows."""
 
 import numpy as np
 import torch

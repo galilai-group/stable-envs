@@ -130,7 +130,7 @@ def render_classic_cpu(ops: Ops, out: torch.Tensor | None = None) -> torch.Tenso
     if plate is None:
         plate_np, idx = np.zeros((0, 3, 1, 1), np.uint8), np.zeros(1, np.int64)
     else:
-        # Planar (3, U, H, W) as the CUDA kernel reads it; lanes map to images by lane index or ops.plate_idx.
+        # Planar (3, U, H, W) as the CUDA kernel reads it; environments map to images by environment index or ops.plate_idx.
         plate_np = plate.permute(1, 0, 2, 3).numpy()
         pidx = getattr(ops, "plate_idx", None)
         idx = pidx.numpy() if pidx is not None else np.arange(B, dtype=np.int64) % plate_np.shape[0]

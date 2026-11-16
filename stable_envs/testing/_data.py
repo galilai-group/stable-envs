@@ -167,7 +167,7 @@ class _RenderingDataset(torch.utils.data.Dataset):
         """Measure ``(H, W, 3)`` with a one-row render; outputs need not be square.
 
         Use the dataset's first style, or the default, to avoid broadcasting an
-        unrelated per-lane environment appearance.
+        unrelated per-environment environment appearance.
         """
         if self._frame_hw is None:
             style = getattr(self, "style", None)

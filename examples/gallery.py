@@ -2,9 +2,9 @@
 
 Per env, under ``--out/<env>/``:
 
-  ``reset.png``       one frame per lane after ``reset``
-  ``rollout.png``     lane 0 over ``--steps`` random actions, for envs with dynamics
-  ``variation.png``   lane 0's state under one sampled appearance per lane, for envs whose
+  ``reset.png``       one frame per environment after ``reset``
+  ``rollout.png``     environment 0 over ``--steps`` random actions, for envs with dynamics
+  ``variation.png``   environment 0's state under one sampled appearance per environment, for envs whose
                       ``render`` takes ``variation=``
 
     python examples/gallery.py --out media

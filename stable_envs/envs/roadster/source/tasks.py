@@ -55,7 +55,7 @@ class RoadsterPlanEnv:
         if task not in TASKS:
             raise ValueError(f"unknown task {task!r}; known: {TASKS}")
         self.task = task
-        # A template lane shares its compiled model, settled pose and loop goal (all independent of the episode).
+        # A template environment shares its compiled model, settled pose and loop goal (all independent of the episode).
         self.sim = RoadsterSim(course=course, template=None if template is None else template.sim)
         self.ap = Autopilot(self.sim)
         self.dt = self.sim.dt * REPEAT

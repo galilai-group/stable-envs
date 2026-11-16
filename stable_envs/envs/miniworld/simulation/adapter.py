@@ -68,7 +68,7 @@ ACTION_HIGH = 8
 
 #: The FloWM dynamic dataset ("SUNDAY V2" in the fork's ``scripts/old_generation_commands.py``): plain
 #: colored boxes in the env's white-walled, concrete-floored room. Like the script's
-#: ``--num-blocks-min 6 --num-blocks-max 10``, each lane draws its block count uniformly from [6, 10] at reset.
+#: ``--num-blocks-min 6 --num-blocks-max 10``, each environment draws its block count uniformly from [6, 10] at reset.
 FLOWM = {
     "room_size": 16,
     "grid_mode": True,
@@ -166,7 +166,7 @@ def resolve_config(preset: str, overrides: dict) -> dict:
     config = {**UPSTREAM, **PRESETS[preset], **overrides}
     if "color_pool" in config and config["color_pool"] is not None:
         config["color_pool"] = tuple(config["color_pool"])
-    # An int fixes the count; a (min, max) pair draws it per lane and reset, like the dataset script.
+    # An int fixes the count; a (min, max) pair draws it per environment and reset, like the dataset script.
     count = config.get("num_blocks", 6)
     lo, hi = (int(count), int(count)) if isinstance(count, (int, np.integer)) else (int(count[0]), int(count[1]))
     if not 1 <= lo <= hi:
@@ -184,7 +184,7 @@ def source_kwargs(config: dict, size: int) -> dict:
     from miniworld.params import DEFAULT_PARAMS
 
     kwargs = {k: v for k, v in config.items() if k in WORLD_KEYS}
-    kwargs["num_blocks"] = int(config["num_blocks"][1])  # each reset sets the lane's own count
+    kwargs["num_blocks"] = int(config["num_blocks"][1])  # each reset sets the environment's own count
     if "room_size" in kwargs:
         kwargs["size"] = int(kwargs.pop("room_size"))
     if "color_pool" in kwargs and kwargs["color_pool"] is not None:
@@ -256,7 +256,7 @@ def frame(env) -> np.ndarray:
     """The agent view ``env.render()`` returns in ``rgb_array`` mode: ``render_obs`` into the window buffer.
 
     Display list 1 is recompiled only when it holds another room (see ``_COMPILED``), so each env draws its
-    own room, as a lone env in its process does, and lanes that share a room compile it once.
+    own room, as a lone env in its process does, and environments that share a room compile it once.
     """
     env.shadow_window.switch_to()
     room = env._se_room
@@ -271,7 +271,7 @@ def state_schema(num_blocks: int) -> StateSchema:
     """The State of environments with ``num_blocks`` block slots: one group for each dtype.
 
     The float64 group holds the agent pose and the blocks' size, position, heading and velocity; the int64 group
-    holds the indices, the generator and the step count; the bool group marks the lane's blocks.
+    holds the indices, the generator and the step count; the bool group marks the environment's blocks.
     """
     f64, i64, m = torch.float64, torch.int64, int(num_blocks)
     floats, ints, flags = "moving_block_world/float64", "moving_block_world/int64", "moving_block_world/bool"
@@ -292,7 +292,9 @@ def state_schema(num_blocks: int) -> StateSchema:
             Field("rng/seed", (1,), i64, ints),  # the reset draws hash (seed, episode, draw index); see rng.py
             Field("rng/episode", (1,), i64, ints),
             Field("lifecycle/elapsed_steps", (1,), i64, ints),
-            Field("blocks/present", (m,), torch.bool, flags),  # the lane's blocks first; absent slots hold padding
+            Field(
+                "blocks/present", (m,), torch.bool, flags
+            ),  # the environment's blocks first; absent slots hold padding
         ],
     )
 
@@ -303,7 +305,7 @@ def _ball_colors() -> dict[int, str]:
     return {id(ObjMesh.get(f"ball_{c}")): c for c in COLORS}
 
 
-def read_lane(env, num_blocks: int) -> dict:
+def read_instance(env, num_blocks: int) -> dict:
     """One environment's state values, read from a source env; ``num_blocks`` is the padded width.
 
     A source env has no counter-based generator, so the ``rng`` fields are 0.
@@ -353,7 +355,7 @@ def read_lane(env, num_blocks: int) -> dict:
 
 
 def _world(row: dict) -> tuple:
-    """The parts of a lane's state that fix its static world (room, block kinds and sizes)."""
+    """The parts of an environment's state that fix its static world (room, block kinds and sizes)."""
     return tuple(
         tuple(np.asarray(row[key]).reshape(-1).tolist())
         for key in (
@@ -371,7 +373,7 @@ def build_world(env, row: dict) -> None:
     """Rebuild ``env``'s room and entities from state, as ``MiniWorldEnv.reset`` builds them after ``_gen_world``.
 
     The room (geometry, textures, collision segments and lights) is rebuilt only when its textures differ:
-    lanes of one configuration differ only in their blocks, which are drawn per frame. ``frame`` compiles
+    environments of one configuration differ only in their blocks, which are drawn per frame. ``frame`` compiles
     the room's display list when it draws.
     """
     from miniworld.entity import Agent, Ball, Box
@@ -408,7 +410,7 @@ def build_world(env, row: dict) -> None:
     env._se_world = _world(row)
 
 
-def write_lane(env, row: dict) -> None:
+def write_instance(env, row: dict) -> None:
     """Write validated state values into a source env, rebuilding the world only when it differs."""
     if getattr(env, "_se_world", None) != _world(row):
         build_world(env, row)
@@ -475,7 +477,7 @@ def pack_rows(state: TensorDict, schema: StateSchema) -> np.ndarray:
 
 def unpack_rows(rows: np.ndarray, schema: StateSchema) -> list[dict]:
     """Inverse of :func:`pack_rows`: one dict of values for each row, keyed by field name with ``.`` joins."""
-    lanes, offset = [{} for _ in range(len(rows))], 0
+    instances, offset = [{} for _ in range(len(rows))], 0
     for group in schema.groups.values():
         block = rows[:, offset : offset + group.size]
         offset += group.size
@@ -485,9 +487,9 @@ def unpack_rows(rows: np.ndarray, schema: StateSchema) -> list[dict]:
             block = np.rint(block).astype(np.int64)
         for field in group.fields:
             part = block[:, field.start : field.stop]
-            for lane, value in zip(lanes, part, strict=True):
-                lane[field.name.replace("/", ".")] = value
-    return lanes
+            for instance, value in zip(instances, part, strict=True):
+                instance[field.name.replace("/", ".")] = value
+    return instances
 
 
 def draw_rows(env, rows: list[dict], out: np.ndarray) -> None:
@@ -497,7 +499,7 @@ def draw_rows(env, rows: list[dict], out: np.ndarray) -> None:
     each world's blocks are built once.
     """
     for i in sorted(range(len(rows)), key=lambda i: _world(rows[i])):
-        write_lane(env, rows[i])
+        write_instance(env, rows[i])
         out[i] = frame(env)
 
 

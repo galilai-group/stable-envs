@@ -16,11 +16,11 @@ pytestmark = pytest.mark.unit
 
 @pytest.mark.parametrize("threads", [2, 3, 6])
 def test_thread_count_keeps_state(threads):
-    with tuning.override(workers=0, worker_min_lanes=4, fetch_threads=1):
+    with tuning.override(workers=0, worker_min_envs=4, fetch_threads=1):
         reference = snv.make(
             "FetchPush", num_envs=6, seed=17, device="cpu", backend="opengl", simulation_backend="source"
         )
-    with tuning.override(workers=0, worker_min_lanes=4, fetch_threads=threads):
+    with tuning.override(workers=0, worker_min_envs=4, fetch_threads=threads):
         candidate = snv.make(
             "FetchPush", num_envs=6, seed=17, device="cpu", backend="opengl", simulation_backend="source"
         )

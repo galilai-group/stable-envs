@@ -70,9 +70,9 @@ def test_plane_reflections_match_analytic_sphere_and_material_addition(tilt):
     expected_hits = visible & np.isfinite(mirror)
     assert expected_hits.sum() > 20
     assert np.array_equal((result != baseline).any(-1), expected_hits)
-    for lane in range(3):
-        expected = (0.4 * args[5][lane, 1] + args[5][lane, 0]).clamp(0, 1).numpy() * 255
-        assert np.max(abs(result[lane, expected_hits[lane]].astype(float) - expected)) <= 1
+    for instance in range(3):
+        expected = (0.4 * args[5][instance, 1] + args[5][instance, 0]).clamp(0, 1).numpy() * 255
+        assert np.max(abs(result[instance, expected_hits[instance]].astype(float) - expected)) <= 1
 
 
 @pytest.mark.parametrize("shadows", [False, True])

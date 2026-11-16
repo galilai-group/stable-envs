@@ -1036,18 +1036,18 @@ class Canvas:
         for c in range(3):
             buf[c].masked_fill_(mask, int(color[c]))
 
-    def _disc_index(self, cy, cx, off, gate=None, lanes=None):
+    def _disc_index(self, cy, cx, off, gate=None, instances=None):
         """Place disc stencil offsets in each frame, redirecting invalid indices to trash.
 
-        ``lanes`` names the environment of each center when they are a subset of the batch.
+        ``instances`` names the environment of each center when they are a subset of the batch.
         """
         B = cy.shape[0]
         y = cy.view(-1, 1) + off[:, 0].view(1, -1)
         x = cx.view(-1, 1) + off[:, 1].view(1, -1)
         ok = (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         if gate is not None:
-            ok = ok & (gate if lanes is None else gate[lanes]).view(-1, 1)
-        b = (torch.arange(B, device=self.device) if lanes is None else lanes).view(-1, 1)
+            ok = ok & (gate if instances is None else gate[instances]).view(-1, 1)
+        b = (torch.arange(B, device=self.device) if instances is None else instances).view(-1, 1)
         return torch.where(
             ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W + x.clamp(0, self.W - 1), self.trash
         ).reshape(-1)
@@ -1142,12 +1142,12 @@ class StyleCanvas(Canvas):
         c = to_u8(self.col if color is None else color)
         self.flat[:, idx] = c.t()[:, torch.repeat_interleave(b, n)]
 
-    def paint_disc(self, cy, cx, off, color=None, lanes=None) -> None:
+    def paint_disc(self, cy, cx, off, color=None, instances=None) -> None:
         B, S = cy.shape[0], off.shape[0]
-        idx = self._disc_index(cy, cx, off, self.gate, lanes)
+        idx = self._disc_index(cy, cx, off, self.gate, instances)
         c = to_u8(self.col if color is None else color)
-        if lanes is not None:
-            c = c[lanes]
+        if instances is not None:
+            c = c[instances]
         self.flat[:, idx] = c.t().reshape(3, B, 1).expand(3, B, S).reshape(3, -1)
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
@@ -1284,11 +1284,11 @@ def polygon(
 
 
 def circle(
-    cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True, window=None, disc=None, lanes=None
+    cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True, window=None, disc=None, instances=None
 ) -> None:
     """Draw ordered antialiased fringe passes, then the filled circle.
 
-    ``disc`` is a filled-disc stencil (``hw_t`` and ``window`` are used otherwise). With ``lanes``, the
+    ``disc`` is a filled-disc stencil (``hw_t`` and ``window`` are used otherwise). With ``instances``, the
     centers belong to those environments only.
     """
     if aa and stencil is not None:
@@ -1306,8 +1306,8 @@ def circle(
                 st[:, 2].view(1, -1).expand(B, S).reshape(-1),
                 cv.always().expand(B * S),
             )
-    if lanes is not None:
-        cv.paint_disc(cy, cx, disc, color, lanes)
+    if instances is not None:
+        cv.paint_disc(cy, cx, disc, color, instances)
     elif disc is not None:
         cv.paint_disc(cy, cx, disc, color)
     else:
@@ -1326,7 +1326,7 @@ def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
     quarter = torch.fmod(a + _VECTOR_EPSILON, math.pi / 2) < 2 * _VECTOR_EPSILON
     k = torch.div(a + _VECTOR_EPSILON, math.pi / 2, rounding_mode="trunc").to(torch.int64) % 4
     if a.device.type == "cpu":
-        # Vectorized torch trig can differ from C libm by one ulp; there is one angle per lane, so use libm.
+        # Vectorized torch trig can differ from C libm by one ulp; there is one angle per environment, so use libm.
         flat = a.detach().reshape(-1).tolist()
         c = torch.tensor([math.cos(x) for x in flat], dtype=a.dtype).reshape(a.shape)
         s = torch.tensor([math.sin(x) for x in flat], dtype=a.dtype).reshape(a.shape)

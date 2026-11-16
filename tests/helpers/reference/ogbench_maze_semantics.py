@@ -83,13 +83,13 @@ class OGBMazeReference:
             self.env_name = None
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
 
-    def _in_legacy_rng(self, lane, function, *args, **kwargs):
+    def _in_legacy_rng(self, instance, function, *args, **kwargs):
         outside = np.random.get_state()
-        np.random.set_state(self._global_rng[lane])
+        np.random.set_state(self._global_rng[instance])
         try:
             return function(*args, **kwargs)
         finally:
-            self._global_rng[lane] = np.random.get_state()
+            self._global_rng[instance] = np.random.get_state()
             np.random.set_state(outside)
 
     def reset(self, seed=None):
@@ -97,15 +97,15 @@ class OGBMazeReference:
             if seed is not None:
                 self._global_rng[i] = np.random.RandomState(int(seed) + i).get_state()
             self._in_legacy_rng(
-                i, wrapper.reset, seed=None if seed is None else int(seed) + i, options=self._lane_options(i)
+                i, wrapper.reset, seed=None if seed is None else int(seed) + i, options=self._instance_options(i)
             )
         return self.get_state()
 
-    def _lane_options(self, lane):
+    def _instance_options(self, instance):
         if self.options is None:
             return None
         values = self.options.get("variation_values", {})
-        return {**self.options, "variation_values": {k: np.asarray(v)[lane] for k, v in values.items()}}
+        return {**self.options, "variation_values": {k: np.asarray(v)[instance] for k, v in values.items()}}
 
     def get_state(self):
         rows = []

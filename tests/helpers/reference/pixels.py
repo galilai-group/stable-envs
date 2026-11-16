@@ -1,6 +1,6 @@
 """Online checks consume source-witnessed traces; family adapters build them.
 
-Source pixels must come from forward-running upstream lanes, never a candidate
+Source pixels must come from forward-running upstream environments, never a candidate
 render or a source restored using candidate serialization.
 """
 
@@ -32,7 +32,7 @@ class PixelTrace:
     initial: TensorDict
     states: list[TensorDict]
     tasks: dict[str | tuple[str, ...], torch.Tensor]  # [B,T,...], including the one-action case.
-    frames: NDArray[np.uint8]  # [B,T,H,W,3], including held terminal lanes.
+    frames: NDArray[np.uint8]  # [B,T,H,W,3], including held terminal environments.
     valid: torch.Tensor
     actions: NDArray  # [B,T,A]; the family chooses the action dtype.
     nan_tasks: frozenset[str | tuple[str, ...]] = frozenset()

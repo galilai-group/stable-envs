@@ -99,8 +99,8 @@ class OGBBridge:
 
             self.oracle = load_oracle()
             try:
-                for lane in range(batch):
-                    self.envs.append(getattr(self.oracle, "Owned" + case.domain)(entropy_seed=lane))
+                for instance in range(batch):
+                    self.envs.append(getattr(self.oracle, "Owned" + case.domain)(entropy_seed=instance))
             except BaseException:
                 self.close()
                 raise
@@ -109,8 +109,8 @@ class OGBBridge:
         if self.source:
             self.source.reset(seed)
         else:
-            for lane, source in enumerate(self.envs):
-                source.reset(seed=seed + lane)
+            for instance, source in enumerate(self.envs):
+                source.reset(seed=seed + instance)
 
     def compare(self, candidate):
         if self.source:
@@ -141,8 +141,8 @@ class PushTBridge:
         self.envs = [cls(resolution=64) for _ in range(batch)]
 
     def reset(self, seed):
-        for lane, source in enumerate(self.envs):
-            source.reset(seed=seed + lane)
+        for instance, source in enumerate(self.envs):
+            source.reset(seed=seed + instance)
 
     def compare(self, candidate):
         from tests.helpers.reference.pusht_semantics import diagnostics, equal
@@ -172,8 +172,8 @@ class FetchBridge:
             raise
 
     def reset(self, seed):
-        for lane, source in enumerate(self.envs):
-            source.reset(seed=seed + lane, options={"variation": []})
+        for instance, source in enumerate(self.envs):
+            source.reset(seed=seed + instance, options={"variation": []})
 
     def compare(self, candidate):
         from tests.helpers.reference.fetch_semantics import snapshot, source_state
@@ -205,8 +205,8 @@ class RocketBridge:
             raise
 
     def reset(self, seed):
-        for lane, source in enumerate(self.envs):
-            source.reset(seed=seed + lane)
+        for instance, source in enumerate(self.envs):
+            source.reset(seed=seed + instance)
 
     def compare(self, candidate):
         from tests.helpers.reference.rocket_semantics import capture, differences

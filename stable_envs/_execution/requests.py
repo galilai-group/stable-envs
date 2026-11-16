@@ -6,9 +6,12 @@ import numpy as np
 from .. import tuning
 
 
-def lane_slices(num_envs, processes):
-    """Split ``num_envs`` lanes into ``processes`` contiguous, nearly equal slices."""
-    return [slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)]
+def instance_slices(num_envs, processes):
+    """Split ``num_envs`` environments into ``processes`` contiguous, nearly equal slices."""
+    return [
+        slice(int(instances[0]), int(instances[-1]) + 1)
+        for instances in np.array_split(np.arange(num_envs), processes)
+    ]
 
 
 class ProcessRequests:
@@ -39,7 +42,7 @@ class ProcessRequests:
         return results
 
     def _spawn_workers(self, context, target, cpus, args, daemon=False):
-        """Start one ``target`` worker per lane slice and store each ready reply in ``worker_info``.
+        """Start one ``target`` worker per environment slice and store each ready reply in ``worker_info``.
 
         ``args(rows, cpus)`` returns the arguments after the worker's pipe end, with
         ``cpus`` split evenly across workers. Daemon workers cannot start processes; the

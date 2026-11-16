@@ -1,6 +1,6 @@
 """Time ``env.render(state)`` for the same states on CPU and on CUDA.
 
-Each env is reset with ``--pool`` lanes; the state is tiled up to each batch size, since ``render``
+Each env is reset with ``--pool`` environments; the state is tiled up to each batch size, since ``render``
 accepts a state of any batch. The table reports frames per second per device and the CUDA speedup.
 Envs that require CUDA have no CPU column. Without CUDA only the CPU column is measured.
 
@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="render() frames/s on CPU and CUDA for the same States.")
     p.add_argument("--envs", default="", help="comma-separated names; default is every registered env")
     p.add_argument("--batches", default="1,64,1024")
-    p.add_argument("--pool", type=int, default=16, help="lanes reset per env; States are tiled to each batch")
+    p.add_argument("--pool", type=int, default=16, help="environments reset per env; States are tiled to each batch")
     p.add_argument("--reps", type=int, default=10)
     p.add_argument("--out", type=Path, default=None, help="optional JSON path for the results")
     args = p.parse_args(argv)

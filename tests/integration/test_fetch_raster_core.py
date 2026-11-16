@@ -19,12 +19,12 @@ def software_gl() -> None:
     pytest.importorskip("numba")
 
 
-def _env(scene, lanes):
-    env = se.make(f"Fetch{scene}", num_envs=lanes, device="cpu")
+def _env(scene, instances):
+    env = se.make(f"Fetch{scene}", num_envs=instances, device="cpu")
     env.reset(seed=3)
     generator = torch.Generator().manual_seed(3)
     for _ in range(4):
-        env.step(torch.rand(lanes, 4, generator=generator) * 2 - 1)
+        env.step(torch.rand(instances, 4, generator=generator) * 2 - 1)
     return env
 
 

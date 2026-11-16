@@ -109,7 +109,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 result = advance(acts[:, t])
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
-                # Family hook actually skips finished lanes, without step/restore.
+                # Family hook actually skips finished environments, without step/restore.
                 result = advance(acts[:, t], active=active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = t in state_times or t in frame_times or t == length - 1

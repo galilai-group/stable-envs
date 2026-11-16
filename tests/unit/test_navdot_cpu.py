@@ -127,13 +127,13 @@ def test_row_kernel_draws_the_frame_kernel_bytes():
         assert np.array_equal(by_frame, by_rows), (B, ND)
 
 
-@pytest.mark.parametrize("per_lane", [False, True], ids=["shared", "per-lane"])
+@pytest.mark.parametrize("per_instance", [False, True], ids=["shared", "per-instance"])
 @pytest.mark.parametrize("cfg", ["TwoRoom", "TwoRoomTarget"])
-def test_sequence_frames_are_the_renders_of_the_states(cfg, per_lane):
+def test_sequence_frames_are_the_renders_of_the_states(cfg, per_instance):
     """A step draws the frames of all its actions in one call; each is the render of its State."""
     with se.make(cfg, num_envs=5, device="cpu") as env:
         env.reset(seed=4)
-        if per_lane:
+        if per_instance:
             env.set_variation({"agent.radius": torch.tensor([[7.0], [9.0], [11.0], [13.0], [14.0]])})
         actions = torch.as_tensor(np.random.default_rng(1).uniform(-1, 1, (5, 9, 2)), dtype=torch.float32)
         out = env.step(actions, states=slice(None), frames=slice(None))

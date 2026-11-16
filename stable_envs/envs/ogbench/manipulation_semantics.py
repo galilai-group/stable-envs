@@ -117,7 +117,7 @@ class ManipulationSemantics:
         variation, style = _split_appearance(variation, style)
         if style is None:
             style = (self._style if self._render_style is None else self._render_style).values
-            # Lanes differing only in reset-time leaves share one appearance.
+            # Environments differing only in reset-time leaves share one appearance.
             if len(style) != B and rows_are_equal(style[:, self._drawn_columns()]):
                 style = style[:1]
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
@@ -178,7 +178,7 @@ class ManipulationSemantics:
         return self.device.type != "cpu" and getattr(self._simulator, "step_host", None) is not None
 
     def _masks_on_device(self) -> bool:
-        """Whether the simulator masks finished lanes of a sequence on the device, so steps need no readback."""
+        """Whether the simulator masks finished environments of a sequence on the device, so steps need no readback."""
         return getattr(self._simulator, "masks_on_device", False)
 
     def _host_advance(self, actions, *, active=None, capture_state=True):
@@ -307,11 +307,11 @@ class ManipulationSemantics:
         return self._into(result, out)
 
     def _render_live(self):
-        """The stepping hook: frames of the live lanes."""
+        """The stepping hook: frames of the live environments."""
         return self.render()
 
     def _draw_live(self, size, supersample, chunk_size, out, chosen="opengl"):
-        """Draw the live lanes from simulator columns straight into OpenGL, without a RenderState TensorDict."""
+        """Draw the live environments from simulator columns straight into OpenGL, without a RenderState TensorDict."""
         from . import manipulation_opengl
         from .simulation import render_state as pixels
 

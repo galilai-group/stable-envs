@@ -161,7 +161,7 @@ def test_relative_controls_and_contact_track_pymunk(initial, action, steps, atol
 
 @pytest.mark.parametrize("discrete", [False, True])
 def test_masked_steps_checkpoints_and_cuda_tensors(discrete):
-    """A masked step leaves the inactive lanes alone, and a checkpoint restores without physics."""
+    """A masked step leaves the inactive environments alone, and a checkpoint restores without physics."""
     cases = [(PushTNumbaAdapter, "cpu")]
     if torch.cuda.is_available():
         from stable_envs.envs.pusht.simulation.triton_batch import PushTTritonAdapter

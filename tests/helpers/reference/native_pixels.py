@@ -10,7 +10,7 @@ from tests.helpers.reference.semantics import compare_state
 
 
 def native_trace(case: Registration, seed: int, dtype: str, horizon: int, scenario: str) -> PixelTrace:
-    """Capture source-owned States and native-resolution pixels without restoring source lanes."""
+    """Capture source-owned States and native-resolution pixels without restoring source environments."""
     with closing(NativeClassicReference(case.domain, 2, render_mode="rgb_array")) as source:
         source.reset(seed)
         limit = source.envs[0].spec.max_episode_steps
@@ -38,9 +38,9 @@ def native_trace(case: Registration, seed: int, dtype: str, horizon: int, scenar
         for t in range(horizon):
             validity.append(active.copy())
             rows = []
-            for lane, env in enumerate(source.envs):
-                if active[lane]:
-                    action = actions[lane, t, 0].item() if dtype == "int64" else actions[lane, t].copy()
+            for instance, env in enumerate(source.envs):
+                if active[instance]:
+                    action = actions[instance, t, 0].item() if dtype == "int64" else actions[instance, t].copy()
                     observation, reward, terminated, truncated, info = env.step(action)
                     row = dict(
                         observation=observation.copy(),
@@ -49,10 +49,10 @@ def native_trace(case: Registration, seed: int, dtype: str, horizon: int, scenar
                         terminated=np.bool_(terminated),
                         truncated=np.bool_(truncated),
                     )
-                    previous[lane] = row
-                    active[lane] = not (terminated or truncated)
+                    previous[instance] = row
+                    active[instance] = not (terminated or truncated)
                 else:
-                    row = {key: np.zeros_like(value) for key, value in previous[lane].items()}
+                    row = {key: np.zeros_like(value) for key, value in previous[instance].items()}
                 rows.append(row)
             states.append(source.get_state())
             frames.append(np.stack([env.render().copy() for env in source.envs]))

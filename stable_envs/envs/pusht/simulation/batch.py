@@ -10,7 +10,7 @@ from ...._core.tensordicts import build_tensordict
 from .numba_physics import warm_start
 from .numeric import MAX_SHAPES, geometry_columns, install_latest
 from .replay import HISTORY_KEYS, validate_seed
-from .replay_batch import PushTReplayAdapter, lane_options
+from .replay_batch import PushTReplayAdapter, instance_options
 
 _TORCH_DTYPES: dict = {}
 
@@ -88,12 +88,12 @@ UNFOLDED = frozenset({"current/goal_image"})
 
 
 class PushTBatchAdapter(PushTReplayAdapter):
-    """Step PushT lanes with one batched physics call; CPU owners supply resets, restores and Variation.
+    """Step PushT environments with one batched physics call; CPU owners supply resets, restores and Variation.
 
     Subclasses implement ``_advance``.
 
-    With ``processes``, owners in worker processes reset the lanes (see ``PushTResetPool``). After a
-    worker reset, the workers own the lanes' CPU engines and the batch columns hold their static fields;
+    With ``processes``, owners in worker processes reset the environments (see ``PushTResetPool``). After a
+    worker reset, the workers own the environments' CPU engines and the batch columns hold their static fields;
     ``envs`` rebuilds the parent owners from the columns when it is read.
 
     The exported State is folded by ``group_of``.
@@ -139,18 +139,18 @@ class PushTBatchAdapter(PushTReplayAdapter):
             self._materialize([0])
         return self._envs[0]
 
-    def _materialize(self, lanes):
-        """Rebuild the parent owners of ``lanes`` from the batch columns of a worker reset."""
-        for lane in lanes:
-            row = {key: np.asarray(value[lane]) for key, value in self._columns.items()}
-            owner = self._envs[lane].reconstruct_anchor(row)
+    def _materialize(self, instances):
+        """Rebuild the parent owners of ``instances`` from the batch columns of a worker reset."""
+        for instance in instances:
+            row = {key: np.asarray(value[instance]) for key, value in self._columns.items()}
+            owner = self._envs[instance].reconstruct_anchor(row)
             owner._install_metadata({k.removeprefix("owned/"): v for k, v in row.items() if k.startswith("owned/")})
-            self._envs[lane].close()
-            self._envs[lane] = owner
-            self._stale.discard(lane)
+            self._envs[instance].close()
+            self._envs[instance] = owner
+            self._stale.discard(instance)
 
     def _adopt(self, columns):
-        """Install the static columns that the workers wrote; the workers now own the lanes."""
+        """Install the static columns that the workers wrote; the workers now own the environments."""
         self._columns = columns
         self._stale = set(range(self.num_envs))
         self._pool_owns = True
@@ -332,24 +332,26 @@ class PushTBatchAdapter(PushTReplayAdapter):
             return super().reset(seed, options)
         validate_seed(seed)
         if isinstance(options, list):
-            lanes = options
+            instances = options
         elif isinstance((options or {}).get("variation_values"), dict):
-            # Only per-lane variation values need the space; reading it rebuilds a lane the workers own.
+            # Only per-environment variation values need the space; reading it rebuilds an environment the workers own.
             space = self.template.env.variation_space
-            lanes = [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+            instances = [
+                instance_options(space, options, self.num_envs, instance) for instance in range(self.num_envs)
+            ]
         else:
-            lanes = [options] * self.num_envs
-        # Workers that do not own the lanes first take the owners' metadata from the columns.
+            instances = [options] * self.num_envs
+        # Workers that do not own the environments first take the owners' metadata from the columns.
         sync = None if self._pool_owns else self._static_columns()
-        static, current, geometry = self._pool.reset(seed, lanes, latest, sync)
+        static, current, geometry = self._pool.reset(seed, instances, latest, sync)
         self._adopt(static)
         self._initialize_device({**static, **current}, geometry)
         return self.get_state()
 
-    def install_variation(self, lanes, immediate=frozenset()):
+    def install_variation(self, instances, immediate=frozenset()):
         if not self._pool_owns:
-            return super().install_variation(lanes, immediate)
-        self._adopt(self._pool.install_variation(lanes, immediate))
+            return super().install_variation(instances, immediate)
+        self._adopt(self._pool.install_variation(instances, immediate))
         self._install_columns(self._columns)
 
     def variation_rows(self, attribute, keys):
@@ -406,7 +408,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
             self._codes = torch.cat(
                 (self._codes, self._codes.new_zeros(self.num_envs, capacity - self._codes.shape[1])), 1
             )
-        lane = torch.arange(self.num_envs, device=self.device)
+        instance = torch.arange(self.num_envs, device=self.device)
         index = self._lengths
         code = (
             (torch.int32, torch.int64).index(actions.dtype) + 2
@@ -415,16 +417,16 @@ class PushTBatchAdapter(PushTReplayAdapter):
         )
         new_tags = self._latest_tags[0 if relative.dtype == torch.float32 else 1]
         if everyone:
-            self._actions[lane, index] = actions.to(torch.float64)
-            self._codes[lane, index] = code
+            self._actions[instance, index] = actions.to(torch.float64)
+            self._codes[instance, index] = code
             self._lengths = self._lengths + 1
             self._width = width
             self._fixed["current/latest/value"] = relative.to(torch.float64)
             self._fixed["current/latest/type"] = new_tags.expand(self.num_envs, 2).clone()
             self._fixed["current/latest_present"] = torch.ones_like(self._fixed["current/latest_present"])
         else:
-            self._actions[lane, index] = torch.where(active[:, None], actions.to(torch.float64), 0.0)
-            self._codes[lane, index] = torch.where(active, code, 0).to(torch.uint8)
+            self._actions[instance, index] = torch.where(active[:, None], actions.to(torch.float64), 0.0)
+            self._codes[instance, index] = torch.where(active, code, 0).to(torch.uint8)
             self._lengths = self._lengths + active
             self._width = None
             self._fixed["current/latest/value"] = torch.where(
@@ -451,13 +453,13 @@ class PushTBatchAdapter(PushTReplayAdapter):
         return TensorDict._new_unsafe(outputs, batch_size=torch.Size([self.num_envs]), device=self._state_device)
 
     def _history_width(self):
-        """The longest action history; kept on the host while every lane steps, to avoid a device read."""
+        """The longest action history; kept on the host while every environment steps, to avoid a device read."""
         if self._width is None:
             self._width = int(self._lengths.max())
         return self._width
 
     def _physics(self, target, single, active, everyone):
-        """Step the solver State of the ``active`` lanes and set their contact and render-segment fields."""
+        """Step the solver State of the ``active`` environments and set their contact and render-segment fields."""
         body, bias, impulse, identifiers, tree, bounds, contacts, segments, segment_count = self._advance(
             target, single, active
         )
@@ -505,7 +507,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
             raise ValueError("PushT full State keys differ")
         fields = state_columns(state.select(*keys), base, self.num_envs)
         rows = [{k: np.asarray(v[i]).copy() for k, v in fields.items()} for i in range(self.num_envs)]
-        # Checks and replays depend only on the configuration, which every lane shares.
+        # Checks and replays depend only on the configuration, which every environment shares.
         template = self.template
         for row in rows:
             if row["recipe/version"] not in (2, 3):

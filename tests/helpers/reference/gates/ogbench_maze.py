@@ -161,7 +161,7 @@ def run_gate(device="cpu"):
                             two_history_steps=len(history),
                             full_state_render=True,
                             target_geom_restored=True,
-                            legacy_rng_lane_isolated=True,
+                            legacy_rng_instance_isolated=True,
                             max_state_error=max(max(x["state"].values()) for x in steps),
                             reward_done_observation_info_error=0.0,
                         )
@@ -261,7 +261,7 @@ def run_gate(device="cpu"):
     return evidence
 
 
-#: Per-lane explicit values (three lanes) for each swm/OGBMaze-v0 appearance leaf.
+#: Per-environment explicit values (three environments) for each swm/OGBMaze-v0 appearance leaf.
 #: The gate compares State bit for bit, so CUDA envs step on the exact CPU physics, not MuJoCo Warp.
 EXACT = {"simulation_backend": "native"}
 
@@ -276,7 +276,7 @@ APPEARANCE_CASES = {
     "wall.color": [[0.9, 0.2, 0.2], [0.0, 0.0, 0.0], [0.3, 0.6, 0.9]],
 }
 STATE_CASES = {"default": {}, **{k: {k: v} for k, v in APPEARANCE_CASES.items()}, "all": APPEARANCE_CASES}
-#: Two lanes each: a swm pixels env holds two GL contexts once its recompile rebuilds the renderer.
+#: Two environments each: a swm pixels env holds two GL contexts once its recompile rebuilds the renderer.
 PIXEL_CASES = {
     "gradient": {"floor.pixel_encoding": [1, 1]},
     "checker_colour": {"floor.pixel_encoding": [0, 0], "floor.color": APPEARANCE_CASES["floor.color"][:2]},
@@ -291,8 +291,8 @@ _OURS = {"wall.color": "walls.color"}
 _LIVE = []
 
 
-def _ours(values, lanes):
-    return {_OURS.get(k, k): np.asarray(v, np.float32).reshape(lanes, -1) for k, v in values.items()}
+def _ours(values, instances):
+    return {_OURS.get(k, k): np.asarray(v, np.float32).reshape(instances, -1) for k, v in values.items()}
 
 
 def _mse(ours, theirs):
@@ -303,15 +303,15 @@ def _mse(ours, theirs):
 
 
 def _check_frames(case, frames, shift):
-    """Within the bar, and every varied lane moved swm's frame off our default by more than our residual."""
+    """Within the bar, and every varied environment moved swm's frame off our default by more than our residual."""
     assert frames["worst"] <= FRAME_MSE_MAX, (case, frames)
     assert shift is None or shift["least"] > frames["worst"], (case, frames, shift)
 
 
 def appearance_gate(case, cell="PointMazeLargeNavigate", *, seed=23, steps=20, device="cpu"):
-    """One swm/OGBMaze-v0 appearance case against swm in the state scene, three lanes.
+    """One swm/OGBMaze-v0 appearance case against swm in the state scene, three environments.
 
-    swm recompiles the MJCF, so the same seed and per-lane ``variation_values`` must give the exact
+    swm recompiles the MJCF, so the same seed and per-environment ``variation_values`` must give the exact
     reset State and rollout, and the first frame must agree. swm's states-mode renderer is built on
     first render and never rebuilt, so every case uses fresh swm envs.
     """
@@ -354,15 +354,15 @@ def pixel_appearance_gate(cell, case, *, seed=23, device="cpu"):
     cls = se.registry.REGISTRY[cell]
     values = PIXEL_CASES[case]
     theirs, qpos = [], []
-    for lane in range(2):
+    for instance in range(2):
         swm = MazeEnv(loco_env_type=cls.LOCO, maze_type=cls.MAZE, ob_type="pixels", width=224, height=224)
         _LIVE.extend([swm, swm.env.custom_renderer])
-        lane_values = {k: np.asarray(v)[lane] for k, v in values.items()}
-        lane_values["floor.pixel_encoding"] = int(lane_values["floor.pixel_encoding"])
+        instance_values = {k: np.asarray(v)[instance] for k, v in values.items()}
+        instance_values["floor.pixel_encoding"] = int(instance_values["floor.pixel_encoding"])
         outside = np.random.get_state()
-        np.random.seed(seed + lane)  # ogbench draws the task from the global RNG
+        np.random.seed(seed + instance)  # ogbench draws the task from the global RNG
         try:
-            swm.reset(seed=seed + lane, options={"variation_values": lane_values})
+            swm.reset(seed=seed + instance, options={"variation_values": instance_values})
         finally:
             np.random.set_state(outside)
         _LIVE.append(swm.env.custom_renderer)

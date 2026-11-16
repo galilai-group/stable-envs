@@ -693,7 +693,7 @@ class FetchBase(Env):
         grp = torch.as_tensor(inv, device=self.device, dtype=torch.long)
         # Camera grouping is batch-wide; repeating it per chunk adds host transfers and synchronization.
         campos, camquat = self._camera_batch(sty, B)
-        arm = self._translucent_lanes(sty, B)
+        arm = self._translucent_instances(sty, B)
         # More worlds per context reduce launches and increase framebuffer memory.
         chunk = tuning.get("fetch_mjw_worlds", path="fetch-mjwarp", size=size, batch=B, device=self.device)
         for lo in range(0, B, chunk):
@@ -713,9 +713,9 @@ class FetchBase(Env):
                 if comp is None:
                     comp, mv = comp_t, mv_t
                 else:
-                    lane = torch.as_tensor(flags, device=self.device).view(n, 1, 1)
-                    comp = torch.where(lane.unsqueeze(-1), comp_t, comp)
-                    mv = torch.where(lane, mv_t, mv)
+                    instance = torch.as_tensor(flags, device=self.device).view(n, 1, 1)
+                    comp = torch.where(instance.unsqueeze(-1), comp_t, comp)
+                    mv = torch.where(instance, mv_t, mv)
             if ss == 1:
                 buf[lo:hi] = comp
             else:
@@ -745,8 +745,8 @@ class FetchBase(Env):
         mv = self._mover_lut().index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
         return torch.where(mv.unsqueeze(-1), rgb, pl), mv
 
-    def _translucent_lanes(self, sty, B: int):
-        """Host bool mask of lanes drawing a transparent arm, or None when no lane does."""
+    def _translucent_instances(self, sty, B: int):
+        """Host bool mask of environments drawing a transparent arm, or None when no environment does."""
         if "rendering.transparent_arm" not in sty.layout:
             return None
         flags = sty["rendering.transparent_arm"].reshape(-1)[:B].cpu().numpy() > 0.5
@@ -762,7 +762,7 @@ class FetchBase(Env):
         n = int(comp.shape[0])
         frame = comp.view(n, -1, 3)
         touched = torch.empty(frame.shape[:2], dtype=torch.uint8, device=self.device)
-        lanes = torch.as_tensor(flags.astype(np.int32), device=self.device)
+        instances = torch.as_tensor(flags.astype(np.int32), device=self.device)
         torch.cuda.synchronize()
         wp = c.wp
         b.blender.launch(
@@ -770,7 +770,7 @@ class FetchBase(Env):
             c.wd,
             c.rc,
             b.info["cam"],
-            wp.from_torch(lanes),
+            wp.from_torch(instances),
             wp.from_torch(frame),
             wp.from_torch(touched),
             ARM_ALPHA,

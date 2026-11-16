@@ -35,22 +35,22 @@ class SourceSnapshot:
 
 @pytest.mark.parametrize("key", sorted(FACTORIES))
 def test_task_outputs_match_source_after_steps_and_resets(key):
-    with closing(make_local(key, 3, "cpu", 7)) as lanes:
-        task = bind_task(key, lanes.envs[0])
+    with closing(make_local(key, 3, "cpu", 7)) as instances:
+        task = bind_task(key, instances.envs[0])
         rng = np.random.default_rng(5)
         for seed in (7, 38):
-            lanes.reset(seed)
+            instances.reset(seed)
             for _ in range(3):
-                actions = rng.uniform(-1, 1, (lanes.num_envs, lanes.action_dim))
-                outputs = [env.step(action) for env, action in zip(lanes.envs, actions, strict=True)]
+                actions = rng.uniform(-1, 1, (instances.num_envs, instances.action_dim))
+                outputs = [env.step(action) for env, action in zip(instances.envs, actions, strict=True)]
                 observation = torch.from_numpy(
                     np.stack([np.concatenate([v.flatten() for v in out.observation.values()]) for out in outputs])
                 ).float()
                 reward = torch.tensor([out.reward for out in outputs], dtype=torch.float64)
-                snapshot = SourceSnapshot(lanes.envs)
+                snapshot = SourceSnapshot(instances.envs)
                 torch.testing.assert_close(task.observation(snapshot), observation, atol=1e-6, rtol=1e-6)
                 torch.testing.assert_close(task.reward(snapshot), reward, atol=2e-12, rtol=2e-12)
-                infos = [lanes._info(env, i) for i, env in enumerate(lanes.envs)]
+                infos = [instances._info(env, i) for i, env in enumerate(instances.envs)]
                 actual_info = task.info(snapshot)
                 if infos[0] is None:
                     assert actual_info is None
@@ -63,30 +63,32 @@ def test_task_outputs_match_source_after_steps_and_resets(key):
                         expected = torch.as_tensor(np.stack([v[1][name] for v in infos]))
                         torch.testing.assert_close(values, expected, atol=2e-12, rtol=2e-12, equal_nan=True)
                 # Test the float32 field boundary separately from integration drift.
-                fp32 = SourceSnapshot(lanes.envs, dtype=torch.float32)
+                fp32 = SourceSnapshot(instances.envs, dtype=torch.float32)
                 torch.testing.assert_close(task.observation(fp32), observation, atol=2e-5, rtol=2e-5)
                 torch.testing.assert_close(task.reward(fp32), reward, atol=2e-6, rtol=2e-6)
 
 
-def test_reacher_sparse_reward_uses_each_lanes_target():
-    with closing(make_local("reacher", 3, "cpu", 7)) as lanes:
-        for env, target in zip(lanes.envs, ((0.26, 0, 0.01), (0.27, 0, 0.01), (0.24, 0.1, 0.01)), strict=True):
+def test_reacher_sparse_reward_uses_each_environments_target():
+    with closing(make_local("reacher", 3, "cpu", 7)) as instances:
+        for env, target in zip(instances.envs, ((0.26, 0, 0.01), (0.27, 0, 0.01), (0.24, 0.1, 0.01)), strict=True):
             physics = env.physics
             physics.data.qpos[:] = 0
             physics.data.qvel[:] = 0
             physics.named.model.geom_pos["target"] = target
             physics.after_reset()
-        task = bind_task("reacher", lanes.envs[0])
-        reward = torch.tensor([env.task.get_reward(env.physics) for env in lanes.envs], dtype=torch.float64)
+        task = bind_task("reacher", instances.envs[0])
+        reward = torch.tensor([env.task.get_reward(env.physics) for env in instances.envs], dtype=torch.float64)
         assert reward.tolist() == [1.0, 0.0, 0.0]
         for dtype in (torch.float32, torch.float64):
-            torch.testing.assert_close(task.reward(SourceSnapshot(lanes.envs, dtype=dtype)), reward, atol=0, rtol=0)
+            torch.testing.assert_close(
+                task.reward(SourceSnapshot(instances.envs, dtype=dtype)), reward, atol=0, rtol=0
+            )
 
 
 @pytest.mark.parametrize("key", ["ball_in_cup", "finger-spin"])
 def test_sparse_reward_positives_and_negatives_match_native(key):
-    with closing(make_local(key, 3, "cpu", 7)) as lanes:
-        for index, env in enumerate(lanes.envs):
+    with closing(make_local(key, 3, "cpu", 7)) as instances:
+        for index, env in enumerate(instances.envs):
             physics = env.physics
             physics.data.qvel[:] = 0
             physics.data.qacc_warmstart[:] = 0
@@ -101,12 +103,14 @@ def test_sparse_reward_positives_and_negatives_match_native(key):
                 physics.data.qpos[:] = [-0.5, 0.2, 0.0]
                 physics.named.data.qvel["hinge"] = (-30.0, -2.0, 30.0)[index]
             physics.after_reset()
-        reward = torch.tensor([env.task.get_reward(env.physics) for env in lanes.envs], dtype=torch.float64)
-        success = torch.tensor([lanes._info(env, i)[0] for i, env in enumerate(lanes.envs)], dtype=torch.float64)
+        reward = torch.tensor([env.task.get_reward(env.physics) for env in instances.envs], dtype=torch.float64)
+        success = torch.tensor(
+            [instances._info(env, i)[0] for i, env in enumerate(instances.envs)], dtype=torch.float64
+        )
         assert reward.tolist() == [1.0, 0.0, 0.0]
         if key == "ball_in_cup":
             assert success.tolist() == [1.0, 0.0, 0.0]
-        task = bind_task(key, lanes.envs[0])
-        snapshot = SourceSnapshot(lanes.envs, dtype=torch.float32)
+        task = bind_task(key, instances.envs[0])
+        snapshot = SourceSnapshot(instances.envs, dtype=torch.float32)
         torch.testing.assert_close(task.reward(snapshot), reward, atol=0, rtol=0)
         torch.testing.assert_close(task.info(snapshot)[0], success, atol=0, rtol=0, equal_nan=True)

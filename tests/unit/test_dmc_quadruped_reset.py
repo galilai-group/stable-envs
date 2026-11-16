@@ -38,7 +38,7 @@ def test_batch_reset_leaves_the_data_of_dm_control(domain, seed):
     try:
         batch.reset(seed=seed)
         local.reset(seed=seed)
-        for ours, theirs in zip(batch.lanes.envs, local.envs, strict=True):
+        for ours, theirs in zip(batch.instances.envs, local.envs, strict=True):
             a, b = ours.physics.data.ptr, theirs.physics.data.ptr
             for name in (*FIELDS, "time", "ctrl"):
                 assert np.array_equal(getattr(a, name), getattr(b, name)), name

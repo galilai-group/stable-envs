@@ -276,7 +276,7 @@ _PIECEWISE_GATE = (
 
 #: our class name -> how its appearance relates to the official swm env's
 VARIATION_MAPS: dict[str, VariationMap] = {
-    # ``agent.position`` and ``target.position`` are per-lane reset distributions (``Env.reset_leaves``)
+    # ``agent.position`` and ``target.position`` are per-environment reset distributions (``Env.reset_leaves``)
     # that land in State, not style columns; tests/integration/test_variation_navigation.py gates
     # them against swm.
     "TwoRoom": VariationMap(
@@ -314,8 +314,8 @@ VARIATION_MAPS: dict[str, VariationMap] = {
         },
         dead_upstream=_MIN_STEPS_DEAD,
         notes={
-            "agent.position": "a per-lane reset leaf in State; " + _PIECEWISE_GATE,
-            "target.position": "a per-lane reset leaf in State; " + _PIECEWISE_GATE,
+            "agent.position": "a per-environment reset leaf in State; " + _PIECEWISE_GATE,
+            "target.position": "a per-environment reset leaf in State; " + _PIECEWISE_GATE,
             "rendering.render_target": "the target is drawn from the full State's hidden target; "
             "compact rows alone cannot draw it. " + _PIECEWISE_GATE,
             "rendering.render_bias_field": "the arrows are rasterised by the same Matplotlib Agg quiver "
@@ -340,7 +340,7 @@ VARIATION_MAPS: dict[str, VariationMap] = {
     # The public PushT owns swm's variation space leaf for leaf (same paths, units, ranges and
     # defaults) and runs the same reset and physics, so every leaf is identical. Start positions,
     # block.angle and agent.velocity are reset values that land in State; agent.shape and
-    # block.shape rebuild the pymunk bodies. Gated per lane against swm, explicit and sampled, by
+    # block.shape rebuild the pymunk bodies. Gated per environment against swm, explicit and sampled, by
     # tests/integration/test_variation_pusht.py.
     "PushT": VariationMap(
         swm_id="swm/PushT-v1",

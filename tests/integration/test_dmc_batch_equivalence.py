@@ -1,4 +1,4 @@
-"""DMC batch lanes match local lanes at every thread count, through implicit resets, restores and physics Variation."""
+"""DMC batch environments match local environments at every thread count, through implicit resets, restores and physics Variation."""
 
 import math
 from unittest.mock import Mock
@@ -18,29 +18,31 @@ from tests.helpers.process_equivalence import assert_process_matches_local  # no
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
 
-def test_local_lanes_compile_once_and_own_model_and_data(monkeypatch):
+def test_local_environments_compile_once_and_own_model_and_data(monkeypatch):
     builder = Mock(wraps=first_family._make_first_family)
     monkeypatch.setattr(first_family, "_make_first_family", builder)
     adapter = make_local("cartpole", 3, seed=17)
     try:
-        lanes = adapter.envs
+        instances = adapter.envs
         assert builder.call_count == 1
-        assert len({id(lane.task) for lane in lanes}) == 3
-        spec, clone_spec = lanes[0].action_spec(), lanes[1].action_spec()
+        assert len({id(instance.task) for instance in instances}) == 3
+        spec, clone_spec = instances[0].action_spec(), instances[1].action_spec()
         assert (clone_spec.shape, clone_spec.dtype) == (spec.shape, spec.dtype)
         np.testing.assert_array_equal(clone_spec.minimum, spec.minimum)
         np.testing.assert_array_equal(clone_spec.maximum, spec.maximum)
-        before = [(lane.physics.model.body_mass.copy(), lane.physics.data.qpos.copy()) for lane in lanes]
-        lanes[1].physics.model.body_mass[0] += 1
-        lanes[1].physics.data.qpos[0] += 1
-        for lane, (body_mass, qpos) in zip(lanes[::2], before[::2]):
-            np.testing.assert_array_equal(lane.physics.model.body_mass, body_mass)
-            np.testing.assert_array_equal(lane.physics.data.qpos, qpos)
+        before = [
+            (instance.physics.model.body_mass.copy(), instance.physics.data.qpos.copy()) for instance in instances
+        ]
+        instances[1].physics.model.body_mass[0] += 1
+        instances[1].physics.data.qpos[0] += 1
+        for instance, (body_mass, qpos) in zip(instances[::2], before[::2]):
+            np.testing.assert_array_equal(instance.physics.model.body_mass, body_mass)
+            np.testing.assert_array_equal(instance.physics.data.qpos, qpos)
     finally:
         adapter.close()
 
 
-def test_local_lanes_keep_independent_rng_across_unseeded_reset():
+def test_local_environments_keep_independent_rng_across_unseeded_reset():
     adapter = make_local("cartpole", 2, seed=17)
     try:
         for state in (adapter.get_state(), adapter.reset()):
@@ -51,15 +53,15 @@ def test_local_lanes_keep_independent_rng_across_unseeded_reset():
 
 
 @pytest.mark.parametrize("num_envs", [0, -1])
-def test_local_lanes_refuse_an_empty_batch(num_envs):
+def test_local_environments_refuse_an_empty_batch(num_envs):
     with pytest.raises(ValueError, match="num_envs must be a positive integer"):
         make_local("cartpole", num_envs)
 
 
 def _foreign_and_actions(domain):
-    """A State whose lanes reach the time limit in the first or the second control step of the next actions.
+    """A State whose environments reach the time limit in the first or the second control step of the next actions.
 
-    Acrobot and Cartpole lanes start upright, inside the sparse target that random actions never reach.
+    Acrobot and Cartpole environments start upright, inside the sparse target that random actions never reach.
     """
     other = make_local(domain, 5, seed=99)
     try:
@@ -110,7 +112,7 @@ def test_batch_matches_local_under_physics_variation(domain):
 def test_batch_matches_local_when_physics_changes_mid_episode():
     rng = np.random.default_rng(3)
     values = {leaf.path: rng.uniform(leaf.low, leaf.high, 5) for leaf in LEAVES["walker"]}
-    # After 15 zero actions every lane touches the floor, so the change lands during contact.
+    # After 15 zero actions every environment touches the floor, so the change lands during contact.
     actions = [np.zeros((5, 6))] * 15 + list(rng.uniform(-1, 1, (4, 5, 6)))
     for threads in (1, 5):
         local, batch = make_local("walker", 5, seed=17), make_batch("walker", 5, seed=17, threads=threads)

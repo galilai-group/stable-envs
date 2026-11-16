@@ -1,4 +1,4 @@
-"""OGBench Cube and Scene lanes in worker processes."""
+"""OGBench Cube and Scene environments in worker processes."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .manipulation import OGBManipulationAdapter, field
 _worker = process_worker
 
 
-def _lanes(family, reward_task_id, count, seed):
+def _instances(family, reward_task_id, count, seed):
     return OGBManipulationAdapter(family, count, seed=seed, reward_task_id=reward_task_id)
 
 
@@ -29,7 +29,7 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None, *, processes=8, cpus=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
             raise ValueError("Cube/Scene require a positive integer batch")
-        factory = partial(_lanes, family, reward_task_id)
+        factory = partial(_instances, family, reward_task_id)
         super().__init__(factory, num_envs, device, seed, processes=processes, cpus=cpus)
 
     def _worker_target(self):
@@ -44,8 +44,8 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
         self._check_idle()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
-        lanes = self._metadata.envs[0].lane_options(options, self.num_envs)
-        return self._reset(seed, [(lanes[rows],) for rows in self._slices])
+        instances = self._metadata.envs[0].instance_options(options, self.num_envs)
+        return self._reset(seed, [(instances[rows],) for rows in self._slices])
 
     def configure(self, values):
         self._check_idle()

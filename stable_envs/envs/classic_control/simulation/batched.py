@@ -1,4 +1,4 @@
-"""Classic-control dynamics stepped for every lane at once, in NumPy or in Torch.
+"""Classic-control dynamics stepped for every environment at once, in NumPy or in Torch.
 
 Gymnasium environments still own resets, the PCG64 streams and the physics values, so seeded resets
 and state export match :class:`ClassicControlAdapter`. Steps repeat each source ``step`` in float64,
@@ -62,7 +62,7 @@ def _f32(value: float) -> float:
     return float(np.float32(value))
 
 
-#: Float32 roundings of the MountainCarContinuous bounds, for lanes that hold a float32 state.
+#: Float32 roundings of the MountainCarContinuous bounds, for environments that hold a float32 state.
 _F32_RIGHT, _F32_LEFT, _F32_GOAL = _f32(0.6), _f32(-1.2), _f32(0.45)
 #: Wrap passes of a Torch step in each direction; a step moves an angle by less than four turns.
 _WRAP_PASSES = 4
@@ -276,7 +276,7 @@ def _acrobot(xp, s, p, a, _):
     l1, lc1, lc2, moi = p["link_length_1"], p["link_com_pos_1"], p["link_com_pos_2"], p["link_moi"]
     # AVAIL_TORQUE[a] = [-1.0, 0.0, 1.0][a], including Python's negative indices.
     torque = xp.f64((a + 3) % 3 - 1)
-    # Lane constants, grouped as Python evaluates the source expressions left to right.
+    # Environment constants, grouped as Python evaluates the source expressions left to right.
     pow2 = xp.pow2
     d1_base = m1 * pow2(lc1)
     d1_lengths = pow2(l1) + pow2(lc2)
@@ -356,9 +356,9 @@ def _mountain_car(xp, s, p, a, _):
 def _mountain_car_continuous(xp, s, p, a, dtype):
     """``Continuous_MountainCarEnv.step`` with NumPy 2 scalar types.
 
-    A lane's state is float64 after a reset and float32 after a step. A clipped force is a Python
+    An environment's state is float64 after a reset and float32 after a step. A clipped force is a Python
     float, so the next sum takes the state's type. An unclipped force keeps the action's type. The
-    ``wide`` masks mark lanes whose source scalar is float64 or a Python float; the others hold float32
+    ``wide`` masks mark environments whose source scalar is float64 or a Python float; the others hold float32
     values, which compare with the float32 rounding of a Python constant.
     """
     position, velocity, is32 = s["position"], s["velocity"], s["is32"]
@@ -449,7 +449,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._params = {name: views[physics_field(name)][:, 0] for name in _PHYSICS_SPACES[domain]}
 
     def _load(self, state: TensorDict) -> None:
-        """Adopt ``state`` as the live lanes."""
+        """Adopt ``state`` as the live environments."""
         if self._in_place:
             host = state.cpu()
             for key, array in self._groups.items():
@@ -477,7 +477,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def set_state(self, state: TensorDict) -> None:
         super().set_state(state)
-        # Gymnasium stores the state in its own types, for example float32 MountainCarContinuous lanes.
+        # Gymnasium stores the state in its own types, for example float32 MountainCarContinuous environments.
         self._load(ClassicControlAdapter.get_state(self))
 
     def get_state(self) -> TensorDict:
@@ -584,7 +584,7 @@ COMPILED_HOST = frozenset({"cartpole", "mountain_car"})
 
 
 def _measure(domain: str, device: torch.device):
-    """Build and step lanes of ``domain`` on one backend, for ``stable-envs tune``."""
+    """Build and step environments of ``domain`` on one backend, for ``stable-envs tune``."""
     from ...._execution.backends import measure_adapter
     from .execution import make_step_adapter
 

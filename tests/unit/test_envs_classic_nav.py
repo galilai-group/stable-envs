@@ -440,7 +440,7 @@ def test_piecewise_draws_its_hidden_target_only_from_full_state():
 
 @pytest.mark.parametrize("name", ("CartPole", "Acrobot"))
 def test_drawn_physics_lengths_render_as_the_official_frame(name):
-    """Per-lane pole and link lengths, including every Acrobot joint radius the range reaches (7-20)."""
+    """Per-environment pole and link lengths, including every Acrobot joint radius the range reaches (7-20)."""
     pytest.importorskip("gymnasium")
     pytest.importorskip("pygame")
     if name == "CartPole":

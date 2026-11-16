@@ -22,7 +22,7 @@ Each variable sets one [tuning setting](api/tuning.md#settings) for the whole pr
 | `STABLE_ENVS_WORKERS` | most worker processes |
 | `STABLE_ENVS_LARGE_BACKEND_MIN_ENVS` | smallest batch that steps on the large-batch simulation backend with `simulation_backend="auto"` |
 | `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS` | smallest render batch that draws with the CUDA renderer of a class with a CPU and a CUDA renderer |
-| `STABLE_ENVS_WORKER_MIN_LANES` | smallest batch that uses worker processes |
+| `STABLE_ENVS_WORKER_MIN_ENVS` | smallest batch that uses worker processes |
 | `STABLE_ENVS_WORKER_TIMEOUT` | seconds that a CPU simulator worker can take to answer one request |
 | `STABLE_ENVS_FETCH_THREADS` | most simulator threads of an in-process Fetch batch |
 | `STABLE_ENVS_DMC_THREADS` | most `mujoco.batch` threads of a DM Control batch |

@@ -54,7 +54,6 @@ def test_profiles_install_declared_extras_and_groups():
 def test_the_ogbench_profile_resets_cube_and_scene_in_process():
     """Reset workers for every Cube/Scene env of every test exceed the runner's memory; the process tests cover them."""
     env = FAMILIES["ogbench"]["linux_env"]
-    assert int(env["STABLE_ENVS_WORKER_MIN_LANES"]) > 2
     assert int(env["STABLE_ENVS_WORKER_MIN_ENVS"]) > 2
 
 

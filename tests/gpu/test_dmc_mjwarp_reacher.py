@@ -71,7 +71,8 @@ def test_reacher_target_restore_preserves_sparse_rewards():
             expected = reference.step(action)
             actual = env.step(action.cuda(), states=None, frames=None).cpu()
             assert_same_state(
-                expected["reward"], torch.tensor([2.0 if lane == 0 else 0.0 for lane in order], dtype=torch.float64)
+                expected["reward"],
+                torch.tensor([2.0 if instance == 0 else 0.0 for instance in order], dtype=torch.float64),
             )
             assert_same_state(actual["reward"], expected["reward"])
             torch.testing.assert_close(actual["observation"], expected["observation"], rtol=0, atol=3e-6)

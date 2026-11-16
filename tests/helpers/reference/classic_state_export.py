@@ -1,4 +1,4 @@
-"""Per-lane classic State exporter that reads every field from the Gymnasium env itself."""
+"""Per-environment classic State exporter that reads every field from the Gymnasium env itself."""
 
 import numpy as np
 import torch

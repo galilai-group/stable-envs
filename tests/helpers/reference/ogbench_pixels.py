@@ -86,9 +86,9 @@ def _maze_trace(seed: int, actions: np.ndarray, device: str) -> tuple[PixelTrace
         for wrapper in source.envs:
             stack.callback(_close_renderer, wrapper.env, "custom_renderer")
         source.reset(seed)
-        for lane, prefix in enumerate((0, 7)):
+        for instance, prefix in enumerate((0, 7)):
             for _ in range(prefix):
-                output = source._in_legacy_rng(lane, source.envs[lane].step, np.zeros(2, actions.dtype))
+                output = source._in_legacy_rng(instance, source.envs[instance].step, np.zeros(2, actions.dtype))
                 assert not (output[2] or output[3])
         initial = source.get_state()
         states, frames, tasks, identities = [], [], [], []
@@ -97,14 +97,14 @@ def _maze_trace(seed: int, actions: np.ndarray, device: str) -> tuple[PixelTrace
             assert not bool((result["terminated"] | result["truncated"]).any())
             state = source.get_state()
             images = []
-            for lane, wrapper in enumerate(source.envs):
-                image = source._in_legacy_rng(lane, wrapper.render).copy()
+            for instance, wrapper in enumerate(source.envs):
+                image = source._in_legacy_rng(instance, wrapper.render).copy()
                 assert image.shape == (64, 64, 3) and image.dtype == np.uint8
                 identity = _identity(wrapper.env.custom_renderer, device, "Maze", wrapper.env.model.light_cutoff)
                 if step == 0:
                     identities.append(identity)
                 else:
-                    assert identity == identities[lane]
+                    assert identity == identities[instance]
                 images.append(image)
             compare_state(source.get_state(), state)
             states.append(state)
@@ -127,17 +127,18 @@ def _manipulation_trace(
     source_class = getattr(oracle, "Owned" + case.domain)
     with ExitStack() as stack:
         # The trace reads the reference's OGBench objects, so they stay in this process.
-        with se.tuning.override(worker_min_lanes=3):
+        with se.tuning.override(worker_min_envs=3):
             reference = stack.enter_context(se.make(case.name, num_envs=2, size=64, device="cpu"))
         reference.reset(seed=seed)
         sources = [
-            stack.enter_context(closing(source_class(entropy_seed=lane, width=64, height=64))) for lane in range(2)
+            stack.enter_context(closing(source_class(entropy_seed=instance, width=64, height=64)))
+            for instance in range(2)
         ]
         for source in sources:
             stack.callback(_close_renderer, source, "_renderer")
-        for lane, (source, prefix) in enumerate(zip(sources, (0, 7), strict=True)):
-            source.reset(seed=seed + lane)
-            raw = reference._simulator.envs[lane]
+        for instance, (source, prefix) in enumerate(zip(sources, (0, 7), strict=True)):
+            source.reset(seed=seed + instance)
+            raw = reference._simulator.envs[instance]
             for _ in range(prefix):
                 action = np.zeros(5, actions.dtype)
                 output = source.step(action.copy())
@@ -151,10 +152,10 @@ def _manipulation_trace(
             validity.append(active.copy())
             row = np.zeros((2, 4), np.float64)
             images = []
-            for lane, source in enumerate(sources):
-                if active[lane]:
-                    output = source.step(actions[lane, step].copy())
-                    row[lane] = output[1], output[2], output[3], output[4]["success"]
+            for instance, source in enumerate(sources):
+                if active[instance]:
+                    output = source.step(actions[instance, step].copy())
+                    row[instance] = output[1], output[2], output[3], output[4]["success"]
                 before = oracle.capture(source)
                 image = source.render().copy()
                 assert image.shape == (64, 64, 3) and image.dtype == np.uint8
@@ -163,18 +164,18 @@ def _manipulation_trace(
                 if step == 0:
                     identities.append(identity)
                 else:
-                    assert identity == identities[lane]
+                    assert identity == identities[instance]
                 images.append(image)
             reference._simulator.step(actions[:, step], active=torch.from_numpy(active))
-            for lane, source in enumerate(sources):
-                assert_oracle(source, reference._simulator.envs[lane], oracle)
+            for instance, source in enumerate(sources):
+                assert_oracle(source, reference._simulator.envs[instance], oracle)
             states.append(reference.get_state())
             frames.append(np.stack(images))
             tasks.append(row)
             active &= ~(row[:, 1].astype(bool) | row[:, 2].astype(bool))
-        for lane, source in enumerate(sources):
-            action = -actions[lane, -1]
-            raw = reference._simulator.envs[lane]
+        for instance, source in enumerate(sources):
+            action = -actions[instance, -1]
+            raw = reference._simulator.envs[instance]
             assert not oracle.differences(source.step(action.copy()), raw.step(action.copy()))
             assert_oracle(source, raw, oracle)
         columns = torch.from_numpy(np.stack(tasks, axis=1))

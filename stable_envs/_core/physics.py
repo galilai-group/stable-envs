@@ -1,4 +1,4 @@
-"""Per-lane MuJoCo model parameters driven by variation leaves.
+"""Per-environment MuJoCo model parameters driven by variation leaves.
 
 Values travel in state under ``("physics", *leaf.split("."))``.
 """
@@ -419,12 +419,12 @@ class PhysicsParams:
             _refresh_bvh(model, body)
 
 
-class PhysicsLanes:
+class PhysicsInstances:
     """One physics value row per CPU model."""
 
     def __init__(self, params: Sequence[Param], models: Sequence, **compile_options):
         if not models:
-            raise ValueError("PhysicsLanes needs at least one model")
+            raise ValueError("PhysicsInstances needs at least one model")
         self.spec = PhysicsParams(params, models[0], **compile_options)
         self.models = list(models)
         self._data = [None] * len(self.models)
@@ -439,11 +439,11 @@ class PhysicsLanes:
         spec = self.spec
         return PhysicsLayout(spec.leaves, spec.widths, spec.offsets, tuple(float(x) for x in spec.nominal))
 
-    def _apply(self, lane: int, row: np.ndarray) -> None:
+    def _apply(self, instance: int, row: np.ndarray) -> None:
         mj = _mujoco()
-        if self._data[lane] is None and self.spec._derived:
-            self._data[lane] = mj.MjData(self.models[lane])
-        self.spec.apply(self.models[lane], row, self._data[lane])
+        if self._data[instance] is None and self.spec._derived:
+            self._data[instance] = mj.MjData(self.models[instance])
+        self.spec.apply(self.models[instance], row, self._data[instance])
 
     def configure(self, values) -> None:
         """Install ``(num_envs, dim)`` rows, one shared row, or a mapping of leaf overrides."""
@@ -457,9 +457,9 @@ class PhysicsLanes:
             rows = np.broadcast_to(np.asarray(values, np.float64).reshape(-1, self.spec.dim), self.values.shape)
         if not np.isfinite(rows).all():
             raise ValueError("physics values must be finite")
-        for lane, row in enumerate(rows):
-            if not np.array_equal(row, self.values[lane]):
-                self._apply(lane, row)
+        for instance, row in enumerate(rows):
+            if not np.array_equal(row, self.values[instance]):
+                self._apply(instance, row)
         self.values = np.array(rows, np.float64)
 
     def state_fields(self) -> dict[tuple[str, ...], int]:

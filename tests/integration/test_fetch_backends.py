@@ -77,17 +77,17 @@ def test_public_env_steps_on_the_cpu_batch():
 @pytest.mark.parametrize("task", TASKS)
 def test_cpu_batch_matches_the_source_loop_bit_for_bit(task, threads):
     """Every State field and output, through masks, restores, seeded and unseeded resets and variations."""
-    lanes = 5
+    instances = 5
     for reward_type in ("sparse", "dense"):
-        reference = FetchAdapter(lanes, seed=7, task=task, reward_type=reward_type)
-        candidate = FetchBatchAdapter(lanes, seed=7, task=task, reward_type=reward_type, threads=threads)
+        reference = FetchAdapter(instances, seed=7, task=task, reward_type=reward_type)
+        candidate = FetchBatchAdapter(instances, seed=7, task=task, reward_type=reward_type, threads=threads)
         try:
             assert_identical(reference.get_state(), candidate.get_state(), "construction")
             rng = np.random.default_rng(1)
             for episode in range(2):
                 variations = None
                 if episode:
-                    variations = [{} for _ in range(lanes)]
+                    variations = [{} for _ in range(instances)]
                     variations[1] = {"agent.start_position": np.array([1.3, 0.7])}
                     variations[3] = {"goal.start_position": np.array([1.2, 0.7, 0.4247])}
                     if task != "Reach":
@@ -103,8 +103,8 @@ def test_cpu_batch_matches_the_source_loop_bit_for_bit(task, threads):
                 for step in range(55):
                     # float64 and float32 actions round differently in the source's action scaling.
                     dtype = np.float32 if step % 2 else np.float64
-                    actions = rng.uniform(-1.3, 1.3, (lanes, 4)).astype(dtype)
-                    active = None if step % 3 else rng.random(lanes) < 0.7
+                    actions = rng.uniform(-1.3, 1.3, (instances, 4)).astype(dtype)
+                    active = None if step % 3 else rng.random(instances) < 0.7
                     expected = reference.step(actions, active=active)
                     assert_identical(expected, candidate.step(actions, active=active), f"step {step}")
                     if step == 20:

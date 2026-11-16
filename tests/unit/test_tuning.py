@@ -211,7 +211,7 @@ def test_tune_names_the_missing_extra(monkeypatch, capsys):
 
 @pytest.mark.parametrize(
     ("settings", "batch", "expected"),
-    [({}, 64, 8), ({"workers": 0}, 64, 0), ({"workers": 3}, 64, 3), ({}, 32, 0), ({"worker_min_lanes": 8}, 8, 8)],
+    [({}, 64, 8), ({"workers": 0}, 64, 0), ({"workers": 3}, 64, 3), ({}, 32, 0), ({"worker_min_envs": 8}, 8, 8)],
 )
 def test_worker_settings_drive_process_count(monkeypatch, settings, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
@@ -221,15 +221,13 @@ def test_worker_settings_drive_process_count(monkeypatch, settings, batch, expec
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
 
-@pytest.mark.parametrize(
-    ("settings", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_lanes": 64}, 32, 0)]
-)
+@pytest.mark.parametrize(("settings", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_envs": 64}, 32, 0)])
 def test_the_caller_sets_the_smallest_worker_batch_unless_the_setting_does(monkeypatch, settings, batch, expected):
     monkeypatch.setattr(policy.sys, "platform", "linux")
     monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
     monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
     with tuning.override(**settings):
-        assert policy.process_count(batch, list(range(16)), path="ogb-sim", min_lanes=2) == expected
+        assert policy.process_count(batch, list(range(16)), path="ogb-sim", min_envs=2) == expected
 
 
 @pytest.mark.parametrize(("settings", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
@@ -268,12 +266,12 @@ def _logged(caplog, text):
 
 def test_a_large_untuned_render_logs_one_hint_per_path(caplog):
     caplog.set_level("INFO", logger="stable_envs.tuning")
-    _draw(Probe(num_envs=tuning.HINT_LANES - 1))
+    _draw(Probe(num_envs=tuning.HINT_MIN_ENVS - 1))
     assert _logged(caplog, "stable-envs tune") == []
-    env = Probe(num_envs=tuning.HINT_LANES)
+    env = Probe(num_envs=tuning.HINT_MIN_ENVS)
     _draw(env)
     _draw(env)
-    _draw(Probe(num_envs=tuning.HINT_LANES))
+    _draw(Probe(num_envs=tuning.HINT_MIN_ENVS))
     (hint,) = _logged(caplog, "stable-envs tune Probe")
     assert hint.levelname == "INFO"
 
@@ -281,11 +279,11 @@ def test_a_large_untuned_render_logs_one_hint_per_path(caplog):
 def test_the_hint_is_hidden_by_its_variable_and_by_a_cached_entry(caplog, monkeypatch):
     caplog.set_level("INFO", logger="stable_envs.tuning")
     monkeypatch.setenv("STABLE_ENVS_TUNING_HINT", "0")
-    _draw(Probe(num_envs=tuning.HINT_LANES))
+    _draw(Probe(num_envs=tuning.HINT_MIN_ENVS))
     monkeypatch.delenv("STABLE_ENVS_TUNING_HINT")
     tuning._clear_caches()
-    _cache(64, batch=tuning.HINT_LANES)
-    _draw(Probe(num_envs=tuning.HINT_LANES))
+    _cache(64, batch=tuning.HINT_MIN_ENVS)
+    _draw(Probe(num_envs=tuning.HINT_MIN_ENVS))
     assert _logged(caplog, "stable-envs tune") == []
 
 
@@ -297,8 +295,8 @@ def autotuning(monkeypatch, caplog):
 
 
 def test_autotune_caches_the_path_on_first_render(autotuning):
-    _draw(Probe(num_envs=tuning.HINT_LANES))
-    assert Probe(num_envs=tuning.HINT_LANES).chunk() == 64
+    _draw(Probe(num_envs=tuning.HINT_MIN_ENVS))
+    assert Probe(num_envs=tuning.HINT_MIN_ENVS).chunk() == 64
 
 
 def test_autotune_falls_back_without_waiting_when_another_process_holds_the_lock(autotuning, caplog):
@@ -308,14 +306,14 @@ def test_autotune_falls_back_without_waiting_when_another_process_holds_the_lock
     with open(lock, "a") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         start = time.perf_counter()
-        assert _draw(Probe(num_envs=tuning.HINT_LANES)).shape[0] == tuning.HINT_LANES
+        assert _draw(Probe(num_envs=tuning.HINT_MIN_ENVS)).shape[0] == tuning.HINT_MIN_ENVS
         assert time.perf_counter() - start < 1.0
     assert not tuning.cache_path("cpu").exists() and _logged(caplog, "another process is tuning")
 
 
 def test_a_failing_autotune_never_reaches_the_render(autotuning, caplog, monkeypatch):
     monkeypatch.setattr(_tune, "tune", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
-    assert _draw(Probe(num_envs=tuning.HINT_LANES)).shape[0] == tuning.HINT_LANES
+    assert _draw(Probe(num_envs=tuning.HINT_MIN_ENVS)).shape[0] == tuning.HINT_MIN_ENVS
     assert _logged(caplog, "autotune of Probe failed")
 
 

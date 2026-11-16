@@ -62,8 +62,8 @@ def test_numba_steps_match_torch_bytes(name, batch):
 
 
 @pytest.mark.parametrize("name", ["TwoRoom", "Piecewise"])
-def test_numba_masks_finished_lanes_like_torch(name):
-    # The first lanes start on their targets and finish at once; the sequence holds them.
+def test_numba_masks_finished_environments_like_torch(name):
+    # The first environments start on their targets and finish at once; the sequence holds them.
     agent = np.array([[60, 112], [60, 112], [100, 60], [150, 150]], np.float32)
     target = np.array([[60, 112], [70, 112], [180, 180], [30, 30]], np.float32)
     actions = torch.tensor([[[1.0, 0.0]] * 12] * 4)
@@ -110,18 +110,18 @@ def test_numba_selection():
 
 
 def _full_tree_values(env, seed):
-    """Reset values drawn the slow way: seed the whole tree for each lane and call ``Box.sample``."""
+    """Reset values drawn the slow way: seed the whole tree for each environment and call ``Box.sample``."""
     tree = env.reset_tree_factory()
     out = {leaf.path: [] for leaf in env.reset_leaves}
-    for lane in range(env.B):
-        tree.seed(seed + lane)
+    for instance in range(env.B):
+        tree.seed(seed + instance)
         for leaf in env.reset_leaves:
             node = tree
             for part in leaf.path.split("."):
                 node = node[part]
             while True:
                 value = node.sample()
-                if env._reset_value_ok(leaf.path, value, lane):
+                if env._reset_value_ok(leaf.path, value, instance):
                     break
             out[leaf.path].append(value)
     return {path: np.stack(rows) for path, rows in out.items()}

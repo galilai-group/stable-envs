@@ -1,6 +1,6 @@
 """Dispatch public action batches and sequences with independent capture slices.
 
-Finished lanes hold their endpoints without implicit reset. The process path
+Finished environments hold their endpoints without implicit reset. The process path
 keeps at most one transition in flight and renders owned snapshots in the parent.
 """
 
@@ -60,12 +60,12 @@ def _done(result):
 
 
 def _task_outputs(result, active, *, all_active, owned=False, shared=()):
-    """Own the task outputs and zero them where a lane had already finished.
+    """Own the task outputs and zero them where an environment had already finished.
 
     ``shared`` leaves are tensors the family never writes; they pass through and are padded when stacked.
     """
     # Families may guarantee fresh output storage. Padding still needs a copy:
-    # once every lane finishes, result can be reused for later sequence entries.
+    # once every environment finishes, result can be reused for later sequence entries.
     copy = not owned or not all_active
     if shared:
         out = result.exclude("state", "frame", *shared)
@@ -112,7 +112,7 @@ def _stack_outputs(history, valid, shared=(), spares=None):
     """Stack per-step task outputs along a new time axis.
 
     A shared leaf that is one tensor at every step becomes a view of it along time. It is copied
-    only when a lane finished, to zero the slots after the end.
+    only when an environment finished, to zero the slots after the end.
     """
     if not shared:
         return stack_leaves(history)
@@ -282,7 +282,7 @@ def _true_flags(env, count, device):
     return slab[0][start : start + count].unbind(0)
 
 
-#: All-true ``(num_envs, 1)`` host flags per lane count; packing copies them, so the result never shares them.
+#: All-true ``(num_envs, 1)`` host flags per environment count; packing copies them, so the result never shares them.
 _HOST_TRUE: dict = {}
 #: ``copies`` of ``pack_to_device`` that give the ``states`` of one action from the State.
 _STATE_COPIES = (("state",), ("states",), ("state_valid",))
@@ -437,7 +437,7 @@ def _sequence_hook(env, acts, sequence, state_indices, frame_indices, *, final_s
     no selection), and ``final``: whether to build the final state, which the result returns unless
     ``final_state`` is False and an empty ``states`` selection copies. It returns None, or a dict of
     ``(B, T, ...)`` task outputs with ``valid``, and ``state``, ``states`` and ``frames`` when they are asked
-    for. Finished lanes hold their state and their later task outputs are zero, as in the step loop.
+    for. Finished environments hold their state and their later task outputs are zero, as in the step loop.
     """
     hook = getattr(env, "_step_sequence", None)
     if hook is None:
@@ -492,16 +492,16 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     if length == 1 and frame_indices is None and pipeline is None and not shared:
         return _single_step(env, acts[:, 0] if sequence else acts, sequence, state_indices, final_state, advance)
     history, saved_states, saved_frames, validity = [], {}, {}, []
-    # Draws the live lanes without rebuilding them from the state snapshot.
+    # Draws the live environments without rebuilding them from the state snapshot.
     render_live = getattr(env, "_render_live", None)
     all_active = True
     result, live_state, live_frame = None, None, None
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
     # the end of the step; then the outputs move to the device. So does a family that steps host copies of an
-    # accelerator's lanes (``_steps_on_host``): its transitions stay on the host and the result moves in one copy.
+    # accelerator's environments (``_steps_on_host``): its transitions stay on the host and the result moves in one copy.
     host_steps = pipeline is None and env.device.type != "cpu" and getattr(env, "_steps_on_host", bool)()
     host = host_steps or _host_pipeline(env, pipeline)
-    # A family that masks finished lanes on the device takes the mask as it is: no readback between actions.
+    # A family that masks finished environments on the device takes the mask as it is: no readback between actions.
     device_masks = pipeline is None and not host_steps and getattr(env, "_masks_on_device", bool)()
     work = torch.device("cpu") if host else env.device
     if host_steps:
@@ -526,7 +526,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
         active = flags[0].view(-1)
     else:
         active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
-    # Frames drawn from the live lanes, here or in pipeline workers, need no state snapshot.
+    # Frames drawn from the live environments, here or in pipeline workers, need no state snapshot.
     pipeline_frames = pipeline is not None and getattr(pipeline, "live_frames", False)
     draws_live = render_live is not None and (pipeline is None or pipeline_frames)
     # Families whose frames depend only on packed render rows keep the rows and draw every frame in one call.
@@ -575,7 +575,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
             elif device_masks or bool(active.any()):
-                # Skip finished lanes through the family hook, without stepping and restoring them.
+                # Skip finished environments through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = (t in state_times and t not in slots) or (final and t == length - 1)
@@ -605,7 +605,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                     if live_frame is None and draws_live and pipeline is None:
                         live_frame = render_live()
                     elif live_frame is None:
-                        # Workers drew no frame after the last transition when every lane finished before it.
+                        # Workers drew no frame after the last transition when every environment finished before it.
                         live_state = env.get_state().to(work) if live_state is None else live_state
                         live_frame = env.render(live_state.to(env.device))
                 saved_frames[t] = live_frame

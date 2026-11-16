@@ -110,8 +110,8 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
     try:
         state = source.get_state()
         limit = math.ceil(source.envs[0]._env._step_limit)
-        # Lane 0 resets in the second control round, lane 1 in the first;
-        # lane 2 continues through both rounds.
+        # Environment 0 resets in the second control round, environment 1 in the first;
+        # environment 2 continues through both rounds.
         get_field(state, "lifecycle/step_count")[:] = torch.tensor([[limit - 1], [limit], [6]])
         get_field(state, "lifecycle/reset_next_step")[:] = torch.tensor([[False], [True], [False]])
         get_field(state, "task/cumulative_reward")[:] = torch.tensor([[11.0], [17.0], [23.0]])
@@ -125,7 +125,7 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         assert_same_state(unfold(actual["state"])["rng"], unfold(expected["state"])["rng"])
         assert_same_state(unfold(actual["state"])["lifecycle"], unfold(expected["state"])["lifecycle"])
         assert get_field(actual["state"], "lifecycle/step_count").flatten().tolist() == [0, 1, 8]
-        # Cartpole's first reset velocity consumes the cached Gaussian. Lane 0
+        # Cartpole's first reset velocity consumes the cached Gaussian. Environment 0
         # has not integrated after its reset, so this value must remain exact.
         assert get_field(actual["state"], "qvel")[0, 0].item() == 0.01 * 0.125
         for key in ("qpos", "qvel"):
@@ -159,7 +159,7 @@ def test_mixed_resets_in_both_action_repeats_match_native_lifecycle():
         source.close()
 
 
-def test_invalid_later_lane_restore_preserves_models_state_and_rng():
+def test_invalid_later_environment_restore_preserves_models_state_and_rng():
     from stable_envs.envs.dmcontrol.simulation.mjwarp import DMCWarpAdapter
 
     adapter = DMCWarpAdapter("cartpole-balance", 3, "cuda", 5)

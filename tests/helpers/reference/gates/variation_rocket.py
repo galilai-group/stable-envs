@@ -20,21 +20,21 @@ def _swm_leaf(env, path):
     return node
 
 
-class _RocketLanes:
-    """One rendering stable-worldmodel Rocket per lane; ``defaults`` are installed with stable-worldmodel's
+class _RocketInstances:
+    """One rendering stable-worldmodel Rocket per environment; ``defaults`` are installed with stable-worldmodel's
     ``set_init_value``."""
 
     def __init__(self, defaults=None):
         from stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding import RocketLandingEnv
 
         self.envs = [RocketLandingEnv(render_mode="rgb_array") for _ in range(3)]
-        for lane, env in enumerate(self.envs):
+        for instance, env in enumerate(self.envs):
             for path, values in (defaults or {}).items():
-                _swm_leaf(env, path).set_init_value(values[lane])
+                _swm_leaf(env, path).set_init_value(values[instance])
 
     def reset(self, seed, options=None):
-        for lane, env in enumerate(self.envs):
-            env.reset(seed=seed + lane, options=options)
+        for instance, env in enumerate(self.envs):
+            env.reset(seed=seed + instance, options=options)
 
     def step(self, actions):
         return [env.step(action) for env, action in zip(self.envs, actions, strict=True)]
@@ -76,54 +76,54 @@ def _rocket_same(ours, theirs):
         assert np.array_equal(ours[key].reshape(value.shape), value), (key, ours[key], value)
 
 
-def _rocket_rollout(env, lanes, actions):
+def _rocket_rollout(env, instances, actions):
     """Per-step observation, reward and termination must be bit-identical."""
     for action in actions:
         out = env.step(action, frames=None)
-        theirs = lanes.step(action)
+        theirs = instances.step(action)
         assert np.array_equal(_rocket_view(out["state"])["observation"], np.stack([r[0] for r in theirs]))
         assert out["reward"].tolist() == [float(r[1]) for r in theirs]
         assert out["terminated"].tolist() == [bool(r[2]) for r in theirs]
 
 
 def rocket_reset_leaf_gate(seed=31, steps=40) -> dict:
-    """Rocket's start leaves per lane, explicit and sampled, and the colors reset can set, against
+    """Rocket's start leaves per environment, explicit and sampled, and the colors reset can set, against
     stable-worldmodel."""
     low = np.asarray([-1, -1, -1, 0, 0, -1, -1], np.float64)
     actions = np.random.default_rng(seed).uniform(low, 1.0, (steps, 3, 7))
     evidence = {"stable_env": "PyFlytRocketLanding", "leaves": sorted(ROCKET_START), "seed": seed, "steps": steps}
     with se.make("PyFlytRocketLanding", num_envs=3, device="cpu", simulation_backend="pybullet") as env:
-        # Explicit per-lane values; stable-worldmodel reads only init values, so its lanes take them as defaults.
+        # Explicit per-environment values; stable-worldmodel reads only init values, so its environments take them as defaults.
         ours = env.reset(seed=seed, options={"variation_values": ROCKET_START})
-        lanes, default = _RocketLanes(ROCKET_START), _RocketLanes()
+        instances, default = _RocketInstances(ROCKET_START), _RocketInstances()
         try:
-            lanes.reset(seed)
+            instances.reset(seed)
             default.reset(seed)
-            _rocket_same(_rocket_view(ours), lanes.view())
-            start = lanes.view()["observation"][:, 10:13] - default.view()["observation"][:, 10:13]
+            _rocket_same(_rocket_view(ours), instances.view())
+            start = instances.view()["observation"][:, 10:13] - default.view()["observation"][:, 10:13]
             assert not start[0].any() and np.abs(start[1:]).max(-1).min() > 0.1, start
-            _rocket_rollout(env, lanes, actions)
+            _rocket_rollout(env, instances, actions)
         finally:
-            lanes.close()
+            instances.close()
             default.close()
         evidence["explicit"] = {"start_shift_vs_default_m": np.abs(start).max(-1).tolist(), "exact": True}
 
-        # Sampled per lane under seed + lane, then a plain reset back to the registered defaults.
+        # Sampled per environment under seed + environment, then a plain reset back to the registered defaults.
         options = {"variation": sorted(ROCKET_START)}
         ours = env.reset(seed=seed + 1, options=options)
-        lanes = _RocketLanes()
+        instances = _RocketInstances()
         try:
-            lanes.reset(seed + 1, options)
+            instances.reset(seed + 1, options)
             view = _rocket_view(ours)
-            _rocket_same(view, lanes.view())
+            _rocket_same(view, instances.view())
             assert len({float(h) for h in view["environment.start_height_ratio"]}) == 3
-            _rocket_rollout(env, lanes, actions)
+            _rocket_rollout(env, instances, actions)
             ours = env.reset(seed=seed + 2)
-            lanes.reset(seed + 2)
-            _rocket_same(_rocket_view(ours), lanes.view())
-            _rocket_rollout(env, lanes, actions[:10])
+            instances.reset(seed + 2)
+            _rocket_same(_rocket_view(ours), instances.view())
+            _rocket_rollout(env, instances, actions[:10])
         finally:
-            lanes.close()
+            instances.close()
         evidence["sampled"] = {"heights": view["environment.start_height_ratio"].tolist(), "exact": True}
 
         # Colors set for one reset are drawn as stable-worldmodel draws the same values once a color reset paints.
@@ -133,11 +133,11 @@ def rocket_reset_leaf_gate(seed=31, steps=40) -> dict:
         }
         options = {"variation": ["rocket.fin_color"]}
         ours = env.reset(seed=seed + 3, options={**options, "variation_values": colours})
-        lanes = _RocketLanes(colours)
+        instances = _RocketInstances(colours)
         try:
-            lanes.reset(seed + 3, options)
-            _rocket_same(_rocket_view(ours), lanes.view())
+            instances.reset(seed + 3, options)
+            _rocket_same(_rocket_view(ours), instances.view())
         finally:
-            lanes.close()
+            instances.close()
         evidence["colours"] = {"leaves": sorted(colours), "exact": True}
     return evidence

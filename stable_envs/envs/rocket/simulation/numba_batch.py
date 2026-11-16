@@ -246,29 +246,29 @@ class RocketNumbaAdapter(SimulatorAdapter):
     def zero_state_leaves(self):
         return frozenset()
 
-    def _value(self, path, lane, init=False):
+    def _value(self, path, instance, init=False):
         value, code, init_value, init_code = self._variation[path]
-        return _decode(init_value[lane], init_code[lane]) if init else _decode(value[lane], code[lane])
+        return _decode(init_value[instance], init_code[instance]) if init else _decode(value[instance], code[instance])
 
-    def _set(self, path, lane, value, init=False):
+    def _set(self, path, instance, value, init=False):
         column = self._variation[path]
         offset = 2 if init else 0
-        column[offset][lane] = np.asarray(value, np.float64)
-        column[offset + 1][lane] = _code(value)
+        column[offset][instance] = np.asarray(value, np.float64)
+        column[offset + 1][instance] = _code(value)
 
     def configure(self, values):
         from .adapter import check_values
 
         check_values(self._template, values, self.num_envs)
-        for lane, row in enumerate(values):
+        for instance, row in enumerate(values):
             for path, value in row.items():
                 node = self._template.env.variation_space._walk(path)
                 value = node._coerce(copy.deepcopy(value)) if hasattr(node, "_coerce") else value
-                self._set(path, lane, value, init=True)
+                self._set(path, instance, value, init=True)
                 if path in IMMEDIATE:
-                    self._set(path, lane, value)
+                    self._set(path, instance, value)
                 if path in PAINTED:
-                    self._rgba[lane, _RGBA_ROW[path]] = _painted_rgba(path, tuple(np.asarray(value).tolist()))
+                    self._rgba[instance, _RGBA_ROW[path]] = _painted_rgba(path, tuple(np.asarray(value).tolist()))
         self._configured()
 
     def _configured(self):
@@ -282,23 +282,23 @@ class RocketNumbaAdapter(SimulatorAdapter):
         """``(B, 4)`` host copy of the ``rng`` field: each environment's thrust-noise generator."""
         return self.state["rng"].copy()
 
-    def _generator(self, lane, rows=None):
-        """The lane's thrust-noise generator at the position of its next draw."""
+    def _generator(self, instance, rows=None):
+        """The environment's thrust-noise generator at the position of its next draw."""
         generator = np.random.Generator(np.random.PCG64(0))
         rows = self._rng_rows() if rows is None else rows
-        generator.bit_generator.state = physics.generator_state(rows[lane])
+        generator.bit_generator.state = physics.generator_state(rows[instance])
         return generator
 
-    def _sample_variation(self, lane, seed, selection, values):
+    def _sample_variation(self, instance, seed, selection, values):
         """Draw the Variation values of one environment as ``RocketLandingEnv.reset`` does; return them."""
-        space = self._spaces[lane] if hasattr(self, "_spaces") else None
+        space = self._spaces[instance] if hasattr(self, "_spaces") else None
         if space is None:
             if not hasattr(self, "_spaces"):
                 self._spaces = [None] * self.num_envs
-            space = self._spaces[lane] = copy.deepcopy(self._template.env.variation_space)
+            space = self._spaces[instance] = copy.deepcopy(self._template.env.variation_space)
         for path, _ in self._template.leaves:
             node = space._walk(path)
-            node._init_value = values[path] if path in values else self._value(path, lane, init=True)
+            node._init_value = values[path] if path in values else self._value(path, instance, init=True)
         space.seed(seed)
         space.reset()
         space.update(selection)
@@ -307,10 +307,10 @@ class RocketNumbaAdapter(SimulatorAdapter):
     def reset(self, seed=None, options=None, values=None):
         batch, template = self.num_envs, self._template
         if values is not None and len(values) != batch:
-            raise ValueError("Expected one Rocket Variation row per lane")
-        for lane in range(batch):
+            raise ValueError("Expected one Rocket Variation row per environment")
+        for instance in range(batch):
             template.check_reset(
-                None if seed is None else seed + lane, options, None if values is None else values[lane]
+                None if seed is None else seed + instance, options, None if values is None else values[instance]
             )
         options = dict(options or {})
         selection = list(options.get("variation", []))
@@ -325,15 +325,15 @@ class RocketNumbaAdapter(SimulatorAdapter):
         for path, column in self._variation.items():
             column[0][:], column[1][:] = column[2], column[3]
         if selection or values:
-            for lane in range(batch):
-                row = {} if values is None else values[lane]
+            for instance in range(batch):
+                row = {} if values is None else values[instance]
                 if selection:
-                    lane_seed = None if seed is None else seed + lane
-                    for path, value in self._sample_variation(lane, lane_seed, selection, row).items():
-                        self._set(path, lane, value)
+                    instance_seed = None if seed is None else seed + instance
+                    for path, value in self._sample_variation(instance, instance_seed, selection, row).items():
+                        self._set(path, instance, value)
                 else:
                     for path, value in row.items():
-                        self._set(path, lane, value)
+                        self._set(path, instance, value)
         height, height_code = self._variation["environment.start_height_ratio"][:2]
         ceiling = template.env.ceiling
         z = np.where(
@@ -349,25 +349,25 @@ class RocketNumbaAdapter(SimulatorAdapter):
         linear = np.zeros((batch, 3))
         generators = []
         rows = self._rng_rows() if seed is None else None
-        for lane in range(batch):
+        for instance in range(batch):
             if seed is None:
-                generator = self._generator(lane, rows) if rows[lane].any() else np.random.default_rng()
-                self._seed[lane] = -1
+                generator = self._generator(instance, rows) if rows[instance].any() else np.random.default_rng()
+                self._seed[instance] = -1
             else:
-                generator = np.random.default_rng(seed + lane)
-                self._seed[lane] = seed + lane
+                generator = np.random.default_rng(seed + instance)
+                self._seed[instance] = seed + instance
             if randomize or perturb:
                 if randomize:
                     limit = template.env.max_displacement * 0.1
-                    start_pos[lane, :2] = generator.uniform(-limit, limit, size=(2,))
-                    start_pos[lane, 2] = generator.uniform(ceiling * 0.8, ceiling * 0.9)
-                    start_orn[lane] = generator.uniform(-0.3, 0.3, size=(3,))
+                    start_pos[instance, :2] = generator.uniform(-limit, limit, size=(2,))
+                    start_pos[instance, 2] = generator.uniform(ceiling * 0.8, ceiling * 0.9)
+                    start_orn[instance] = generator.uniform(-0.3, 0.3, size=(3,))
                 if perturb:
                     # The task's ``resetBasePositionAndOrientation`` then zeroes these velocities; only the draws stay.
                     generator.uniform(-5.0, 5.0, size=(3,))
                     generator.uniform(-0.5, 0.5, size=(3,))
                 if randomize and not controls_offset:
-                    spawn[lane] = generator.uniform(-_SPAWN_LIMIT, _SPAWN_LIMIT, size=2)
+                    spawn[instance] = generator.uniform(-_SPAWN_LIMIT, _SPAWN_LIMIT, size=2)
             generators.append(generator)
         if accelerate:
             linear[:, 2] = _ENTRY_SPEED
@@ -404,8 +404,10 @@ class RocketNumbaAdapter(SimulatorAdapter):
             ).any(1)
             if values is not None:
                 painted |= np.array([path in row for row in values])
-            for lane in np.flatnonzero(painted):
-                self._rgba[lane, _RGBA_ROW[path]] = _painted_rgba(path, tuple(value[lane].astype(np.uint8).tolist()))
+            for instance in np.flatnonzero(painted):
+                self._rgba[instance, _RGBA_ROW[path]] = _painted_rgba(
+                    path, tuple(value[instance].astype(np.uint8).tolist())
+                )
 
     def check_step(self, actions, active):
         if torch.is_tensor(actions):

@@ -1,4 +1,4 @@
-"""One Triton kernel per classic-control domain: the step of every lane, its outputs and its render rows.
+"""One Triton kernel per classic-control domain: the step of every environment, its outputs and its render rows.
 
 Each kernel repeats the operations of the Torch kernel in ``batched.py`` in the same order, without
 fused multiply-adds, so each operation rounds as the Torch operation does. Constants

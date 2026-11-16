@@ -27,17 +27,17 @@ def _gpu() -> bool:
 if not torch.cuda.is_available() or not _gpu():
     pytest.skip("Craftax on CUDA needs CUDA and the craftax-gpu extra", allow_module_level=True)
 
-LANES = 5
+NUM_ENVS = 5
 STEPS = 11
 SEED = 3
 
 
 def _pair(name: str):
-    fused = se.make(name, num_envs=LANES, device="cuda")
-    stepped = per_step(se.make(name, num_envs=LANES, device="cuda"))
+    fused = se.make(name, num_envs=NUM_ENVS, device="cuda")
+    stepped = per_step(se.make(name, num_envs=NUM_ENVS, device="cuda"))
     for env in (fused, stepped):
         state = env.reset(seed=SEED)
-        # Lane 2 dies on its first step, so it holds its state and gives zero outputs after it.
+        # Environment 2 dies on its first step, so it holds its state and gives zero outputs after it.
         get_field(state, "engine/player_health")[2] = 0
         env.set_state(state)
     return fused, stepped
@@ -50,7 +50,7 @@ def test_a_fused_sequence_with_every_state_and_frame_equals_its_steps(name, devi
     with fused, stepped:
         g = torch.Generator().manual_seed(SEED)
         for _ in range(2):
-            acts = torch.randint(0, fused.action_high + 1, (LANES, STEPS, 1), generator=g)
+            acts = torch.randint(0, fused.action_high + 1, (NUM_ENVS, STEPS, 1), generator=g)
             if device_actions:
                 acts = acts.cuda()
             got = fused.step(acts, states=slice(None), frames=slice(None))
@@ -62,9 +62,9 @@ def test_a_fused_sequence_with_every_state_and_frame_equals_its_steps(name, devi
 
 
 def test_a_cuda_sequence_with_an_action_out_of_range_changes_nothing_and_the_next_call_raises():
-    with se.make("CraftaxClassicSymbolic", num_envs=LANES, device="cuda") as env:
+    with se.make("CraftaxClassicSymbolic", num_envs=NUM_ENVS, device="cuda") as env:
         before = env.reset(seed=SEED)
-        acts = torch.zeros((LANES, STEPS, 1), dtype=torch.int64, device="cuda")
+        acts = torch.zeros((NUM_ENVS, STEPS, 1), dtype=torch.int64, device="cuda")
         acts[1, 7] = env.action_high + 1
         out = env.step(acts, states=slice(None), frames=None)
         assert out["valid"].all() and not out["reward"].any()

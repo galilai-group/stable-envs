@@ -11,7 +11,7 @@ from stable_envs.envs.rocket.simulation.adapter import RocketAdapter  # noqa: E4
 
 
 def _read(adapter):
-    """The State of every lane read in full from the engines."""
+    """The State of every environment read in full from the engines."""
     rows = [env.read_state() for env in adapter.envs]
     return {tuple(key.split("/")): np.stack([row[key] for row in rows]) for key in rows[0]}
 
@@ -41,7 +41,7 @@ def test_state_matches_a_full_read_through_an_episode(config):
     try:
         _assert_full_read(adapter)
         for t in range(40):
-            # Lane 0 ignites at step 5, which recolours the flame; lane 2 never ignites.
+            # Environment 0 ignites at step 5, which recolours the flame; environment 2 never ignites.
             ignite = np.array([float(t >= 5), 1.0, 0.0])
             adapter.step(_actions(rng, 3, ignite), capture_state=t % 7 == 0)
             if t % 5 == 0:

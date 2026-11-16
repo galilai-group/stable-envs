@@ -1,4 +1,4 @@
-"""Every Roadster cell matches the source's ``RoadsterPlanEnv`` driven directly, lane by lane.
+"""Every Roadster cell matches the source's ``RoadsterPlanEnv`` driven directly, environment by environment.
 
 The source gate of the family: reset, State, reward, success and both done flags over a rollout of the
 scripted expert with noise, under wind and rain, and the frame MuJoCo draws of the live simulation at the
@@ -21,7 +21,7 @@ from stable_envs.envs.roadster.source.weather import apply_render_flags
 
 pytestmark = pytest.mark.unit
 
-LANES = 2
+NUM_ENVS = 2
 SEED = 11
 STEPS = 8
 #: Values in ``variation_values`` reach the source exactly (float64 physics leaves).
@@ -30,41 +30,45 @@ WIND, RAIN = 5.0, 0.3
 _SOURCE_RENDERERS: dict = {}
 
 
-def _lane_actions(expert, lane, rng):
-    return np.clip(expert(lane) + 0.3 * rng.standard_normal(4), -1, 1).astype(np.float32)
+def _instance_actions(expert, instance, rng):
+    return np.clip(expert(instance) + 0.3 * rng.standard_normal(4), -1, 1).astype(np.float32)
 
 
 @pytest.mark.parametrize("name,task", CELLS)
-def test_lanes_match_the_source_called_directly(name, task):
-    with snv.make(name, num_envs=LANES, device="cpu") as env:
+def test_environments_match_the_source_called_directly(name, task):
+    with snv.make(name, num_envs=NUM_ENVS, device="cpu") as env:
         state = env.reset(seed=SEED, options={"variation_values": {"weather.wind": [WIND], "weather.rain": [RAIN]}})
-        sources = [RoadsterPlanEnv(task=task) for _ in range(LANES)]
-        for lane, src in enumerate(sources):
-            src.reset(seed=SEED + lane, wind=WIND, rain=RAIN)
-            np.testing.assert_array_equal(snv.get_field(state, "sim/qpos")[lane].numpy(), src.data.qpos)
-            np.testing.assert_array_equal(snv.get_field(state, "goal/position")[lane].numpy(), src.goal_pos)
+        sources = [RoadsterPlanEnv(task=task) for _ in range(NUM_ENVS)]
+        for instance, src in enumerate(sources):
+            src.reset(seed=SEED + instance, wind=WIND, rain=RAIN)
+            np.testing.assert_array_equal(snv.get_field(state, "sim/qpos")[instance].numpy(), src.data.qpos)
+            np.testing.assert_array_equal(snv.get_field(state, "goal/position")[instance].numpy(), src.goal_pos)
             np.testing.assert_array_equal(
-                snv.get_field(state, "weather/wind_mean")[lane].numpy(), src.sim.weather.wind_mean
+                snv.get_field(state, "weather/wind_mean")[instance].numpy(), src.sim.weather.wind_mean
             )
-            assert snv.get_field(state, "task/status")[lane].item() == list(("drive", "flight")).index(src.sim.status)
+            assert snv.get_field(state, "task/status")[instance].item() == list(("drive", "flight")).index(
+                src.sim.status
+            )
         expert, rng = GoalExpert(), np.random.default_rng(SEED)
         for t in range(STEPS):
-            actions = np.stack([_lane_actions(expert, src, rng) for src in sources])
+            actions = np.stack([_instance_actions(expert, src, rng) for src in sources])
             result = env.step(actions, frames=None)
-            for lane, src in enumerate(sources):
-                reward, terminated, truncated, info = src.step(actions[lane])
+            for instance, src in enumerate(sources):
+                reward, terminated, truncated, info = src.step(actions[instance])
                 np.testing.assert_array_equal(
-                    snv.get_field(result["state"], "sim/qpos")[lane].numpy(), src.data.qpos, err_msg=str(t)
+                    snv.get_field(result["state"], "sim/qpos")[instance].numpy(), src.data.qpos, err_msg=str(t)
                 )
-                np.testing.assert_array_equal(snv.get_field(result["state"], "sim/qvel")[lane].numpy(), src.data.qvel)
-                assert result["reward"][lane].item() == reward, t
-                assert result["success"][lane].item() == info["success"]
-                assert result["failed"][lane].item() == info["failed"]
-                assert result["terminated"][lane].item() == terminated
-                assert result["truncated"][lane].item() == truncated
-                assert result["cost"][lane].item() == info["cost"]
-                assert snv.get_field(result["state"], "lifecycle/elapsed_steps")[lane].item() == src.steps
-                assert snv.get_field(result["state"], "task/fuel")[lane].item() == src.sim.fuel
+                np.testing.assert_array_equal(
+                    snv.get_field(result["state"], "sim/qvel")[instance].numpy(), src.data.qvel
+                )
+                assert result["reward"][instance].item() == reward, t
+                assert result["success"][instance].item() == info["success"]
+                assert result["failed"][instance].item() == info["failed"]
+                assert result["terminated"][instance].item() == terminated
+                assert result["truncated"][instance].item() == truncated
+                assert result["cost"][instance].item() == info["cost"]
+                assert snv.get_field(result["state"], "lifecycle/elapsed_steps")[instance].item() == src.steps
+                assert snv.get_field(result["state"], "task/fuel")[instance].item() == src.sim.fuel
         np.testing.assert_array_equal(
             snv.get_field(result["state"], "sim/mocap_pos")[0].numpy(), sources[0].data.mocap_pos.reshape(-1)
         )
