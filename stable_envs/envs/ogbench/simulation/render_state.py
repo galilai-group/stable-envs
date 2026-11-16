@@ -8,7 +8,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.state_schema import schema_of
-from .compatibility import TARGET_ALPHA, CompatibleCube, CompatibleScene
+from .compatibility import TARGET_ALPHA, CompatibleCube, CompatibleScene, target_alpha
 from .manipulation import field
 
 OBJECT_QPOS_ADR = 14
@@ -69,6 +69,7 @@ def fields(family):
         ("appearance", "agent.opacity"): ((1,), torch.float64),
         ("appearance", "camera.angle_delta"): ((1, 2), torch.float64),
         ("appearance", "light.intensity"): ((1,), torch.float64),
+        ("appearance", "target.opacity"): ((1,), torch.float64),
         ("appearance", "floor.color"): ((2, 3), torch.float64),
         ("appearance", "cube.color"): ((1, 3), torch.float64),
         ("appearance", "target_alpha"): ((1,), torch.float32),
@@ -95,7 +96,7 @@ def header(family, b, size, supersample, device):
 def sources(family):
     """The State field each RenderState leaf of ``project`` copies, keyed by the RenderState leaf."""
     result = {("pose", name): field("physics", name) for name in ("qpos", "mocap_pos", "mocap_quat")}
-    for name in (*STATIC, "agent.color", "agent.opacity", "floor.color"):
+    for name in (*STATIC, "agent.color", "agent.opacity", "floor.color", "target.opacity"):
         result["appearance", name] = field("model", "compiled", name)
     result["appearance", "cube.color"] = field("variation", "current", "cube.color")
     if family == "Scene":
@@ -205,6 +206,7 @@ def validate(family, state, labels=None):
         "agent.opacity",
         "floor.color",
         "light.intensity",
+        "target.opacity",
         *(("lock_color",) if family == "Scene" else ()),
     ):
         v = leaves["appearance", name]
@@ -263,6 +265,7 @@ def _validate_host(family, state, schema, labels=None):
         "agent.opacity",
         "floor.color",
         "light.intensity",
+        "target.opacity",
         *(("lock_color",) if family == "Scene" else ()),
     ):
         v = values["appearance", name]
@@ -300,7 +303,7 @@ def build_model(family, row=None, names=None):
         env.compile_model_and_data()
         env._cube_colors_from_variation()
         for ids in env._cube_target_geom_ids_list:
-            env.model.geom_rgba[ids, 3] = TARGET_ALPHA
+            env.model.geom_rgba[ids, 3] = target_alpha(env)
         if family == "Scene":
             env._cur_button_states = np.zeros(2, np.int64)
             env._apply_button_states()

@@ -15,7 +15,15 @@ from ogbench.manipspace.envs.scene_env import SceneEnv
 
 from ....spaces import Box, Dict
 
-MODEL_VALUES = ("cube.size", "agent.color", "agent.opacity", "floor.color", "camera.angle_delta", "light.intensity")
+MODEL_VALUES = (
+    "cube.size",
+    "agent.color",
+    "agent.opacity",
+    "floor.color",
+    "camera.angle_delta",
+    "light.intensity",
+    "target.opacity",
+)
 
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
 ARM_START = "agent.ee_start_position"
@@ -46,6 +54,8 @@ COMPILED_FIELDS = (
 )
 # OGBench pixel tasks hide the goal cube (visualize_info=False).
 TARGET_ALPHA = 0.0
+# The goal cube alpha of OGBench's visualize_info=True, the swm OGBCube-v0 default; target.opacity 1 draws it.
+VISIBLE_TARGET_ALPHA = 0.2
 # Material alphas OGBench's pixel tasks apply (ob_type="pixels", pixel_transparent_arm=True). The
 # agent.opacity leaf moves each alpha linearly from this value (0) to 1, the opaque arm of OGBench's
 # state tasks and of swm's OGBCube-v0 (1).
@@ -67,6 +77,11 @@ LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gai
 def arm_alpha(pixel_alpha, opacity):
     """The arm material alpha for ``agent.opacity``: the pixel-task alpha at 0, opaque at 1."""
     return pixel_alpha + opacity * (1.0 - pixel_alpha)
+
+
+def target_alpha(env):
+    """The goal cube alpha for ``env``'s ``target.opacity``: hidden at 0, OGBench's visualize_info=True at 1."""
+    return TARGET_ALPHA + float(env.variation_space["target"]["opacity"].value[0]) * VISIBLE_TARGET_ALPHA
 
 
 def legacy_seed(seed):
@@ -125,6 +140,7 @@ def variation_tree(env):
         "camera": Dict({"angle_delta": box(-angle, angle, (1, 2), [[0.0, 0.0]])}),
         # MuJoCo's default directional diffuse, which OGBench leaves unset.
         "light": Dict({"intensity": box(0.0, 1.0, (1,), [0.7])}),
+        "target": Dict({"opacity": box(0.0, 1.0, (1,), [0.0])}),
     }
     if env.family == "Scene":
         result["lock_color"] = box(0.0, 1.0, (2, 3), [env._colors["red"][:3]] * 2)

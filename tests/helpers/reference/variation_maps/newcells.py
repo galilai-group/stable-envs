@@ -67,6 +67,8 @@ _OGB_SCENE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *_OGB_APPEARANCE)))
 _OGB_OURS_ONLY = {
     "agent.opacity": "swm's OGBCube-v0/OGBScene-v0 always draw OGBench's opaque state-task arm and have no "
     "leaf for it; ours defaults to OGBench's see-through pixel-task arm (0) and draws swm's arm at 1",
+    "target.opacity": "swm's OGBCube-v0/OGBScene-v0 draw the goal cube at alpha 0.2 (visualize_info=True) and "
+    "have no leaf for it; ours defaults to OGBench's hidden pixel-task goal cube (0) and draws swm's at 1",
 }
 _OGB_PLACEMENT_NOTES = {
     k: "SWM CubeEnv/SceneEnv read this leaf only in data_collection mode; the registered env runs in task "
