@@ -32,7 +32,7 @@ jobs:
       - name: Build documentation
         run: python -m mkdocs build --strict --config-file mkdocs.yaml
       - name: Add the project page
-        run: cp -r blog site/project
+        run: cp -r blog site/blog
       - uses: actions/upload-artifact@v4
         with:
           name: documentation
