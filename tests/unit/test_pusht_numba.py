@@ -289,9 +289,10 @@ def test_cuda_host_steps_reuse_the_transfer_plan():
 
 
 def test_a_step_without_frames_keeps_the_key_order_of_a_step_with_frames():
-    with closing(PushT(num_envs=2, device="cpu", simulation_backend="numba")) as a, closing(
-        PushT(num_envs=2, device="cpu", simulation_backend="numba")
-    ) as b:
+    with (
+        closing(PushT(num_envs=2, device="cpu", simulation_backend="numba")) as a,
+        closing(PushT(num_envs=2, device="cpu", simulation_backend="numba")) as b,
+    ):
         a.reset(seed=0)
         b.reset(seed=0)
         action = torch.zeros(2, 2)
