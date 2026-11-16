@@ -6,6 +6,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as snv
+from stable_envs import get_field
 from tests.helpers.counter_env import Counter, PipelinedCounter
 
 
@@ -205,7 +206,7 @@ def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch
         out = env.step(torch.zeros(3, 5, 1, dtype=torch.int64), frames=None)
         assert calls == [1, 2, 3]
         assert out["valid"].sum(1).tolist() == calls
-        assert out["state"]["lifecycle", "elapsed_steps"][:, 0].tolist() == calls
+        assert get_field(out["state"], "lifecycle/elapsed_steps")[:, 0].tolist() == calls
 
 
 @pytest.mark.family("navigation")

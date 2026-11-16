@@ -12,6 +12,9 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - The DM Control state has three leaves: `dmc_<task>/float64`, `dmc_<task>/int64` and `dmc_<task>/bool`, such as `dmc_reacher/float64`. Each field, such as `qpos` or `rng/keys`, is a slice of one of them. Read and write a field with `snv.get_field(state, "qpos")` and `snv.set_field`. States saved before this change do not load.
 - The `OGBCube` and `OGBScene` state has one leaf for each section and dtype, such as `physics/float64`. Each field, such as `physics/qpos` or `physics/mocap_pos`, is a slice of one of them. Read and write a field with `snv.get_field(state, "physics/qpos")` and `snv.set_field`. States saved before this change do not load.
 - The navigation classes fold their state. TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones keep the agent and target positions in one `navigation/float32` leaf, and SimplePointMaze keeps its fields in one `simple_point_maze/<dtype>` leaf for each dtype. Read and write a field with `snv.get_field(state, "agent.position")` and `snv.set_field`.
+- The `torch_min_envs` argument of the classic-control classes, the `numba_cuda_min_envs` argument of `PyFlytRocketLanding` and the `triton_min_envs` argument of `MiniWorldMovingBlockWorld` are removed, with the `NUMPY_MIN_ENVS`, `TORCH_MIN_ENVS`, `NUMBA_CUDA_MIN_ENVS` and `TRITON_MIN_ENVS` constants. `simulation_backend="auto"` is the default of these classes. It uses the switch points that each class ships, or the `large_backend_min_envs` knob and `stable-envs tune`.
+- Classic control with `simulation_backend="torch"` on CUDA resets with Gymnasium on the host. A seed gives Gymnasium's initial states on every backend, and the `rng` state fields hold the PCG64 state instead of a key and a reset count.
+- The classic-control and `MiniWorldMovingBlockWorld` states have one leaf for each dtype, such as `("cartpole", "float64")`, in place of one leaf for each field. `snv.get_field(state, "physics/gravity")` reads a field by name.
 
 ### Added
 
@@ -19,6 +22,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
+- CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 - On CUDA, the CPU physics of DM Control, `OGBCube`, `OGBScene` and TwoRoom moves the result of a single step to the device in one copy: the state, the outputs, the `states` and the validity masks. PushT moves the outputs and the state of a single step without frames in one copy. PushT's Numba backend keeps its state on the CPU and no longer copies it to and from the device at each step.
 - On CUDA, a step result that moves from the host reuses the device memory of an earlier result when no tensor uses that result any more. A single step stacks a state whose leaves share one buffer with one copy.

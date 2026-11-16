@@ -3,6 +3,7 @@
 import numpy as np
 import torch
 
+from stable_envs import get_field
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from tests.helpers.process_equivalence import assert_atomic_restore, assert_process_matches_local
@@ -37,8 +38,8 @@ def test_invalid_last_lane_rng_restores_no_lane():
     try:
 
         def corrupt(state):
-            state["theta1"][0] += 0.25
-            state["rng", "state"][-1].fill_(-1)
+            get_field(state, "theta1")[0] += 0.25
+            get_field(state, "rng/state")[-1].fill_(-1)
             return state
 
         assert_atomic_restore(

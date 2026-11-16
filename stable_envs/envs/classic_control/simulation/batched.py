@@ -22,8 +22,19 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .... import tuning
 from ...._core.tensordicts import build_tensordict
-from .local import _PHYSICS_SPACES, ClassicControlAdapter, physics_state_key
+from .local import (
+    _PHYSICS_SPACES,
+    BEYOND,
+    ELAPSED,
+    HAS_BEYOND,
+    HAS_LAST_U,
+    IS_FLOAT32,
+    STATES,
+    ClassicControlAdapter,
+    physics_field,
+)
 
 #: Time limits that ``gymnasium.make`` adds for each registered id.
 MAX_EPISODE_STEPS = {
@@ -34,21 +45,16 @@ MAX_EPISODE_STEPS = {
     "mountain_car_continuous": 999,
 }
 
-_ELAPSED = ("lifecycle", "elapsed_steps")
+#: The State fields that steps change, by the name the kernels give them. The elapsed steps are separate.
 _DYNAMIC = {
-    "cartpole": (
-        "x",
-        "x_dot",
-        "theta",
-        "theta_dot",
-        ("task", "steps_beyond_terminated"),
-        ("task", "has_steps_beyond_terminated"),
-    ),
-    "pendulum": ("theta", "theta_dot", "torque", ("task", "has_last_u")),
+    "cartpole": ("x", "x_dot", "theta", "theta_dot", "beyond", "has_beyond"),
+    "pendulum": ("theta", "theta_dot", "torque", "has_last_u"),
     "acrobot": ("theta1", "theta2", "dtheta1", "dtheta2"),
     "mountain_car": ("position", "velocity"),
-    "mountain_car_continuous": ("position", "velocity", ("task", "state_is_float32")),
+    "mountain_car_continuous": ("position", "velocity", "is32"),
 }
+#: The State field of each kernel name that is not the field's own name.
+_FIELD = {"beyond": BEYOND, "has_beyond": HAS_BEYOND, "has_last_u": HAS_LAST_U, "is32": IS_FLOAT32}
 _DISCRETE = {"cartpole": 2, "acrobot": 3, "mountain_car": 3}
 
 
@@ -115,10 +121,6 @@ class _NumPy:
         return np.full(like.shape, value, np.bool_)
 
     @staticmethod
-    def load(tensor):
-        return tensor.detach().cpu().numpy().copy()
-
-    @staticmethod
     def host(value):
         return np.asarray(value.detach().cpu() if torch.is_tensor(value) else value)
 
@@ -138,10 +140,6 @@ class _NumPy:
     def floats(a):
         """Float64 values and the narrower float type that the source computes action terms in."""
         return a.astype(np.float64), (a.dtype if a.dtype.kind == "f" and a.dtype.itemsize < 8 else None)
-
-    def column(self, x):
-        """An owned ``[N, 1]`` tensor on the adapter's device."""
-        return torch.from_numpy(x[:, None].copy()).to(self.device)
 
     def export(self, x, dtype=None):
         return torch.from_numpy(x if dtype is None else x.astype(dtype)).to(self.device)
@@ -199,9 +197,6 @@ class _Torch:
     def flags(like, value: bool):
         return torch.full_like(like, value, dtype=torch.bool)
 
-    def load(self, tensor):
-        return tensor.detach().to(self.device).clone()
-
     def host(self, value):
         return torch.as_tensor(value, device=self.device)
 
@@ -220,10 +215,6 @@ class _Torch:
     @staticmethod
     def floats(a):
         return a.double(), (a.dtype if a.is_floating_point() and a.dtype.itemsize < 8 else None)
-
-    @staticmethod
-    def column(x):
-        return x[:, None].clone()
 
     @staticmethod
     def export(x, dtype=None):
@@ -247,15 +238,15 @@ def _cartpole(xp, s, p, a, _):
     theta, theta_dot = theta + tau * theta_dot, theta_dot + tau * thetaacc
     limit = 12 * 2 * math.pi / 360
     terminated = (x < -2.4) | (x > 2.4) | (theta < -limit) | (theta > limit)
-    beyond, has_beyond = s["task", "steps_beyond_terminated"], s["task", "has_steps_beyond_terminated"]
+    beyond, has_beyond = s["beyond"], s["has_beyond"]
     again = terminated & has_beyond
     new = {
         "x": x,
         "x_dot": x_dot,
         "theta": theta,
         "theta_dot": theta_dot,
-        ("task", "steps_beyond_terminated"): xp.where(again, beyond + 1, xp.where(terminated, 0, beyond)),
-        ("task", "has_steps_beyond_terminated"): has_beyond | terminated,
+        "beyond": xp.where(again, beyond + 1, xp.where(terminated, 0, beyond)),
+        "has_beyond": has_beyond | terminated,
     }
     return new, [x, x_dot, theta, theta_dot], xp.where(again, 0.0, xp.full(x, 1.0)), terminated
 
@@ -275,7 +266,7 @@ def _pendulum(xp, s, p, u, dtype):
     newthdot = thdot + (3 * p["g"] / (2 * p["l"]) * xp.sin(th) + drive) * p["dt"]
     newthdot = xp.minimum(xp.maximum(newthdot, -p["max_speed"]), p["max_speed"])
     newth = th + newthdot * p["dt"]
-    new = {"theta": newth, "theta_dot": newthdot, "torque": u, ("task", "has_last_u"): xp.flags(u, True)}
+    new = {"theta": newth, "theta_dot": newthdot, "torque": u, "has_last_u": xp.flags(u, True)}
     return new, [xp.cos(newth), xp.sin(newth), newthdot], -costs, xp.flags(u, False)
 
 
@@ -370,7 +361,7 @@ def _mountain_car_continuous(xp, s, p, a, dtype):
     ``wide`` masks mark lanes whose source scalar is float64 or a Python float; the others hold float32
     values, which compare with the float32 rounding of a Python constant.
     """
-    position, velocity, is32 = s["position"], s["velocity"], s["task", "state_is_float32"]
+    position, velocity, is32 = s["position"], s["velocity"], s["is32"]
     r32, power, max_speed = xp.r32, p["power"], p["max_speed"]
     cosine = 0.0025 * xp.cos(xp.where(is32, r32(3 * position), 3 * position))
     low, high = a < -1.0, a > 1.0
@@ -402,7 +393,7 @@ def _mountain_car_continuous(xp, s, p, a, dtype):
     terminated = xp.where(wide, position >= 0.45, position >= _F32_GOAL) & (velocity >= 0)
     reward = xp.where(terminated, 100.0, xp.full(a, 0.0)) - xp.pow2(a) * 0.1
     position, velocity = r32(position), r32(velocity)
-    new = {"position": position, "velocity": velocity, ("task", "state_is_float32"): xp.flags(is32, True)}
+    new = {"position": position, "velocity": velocity, "is32": xp.flags(is32, True)}
     return new, [position, velocity], reward, terminated
 
 
@@ -418,37 +409,66 @@ _KERNELS = {
 class BatchedClassicAdapter(ClassicControlAdapter):
     """Batched classic-control steps; resets and RNG stay with the Gymnasium environments.
 
-    ``backend="numpy"`` steps on the host and ``backend="torch"`` on ``device``.
+    ``backend="numpy"`` steps on the host, ``backend="numba"`` steps on the host in one compiled call (the tasks of
+    ``numba_step.STEPS``), and ``backend="torch"`` steps on ``device``.
     """
 
     def __init__(self, domain: str, num_envs: int, device="cpu", seed: int = 0, backend: str = "numpy"):
-        if backend not in ("numpy", "torch"):
-            raise ValueError(f"backend must be 'numpy' or 'torch', got {backend!r}")
+        from .numba_step import STEPS
+
+        if backend not in ("numpy", "numba", "torch"):
+            raise ValueError(f"backend must be 'numpy', 'numba' or 'torch', got {backend!r}")
+        if backend == "numba" and domain not in STEPS:
+            raise ValueError(f"simulation_backend='numba' has no {domain} step; use 'gym' or 'numpy'")
+        self._compiled = STEPS.get(domain) if backend == "numba" else None
         super().__init__(domain, num_envs, device, seed)
         self.backend = backend
         # The kernels call one array API; NumPy and Torch overloads differ only in their stubs.
-        self._xp: Any = _NumPy(self.device) if backend == "numpy" else _Torch(self.device)
+        self._xp: Any = _Torch(self.device) if backend == "torch" else _NumPy(self.device)
         self._kernel = _KERNELS[domain]
         self._dynamic = _DYNAMIC[domain]
         self._max_steps = MAX_EPISODE_STEPS[domain]
-        self._fixed: dict | None = None
+        self._ready = False
+        self._everyone = np.ones(int(num_envs), np.bool_)
+        # The steps change the live fields in place: NumPy and Numba in the host group arrays of the packed State,
+        # Torch in the group tensors of its own State on ``device``.
+        self._in_place = backend in ("numpy", "numba")
+        schema = STATES[domain]
+        self._groups: dict[str, Any]
+        views: dict[str, Any]
+        if self._in_place:
+            self._groups = self._packed.arrays
+            views = self._packed.views
+        else:
+            self._live_state = schema.new(self.num_envs, self.device)
+            self._groups = schema.buffers(self._live_state)
+            views = schema.views(self._groups)
+        self._paths = {key: tuple(key.split("/")) for key in self._groups}
+        self._live = {key: views[_FIELD.get(key, key)][:, 0] for key in self._dynamic}
+        self._elapsed = views[ELAPSED][:, 0]
+        self._params = {name: views[physics_field(name)][:, 0] for name in _PHYSICS_SPACES[domain]}
 
     def _load(self, state: TensorDict) -> None:
-        """Adopt ``state`` as the live lanes and keep the fields that steps do not change."""
-        xp = self._xp
-        moving = (*self._dynamic, _ELAPSED)
-        self._fixed = {key: state[key].to(self.device).clone() for key in self.fields if key not in moving}
-        self._live = {key: xp.load(state[key][:, 0]) for key in self._dynamic}
-        self._elapsed = xp.load(state[_ELAPSED][:, 0])
-        self._params = {name: xp.load(state[physics_state_key(name)][:, 0]) for name in _PHYSICS_SPACES[self.domain]}
+        """Adopt ``state`` as the live lanes."""
+        if self._in_place:
+            host = state.cpu()
+            for key, array in self._groups.items():
+                array[...] = host.get(self._paths[key]).numpy()
+        else:
+            for key, group in self._groups.items():
+                group.copy_(state.get(self._paths[key]))
+        self._static_loaded = True
+        self._ready = True
 
     def configure(self, values) -> None:
         super().configure(values)
-        if self._fixed is not None:
-            state = self.get_state()
-            for j, key in enumerate(self._physics_keys):
-                state[key] = torch.from_numpy(self._physics[:, j : j + 1].copy()).to(self.device)
-            self._load(state)
+        if self._ready:
+            for j, name in enumerate(self._physics_names):
+                column, rows = self._params[name], self._physics[:, j]
+                if isinstance(column, np.ndarray):
+                    column[...] = rows
+                else:
+                    column.copy_(torch.as_tensor(rows, device=column.device))
 
     def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
         state = super().reset(seed=seed, options=options)
@@ -462,22 +482,12 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        if self._fixed is None:
+        if not self._ready:
             return super().get_state()
-        tree: dict = {}
-        live, fixed, column = self._live, self._fixed, self._xp.column
-        for key in self.fields:
-            if key in live:
-                value = column(live[key])
-            elif key == _ELAPSED:
-                value = column(self._elapsed)
-            else:
-                value = fixed[key].clone()
-            if isinstance(key, str):
-                tree[key] = value
-            else:
-                tree.setdefault(key[0], {})[key[1]] = value
-        return build_tensordict(tree, [self.num_envs], self.device)
+        return self._packed.export(self.device) if self._in_place else self._live_state.clone()
+
+    def stack_states(self, states) -> TensorDict | None:
+        return self._packed.stack(states) if self._in_place else None
 
     def _check_actions(self, a, live) -> None:
         n = _DISCRETE[self.domain]
@@ -495,7 +505,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         self._check_open()
-        if self._fixed is None:
+        if not self._ready:
             raise RuntimeError("Call reset before step")
         xp = self._xp
         a = xp.host(actions)
@@ -510,20 +520,30 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             a, dtype = xp.integers(a), None
         else:
             a, dtype = xp.floats(a)
+        if self._compiled is not None:
+            reward, terminated, truncated, observation = self._compiled(
+                self._packed.views, self._params, a, self._everyone if live is None else live, self._max_steps
+            )
+            return self._outputs(reward, terminated, truncated, observation, capture_state)
         old = self._live
         new, observation, reward, terminated = self._kernel(xp, old, self._params, a, dtype)
+        if live is not None:
+            new = {key: xp.where(live, new[key], old[key]) for key in self._dynamic}
+        # The live fields are views of the live State.
+        for key in self._dynamic:
+            old[key][...] = new[key]
+        self._elapsed += 1 if live is None else live
         if live is None:
-            self._live = new
-            self._elapsed = self._elapsed + 1
             truncated = self._elapsed >= self._max_steps
         else:
-            self._live = {key: xp.where(live, new[key], old[key]) for key in self._dynamic}
-            self._elapsed = self._elapsed + live
             truncated = live & (self._elapsed >= self._max_steps)
             observation = [xp.where(live, column, 0.0) for column in observation]
             reward = xp.where(live, reward, 0.0)
             terminated = live & terminated
-        observation = xp.stack(observation)
+        return self._outputs(reward, terminated, truncated, xp.stack(observation), capture_state)
+
+    def _outputs(self, reward, terminated, truncated, observation, capture_state: bool) -> TensorDict:
+        xp = self._xp
         return build_tensordict(
             {
                 **({"state": self.get_state()} if capture_state else {}),
@@ -538,40 +558,84 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         )
 
     def close(self) -> None:
-        self._fixed = None
+        self._ready = False
         super().close()
 
 
-#: Fewest lanes for which the CPU default and ``"auto"`` pick NumPy steps. Below them the per-call cost of the
-#: batched arrays exceeds the Gymnasium loop. Measured on a Xeon Platinum 8268.
-NUMPY_MIN_ENVS = {"cartpole": 2, "pendulum": 1, "acrobot": 2, "mountain_car": 1, "mountain_car_continuous": 8}
-#: Fewest CUDA lanes for which ``"auto"`` picks Torch steps; below them NumPy steps on the host and the
-#: outputs are copied to the GPU. On an L40S the Torch step on the GPU is faster at every batch size.
-TORCH_MIN_ENVS = 1
-BACKENDS = ("auto", "gym", "numpy", "torch")
+#: Backends that ``simulation_backend`` accepts besides ``"auto"``.
+SIMULATION_BACKENDS = ("gym", "numpy", "torch")
+
+#: Shipped switch points of ``"auto"``; the knob and the tuning cache (``stable-envs tune``) take precedence.
+#: ``CPU_MIN_ENVS``: the smallest batch that steps in NumPy rather than Gymnasium on the host, on every device; None
+#: steps in NumPy at every batch size. ``CUDA_MIN_ENVS``: the smallest CUDA batch that steps in Torch on the GPU
+#: rather than on the host; None steps in Torch at every batch size.
+#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.classic_switch`` (docs/performance-tuning.md).
+CPU_MIN_ENVS: dict[str, int | None] = {
+    "cartpole": 2,
+    "pendulum": None,
+    "acrobot": 4,
+    "mountain_car": None,
+    "mountain_car_continuous": 8,
+}
+CUDA_MIN_ENVS: dict[str, int | None] = dict.fromkeys(CPU_MIN_ENVS)
+#: Tasks whose compiled step (``"numba"``) is the host backend at every batch size, in place of Gymnasium and NumPy.
+#: Measured as above: the compiled step was the fastest host backend from 1 to 4096 environments on both hosts.
+COMPILED_HOST = frozenset({"cartpole", "mountain_car"})
 
 
-def classic_backend(
-    domain: str,
-    device: str | torch.device,
-    num_envs: int,
-    backend: str | None = None,
-    torch_min_envs: int = TORCH_MIN_ENVS,
-) -> str:
-    """Resolve ``simulation_backend`` from the device and the lane count.
+def _measure(domain: str, device: torch.device):
+    """Build and step lanes of ``domain`` on one backend, for ``stable-envs tune``."""
+    from ...._execution.backends import measure_adapter
+    from .execution import make_step_adapter
 
-    ``None`` selects Torch on CUDA and the CPU choice of ``"auto"`` on the CPU. ``"auto"`` also uses
-    Torch on CUDA, but only for ``torch_min_envs`` or more lanes.
-    """
-    if backend is not None and backend not in BACKENDS:
-        raise ValueError(f"simulation_backend must be None, 'auto', 'gym', 'numpy' or 'torch', got {backend!r}")
-    if isinstance(torch_min_envs, bool) or not isinstance(torch_min_envs, int) or torch_min_envs < 1:
-        raise ValueError(f"torch_min_envs must be an int >= 1, got {torch_min_envs!r}")
-    cuda = torch.device(device).type == "cuda"
-    if backend is None and cuda:
-        return "torch"
+    dtype = torch.int64 if domain in _DISCRETE else torch.float32
+    return measure_adapter(
+        lambda backend, n: make_step_adapter(domain, backend, n, device, 0),
+        lambda n: torch.zeros((n, 1), dtype=dtype, device=device),
+    )
+
+
+def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices, measure) -> str:
+    """The host backend. The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here:
+    the tuning cache that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point."""
+    from ...._execution import backends
+
+    cpu = torch.device("cpu")
     if backend not in (None, "auto"):
-        return backend
-    if cuda and num_envs >= torch_min_envs:
-        return "torch"
-    return "numpy" if num_envs >= NUMPY_MIN_ENVS[domain] else "gym"
+        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": rungs}, choices=choices)
+    backends._REGISTERED[path, cpu.type] = (rungs, measure)
+    if rungs.small == rungs.large:
+        return rungs.small
+    data, current = tuning.read_cache(cpu)
+    value = data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.KNOB) if current else None
+    if value is not None:
+        return rungs.large if num_envs >= value else rungs.small
+    side = backends._cached_neighbours(path, cpu, num_envs)
+    if side is not None:
+        return rungs.large if side == "large" else rungs.small
+    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
+
+
+def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
+    """Return ``"gym"``, ``"numpy"``, ``"numba"`` or ``"torch"``.
+
+    ``"auto"`` (or None) first selects the host backend: the compiled step for ``COMPILED_HOST`` tasks, else
+    Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
+    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` knob moves only the CUDA switch point.
+    """
+    from ...._execution.backends import Rungs, select_backend
+    from .numba_step import STEPS
+
+    device = torch.device(device)
+    choices = SIMULATION_BACKENDS + (("numba",) if domain in STEPS else ())
+    cpu = torch.device("cpu")
+    compiled = domain in COMPILED_HOST and domain in STEPS
+    rungs = Rungs("numba", "numba") if compiled else Rungs("gym", "numpy", CPU_MIN_ENVS[domain])
+    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, rungs, choices, _measure(domain, cpu))
+    if device.type == "cpu" or backend not in (None, "auto"):
+        return host
+    return select_backend(
+        f"classic-sim/{domain}", num_envs, device, backend,
+        {"cpu": Rungs(host, host), "cuda": Rungs(host, "torch", CUDA_MIN_ENVS[domain])},
+        choices=choices, measure=_measure(domain, device),
+    )  # fmt: skip

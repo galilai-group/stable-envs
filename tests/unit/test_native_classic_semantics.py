@@ -3,6 +3,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs import get_field, schema_of
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS
 from tests.helpers.stepping import branch_step
 
@@ -20,15 +21,20 @@ from tests.helpers.stepping import branch_step
 def test_classic_state_is_complete_independent_and_renderable(domain, name, owned_field):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=17)
-        assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
-        assert set(state.keys(True, True)) == set(CLASSIC_FIELDS[domain])
+        modes = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
+        assert env.execution_mode == modes[env.simulation_backend]
+        schema = schema_of(state)
+        assert sorted(schema.names) == sorted(CLASSIC_FIELDS[domain])
         for key, (width, dtype) in CLASSIC_FIELDS[domain].items():
-            assert state[key].shape == (2, width)
-            assert state[key].dtype == dtype
-            assert env.state_spec[key].dtype == dtype
+            assert get_field(state, key).shape == (2, width)
+            assert get_field(state, key).dtype == dtype
+        for group in schema.groups.values():
+            spec = env.state_spec[group.path]
+            assert state.get(group.path).dtype == spec.dtype == group.dtype
+            assert spec.shape == (group.size,)
 
         held = state.clone()
-        state[owned_field].add_(1)
+        get_field(state, owned_field).add_(1)
         assert (env.get_state() == held).all()
         assert torch.equal(env.render(held), env._render(env._pack_render_state(held)))
 
@@ -73,15 +79,14 @@ def test_pendulum_action_clipping_and_zero_reward_state():
     with se.make("Pendulum", num_envs=1, device="cpu") as env:
         assert env.action_spec.dtype == torch.float32
         state = env.get_state()
-        state["theta"].zero_()
-        state["theta_dot"].zero_()
-        state["torque"].zero_()
-        state["task", "has_last_u"].fill_(True)
+        for name in ("theta", "theta_dot", "torque"):
+            get_field(state, name).zero_()
+        get_field(state, "task/has_last_u").fill_(True)
         env.set_state(state)
         out = env.step(np.zeros((1, 1), np.float32), frames=None)
         assert out["reward"].item() == 0.0
         out = env.step(np.asarray([[3.25]], np.float64), frames=None)
-        assert out["state", "torque"].item() == 2.0
+        assert get_field(out["state"], "torque").item() == 2.0
 
 
 @pytest.mark.parametrize("name", ["Acrobot", "MountainCar"])
@@ -108,10 +113,10 @@ def test_remaining_discrete_action_contract(name):
 def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
     with se.make("MountainCarContinuous", num_envs=1, device="cpu") as env:
         reset = env.reset(seed=17)
-        assert not reset["task", "state_is_float32"].item()
+        assert not get_field(reset, "task/state_is_float32").item()
         precise = np.asarray([[0.1234567890123]], np.float64)
         out = env.step(precise, frames=None)
-        assert out["state", "task", "state_is_float32"].item()
+        assert get_field(out["state"], "task/state_is_float32").item()
         saved = out["state"]
         expected = env.step(np.zeros((1, 1), np.float32), frames=None)
         env.set_state(saved)

@@ -22,34 +22,10 @@
  },
  "state": [
   {
-   "key": "agent",
+   "key": "moving_block_world",
    "leaves": 3,
-   "numel": 5,
-   "dtypes": ["float64", "int64"]
-  },
-  {
-   "key": "room",
-   "leaves": 1,
-   "numel": 3,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "blocks",
-   "leaves": 8,
-   "numel": 140,
+   "numel": 151,
    "dtypes": ["bool", "float64", "int64"]
-  },
-  {
-   "key": "rng",
-   "leaves": 2,
-   "numel": 2,
-   "dtypes": ["int64"]
-  },
-  {
-   "key": "lifecycle",
-   "leaves": 1,
-   "numel": 1,
-   "dtypes": ["int64"]
   }
  ],
  "variation": [],

@@ -6,6 +6,7 @@ import pytest
 import torch
 
 import stable_envs as se
+from stable_envs._core.state_schema import unfold
 from tests.helpers.reference.saved import assert_frozen_equal, native_corpus
 
 
@@ -24,12 +25,12 @@ def test_frozen_source_state_and_tasks(domain, name):
     root = Path(__file__).resolve().parents[1] / "fixtures/semantics" / family
     manifest, arrays = native_corpus(root, domain)
     with se.make(name, num_envs=manifest["batch"], device="cpu") as env:
-        states = [env.reset(seed=manifest["seed"])]
+        states = [unfold(env.reset(seed=manifest["seed"]))]
         outputs = []
         for action in arrays["actions"]:
             output = env.step(action, frames=None, states=None)
             outputs.append(output)
-            states.append(output["state"])
+            states.append(unfold(output["state"]))
         keys = {"state/" + (key if isinstance(key, str) else "/".join(key)) for key in states[0].keys(True, True)}
         assert keys == {key for key in arrays if key.startswith("state/")}
         for key in states[0].keys(True, True):

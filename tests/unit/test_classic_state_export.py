@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import torch
 
+from stable_envs import get_field
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter
 from tests.helpers.reference.classic_state_export import classic_state
 from tests.helpers.reference.semantics import assert_same_state
@@ -22,10 +23,11 @@ def test_classic_export_continuation_and_ownership(domain, device):
         pytest.skip("requires CUDA")
     adapter = ClassicControlAdapter(domain, 3, device, 17)
     try:
-        adapter.reset(17)
-        cached = adapter.envs[1].unwrapped.np_random.bit_generator.state
-        cached["has_uint32"], cached["uinteger"] = 1, 2**32 - 1
-        adapter.envs[1].unwrapped.np_random.bit_generator.state = cached
+        # A cached 32-bit draw: the generator changes only through reset and set_state.
+        cached = adapter.reset(17)
+        get_field(cached, "rng/has_uint32")[1], get_field(cached, "rng/uinteger")[1] = 1, 2**32 - 1
+        adapter.set_state(cached)
+        assert adapter.envs[1].unwrapped.np_random.bit_generator.state["uinteger"] == 2**32 - 1
         initial = adapter.get_state()
         held = initial.clone()
         assert_same_state(initial, classic_state(adapter))
@@ -38,8 +40,8 @@ def test_classic_export_continuation_and_ownership(domain, device):
             result = adapter.step(action)
             assert_same_state(result["state"], classic_state(adapter))
         if domain == "mountain_car_continuous":
-            assert result["state", "task", "state_is_float32"].all()
-            assert not initial["task", "state_is_float32"].any()
+            assert get_field(result["state"], "task/state_is_float32").all()
+            assert not get_field(initial, "task/state_is_float32").any()
         assert_same_state(initial, held)
         adapter.set_state(initial)
         assert_same_state(adapter.get_state(), initial)

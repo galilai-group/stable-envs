@@ -66,15 +66,15 @@ def _near(x, z, r, ox, oz, orad):
 @triton.jit
 def _blocked(
     x, z, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero,
-    WALLS: tl.constexpr, AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, M: tl.constexpr,
+    WALLS: tl.constexpr, AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, M: tl.constexpr, WF: tl.constexpr,
 ):  # fmt: skip
     """``MovingBlockWorld.intersect`` of entity ``who`` (-1: the agent) at ``(x, z)``, as a hit flag."""
     hit = x != x
     if WALLS:
         hit = hit | _wall(x, z, r, S, zero)
     if not AGENT_OV:
-        ax = tl.load(apos + offs * 3, mask=mask, other=0.0)
-        az = tl.load(apos + offs * 3 + 2, mask=mask, other=0.0)
+        ax = tl.load(apos + offs * WF, mask=mask, other=0.0)
+        az = tl.load(apos + offs * WF + 2, mask=mask, other=0.0)
         hit = hit | ((who >= 0) & _near(x, z, r, ax, az, AR))
     if not (AGENT_OV and BOX_OV):
         for j in range(M):
@@ -83,8 +83,8 @@ def _blocked(
                 sel = sel & (who >= 0)
             if BOX_OV:
                 sel = sel & (who < 0)
-            bx = tl.load(bpos + (offs * M + j) * 3, mask=mask, other=0.0)
-            bz = tl.load(bpos + (offs * M + j) * 3 + 2, mask=mask, other=0.0)
+            bx = tl.load(bpos + offs * WF + j * 3, mask=mask, other=0.0)
+            bz = tl.load(bpos + offs * WF + j * 3 + 2, mask=mask, other=0.0)
             br = tl.load(rad + offs * M + j, mask=mask, other=0.0)
             hit = hit | (sel & _near(x, z, r, bx, bz, br))
     return hit
@@ -93,12 +93,12 @@ def _blocked(
 @triton.jit
 def _snap(
     x, z, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero,
-    AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, M: tl.constexpr,
+    AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, M: tl.constexpr, WF: tl.constexpr,
 ):  # fmt: skip
     """``_snap_entity_to_grid``: the rounded point, else its first free neighbour, else stay."""
     sx = libdevice.rint(x)
     sz = libdevice.rint(z)
-    free = ~_blocked(sx, sz, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M)
+    free = ~_blocked(sx, sz, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M, WF)
     nx = tl.where(free, sx, x)
     nz = tl.where(free, sz, z)
     done = free
@@ -106,7 +106,7 @@ def _snap(
         cx = sx + (k // 3 - 1).to(tl.float64)
         cz = sz + (k % 3 - 1).to(tl.float64)
         ok = ~done & ~_blocked(
-            cx, cz, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M
+            cx, cz, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M, WF
         )
         nx = tl.where(ok, cx, nx)
         nz = tl.where(ok, cz, nz)
@@ -159,8 +159,8 @@ def _axis(cur, v, cand, back, free, free2, r, mv, S, zero, TORUS: tl.constexpr, 
 @triton.jit
 def step_kernel(
     actions, active, apos, adir, carry, count_ptr, rad, height, bpos, bdir, vel, steps_ptr, truncated, C, B,
-    M: tl.constexpr, BLOCK: tl.constexpr, ALL: tl.constexpr, GRID: tl.constexpr, TORUS: tl.constexpr,
-    STATIC: tl.constexpr, AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, WRAP: tl.constexpr,
+    WF: tl.constexpr, WI: tl.constexpr, M: tl.constexpr, BLOCK: tl.constexpr, ALL: tl.constexpr,
+    GRID: tl.constexpr, TORUS: tl.constexpr, STATIC: tl.constexpr, AGENT_OV: tl.constexpr, BOX_OV: tl.constexpr, WRAP: tl.constexpr,
 ):  # fmt: skip
     offs = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
     mask = offs < B
@@ -173,17 +173,17 @@ def step_kernel(
     zero = tl.load(C + C_ZERO)
     a = tl.load(actions + offs, mask=mask, other=4)
     count = tl.load(count_ptr + offs, mask=mask, other=0)
-    steps = tl.load(steps_ptr + offs, mask=mask, other=0) + 1
-    d = tl.load(adir + offs, mask=mask, other=0.0)
-    c = tl.load(carry + offs, mask=mask, other=-1)
-    ax = tl.load(apos + offs * 3, mask=mask, other=0.0)
-    ay = tl.load(apos + offs * 3 + 1, mask=mask, other=0.0)
-    az = tl.load(apos + offs * 3 + 2, mask=mask, other=0.0)
+    steps = tl.load(steps_ptr + offs * WI, mask=mask, other=0) + 1
+    d = tl.load(adir + offs * WF, mask=mask, other=0.0)
+    c = tl.load(carry + offs * WI, mask=mask, other=-1)
+    ax = tl.load(apos + offs * WF, mask=mask, other=0.0)
+    ay = tl.load(apos + offs * WF + 1, mask=mask, other=0.0)
+    az = tl.load(apos + offs * WF + 2, mask=mask, other=0.0)
     has = c >= 0
     ci = tl.maximum(c, 0)
     rc = tl.load(rad + offs * M + ci, mask=mask, other=1.0)
     hc = tl.load(height + offs * M + ci, mask=mask, other=1.0)
-    cptr = bpos + (offs * M + ci) * 3
+    cptr = bpos + offs * WF + ci * 3
     # move forward or back
     fwd = tl.load(C + C_FWD)
     f = tl.where(a == 2, fwd, -fwd)
@@ -192,30 +192,30 @@ def step_kernel(
     nx = ax + cosd * f + sind * zero
     nz = az + (-sind) * f + cosd * zero
     free = ~_blocked(
-        nx, nz, zero + AR, ci * 0 - 1, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M
+        nx, nz, zero + AR, ci * 0 - 1, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M, WF
     )
     cx, cy, cz = _carry_pos(nx, nz, cosd, sind, rc, hc, C)
-    cfree = ~_blocked(cx, cz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M)
+    cfree = ~_blocked(cx, cz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M, WF)
     moved = live & ((a == 2) | (a == 3)) & free & (~has | cfree)
     tl.store(cptr, cx, mask=moved & has)
     tl.store(cptr + 1, ay + cy, mask=moved & has)
     tl.store(cptr + 2, cz, mask=moved & has)
     ax = tl.where(moved, nx, ax)
     az = tl.where(moved, nz, az)
-    tl.store(apos + offs * 3, ax, mask=moved)
-    tl.store(apos + offs * 3 + 2, az, mask=moved)
+    tl.store(apos + offs * WF, ax, mask=moved)
+    tl.store(apos + offs * WF + 2, az, mask=moved)
     # turn
     turn = tl.load(C + C_TURN)
     nd = d + tl.where(a == 0, turn, -turn) * tl.load(C + C_DEG)
     cosn = libdevice.cos(nd)
     sinn = libdevice.sin(nd)
     tx, ty, tz = _carry_pos(ax, az, cosn, sinn, rc, hc, C)
-    tfree = ~_blocked(tx, tz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M)
+    tfree = ~_blocked(tx, tz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, True, AGENT_OV, BOX_OV, M, WF)
     turned = live & ((a == 0) | (a == 1)) & (~has | tfree)
     tl.store(cptr, tx, mask=turned & has)
     tl.store(cptr + 1, ay + ty, mask=turned & has)
     tl.store(cptr + 2, tz, mask=turned & has)
-    tl.store(bdir + offs * M + ci, nd, mask=turned & has)
+    tl.store(bdir + offs * WF + ci, nd, mask=turned & has)
     d = tl.where(turned, nd, d)
     cosd = tl.where(turned, cosn, cosd)
     sind = tl.where(turned, sinn, sind)
@@ -227,8 +227,8 @@ def step_kernel(
     first = ci * 0 - 1
     if not AGENT_OV:
         for j in range(M):
-            bx = tl.load(bpos + (offs * M + j) * 3, mask=mask, other=0.0)
-            bz = tl.load(bpos + (offs * M + j) * 3 + 2, mask=mask, other=0.0)
+            bx = tl.load(bpos + offs * WF + j * 3, mask=mask, other=0.0)
+            bz = tl.load(bpos + offs * WF + j * 3 + 2, mask=mask, other=0.0)
             br = tl.load(rad + offs * M + j, mask=mask, other=0.0)
             hit = (j < count) & _near(px, pz, pr, bx, bz, br)
             first = tl.where(hit & (first < 0), j, first)
@@ -241,29 +241,29 @@ def step_kernel(
     ci = tl.maximum(c, 0)
     rc = tl.load(rad + offs * M + ci, mask=mask, other=1.0)
     hc = tl.load(height + offs * M + ci, mask=mask, other=1.0)
-    cptr = bpos + (offs * M + ci) * 3
+    cptr = bpos + offs * WF + ci * 3
     x, y, z = _carry_pos(ax, az, cosd, sind, rc, hc, C)
     follow = live & has
     tl.store(cptr, x, mask=follow)
     tl.store(cptr + 1, ay + y, mask=follow)
     tl.store(cptr + 2, z, mask=follow)
-    tl.store(bdir + offs * M + ci, d, mask=follow)
+    tl.store(bdir + offs * WF + ci, d, mask=follow)
     trunc = steps.to(tl.float64) >= tl.load(C + C_MAX_STEPS)
     go = live & ~trunc
     if GRID:
         sx, sz = _snap(
-            ax, az, zero + AR, ci * 0 - 1, offs, mask, count, apos, bpos, rad, S, AR, zero, AGENT_OV, BOX_OV, M
+            ax, az, zero + AR, ci * 0 - 1, offs, mask, count, apos, bpos, rad, S, AR, zero, AGENT_OV, BOX_OV, M, WF
         )
         ax = tl.where(go, sx, ax)
         az = tl.where(go, sz, az)
-        tl.store(apos + offs * 3, ax, mask=go)
-        tl.store(apos + offs * 3 + 2, az, mask=go)
+        tl.store(apos + offs * WF, ax, mask=go)
+        tl.store(apos + offs * WF + 2, az, mask=go)
         q = tl.load(C + C_QUARTER)
         d = tl.where(go, libdevice.rint(d / q) * q, d)
-        tl.store(bdir + offs * M + ci, d, mask=go & has)
+        tl.store(bdir + offs * WF + ci, d, mask=go & has)
         ox = tl.load(cptr, mask=mask & has, other=0.0)
         oz = tl.load(cptr + 2, mask=mask & has, other=0.0)
-        sx, sz = _snap(ox, oz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, AGENT_OV, BOX_OV, M)
+        sx, sz = _snap(ox, oz, rc, ci, offs, mask, count, apos, bpos, rad, S, AR, zero, AGENT_OV, BOX_OV, M, WF)
         tl.store(cptr, sx, mask=go & has)
         tl.store(cptr + 2, sz, mask=go & has)
     if not STATIC:
@@ -272,14 +272,15 @@ def step_kernel(
             MP: tl.constexpr = triton.next_power_of_2(M)
             j = tl.arange(0, MP)
             row = offs[:, None] * M + j[None, :]
+            prow = offs[:, None] * WF + j[None, :] * 3
             on = mask[:, None] & (j[None, :] < M)
             mv = go[:, None] & (j[None, :] < count[:, None]) & ~(has[:, None] & (ci[:, None] == j[None, :]))
             r = tl.load(rad + row, mask=on, other=1.0)
             for axis in tl.static_range(2):
                 k = axis * 2
-                v = tl.load(vel + row * 3 + k, mask=on, other=0.0)
-                cur = tl.load(bpos + row * 3 + k, mask=on, other=0.0)
-                other = tl.load(bpos + row * 3 + 2 - k, mask=on, other=0.0)
+                v = tl.load(vel + prow + k, mask=on, other=0.0)
+                cur = tl.load(bpos + prow + k, mask=on, other=0.0)
+                other = tl.load(bpos + prow + 2 - k, mask=on, other=0.0)
                 cand = cur + v
                 back = cur - v
                 if axis == 0:
@@ -289,17 +290,17 @@ def step_kernel(
                     free = _free(other, cand, r, ax[:, None], az[:, None], S, AR, zero, not TORUS, AGENT_OV)
                     free2 = _free(other, back, r, ax[:, None], az[:, None], S, AR, zero, not TORUS, AGENT_OV)
                 new, nv, moving = _axis(cur, v, cand, back, free, free2, r, mv, S, zero, TORUS, GRID)
-                tl.store(bpos + row * 3 + k, new, mask=on & mv)
-                tl.store(vel + row * 3 + k, nv, mask=on & moving)
+                tl.store(bpos + prow + k, new, mask=on & mv)
+                tl.store(vel + prow + k, nv, mask=on & moving)
         else:
             for m in range(M):
                 mv = go & (m < count) & ~(has & (ci == m))
                 r = tl.load(rad + offs * M + m, mask=mask, other=1.0)
                 who = ci * 0 + m
-                p = bpos + (offs * M + m) * 3
+                p = bpos + offs * WF + m * 3
                 for axis in tl.static_range(2):
                     k = axis * 2
-                    v = tl.load(vel + (offs * M + m) * 3 + k, mask=mask, other=0.0)
+                    v = tl.load(vel + offs * WF + m * 3 + k, mask=mask, other=0.0)
                     cur = tl.load(p + k, mask=mask, other=0.0)
                     other = tl.load(p + 2 - k, mask=mask, other=0.0)
                     cand = cur + v
@@ -309,21 +310,55 @@ def step_kernel(
                     else:
                         x0, z0, x1, z1 = other, cand, other, back
                     free = ~_blocked(
-                        x0, z0, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, not TORUS, AGENT_OV, BOX_OV, M
+                        x0,
+                        z0,
+                        r,
+                        who,
+                        offs,
+                        mask,
+                        count,
+                        apos,
+                        bpos,
+                        rad,
+                        S,
+                        AR,
+                        zero,
+                        not TORUS,
+                        AGENT_OV,
+                        BOX_OV,
+                        M,
+                        WF,
                     )  # noqa: E501
                     free2 = ~_blocked(
-                        x1, z1, r, who, offs, mask, count, apos, bpos, rad, S, AR, zero, not TORUS, AGENT_OV, BOX_OV, M
+                        x1,
+                        z1,
+                        r,
+                        who,
+                        offs,
+                        mask,
+                        count,
+                        apos,
+                        bpos,
+                        rad,
+                        S,
+                        AR,
+                        zero,
+                        not TORUS,
+                        AGENT_OV,
+                        BOX_OV,
+                        M,
+                        WF,
                     )  # noqa: E501
                     new, nv, moving = _axis(cur, v, cand, back, free, free2, r, mv, S, zero, TORUS, GRID)
                     tl.store(p + k, new, mask=mv)
-                    tl.store(vel + (offs * M + m) * 3 + k, nv, mask=moving)
+                    tl.store(vel + offs * WF + m * 3 + k, nv, mask=moving)
     if WRAP:
         full = tl.load(C + C_TURN_FULL)
         rem = libdevice.fmod(d, full)
         d = tl.where(live, tl.where((rem != zero) & ((rem < zero) != (full < zero)), rem + full, rem), d)
-    tl.store(adir + offs, d, mask=live)
-    tl.store(carry + offs, c, mask=live)
-    tl.store(steps_ptr + offs, steps, mask=live)
+    tl.store(adir + offs * WF, d, mask=live)
+    tl.store(carry + offs * WI, c, mask=live)
+    tl.store(steps_ptr + offs * WI, steps, mask=live)
     tl.store(truncated + offs, (live & trunc).to(tl.int8), mask=mask)
 
 
@@ -334,5 +369,5 @@ def step(s: dict, actions: torch.Tensor, active: torch.Tensor | None, C: torch.T
     step_kernel[grid](
         actions, actions if active is None else active, s["apos"], s["adir"], s["carry"], s["count"], s["rad"],
         s["height"], s["bpos"], s["bdir"], s["vel"], s["steps"], truncated, C, B,
-        M=M, BLOCK=BLOCK, ALL=active is None, enable_fp_fusion=False, num_warps=1, **flags,
+        WF=s["apos"].stride(0), WI=s["carry"].stride(0), M=M, BLOCK=BLOCK, ALL=active is None, enable_fp_fusion=False, num_warps=1, **flags,
     )  # fmt: skip

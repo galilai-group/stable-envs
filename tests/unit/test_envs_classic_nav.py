@@ -19,6 +19,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as snv
+from stable_envs import get_field, schema_of
 
 pytestmark = pytest.mark.unit
 
@@ -98,7 +99,8 @@ LEAVES = {
 
 
 def _field(state, key):
-    return snv.get_field(state, "/".join(key))
+    """The field at State key ``key``, in a folded State and in a State with one leaf for each field."""
+    return get_field(state, ".".join(key))
 
 
 def _initialize(env, name, seed):
@@ -154,7 +156,7 @@ def test_classic_velocities_are_full_state_and_absent_from_render_projection(nam
         assert velocities and velocities <= hidden
         projection = env._unpack_render_state(env._pack_render_state(state))
         for key in velocities:
-            assert key in state.keys(True, True)
+            assert key[0] in schema_of(state).names
             assert key not in projection.keys(True, True)
         with pytest.raises(ValueError, match="missing"):
             env.set_state(projection)
@@ -164,7 +166,7 @@ def test_classic_velocities_are_full_state_and_absent_from_render_projection(nam
 def test_classic_physical_state_is_lossless_and_projects_to_float32(name):
     with _env(name) as env:
         state = env.reset(seed=17)
-        assert all(state[key].dtype == torch.float64 for key in KEYS[name])
+        assert all(_field(state, key).dtype == torch.float64 for key in KEYS[name])
         rows = env._pack_render_state(state)
         assert rows.dtype == torch.float32
         assert torch.equal(rows, env._get_render_state())
@@ -250,9 +252,11 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert env.size == env.default_size
     assert tuple(env.action_spec.shape) == (env.action_dim,)
     spec = env.state_spec
-    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(
-        LEAVES.get(name, FULL_KEYS[name])
-    )
+    if name in CLASSIC:
+        expected = [group.path for group in env._schema.groups.values()]
+    else:
+        expected = LEAVES.get(name, FULL_KEYS[name])
+    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(expected)
     env.close()
 
 
@@ -415,7 +419,9 @@ def test_classic_reports_authoritative_outputs_and_typed_state(name):
         assert result["reward"].dtype == torch.float64
         assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
         assert env.execution_mode == ("DELEGATED_CPU" if env.simulation_backend == "gym" else "NATIVE_NUMPY")
-        assert set(result["state"].keys(True, True)) == {key[0] if len(key) == 1 else key for key in FULL_KEYS[name]}
+        schema = schema_of(result["state"])
+        assert sorted(schema.names) == sorted("/".join(key) for key in FULL_KEYS[name])
+        assert set(result["state"].keys(True, True)) == {tuple(group.path) for group in schema.groups.values()}
         for key in result["state"].keys(True, True):
             assert result["state"][key].dtype == env.state_spec[key].dtype
 

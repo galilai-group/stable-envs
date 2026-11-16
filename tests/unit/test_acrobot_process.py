@@ -1,6 +1,5 @@
 """Bounded Acrobot ownership, source continuation, lifecycle and public slices."""
 
-from functools import partial
 from unittest.mock import patch
 
 import numpy as np
@@ -8,7 +7,8 @@ import pytest
 import torch
 
 import stable_envs as se
-import stable_envs.envs.classic_control.semantics as semantics
+import stable_envs.envs.classic_control.simulation.execution as execution
+from stable_envs import get_field
 from stable_envs.envs.classic_control.simulation.local import ClassicControlAdapter
 from stable_envs.envs.classic_control.simulation.process import AcrobotProcessAdapter
 from tests.helpers.reference.semantics import assert_same_state
@@ -21,8 +21,8 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
     try:
         assert_same_state(local.reset(17), remote.get_state())
         initial = local.get_state()
-        initial["rng", "has_uint32"][-1] = 1
-        initial["rng", "uinteger"][-1] = 2**32 - 1
+        get_field(initial, "rng/has_uint32")[-1] = 1
+        get_field(initial, "rng/uinteger")[-1] = 2**32 - 1
         values = {"link_mass_1": np.linspace(0.5, 1.5, 5)}
         for adapter in (local, remote):
             adapter.configure(values)
@@ -38,7 +38,7 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
         assert_same_state(local.reset(), remote.reset())
         assert_same_state(local.reset(42, {"low": -0.2, "high": 0.3}), remote.reset(42, {"low": -0.2, "high": 0.3}))
         changed = remote.get_state()
-        changed["theta1"].zero_()
+        get_field(changed, "theta1").zero_()
         assert_same_state(local.get_state(), remote.get_state())
     finally:
         local.close()
@@ -51,13 +51,13 @@ def test_invalid_last_lane_does_not_mutate_other_owners():
     try:
         initial = remote.get_state()
         invalid = initial.clone()
-        invalid["theta1"][0] += 0.25
-        invalid["rng", "state"][-1].fill_(-1)
+        get_field(invalid, "theta1")[0] += 0.25
+        get_field(invalid, "rng/state")[-1].fill_(-1)
         with pytest.raises((ValueError, OverflowError)):
             remote.set_state(invalid)
         assert_same_state(initial, remote.get_state())
         bad = initial.clone()
-        bad["dtheta1"][-1] = float("nan")
+        get_field(bad, "dtheta1")[-1] = float("nan")
         with pytest.raises(ValueError):
             remote.set_state(bad)
         assert_same_state(initial, remote.get_state())
@@ -118,16 +118,17 @@ def test_public_chunks_slices_early_stop_and_current_render(pipeline, device):
     if device == "cuda" and not torch.cuda.is_available():
         pytest.skip("requires CUDA")
     local = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
-    with patch.object(semantics, "ClassicControlAdapter", partial(AcrobotProcessAdapter, processes=2)):
+    workers = lambda domain, n, dev, seed, _: AcrobotProcessAdapter(domain, n, dev, seed, processes=2)  # noqa: E731
+    with patch.object(execution, "make_classic_adapter", workers):
         remote = se.make("Acrobot", num_envs=4, seed=17, device=device, simulation_backend="gym")
     if pipeline:
         remote._step_pipeline = lambda: remote._simulator
     try:
         initial = local.get_state()
-        initial["lifecycle", "elapsed_steps"][:, 0] = torch.tensor([0, 499, 500, 4], device=device)
-        initial["theta1"][3] = np.pi
-        initial["rng", "has_uint32"][-1] = 1
-        initial["rng", "uinteger"][-1] = 2**32 - 1
+        get_field(initial, "lifecycle/elapsed_steps")[:, 0] = torch.tensor([0, 499, 500, 4], device=device)
+        get_field(initial, "theta1")[3] = np.pi
+        get_field(initial, "rng/has_uint32")[-1] = 1
+        get_field(initial, "rng/uinteger")[-1] = 2**32 - 1
         actions = np.random.default_rng(31).integers(0, 3, (4, 8, 1))
         for horizon in (1, 8):
             a = actions[:, 0, 0] if horizon == 1 else actions

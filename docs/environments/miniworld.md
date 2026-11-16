@@ -47,19 +47,29 @@ The `simulation_backend` argument selects the step:
 
 | Value | Step | Device |
 |---|---|---|
-| `None` (default) | `"triton"` on CUDA, `"numba"` on CPU | |
+| `"auto"` (default) | `"numba"` on CPU. On CUDA, `"numba"` for small batches and `"triton"` for large batches | |
 | `"numba"` | a Numba kernel, from 64 environments on several CPU threads | CPU; on a CUDA device it returns the state on CUDA |
 | `"triton"` | a Triton kernel, one environment per GPU thread, in a CUDA graph | CUDA |
 | `"torch"` | Torch operations on the whole batch | any |
-| `"auto"` | `"numba"` for CUDA batches of fewer than `triton_min_envs` environments, otherwise as `None` | |
 
-`env.simulation_backend` reports the selected backend. On an NVIDIA L40S, the Triton step is as fast as the Numba step from one environment, so `triton_min_envs` is 1 by default.
+`None` means `"auto"`. The class ships a switch point measured on RTX 3090 and RTX A5000 hosts. The `large_backend_min_envs` tuning knob and `stable-envs tune` can change it (see [Physics backends](../performance-tuning.md#physics-backends)). `env.simulation_backend` reports the selected backend.
 
 The Numba step follows the fork's `MiniWorldEnv.step` and `MovingBlockWorld.step` operation by operation in float64, and from the same state it gives the fork's values bit for bit. The Triton and Torch steps use the same rules. On CUDA, the cosine and sine round differently and the Triton step compares squared distances, so continuous motion (`preset="upstream"`) agrees to 1e-9 per step in the tests, while the grid motion of the FloWM presets gives equal values.
 
 Resets sample the fork's reset distribution: block count, colors, textures, kinds, sizes, positions, headings and velocities. Draw `k` of an episode is a hash of the environment's seed, its episode number and `k`, so every backend draws the same numbers. `reset(seed)` gives environment `i` the seed `seed + i`, and `reset()` starts the next episode of each environment. The state holds the seed and the episode number (`rng.seed`, `rng.episode`), so a restored state continues with the same episodes.
 
 Actions on the host are checked, and an id outside [0, 8] raises `ValueError`. Actions on CUDA aren't read back, and there an id out of range does nothing, as in the fork.
+
+## State
+
+The [state](../terms.md#state) folds its fields into one array for each dtype: `float64`, `int64` and `bool`. The arrays are the leaves of the state, under the key `moving_block_world`. `snv.get_field(state, "blocks/pos")` reads one field by name, and `snv.schema_of(state).names` lists them. The fields are `agent/pos`, `agent/dir`, `agent/carrying`, `room/textures`, the `blocks/` fields, `rng/seed`, `rng/episode` and `lifecycle/elapsed_steps`.
+
+```python
+with snv.MiniWorldMovingBlockWorld(num_envs=2, size=64, device="cpu") as env:
+    state = env.reset(seed=0)
+    print(list(state.keys(True, True)))  # three leaves, one for each dtype
+    print(snv.get_field(state, "blocks/present").shape)  # torch.Size([2, 10])
+```
 
 ## Rendering
 

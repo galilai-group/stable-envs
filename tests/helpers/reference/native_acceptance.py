@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+from stable_envs import get_field
 from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 from tests.helpers.reference.profiles import PROFILES
 from tests.helpers.reference.semantics import (
@@ -58,7 +59,7 @@ def _assert_independent_snapshot(env, snapshot):
     frozen = snapshot.clone()
     first_float = next(key for key in snapshot.keys(True, True) if snapshot[key].is_floating_point())
     snapshot[first_float].add_(1)
-    snapshot["rng", "state"].add_(1)
+    get_field(snapshot, "rng/state").add_(1)
     compare_state(env.get_state(), frozen)
 
 
@@ -95,16 +96,16 @@ def _terminal_and_reward(domain, env, ref, batch):
     state = ref.get_state()
     action = _zero(domain, batch)
     if domain == "acrobot":
-        state["theta1"].fill_(np.pi)
-        state["theta2"].zero_()
-        state["dtheta1"].zero_()
-        state["dtheta2"].zero_()
+        get_field(state, "theta1").fill_(np.pi)
+        get_field(state, "theta2").zero_()
+        get_field(state, "dtheta1").zero_()
+        get_field(state, "dtheta2").zero_()
         expected_reward = 0.0
     else:
-        state["position"].fill_(0.55 if domain == "mountain_car" else 0.50)
-        state["velocity"].fill_(0.01)
+        get_field(state, "position").fill_(0.55 if domain == "mountain_car" else 0.50)
+        get_field(state, "velocity").fill_(0.01)
         if domain == "mountain_car_continuous":
-            state["task", "state_is_float32"].fill_(True)
+            get_field(state, "task/state_is_float32").fill_(True)
         expected_reward = -1.0 if domain == "mountain_car" else 100.0
     env.set_state(state)
     ref.set_state(state)
@@ -140,14 +141,17 @@ def _continuous_dtype_flag_necessity(device):
         try:
             snapshot = ref.reset(seed=17)
             compare_state(env.reset(seed=17), snapshot)
-            assert not snapshot["task", "state_is_float32"].item()
+            assert not get_field(snapshot, "task/state_is_float32").item()
 
             wrong = snapshot.clone()
-            wrong["task", "state_is_float32"].fill_(True)
+            get_field(wrong, "task/state_is_float32").fill_(True)
             env.set_state(wrong)
             got_wrong, expected = env.step(action, states=None, frames=None), ref.step(action)
             position_error = float(
-                (got_wrong["state", "position"].detach().cpu() - expected["state", "position"].detach().cpu())
+                (
+                    get_field(got_wrong["state"], "position").detach().cpu()
+                    - get_field(expected["state"], "position").detach().cpu()
+                )
                 .abs()
                 .max()
             )
@@ -173,12 +177,12 @@ def _continuous_dtype_flag_necessity(device):
 def _cartpole_terminal(env, ref, batch):
     check_reset_matches_reference(env, ref, seed=73)
     state = ref.get_state()
-    state["x"].fill_(2.5)
-    state["x_dot"].zero_()
-    state["theta"].zero_()
-    state["theta_dot"].zero_()
-    state["task", "steps_beyond_terminated"].zero_()
-    state["task", "has_steps_beyond_terminated"].zero_()
+    get_field(state, "x").fill_(2.5)
+    get_field(state, "x_dot").zero_()
+    get_field(state, "theta").zero_()
+    get_field(state, "theta_dot").zero_()
+    get_field(state, "task/steps_beyond_terminated").zero_()
+    get_field(state, "task/has_steps_beyond_terminated").zero_()
     env.set_state(state)
     ref.set_state(state)
     zero = np.zeros((batch, 1), np.int64)
@@ -195,10 +199,10 @@ def _cartpole_terminal(env, ref, batch):
 def _pendulum_rewards(env, ref, batch):
     check_reset_matches_reference(env, ref, seed=74)
     upright = ref.get_state()
-    upright["theta"].zero_()
-    upright["theta_dot"].zero_()
-    upright["torque"].zero_()
-    upright["task", "has_last_u"].fill_(True)
+    get_field(upright, "theta").zero_()
+    get_field(upright, "theta_dot").zero_()
+    get_field(upright, "torque").zero_()
+    get_field(upright, "task/has_last_u").fill_(True)
     env.set_state(upright)
     ref.set_state(upright)
     zero = np.zeros((batch, 1), np.float32)
@@ -207,7 +211,7 @@ def _pendulum_rewards(env, ref, batch):
     assert (got["reward"] == 0).all()
 
     costly = upright.clone()
-    costly["theta"].fill_(1.0)
+    get_field(costly, "theta").fill_(1.0)
     env.set_state(costly)
     ref.set_state(costly)
     got, expected = env.step(zero, states=None, frames=None), ref.step(zero)
@@ -236,16 +240,16 @@ def _action_semantics(domain, env, ref, batch):
         action = np.full((batch, 1), 3.25, np.float64)
         got, expected = env.step(action, states=None, frames=None), ref.step(action)
         compare_state(got, expected)
-        assert (got["state", "torque"] == 2.0).all()
+        assert (get_field(got["state"], "torque") == 2.0).all()
 
     precise_value = 0.1234567890123
     precise = np.full((batch, 1), precise_value, np.float64)
     got, expected = env.step(precise, states=None, frames=None), ref.step(precise)
     compare_state(got, expected)
     if domain == "pendulum":
-        assert (got["state", "torque"] == precise_value).all()
+        assert (get_field(got["state"], "torque") == precise_value).all()
     else:
-        assert bool(got["state", "task", "state_is_float32"].all())
+        assert bool(get_field(got["state"], "task/state_is_float32").all())
     saved = got["state"]
     zero = np.zeros((batch, 1), np.float32)
     env.step(zero, states=None, frames=None)

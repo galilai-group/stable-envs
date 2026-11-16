@@ -70,12 +70,12 @@ print(env.default_variation().shape)              # (22,)
 
 ```python
 state = env.reset(seed=0, options={"variation": ["physics.gravity", "physics.length"]})
-print(state["physics", "gravity"].flatten()[:4])  # gravities drawn in [4.9, 14.7]
+print(snv.get_field(state, "physics/gravity").flatten()[:4])  # gravities drawn in [4.9, 14.7]
 values = {"physics.gravity": torch.arange(1.0, 17.0)}
 state = env.reset(seed=1, options={"variation_values": values})
-print(state["physics", "gravity"].flatten()[:4])  # tensor([1., 2., 3., 4.], dtype=torch.float64)
+print(snv.get_field(state, "physics/gravity").flatten()[:4])  # tensor([1., 2., 3., 4.], dtype=torch.float64)
 state = env.reset(seed=2)
-print(state["physics", "gravity"].flatten()[:4])  # tensor([9.8000, 9.8000, 9.8000, 9.8000], dtype=torch.float64)
+print(snv.get_field(state, "physics/gravity").flatten()[:4])  # tensor([9.8000, 9.8000, 9.8000, 9.8000], dtype=torch.float64)
 env.close()
 ```
 
