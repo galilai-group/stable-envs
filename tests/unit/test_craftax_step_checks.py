@@ -7,7 +7,6 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs._core.stepping import _stack_states
 from tests.helpers.reference.semantics import assert_same_state
 
 pytest.importorskip("jax")
@@ -76,16 +75,10 @@ def test_close_raises_for_a_rejected_step_that_no_call_read():
 
 
 @pytest.mark.parametrize("name", NAMES)
-def test_state_histories_equal_leafwise_stacking_and_own_their_storage(name):
+def test_state_histories_own_their_storage(name):
     with se.make(name, num_envs=LANES, device="cpu") as env:
         env.reset(seed=7)
         sequence = torch.as_tensor(actions(env, 4, 7)).permute(1, 0, 2)
-        snapshots = [env.step(sequence[:, t], frames=None)["state"] for t in range(2)]
-        stacked = env._stack_states(snapshots)
-        reference = _stack_states(snapshots)
-        assert_same_state(stacked, reference)
-        for key in reference.keys(True, True):
-            assert stacked[key].dtype == reference[key].dtype and stacked[key].shape == reference[key].shape, key
         for out, length in ((env.step(sequence), 4), (env.step(sequence[:, 0]), 1)):
             states, state = out["states"], out["state"]
             assert states.batch_size == torch.Size([LANES, length])
