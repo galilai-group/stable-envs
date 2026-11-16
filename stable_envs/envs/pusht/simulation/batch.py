@@ -62,6 +62,26 @@ def group_of(name, dtype):
     return f"{section}/{str(dtype).removeprefix('torch.')}"
 
 
+#: Contact cache sizes of every agent and block shape: ``9 * pieces`` with the disc agent, else
+#: ``2 * pieces**2 + 16 * pieces``, for 1 to ``MAX_SHAPES`` convex pieces.
+CONTACT_COUNTS = tuple(
+    sorted(
+        {9 * pieces for pieces in range(1, MAX_SHAPES + 1)} | {2 * p * p + 16 * p for p in range(1, MAX_SHAPES + 1)}
+    )
+)
+_CONTACT_FIELDS = ("current/jax/impulse", "current/jax/identifiers")
+
+
+def _declare_contact_variants(leaves):
+    """Declare the PushT layout of ``leaves`` for every contact cache size.
+
+    ``schema_of`` then finds the layout of a State with other shapes, such as one loaded from disk.
+    """
+    for count in CONTACT_COUNTS:
+        variant = [(key, (count,) if key in _CONTACT_FIELDS else shape, dtype) for key, shape, dtype in leaves]
+        StateSchema("PushT", [Field(*leaf, group_of(leaf[0], leaf[2])) for leaf in variant])
+
+
 #: Fields a folded State leaves out. The goal image is a frame of the goal pose, which a restore draws again; an
 #: export would otherwise copy its 150 kB per environment on every step.
 UNFOLDED = frozenset({"current/goal_image"})
@@ -86,6 +106,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
         super().__init__(batch, device, seed, discrete=discrete, config=config)
         try:
             self._initialize_device()
+            # Declares the State layouts now, so a State that another process saved resolves before any export.
+            self._state_layout(self._state_fields(self._history_width()))
             if processes:
                 from .reset_pool import PushTResetPool
 
@@ -249,6 +271,7 @@ class PushTBatchAdapter(PushTReplayAdapter):
                 if len(layouts) >= 8:
                     layouts.clear()
                 groups = StateSchema("PushT", [Field(*leaf, group_of(leaf[0], leaf[2])) for leaf in leaves])
+                _declare_contact_variants(leaves)
                 declared = groups.leaves()
                 static = frozenset(key for key, _, _ in declared if not _changes_with_step(key))
                 moving = [key for key in groups.groups if _changes_with_step(key)]

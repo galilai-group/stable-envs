@@ -420,6 +420,9 @@ class PushT(Env):
         groups = schema_of(state)
         if groups is not None:
             return self._folded_render_fields(state, groups, on_device)
+        if ("recipe", "config") not in state.keys(True, True):
+            leaves = sorted("/".join(k if isinstance(k, tuple) else (k,)) for k in state.keys(True, True))
+            raise ValueError(f"PushT render: the State's leaves match no PushT layout: {leaves}")
         selected, error, nodes = {}, None, {(): _children(state)}
         batch = tuple(state.batch_size)
         for key, shape, dtype in self._render_fields:
