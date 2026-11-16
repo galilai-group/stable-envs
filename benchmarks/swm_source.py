@@ -21,6 +21,8 @@ SOURCE_KWARGS = {
     "swm/OGBScene-v0": lambda size: {"width": size, "height": size},
     "swm/OGBMaze-v0": lambda size: {"width": size, "height": size},
 }
+#: swm ids whose seeded reset needs the seeded classes of ``tests/helpers/reference/ogbench_manipulation_source.py``.
+SEEDED = {"swm/OGBCube-v0": "OwnedCube", "swm/OGBScene-v0": "OwnedScene"}
 #: Families whose swm env draws with MuJoCo, so it can draw on the GPU with EGL.
 MUJOCO_FAMILIES = ("dmcontrol", "fetch", "ogbench")
 
@@ -79,16 +81,8 @@ FIELDS = {
     "block": ("current.body.block.position",),
     "angle": ("current.body.block.angle",),
     "velocity": ("current.body.agent.velocity",),
-    "block_velocity": ("current.body.block.velocity",),
-    "block_angular_velocity": ("current.body.block.angular_velocity",),
     "qpos": ("qpos", "physics.qpos"),
     "qvel": ("qvel", "physics.qvel"),
-    "observation": ("current.observation",),
-    "time": ("time", "physics.time"),
-    "warmstart": ("warmstart", "physics.warmstart"),
-    "ctrl": ("ctrl", "physics.ctrl"),
-    "mocap_pos": ("mocap_pos", "physics.mocap_pos"),
-    "mocap_quat": ("mocap_quat", "physics.mocap_quat"),
 }
 
 
@@ -135,14 +129,22 @@ def _mujoco(u):
 class SwmSource:
     """One swm env of class ``name`` at frame size ``size``; actions are converted to its action space."""
 
-    def __init__(self, name: str, size: int = 224):
+    def __init__(self, name: str, size: int = 224, seeded: bool = False):
         import gymnasium as gym
         import stable_worldmodel  # noqa: F401  registers the swm/ ids
 
         self.name, self.id = name, source_id(name)
         kwargs = SOURCE_KWARGS[self.id](size) if self.id in SOURCE_KWARGS else {}
-        self.env = gym.make(self.id, render_mode="rgb_array", **kwargs)
         self.kwargs = kwargs
+        if seeded and self.id in SEEDED:
+            # swm's CubeEnv and SceneEnv take their task and variation draws from NumPy's global RNG and drop the
+            # reset seed. The Owned classes keep swm's reset, task and physics code and derive those streams from
+            # the seed, as stable-envs does.
+            from tests.helpers.reference import ogbench_manipulation_source as owned
+
+            self.env = getattr(owned, SEEDED[self.id])(**kwargs)
+        else:
+            self.env = gym.make(self.id, render_mode="rgb_array", **kwargs)
         space = self.env.action_space
         self.discrete = hasattr(space, "n") and not hasattr(space, "nvec")
         self.shape, self.dtype = getattr(space, "shape", ()), getattr(space, "dtype", None)
@@ -197,20 +199,29 @@ class SwmSource:
         mujoco.mj_forward(model, data)
 
     def read(self) -> dict:
-        """The fields that swm exposes, as ``{short name: float64 vector}`` (see ``FIELDS``)."""
+        """The state swm exposes, as ``{stable-envs field name: float64 vector}``.
+
+        Raises:
+            NotImplementedError: If there is no mapping for this class.
+        """
         u = self.env.unwrapped
         if hasattr(u, "block") and hasattr(u, "agent"):
-            return {
-                "agent": np.array(u.agent.position, np.float64),
-                "velocity": np.array(u.agent.velocity, np.float64),
-                "block": np.array(u.block.position, np.float64),
-                "angle": np.array([u.block.angle], np.float64),
-                "block_velocity": np.array(u.block.velocity, np.float64),
-                "block_angular_velocity": np.array([u.block.angular_velocity], np.float64),
-                "observation": np.asarray(u._get_obs(), np.float64),
-            }
+            out = {}
+            for n in ("agent", "block"):
+                body = getattr(u, n)
+                out[f"current.body.{n}.position"] = np.asarray(tuple(body.position), np.float64)
+                out[f"current.body.{n}.velocity"] = np.asarray(tuple(body.velocity), np.float64)
+                out[f"current.body.{n}.angle"] = np.asarray([body.angle], np.float64)
+                out[f"current.body.{n}.angular_velocity"] = np.asarray([body.angular_velocity], np.float64)
+            out["current.observation"] = np.asarray(u._get_obs(), np.float64)
+            return out
         if hasattr(u, "agent_position"):
-            return {"agent": np.asarray(u.agent_position, np.float64).reshape(-1)[:2]}
+            return {
+                "agent.position": np.asarray(u.agent_position, np.float64).reshape(-1),
+                "target.position": np.asarray(u.target_position, np.float64).reshape(-1),
+            }
+        if hasattr(u, "_pinch_site_id"):
+            return _read_manipulation(u)
         mj = _mujoco(u)
         if mj is None:
             raise NotImplementedError(f"no swm state mapping for {self.name}")
@@ -220,38 +231,30 @@ class SwmSource:
             "qvel": np.array(data.qvel[: model.nv], np.float64),
             "time": np.array([data.time], np.float64),
             "warmstart": np.array(data.qacc_warmstart, np.float64),
-            "ctrl": np.array(data.ctrl, np.float64),
         }
-        if model.nmocap:
-            out.update(
-                mocap_pos=np.array(data.mocap_pos, np.float64), mocap_quat=np.array(data.mocap_quat, np.float64)
-            )
+        physics = getattr(getattr(u, "env", None), "physics", None)
+        if physics is not None and "target" in physics.named.model.geom_pos.axes.row.names:
+            out["task.target_pos"] = np.array(physics.named.model.geom_pos["target"], np.float64)
         return out
 
-    def get_state(self, like: dict) -> np.ndarray:
-        """Read the swm env's state as the vector that :func:`state_vector` makes of the row ``like``."""
-        u = self.env.unwrapped
-        if _leaf(like, "block") is not None:
-            return np.array([*u.agent.position, *u.block.position, u.block.angle], np.float64)
-        if _leaf(like, "agent") is not None:
-            return np.asarray(u.agent_position, np.float64).reshape(-1)[:2]
-        mj = _mujoco(u)
-        if mj is None:
-            raise NotImplementedError(f"no swm state mapping for {self.name}")
-        model, data = mj
-        qvel = np.asarray(data.qvel[: model.nv]) if _leaf(like, "qvel") is not None else np.zeros(0)
-        return np.concatenate([np.asarray(data.qpos[: model.nq]), qvel])
 
+def _read_manipulation(u) -> dict:
+    """The fields of an OGBench Cube or Scene State that a step changes, read from swm's env."""
+    import mujoco
 
-def state_vector(state: dict) -> np.ndarray:
-    """The vector of one State instance (a dict from :func:`rows`) that :meth:`SwmSource.get_state` reads."""
-    block = _leaf(state, "block")
-    if block is not None:
-        return np.concatenate([_leaf(state, "agent"), block, _leaf(state, "angle")[:1]])
-    agent = _leaf(state, "agent")
-    if agent is not None:
-        return agent[:2]
-    qpos, qvel = _leaf(state, "qpos"), _leaf(state, "qvel")
-    if qpos is None:
-        raise NotImplementedError("no qpos leaf in the State")
-    return np.concatenate([qpos, qvel if qvel is not None else np.zeros(0)])
+    from stable_envs.envs.ogbench.simulation.manipulation import FLAGS, field
+
+    out = {}
+    for name, flag in FLAGS.items():
+        size = mujoco.mj_stateSize(u._model, flag)
+        if size:
+            value = np.empty(size, np.float64)
+            mujoco.mj_getState(u._model, u._data, value, flag)
+            out[field("physics", name).replace("/", ".")] = value
+    pinch = [u._pinch_site_id]
+    out["controller.site_xpos"] = u._data.site_xpos[pinch].copy().reshape(-1)
+    out["controller.site_xmat"] = u._data.site_xmat[pinch].copy().reshape(-1)
+    out["output.gripper_force"] = u._data.body("ur5e/robotiq/right_pad").cfrc_ext.copy().reshape(-1)
+    out["output.prev_qpos"] = np.asarray(u._prev_qpos, np.float64).reshape(-1)
+    out["output.prev_qvel"] = np.asarray(u._prev_qvel, np.float64).reshape(-1)
+    return out

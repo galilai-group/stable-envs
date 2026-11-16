@@ -3,16 +3,19 @@
     python -m benchmarks.rollout_parity --env PushT TwoRoom DMCReacher OGBCube --steps 20 --out rollout_parity.csv
 
 The script never writes a state into swm. It has two modes:
-  seeded   both sides reset with the same seed. The script reads swm's start state and compares it with ours,
-           then both take the same random actions.
+  seeded   both sides reset with the same seed, and the script compares the start states. Then both take the
+           same random actions. For OGBCube and OGBScene, swm's env is the seeded class of
+           ``tests/helpers/reference/ogbench_manipulation_source.py``: swm's own reset, task and physics code, with
+           the task and variation draws taken from the seed.
   natural  swm resets with a seed and takes ``--offset`` random actions. The script reads swm's state, writes it
            into ours with ``env.set_state``, and both take the same next actions. The ``not_read`` column lists
            the fields of ours that swm does not expose; they keep the values of ours' seeded reset. For PushT,
            pymunk's contact solver caches are among them: ours starts them cold, so steps with contacts can
            move apart. That is a limit of the comparison, not a failure.
 
-After every action the script compares the state vectors of ``swm_source.state_vector`` (positions and angle for
-PushT, the agent position for TwoRoom, qpos and qvel for MuJoCo envs).
+The error after each action is the largest absolute difference over the fields that ``SwmSource.read`` reads
+from swm (``read_from_swm``): body poses and velocities for PushT, agent and target positions for TwoRoom, the
+MuJoCo state for DM Control, and the MuJoCo state, controller and outputs for OGBench Cube and Scene.
 """
 
 from __future__ import annotations
@@ -34,6 +37,7 @@ COLUMNS = [
     "max_abs_error",
     "final_abs_error",
     "first_step_over_1e-3",
+    "worst_field",
     "read_from_swm",
     "not_read",
     "source",
@@ -53,39 +57,43 @@ def _field_names(state) -> list[str]:
     return [".".join(k) if isinstance(k, tuple) else k for k in state.keys(True, True)]
 
 
-def _load(env, fields: dict) -> tuple[list[str], list[str]]:
-    """Write the swm fields into ours' current State; return the field names written and the ones not read."""
+def _load(env, fields: dict) -> list[str]:
+    """Write swm's fields into ours' current State with ``env.set_state``; return the fields of ours not read."""
     import torch
 
-    from benchmarks.swm_source import FIELDS
     from stable_envs import get_field, set_field
 
     state = env.get_state()
-    written = []
-    for short, value in fields.items():
-        for name in FIELDS.get(short, ()):
-            try:
-                field = get_field(state, name)
-            except KeyError:
-                continue
-            if field.numel() != value.size:
-                continue
-            set_field(state, name, torch.as_tensor(value, dtype=field.dtype).reshape(field.shape))
-            written.append(name)
-            break
+    for name, value in fields.items():
+        field = get_field(state, name)
+        set_field(state, name, torch.as_tensor(value, dtype=field.dtype).reshape(field.shape))
     env.set_state(state)
-    norm = {w.replace("/", ".") for w in written}
-    return written, [n for n in _field_names(state) if n.replace("/", ".") not in norm]
+    read = {n.replace("/", ".") for n in fields}
+    return [n for n in _field_names(state) if n.replace("/", ".") not in read]
+
+
+def _error(env, fields: dict) -> tuple[float, str]:
+    """The largest absolute difference between ours and swm over ``fields``, and the field where it is."""
+    from stable_envs import get_field
+
+    state = env.get_state()
+    worst, where = 0.0, ""
+    for name, value in fields.items():
+        ours = get_field(state, name)[0].detach().cpu().double().numpy().reshape(-1)
+        d = float(np.nan_to_num(np.abs(ours - value.reshape(-1))).max()) if ours.size else 0.0
+        if d > worst:
+            worst, where = d, name
+    return worst, where
 
 
 def measure(name: str, episodes: int, steps: int, mode: str = "seeded", offset: int = 10) -> dict:
     import stable_envs as snv
-    from benchmarks.swm_source import SwmSource, rows, source_id, state_vector, versions
+    from benchmarks.swm_source import SEEDED, SwmSource, source_id, versions
 
-    src = SwmSource(name)
+    src = SwmSource(name, seeded=mode == "seeded")
     rng = np.random.default_rng(SEED)
     errors, start = np.zeros((episodes, steps)), np.zeros(episodes)
-    written: list[str] = []
+    worst: dict = {}
     not_read: list[str] = []
     with snv.make(name, num_envs=1, device="cpu") as env:
 
@@ -99,17 +107,18 @@ def measure(name: str, episodes: int, steps: int, mode: str = "seeded", offset: 
             if mode == "natural":
                 for _ in range(offset):
                     src.step(act()[1])
-                written, not_read = _load(env, src.read())
-            s0 = rows(env.get_state())[0]
-            start[ep] = float(np.abs(state_vector(s0) - src.get_state(s0)).max())
+                not_read = _load(env, src.read())
+            fields = src.read()
+            start[ep] = _error(env, fields)[0]
             for t in range(steps):
                 ours_action, swm_action = act()
                 env.step(ours_action, frames=None)
                 src.step(swm_action)
-                ours = rows(env.get_state())[0]
-                errors[ep, t] = float(np.abs(state_vector(ours) - src.get_state(ours)).max())
+                errors[ep, t], where = _error(env, src.read())
+                worst[where] = max(worst.get(where, 0.0), errors[ep, t])
     src.close()
     over = np.flatnonzero((errors > 1e-3).any(0))
+    worst.pop("", None)
     return {
         "mode": mode,
         "episodes": episodes,
@@ -118,9 +127,11 @@ def measure(name: str, episodes: int, steps: int, mode: str = "seeded", offset: 
         "max_abs_error": f"{errors.max():.4g}",
         "final_abs_error": f"{errors[:, -1].max():.4g}",
         "first_step_over_1e-3": int(over[0]) + 1 if len(over) else "",
-        "read_from_swm": " ".join(written),
+        "worst_field": max(worst, key=worst.get) if worst else "",
+        "read_from_swm": " ".join(fields),
         "not_read": " ".join(not_read),
-        "source": source_id(name),
+        "source": source_id(name)
+        + (f" ({type(src.env).__name__})" if mode == "seeded" and source_id(name) in SEEDED else ""),
         "status": "ok",
         "source_versions": versions(),
     }
