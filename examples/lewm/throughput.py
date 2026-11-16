@@ -27,7 +27,9 @@ writes ``summary.json`` and one CSV row to ``--out``:
                       included).
   proc_sm_train / proc_sm_workers / proc_sm_other
                       the mean per-process NVML SM utilisation of the training process, of its DataLoader workers,
-                      and of other processes. The frame drawing of ``ours`` is in the training process.
+                      and of other processes. The frame drawing of ``ours`` runs in the training process.
+  proc_sm_child       the same for other child processes of the training process, for example the OpenGL
+                      worker pool that draws OGBench Cube frames for ``ours``.
 
 The driver records one NVML sample per period (about 200 ms), so polls faster than that repeat values.
 
@@ -42,7 +44,6 @@ import csv
 import json
 import os
 import sys
-import threading
 import time
 from pathlib import Path
 
@@ -125,92 +126,121 @@ class SourceRender:
         return steps
 
 
-class Monitor(threading.Thread):
-    """Poll NVML for the GPU of ``device``: the GPU utilisation, the driver's sample buffer and per-process SM use."""
+def _poll_nvml(pid, uuid, period, nvml_path, proc_path, halt):
+    """Poll NVML until ``halt`` is set and write the traces. A separate process, so the GIL of training does not
+    delay the polls: NVML keeps only the last per-process sample, and a poll later than one driver period loses one."""
+    import psutil
+    import pynvml
 
-    def __init__(self, device, hz: float = 10.0):
-        super().__init__(daemon=True)
-        self.device, self.period = device, 1.0 / hz
-        self.polls, self.util, self.proc, self.error = [], {}, {}, None
-        self._halt = threading.Event()
+    pynvml.nvmlInit()
+    h = pynvml.nvmlDeviceGetHandleByUUID(uuid)
+    trainer = psutil.Process(pid)
+    polls, util, proc, roles = [], {}, {}, {}
+    last_ts = last_pts = 0
 
-    def _handle(self, pynvml):
+    def role(p):
+        if p not in roles:
+            try:
+                child = psutil.Process(p)
+                if p == pid:
+                    roles[p] = "train"
+                elif pid not in {x.pid for x in child.parents()}:
+                    roles[p] = "other"
+                else:
+                    # Forked DataLoader workers keep the command line of the training process.
+                    roles[p] = "worker" if child.cmdline() == trainer.cmdline() else "child"
+            except psutil.Error:
+                roles[p] = "other"
+        return roles[p]
+
+    while not halt.is_set():
+        t = time.time()
+        try:
+            rates = pynvml.nvmlDeviceGetUtilizationRates(h)
+            polls.append((t, rates.gpu, rates.memory))
+        except pynvml.NVMLError:
+            pass
+        try:
+            _, samples = pynvml.nvmlDeviceGetSamples(h, pynvml.NVML_GPU_UTILIZATION_SAMPLES, last_ts)
+            for x in samples:
+                util[x.timeStamp] = x.sampleValue.uiVal
+                last_ts = max(last_ts, x.timeStamp)
+        except pynvml.NVMLError:
+            pass
+        try:
+            pu = pynvml.nvmlDeviceGetProcessUtilization(h, last_pts)
+        except pynvml.NVMLError:
+            pu = []
+        for u in pu:
+            proc[(u.pid, u.timeStamp)] = (role(u.pid), u.smUtil, u.memUtil)
+            last_pts = max(last_pts, u.timeStamp)
+        halt.wait(max(0.0, period - (time.time() - t)))
+    with open(nvml_path, "w", newline="") as f:
+        wr = csv.writer(f)
+        wr.writerow(["t", "source", "gpu_util", "mem_util"])
+        wr.writerows((t, "poll", g, m) for t, g, m in polls)
+        wr.writerows((ts / 1e6, "buffer", v, "") for ts, v in sorted(util.items()))
+    with open(proc_path, "w", newline="") as f:
+        wr = csv.writer(f)
+        wr.writerow(["t", "pid", "role", "sm_util", "mem_util"])
+        wr.writerows((ts / 1e6, p, *v) for (p, ts), v in sorted(proc.items(), key=lambda kv: kv[0][1]))
+
+
+class Monitor:
+    """NVML traces of the GPU of ``device`` from a separate process: the GPU utilisation, the driver's sample
+    buffer and per-process SM use of the training process, its DataLoader workers, its other child processes
+    (for example a renderer's worker pool) and other processes."""
+
+    def __init__(self, device, out: Path, tag: str, hz: float = 10.0):
+        import multiprocessing as mp
+
         import torch
 
         # NVML numbers every GPU of the node, so CUDA_VISIBLE_DEVICES does not apply; find the GPU by its UUID.
-        uuid = str(torch.cuda.get_device_properties(self.device).uuid)
-        return pynvml.nvmlDeviceGetHandleByUUID(uuid if uuid.startswith("GPU-") else f"GPU-{uuid}")
+        uuid = str(torch.cuda.get_device_properties(device).uuid)
+        uuid = uuid if uuid.startswith("GPU-") else f"GPU-{uuid}"
+        out.mkdir(parents=True, exist_ok=True)
+        self.nvml_path, self.proc_path = out / f"nvml-{tag}.csv", out / f"proc-{tag}.csv"
+        ctx = mp.get_context("spawn")
+        self._halt = ctx.Event()
+        args = (os.getpid(), uuid, 1.0 / hz, str(self.nvml_path), str(self.proc_path), self._halt)
+        self._process = ctx.Process(target=_poll_nvml, args=args, daemon=True)
+        self.error = None
 
-    def run(self):
-        import psutil
-
-        try:
-            import pynvml
-
-            pynvml.nvmlInit()
-            h = self._handle(pynvml)
-        except Exception as e:  # noqa: BLE001
-            self.error = repr(e)
-            return
-        me, last_ts, last_pts = psutil.Process(), 0, 0
-        while not self._halt.is_set():
-            t = time.time()
-            try:
-                rates = pynvml.nvmlDeviceGetUtilizationRates(h)
-                self.polls.append((t, rates.gpu, rates.memory))
-            except pynvml.NVMLError:
-                pass
-            try:
-                _, samples = pynvml.nvmlDeviceGetSamples(h, pynvml.NVML_GPU_UTILIZATION_SAMPLES, last_ts)
-                for x in samples:
-                    self.util[x.timeStamp] = x.sampleValue.uiVal
-                    last_ts = max(last_ts, x.timeStamp)
-            except pynvml.NVMLError:
-                pass
-            try:
-                pu = pynvml.nvmlDeviceGetProcessUtilization(h, last_pts)
-            except pynvml.NVMLError:
-                pu = []
-            children = {c.pid for c in me.children(recursive=True)}
-            for u in pu:
-                role = "train" if u.pid == me.pid else "worker" if u.pid in children else "other"
-                self.proc[(u.pid, u.timeStamp)] = (role, u.smUtil, u.memUtil)
-                last_pts = max(last_pts, u.timeStamp)
-            self._halt.wait(max(0.0, self.period - (time.time() - t)))
+    def start(self):
+        self._process.start()
 
     def stop(self):
         self._halt.set()
-        self.join(5)
+        self._process.join(60)
+        if self._process.exitcode != 0:
+            self.error = f"NVML monitor exit code {self._process.exitcode}"
 
     def summary(self, t0: float, t1: float) -> dict:
         """Means over ``[t0, t1]``. A process reports no sample for a period with zero use, so each role's SM
         mean is the sum of its samples divided by the number of driver sample periods in the window."""
         import numpy as np
 
-        util = [v for ts, v in self.util.items() if t0 <= ts / 1e6 <= t1]
-        polls = [g for t, g, _ in self.polls if t0 <= t <= t1]
+        if self.error:
+            return {"nvml_error": self.error}
+        with open(self.nvml_path) as f:
+            rows = list(csv.DictReader(f))
+        util = [int(r["gpu_util"]) for r in rows if r["source"] == "buffer" and t0 <= float(r["t"]) <= t1]
+        polls = [int(r["gpu_util"]) for r in rows if r["source"] == "poll" and t0 <= float(r["t"]) <= t1]
+        with open(self.proc_path) as f:
+            proc = [r for r in csv.DictReader(f) if t0 <= float(r["t"]) <= t1]
         out = {
             "gpu_util_mean": float(np.mean(util)) if util else None,
             "gpu_util_poll_mean": float(np.mean(polls)) if polls else None,
             "nvml_samples": len(util),
             "nvml_polls": len(polls),
-            "nvml_error": self.error,
+            "nvml_proc_periods": len({r["t"] for r in proc}),
+            "nvml_error": None,
         }
-        for role in ("train", "worker", "other"):
-            sm = sum(v[1] for (_, ts), v in self.proc.items() if v[0] == role and t0 <= ts / 1e6 <= t1)
+        for role in ("train", "worker", "child", "other"):
+            sm = sum(int(r["sm_util"]) for r in proc if r["role"] == role)
             out[f"proc_sm_{'workers' if role == 'worker' else role}"] = sm / len(util) if util else None
         return out
-
-    def write(self, out: Path, tag: str) -> None:
-        with open(out / f"nvml-{tag}.csv", "w", newline="") as f:
-            wr = csv.writer(f)
-            wr.writerow(["t", "source", "gpu_util", "mem_util"])
-            wr.writerows((t, "poll", g, m) for t, g, m in self.polls)
-            wr.writerows((ts / 1e6, "buffer", v, "") for ts, v in sorted(self.util.items()))
-        with open(out / f"proc-{tag}.csv", "w", newline="") as f:
-            wr = csv.writer(f)
-            wr.writerow(["t", "pid", "role", "sm_util", "mem_util"])
-            wr.writerows((ts / 1e6, pid, *v) for (pid, ts), v in sorted(self.proc.items(), key=lambda kv: kv[0][1]))
 
 
 def main() -> None:
@@ -353,7 +383,9 @@ def main() -> None:
             self.ends.append(time.time())
 
     timing = Timing()
-    monitor = Monitor(torch.device("cuda", torch.cuda.current_device()), a.nvml_hz) if gpu else None
+    tag = f"{a.env}-{a.input}"
+    out = Path(a.out)
+    monitor = Monitor(torch.device("cuda", torch.cuda.current_device()), out, tag, a.nvml_hz) if gpu else None
     trainer = pl.Trainer(
         **{**OmegaConf.to_container(cfg.trainer), "max_epochs": 1},
         accelerator=a.accelerator,
@@ -400,12 +432,8 @@ def main() -> None:
         "model_overrides": a.model_overrides,
         "torch": torch.__version__,
     }
-    out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    tag = f"{a.env}-{a.input}"
     (out / f"summary-{tag}.json").write_text(json.dumps(summary, indent=1))
-    if monitor:
-        monitor.write(out, tag)
     with open(out / f"steps-{tag}.csv", "w", newline="") as f:
         wr = csv.writer(f)
         wr.writerow(["step", "start", "end", "step_gpu_ms", "render_ms"])
