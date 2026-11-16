@@ -30,23 +30,23 @@ class SphereDensity:
     width = 1
 
 
-class SphereKnobs(_physics.PhysicsKnobs):
-    """PhysicsKnobs plus sphere geoms whose radius and density set their body, as a recompile does."""
+class SphereParams(_physics.PhysicsParams):
+    """PhysicsParams plus sphere geoms whose radius and density set their body, as a recompile does."""
 
-    def __init__(self, knobs, model, **options):
+    def __init__(self, params, model, **options):
         self._spheres = {}
-        for knob in knobs:
-            if isinstance(knob, (SphereRadius, SphereDensity)):
+        for param in params:
+            if isinstance(param, (SphereRadius, SphereDensity)):
                 import mujoco
 
-                geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, knob.geom)
+                geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, param.geom)
                 if geom < 0 or int(model.geom_type[geom]) != int(mujoco.mjtGeom.mjGEOM_SPHERE):
-                    raise KeyError(f"{knob.leaf}: no sphere geom named {knob.geom!r}")
+                    raise KeyError(f"{param.leaf}: no sphere geom named {param.geom!r}")
                 body = int(model.geom_bodyid[geom])
                 if sum(int(b) == body for b in model.geom_bodyid) != 1:
-                    raise ValueError(f"{knob.leaf}: {knob.geom!r} must be its body's only geom")
-                self._spheres.setdefault(geom, {})[type(knob)] = knob
-        super().__init__(knobs, model, **options)
+                    raise ValueError(f"{param.leaf}: {param.geom!r} must be its body's only geom")
+                self._spheres.setdefault(geom, {})[type(param)] = param
+        super().__init__(params, model, **options)
         self._derived = True
 
     def _read_nominal(self, m):
@@ -119,36 +119,36 @@ def tilt_quat(degrees: float) -> np.ndarray:
     return quat
 
 
-class TiltKnobs(_physics.PhysicsKnobs):
-    """PhysicsKnobs plus plane tilts, written as a recompile writes them: quat, frame flag and world BVH."""
+class TiltParams(_physics.PhysicsParams):
+    """PhysicsParams plus plane tilts, written as a recompile writes them: quat, frame flag and world BVH."""
 
-    def __init__(self, knobs, model, **options):
+    def __init__(self, params, model, **options):
         import mujoco
 
         self._tilts = []
-        for knob in knobs:
-            if isinstance(knob, PlaneTilt):
-                geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, knob.geom)
+        for param in params:
+            if isinstance(param, PlaneTilt):
+                geom = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_GEOM, param.geom)
                 if geom < 0 or int(model.geom_type[geom]) != int(mujoco.mjtGeom.mjGEOM_PLANE):
-                    raise KeyError(f"{knob.leaf}: no plane geom named {knob.geom!r}")
+                    raise KeyError(f"{param.leaf}: no plane geom named {param.geom!r}")
                 if int(model.geom_bodyid[geom]) != 0:
-                    raise ValueError(f"{knob.leaf}: {knob.geom!r} must belong to the world body")
-                self._tilts.append((geom, knob))
-        super().__init__(knobs, model, **options)
+                    raise ValueError(f"{param.leaf}: {param.geom!r} must belong to the world body")
+                self._tilts.append((geom, param))
+        super().__init__(params, model, **options)
 
     def _read_nominal(self, m):
         row = super()._read_nominal(m)
-        for geom, knob in self._tilts:
+        for geom, param in self._tilts:
             if not np.array_equal(m.geom_quat[geom], tilt_quat(0.0)):
-                raise ValueError(f"{knob.leaf}: {knob.geom!r} is not compiled level")
-            row[self.offsets[self.leaves.index(knob.leaf)]] = 0.0
+                raise ValueError(f"{param.leaf}: {param.geom!r} is not compiled level")
+            row[self.offsets[self.leaves.index(param.leaf)]] = 0.0
         return row
 
     def apply(self, model, row, data=None) -> None:
         super().apply(model, row, data)
         n = self._nominal_model
-        for geom, knob in self._tilts:
-            quat = tilt_quat(row[self.offsets[self.leaves.index(knob.leaf)]])
+        for geom, param in self._tilts:
+            quat = tilt_quat(row[self.offsets[self.leaves.index(param.leaf)]])
             model.geom_quat[geom] = quat
             level = np.array_equal(quat, n.geom_quat[geom])
             model.geom_sameframe[geom] = n.geom_sameframe[geom] if level else 0
@@ -157,17 +157,17 @@ class TiltKnobs(_physics.PhysicsKnobs):
 
 
 class SphereLanes(_physics.PhysicsLanes):
-    KNOBS = SphereKnobs
+    PARAMS = SphereParams
 
-    def __init__(self, knobs, models, **options):
-        plain = [k for k in knobs if isinstance(k, (_physics.ModelField, _physics.GeomMass))]
+    def __init__(self, params, models, **options):
+        plain = [k for k in params if isinstance(k, (_physics.ModelField, _physics.GeomMass))]
         super().__init__(plain, models, **options)
-        self.spec = self.KNOBS(knobs, models[0], **options)
+        self.spec = self.PARAMS(params, models[0], **options)
         self.values = np.tile(self.spec.nominal, (len(self.models), 1))
 
 
 class TiltLanes(SphereLanes):
-    KNOBS = TiltKnobs
+    PARAMS = TiltParams
 
 
 @dataclass(frozen=True)
@@ -176,7 +176,7 @@ class Leaf:
     low: float
     high: float
     default: float
-    knobs: tuple[_physics.Knob, ...]
+    params: tuple[_physics.Param, ...]
 
 
 def _gravity():
@@ -258,12 +258,12 @@ LEAVES: dict[str, tuple[Leaf, ...]] = {
 }
 
 
-def knobs(key: str) -> tuple[_physics.Knob, ...]:
-    return tuple(k for leaf in LEAVES.get(key, ()) for k in leaf.knobs)
+def params(key: str) -> tuple[_physics.Param, ...]:
+    return tuple(k for leaf in LEAVES.get(key, ()) for k in leaf.params)
 
 
 def state_fields(key: str) -> dict:
-    return {k: (width, torch.float64) for k, width in _physics.state_fields(knobs(key)).items()}
+    return {k: (width, torch.float64) for k, width in _physics.state_fields(params(key)).items()}
 
 
 @cache
@@ -280,7 +280,7 @@ def compile_options(key: str) -> dict:
 
 
 def make_lanes(key: str, models):
-    declared = knobs(key)
+    declared = params(key)
     if not declared:
         return None
     if any(isinstance(k, (SphereRadius, SphereDensity)) for k in declared):

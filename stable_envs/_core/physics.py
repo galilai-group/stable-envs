@@ -83,7 +83,7 @@ class GeomMass:
     width = 1
 
 
-Knob = ModelField | GeomMass
+Param = ModelField | GeomMass
 
 
 @dataclass(frozen=True)
@@ -101,11 +101,11 @@ def state_key(leaf: str) -> tuple[str, ...]:
     return (PHYSICS_KEY, *leaf.split("."))
 
 
-def state_fields(knobs: Sequence[Knob]) -> dict[tuple[str, ...], int]:
-    """Return ``{state key: width}`` for the leaves the knobs declare."""
+def state_fields(params: Sequence[Param]) -> dict[tuple[str, ...], int]:
+    """Return ``{state key: width}`` for the leaves the parameters declare."""
     out: dict[tuple[str, ...], int] = {}
-    for knob in knobs:
-        out.setdefault(state_key(knob.leaf), int(knob.width))
+    for param in params:
+        out.setdefault(state_key(param.leaf), int(param.width))
     return out
 
 
@@ -203,43 +203,43 @@ def _unit_geom(m, geom: int):
 
 
 class _ResolvedField:
-    __slots__ = ("knob", "row", "index", "option")
+    __slots__ = ("param", "row", "index", "option")
 
-    def __init__(self, m, knob: ModelField):
+    def __init__(self, m, param: ModelField):
         mj = _mujoco()
-        self.knob = knob
-        self.index = knob.index
-        self.option = knob.field.startswith("opt.")
+        self.param = param
+        self.index = param.index
+        self.option = param.field.startswith("opt.")
         self.row = None
         if self.option:
-            if not hasattr(m.opt, knob.field[4:]):
-                raise KeyError(f"{knob.leaf}: MjOption has no field {knob.field[4:]!r}")
+            if not hasattr(m.opt, param.field[4:]):
+                raise KeyError(f"{param.leaf}: MjOption has no field {param.field[4:]!r}")
             return
-        if not hasattr(m, knob.field):
-            raise KeyError(f"{knob.leaf}: MjModel has no field {knob.field!r}")
-        if knob.obj is None:
+        if not hasattr(m, param.field):
+            raise KeyError(f"{param.leaf}: MjModel has no field {param.field!r}")
+        if param.obj is None:
             return
-        objtype = getattr(mj.mjtObj, _OBJECTS[knob.obj])
-        ident = mj.mj_name2id(m, objtype, knob.name)
+        objtype = getattr(mj.mjtObj, _OBJECTS[param.obj])
+        ident = mj.mj_name2id(m, objtype, param.name)
         if ident < 0:
-            raise KeyError(f"{knob.leaf}: no {knob.obj} named {knob.name!r}")
-        if knob.obj == "joint" and knob.field.startswith("dof_"):
+            raise KeyError(f"{param.leaf}: no {param.obj} named {param.name!r}")
+        if param.obj == "joint" and param.field.startswith("dof_"):
             ident = int(m.jnt_dofadr[ident])
-        elif knob.obj == "joint" and knob.field.startswith("qpos"):
+        elif param.obj == "joint" and param.field.startswith("qpos"):
             ident = int(m.jnt_qposadr[ident])
         self.row = ident
 
     def write(self, m, value) -> None:
-        v = np.asarray(value, np.float64).reshape(-1) * self.knob.scale + self.knob.offset
+        v = np.asarray(value, np.float64).reshape(-1) * self.param.scale + self.param.offset
         if self.option:
-            name = self.knob.field[4:]
+            name = self.param.field[4:]
             current = getattr(m.opt, name)
             if np.ndim(current) == 0:
                 setattr(m.opt, name, type(current)(v[0]))
                 return
             target = current
         else:
-            target = getattr(m, self.knob.field)
+            target = getattr(m, self.param.field)
             if self.row is not None:
                 if target.ndim == 1:
                     target[self.row] = v[0]
@@ -254,26 +254,26 @@ class _ResolvedField:
 
 
 class _ResolvedMass:
-    __slots__ = ("knob", "body", "part", "unscaled_mass")
+    __slots__ = ("param", "body", "part", "unscaled_mass")
 
-    def __init__(self, m, knob: GeomMass, compile_scale: float):
+    def __init__(self, m, param: GeomMass, compile_scale: float):
         mj = _mujoco()
-        if knob.per not in ("density", "mass"):
-            raise ValueError(f"{knob.leaf}: per must be 'density' or 'mass', got {knob.per!r}")
-        if not float(knob.nominal) > 0:
-            raise ValueError(f"{knob.leaf}: the nominal value must be positive")
-        geom = mj.mj_name2id(m, mj.mjtObj.mjOBJ_GEOM, knob.geom)
+        if param.per not in ("density", "mass"):
+            raise ValueError(f"{param.leaf}: per must be 'density' or 'mass', got {param.per!r}")
+        if not float(param.nominal) > 0:
+            raise ValueError(f"{param.leaf}: the nominal value must be positive")
+        geom = mj.mj_name2id(m, mj.mjtObj.mjOBJ_GEOM, param.geom)
         if geom < 0:
-            raise KeyError(f"{knob.leaf}: no geom named {knob.geom!r}")
-        self.knob = knob
+            raise KeyError(f"{param.leaf}: no geom named {param.geom!r}")
+        self.param = param
         self.body = int(m.geom_bodyid[geom])
         unit = _unit_geom(m, geom)
-        k = float(knob.nominal) if knob.per == "density" else float(knob.nominal) / unit[0]
+        k = float(param.nominal) if param.per == "density" else float(param.nominal) / unit[0]
         self.unscaled_mass = k * unit[0]
         self.part = tuple(compile_scale * k * np.asarray(x) for x in unit)
 
 
-class PhysicsKnobs:
+class PhysicsParams:
     """Resolved physics declarations for one compiled model.
 
     A model compiled with ``settotalmass`` passes ``total_mass`` and the body mass
@@ -282,25 +282,25 @@ class PhysicsKnobs:
     """
 
     def __init__(
-        self, knobs: Sequence[Knob], model, *, total_mass: float | None = None, unscaled_total: float | None = None
+        self, params: Sequence[Param], model, *, total_mass: float | None = None, unscaled_total: float | None = None
     ):
         if (total_mass is None) != (unscaled_total is None):
             raise ValueError("total_mass and unscaled_total are declared together")
         self.total_mass = None if total_mass is None else float(total_mass)
         self._compile_scale = 1.0 if total_mass is None else float(total_mass) / float(unscaled_total)
         self._unscaled_total = None if unscaled_total is None else float(unscaled_total)
-        self.knobs = tuple(knobs)
+        self.params = tuple(params)
         leaves: dict[str, int] = {}
-        for knob in self.knobs:
-            width = int(knob.width)
-            if leaves.setdefault(knob.leaf, width) != width:
-                raise ValueError(f"{knob.leaf}: declarations disagree on the leaf width")
+        for param in self.params:
+            width = int(param.width)
+            if leaves.setdefault(param.leaf, width) != width:
+                raise ValueError(f"{param.leaf}: declarations disagree on the leaf width")
         self.leaves = tuple(leaves)
         self.widths = tuple(leaves.values())
         self.offsets = tuple(int(x) for x in np.cumsum((0, *self.widths))[:-1])
         self.dim = int(sum(self.widths))
-        self._fields = [_ResolvedField(model, k) for k in self.knobs if isinstance(k, ModelField)]
-        self._masses = [_ResolvedMass(model, k, self._compile_scale) for k in self.knobs if isinstance(k, GeomMass)]
+        self._fields = [_ResolvedField(model, k) for k in self.params if isinstance(k, ModelField)]
+        self._masses = [_ResolvedMass(model, k, self._compile_scale) for k in self.params if isinstance(k, GeomMass)]
         # Bodies whose whole mass comes from declared geoms; one shared factor then scales them exactly.
         declared: dict[int, list] = {}
         for mass in self._masses:
@@ -310,14 +310,14 @@ class PhysicsKnobs:
             for body, parts in declared.items()
             if abs(sum(parts) - float(model.body_mass[body])) <= 1e-9 * float(model.body_mass[body])
         }
-        self._derived = bool(self._masses) or any(f.knob.field in _SETCONST_INPUTS for f in self._fields)
+        self._derived = bool(self._masses) or any(f.param.field in _SETCONST_INPUTS for f in self._fields)
         self._nominal_model = copy.copy(model)
         self.nominal = self._read_nominal(model)
 
     def _read_nominal(self, m) -> np.ndarray:
         row = np.zeros(self.dim)
         for f in self._fields:
-            k, off = f.knob, self.offsets[self.leaves.index(f.knob.leaf)]
+            k, off = f.param, self.offsets[self.leaves.index(f.param.leaf)]
             source = getattr(m.opt, k.field[4:]) if f.option else getattr(m, k.field)
             if f.row is not None:
                 source = source[f.row]
@@ -325,7 +325,7 @@ class PhysicsKnobs:
             raw = raw[list(f.index)] if isinstance(f.index, tuple) else raw if f.index is None else raw[f.index]
             row[off : off + k.width] = (np.asarray(raw).reshape(-1)[: k.width] - k.offset) / k.scale
         for mass in self._masses:
-            row[self.offsets[self.leaves.index(mass.knob.leaf)]] = float(mass.knob.nominal)
+            row[self.offsets[self.leaves.index(mass.param.leaf)]] = float(mass.param.nominal)
         return row
 
     def as_row(self, values: Mapping[str, object] | np.ndarray | None) -> np.ndarray:
@@ -351,8 +351,8 @@ class PhysicsKnobs:
         if not np.isfinite(row).all():
             raise ValueError(f"physics values must be finite, got {row}")
         for f in self._fields:
-            off = self.offsets[self.leaves.index(f.knob.leaf)]
-            f.write(model, row[off : off + f.knob.width])
+            off = self.offsets[self.leaves.index(f.param.leaf)]
+            f.write(model, row[off : off + f.param.width])
         if not self._derived:
             return
         self._apply_masses(model, row)
@@ -388,10 +388,10 @@ class PhysicsKnobs:
         changed: dict[int, list] = {}
         extra = 0.0
         for mass in self._masses:
-            value = float(row[self.offsets[self.leaves.index(mass.knob.leaf)]])
+            value = float(row[self.offsets[self.leaves.index(mass.param.leaf)]])
             if not value > 0:
-                raise ValueError(f"{mass.knob.leaf} must be positive, got {value}")
-            s = value / float(mass.knob.nominal)
+                raise ValueError(f"{mass.param.leaf} must be positive, got {value}")
+            s = value / float(mass.param.nominal)
             if s != 1.0:
                 changed.setdefault(mass.body, []).append((mass, s))
                 extra += (s - 1.0) * mass.unscaled_mass
@@ -422,10 +422,10 @@ class PhysicsKnobs:
 class PhysicsLanes:
     """One physics value row per CPU model."""
 
-    def __init__(self, knobs: Sequence[Knob], models: Sequence, **compile_options):
+    def __init__(self, params: Sequence[Param], models: Sequence, **compile_options):
         if not models:
             raise ValueError("PhysicsLanes needs at least one model")
-        self.spec = PhysicsKnobs(knobs, models[0], **compile_options)
+        self.spec = PhysicsParams(params, models[0], **compile_options)
         self.models = list(models)
         self._data = [None] * len(self.models)
         self.values = np.tile(self.spec.nominal, (len(self.models), 1))

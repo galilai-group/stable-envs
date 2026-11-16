@@ -272,7 +272,7 @@ class DMControlTrackCom(_DMCModel):
             import mujoco
 
             key = cls._simulator_key() if hasattr(cls, "_simulator_key") else None
-            tilts = [k for k in (_sim_physics.knobs(key) if key else ()) if isinstance(k, _sim_physics.PlaneTilt)]
+            tilts = [k for k in (_sim_physics.params(key) if key else ()) if isinstance(k, _sim_physics.PlaneTilt)]
             cls._floor_tilt_cache = None
             if tilts:
                 geom = mujoco.mj_name2id(cls._model(), mujoco.mjtObj.mjOBJ_GEOM, tilts[0].geom)

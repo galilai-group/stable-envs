@@ -1,4 +1,4 @@
-"""Per-lane physics knobs and the reset rule: unnamed Variation leaves return to their defaults."""
+"""Per-lane physics parameters and the reset rule: unnamed Variation leaves return to their defaults."""
 
 import copy
 import importlib
@@ -11,7 +11,7 @@ import torch
 
 import stable_envs as se
 from stable_envs import get_field
-from stable_envs._core.physics import GeomMass, ModelField, PhysicsKnobs, state_key
+from stable_envs._core.physics import GeomMass, ModelField, PhysicsParams, state_key
 from stable_envs._core.state_schema import unfold
 
 mujoco = pytest.importorskip("mujoco")
@@ -100,29 +100,29 @@ def test_geom_mass_matches_a_recompile(domain):
     options = {}
     if domain == "cheetah":
         options = {"total_mass": 14.0, "unscaled_total": float(_compile(domain, keep_total=False).body_mass[1:].sum())}
-    knobs = PhysicsKnobs([GeomMass("agent.torso_density", "torso", 1000.0)], nominal, **options)
+    params = PhysicsParams([GeomMass("agent.torso_density", "torso", 1000.0)], nominal, **options)
     for density in (500.0, 1500.0):
         recompiled = _compile(domain, "torso", density)
         mine = copy.copy(nominal)
-        knobs.apply(mine, knobs.as_row({"agent.torso_density": density}))
+        params.apply(mine, params.as_row({"agent.torso_density": density}))
         ours, theirs = _model_arrays(mine), _model_arrays(recompiled)
         for name in _PHYSICAL:
             np.testing.assert_allclose(ours[name], theirs[name], rtol=1e-12, atol=1e-12, err_msg=name)
         np.testing.assert_allclose(_full_inertia(mine), _full_inertia(recompiled), rtol=1e-12, atol=1e-14)
         np.testing.assert_allclose(_roll(mine), _roll(recompiled), atol=1e-10)
     restored = copy.copy(nominal)
-    knobs.apply(restored, knobs.as_row({"agent.torso_density": 700.0}))
-    knobs.apply(restored, knobs.nominal)
+    params.apply(restored, params.as_row({"agent.torso_density": 700.0}))
+    params.apply(restored, params.nominal)
     before, after = _model_arrays(nominal), _model_arrays(restored)
     assert all(np.array_equal(before[k], after[k]) for k in before), "the registered row must restore every array"
 
 
 def test_sphere_radius_and_density_match_a_recompile():
-    from stable_envs.envs.dmcontrol.simulation.physics import SphereKnobs, knobs
+    from stable_envs.envs.dmcontrol.simulation.physics import SphereParams, params
 
     nominal = _compile("ball_in_cup")
     recompiled = _compile("ball_in_cup", "ball", 1300.0, size=0.04)
-    spec = SphereKnobs(knobs("ball_in_cup"), nominal)
+    spec = SphereParams(params("ball_in_cup"), nominal)
     mine = copy.copy(nominal)
     spec.apply(mine, spec.as_row({"ball.density": 1300.0, "ball.size": 0.04}))
     ours, theirs = _model_arrays(mine), _model_arrays(recompiled)
@@ -135,10 +135,10 @@ def test_sphere_radius_and_density_match_a_recompile():
 
 
 def test_floor_tilt_matches_a_recompile():
-    from stable_envs.envs.dmcontrol.simulation.physics import TiltKnobs, knobs
+    from stable_envs.envs.dmcontrol.simulation.physics import TiltParams, params
 
     nominal = _compile("walker")
-    spec = TiltKnobs(knobs("walker"), nominal)
+    spec = TiltParams(params("walker"), nominal)
     for degrees in (-7.3, 1e-9, 9.0):
         mine, recompiled = copy.copy(nominal), _compile("walker", tilt=degrees)
         spec.apply(mine, spec.as_row({"floor.rotation_y": degrees}))
@@ -154,10 +154,10 @@ def test_floor_tilt_matches_a_recompile():
 
 def test_geom_mass_scales_a_body_it_covers_without_rotating_its_frame():
     """Every ball-in-cup cup part shares one leaf, so the cup's inertial frame survives."""
-    from stable_envs.envs.dmcontrol.simulation.physics import knobs
+    from stable_envs.envs.dmcontrol.simulation.physics import params
 
     nominal = _compile("ball_in_cup")
-    spec = PhysicsKnobs([k for k in knobs("ball_in_cup") if isinstance(k, GeomMass)], nominal)
+    spec = PhysicsParams([k for k in params("ball_in_cup") if isinstance(k, GeomMass)], nominal)
     mine = copy.copy(nominal)
     spec.apply(mine, spec.as_row({"agent.density": 700.0}))
     body = int(nominal.geom_bodyid[mujoco.mj_name2id(nominal, mujoco.mjtObj.mjOBJ_GEOM, "cup_part_0")])
@@ -168,15 +168,15 @@ def test_geom_mass_scales_a_body_it_covers_without_rotating_its_frame():
 
 @pytest.mark.parametrize("cell", ["DMCCheetahRun", "DMCQuadrupedWalk"])
 def test_render_masses_match_the_simulated_model(cell):
-    """The tracking camera's per-row masses are the ones PhysicsKnobs writes into the simulator."""
+    """The tracking camera's per-row masses are the ones PhysicsParams writes into the simulator."""
     pytest.importorskip("dm_control")
     from stable_envs.envs.dmcontrol import _mass_rows
-    from stable_envs.envs.dmcontrol.simulation.physics import compile_options, knobs
+    from stable_envs.envs.dmcontrol.simulation.physics import compile_options, params
 
     cls = se.registry.REGISTRY[cell]
     key, model = cls._simulator_key(), cls._model()
     rows = _mass_rows.MassRows(key, model)
-    spec = PhysicsKnobs(knobs(key), model, **compile_options(key))
+    spec = PhysicsParams(params(key), model, **compile_options(key))
     values = {rows.paths[0]: 650.0, rows.paths[1]: 1400.0}
     mine = copy.copy(model)
     spec.apply(mine, spec.as_row(values))
@@ -193,7 +193,7 @@ def test_model_fields_write_through_a_transform():
     joint.frictionloss = 0.1
     body.add_geom(name="g", size=[0.1, 0, 0])
     m = spec.compile()
-    knobs = PhysicsKnobs(
+    params = PhysicsParams(
         [
             ModelField("gravity.z", "opt.gravity", index=2),
             ModelField("floor.friction", "geom_friction", "geom", "g", 0),
@@ -201,11 +201,11 @@ def test_model_fields_write_through_a_transform():
         ],
         m,
     )
-    np.testing.assert_allclose(knobs.nominal, [-9.81, 1.0, 0.05])
-    knobs.apply(m, knobs.as_row({"gravity.z": -3.0, "floor.friction": 0.4, "spinner.friction": 0.25}))
+    np.testing.assert_allclose(params.nominal, [-9.81, 1.0, 0.05])
+    params.apply(m, params.as_row({"gravity.z": -3.0, "floor.friction": 0.4, "spinner.friction": 0.25}))
     assert m.opt.gravity[2] == -3.0 and m.geom_friction[0, 0] == 0.4 and m.dof_frictionloss[0] == 0.5
     with pytest.raises(KeyError, match="no geom named"):
-        PhysicsKnobs([ModelField("x", "geom_friction", "geom", "missing", 0)], m)
+        PhysicsParams([ModelField("x", "geom_friction", "geom", "missing", 0)], m)
 
 
 def test_dmc_batch_rejects_a_state_without_its_physics():
