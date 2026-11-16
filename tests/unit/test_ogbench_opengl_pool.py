@@ -55,3 +55,5 @@ def test_worker_frames_equal_in_process_frames(name):
         same(again, alone[3:19], device)
     finally:
         env.close()
+        # The pool outlives the env; stop its workers so they don't hold memory for the rest of the session.
+        pool.close_all()

@@ -14,7 +14,16 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import build_tensordict, exclude_leaves, leaf_tree, new_node, pack_to_device, stack_leaves, to_device
+from .tensordicts import (
+    build_tensordict,
+    exclude_leaves,
+    leaf_tree,
+    new_node,
+    node_factory,
+    pack_to_device,
+    stack_leaves,
+    to_device,
+)
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -359,25 +368,31 @@ def _host_builder(keys, n, sequence, state_indices):
     state = [key for key in keys if key[0] == "state"]
     outputs = [key for key in keys if key[0] != "state"]
     width = None if state_indices is None else len(state_indices)
-    names: dict = {"F": torch.from_numpy, "N": new_node, "C": torch.device("cpu"), "T": torch.ones, "B": torch.bool}
-    names["R"] = lambda value: value.reshape(n, 1, *value.shape[1:])
+    # A NumPy copy and ``from_numpy`` cost less than a torch op per leaf; ``[:, None]`` adds the time axis.
+    names: dict = {
+        "F": torch.from_numpy,
+        "N": node_factory(),
+        "C": torch.device("cpu"),
+        "O": np.ones((n, 1), np.bool_),
+    }
     leaves = []
     for key in state:
         leaves.append((key, f"F(V[K{len(names)}].copy())"))
         names[f"K{len(names)}"] = key
     for key in outputs:
-        copy = f"V[K{len(names)}].copy()"
-        leaves.append((key, f"F(R({copy}))" if sequence else f"F({copy})"))
+        leaves.append((key, f"F(V[K{len(names)}]{'[:, None]' if sequence else ''}.copy())"))
         names[f"K{len(names)}"] = key
-    leaves.append((("valid",), f"T(({n}, 1), dtype=B)"))
+    leaves.append((("valid",), "F(O.copy())"))
     batches = {(): (n,)}
     if sequence:
         batches.update({key[:1]: (n, 1) for key in outputs if len(key) > 1})
     if width is not None:
         for key in state:
-            leaves.append((("states", *key[1:]), f"F(R(V[K{len(names)}].copy())[:, :{width}])"))
+            leaves.append(
+                (("states", *key[1:]), f"F(V[K{len(names)}][:, None]{'[:, :0]' if width == 0 else ''}.copy())")
+            )
             names[f"K{len(names)}"] = key
-        leaves.append((("state_valid",), f"T(({n}, 1), dtype=B)[:, :{width}]"))
+        leaves.append((("state_valid",), f"F(O[:, :{width}].copy())"))
         batches[("states",)] = (n, width)
     tree: dict = {}
     for key, expression in leaves:
@@ -415,6 +430,40 @@ def _host_result(env, leaves, sequence, state_indices, final_state):
     return result, live
 
 
+def _sequence_hook(env, acts, sequence, state_indices, frame_indices, *, final_state, final):
+    """Step through the family's ``_step_sequence`` hook, or return None when the family has none or declines.
+
+    The hook gets ``(B, T, *action_shape)`` actions, the selected step indices of states and frames (None for
+    no selection), and ``final``: whether to build the final state, which the result returns unless
+    ``final_state`` is False and an empty ``states`` selection copies. It returns None, or a dict of
+    ``(B, T, ...)`` task outputs with ``valid``, and ``state``, ``states`` and ``frames`` when they are asked
+    for. Finished lanes hold their state and their later task outputs are zero, as in the step loop.
+    """
+    hook = getattr(env, "_step_sequence", None)
+    if hook is None:
+        return None
+    got = hook(acts if sequence else acts[:, None], state_indices or None, frame_indices or None, final)
+    if got is None:
+        return None
+    valid = got.pop("valid")
+    live_state, saved_states, saved_frames = got.pop("state", None), got.pop("states", None), got.pop("frames", None)
+    out = {"state": live_state} if final_state else {}
+    out.update(got.items() if sequence else ((key, value[:, 0]) for key, value in got.items()))
+    out["valid"] = valid
+    if state_indices is not None:
+        out["states"] = saved_states if state_indices else live_state.unsqueeze(1)[:, :0].clone()
+        out["state_valid"] = _columns(valid, state_indices)
+    if frame_indices is not None:
+        if frame_indices:
+            out["frames"] = saved_frames
+        else:
+            out["frames"] = torch.empty(
+                (env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device
+            )
+        out["frame_valid"] = _columns(valid, frame_indices)
+    return build_tensordict(out, [env.num_envs], env.device)
+
+
 def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
@@ -430,6 +479,11 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
     # The final State: returned unless ``state=False``, and the source of an empty ``states`` selection.
     final = final_state or state_indices == ()
+    if pipeline is None:
+        # A family that steps the whole sequence in one call takes it here; the step loop serves the rest.
+        fused = _sequence_hook(env, acts, sequence, state_indices, frame_indices, final_state=final_state, final=final)
+        if fused is not None:
+            return fused
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
     advance = getattr(env, "_advance_without_snapshot", env._step)

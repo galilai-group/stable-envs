@@ -184,7 +184,9 @@ def release_gl(resource) -> None:
 def release_all_gl() -> int:
     """Release every tracked object, newest first, and return how many were released.
 
-    A failing release does not stop the others; the first failure is raised afterward.
+    Interpreter exit calls this. Caches of other families keep their renderers for the process lifetime, so a
+    call while they can still render leaves them with a closed renderer. A failing release does not stop the
+    others; the first failure is raised afterward.
     """
     with _GL_LOCK:
         entries = list(_GL_OWNED.values())[::-1]

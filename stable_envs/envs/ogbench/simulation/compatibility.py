@@ -15,7 +15,15 @@ from ogbench.manipspace.envs.scene_env import SceneEnv
 
 from ....spaces import Box, Dict
 
-MODEL_VALUES = ("cube.size", "agent.color", "floor.color", "camera.angle_delta", "light.intensity")
+MODEL_VALUES = (
+    "cube.size",
+    "agent.color",
+    "agent.opacity",
+    "floor.color",
+    "camera.angle_delta",
+    "light.intensity",
+    "target.opacity",
+)
 
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
 ARM_START = "agent.ee_start_position"
@@ -46,7 +54,11 @@ COMPILED_FIELDS = (
 )
 # OGBench pixel tasks hide the goal cube (visualize_info=False).
 TARGET_ALPHA = 0.0
-# Material alphas OGBench's pixel tasks apply (ob_type="pixels", pixel_transparent_arm=True).
+# The goal cube alpha of OGBench's visualize_info=True, the swm OGBCube-v0 default; target.opacity 1 draws it.
+VISIBLE_TARGET_ALPHA = 0.2
+# Material alphas OGBench's pixel tasks apply (ob_type="pixels", pixel_transparent_arm=True). The
+# agent.opacity leaf moves each alpha linearly from this value (0) to 1, the opaque arm of OGBench's
+# state tasks and of swm's OGBCube-v0 (1).
 PIXEL_ALPHAS = {
     "ur5e/robotiq/metal": 0.1,
     "ur5e/robotiq/silicone": 0.1,
@@ -60,6 +72,16 @@ PIXEL_ALPHAS = {
 }
 # MjModel arrays written per lane after compilation; lanes sharing a model swap them in.
 LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
+
+
+def arm_alpha(pixel_alpha, opacity):
+    """The arm material alpha for ``agent.opacity``: the pixel-task alpha at 0, opaque at 1."""
+    return pixel_alpha + opacity * (1.0 - pixel_alpha)
+
+
+def target_alpha(env):
+    """The goal cube alpha for ``env``'s ``target.opacity``: hidden at 0, OGBench's visualize_info=True at 1."""
+    return TARGET_ALPHA + float(env.variation_space["target"]["opacity"].value[0]) * VISIBLE_TARGET_ALPHA
 
 
 def legacy_seed(seed):
@@ -111,6 +133,7 @@ def variation_tree(env):
                     (3,),
                     np.mean(env._arm_sampling_bounds, axis=0),
                 ),
+                "opacity": box(0.0, 1.0, (1,), [0.0]),
             }
         ),
         "floor": Dict({"color": box(0.0, 1.0, (2, 3), [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]])}),
@@ -120,6 +143,7 @@ def variation_tree(env):
     }
     if env.family == "Scene":
         result["lock_color"] = box(0.0, 1.0, (2, 3), [env._colors["red"][:3]] * 2)
+    result["target"] = Dict({"opacity": box(0.0, 1.0, (1,), [0.0])})
     return Dict(result)
 
 
@@ -143,7 +167,7 @@ class _SharedTree:
     def __init__(self, root, attributes):
         self.root, self.attributes, self.active = root, attributes, None
         self.slots = [(root.find("texture", "grid"), "rgb1"), (root.find("texture", "grid"), "rgb2")]
-        self.slots += [(root.find("material", "ur5e/robotiq/" + name), "rgba") for name in ("black", "pad_gray")]
+        self.slots += [(root.find("material", name), "rgba") for name in PIXEL_ALPHAS]
         for body in ("object_0", "object_target_0"):
             self.slots += [(geom, "size") for geom in root.find("body", body).find_all("geom")]
         self.slots += [(root.find("camera", "front_pixels"), "xyaxes"), (root.find("light", "global"), "diffuse")]
@@ -557,8 +581,10 @@ class Compatibility:
             changes.append(same if equal_means_dirty else not same)
             setattr(element, attr, value)
 
+        opacity = float(v["agent"]["opacity"].value[0])
         for name, alpha in PIXEL_ALPHAS.items():
-            model.find("material", name).rgba[3] = alpha
+            material = model.find("material", name)
+            assign(material, "rgba", [*material.rgba[:3], arm_alpha(alpha, opacity)])
         for i, attr in enumerate(("rgb1", "rgb2")):
             assign(model.find("texture", "grid"), attr, v["floor"]["color"].value[i])
         for name in ("black", "pad_gray"):
@@ -651,6 +677,15 @@ _COMPILED_CACHE_MAX = 64
 
 def values_key(values):
     return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES)
+
+
+#: MODEL_VALUES that only colour materials and geoms: no COMPILED_FIELDS array depends on them.
+COLOUR_VALUES = ("agent.color", "agent.opacity", "target.opacity")
+
+
+def compiled_key(values):
+    """The key of the COMPILED_FIELDS arrays of ``values``: lanes that differ only in COLOUR_VALUES share it."""
+    return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES if k not in COLOUR_VALUES)
 
 
 def compiled_fields(family, values):

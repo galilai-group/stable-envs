@@ -6,6 +6,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Breaking changes
 
+- The Craftax state has three leaves, one for each dtype, such as `craftax/int32` or `craftax_classic/int32`, in place of one leaf for each upstream field. Each field, such as `engine/player_health` or `physics/zombie/health`, is a slice of one of them. Read and write a field with `snv.get_field` and `snv.set_field`. States saved before this change do not load.
 - The `mjwarp_min_envs` argument of the DM Control classes, `OGBCube` and `OGBScene`, the `triton_min_envs` argument of PushT and the `jax_min_envs` argument of TwoRoom are removed, with the tables of measured cutoffs. The `large_backend_min_envs` tuning knob (`STABLE_ENVS_LARGE_BACKEND_MIN_ENVS`) sets the switch point for these classes.
 - `simulation_backend="auto"` is the default of the DM Control classes, `OGBCube`, `OGBScene` and PushT, and it has the same meaning in each: on CUDA, small batches step on the small-batch backend and large batches on the GPU backend. `"default"` is no longer accepted by `OGBCube` and `OGBScene`; None still means `"auto"`.
 - The PushT state is folded: its fixed-shape fields are slices of one `(N, size)` leaf for each section and dtype, and the action history keeps its own leaves. The state has about 20 leaves instead of 239, and it leaves out the goal image. Read and write fields with `snv.get_field` and `snv.set_field`.
@@ -22,11 +23,13 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. They replace `benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py`. The `bench` dependency group installs stable-worldmodel.
 - `examples/lewm/throughput.py` measures LeWM training speed and GPU use with stored frames, the stable-worldmodel renderer and stable-envs.
+- The Craftax classes have physics variation: the variation leaves set fields of the upstream `EnvParams` for each environment, and the state keeps the values, so `set_state` restores them.
 - `snv.FrameLoader(env, states, batch_size)` yields the frames of stored States or rows a batch at a time. It draws many batches in one `env.render` call, with a chunk size that it picks from free device memory and caps at the environment's `render_ahead_rows`, so small batches draw at the per-frame cost of a large batch. Each batch has the same bytes as `env.render` of its states, except for `OGBCube` on CUDA, where a few pixels differ by 1 level.
 - `step(..., state=False)` skips building the final state; the result then has no `state` key, and `get_state()` builds the state on demand.
 
 ### Changed
 
+- Craftax draws its frames in the jitted step with one texture gather per pixel, with the same bytes as upstream's renderer. A sequence of actions steps in one jitted `lax.scan`. On CPU, the environments are split over one XLA host device per usable CPU, with at least 32 environments on each device.
 - stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` when it builds an environment that steps in JAX, before JAX starts, and no longer when it imports a JAX backend module. A value that you set is kept. If JAX already started on a GPU without the variable, stable-envs logs one warning with the fix. See [JAX GPU memory](https://galilai-group.github.io/stable-envs/environment-variables/#jax-gpu-memory).
 - CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.
 - With `simulation_backend="auto"`, DM Control, `OGBCube`, `OGBScene`, PushT and TwoRoom select their CUDA physics backend from the batch size with one shared rule. The switch point comes from the `large_backend_min_envs` knob, else from the tuning cache that `stable-envs tune` writes, else from the value each class ships. Building an environment times nothing. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
