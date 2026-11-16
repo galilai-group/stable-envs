@@ -536,8 +536,12 @@ def test_owned_variation_child_streams_and_no_recompilation_branch(family, oracl
             b.reset(options=options)
             assert_oracle(a, b, oracle)
             assert (a._model is old_a) == (b._model is old_b)
+            theirs = dict(oracle.spaces(b.variation_space))
+            # agent.opacity and target.opacity have no swm counterpart.
             for name, node in oracle.spaces(a.variation_space):
-                counterpart = dict(oracle.spaces(b.variation_space))[name]
+                if name in ("variation/agent/opacity", "variation/target", "variation/target/opacity"):
+                    continue
+                counterpart = theirs[name]
                 assert node.np_random.bit_generator.state == counterpart.np_random.bit_generator.state
     finally:
         a.close()

@@ -66,19 +66,19 @@
   {
    "key": "variation",
    "leaves": 1,
-   "numel": 62,
+   "numel": 66,
    "dtypes": ["float64"]
   },
   {
    "key": "model",
    "leaves": 1,
-   "numel": 26,
+   "numel": 30,
    "dtypes": ["float64"]
   },
   {
    "key": "rng",
    "leaves": 3,
-   "numel": 1341,
+   "numel": 1443,
    "dtypes": ["float64", "int64", "uint8"]
   }
  ],
@@ -100,6 +100,15 @@
    "low": [0.25, -0.2, 0.2],
    "high": [0.6, 0.2, 0.35],
    "default": [0.425, 0, 0.275]
+  },
+  {
+   "path": "agent.opacity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0
   },
   {
    "path": "camera.angle_delta",
@@ -190,6 +199,15 @@
    "low": 0,
    "high": 1,
    "default": [0.96, 0.26, 0.33, 0.96, 0.26, 0.33]
+  },
+  {
+   "path": "target.opacity",
+   "type": "Box",
+   "reset": false,
+   "shape": [1],
+   "low": 0,
+   "high": 1,
+   "default": 0
   }
  ],
  "devices": {

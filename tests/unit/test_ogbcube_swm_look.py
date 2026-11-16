@@ -37,7 +37,7 @@ def test_default_look_is_the_pixel_task_look():
 def test_opacity_one_is_the_swm_look():
     arm, target = _alphas(1.0)
     assert arm == pytest.approx(dict.fromkeys(PIXEL_ALPHAS, 1.0))
-    assert target == pytest.approx({0.2})
+    assert sorted(target) == pytest.approx([0.2])
 
 
 @pytest.mark.swm
