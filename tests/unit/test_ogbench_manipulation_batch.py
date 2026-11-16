@@ -40,8 +40,9 @@ def _same_outputs(a, b):
 
 @pytest.mark.parametrize("family", FAMILIES)
 @pytest.mark.parametrize("reward_task_id", [None, 2])
-def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
-    lanes, rng = 6, np.random.default_rng(3)
+@pytest.mark.parametrize("lanes", [1, 6])
+def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id, lanes):
+    rng = np.random.default_rng(3)
     ref = OGBManipulationAdapter(family, lanes, seed=11, reward_task_id=reward_task_id)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=11, reward_task_id=reward_task_id, threads=3)
     try:
@@ -60,8 +61,9 @@ def test_batch_step_equals_ogbench_lanes_bit_for_bit(family, reward_task_id):
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-def test_batch_restore_and_variation_continue_bit_for_bit(family):
-    lanes, rng = 4, np.random.default_rng(8)
+@pytest.mark.parametrize("lanes", [1, 4])
+def test_batch_restore_and_variation_continue_bit_for_bit(family, lanes):
+    rng = np.random.default_rng(8)
     ref = OGBManipulationAdapter(family, lanes, seed=2)
     bat = OGBManipulationBatchAdapter(family, lanes, seed=2, threads=2)
     try:
@@ -83,6 +85,38 @@ def test_batch_restore_and_variation_continue_bit_for_bit(family):
         for t in range(40, 60):
             action = _actions(rng, t, lanes)
             assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+    finally:
+        ref.close()
+        bat.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_threaded_physics_equals_one_thread(family):
+    lanes, rng = 8, np.random.default_rng(6)
+    serial = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=1)
+    threaded = OGBManipulationBatchAdapter(family, lanes, seed=7, threads=4)
+    try:
+        assert serial.physics.b.nthread == 1 and threaded.physics.b.nthread == 4
+        for t in range(40):
+            action = _actions(rng, t, lanes)
+            assert_same_state(threaded.step(action)["state"], serial.step(action)["state"])
+    finally:
+        serial.close()
+        threaded.close()
+
+
+@pytest.mark.parametrize("lanes", [1, 2])
+def test_scene_cube_repair_equals_ogbench(lanes):
+    ref = OGBManipulationAdapter("Scene", lanes, seed=4)
+    bat = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
+    try:
+        for _ in range(2):
+            # The last lane's cube leaves the workspace; post_step puts it back from the lane's generator.
+            ref.envs[-1].data.qpos[bat._cube] = 5.0
+            bat._qpos[-1, bat._cube] = 5.0
+            action = np.zeros((lanes, 5))
+            assert_same_state(bat.step(action)["state"], ref.step(action)["state"])
+        assert_same_state(bat.reset(), ref.reset())
     finally:
         ref.close()
         bat.close()
@@ -163,6 +197,35 @@ def test_batch_controller_writes_ogbench_controls(family):
         controller.close()
         for env in envs:
             env.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_controller_site_jacobian_equals_mujoco(family):
+    import mujoco
+
+    from stable_envs.envs.ogbench.simulation.compatibility import CompatibleCube, CompatibleScene, LanePool
+
+    cls = CompatibleCube if family == "Cube" else CompatibleScene
+    env = cls(seed=0, pool=LanePool())
+    env.reset(seed=0)
+    lanes = 6
+    controller = BatchController(env, lanes, 2)
+    try:
+        if controller._jacobian is None:
+            pytest.skip("Numba is not installed")
+        b, rng = controller._ik, np.random.default_rng(4)
+        controller._ik_qpos[:] = rng.uniform(-np.pi, np.pi, controller._ik_qpos.shape)
+        b.forward(None, mujoco.mjtStage.mjSTAGE_POS)
+        site_xpos = controller._ik_site_xpos[:, controller._site]
+        for rows in (np.arange(lanes), np.array([1, 4])):
+            jacp, jacr = b.jac(controller._site_body, site_xpos[rows], None if len(rows) == lanes else rows)
+            ours = controller._jacobian(
+                controller._ik_cdof, controller._ik_subtree_com, site_xpos, rows, controller._chain, controller._root
+            )
+            assert np.array_equal(ours, np.concatenate([jacp, jacr], axis=1))
+    finally:
+        controller.close()
+        env.close()
 
 
 @pytest.mark.parametrize(
