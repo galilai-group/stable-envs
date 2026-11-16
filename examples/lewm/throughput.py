@@ -17,10 +17,17 @@ writes ``summary.json`` and one CSV row to ``--out``:
   train_busy_frac     GPU time of the training step alone (CUDA events around the step, without frame drawing)
                       divided by the steady-state wall time.
   render_busy_frac    GPU time of the frame drawing of ``ours`` divided by the steady-state wall time.
-  gpu_util_mean       the mean of NVML's GPU-utilisation samples in the steady state.
+  render_ms           mean GPU time of the frame drawing of ``ours`` per batch.
+  data_wait_frac      wall time between the end of one step and the start of the next (DataLoader wait and the
+                      copy of the batch to the GPU) divided by the steady-state wall time.
+  gpu_util_mean       the mean of NVML's GPU-utilisation samples in the steady state (the whole GPU, frame drawing
+                      included).
   proc_sm_train / proc_sm_workers / proc_sm_other
                       the mean per-process NVML SM utilisation of the training process, of its DataLoader workers,
                       and of other processes.
+
+On a GPU it also writes three traces for the whole run: ``nvml-*.csv`` (NVML polled at ``--nvml-hz``),
+``proc-*.csv`` (per-process SM samples) and ``steps-*.csv`` (the times of each step).
 """
 
 from __future__ import annotations
@@ -114,11 +121,20 @@ class SourceRender:
 
 
 class Monitor(threading.Thread):
-    """Sample NVML once per second: the driver's GPU-utilisation buffer and per-process SM and memory use."""
+    """Poll NVML for the GPU of ``device``: the GPU utilisation, the driver's sample buffer and per-process SM use."""
 
-    def __init__(self):
+    def __init__(self, device, hz: float = 10.0):
         super().__init__(daemon=True)
-        self.records, self._halt = [], threading.Event()
+        self.device, self.period = device, 1.0 / hz
+        self.polls, self.util, self.proc, self.error = [], {}, {}, None
+        self._halt = threading.Event()
+
+    def _handle(self, pynvml):
+        import torch
+
+        # NVML numbers every GPU of the node, so CUDA_VISIBLE_DEVICES does not apply; find the GPU by its UUID.
+        uuid = str(torch.cuda.get_device_properties(self.device).uuid)
+        return pynvml.nvmlDeviceGetHandleByUUID(uuid if uuid.startswith("GPU-") else f"GPU-{uuid}")
 
     def run(self):
         import psutil
@@ -127,38 +143,69 @@ class Monitor(threading.Thread):
             import pynvml
 
             pynvml.nvmlInit()
-            h = pynvml.nvmlDeviceGetHandleByIndex(0)
+            h = self._handle(pynvml)
         except Exception as e:  # noqa: BLE001
-            self.records.append({"t": time.time(), "nvml_error": repr(e)})
+            self.error = repr(e)
             return
         me, last_ts, last_pts = psutil.Process(), 0, 0
         while not self._halt.is_set():
             t = time.time()
-            rec: dict = {"t": t}
+            try:
+                rates = pynvml.nvmlDeviceGetUtilizationRates(h)
+                self.polls.append((t, rates.gpu, rates.memory))
+            except pynvml.NVMLError:
+                pass
             try:
                 _, samples = pynvml.nvmlDeviceGetSamples(h, pynvml.NVML_GPU_UTILIZATION_SAMPLES, last_ts)
-                rec["util"] = [(s.timeStamp / 1e6, s.sampleValue.uiVal) for s in samples]
-                if samples:
-                    last_ts = samples[-1].timeStamp
+                for x in samples:
+                    self.util[x.timeStamp] = x.sampleValue.uiVal
+                    last_ts = max(last_ts, x.timeStamp)
             except pynvml.NVMLError:
-                rec["util"] = []
-            workers = {c.pid for c in me.children(recursive=True)}
+                pass
             try:
                 pu = pynvml.nvmlDeviceGetProcessUtilization(h, last_pts)
-                if pu:
-                    last_pts = max(u.timeStamp for u in pu)
             except pynvml.NVMLError:
                 pu = []
-            rec["proc"] = [
-                (u.smUtil, u.memUtil, "train" if u.pid == me.pid else "worker" if u.pid in workers else "other")
-                for u in pu
-            ]
-            self.records.append(rec)
-            self._halt.wait(max(0.0, 1.0 - (time.time() - t)))
+            children = {c.pid for c in me.children(recursive=True)}
+            for u in pu:
+                role = "train" if u.pid == me.pid else "worker" if u.pid in children else "other"
+                self.proc[(u.pid, u.timeStamp)] = (role, u.smUtil, u.memUtil)
+                last_pts = max(last_pts, u.timeStamp)
+            self._halt.wait(max(0.0, self.period - (time.time() - t)))
 
     def stop(self):
         self._halt.set()
         self.join(5)
+
+    def summary(self, t0: float, t1: float) -> dict:
+        """Means over ``[t0, t1]``. A process reports no sample for a period with zero use, so each role's SM
+        mean is the sum of its samples divided by the number of driver sample periods in the window."""
+        import numpy as np
+
+        util = [v for ts, v in self.util.items() if t0 <= ts / 1e6 <= t1]
+        polls = [g for t, g, _ in self.polls if t0 <= t <= t1]
+        out = {
+            "gpu_util_mean": float(np.mean(util)) if util else None,
+            "gpu_util_poll_mean": float(np.mean(polls)) if polls else None,
+            "nvml_samples": len(util),
+            "nvml_polls": len(polls),
+            "nvml_error": self.error,
+        }
+        for role in ("train", "worker", "other"):
+            sm = sum(v[1] for (_, ts), v in self.proc.items() if v[0] == role and t0 <= ts / 1e6 <= t1)
+            out[f"proc_sm_{'workers' if role == 'worker' else role}"] = sm / len(util) if util else None
+        return out
+
+    def write(self, out: Path, tag: str) -> None:
+        with open(out / f"nvml-{tag}.csv", "w", newline="") as f:
+            wr = csv.writer(f)
+            wr.writerow(["t", "source", "gpu_util", "mem_util"])
+            wr.writerows((t, "poll", g, m) for t, g, m in self.polls)
+            wr.writerows((ts / 1e6, "buffer", v, "") for ts, v in sorted(self.util.items()))
+        with open(out / f"proc-{tag}.csv", "w", newline="") as f:
+            wr = csv.writer(f)
+            wr.writerow(["t", "pid", "role", "sm_util", "mem_util"])
+            wr.writerows((ts / 1e6, pid, *v) for (pid, ts), v in sorted(self.proc.items(), key=lambda kv: kv[0][1]))
 
 
 def main() -> None:
@@ -176,6 +223,7 @@ def main() -> None:
     )
     p.add_argument("--accelerator", default="gpu", help="Lightning accelerator; cpu reports no GPU numbers")
     p.add_argument("--compile", action=argparse.BooleanOptionalAction, default=True, help="torch.compile each module")
+    p.add_argument("--nvml-hz", type=float, default=10.0, help="NVML poll rate")
     p.add_argument("--out", default="runs/throughput")
     a = p.parse_args()
     if a.input == "ours":
@@ -281,10 +329,11 @@ def main() -> None:
 
     class Timing(Callback):
         def __init__(self):
-            self.starts, self.ends, self.gpu_ms = [], [], []
+            self.starts, self.ends, self.gpu_ms, self.render_ms = [], [], [], []
 
         def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
             self.starts.append(time.time())
+            self.r0 = len(render_ms)
             if gpu:
                 self.e0 = torch.cuda.Event(enable_timing=True)
                 self.e1 = torch.cuda.Event(enable_timing=True)
@@ -295,9 +344,11 @@ def main() -> None:
                 self.e1.record()
                 torch.cuda.synchronize()
                 self.gpu_ms.append(self.e0.elapsed_time(self.e1))
+            self.render_ms.append(sum(render_ms[self.r0 :]))
             self.ends.append(time.time())
 
-    timing, monitor = Timing(), Monitor()
+    timing = Timing()
+    monitor = Monitor(torch.device("cuda", torch.cuda.current_device()), a.nvml_hz) if gpu else None
     trainer = pl.Trainer(
         **{**OmegaConf.to_container(cfg.trainer), "max_epochs": 1},
         accelerator=a.accelerator,
@@ -310,23 +361,20 @@ def main() -> None:
         enable_checkpointing=False,
         default_root_dir=a.out,
     )
-    if gpu:
+    if monitor:
         monitor.start()
     spt.Manager(trainer=trainer, module=module, data=spt.data.DataModule(train=train, val=val), seed=cfg.seed)()
-    if gpu:
+    if monitor:
         monitor.stop()
 
     w = a.warmup_steps
-    starts, ends, gpu_ms = np.array(timing.starts), np.array(timing.ends), np.array(timing.gpu_ms)
+    starts, ends = np.array(timing.starts), np.array(timing.ends)
+    gpu_ms, step_render_ms = np.array(timing.gpu_ms), np.array(timing.render_ms)
     t0, t1 = starts[w], ends[-1]
     wall = t1 - t0
     steady = len(starts) - w
-    train_ms = gpu_ms[w:].sum() - (np.sum(render_ms[w : len(starts)]) if render_ms else 0.0)
-    util = [u for r in monitor.records for ts, u in r.get("util", []) if t0 <= ts <= t1]
-    calls = [r["proc"] for r in monitor.records if "proc" in r and t0 <= r["t"] <= t1]
-
-    def proc_mean(role):
-        return float(np.mean([sum(sm for sm, _, ro in c if ro == role) for c in calls])) if calls else None
+    render_sum = step_render_ms[w:].sum()
+    nvml = monitor.summary(t0, t1) if monitor else {}
 
     summary = {
         "env": a.env,
@@ -336,19 +384,28 @@ def main() -> None:
         "steady_steps": steady,
         "steps_per_s": steady / wall,
         "samples_per_s": steady * int(cfg.loader.batch_size) / wall,
-        "train_busy_frac": train_ms / 1000 / wall if gpu else None,
-        "render_busy_frac": (np.sum(render_ms[w:]) / 1000 / wall) if render_ms else None,
-        "gpu_util_mean": float(np.mean(util)) if util else None,
-        "proc_sm_train": proc_mean("train"),
-        "proc_sm_workers": proc_mean("worker"),
-        "proc_sm_other": proc_mean("other"),
-        "nvml_calls": len(calls),
+        "train_busy_frac": (gpu_ms[w:].sum() - render_sum) / 1000 / wall if gpu else None,
+        "render_busy_frac": render_sum / 1000 / wall if render_ms else None,
+        "render_ms": render_sum / steady if render_ms else None,
+        "data_wait_frac": float((starts[w + 1 :] - ends[w:-1]).sum() / wall),
+        **nvml,
+        "num_workers": int(cfg.loader.num_workers),
+        "model_params": sum(x.numel() for x in model.parameters()),
         "model_overrides": a.model_overrides,
         "torch": torch.__version__,
     }
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / f"summary-{a.env}-{a.input}.json").write_text(json.dumps(summary, indent=1))
+    tag = f"{a.env}-{a.input}"
+    (out / f"summary-{tag}.json").write_text(json.dumps(summary, indent=1))
+    if monitor:
+        monitor.write(out, tag)
+    with open(out / f"steps-{tag}.csv", "w", newline="") as f:
+        wr = csv.writer(f)
+        wr.writerow(["step", "start", "end", "step_gpu_ms", "render_ms"])
+        wr.writerows(
+            zip(range(1, len(starts) + 1), starts, ends, gpu_ms if gpu else [""] * len(starts), step_render_ms)
+        )
     csv_path = out / "throughput.csv"
     new = not csv_path.exists()
     with open(csv_path, "a", newline="") as f:
