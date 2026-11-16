@@ -14,7 +14,16 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import build_tensordict, exclude_leaves, leaf_tree, new_node, pack_to_device, stack_leaves, to_device
+from .tensordicts import (
+    build_tensordict,
+    exclude_leaves,
+    leaf_tree,
+    new_node,
+    node_factory,
+    pack_to_device,
+    stack_leaves,
+    to_device,
+)
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -359,25 +368,31 @@ def _host_builder(keys, n, sequence, state_indices):
     state = [key for key in keys if key[0] == "state"]
     outputs = [key for key in keys if key[0] != "state"]
     width = None if state_indices is None else len(state_indices)
-    names: dict = {"F": torch.from_numpy, "N": new_node, "C": torch.device("cpu"), "T": torch.ones, "B": torch.bool}
-    names["R"] = lambda value: value.reshape(n, 1, *value.shape[1:])
+    # A NumPy copy and ``from_numpy`` cost less than a torch op per leaf; ``[:, None]`` adds the time axis.
+    names: dict = {
+        "F": torch.from_numpy,
+        "N": node_factory(),
+        "C": torch.device("cpu"),
+        "O": np.ones((n, 1), np.bool_),
+    }
     leaves = []
     for key in state:
         leaves.append((key, f"F(V[K{len(names)}].copy())"))
         names[f"K{len(names)}"] = key
     for key in outputs:
-        copy = f"V[K{len(names)}].copy()"
-        leaves.append((key, f"F(R({copy}))" if sequence else f"F({copy})"))
+        leaves.append((key, f"F(V[K{len(names)}]{'[:, None]' if sequence else ''}.copy())"))
         names[f"K{len(names)}"] = key
-    leaves.append((("valid",), f"T(({n}, 1), dtype=B)"))
+    leaves.append((("valid",), "F(O.copy())"))
     batches = {(): (n,)}
     if sequence:
         batches.update({key[:1]: (n, 1) for key in outputs if len(key) > 1})
     if width is not None:
         for key in state:
-            leaves.append((("states", *key[1:]), f"F(R(V[K{len(names)}].copy())[:, :{width}])"))
+            leaves.append(
+                (("states", *key[1:]), f"F(V[K{len(names)}][:, None]{'[:, :0]' if width == 0 else ''}.copy())")
+            )
             names[f"K{len(names)}"] = key
-        leaves.append((("state_valid",), f"T(({n}, 1), dtype=B)[:, :{width}]"))
+        leaves.append((("state_valid",), f"F(O[:, :{width}].copy())"))
         batches[("states",)] = (n, width)
     tree: dict = {}
     for key, expression in leaves:
