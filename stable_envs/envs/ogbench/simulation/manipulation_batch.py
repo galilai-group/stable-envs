@@ -13,7 +13,14 @@ from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.mjbatch import NativeBatch, native_threads
 from ...._execution.policy import cpu_affinity, process_count
-from .compatibility import COMPILED_FIELDS, MODEL_VALUES, CompatibleCube, CompatibleScene, compiled_fields, values_key
+from .compatibility import (
+    COMPILED_FIELDS,
+    MODEL_VALUES,
+    CompatibleCube,
+    CompatibleScene,
+    compiled_fields,
+    compiled_key,
+)
 from .manipulation import FLAGS, PCG_KEYS, OGBManipulationAdapter, field, groups_of, site_ids, state_schema
 from .manipulation_control import BatchController
 from .pcg import pcg_decode, pcg_encode
@@ -169,7 +176,7 @@ class LaneModels:
     def __init__(self, env, names, schema):
         self.family, self.model, self.schema = env.family, env.model, schema
         self.names = frozenset(names)
-        self._base_key = values_key(env._model_values)
+        self._base_key = compiled_key(env._model_values)
         if self.family == "Scene":
             self._lock_dofs = [int(env.model.joint(n).dofadr[0]) for n in ("drawer_slide", "window_slide")]
             self._targets = [int(env._drawer_target_site_id), int(env._window_target_site_id)]
@@ -178,12 +185,12 @@ class LaneModels:
         return {name: self.schema.get(columns, field("model", "compiled", name)) for name in MODEL_VALUES}
 
     def variants(self, columns):
-        """``{key: (compiled values, lane ids)}`` of the lanes whose compiled values differ from the model's."""
+        """``{key: (compiled values, lane ids)}`` of the lanes whose compiled arrays differ from the model's."""
         compiled = self._compiled(columns)
         groups = {}
         for i in range(len(compiled[MODEL_VALUES[0]])):
             values = {name: value[i] for name, value in compiled.items()}
-            key = values_key(values)
+            key = compiled_key(values)
             if key != self._base_key:
                 groups.setdefault(key, (values, []))[1].append(i)
         return groups

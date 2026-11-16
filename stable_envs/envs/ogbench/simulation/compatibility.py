@@ -679,6 +679,15 @@ def values_key(values):
     return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES)
 
 
+#: MODEL_VALUES that only colour materials and geoms: no COMPILED_FIELDS array depends on them.
+COLOUR_VALUES = ("agent.color", "agent.opacity", "target.opacity")
+
+
+def compiled_key(values):
+    """The key of the COMPILED_FIELDS arrays of ``values``: lanes that differ only in COLOUR_VALUES share it."""
+    return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES if k not in COLOUR_VALUES)
+
+
 def compiled_fields(family, values):
     """Model arrays and compiled values of one MODEL_VALUES configuration, cached per distinct value."""
     key = (family, *values_key(values))
