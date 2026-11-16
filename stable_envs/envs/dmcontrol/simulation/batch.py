@@ -236,6 +236,10 @@ class DMCBatchAdapter(SimulatorAdapter):
             out = {"state": self._state_on(_CPU), **out}
         return build_tensordict(out, [self.num_envs], _CPU)
 
+    def state_leaves(self):
+        """The State as host arrays by key path under ``"state"``. They may be live buffers: the caller copies them."""
+        return self._layout.host_leaves(self._state_groups(), ("state",))
+
     def step_leaves(self, actions, *, state=True):
         """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
 
@@ -245,7 +249,7 @@ class DMCBatchAdapter(SimulatorAdapter):
         outputs = self._advance(actions, None)
         if not state:
             return outputs
-        return {**self._layout.host_leaves(self._state_groups(), ("state",)), **outputs}
+        return {**self.state_leaves(), **outputs}
 
     def _advance(self, actions, active):
         """Advance the lanes; the task outputs as ``{key path: array}``."""

@@ -257,6 +257,10 @@ class DelegatedSemantics:
     def _end_host_steps(self):
         pass
 
+    def _host_state_leaves(self):
+        """The live host arrays of the State by key path under ``"state"``; the caller copies them."""
+        return self._simulator.state_leaves()
+
     def _host_step(self, actions, move):
         """One step on a host simulator: ``move`` puts its arrays on the device in one copy."""
         step = getattr(self._simulator, "step_leaves", None)

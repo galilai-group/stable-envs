@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .tensordicts import build_tensordict, exclude_leaves, new_node, pack_to_device, stack_leaves, to_device
+from .tensordicts import build_tensordict, exclude_leaves, leaf_tree, new_node, pack_to_device, stack_leaves, to_device
 
 _NUMPY_DTYPES = {torch.uint8: np.uint8, torch.float32: np.float32, torch.float64: np.float64, torch.bool: np.bool_}
 
@@ -452,6 +452,17 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     work = torch.device("cpu") if host else env.device
     if host_steps:
         acts = acts.detach().cpu() if torch.is_tensor(acts) else acts
+    # Host steps with several States: each State's host arrays go straight into its time slot of one buffer per leaf,
+    # with no State export per action and no stack (``_host_state_leaves``).
+    slots, rows = {}, None
+    if (
+        host_steps
+        and state_indices
+        and len(state_indices) > 1
+        and getattr(env, "_host_state_leaves", None) is not None
+        and getattr(env, "_stack_states", None) is None
+    ):
+        slots = {t: k for k, t in enumerate(state_indices)}
     # One action needs one all-true flag column per output; a single allocation serves them all.
     single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
     flags = None
@@ -491,11 +502,19 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                     pending = False
                     live_state, live_frame = result.get("state", None), result.get("frame", None)
             elif host_steps:
-                wanted = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
+                wanted = (t in state_times and t not in slots) or (final and t == length - 1)
+                wanted = wanted or (t in frame_times and not draws_live)
                 result = env._host_advance(
                     acts[:, t] if sequence else acts, active=None if all_active else active, capture_state=wanted
                 )
                 live_state, live_frame = result.get("state", None), None
+                if t in slots:
+                    leaves = env._host_state_leaves()
+                    if rows is None:
+                        n, width = env.num_envs, len(state_indices)
+                        rows = {key: np.empty((n, width, *v.shape[1:]), v.dtype) for key, v in leaves.items()}
+                    for key, value in leaves.items():
+                        rows[key][:, slots[t]] = value
             elif all_active:
                 # A single step that needs its State exports it with the outputs, in one call.
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
@@ -505,7 +524,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
-            needs_state = t in state_times or (final and t == length - 1) or (t in frame_times and not draws_live)
+            needs_state = (t in state_times and t not in slots) or (final and t == length - 1)
+            needs_state = needs_state or (t in frame_times and not draws_live)
             if needs_state and live_state is None:
                 live_state = env.get_state().to(work)
             next_active = active & ~_done(result) if t + 1 < length else active
@@ -519,7 +539,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 submit(t + 1, next_active, next_all_active)
                 pending = True
             history.append(_task_outputs(result, active, all_active=all_active, owned=outputs_owned, shared=shared))
-            if t in state_times:
+            if t in state_times and t not in slots:
                 saved_states[t] = live_state
             if t in frame_times and draw_rows is not None:
                 saved_frames[t] = env._pack_render_state(live_state)
@@ -551,11 +571,15 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     out.update((_stack_outputs(history, valid, shared, spares) if sequence else history[0]).items())
     out["valid"] = valid
     if state_indices is not None:
-        out["states"] = (
-            getattr(env, "_stack_states", _stack_states)([saved_states[t] for t in state_indices])
-            if state_indices
-            else live_state.unsqueeze(1)[:, :0].clone()
-        )
+        if rows is not None:
+            tree = leaf_tree({key[1:]: value for key, value in rows.items()})
+            out["states"] = build_tensordict(tree, [env.num_envs, len(state_indices)], work)
+        else:
+            out["states"] = (
+                getattr(env, "_stack_states", _stack_states)([saved_states[t] for t in state_indices])
+                if state_indices
+                else live_state.unsqueeze(1)[:, :0].clone()
+            )
         out["state_valid"] = flags[1] if single else _columns(valid, state_indices)
     if frame_indices is not None:
         if not frame_indices:
