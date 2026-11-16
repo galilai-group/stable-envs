@@ -417,7 +417,7 @@ def _control(velocity, position, target, single):
 
 
 @njit(cache=True)
-def _lane(
+def _instance(
     body,
     bias,
     cached,
@@ -568,13 +568,13 @@ def warm_start(body, vertices, inverse, radius, enabled, circle, found, impulse,
     out = np.empty((count, 5))
     ids = np.empty(count, np.int64)
     pairs = np.empty((count, 2), np.int64)
-    for lane in range(body.shape[0]):
+    for instance in range(body.shape[0]):
         _contacts(
-            body[lane],
-            vertices[lane],
-            inverse[lane],
-            radius[lane],
-            enabled[lane],
+            body[instance],
+            vertices[instance],
+            inverse[instance],
+            radius[instance],
+            enabled[instance],
             circle,
             world,
             out,
@@ -583,12 +583,15 @@ def warm_start(body, vertices, inverse, radius, enabled, circle, found, impulse,
             tight,
         )
         for i in range(count):
-            impulse[lane, i] = 0.0
-            identifiers[lane, i] = ids[i] if out[i, 4] >= 0 else -1
+            impulse[instance, i] = 0.0
+            identifiers[instance, i] = ids[i] if out[i, 4] >= 0 else -1
             if out[i, 4] >= 0:
                 for j in range(found.shape[1]):
-                    if abs(found[lane, j, 0] - out[i, 0]) <= 1e-7 and abs(found[lane, j, 1] - out[i, 1]) <= 1e-7:
-                        impulse[lane, i] = found[lane, j, 2]
+                    if (
+                        abs(found[instance, j, 0] - out[i, 0]) <= 1e-7
+                        and abs(found[instance, j, 1] - out[i, 1]) <= 1e-7
+                    ):
+                        impulse[instance, i] = found[instance, j, 2]
 
 
 @njit(parallel=True, cache=True)
@@ -599,45 +602,45 @@ def visit_order(tree, bounds, tight, velocity, order, active, walls, circle, sha
     leaves' boxes and body velocities after the position update, ``active`` the contact slots that touch.
     """
     count = active.shape[1]
-    for lane in prange(tree.shape[0]):
+    for instance in prange(tree.shape[0]):
         fresh = np.empty(broadphase.LEAVES, np.bool_)
         calls = np.empty((broadphase.LEAVES * broadphase.PAIRS, 2), np.int64)
         stack = np.empty(2 * broadphase.NODES + 2, np.int64)
         seen = np.empty(count, np.bool_)
         slots = np.empty(count, np.int64)
         reported = broadphase.reindex(
-            tree[lane], bounds[lane], tight[lane], velocity[lane], order[lane], fresh, calls, stack
+            tree[instance], bounds[instance], tight[instance], velocity[instance], order[instance], fresh, calls, stack
         )
-        live[lane] = _visit_order(calls, reported, active[lane], walls, circle, shapes, seen, slots)
+        live[instance] = _visit_order(calls, reported, active[instance], walls, circle, shapes, seen, slots)
         for j in range(count):
-            sequence[lane, j] = slots[j] if j < live[lane] else 0
+            sequence[instance, j] = slots[j] if j < live[instance] else 0
 
 
 @njit(cache=True, inline="always")
-def _advance_lane(
-    lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
+def _advance_instance(
+    instance, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled, target,
     single, circle, active, counts, lines,
 ):  # fmt: skip
-    if active[lane]:
-        total, rows = _lane(
-            body[lane],
-            bias[lane],
-            cached[lane],
-            identifiers[lane],
-            tree[lane],
-            bounds[lane],
-            order[lane],
-            vertices[lane],
-            cog[lane],
-            inverse[lane],
-            radius[lane],
-            enabled[lane],
-            target[lane],
+    if active[instance]:
+        total, rows = _instance(
+            body[instance],
+            bias[instance],
+            cached[instance],
+            identifiers[instance],
+            tree[instance],
+            bounds[instance],
+            order[instance],
+            vertices[instance],
+            cog[instance],
+            inverse[instance],
+            radius[instance],
+            enabled[instance],
+            target[instance],
             single,
             circle,
-            lines[lane],
+            lines[instance],
         )
-        counts[lane, 0], counts[lane, 1] = total, rows
+        counts[instance, 0], counts[instance, 1] = total, rows
 
 
 @njit(parallel=True, cache=True)
@@ -650,9 +653,9 @@ def advance_batch(
     ``counts[:, 0]`` gets the contacts summed over substeps and ``counts[:, 1]`` the render segments
     written to ``lines``.
     """
-    for lane in prange(body.shape[0]):
-        _advance_lane(
-            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+    for instance in prange(body.shape[0]):
+        _advance_instance(
+            instance, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
             target, single, circle, active, counts, lines,
         )  # fmt: skip
 
@@ -663,8 +666,8 @@ def advance_serial(
     circle, active, counts, lines,
 ):  # fmt: skip
     """``advance_batch`` on the calling thread, without starting the parallel region of one environment."""
-    for lane in range(body.shape[0]):
-        _advance_lane(
-            lane, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
+    for instance in range(body.shape[0]):
+        _advance_instance(
+            instance, body, bias, cached, identifiers, tree, bounds, order, vertices, cog, inverse, radius, enabled,
             target, single, circle, active, counts, lines,
         )  # fmt: skip

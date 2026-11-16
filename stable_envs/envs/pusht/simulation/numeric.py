@@ -451,7 +451,7 @@ def geometry_columns(owners, shapes=None):
         bounds.append(bound)
         orders.append(order)
         radius = 0.0
-        lane_vertices, lane_enabled = [], []
+        instance_vertices, instance_enabled = [], []
         for name, body, body_pieces in zip(("agent", "block"), pair, pieces, strict=True):
             polys = np.zeros((shapes, 4, 2), np.float64)
             valid = np.zeros(shapes, np.bool_)
@@ -465,14 +465,14 @@ def geometry_columns(owners, shapes=None):
             polys[~valid] = _UNIT_SQUARE
             if name == "agent" and not np.isfinite(body.mass):
                 polys[:] = _UNIT_SQUARE
-            lane_vertices.append(polys)
-            lane_enabled.append(valid)
+            instance_vertices.append(polys)
+            instance_enabled.append(valid)
         rows.append([[*body.position, *body.velocity, body.angle, body.angular_velocity] for body in pair])
-        vertices.append(lane_vertices)
+        vertices.append(instance_vertices)
         centers.append([body.center_of_gravity for body in pair])
         inverse.append([[1 / body.mass, 1 / body.moment] for body in pair])
         radii.append(radius)
-        enabled.append(lane_enabled)
+        enabled.append(instance_enabled)
     return {
         "body": np.array(rows),
         "vertices": np.array(vertices),

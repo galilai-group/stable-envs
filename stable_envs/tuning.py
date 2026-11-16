@@ -1,6 +1,6 @@
-"""Tuning knobs: chunk sizes, block sizes, worker counts and memory budgets.
+"""Tuning settings: chunk sizes, block sizes, worker counts and memory budgets.
 
-A knob changes speed and memory use, but frames and state are the same for every valid value.
+A setting changes speed and memory use, but frames and state are the same for every valid value.
 """
 
 from __future__ import annotations
@@ -24,8 +24,8 @@ from ._core.cache import cache_dir as _cache_dir
 from ._core.config import log as _log
 
 __all__ = [
-    "Knob",
-    "KNOBS",
+    "Setting",
+    "SETTINGS",
     "RENDER_PATHS",
     "get",
     "set",
@@ -39,8 +39,8 @@ __all__ = [
 ]
 
 #: Batch size from which an untuned render path logs the ``stable-envs tune`` hint or autotunes.
-HINT_LANES = 256
-#: Cache entry of the knobs read without a render path (Triton kernel shapes).
+HINT_MIN_ENVS = 256
+#: Cache entry of the settings read without a render path (Triton kernel shapes).
 DEVICE_ENTRY = "*"
 
 
@@ -85,14 +85,14 @@ _WARPS = (1, 2, 4, 8, 16, 32)
 
 
 @dataclass(frozen=True)
-class Knob:
-    """One knob: its fallback, the render paths that read it, and how ``tune`` sweeps it.
+class Setting:
+    """One setting: its fallback, the render paths that read it, and how ``tune`` sweeps it.
 
     Attributes:
-        name: Knob name, a key of ``KNOBS``.
-        fallback: Value used when nothing else sets the knob (the call site decides if None).
-        paths: Render or simulation paths that read the knob.
-        device: Device whose work the knob controls: ``"cpu"``, ``"cuda"`` or ``"any"``.
+        name: Setting name, a key of ``SETTINGS``.
+        fallback: Value used when nothing else sets the setting (the call site decides if None).
+        paths: Render or simulation paths that read the setting.
+        device: Device whose work the setting controls: ``"cpu"``, ``"cuda"`` or ``"any"``.
         kind: Accepted values: ``"n"`` (at least 1), ``"n0"`` (at least 0), ``"pow2"`` or ``"warps"``.
         unit: Work-split unit ``tune`` uses to skip equivalent values (not swept if None).
         doc: One-line description.
@@ -114,11 +114,11 @@ class Knob:
 
     @property
     def env_var(self) -> str:
-        """The environment variable that sets this knob."""
+        """The environment variable that sets this setting."""
         return f"STABLE_ENVS_{self.name.upper()}"
 
     def check(self, value: Any) -> int | None:
-        """Return ``value`` unchanged if it is None or valid for this knob's ``kind``.
+        """Return ``value`` unchanged if it is None or valid for this setting's ``kind``.
 
         Args:
             value: The value to check.
@@ -134,7 +134,7 @@ class Knob:
         if ok and self.kind == "warps":
             ok = value in _WARPS
         if not ok:
-            raise ValueError(f"tuning knob {self.name!r} takes {_KINDS[self.kind]}, got {value!r}")
+            raise ValueError(f"tuning setting {self.name!r} takes {_KINDS[self.kind]}, got {value!r}")
         return value
 
 
@@ -149,36 +149,36 @@ _SIM = (
 )
 _RENDER = ("classic-render", "fetch-opengl", "miniworld-render", "roadster-render", "rocket-render")
 
-KNOBS: dict[str, Knob] = {
+SETTINGS: dict[str, Setting] = {
     k.name: k
     for k in (
-        Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
-        Knob("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
-        Knob("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
-        Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
-        Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
-        Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
-        Knob("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
-        Knob("fetch_threads", 4, ("fetch-sim",), "cpu", "n", "cpus", "Most simulator threads of an in-process Fetch batch.", step=True),
-        Knob("dmc_threads", 8, ("dmc-sim",), "cpu", "n", "cpus", "Most mujoco.batch threads of a DM Control batch.", step=True),
-        Knob("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
-        Knob("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
-        Knob("dmc_ray_budget", 1 << 24, ("dmc-suite",), "cuda", "pow2", "rays", "Rays per CUDA render chunk of fixed-camera DMC cells.", _cuda_rays),
-        Knob("dmc_graph_rows", 48, ("dmc-suite",), "cuda", "n", "rows", "Most rows of a fixed-camera DMC CUDA render chunk that replay one captured graph; larger chunks launch kernels and draw only the rays movers reach."),
-        Knob("dmc_launch_rays", 256 * 224 * 224, ("dmc-trackcom",), "cuda", "n", "rays", "Rays per MJWarp launch of DMC TrackCom cells."),
-        Knob("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
-        Knob("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),
-        Knob("ogb_mjw_worlds", 256, ("ogb-manipulation",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of OGBench Cube and Scene.", per_path=False),
-        Knob("ogb_gl_workers", 8, ("ogb-manipulation",), "any", "n0", None, "Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux; 0 draws in-process.", per_path=False),
-        Knob("ogb_context_cache_bytes", None, ("ogb-manipulation",), "cuda", "n", None, "GPU bytes the OGBench context cache keeps per device."),
-        Knob("nvd_budget_bytes", 6 << 30, ("rocket-nvdiff",), "cuda", "n", "bytes", "GPU bytes per nvdiffrast chunk of Rocket cells.", _nvd_bytes),
-        Knob("nav_render_chunk", 256, ("navigation",), "any", "n", "rows", "Frames per render chunk of navigation cells."),
-        Knob("navdot_block", 1024, ("navigation",), "cuda", "pow2", "", "Pixels per Triton tile of the navigation dot compositor.", per_path=False),
-        Knob("navdot_warps", 4, ("navigation",), "cuda", "warps", "", "Triton warps per tile of the navigation dot compositor.", per_path=False),
-        Knob("raster2d_block", 128, ("raster2d",), "cuda", "pow2", "", "Pixels per Triton program of the unculled 2-D rasterizer.", per_path=False),
-        Knob("raster2d_cull_warps", 4, ("raster2d",), "cuda", "warps", "", "Triton warps per tile of the culling 2-D rasterizer.", per_path=False),
-        Knob("gfxdraw_warps", 1, ("gfxdraw",), "cuda", "warps", "", "Triton warps per tile of the gfxdraw rasterizer.", per_path=False),
-        Knob("raycast_block", 256, ("dmc-suite", "ogb-maze"), "cuda", "pow2", "", "Rays per Triton program of the analytic ray caster.", per_path=False),
+        Setting("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
+        Setting("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
+        Setting("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
+        Setting("worker_min_envs", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
+        Setting("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
+        Setting("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
+        Setting("render_worker_min_rows", 16, _RENDER, "cpu", "n", None, "Smallest CPU render batch that uses render worker processes."),
+        Setting("fetch_threads", 4, ("fetch-sim",), "cpu", "n", "cpus", "Most simulator threads of an in-process Fetch batch.", step=True),
+        Setting("dmc_threads", 8, ("dmc-sim",), "cpu", "n", "cpus", "Most mujoco.batch threads of a DM Control batch.", step=True),
+        Setting("cpu3d_chunk", 16, ("dmc-trackcom",), "cpu", "n", "rows", "Frames per cpu3d ray-casting chunk."),
+        Setting("dmc_cpu_ray_budget", 1 << 21, ("dmc-suite",), "cpu", "pow2", "rays", "Rays per CPU render chunk of fixed-camera DMC cells.", _cpu_rays),
+        Setting("dmc_ray_budget", 1 << 24, ("dmc-suite",), "cuda", "pow2", "rays", "Rays per CUDA render chunk of fixed-camera DMC cells.", _cuda_rays),
+        Setting("dmc_graph_rows", 48, ("dmc-suite",), "cuda", "n", "rows", "Most rows of a fixed-camera DMC CUDA render chunk that replay one captured graph; larger chunks launch kernels and draw only the rays movers reach."),
+        Setting("dmc_launch_rays", 256 * 224 * 224, ("dmc-trackcom",), "cuda", "n", "rays", "Rays per MJWarp launch of DMC TrackCom cells."),
+        Setting("dmc_min_worlds", 64, ("dmc-trackcom",), "cuda", "pow2", "rows", "Fewest worlds per MJWarp launch of DMC TrackCom cells."),
+        Setting("fetch_mjw_worlds", 256, ("fetch-mjwarp",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of Fetch cells."),
+        Setting("ogb_mjw_worlds", 256, ("ogb-manipulation",), "cuda", "pow2", "rows", "Most worlds per MJWarp launch of OGBench Cube and Scene.", per_path=False),
+        Setting("ogb_gl_workers", 8, ("ogb-manipulation",), "any", "n0", None, "Most OpenGL worker processes of an OGBench Cube and Scene batch on Linux; 0 draws in-process.", per_path=False),
+        Setting("ogb_context_cache_bytes", None, ("ogb-manipulation",), "cuda", "n", None, "GPU bytes the OGBench context cache keeps per device."),
+        Setting("nvd_budget_bytes", 6 << 30, ("rocket-nvdiff",), "cuda", "n", "bytes", "GPU bytes per nvdiffrast chunk of Rocket cells.", _nvd_bytes),
+        Setting("nav_render_chunk", 256, ("navigation",), "any", "n", "rows", "Frames per render chunk of navigation cells."),
+        Setting("navdot_block", 1024, ("navigation",), "cuda", "pow2", "", "Pixels per Triton tile of the navigation dot compositor.", per_path=False),
+        Setting("navdot_warps", 4, ("navigation",), "cuda", "warps", "", "Triton warps per tile of the navigation dot compositor.", per_path=False),
+        Setting("raster2d_block", 128, ("raster2d",), "cuda", "pow2", "", "Pixels per Triton program of the unculled 2-D rasterizer.", per_path=False),
+        Setting("raster2d_cull_warps", 4, ("raster2d",), "cuda", "warps", "", "Triton warps per tile of the culling 2-D rasterizer.", per_path=False),
+        Setting("gfxdraw_warps", 1, ("gfxdraw",), "cuda", "warps", "", "Triton warps per tile of the gfxdraw rasterizer.", per_path=False),
+        Setting("raycast_block", 256, ("dmc-suite", "ogb-maze"), "cuda", "pow2", "", "Rays per Triton program of the analytic ray caster.", per_path=False),
     )
 }  # fmt: skip
 
@@ -197,9 +197,9 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "roadster": ("roadster-render",),
 }
 
-for _k in KNOBS.values():
+for _k in SETTINGS.values():
     _environ.register(
-        _k.env_var, _k.kind, None, f"Tuning knob `{_k.name}`.", lambda t, k=_k: k.check(_environ.parse_int(t))
+        _k.env_var, _k.kind, None, f"Tuning setting `{_k.name}`.", lambda t, k=_k: k.check(_environ.parse_int(t))
     )
 _environ.register(
     "STABLE_ENVS_AUTOTUNE", "flag", False, "1 tunes a large untuned render path on first use.", _environ.parse_flag
@@ -217,19 +217,19 @@ def paths_of(cls) -> tuple[str, ...]:
     return RENDER_PATHS.get(getattr(cls, "family", ""), ())
 
 
-def check(knobs: Mapping[str, Any]) -> dict[str, int | None]:
-    """Validate ``{knob name: value or None}`` and return the checked values.
+def check(settings: Mapping[str, Any]) -> dict[str, int | None]:
+    """Validate ``{setting name: value or None}`` and return the checked values.
 
     Args:
-        knobs: The values to check.
+        settings: The values to check.
 
     Raises:
-        ValueError: If a name is not in ``KNOBS`` or a value is invalid.
+        ValueError: If a name is not in ``SETTINGS`` or a value is invalid.
     """
-    unknown = sorted(n for n in knobs if n not in KNOBS)
+    unknown = sorted(n for n in settings if n not in SETTINGS)
     if unknown:
-        raise ValueError(f"unknown tuning knob(s) {unknown}; the knobs are {sorted(KNOBS)}")
-    return {name: KNOBS[name].check(value) for name, value in knobs.items()}
+        raise ValueError(f"unknown tuning setting(s) {unknown}; the settings are {sorted(SETTINGS)}")
+    return {name: SETTINGS[name].check(value) for name, value in settings.items()}
 
 
 @cache
@@ -262,8 +262,8 @@ def _dev(device) -> str | None:
     return f"cuda:{torch.cuda.current_device() if index is None else index}"
 
 
-def _where(knob: Knob, device) -> str | None:
-    return _dev("cpu" if knob.device == "cpu" else device or ("cuda" if knob.device == "cuda" else "cpu"))
+def _where(setting: Setting, device) -> str | None:
+    return _dev("cpu" if setting.device == "cpu" else device or ("cuda" if setting.device == "cuda" else "cpu"))
 
 
 @cache
@@ -357,7 +357,7 @@ def refresh() -> None:
 def read_cache(device="cpu") -> tuple[dict, bool]:
     """Return the cache file of ``device`` and whether it is current (same device, driver, CPU and version).
 
-    The file is read again only after ``refresh`` or a change of knobs in this process. A file that another process
+    The file is read again only after ``refresh`` or a change of settings in this process. A file that another process
     writes is read when this process builds its next environment.
 
     Args:
@@ -392,12 +392,12 @@ def read_cache(device="cpu") -> tuple[dict, bool]:
 
 
 def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
-    """Merge ``{entry key: {knob: value}}`` into the cache file of ``device`` and return its path.
+    """Merge ``{entry key: {setting: value}}`` into the cache file of ``device`` and return its path.
 
     Entries of a file that isn't current for this machine are dropped first.
 
     Args:
-        entries: ``{entry key: {knob: value}}``, with keys from ``entry_key`` or ``"*"`` for the whole device.
+        entries: ``{entry key: {setting: value}}``, with keys from ``entry_key`` or ``"*"`` for the whole device.
         device: ``"cpu"``, ``"cuda"`` or ``"cuda:<index>"``.
 
     Raises:
@@ -406,12 +406,12 @@ def write_cache(entries: Mapping[str, Mapping[str, int]], device="cpu") -> Path:
     path = cache_path(device)
     if path is None:
         raise RuntimeError("CUDA is unavailable, so there is no CUDA device to write tuning for")
-    for knobs in entries.values():
-        check(knobs)
+    for settings in entries.values():
+        check(settings)
     data, current = read_cache(device)
     merged = dict(data.get("entries", {}) if current else {})
-    for key, knobs in entries.items():
-        merged[key] = {**merged.get(key, {}), **knobs}
+    for key, settings in entries.items():
+        merged[key] = {**merged.get(key, {}), **settings}
     where = _dev(device)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -429,13 +429,13 @@ _MISSING = object()
 
 
 def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISSING, measured=True):
-    """Return ``(value, source)`` for knob ``name``; the arguments are those of ``get``.
+    """Return ``(value, source)`` for setting ``name``; the arguments are those of ``get``.
 
     ``source`` is ``"override"``, ``"set"``, ``"env"``, ``"cache"``, ``"derived"``, ``"default"`` or
     ``"fallback"``.
 
     Args:
-        name: A key of ``KNOBS``.
+        name: A key of ``SETTINGS``.
         path: Render path of the call.
         size: Frame size in pixels.
         batch: Number of environments in the call.
@@ -444,20 +444,20 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
         measured: Read the tuning cache; False skips it.
 
     Raises:
-        ValueError: If ``name`` is not a knob or its environment variable is invalid.
+        ValueError: If ``name`` is not a setting or its environment variable is invalid.
     """
-    if name not in KNOBS:
+    if name not in SETTINGS:
         check({name: None})
-    knob = KNOBS[name]
+    setting = SETTINGS[name]
     for scope in reversed(_scopes.get()):
         if name in scope:
             return scope[name], "override"
     if name in _set:
         return _set[name], "set"
-    value = _environ.read(knob.env_var)
+    value = _environ.read(setting.env_var)
     if value is not None:
         return value, "env"
-    where = _where(knob, device)
+    where = _where(setting, device)
     if where is not None:
         if measured:
             data, current = read_cache(where)
@@ -465,24 +465,24 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
             value = data["entries"].get(key, {}).get(name) if current else None
             if value is not None:
                 return value, "cache"
-        if knob.derive is not None:
+        if setting.derive is not None:
             if (name, where) not in _derived:
-                _derived[name, where] = knob.derive(where)
+                _derived[name, where] = setting.derive(where)
             if _derived[name, where] is not None:
                 return _derived[name, where], "derived"
-    return (knob.fallback, "fallback") if default is _MISSING else (default, "default")
+    return (setting.fallback, "fallback") if default is _MISSING else (default, "default")
 
 
 def sources_state(name: str, device=None) -> tuple:
-    """Return a value that changes whenever a source of knob ``name`` on ``device`` may change.
+    """Return a value that changes whenever a source of setting ``name`` on ``device`` may change.
 
     The sources are the ``override`` blocks of this thread, ``set``, the environment variable and the cache file,
-    which ``read_cache`` reads again only after a bump of the knob generation. Callers keep a choice they made from
-    the knob while this value stays equal. It calls no ``stat``.
+    which ``read_cache`` reads again only after a bump of the setting generation. Callers keep a choice they made from
+    the setting while this value stays equal. It calls no ``stat``.
     """
-    knob = KNOBS[name]
-    where = _where(knob, device)
-    return (_scopes.get(), _generation, os.environ.get(knob.env_var), None if where is None else cache_path(where))
+    setting = SETTINGS[name]
+    where = _where(setting, device)
+    return (_scopes.get(), _generation, os.environ.get(setting.env_var), None if where is None else cache_path(where))
 
 
 def get(
@@ -494,28 +494,28 @@ def get(
     device: Any = None,
     default: Any = _MISSING,
 ) -> int | None:
-    """Return the current value of knob ``name``; ``lookup`` also returns where it came from.
+    """Return the current value of setting ``name``; ``lookup`` also returns where it came from.
 
     Args:
-        name: A key of ``KNOBS``.
+        name: A key of ``SETTINGS``.
         path: Render path of the call; with ``size`` and ``batch`` it selects measured values.
         size: Frame size in pixels (0 for simulation paths).
         batch: Number of environments in the call.
-        device: Device the work runs on (the knob's own device if None).
-        default: The call site's value, used instead of the knob's fallback.
+        device: Device the work runs on (the setting's own device if None).
+        default: The call site's value, used instead of the setting's fallback.
     """
     return lookup(name, path=path, size=size, batch=batch, device=device, default=default)[0]
 
 
-def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.set``
-    """Set knobs for the process and return every knob set this way; None clears a knob.
+def set(**settings: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.set``
+    """Set settings for the process and return every setting set this way; None clears a setting.
 
     Values set here sit below ``override`` blocks and above everything else.
 
     Args:
-        **knobs: ``{knob name: value or None}``.
+        **settings: ``{setting name: value or None}``.
     """
-    for name, value in check(knobs).items():
+    for name, value in check(settings).items():
         if value is None:
             _set.pop(name, None)
         else:
@@ -525,21 +525,21 @@ def set(**knobs: int | None) -> dict[str, int]:  # noqa: A001 - mirrors ``snv.se
 
 
 def reset() -> None:
-    """Clear every knob set with ``set``."""
+    """Clear every setting set with ``set``."""
     _set.clear()
     _bump()
 
 
 @contextlib.contextmanager
-def override(**knobs: int) -> Iterator[None]:
-    """Set knobs inside a ``with`` block, above ``set``.
+def override(**settings: int) -> Iterator[None]:
+    """Set settings inside a ``with`` block, above ``set``.
 
     Blocks nest and the innermost wins. Other threads don't see the values, and None values are ignored.
 
     Args:
-        **knobs: ``{knob name: value}``.
+        **settings: ``{setting name: value}``.
     """
-    values = {k: v for k, v in check(knobs).items() if v is not None}
+    values = {k: v for k, v in check(settings).items() if v is not None}
     token = _scopes.set((*_scopes.get(), values))
     _bump()
     try:
@@ -550,12 +550,12 @@ def override(**knobs: int) -> Iterator[None]:
 
 
 def describe(**where) -> dict[str, tuple[int | None, str]]:
-    """Return ``{name: (value, source)}`` for every knob.
+    """Return ``{name: (value, source)}`` for every setting.
 
     Args:
         **where: ``path``, ``size``, ``batch`` and ``device``, as for ``get``.
     """
-    return {name: lookup(name, **where) for name in KNOBS}
+    return {name: lookup(name, **where) for name in SETTINGS}
 
 
 _noticed: dict[tuple[str, str], None] = {}
@@ -574,15 +574,15 @@ def on_render(path: str, size: int, batch: int, env) -> None:
     """
     try:
         key = (path, str(env.device))
-        if batch < HINT_LANES or key in _noticed:
+        if batch < HINT_MIN_ENVS or key in _noticed:
             return
         _noticed[key] = None
-        knobs = [k for k in KNOBS.values() if path in k.paths and k.unit is not None]
-        if not any(k.device in ("any", env.device.type) for k in knobs):
+        settings = [k for k in SETTINGS.values() if path in k.paths and k.unit is not None]
+        if not any(k.device in ("any", env.device.type) for k in settings):
             return
         data, current = read_cache(str(env.device))
         entries = data.get("entries", {}) if current else {}
-        if entry_key(path, size, batch) in entries or any(k.name in entries.get(DEVICE_ENTRY, {}) for k in knobs):
+        if entry_key(path, size, batch) in entries or any(k.name in entries.get(DEVICE_ENTRY, {}) for k in settings):
             return
         if _environ.read("STABLE_ENVS_AUTOTUNE"):
             autotune(type(env).__name__, size, batch, str(env.device))
@@ -664,9 +664,9 @@ def render_paths(device="cuda"):
     Args:
         device: ``"cpu"`` or ``"cuda"``.
     """
-    from ._execution.backends import RENDER_KNOB, registered
+    from ._execution.backends import RENDERER_SETTING, registered
 
-    return registered(device, knob=RENDER_KNOB)
+    return registered(device, setting=RENDERER_SETTING)
 
 
 def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:

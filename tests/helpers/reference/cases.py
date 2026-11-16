@@ -109,7 +109,7 @@ ORIGINAL_GATES: dict[str, str] = {
     **dict.fromkeys(_MAZES, _MAZE),
     **dict.fromkeys(
         ("CraftaxClassicPixels", "CraftaxClassicSymbolic", "CraftaxPixels", "CraftaxSymbolic"),
-        "tests/unit/test_craftax.py::test_lanes_match_craftax_called_directly",
+        "tests/unit/test_craftax.py::test_environments_match_craftax_called_directly",
     ),
     **dict.fromkeys(
         (
@@ -119,7 +119,7 @@ ORIGINAL_GATES: dict[str, str] = {
             "RoadsterRooftop",
             "RoadsterCarHop",
         ),
-        "tests/unit/test_roadster_source.py::test_lanes_match_the_source_called_directly",
+        "tests/unit/test_roadster_source.py::test_environments_match_the_source_called_directly",
     ),
     "MiniWorldMovingBlockWorld": "tests/unit/test_miniworld_source.py::test_environments_step_as_the_source_called_directly",
     "MSHumanLocomotion": "tests/integration/test_mshuman_gate.py::test_matches_a_plain_mujoco_rollout",
@@ -127,7 +127,7 @@ ORIGINAL_GATES: dict[str, str] = {
 
 _DMC_SWM = "tests/integration/test_dmc_swm_semantics.py::test_dmc_full_state_semantics"
 _DMC_ALIGNED = "tests/integration/test_dmc_aligned_semantics.py::test_aligned_full_state_specs_and_gate"
-_PUSHT = "tests/integration/test_variation_pusht.py::test_leaf_matches_swm_per_lane"
+_PUSHT = "tests/integration/test_variation_pusht.py::test_leaf_matches_swm_per_environment"
 
 #: Registered env with a stable-worldmodel registration -> the CPU test comparing it with live stable-worldmodel
 #: (marked ``swm``).
@@ -155,7 +155,8 @@ SWM_GATES: dict[str, str] = {
         for task in ("Reach", "Push", "Slide", "PickAndPlace")
     },
     **dict.fromkeys(
-        ("OGBCube", "OGBScene"), "tests/integration/test_ogb_variation.py::test_reset_option_leaves_match_swm_per_lane"
+        ("OGBCube", "OGBScene"),
+        "tests/integration/test_ogb_variation.py::test_reset_option_leaves_match_swm_per_environment",
     ),
     **dict.fromkeys(
         ("PointMazeLargeNavigate", "PointMazeLargeStitch"),

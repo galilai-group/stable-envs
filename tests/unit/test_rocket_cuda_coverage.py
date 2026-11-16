@@ -37,8 +37,8 @@ def test_reached_source_pixels_and_batch_partition(scenario):
         mse = np.mean(((ours.cpu().numpy().astype(np.float64) - source) / 255) ** 2, axis=(1, 2, 3))
         assert np.all(mse <= 0.001), mse
         assert torch.equal(ours, env.render(projected, chunk_size=1))
-        for lane in range(2):
-            assert torch.equal(ours[lane : lane + 1], env.render(projected[lane : lane + 1]))
+        for instance in range(2):
+            assert torch.equal(ours[instance : instance + 1], env.render(projected[instance : instance + 1]))
 
 
 @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="Requires two CUDA devices")

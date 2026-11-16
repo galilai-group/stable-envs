@@ -1,4 +1,4 @@
-"""Rocket process lanes match local lanes, through the adapter and the public env, and large batches split."""
+"""Rocket process environments match local environments, through the adapter and the public env, and large batches split."""
 
 import os
 import sys
@@ -15,7 +15,7 @@ from stable_envs._execution import policy, render_pool  # noqa: E402
 from stable_envs.envs.rocket import legacy  # noqa: E402
 from stable_envs.envs.rocket.simulation import execution  # noqa: E402
 from stable_envs.envs.rocket.simulation.adapter import RocketAdapter  # noqa: E402
-from stable_envs.envs.rocket.simulation.process import LANES_PER_PROCESS, RocketProcessAdapter  # noqa: E402
+from stable_envs.envs.rocket.simulation.process import ENVS_PER_PROCESS, RocketProcessAdapter  # noqa: E402
 from tests.helpers.process_equivalence import assert_atomic_restore, assert_process_matches_local  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
@@ -26,7 +26,7 @@ HIGH = np.ones(7)
 def _actions(batch, steps, seed=5):
     rng = np.random.default_rng(seed)
     actions = rng.uniform(LOW, HIGH, (steps, batch, 7))
-    actions[:, 1::2, 3] = 0  # Odd lanes never ignite.
+    actions[:, 1::2, 3] = 0  # Odd environments never ignite.
     actions[:, ::2, 3] = 1
     return [a.astype(np.float32 if t % 2 else np.float64) for t, a in enumerate(actions)]
 
@@ -49,7 +49,7 @@ def test_process_matches_local():
     )
 
 
-def test_replay_mismatch_in_one_worker_restores_no_lane():
+def test_replay_mismatch_in_one_worker_restores_no_environment():
     adapter = RocketProcessAdapter(4, "cpu", 17, processes=2)
     try:
         for action in _actions(4, 3):
@@ -113,17 +113,17 @@ def test_public_env_with_workers_matches_local(monkeypatch):
 
 def test_large_batches_split_across_processes(monkeypatch):
     monkeypatch.setattr(policy.sys, "platform", "darwin")
-    over = 2 * LANES_PER_PROCESS + 1
-    assert policy.process_count(over, None, lanes_per_process=LANES_PER_PROCESS) == 3
-    assert policy.process_count(LANES_PER_PROCESS, None, lanes_per_process=LANES_PER_PROCESS) == 0
-    assert policy.process_count(over, None, eligible=False, lanes_per_process=LANES_PER_PROCESS) == 0
+    over = 2 * ENVS_PER_PROCESS + 1
+    assert policy.process_count(over, None, envs_per_process=ENVS_PER_PROCESS) == 3
+    assert policy.process_count(ENVS_PER_PROCESS, None, envs_per_process=ENVS_PER_PROCESS) == 0
+    assert policy.process_count(over, None, eligible=False, envs_per_process=ENVS_PER_PROCESS) == 0
     with pytest.raises(ValueError, match="at most"):
-        RocketProcessAdapter(LANES_PER_PROCESS + 1, "cpu", 0, processes=1)
+        RocketProcessAdapter(ENVS_PER_PROCESS + 1, "cpu", 0, processes=1)
 
 
 @pytest.mark.slow
 def test_a_batch_above_one_process_restores():
-    batch = LANES_PER_PROCESS + 3
+    batch = ENVS_PER_PROCESS + 3
     with se.make(
         "PyFlytRocketLanding", num_envs=batch, size=32, device="cpu", seed=3, simulation_backend="pybullet"
     ) as env:

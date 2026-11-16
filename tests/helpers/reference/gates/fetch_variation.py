@@ -1,6 +1,6 @@
 """Fetch reset variation leaves against pinned stable_worldmodel.
 
-Each lane of one of our envs is reset with the same seed and options as its own
+Each environment of one of our envs is reset with the same seed and options as its own
 ``swm/Fetch*-v3`` env. The full State must match exactly, the appearance our style
 carries and the object mass must equal what the wrapper wrote into its MuJoCo model,
 and a short rollout must stay exact. With ``frames=True`` the first frames are
@@ -75,12 +75,12 @@ def _check_appearance(env, refs) -> None:
     if env._has_object:
         mass = [ref.unwrapped.model.body_mass[_wrapper(ref)._object_body_id] for ref in refs]
         assert np.array_equal(env._simulator.object_mass, mass), (env._simulator.object_mass, mass)
-    for lane, ref in enumerate(refs):
+    for instance, ref in enumerate(refs):
         want = _swm_appearance(ref)
-        sky = env._style["sky.color"][lane].cpu().numpy().astype(np.float64)
-        assert np.array_equal((sky * 255.0).astype(np.uint8), want.pop("sky_texel")), (lane, sky)
+        sky = env._style["sky.color"][instance].cpu().numpy().astype(np.float64)
+        assert np.array_equal((sky * 255.0).astype(np.uint8), want.pop("sky_texel")), (instance, sky)
         for path, value in want.items():
-            got = env._style[path][lane].cpu().numpy().reshape(-1)
+            got = env._style[path][instance].cpu().numpy().reshape(-1)
             np.testing.assert_allclose(got, np.asarray(value, np.float64).reshape(-1), rtol=0, atol=1e-6, err_msg=path)
 
 
@@ -89,11 +89,11 @@ def _mse(ours, theirs) -> list[float]:
     return (d**2).mean(axis=(1, 2, 3)).tolist()
 
 
-def _case(scene, env, seed, our_options, lane_options, steps, frames, size) -> dict:
-    refs = [_swm(scene, size) for _ in lane_options]
+def _case(scene, env, seed, our_options, instance_options, steps, frames, size) -> dict:
+    refs = [_swm(scene, size) for _ in instance_options]
     try:
-        for lane, (ref, options) in enumerate(zip(refs, lane_options)):
-            ref.reset(seed=seed + lane, options=options)
+        for instance, (ref, options) in enumerate(zip(refs, instance_options)):
+            ref.reset(seed=seed + instance, options=options)
         state = env.reset(seed=seed, options=our_options)
         full_compare(state.cpu(), refs)
         _check_appearance(env, refs)
@@ -117,32 +117,32 @@ def _case(scene, env, seed, our_options, lane_options, steps, frames, size) -> d
 
 
 def fetch_variation_gate(scene="Push", seed=31, steps=10, frames=False, size=480, device="cpu") -> dict:
-    """Explicit per-lane values, then seeded sampling, then a plain reset back to the defaults."""
-    lanes = 3
+    """Explicit per-environment values, then seeded sampling, then a plain reset back to the defaults."""
+    instances = 3
     explicit = leaves(scene)
     sampled = list(explicit) + ["table.color", "camera.angle_delta"] + (["object.color"] if scene != "Reach" else [])
     evidence = {"scene": scene, "seed": seed, "leaves": sorted(sampled)}
-    with se.make(f"Fetch{scene}", num_envs=lanes, device=device) as env:
-        per_lane = [
-            {"variation": [], "variation_values": {k: v[i] for k, v in explicit.items()}} for i in range(lanes)
+    with se.make(f"Fetch{scene}", num_envs=instances, device=device) as env:
+        per_instance = [
+            {"variation": [], "variation_values": {k: v[i] for k, v in explicit.items()}} for i in range(instances)
         ]
         evidence["explicit"] = _case(
-            scene, env, seed, {"variation": [], "variation_values": explicit}, per_lane, steps, frames, size
+            scene, env, seed, {"variation": [], "variation_values": explicit}, per_instance, steps, frames, size
         )
         assert env._style["rendering.transparent_arm"].reshape(-1).tolist() == [1.0, 0.0, 1.0]
         options = {"variation": sampled}
-        evidence["sampled"] = _case(scene, env, seed + 7, options, [options] * lanes, steps, frames, size)
+        evidence["sampled"] = _case(scene, env, seed + 7, options, [options] * instances, steps, frames, size)
         drawn = env._style["rendering.transparent_arm"].reshape(-1).tolist()
         evidence["sampled"]["transparent_arm"] = drawn
 
         state = env.reset(seed=seed + 11)
-        assert np.array_equal(env.get_style().cpu().numpy(), env.default_style().reshape(1, -1).repeat(lanes, 0)), (
-            "a plain reset restores every variation default"
-        )
-        refs = [_swm(scene, size) for _ in range(lanes)]
+        assert np.array_equal(
+            env.get_style().cpu().numpy(), env.default_style().reshape(1, -1).repeat(instances, 0)
+        ), "a plain reset restores every variation default"
+        refs = [_swm(scene, size) for _ in range(instances)]
         try:
-            for lane, ref in enumerate(refs):
-                ref.reset(seed=seed + 11 + lane, options={"variation": []})
+            for instance, ref in enumerate(refs):
+                ref.reset(seed=seed + 11 + instance, options={"variation": []})
             full_compare(state.cpu(), refs)
         finally:
             for ref in refs:

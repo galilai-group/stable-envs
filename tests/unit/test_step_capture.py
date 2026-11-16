@@ -70,7 +70,7 @@ def test_pipeline_renderer_exception_aborts_inflight_transition(monkeypatch):
         assert env.aborted and env.pending is None
 
 
-def test_pipeline_all_lanes_finish_before_first_selected_snapshot():
+def test_pipeline_all_environments_finish_before_first_selected_snapshot():
     with Counter() as reference, PipelinedCounter() as candidate:
         reference.limit.fill_(1)
         candidate.limit.fill_(1)
@@ -189,17 +189,17 @@ def test_accepted_classic_matches_repeated_steps(name, dtype):
 
 
 def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch):
-    # Per-lane Gymnasium time limits and step counts need the Gymnasium backend.
+    # Per-environment Gymnasium time limits and step counts need the Gymnasium backend.
     with snv.CartPole(num_envs=3, device="cpu", simulation_backend="gym") as env:
         env.reset(seed=17)
-        for lane, upstream in enumerate(env._simulator.envs):
-            upstream._max_episode_steps = lane + 1
+        for instance, upstream in enumerate(env._simulator.envs):
+            upstream._max_episode_steps = instance + 1
         calls = [0, 0, 0]
-        for lane, upstream in enumerate(env._simulator.envs):
+        for instance, upstream in enumerate(env._simulator.envs):
             original = upstream.step
 
-            def counted(action, lane=lane, original=original):
-                calls[lane] += 1
+            def counted(action, instance=instance, original=original):
+                calls[instance] += 1
                 return original(action)
 
             monkeypatch.setattr(upstream, "step", counted)

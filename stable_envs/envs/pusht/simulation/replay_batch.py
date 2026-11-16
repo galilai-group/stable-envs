@@ -11,7 +11,7 @@ from tensordict import TensorDict
 from ...._core.space_nodes import nodes
 from ...._core.state_schema import get_field
 from ...._core.tensordicts import build_tensordict
-from ...._execution.process import BROADCAST, PER_LANE
+from ...._execution.process import BROADCAST, PER_INSTANCE
 from ...._execution.protocol import SimulatorAdapter
 from .contacts import contact_segments
 from .numeric import BODY_ROW, body_fields, body_row, latest_fields
@@ -22,8 +22,8 @@ def _leaves(space):
     return {p.strip("/").replace("/", "."): n for p, n in nodes(space) if not hasattr(n, "spaces")}
 
 
-def lane_options(space, options, num_envs, lane):
-    """Select lane ``lane`` of each ``variation_values`` entry shaped ``(num_envs, *leaf.shape)``."""
+def instance_options(space, options, num_envs, instance):
+    """Select environment ``instance`` of each ``variation_values`` entry shaped ``(num_envs, *leaf.shape)``."""
     values = (options or {}).get("variation_values")
     if not isinstance(values, dict):
         return options
@@ -34,19 +34,19 @@ def lane_options(space, options, num_envs, lane):
             node = getattr(node, "spaces", {}).get(part)
         array = np.asarray(value) if node is not None and not hasattr(node, "spaces") else None
         if array is not None and array.shape == (num_envs, *node.shape):
-            value = array[lane].copy() if node.shape else array[lane]
+            value = array[instance].copy() if node.shape else array[instance]
         selected[key] = value
     return {**options, "variation_values": selected}
 
 
 def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
-    """Return each lane's checked ``{leaf: value}`` overrides; a value shaped ``(num_envs, *leaf)`` is per lane.
+    """Return each environment's checked ``{leaf: value}`` overrides; a value shaped ``(num_envs, *leaf)`` is per environment.
 
     ``flat_keys`` names values that come from flat variation rows and must convert exactly to the leaf dtype.
     """
     leaves = _leaves(space)
-    lanes = []
-    for lane in range(num_envs):
+    instances = []
+    for instance in range(num_envs):
         values = {}
         for key, raw in overrides.items():
             if key not in leaves:
@@ -54,7 +54,7 @@ def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
             node = leaves[key]
             value = np.asarray(raw.detach().cpu() if torch.is_tensor(raw) else raw)
             if value.shape == (num_envs, *node.shape):
-                value = value[lane]
+                value = value[instance]
             if value.shape != node.shape or not np.isfinite(value).all():
                 raise ValueError(f"Invalid PushT Variation shape/value: {key}")
             # Keep Python scalar versus NumPy scalar/array representation;
@@ -70,8 +70,8 @@ def resolve_variation(space, overrides, num_envs, flat_keys=frozenset()):
             if not node.contains(converted):
                 raise ValueError(f"Invalid PushT Variation range/dtype: {key}")
             values[key] = converted
-        lanes.append(values)
-    return lanes
+        instances.append(values)
+    return instances
 
 
 def reject_jax_state(state):
@@ -89,12 +89,12 @@ def reject_jax_state(state):
 
 
 def state_columns(state, template, num_envs):
-    """Check state keys, dtypes and batch against one lane's ``template`` row; return host columns."""
+    """Check state keys, dtypes and batch against one environment's ``template`` row; return host columns."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
         raise ValueError("PushT full State requires batch [num_envs]")
     if set(state.keys(True, True)) != {tuple(key.split("/")) for key in template}:
         raise ValueError("PushT full State keys differ")
-    # Transfer each whole field once, then take owned lane copies on the host.
+    # Transfer each whole field once, then take owned environment copies on the host.
     fields = {}
     for key, sample in template.items():
         value = state[tuple(key.split("/"))]
@@ -117,13 +117,13 @@ def validate_actions(actions, discrete):
 class PushTReplayAdapter(SimulatorAdapter):
     """Batch CPU PushT owners with CPU/CUDA state storage.
 
-    Stage every lane before installing a reset or restored state. Export pads
-    histories to the longest lane with zero, invalid entries; padding adds no
+    Stage every environment before installing a reset or restored state. Export pads
+    histories to the longest environment with zero, invalid entries; padding adds no
     episode time limit. Fields that only reset, restore or a variation change
     can change are kept as batch columns and copied on export.
     """
 
-    process_methods = {"install_variation": PER_LANE, "variation_rows": BROADCAST}
+    process_methods = {"install_variation": PER_INSTANCE, "variation_rows": BROADCAST}
     action_dim = 2
 
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
@@ -138,9 +138,9 @@ class PushTReplayAdapter(SimulatorAdapter):
         self._columns, self._sources = {}, [None] * batch
         self._prepared = None
         try:
-            for lane in range(batch):
+            for instance in range(batch):
                 self.envs.append(
-                    PushTReplay(discrete=discrete, config=config, seed=None if seed is None else int(seed) + lane)
+                    PushTReplay(discrete=discrete, config=config, seed=None if seed is None else int(seed) + instance)
                 )
             self._keys = list(self.envs[0].get_state())
         except BaseException:
@@ -148,22 +148,24 @@ class PushTReplayAdapter(SimulatorAdapter):
             raise
 
     def _static_columns(self):
-        """Return the batch columns of every lane's ``static_fields``, updating the lanes that changed."""
+        """Return the batch columns of every environment's ``static_fields``, updating the environments that changed."""
         sources = [(env, env.version) for env in self.envs]
-        stale = [lane for lane, (old, new) in enumerate(zip(self._sources, sources, strict=True)) if old != new]
+        stale = [
+            instance for instance, (old, new) in enumerate(zip(self._sources, sources, strict=True)) if old != new
+        ]
         if len(stale) == self.num_envs:
             rows = [env.static_fields() for env in self.envs]
             self._columns = {key: np.stack([row[key] for row in rows]) for key in rows[0]}
         else:
-            for lane in stale:
-                for key, value in self.envs[lane].static_fields().items():
-                    self._columns[key][lane] = value
+            for instance in stale:
+                for key, value in self.envs[instance].static_fields().items():
+                    self._columns[key][instance] = value
         self._sources = sources
         return self._columns
 
     @property
     def template(self):
-        """A lane whose configuration, variation space and state fields describe the batch."""
+        """An environment whose configuration, variation space and state fields describe the batch."""
         return self.envs[0]
 
     def _current_columns(self):
@@ -174,13 +176,13 @@ class PushTReplayAdapter(SimulatorAdapter):
         segment_counts = np.empty(count, np.int64)
         contacts = np.empty(count, np.int64)
         latest = []
-        for lane, env in enumerate(envs):
-            bodies[lane] = body_row(env.env)
+        for instance, env in enumerate(envs):
+            bodies[instance] = body_row(env.env)
             found = contact_segments(env.env.space, env._contacts)
-            segment_counts[lane] = len(found)
+            segment_counts[instance] = len(found)
             if found:
-                segments[lane, : len(found)] = found
-            contacts[lane] = env.env.n_contact_points
+                segments[instance, : len(found)] = found
+            contacts[instance] = env.env.n_contact_points
             latest.append(latest_fields(env.env))
         values = {"current/" + k: v for k, v in body_fields(bodies).items()}
         values["current/contacts"] = contacts
@@ -205,10 +207,10 @@ class PushTReplayAdapter(SimulatorAdapter):
         width = int(lengths.max())
         actions = np.zeros((count, width, 2), np.float64)
         codes = np.zeros((count, width), np.uint8)
-        for lane, env in enumerate(envs):
+        for instance, env in enumerate(envs):
             length = env.length
-            actions[lane, :length] = env._actions[:length]
-            codes[lane, :length] = env._codes[:length]
+            actions[instance, :length] = env._actions[:length]
+            codes[instance, :length] = env._codes[:length]
         values = {
             "history/actions": actions,
             "history/dtypes": codes,
@@ -233,7 +235,8 @@ class PushTReplayAdapter(SimulatorAdapter):
         reject_jax_state(state)
         fields = state_columns(state, self.envs[0].get_state(), self.num_envs)
         rows = [
-            {key: np.asarray(value[lane]).copy() for key, value in fields.items()} for lane in range(self.num_envs)
+            {key: np.asarray(value[instance]).copy() for key, value in fields.items()}
+            for instance in range(self.num_envs)
         ]
         for env, row in zip(self.envs, rows, strict=True):
             env.validate(row)
@@ -245,7 +248,7 @@ class PushTReplayAdapter(SimulatorAdapter):
             env.close()
 
     def prepare_restore(self, state):
-        """Replay every lane of ``state`` into new owners; the live lanes do not change."""
+        """Replay every environment of ``state`` into new owners; the live environments do not change."""
         if self._prepared is not None:
             raise RuntimeError("A PushT restore is already prepared")
         rows = self.validate(state)
@@ -275,18 +278,18 @@ class PushTReplayAdapter(SimulatorAdapter):
         self.commit_restore()
 
     def reset(self, seed=None, options=None):
-        """Reset every lane; ``options`` may also be a list with one options mapping per lane."""
+        """Reset every environment; ``options`` may also be a list with one options mapping per environment."""
         validate_seed(seed)
         space = self.envs[0].env.variation_space
-        lanes = (
+        instances = (
             options
             if isinstance(options, list)
-            else [lane_options(space, options, self.num_envs, lane) for lane in range(self.num_envs)]
+            else [instance_options(space, options, self.num_envs, instance) for instance in range(self.num_envs)]
         )
         staged = []
         try:
-            for lane, env in enumerate(self.envs):
-                staged.append(env.reset_candidate(None if seed is None else int(seed) + lane, lanes[lane]))
+            for instance, env in enumerate(self.envs):
+                staged.append(env.reset_candidate(None if seed is None else int(seed) + instance, instances[instance]))
         except BaseException:
             for env in staged:
                 env.close()
@@ -294,13 +297,13 @@ class PushTReplayAdapter(SimulatorAdapter):
         self._swap(staged)
         return self.get_state()
 
-    def install_variation(self, lanes, immediate=frozenset()):
-        """Set each lane's checked ``resolve_variation`` values as reset values.
+    def install_variation(self, instances, immediate=frozenset()):
+        """Set each environment's checked ``resolve_variation`` values as reset values.
 
         Leaves in ``immediate`` also change the running episode.
         """
         staged = []
-        for replay, values in zip(self.envs, lanes, strict=True):
+        for replay, values in zip(self.envs, instances, strict=True):
             space = copy.deepcopy(replay.env.variation_space)
             leaves = _leaves(space)
             for key, converted in values.items():
@@ -315,7 +318,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         self.variation_changed()
 
     def variation_rows(self, attribute, keys):
-        """Return each lane's variation leaves ``keys`` as one flat row of ``attribute`` values."""
+        """Return each environment's variation leaves ``keys`` as one flat row of ``attribute`` values."""
         rows = []
         for replay in self.envs:
             leaves = _leaves(replay.env.variation_space)
@@ -373,17 +376,17 @@ class PushTReplayAdapter(SimulatorAdapter):
         return (resolution, resolution, 3)
 
     def render_fields(self):
-        """Return host state columns of the running lanes for drawing; the fixed columns are not copied."""
+        """Return host state columns of the running environments for drawing; the fixed columns are not copied."""
         fields = dict(self._static_columns())
         fields.update(self._current_columns())
         return fields
 
     def render_live(self):
-        """Draw every lane's running scene at the configured resolution, as ``render`` draws its state."""
+        """Draw every environment's running scene at the configured resolution, as ``render`` draws its state."""
         return np.stack([env.env.render() for env in self.envs])
 
     def variation_changed(self):
-        """Drop cached variation fields after the lanes' variation spaces change."""
+        """Drop cached variation fields after the environments' variation spaces change."""
         for env in self.envs:
             env.changed()
 

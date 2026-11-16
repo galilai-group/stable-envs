@@ -1,4 +1,4 @@
-"""DM Control adapter State: owned typed snapshots, lane RNG replay, input validation."""
+"""DM Control adapter State: owned typed snapshots, environment RNG replay, input validation."""
 
 import importlib
 import inspect
@@ -45,8 +45,8 @@ def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, de
         adapter.set_state(initial)
         assert_same_state(initial, adapter.get_state())
 
-        # Lane 1 crosses a reset boundary and consumes a cached Gaussian; the
-        # other lanes continue from different lifecycle positions.
+        # Environment 1 crosses a reset boundary and consumes a cached Gaussian; the
+        # other environments continue from different lifecycle positions.
         boundary = initial.clone()
         get_field(boundary, "rng/has_gauss")[1] = True
         get_field(boundary, "rng/cached_gaussian")[1] = 0.125

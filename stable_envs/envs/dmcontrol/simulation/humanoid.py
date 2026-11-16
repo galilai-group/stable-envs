@@ -4,7 +4,7 @@ import numpy as np
 
 from . import physics as _physics
 from .batch import ZX, ZY, ZZ, scalar_tolerance, tolerance
-from .lanes import DMCLanes
+from .instances import DMCInstances
 from .registered import apply_appearance, apply_floor_friction, compile_physics, normalized, source_model
 from .state import core_fields
 
@@ -47,13 +47,13 @@ def _make_env(seed):
     return normalized(env)
 
 
-class DMCHumanoidAdapter(DMCLanes):
-    """Humanoid Walk lanes."""
+class DMCHumanoidAdapter(DMCInstances):
+    """Humanoid Walk environments."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         super().__init__("humanoid", num_envs, device, seed, _make_env, core_fields(28, 27))
 
-    def _info(self, env, lane):
+    def _info(self, env, instance):
         physics = env.physics
         return float("nan"), {
             "qpos": physics.data.qpos.copy(),
@@ -65,7 +65,7 @@ class DMCHumanoidAdapter(DMCLanes):
 
 
 class HumanoidBatch:
-    """Humanoid Walk batch lanes."""
+    """Humanoid Walk batch environments."""
 
     def __init__(self, b, models):
         m = models[0]

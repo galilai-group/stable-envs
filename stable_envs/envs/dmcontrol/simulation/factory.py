@@ -38,7 +38,7 @@ ACTION_DIMS = {
     **{key: cfg["nu"] for key, cfg in CONTINUATION.items()},
     "humanoid": HUMANOID_CONFIG["nu"],
 }
-#: Batch task per simulator key: rewards, observations and info for all lanes at once.
+#: Batch task per simulator key: rewards, observations and info for all environments at once.
 BATCH_TASKS = {**FIRST_FAMILY_BATCH, **ALIGNED_BATCH, **CONTINUATION_BATCH, "humanoid": HumanoidBatch}
 #: State fields that follow qpos in the compact render row, in order.
 RENDER_KEYS = MODEL_KEYS
@@ -55,7 +55,7 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
 #: Batch rows per ``mujoco.batch`` thread by domain: about 0.1 ms of MuJoCo work per thread and step call (waking a
 #: thread can cost about as much), and at least two rows, as each thread that a call waits for can be the late one.
 #: Measured on two hosts; see "DM Control threads" in docs/performance-tuning.md.
-LANES_PER_THREAD: dict[str, int] = {
+ENVS_PER_THREAD: dict[str, int] = {
     "acrobot": 13,
     "ball_in_cup": 2,
     "cartpole": 12,
@@ -77,25 +77,25 @@ LANES_PER_THREAD: dict[str, int] = {
 
 
 def batch_threads(num_envs: int) -> int:
-    """The ``dmc_threads`` knob, at most one thread per CPU in the process affinity and one per lane."""
+    """The ``dmc_threads`` setting, at most one thread per CPU in the process affinity and one per environment."""
     cpus = cpu_limit()
     return min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
 
 
 def step_threads(domain: str, num_envs: int, most: int) -> int:
-    """At most ``most`` threads, and one per ``LANES_PER_THREAD`` rows of ``domain``."""
-    return max(1, min(most, -(-num_envs // LANES_PER_THREAD.get(domain, 1))))
+    """At most ``most`` threads, and one per ``ENVS_PER_THREAD`` rows of ``domain``."""
+    return max(1, min(most, -(-num_envs // ENVS_PER_THREAD.get(domain, 1))))
 
 
 def make_batch(
     domain: str, num_envs: int, device: str | torch.device = "cpu", seed: int = 0, threads: int | None = None
 ) -> DMCBatchAdapter:
-    """``make_local`` lanes stepped in one mujoco.batch on ``threads`` threads.
+    """``make_local`` environments stepped in one mujoco.batch on ``threads`` threads.
 
     Without ``threads``, a step uses at most ``batch_threads`` threads, and fewer for a domain whose step has little
     MuJoCo work (``step_threads``).
     """
     if threads is None:
         threads = step_threads(domain, num_envs, batch_threads(num_envs))
-    lanes = make_local(domain, num_envs, device, seed)
-    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads)
+    instances = make_local(domain, num_envs, device, seed)
+    return DMCBatchAdapter(instances, BATCH_TASKS[domain], threads)

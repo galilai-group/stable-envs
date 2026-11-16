@@ -10,7 +10,7 @@ from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
 from ..._execution.protocol import StepPipeline, step_pipeline
-from ...env import Env, _lane_value
+from ...env import Env, _instance_value
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import PHYSICS, VISUAL_LEAVES
 from .simulation.execution import fetch_backend, fetch_path, make_fetch_adapter
@@ -215,16 +215,16 @@ class FetchSemantics:
         # for seed=None, as SWM does. It never consumes simulator PCG64.
         leaves = _source_sampling_tree(self._has_object)
         values = []
-        for lane in range(self.B):
+        for instance in range(self.B):
             v = {}
             if sampled:
                 spaces = _source_sampling_tree(self._has_object)
-                spaces.seed(None if seed is None else int(seed) + lane)
+                spaces.seed(None if seed is None else int(seed) + instance)
                 for key in sampled:
                     v[key] = _leaf(spaces, key).sample()
             for key, value in explicit.items():
                 shape = _leaf(leaves, key).shape or ()
-                v[key] = _lane_value(value, lane, self.B, int(np.prod(shape))).reshape(shape)
+                v[key] = _instance_value(value, instance, self.B, int(np.prod(shape))).reshape(shape)
             values.append(v)
         self._restore_variation()
         self._reset_appearance(values)
@@ -255,7 +255,7 @@ class FetchSemantics:
         light0 = float(self._simulator.reference_model().light_diffuse[0, 0])
         style = self._style.values.clone()
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-        for lane, (chosen, value) in enumerate(zip(colors, values)):
+        for instance, (chosen, value) in enumerate(zip(colors, values)):
             chosen = dict(chosen)
             if "background.color" in value:
                 chosen["sky.color"] = value["background.color"]
@@ -267,7 +267,7 @@ class FetchSemantics:
                 ]
             for name, v in chosen.items():
                 off, width = layout[name]
-                style[lane, off : off + width] = torch.as_tensor(
+                style[instance, off : off + width] = torch.as_tensor(
                     np.asarray(v, np.float64).reshape(-1), device=self.device, dtype=style.dtype
                 )
         self._style = StyleTensor(style, self.variation_space.flat_layout())

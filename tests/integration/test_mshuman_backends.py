@@ -1,4 +1,4 @@
-"""MSHumanLocomotion steps CPU lanes in one native mujoco.batch, and CUDA lanes on it or on MuJoCo Warp.
+"""MSHumanLocomotion steps CPU environments in one native mujoco.batch, and CUDA environments on it or on MuJoCo Warp.
 
 Covers backend dispatch, float32 State at the API boundary, fidelity against single-MjData MuJoCo,
 State restore and replay, action clamping, and release of the batch's native threads.
@@ -26,7 +26,7 @@ from stable_envs.envs.mshuman.assets import model
 from stable_envs.envs.mshuman.simulation.adapter import MSHumanBatchAdapter, MSHumanWarpAdapter
 from tests.helpers.reference.semantics import assert_same_state
 
-LANES, STEPS, SEED = 4, 12, 7
+NUM_ENVS, STEPS, SEED = 4, 12, 7
 FIELDS = ("qpos", "qvel", "act", "time", "warmstart")
 
 
@@ -43,11 +43,11 @@ cuda_only = [pytest.mark.gpu, pytest.mark.skipif(_CUDA is not None, reason=str(_
 DEVICES = ["cpu", pytest.param("cuda", marks=cuda_only), pytest.param("cuda/mjwarp", marks=cuda_only)]
 
 
-def _make(lanes=LANES, device="cpu"):
-    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend, native at ``lanes``."""
+def _make(instances=NUM_ENVS, device="cpu"):
+    """``"cuda/mjwarp"`` selects MuJoCo Warp; a plain device uses the automatic backend, native at ``instances``."""
     device, _, backend = device.partition("/")
-    with tuning.override(large_backend_min_envs=lanes + 1):
-        return se.make("MSHumanLocomotion", num_envs=lanes, device=device, simulation_backend=backend or "auto")
+    with tuning.override(large_backend_min_envs=instances + 1):
+        return se.make("MSHumanLocomotion", num_envs=instances, device=device, simulation_backend=backend or "auto")
 
 
 def _actions(env, steps=STEPS, seed=SEED):
@@ -63,24 +63,24 @@ def _round(d):
 
 
 def _single_env_rollout(actions):
-    """Step one MjData per lane with mj_step from the ``init`` keyframe, rounding as the native batch does."""
+    """Step one MjData per environment with mj_step from the ``init`` keyframe, rounding as the native batch does."""
     m = model()
-    lanes = [mujoco.MjData(m) for _ in range(len(actions[0]))]
-    for d in lanes:
+    instances = [mujoco.MjData(m) for _ in range(len(actions[0]))]
+    for d in instances:
         mujoco.mj_resetDataKeyframe(m, d, 0)
         mujoco.mj_forward(m, d)
         _round(d)
     out = []
     for action in actions:
-        for d, ctrl in zip(lanes, np.asarray(action, np.float32)):
+        for d, ctrl in zip(instances, np.asarray(action, np.float32)):
             d.ctrl[:] = ctrl
             mujoco.mj_step(m, d)
             _round(d)
         values = {
-            key: np.stack([np.atleast_1d(getattr(d, name)).copy() for d in lanes])
+            key: np.stack([np.atleast_1d(getattr(d, name)).copy() for d in instances])
             for key, name in zip(FIELDS, ("qpos", "qvel", "act", "time", "qacc_warmstart"))
         }
-        out.append({key: torch.from_numpy(value.reshape(len(lanes), -1)) for key, value in values.items()})
+        out.append({key: torch.from_numpy(value.reshape(len(instances), -1)) for key, value in values.items()})
     return out
 
 
@@ -91,15 +91,15 @@ def _threads() -> int:
 def test_cpu_env_steps_on_the_native_batch():
     with _make() as env:
         assert type(env._simulator) is MSHumanBatchAdapter
-    with se.make("MSHumanLocomotion", num_envs=LANES, device="cpu") as env:
+    with se.make("MSHumanLocomotion", num_envs=NUM_ENVS, device="cpu") as env:
         assert env.simulation_backend == "native"
 
 
 @pytest.mark.parametrize("device", [pytest.param("cuda", marks=cuda_only)])
 def test_cuda_env_steps_on_mujoco_warp_from_the_switch_point_by_default(device):
-    for lanes in (1, LANES):
-        with tuning.override(large_backend_min_envs=lanes):
-            env = se.make("MSHumanLocomotion", num_envs=lanes, device=device)
+    for instances in (1, NUM_ENVS):
+        with tuning.override(large_backend_min_envs=instances):
+            env = se.make("MSHumanLocomotion", num_envs=instances, device=device)
         with env:
             assert env.simulation_backend == "mjwarp"
             assert type(env._simulator) is MSHumanWarpAdapter
@@ -187,12 +187,12 @@ def test_native_batch_matches_single_env_mujoco_with_float32_rounding_bit_for_bi
 
 
 def test_native_batch_results_do_not_depend_on_the_thread_count(monkeypatch):
-    lanes = 8
-    actions = np.random.default_rng(SEED).uniform(0, 1, (6, lanes, 100)).astype(np.float32)
+    instances = 8
+    actions = np.random.default_rng(SEED).uniform(0, 1, (6, instances, 100)).astype(np.float32)
     runs = []
-    for affinity in ([0], list(range(lanes))):
+    for affinity in ([0], list(range(instances))):
         monkeypatch.setattr(mjbatch, "cpu_limit", lambda affinity=affinity: len(affinity))
-        with _make(lanes) as env:
+        with _make(instances) as env:
             assert env._simulator.b.nthread == len(affinity)
             env.reset()
             runs.append([env.step(a, frames=None)["state"] for a in actions])
@@ -237,7 +237,7 @@ def test_actions_are_validated_and_clamped_to_ctrlrange(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with _make() as env:
         with pytest.raises(ValueError, match=r"actions must be \[B, 100\]"):
-            env.step(np.zeros((LANES, 99)))
+            env.step(np.zeros((NUM_ENVS, 99)))
         base = np.asarray(_actions(env, steps=1)[0], np.float32)
         for special, bound in ((np.nan, 0.0), (np.inf, 1.0), (-np.inf, 0.0), (1e11, 1.0), (-1e11, 0.0), (3.0, 1.0)):
             bad, clamped = base.copy(), base.copy()
@@ -249,7 +249,7 @@ def test_actions_are_validated_and_clamped_to_ctrlrange(tmp_path, monkeypatch):
     assert not (tmp_path / "MUJOCO_LOG.TXT").exists()
 
 
-def test_a_diverging_lane_raises_until_the_state_is_restored(tmp_path, monkeypatch):
+def test_a_diverging_environment_raises_until_the_state_is_restored(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     handler = mujoco.get_mju_user_warning()
     # Importing dm_control installs its own handler, which would hide MuJoCo's default one.
@@ -262,7 +262,7 @@ def test_a_diverging_lane_raises_until_the_state_is_restored(tmp_path, monkeypat
             se.get_field(bad, "qvel")[1] = 1e12
             env.set_state(bad)
             for _ in range(2):
-                with pytest.raises(RuntimeError, match=r"Physics state is invalid in lanes \[1\]"):
+                with pytest.raises(RuntimeError, match=r"Physics state is invalid in environments \[1\]"):
                     env.step(action, frames=None)
             env.set_state(start)
             env.step(action, frames=None)

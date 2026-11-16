@@ -33,12 +33,12 @@ class ClassicControlSemantics:
         """Select the step backend.
 
         ``"auto"`` selects from the device and the batch size. On the CPU, small batches step one Gymnasium
-        environment per lane and large batches step in NumPy. On CUDA, small batches step with the CPU choice and
+        environment per batch row and large batches step in NumPy. On CUDA, small batches step with the CPU choice and
         move their results to the GPU, and large batches step and keep their State on the GPU in Torch.
         The class ships the switch points (``CPU_MIN_ENVS`` and ``CUDA_MIN_ENVS``); the ``large_backend_min_envs``
-        tuning knob and ``stable-envs tune`` take precedence.
+        tuning setting and ``stable-envs tune`` take precedence.
 
-        ``"gym"`` steps one Gymnasium environment per lane. ``"numpy"`` or ``"torch"`` selects a batched
+        ``"gym"`` steps one Gymnasium environment per batch row. ``"numpy"`` or ``"torch"`` selects a batched
         backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.
         Gymnasium resets every backend, so a seed gives the same initial states on each.
         """

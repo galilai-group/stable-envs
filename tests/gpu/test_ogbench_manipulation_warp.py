@@ -49,22 +49,22 @@ def test_cube_oracle_replay_has_ogbench_successes():
     from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
     from stable_envs.envs.ogbench.simulation.manipulation_warp import OGBManipulationWarpAdapter
 
-    lanes, steps = 8, 200
-    ref = OGBManipulationAdapter("Cube", lanes, seed=7)
-    gpu = OGBManipulationWarpAdapter("Cube", lanes, "cuda", seed=7)
+    instances, steps = 8, 200
+    ref = OGBManipulationAdapter("Cube", instances, seed=7)
+    gpu = OGBManipulationWarpAdapter("Cube", instances, "cuda", seed=7)
     try:
         for episode in range(2):
             seed = 1000 + 37 * episode
             ref.reset(seed)
             gpu.reset(seed)
             oracles = []
-            for lane, env in enumerate(ref.envs):
-                np.random.seed(seed + lane)
+            for instance, env in enumerate(ref.envs):
+                np.random.seed(seed + instance)
                 oracle = CubeMarkovOracle(env=env)
                 oracle.reset(None, _oracle_info(env))
                 oracles.append(oracle)
-            want = np.zeros((steps, lanes), bool)
-            got = np.zeros((steps, lanes), bool)
+            want = np.zeros((steps, instances), bool)
+            got = np.zeros((steps, instances), bool)
             for t in range(steps):
                 action = np.stack([o.select_action(None, _oracle_info(env)) for o, env in zip(oracles, ref.envs)])
                 action = torch.as_tensor(action, dtype=torch.float32)
@@ -82,9 +82,9 @@ def test_scene_smooth_actions_stay_near_ogbench():
     from stable_envs.envs.ogbench.simulation.manipulation import OGBManipulationAdapter
     from stable_envs.envs.ogbench.simulation.manipulation_warp import OGBManipulationWarpAdapter
 
-    lanes, steps = 8, 200
-    ref = OGBManipulationAdapter("Scene", lanes, seed=3)
-    gpu = OGBManipulationWarpAdapter("Scene", lanes, "cuda", seed=3)
+    instances, steps = 8, 200
+    ref = OGBManipulationAdapter("Scene", instances, seed=3)
+    gpu = OGBManipulationWarpAdapter("Scene", instances, "cuda", seed=3)
     env = ref.envs[0]
     arm = np.asarray(env.model.jnt_qposadr[env._arm_joint_ids])
     try:
@@ -93,7 +93,7 @@ def test_scene_smooth_actions_stay_near_ogbench():
             if t == SCENE_EARLY_STEPS:
                 assert arm_gap <= SCENE_EARLY_ARM_BOUND
                 assert effector_gap <= SCENE_EARLY_EFFECTOR_BOUND
-            phase = t / 25 + np.arange(5)[None] + 0.7 * np.arange(lanes)[:, None]
+            phase = t / 25 + np.arange(5)[None] + 0.7 * np.arange(instances)[:, None]
             action = torch.as_tensor(0.6 * np.sin(phase), dtype=torch.float32)
             want = ref.step(action)["state"]
             got = gpu.step(action.cuda())["state"].cpu()
@@ -161,22 +161,22 @@ def test_gripper_link_pairs_are_excluded_but_the_pads_collide():
         gpu.close()
 
 
-def test_scene_cube_repair_draws_from_the_lane_generator(capsys):
+def test_scene_cube_repair_draws_from_the_environment_generator(capsys):
     _require_cuda()
     from stable_envs.envs.ogbench.simulation.manipulation_batch import OGBManipulationBatchAdapter
     from stable_envs.envs.ogbench.simulation.manipulation_warp import OGBManipulationWarpAdapter
 
-    lanes, repairs = 3, 3
-    ref = OGBManipulationBatchAdapter("Scene", lanes, seed=4)
-    gpu = OGBManipulationWarpAdapter("Scene", lanes, "cuda", seed=4)
+    instances, repairs = 3, 3
+    ref = OGBManipulationBatchAdapter("Scene", instances, seed=4)
+    gpu = OGBManipulationWarpAdapter("Scene", instances, "cuda", seed=4)
     cube = slice(ref._cube, ref._cube + 7)
     rng = [f"rng/environment/{key}" for key in ("state", "increment", "has_uint32", "uinteger")]
     try:
         for _ in range(repairs):
-            # Lane 1's cube leaves the workspace; the step's post-step puts it back from the lane's generator.
+            # Environment 1's cube leaves the workspace; the step's post-step puts it back from the environment's generator.
             ref._qpos[1, ref._cube] = gpu._qpos[1, gpu._cube] = 5.0
-            want = ref.step(np.zeros((lanes, 5)))["state"]
-            got = gpu.step(torch.zeros(lanes, 5, device="cuda"))["state"].cpu()
+            want = ref.step(np.zeros((instances, 5)))["state"]
+            got = gpu.step(torch.zeros(instances, 5, device="cuda"))["state"].cpu()
             torch.cuda.synchronize()
             for name in rng:
                 assert torch.equal(get_field(got, name), get_field(want, name)), name

@@ -1,4 +1,4 @@
-"""Classic-control dynamics stepped for every lane at once, in NumPy or in Torch.
+"""Classic-control dynamics stepped for every environment at once, in NumPy or in Torch.
 
 Gymnasium environments still own resets, the PCG64 streams and the physics values, so seeded resets
 and state export match :class:`ClassicControlAdapter`. Steps repeat each source ``step`` in float64,
@@ -62,7 +62,7 @@ def _f32(value: float) -> float:
     return float(np.float32(value))
 
 
-#: Float32 roundings of the MountainCarContinuous bounds, for lanes that hold a float32 state.
+#: Float32 roundings of the MountainCarContinuous bounds, for environments that hold a float32 state.
 _F32_RIGHT, _F32_LEFT, _F32_GOAL = _f32(0.6), _f32(-1.2), _f32(0.45)
 #: Wrap passes of a Torch step in each direction; a step moves an angle by less than four turns.
 _WRAP_PASSES = 4
@@ -276,7 +276,7 @@ def _acrobot(xp, s, p, a, _):
     l1, lc1, lc2, moi = p["link_length_1"], p["link_com_pos_1"], p["link_com_pos_2"], p["link_moi"]
     # AVAIL_TORQUE[a] = [-1.0, 0.0, 1.0][a], including Python's negative indices.
     torque = xp.f64((a + 3) % 3 - 1)
-    # Lane constants, grouped as Python evaluates the source expressions left to right.
+    # Environment constants, grouped as Python evaluates the source expressions left to right.
     pow2 = xp.pow2
     d1_base = m1 * pow2(lc1)
     d1_lengths = pow2(l1) + pow2(lc2)
@@ -356,9 +356,9 @@ def _mountain_car(xp, s, p, a, _):
 def _mountain_car_continuous(xp, s, p, a, dtype):
     """``Continuous_MountainCarEnv.step`` with NumPy 2 scalar types.
 
-    A lane's state is float64 after a reset and float32 after a step. A clipped force is a Python
+    An environment's state is float64 after a reset and float32 after a step. A clipped force is a Python
     float, so the next sum takes the state's type. An unclipped force keeps the action's type. The
-    ``wide`` masks mark lanes whose source scalar is float64 or a Python float; the others hold float32
+    ``wide`` masks mark environments whose source scalar is float64 or a Python float; the others hold float32
     values, which compare with the float32 rounding of a Python constant.
     """
     position, velocity, is32 = s["position"], s["velocity"], s["is32"]
@@ -449,7 +449,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         self._params = {name: views[physics_field(name)][:, 0] for name in _PHYSICS_SPACES[domain]}
 
     def _load(self, state: TensorDict) -> None:
-        """Adopt ``state`` as the live lanes."""
+        """Adopt ``state`` as the live environments."""
         if self._in_place:
             host = state.cpu()
             for key, array in self._groups.items():
@@ -477,7 +477,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 
     def set_state(self, state: TensorDict) -> None:
         super().set_state(state)
-        # Gymnasium stores the state in its own types, for example float32 MountainCarContinuous lanes.
+        # Gymnasium stores the state in its own types, for example float32 MountainCarContinuous environments.
         self._load(ClassicControlAdapter.get_state(self))
 
     def get_state(self) -> TensorDict:
@@ -565,7 +565,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("gym", "numpy", "torch")
 
-#: Shipped switch points of ``"auto"``; the knob and the tuning cache (``stable-envs tune``) take precedence.
+#: Shipped switch points of ``"auto"``; the setting and the tuning cache (``stable-envs tune``) take precedence.
 #: ``CPU_MIN_ENVS``: the smallest batch that steps in NumPy rather than Gymnasium on the host, on every device; None
 #: steps in NumPy at every batch size. ``CUDA_MIN_ENVS``: the smallest CUDA batch that steps in Torch on the GPU
 #: rather than on the host; None steps in Torch at every batch size.
@@ -584,7 +584,7 @@ COMPILED_HOST = frozenset({"cartpole", "mountain_car"})
 
 
 def _measure(domain: str, device: torch.device):
-    """Build and step lanes of ``domain`` on one backend, for ``stable-envs tune``."""
+    """Build and step environments of ``domain`` on one backend, for ``stable-envs tune``."""
     from ...._execution.backends import measure_adapter
     from .execution import make_step_adapter
 
@@ -595,28 +595,30 @@ def _measure(domain: str, device: torch.device):
     )
 
 
-def _host_backend(path: str, num_envs: int, backend: str | None, rungs, choices, measure) -> str:
+def _host_backend(path: str, num_envs: int, backend: str | None, pair, choices, measure) -> str:
     """The host backend.
 
-    The ``large_backend_min_envs`` knob moves only CUDA switch points, so it doesn't apply here: the tuning cache
+    The ``large_backend_min_envs`` setting moves only CUDA switch points, so it doesn't apply here: the tuning cache
     that ``stable-envs tune`` writes on the CPU decides, else the shipped switch point.
     """
     from ...._execution import backends
 
     cpu = torch.device("cpu")
     if backend not in (None, "auto"):
-        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": rungs}, choices=choices)
-    backends._REGISTERED[backends.KNOB, path, cpu.type] = (rungs, measure)
-    if rungs.small == rungs.large:
-        return rungs.small
+        return backends.select_backend(path, num_envs, cpu, backend, {"cpu": pair}, choices=choices)
+    backends._REGISTERED[backends.BACKEND_SETTING, path, cpu.type] = (pair, measure)
+    if pair.small == pair.large:
+        return pair.small
     data, current = tuning.read_cache(cpu)
-    value = data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.KNOB) if current else None
+    value = (
+        data["entries"].get(tuning.entry_key(path, 0, num_envs), {}).get(backends.BACKEND_SETTING) if current else None
+    )
     if value is not None:
-        return rungs.large if num_envs >= value else rungs.small
+        return pair.large if num_envs >= value else pair.small
     side = backends._cached_neighbours(path, cpu, num_envs)
     if side is not None:
-        return rungs.large if side == "large" else rungs.small
-    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
+        return pair.large if side == "large" else pair.small
+    return pair.large if pair.min_envs is None or num_envs >= pair.min_envs else pair.small
 
 
 def classic_backend(domain: str, device: str | torch.device, num_envs: int, backend: str | None = "auto") -> str:
@@ -624,21 +626,21 @@ def classic_backend(domain: str, device: str | torch.device, num_envs: int, back
 
     ``"auto"`` (or None) first selects the host backend: the compiled step for ``COMPILED_HOST`` tasks, else
     Gymnasium below ``CPU_MIN_ENVS`` and NumPy from it. On CUDA it then selects that host backend below
-    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` knob moves only the CUDA switch point.
+    ``CUDA_MIN_ENVS`` and Torch from it. The ``large_backend_min_envs`` setting moves only the CUDA switch point.
     """
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
     from .numba_step import STEPS
 
     device = torch.device(device)
     choices = SIMULATION_BACKENDS + (("numba",) if domain in STEPS else ())
     cpu = torch.device("cpu")
     compiled = domain in COMPILED_HOST and domain in STEPS
-    rungs = Rungs("numba", "numba") if compiled else Rungs("gym", "numpy", CPU_MIN_ENVS[domain])
-    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, rungs, choices, _measure(domain, cpu))
+    pair = BackendPair("numba", "numba") if compiled else BackendPair("gym", "numpy", CPU_MIN_ENVS[domain])
+    host = _host_backend(f"classic-cpu/{domain}", num_envs, backend, pair, choices, _measure(domain, cpu))
     if device.type == "cpu" or backend not in (None, "auto"):
         return host
     return select_backend(
         f"classic-sim/{domain}", num_envs, device, backend,
-        {"cpu": Rungs(host, host), "cuda": Rungs(host, "torch", CUDA_MIN_ENVS[domain])},
+        {"cpu": BackendPair(host, host), "cuda": BackendPair(host, "torch", CUDA_MIN_ENVS[domain])},
         choices=choices, measure=_measure(domain, device),
     )  # fmt: skip

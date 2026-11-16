@@ -35,7 +35,7 @@ def _getter(paths) -> Callable[[TensorDict], tuple]:
 
 
 class PackedState:
-    """The State fields of ``num_envs`` lanes of ``domain`` in host group arrays."""
+    """The State fields of ``num_envs`` environments of ``domain`` in host group arrays."""
 
     def __init__(self, domain: str, num_envs: int):
         self.num_envs = n = int(num_envs)

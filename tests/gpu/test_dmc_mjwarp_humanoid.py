@@ -23,7 +23,7 @@ def test_humanoid_replays_100_public_calls(seed):
         assert env.simulation_backend == "mjwarp"
         env.reset(seed=seed)
         # Preserve the original 100-call evaluator's RNG, five-call prefix and
-        # three lanes. These are public calls, each with two control rounds.
+        # three environments. These are public calls, each with two control rounds.
         actions = np.random.default_rng(seed + 91717).uniform(-1, 1, (105, 3, env.action_dim))
         for action in actions[:5]:
             env.step(torch.as_tensor(action, device="cuda"), states=None, frames=None)
@@ -51,7 +51,7 @@ def test_humanoid_replays_100_public_calls(seed):
 
 
 @pytest.mark.parametrize("reset_together", [False, True], ids=["staggered", "together"])
-def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_together):
+def test_humanoid_mixed_resets_preserve_continuing_environment_across_streams(reset_together):
     device = torch.device("cuda", torch.cuda.current_device())
     first, second = torch.cuda.Stream(device=device), torch.cuda.Stream(device=device)
     with se.make("DMCHumanoidWalk", num_envs=3, device=device, simulation_backend="mjwarp", size=32) as env:
@@ -62,8 +62,8 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
                 env.step(torch.as_tensor(action, device=device), states=None, frames=None)
             initial = env.get_state()
             limit = int(env._simulator._limits[0])
-            # Staggered resets leave two lanes resetting in different rounds. When
-            # both reset in round one, only lane 2 continues in that round.
+            # Staggered resets leave two environments resetting in different rounds. When
+            # both reset in round one, only environment 2 continues in that round.
             get_field(initial, "lifecycle/step_count")[:, 0] = torch.tensor(
                 [limit if reset_together else limit - 1, limit, 6], device=device
             )
@@ -100,8 +100,8 @@ def test_humanoid_mixed_resets_preserve_continuing_lane_across_streams(reset_tog
         ]
         assert_same_state(unfold(actual["state"])["rng"][2], unfold(initial)["rng"][2])
 
-        # Keep the same batch width but let all lanes advance persistently.
-        # The third lane must not depend on the other lanes' reset decisions.
+        # Keep the same batch width but let all environments advance persistently.
+        # The third environment must not depend on the other environments' reset decisions.
         ordinary = initial.clone()
         get_field(ordinary, "lifecycle/step_count")[:2] = 0
         get_field(ordinary, "lifecycle/reset_next_step")[:2] = False

@@ -21,8 +21,8 @@ from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, Cl
 from stable_envs.envs.classic_control.simulation.numba_step import STEPS  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
 
-LANES = 6
-#: Physics values per lane; the extremes of each range make clamps and terminations frequent.
+NUM_ENVS = 6
+#: Physics values per environment; the extremes of each range make clamps and terminations frequent.
 PHYSICS = {
     "cartpole": {
         "gravity": [9.8, 4.9, 14.7, 7.25, 12.5, 9.8],
@@ -86,18 +86,18 @@ def _tol(backend, steps=1):
 def _actions(domain, steps, seed, dtype=None):
     rng = np.random.default_rng(seed)
     if domain == "cartpole":
-        return torch.as_tensor(rng.integers(0, 2, (steps, LANES, 1)))
+        return torch.as_tensor(rng.integers(0, 2, (steps, NUM_ENVS, 1)))
     if domain in ("acrobot", "mountain_car"):
-        return torch.as_tensor(rng.integers(0, 3, (steps, LANES, 1)))
+        return torch.as_tensor(rng.integers(0, 3, (steps, NUM_ENVS, 1)))
     bound = 4.5 if domain == "pendulum" else 1.5
-    return torch.as_tensor(rng.uniform(-bound, bound, (steps, LANES, 1)), dtype=dtype or torch.float32)
+    return torch.as_tensor(rng.uniform(-bound, bound, (steps, NUM_ENVS, 1)), dtype=dtype or torch.float32)
 
 
 def _pair(domain, backend, device="cpu", seed=7):
     if backend == "numba" and domain not in STEPS:
         pytest.skip(f"no compiled {domain} step")
-    reference = ClassicControlAdapter(domain, LANES, "cpu", seed)
-    fast = BatchedClassicAdapter(domain, LANES, device, seed, backend)
+    reference = ClassicControlAdapter(domain, NUM_ENVS, "cpu", seed)
+    fast = BatchedClassicAdapter(domain, NUM_ENVS, device, seed, backend)
     values = {name: np.asarray(rows, np.float64) for name, rows in PHYSICS[domain].items()}
     for item in (reference, fast):
         item.configure(values)
@@ -177,7 +177,7 @@ def test_float64_actions_match_gymnasium(domain, backend):
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
 def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
-    """Speed and position limits, the left wall and the goal, with float64 and float32 lane states."""
+    """Speed and position limits, the left wall and the goal, with float64 and float32 environment states."""
     reference, fast = _pair("mountain_car_continuous", backend)
     f32 = float(np.float32(-1.2))
     speed = np.asarray(PHYSICS["mountain_car_continuous"]["max_speed"])
@@ -196,8 +196,8 @@ def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
         for is32 in (False, True):
             for shift in range(len(cases)):
                 state = reference.get_state()
-                rows = [cases[(lane + shift) % len(cases)] for lane in range(LANES)]
-                # Float64 values in a float32 lane: set_state rounds them as Gymnasium does.
+                rows = [cases[(instance + shift) % len(cases)] for instance in range(NUM_ENVS)]
+                # Float64 values in a float32 environment: set_state rounds them as Gymnasium does.
                 values = np.asarray(rows, np.float64)
                 set_field(state, "position", torch.as_tensor(values[:, :1]))
                 set_field(state, "velocity", torch.as_tensor(values[:, 1:]))
@@ -205,7 +205,7 @@ def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
                 reference.set_state(state)
                 fast.set_state(state)
                 action = torch.as_tensor(
-                    [[forces[(lane + shift) % len(forces)]] for lane in range(LANES)], dtype=dtype
+                    [[forces[(instance + shift) % len(forces)]] for instance in range(NUM_ENVS)], dtype=dtype
                 )
                 _assert_agree("mountain_car_continuous", fast.step(action), reference.step(action), _tol(backend))
     finally:
@@ -215,7 +215,7 @@ def test_continuous_mountain_car_boundaries_match_gymnasium(backend, dtype):
 
 @pytest.mark.parametrize("backend", BACKENDS)
 @pytest.mark.parametrize("domain", DOMAINS)
-def test_inactive_lanes_hold_and_report_zero_outputs(domain, backend):
+def test_inactive_environments_hold_and_report_zero_outputs(domain, backend):
     reference, fast = _pair(domain, backend)
     try:
         for t, action in enumerate(_actions(domain, 30, 5)):
@@ -248,7 +248,7 @@ def test_state_restores_across_the_two_adapters(domain, backend):
 
 
 @pytest.mark.parametrize("backend", BACKENDS)
-def test_configure_keeps_live_lanes_and_applies_new_physics(backend):
+def test_configure_keeps_live_environments_and_applies_new_physics(backend):
     reference, fast = _pair("cartpole", backend)
     try:
         for action in _actions("cartpole", 5, 2):
@@ -312,13 +312,13 @@ def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path)
     tuning._clear_caches()
     try:
         for domain, fewest in CPU_MIN_ENVS.items():
-            for lanes in (1, 2, 4, 8, 4096):
-                host = "numpy" if fewest is None or lanes >= fewest else "gym"
+            for instances in (1, 2, 4, 8, 4096):
+                host = "numpy" if fewest is None or instances >= fewest else "gym"
                 host = "numba" if domain in COMPILED_HOST else host
-                assert classic_backend(domain, "cpu", lanes) == host
+                assert classic_backend(domain, "cpu", instances) == host
                 cutoff = CUDA_MIN_ENVS[domain]
-                assert classic_backend(domain, "cuda", lanes) == (
-                    "torch" if cutoff is None or lanes >= cutoff else host
+                assert classic_backend(domain, "cuda", instances) == (
+                    "torch" if cutoff is None or instances >= cutoff else host
                 )
         assert classic_backend("cartpole", "cpu", 1) == "numba"
         assert classic_backend("acrobot", "cpu", 1) == "gym"
@@ -327,13 +327,13 @@ def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path)
         tuning._clear_caches()
 
 
-def _shipped_host(domain, lanes):
+def _shipped_host(domain, instances):
     from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS
 
     if domain in COMPILED_HOST:
         return "numba"
     fewest = CPU_MIN_ENVS[domain]
-    return "numpy" if fewest is None or lanes >= fewest else "gym"
+    return "numpy" if fewest is None or instances >= fewest else "gym"
 
 
 def test_backend_selection(monkeypatch, tmp_path):
@@ -341,15 +341,15 @@ def test_backend_selection(monkeypatch, tmp_path):
     tuning._clear_caches()
     for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            # The knob moves the CUDA switch point and leaves the host choice to the shipped values.
+            # The setting moves the CUDA switch point and leaves the host choice to the shipped values.
             with tuning.override(large_backend_min_envs=4):
-                for lanes in (1, 3, 4, 64):
-                    assert classic_backend(domain, "cpu", lanes, backend) == _shipped_host(domain, lanes)
+                for instances in (1, 3, 4, 64):
+                    assert classic_backend(domain, "cpu", instances, backend) == _shipped_host(domain, instances)
                 assert classic_backend(domain, "cuda", 4, backend) == "torch"
                 assert classic_backend(domain, "cuda", 3, backend) == _shipped_host(domain, 3)
-        for lanes in (1, 4096):
-            assert classic_backend(domain, "cuda:0", lanes, "gym") == "gym"
-            assert classic_backend(domain, "cpu", lanes, "torch") == "torch"
+        for instances in (1, 4096):
+            assert classic_backend(domain, "cuda:0", instances, "gym") == "gym"
+            assert classic_backend(domain, "cpu", instances, "torch") == "torch"
     with pytest.raises(ValueError, match="simulation_backend"):
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():

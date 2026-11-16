@@ -4,4 +4,4 @@ from ._delegated import DelegatedSemantics
 
 
 class DMCHumanoidSemantics(DelegatedSemantics):
-    """Humanoid Walk on CPU dm_control lanes."""
+    """Humanoid Walk on CPU dm_control environments."""

@@ -11,7 +11,7 @@ from ... import tuning
 from ..._core.state_schema import Field, StateSchema
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution import host_render
-from ..._execution.backends import Rungs, measure_env, select_backend
+from ..._execution.backends import BackendPair, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_drawn_fields, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -199,7 +199,7 @@ _NO_MASK = np.zeros(0, np.bool_)
 
 
 #: Shipped CUDA switch point of TwoRoom: the smallest batch that steps in JAX; smaller batches step in Numba (Torch
-#: without Numba). None uses JAX at every batch size. The knob and the tuning cache take precedence.
+#: without Numba). None uses JAX at every batch size. The setting and the tuning cache take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 #: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and it is faster than Numba
 #: from 8192 environments on both GPU types.
@@ -667,12 +667,12 @@ class _HiddenTargetSemantics:
         if self.device.type != "cpu" and self.state_dim == 2:
             # The live rows and target are columns of one State group, so a moved State refreshes them in one copy.
             agent, target = (TARGET_STATE.slices[name] for name in ("agent/position", "target/position"))
-            lanes = torch.empty(self.B, _TARGET_GROUP.size, device=self.device, dtype=torch.float32)
-            lanes[:, agent.start : agent.stop] = self._render_state
-            lanes[:, target.start : target.stop] = self._target_position
-            self._render_state = lanes.narrow(1, agent.start, agent.stop - agent.start)
-            self._target_position = lanes.narrow(1, target.start, target.stop - target.start)
-            self._lanes = lanes
+            instances = torch.empty(self.B, _TARGET_GROUP.size, device=self.device, dtype=torch.float32)
+            instances[:, agent.start : agent.stop] = self._render_state
+            instances[:, target.start : target.stop] = self._target_position
+            self._render_state = instances.narrow(1, agent.start, agent.stop - agent.start)
+            self._target_position = instances.narrow(1, target.start, target.stop - target.start)
+            self._instances = instances
         if self.device.type == "cuda":
             from torch._inductor import list_options
 
@@ -694,12 +694,12 @@ class _HiddenTargetSemantics:
         self._target_position.copy_(target.to(device=self.device, dtype=torch.float32).reshape(self.B, 2))
 
     @staticmethod
-    def _option_position(value, lane, batch):
+    def _option_position(value, instance, batch):
         value = np.asarray(value, np.float32)
         if value.shape == (2,):
             return value.copy()
         if value.shape == (batch, 2):
-            return value[lane].copy()
+            return value[instance].copy()
         raise ValueError(f"reset position option must have shape (2,) or ({batch}, 2), got {value.shape}")
 
     def reset(self, seed=None, options=None):
@@ -707,11 +707,11 @@ class _HiddenTargetSemantics:
         options = dict(options or {})
         values = self.draw_reset_values(seed, options)
         agent_rows, target_rows = list(values["agent.position"]), list(values["target.position"])
-        for lane in range(self.B):
+        for instance in range(self.B):
             if "state" in options:
-                agent_rows[lane] = self._option_position(options["state"], lane, self.B)
+                agent_rows[instance] = self._option_position(options["state"], instance, self.B)
             if "target_state" in options:
-                target_rows[lane] = self._option_position(options["target_state"], lane, self.B)
+                target_rows[instance] = self._option_position(options["target_state"], instance, self.B)
         if self.state_dim != 2:
             self._set_render_state(np.stack(agent_rows))
             self._target_position.copy_(torch.as_tensor(np.stack(target_rows), device=self.device))
@@ -791,12 +791,12 @@ class _HiddenTargetSemantics:
         return self._numba_step(act, None, move)
 
     def _steps_on_host(self) -> bool:
-        """Whether a step of several actions advances host copies of the lanes and moves its result once."""
+        """Whether a step of several actions advances host copies of the environments and moves its result once."""
         return self.simulation_backend == "numba" and self.device.type != "cpu"
 
     @torch.no_grad()
     def _host_advance(self, action, *, active=None, capture_state=True):
-        """``_step`` on the host copies of the lanes: the actions, the mask and the result stay on the CPU.
+        """``_step`` on the host copies of the environments: the actions, the mask and the result stay on the CPU.
 
         The result always holds the State, which the kernel builds anyway. The device rows are behind until
         ``_end_host_steps``.
@@ -826,7 +826,7 @@ class _HiddenTargetSemantics:
             cache["target"] = (hit[0], self._target_position._version, hit[2])
 
     def _numba_step(self, action, active, move=None, host=False):
-        """Advance the lanes and build state and task outputs in one Numba call.
+        """Advance the environments and build state and task outputs in one Numba call.
 
         On an accelerator the call runs on host copies. ``move`` builds the result from the host arrays when it is
         given. With ``host``, the result stays on the CPU and the device rows are not updated.
@@ -869,7 +869,7 @@ class _HiddenTargetSemantics:
         if self.state_dim == 2:
             # The moved State group holds the new rows and the target, already on the device: one device copy,
             # without a host wait.
-            self._lanes.copy_(_leaf(moved, _TARGET_GROUP.path))
+            self._instances.copy_(_leaf(moved, _TARGET_GROUP.path))
         else:
             self._render_state.copy_(torch.from_numpy(rows))
         # The host rows already hold the new values: the next step reads them without a device copy.
@@ -980,7 +980,7 @@ class _TorchNavBase(_GymReferencePort):
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         rows, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, active))
         if not finite:
-            # get_state names the non-finite lanes and raises.
+            # get_state names the non-finite environments and raises.
             return self._step_result(self.state)
         # The State of these classes is one group that holds the rows as they are.
         (group,) = self.STATE.groups.values()
@@ -1207,7 +1207,10 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
-    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS)}
+    render_backends = {
+        "cpu": BackendPair("cpu", "cpu"),
+        "cuda": BackendPair("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS),
+    }
     _numba_paths = (
         "agent.speed",
         "agent.radius",
@@ -1219,7 +1222,7 @@ class _TwoRoomBase(_TorchNavBase):
     )
 
     def _render_frame_rows(self, rows: torch.Tensor) -> torch.Tensor:
-        """Draw (B, F, state_dim) rows of the live lanes to (B, F, H, W, 3) frames in one render call.
+        """Draw (B, F, state_dim) rows of the live environments to (B, F, H, W, 3) frames in one render call.
 
         The frames go straight into one buffer, without a copy per action. On the CPU the buffer is the memory of a
         previous step's frames once no tensor uses it, so the renderer writes to pages that are already mapped.
@@ -1291,19 +1294,19 @@ class _TwoRoomBase(_TorchNavBase):
         finally:
             self._reset_walls = None
 
-    def _reset_value_ok(self, path, value, lane):
+    def _reset_value_ok(self, path, value, instance):
         """Reject agent positions inside the band that the wall and the agent radius cover."""
         if path != "agent.position":
             return True
-        # A reset reads the installed variation once, not once for each lane.
+        # A reset reads the installed variation once, not once for each environment.
         walls = self._reset_walls
         if not walls:
             walls = {p: self._style[p].detach().cpu().numpy().reshape(-1) for p in _WALL_RESET_PATHS}
             if self._reset_walls is not None:
                 self._reset_walls = walls
-        axis = int(walls["wall.axis"][lane])
-        thickness = int(walls["wall.thickness"][lane])
-        radius = float(walls["agent.radius"][lane])
+        axis = int(walls["wall.axis"][instance])
+        thickness = int(walls["wall.thickness"][instance])
+        radius = float(walls["agent.radius"][instance])
         lo = WALL_CENTER - thickness // 2 - radius
         hi = WALL_CENTER + thickness // 2 + radius
         return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
@@ -1392,7 +1395,7 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation.
 
-        With ``"auto"``, CPU lanes step in Numba when it imports. CUDA lanes step in Numba (Torch without Numba)
+        With ``"auto"``, CPU environments step in Numba when it imports. CUDA environments step in Numba (Torch without Numba)
         for small batches and in JAX for large ones, from the measured ``large_backend_min_envs`` switch point.
         ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
         every batch size. On CUDA, Numba steps host copies of the rows and moves the results to the device.
@@ -1416,8 +1419,8 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             self.device,
             "auto",
             {
-                "cpu": Rungs("jax", "jax"),
-                "cuda": Rungs("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
+                "cpu": BackendPair("jax", "jax"),
+                "cuda": BackendPair("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
             },
             choices=self.simulation_backends,
             measure=measure,
@@ -1556,7 +1559,7 @@ class _PiecewiseBase(_TorchNavBase):
         {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
     )
 
-    #: Discrete rendering flags that need the layered compositing path when any lane sets them.
+    #: Discrete rendering flags that need the layered compositing path when any environment sets them.
     layer_flags: tuple[str, ...] = ("rendering.render_bias_field",)
     _layered = False
     _FIELD_CACHE = _RES.BoundedCache(16, name="navigation.bias_field")
@@ -1593,15 +1596,15 @@ class _PiecewiseBase(_TorchNavBase):
         return img
 
     def _bias_layer(self, img, sl, k) -> torch.Tensor:
-        """Composite each lane's bias arrows over ``img`` in float32, truncating to uint8."""
+        """Composite each environment's bias arrows over ``img`` in float32, truncating to uint8."""
         biases = torch.stack([sl(f"zones.bias_{i}").reshape(k, 2) for i in range(N_ZONES)], dim=1)
         host = biases.detach().cpu().numpy().astype(np.float32)
         layers = []
-        for lane in range(k):
-            key = (str(self.device), host[lane].tobytes())
+        for instance in range(k):
+            key = (str(self.device), host[instance].tobytes())
             hit = _PiecewiseBase._FIELD_CACHE.get(key)
             if hit is None:
-                rgba = torch.as_tensor(_bias_field_rgba(host[lane]))
+                rgba = torch.as_tensor(_bias_field_rgba(host[instance]))
                 alpha = rgba[..., 3:].to(torch.float32) / 255.0
                 hit = _PiecewiseBase._FIELD_CACHE.put(
                     key, (alpha.to(self.device), rgba[..., :3].to(torch.float32).to(self.device))
@@ -1944,13 +1947,13 @@ class SimplePointMaze(_GymReferencePort):
         finally:
             self._drawing_reset, self._reset_walls = False, None
 
-    def _position_collides(self, value, lane, entity="agent"):
+    def _position_collides(self, value, instance, entity="agent"):
         p = np.asarray(value, np.float32)
         rows = self._wall_rows()
-        number = int(rows["walls.number"][lane, 0])
-        positions = rows["walls.positions"][lane].reshape(MAX_WALLS, 2)
-        shapes = rows["walls.shape"][lane].reshape(MAX_WALLS, 2)
-        radius = float(rows[f"{entity}.radius"][lane, 0])
+        number = int(rows["walls.number"][instance, 0])
+        positions = rows["walls.positions"][instance].reshape(MAX_WALLS, 2)
+        shapes = rows["walls.shape"][instance].reshape(MAX_WALLS, 2)
+        radius = float(rows[f"{entity}.radius"][instance, 0])
         for corner, shape in zip(positions[:number], shapes[:number], strict=True):
             lo = np.minimum(corner, corner + shape)
             hi = np.maximum(corner, corner + shape)
@@ -1959,17 +1962,17 @@ class SimplePointMaze(_GymReferencePort):
                 return True
         return False
 
-    def _reset_value_ok(self, path, value, lane):
+    def _reset_value_ok(self, path, value, instance):
         if path in ("agent.position", "goal.position"):
-            return not self._position_collides(value, lane, path.split(".")[0])
+            return not self._position_collides(value, instance, path.split(".")[0])
         return True
 
-    def _draw_reset_lane(self, tree, lane, sampled, values):
-        out = super()._draw_reset_lane(tree, lane, sampled, values)
+    def _draw_reset_instance(self, tree, instance, sampled, values):
+        out = super()._draw_reset_instance(tree, instance, sampled, values)
         leaf = tree["agent"]["position"]
         for _ in range(1000):
             candidate = leaf.sample()
-            if not self._position_collides(candidate, lane):
+            if not self._position_collides(candidate, instance):
                 out["task.cached_goal_agent_position"] = candidate
                 return out
         raise RuntimeError("agent.position rejection sampling did not converge")

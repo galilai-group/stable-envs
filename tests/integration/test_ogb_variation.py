@@ -1,4 +1,4 @@
-"""Cube/Scene Variation leaves against pinned stable_worldmodel, per lane."""
+"""Cube/Scene Variation leaves against pinned stable_worldmodel, per environment."""
 
 import pytest
 
@@ -9,7 +9,7 @@ from tests.helpers.reference.gates.ogb_variation import reset_options_gate, set_
 
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
-def test_reset_option_leaves_match_swm_per_lane(family):
+def test_reset_option_leaves_match_swm_per_environment(family):
     assert not reset_options_gate(family)["placement_leaves_read_in_task_mode"]
 
 

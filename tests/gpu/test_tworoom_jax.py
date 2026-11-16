@@ -43,25 +43,25 @@ def test_auto_cutoff_preserves_cuda_outputs(batch, expected):
 @pytest.mark.parametrize("batch", [1, 64, 4096])
 @pytest.mark.swm
 def test_cuda_batched_steps_match_cpu_and_swm_with_arbitrary_actions(batch):
-    # Sample source lanes at large batches: each source env owns full-resolution render grids.
-    lanes = np.linspace(0, batch - 1, min(batch, 64), dtype=int).tolist()
+    # Sample source environments at large batches: each source env owns full-resolution render grids.
+    instances = np.linspace(0, batch - 1, min(batch, 64), dtype=int).tolist()
     with (
-        closing(NativeNavigationReference("two_room", len(lanes))) as source,
+        closing(NativeNavigationReference("two_room", len(instances))) as source,
         se.TwoRoom(num_envs=batch, device="cpu") as cpu,
         se.TwoRoom(num_envs=batch, device="cuda") as env,
     ):
         env.reset(seed=7)
         compare_state(env.get_state(), cpu.reset(seed=7))
-        for lane, source_env in zip(lanes, source.envs, strict=True):
-            source_env.reset(seed=7 + lane)
-        compare_state(env.get_state()[lanes], source.get_state())
+        for instance, source_env in zip(instances, source.envs, strict=True):
+            source_env.reset(seed=7 + instance)
+        compare_state(env.get_state()[instances], source.get_state())
         generator = torch.Generator(device="cuda").manual_seed(12)
         for _ in range(32):
             action = (torch.rand(batch, 4, generator=generator, device="cuda") * 4 - 2)[:, ::2]
             assert not action.is_contiguous()
             actual = env.step(action, frames=None, states=None).exclude("valid")
             compare_state(actual, cpu.step(action.cpu(), frames=None, states=None).exclude("valid"))
-            compare_state(actual[lanes], source.step(action[lanes]))
+            compare_state(actual[instances], source.step(action[instances]))
 
 
 def test_cuda_dlpack_step_on_nondefault_stream_has_no_host_conversion(monkeypatch):
@@ -147,7 +147,7 @@ def test_cuda_shared_distance_matches_cpu_norm_without_host_conversion(name, mon
         assert_same_state(result["terminated"].cpu(), expected < 16)
 
 
-def test_cuda_single_lane_sequence_with_offset_action_views():
+def test_cuda_single_environment_sequence_with_offset_action_views():
     with se.TwoRoom(num_envs=1, device="cuda") as env:
         env.reset(seed=0, options={"state": [50, 50], "target_state": [180, 180]})
         actions = torch.arange(12, device="cuda", dtype=torch.float32).reshape(1, 6, 2) / 32
@@ -170,7 +170,7 @@ def test_cuda_numba_steps_host_rows_like_torch(batch):
         assert all(leaf.device.type == "cuda" for leaf in actual.values(True, True))
         assert_same_state(actual, expected)
         assert torch.equal(actual["frames"], expected["frames"])
-        # The sequence stepped host copies of the lanes; the device rows hold the last State.
+        # The sequence stepped host copies of the environments; the device rows hold the last State.
         assert torch.equal(env._render_state, reference._render_state)
         assert torch.equal(env.render(), reference.render())
         later = env.step(actions, states=None, frames=None)

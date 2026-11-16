@@ -226,9 +226,9 @@ def _build_one(f, rec, pose, color, light, goal, shapes, owners, starts, discs, 
 
 
 @njit(parallel=True, cache=True)
-def build(lanes, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots, out):
-    for i in prange(len(lanes)):
-        f = lanes[i]
+def build(instances, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots, out):
+    for i in prange(len(instances)):
+        f = instances[i]
         _build_one(f, out[f], pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots)
 
 
@@ -618,8 +618,10 @@ def _region(canvas, rec, writes, count, background, oy0, oy1, ox0, ox1, tables, 
 
 
 @njit(parallel=True, cache=True)
-def frames(lanes, dest, scene, segments, segment_counts, plate, plates, layout, groups, tables, scratch, static, out):
-    """Draw the frames of rows ``lanes`` into ``out[dest]``; one scratch row of ``scratch`` per thread.
+def frames(
+    instances, dest, scene, segments, segment_counts, plate, plates, layout, groups, tables, scratch, static, out
+):
+    """Draw the frames of rows ``instances`` into ``out[dest]``; one scratch row of ``scratch`` per thread.
 
     ``scene`` is ``(pose, color, light, goal, background)`` per row, ``layout`` the arrays of one template,
     ``groups`` the box group of each record slot (−1 for static slots), and ``tables`` the canvas taps and resize
@@ -631,13 +633,13 @@ def frames(lanes, dest, scene, segments, segment_counts, plate, plates, layout, 
     shapes, owners, starts, discs, walls, wall_slots = layout
     records, canvases, wx, wy, wb, wc = scratch
     edge, i0, i1 = tables[1], tables[4], tables[5]
-    threads, n, size, other = len(records), len(lanes), out.shape[1], max(groups.max(), -1) + 1
+    threads, n, size, other = len(records), len(instances), out.shape[1], max(groups.max(), -1) + 1
     for t in prange(threads):
         rec, canvas = records[t], canvases[t]
         writes = (wx[t], wy[t], wb[t], wc[t])
         boxes = np.empty((other + 1, 4), np.int64)
         for i in range(t, n, threads):
-            f = lanes[i]
+            f = instances[i]
             frame = out[dest[i]]
             _build_one(f, rec, pose, color, light, goal, shapes, owners, starts, discs, walls, wall_slots)
             count = 0

@@ -1,6 +1,6 @@
 # Tuning
 
-`stable_envs.tuning` holds the knobs that set chunk sizes, Triton block sizes, worker counts and memory budgets. A knob changes speed and memory use, and every value gives the same [frames](../terms.md#frame) and [states](../terms.md#state). Each knob has a default and a fixed order of sources for its value, both listed below. See [Performance tuning](../performance-tuning.md) for when to change one.
+`stable_envs.tuning` holds the settings that set chunk sizes, Triton block sizes, worker counts and memory budgets. A setting changes speed and memory use, and every value gives the same [frames](../terms.md#frame) and [states](../terms.md#state). Each setting has a default and a fixed order of sources for its value, both listed below. See [Performance tuning](../performance-tuning.md) for when to change one.
 
 ```python
 import stable_envs as snv
@@ -16,19 +16,19 @@ print(snv.tuning.describe()["nav_render_chunk"])        # (256, 'fallback')
 
 ## How a value is chosen
 
-The library reads a knob each time it does the work, and a change applies to the next call. `large_backend_min_envs` is read when the environment selects its physics backend, and `large_renderer_min_rows` each time it draws. `workers`, `worker_min_lanes`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
+The library reads a setting each time it does the work, and a change applies to the next call. `large_backend_min_envs` is read when the environment selects its physics backend, and `large_renderer_min_rows` each time it draws. `workers`, `worker_min_envs`, `worker_timeout`, `fetch_threads` and `dmc_threads` are read when the environment builds its worker processes or threads. The library uses the first value it finds:
 
 | Source | Set by |
 |---|---|
 | `override` | `snv.tuning.override(...)` blocks, innermost first |
 | `set` | `snv.tuning.set(...)` |
-| `env` | The `STABLE_ENVS_<KNOB>` environment variable, such as `STABLE_ENVS_NAV_RENDER_CHUNK=64` |
+| `env` | The `STABLE_ENVS_<SETTING>` environment variable, such as `STABLE_ENVS_NAV_RENDER_CHUNK=64` |
 | `cache` | `stable-envs tune` or `snv.tune(env)`, for this device, render path, frame size and batch range |
-| `derived` | A rule that reads the hardware, for the knobs that have one |
+| `derived` | A rule that reads the hardware, for the settings that have one |
 | `default` | The call site's own value, such as the per-class `cpu3d_chunk` table of the DM Control body-tracking classes |
-| `fallback` | `KNOBS[name].fallback` |
+| `fallback` | `SETTINGS[name].fallback` |
 
-`describe()` returns the value and the source of every knob. Overrides live in a context variable and stay in the thread that set them. Wrapping each environment's calls in its own `override` block gives two environments different values. Knob values are per render path, the code that draws a group of classes: every fixed-camera DM Control class shares the `dmc-suite` path, and a value measured with `DMCCartpoleSwingup` also applies to `DMCReacher`. The Triton block and warp knobs and `ogb_mjw_worlds` have one value for the whole device instead.
+`describe()` returns the value and the source of every setting. Overrides live in a context variable and stay in the thread that set them. Wrapping each environment's calls in its own `override` block gives two environments different values. Setting values are per render path, the code that draws a group of classes: every fixed-camera DM Control class shares the `dmc-suite` path, and a value measured with `DMCCartpoleSwingup` also applies to `DMCReacher`. The Triton block and warp settings and `ogb_mjw_worlds` have one value for the whole device instead.
 
 An unknown name, a non-int value, a value that is too small, or a value of the wrong kind (a power of two or a Triton warp count) raises `ValueError`:
 
@@ -36,19 +36,19 @@ An unknown name, a non-int value, a value that is too small, or a value of the w
 try:
     snv.tuning.set(navdot_block=3)
 except ValueError as e:
-    print(e)  # tuning knob 'navdot_block' takes a power of two, got 3
+    print(e)  # tuning setting 'navdot_block' takes a power of two, got 3
 ```
 
-## Knobs
+## Settings
 
 Values are ints, and "batch rows" means the batch rows of one call. Each hardware rule runs once per process and device: GPU rules read `torch.cuda.mem_get_info` and the CPU rule reads the L3 size from `sysconf`. When reading the hardware fails, the fallback applies.
 
-| Knob | Type | Fallback | Derived default | What it controls |
+| Setting | Type | Fallback | Derived default | What it controls |
 |---|---|---|---|---|
 | `workers` | int (0 or more) | 8 | min(value, CPUs in the process affinity, batch rows) | Most worker processes of a CPU simulator batch, of a PushT, `OGBCube` or `OGBScene` reset, or of a PushT render, on Linux. The value 0 steps and resets every batch row, and draws every PushT frame, in the main process, except that a `PyFlytRocketLanding` batch of more than 1022 environments always uses processes. |
 | `large_backend_min_envs` | int | none | shipped per class | Smallest batch that steps on the large-batch simulation backend with `simulation_backend="auto"`, for the classes that select their backend with it (see [Physics backends](../performance-tuning.md#physics-backends)). Without a set value, `stable-envs tune` measures it per simulation path and batch range; untuned, each class uses the value it ships. |
 | `large_renderer_min_rows` | int | none | shipped per class | Smallest render batch that draws with the CUDA renderer, for the classes that have a CPU and a CUDA renderer (see [Renderers](../performance-tuning.md#renderers)). Smaller batches draw on the CPU and move to the device in one copy. Without a set value, `stable-envs tune` measures it per render path and batch range; untuned, each class uses the value it ships. |
-| `worker_min_lanes` | int | 64 | none | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered states that uses render workers. |
+| `worker_min_envs` | int | 64 | none | Smallest batch that uses worker processes, or Fetch simulator threads. For PushT, the smallest number of rendered states that uses render workers. |
 | `worker_timeout` | int | 120 | none | Seconds that a CPU simulator worker can take to answer one request before the batch fails. A worker can take up to the larger of this value and 300 seconds to start. Set a larger value for environments whose reset or step takes minutes in one worker, for example with `snv.tuning.set(worker_timeout=600)`. |
 | `fetch_threads` | int | 4 | min(value, CPUs in the process affinity, batch rows) | Most simulator threads of an in-process Fetch batch with `simulation_backend="source"`. |
 | `dmc_threads` | int | 8 | min(value, CPUs in the process affinity, batch rows) | Most `mujoco.batch` threads of a DM Control batch, for CPU and CUDA output. A batch uses at most one thread per two batch rows, and about one thread for each 0.1 ms of MuJoCo work in a step call. With MuJoCo Warp, it only sizes the reset threads of `CheetahRun` and `QuadrupedWalk`, and MJX doesn't read it. |
@@ -62,7 +62,7 @@ Values are ints, and "batch rows" means the batch rows of one call. Each hardwar
 | `ogb_mjw_worlds` | int, power of two | 256 | none | Most worlds per MJWarp launch of `OGBCube` and `OGBScene`. |
 | `ogb_gl_workers` | int (0 or more) | 8 | min(value, CPUs in the process affinity), and on CUDA also rows ÷ 8 | Most OpenGL worker processes of an `OGBCube` or `OGBScene` batch on Linux. A batch that would use fewer than 2 workers draws in the main process, and so does a CPU batch with fewer states than workers. The value 0 draws every batch there. |
 | `render_workers` | int (0 or more) | 8 | min(value, CPUs in the process affinity) | Most worker processes of a CPU render batch on Linux, for classic control without Numba, for Fetch with `backend="opengl"` (software OpenGL), for Miniworld, for Roadster, for the `info.goal` images of SimplePointMaze and for `PyFlytRocketLanding` with `backend="pybullet"` (TinyRenderer). Each Fetch worker has its own OpenGL context. The values 0 and 1 draw every frame in the main process. |
-| `render_worker_min_rows` | int | 16 | none | Smallest CPU render batch that uses render worker processes, in every family that has them. `PyFlytRocketLanding` uses 2 when the knob is unset. |
+| `render_worker_min_rows` | int | 16 | none | Smallest CPU render batch that uses render worker processes, in every family that has them. `PyFlytRocketLanding` uses 2 when the setting is unset. |
 | `ogb_context_cache_bytes` | bytes | none | min(total GPU memory / 4, free GPU memory / 2), per device | GPU bytes the OGBench MJWarp context cache keeps. |
 | `nvd_budget_bytes` | bytes | 6 GiB | min(6 GiB, free GPU memory / 2) | GPU bytes one nvdiffrast chunk of `PyFlytRocketLanding` may use. |
 | `nav_render_chunk` | int | 256 | none | Frames per render chunk of the navigation classes. |
@@ -73,15 +73,15 @@ Values are ints, and "batch rows" means the batch rows of one call. Each hardwar
 | `gfxdraw_warps` | 1, 2, 4, 8, 16 or 32 | 1 | none | Triton warps per tile of the classic control rasterizer. |
 | `raycast_block` | int, power of two | 256 | none | Rays per Triton program of the analytic ray caster (power of two). |
 
-`snv.tuning.KNOBS` maps each knob name to its `Knob`, and `snv.tuning.RENDER_PATHS` maps an environment class or family name to the render and simulation paths whose measured values it shares:
+`snv.tuning.SETTINGS` maps each setting name to its `Setting`, and `snv.tuning.RENDER_PATHS` maps an environment class or family name to the render and simulation paths whose measured values it shares:
 
 ```python
-knob = snv.tuning.KNOBS["nav_render_chunk"]
-print(knob.env_var, knob.fallback, knob.paths)  # STABLE_ENVS_NAV_RENDER_CHUNK 256 ('navigation',)
+setting = snv.tuning.SETTINGS["nav_render_chunk"]
+print(setting.env_var, setting.fallback, setting.paths)  # STABLE_ENVS_NAV_RENDER_CHUNK 256 ('navigation',)
 print(snv.tuning.RENDER_PATHS["navigation"])    # ('navigation', 'raster2d')
 ```
 
-## Read and set knobs
+## Read and set settings
 
 ::: stable_envs.tuning.get
 
@@ -107,6 +107,6 @@ print(snv.tuning.RENDER_PATHS["navigation"])    # ('navigation', 'raster2d')
 
 ::: stable_envs.tuning.time_backend
 
-## Knob definitions
+## Setting definitions
 
-::: stable_envs.tuning.Knob
+::: stable_envs.tuning.Setting

@@ -1,4 +1,4 @@
-"""Craftax driven one lane at a time, and the comparison of one State lane with upstream state."""
+"""Craftax driven one environment at a time, and the comparison of one State environment with upstream state."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def actions(env, steps: int, seed: int) -> np.ndarray:
 
 
 def upstream(reference_id: str):
-    """Jitted single-lane reset and step with the wrapper key handling of stable-worldmodel's CraftaxWrapper."""
+    """Jitted single-environment reset and step with the wrapper key handling of stable-worldmodel's CraftaxWrapper."""
     from craftax.craftax_env import make_craftax_env_from_name
 
     env = make_craftax_env_from_name(reference_id, auto_reset=False)
@@ -37,8 +37,8 @@ def upstream(reference_id: str):
     return jax.jit(reset), jax.jit(step)
 
 
-def assert_lane(state, lane: int, engine, key) -> None:
-    """Lane ``lane`` of a State equals an upstream ``EnvState`` and wrapper key, leaf for leaf."""
+def assert_instance(state, instance: int, engine, key) -> None:
+    """Environment ``instance`` of a State equals an upstream ``EnvState`` and wrapper key, leaf for leaf."""
     from stable_envs import get_field
 
     for path, leaf in [*jax.tree_util.tree_flatten_with_path(engine)[0], ((), key)]:
@@ -46,7 +46,7 @@ def assert_lane(state, lane: int, engine, key) -> None:
         expected = np.asarray(leaf).reshape(-1)
         if expected.dtype == np.uint32:
             expected = expected.view(np.int32)
-        got = get_field(state, name)[lane].reshape(-1).cpu().numpy()
+        got = get_field(state, name)[instance].reshape(-1).cpu().numpy()
         np.testing.assert_array_equal(got, expected, err_msg=name)
 
 

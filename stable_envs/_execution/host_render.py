@@ -1,8 +1,8 @@
 """Draw a small batch of a CUDA environment with its family's CPU renderer, and move the frames in one copy.
 
 A GPU renderer pays a launch cost per call, so a small batch draws faster on the CPU. A class that has both
-renderers declares ``render_rungs``, ``{device type: Rungs("cpu", "cuda", min_rows)}``, next to its renderer choice.
-``on_host`` selects the rung with ``select_renderer``: the ``large_renderer_min_rows`` knob, else the tuning cache,
+renderers declares ``render_backends``, ``{device type: BackendPair("cpu", "cuda", min_rows)}``, next to its renderer choice.
+``on_host`` selects the backend with ``select_renderer``: the ``large_renderer_min_rows`` setting, else the tuning cache,
 else the shipped ``min_rows``. ``draw_rows`` draws compact rows in a CPU copy of the environment, and ``upload``
 moves CPU frames to the device in one pinned copy.
 """
@@ -15,9 +15,9 @@ import torch
 
 from .. import tuning
 from .._core.style import StyleTensor
-from .backends import RENDER_KNOB, Measure, select_renderer
+from .backends import RENDERER_SETTING, Measure, select_renderer
 
-#: The rung that draws on the CPU.
+#: The backend that draws on the CPU.
 CPU = "cpu"
 
 
@@ -31,7 +31,7 @@ def _measure(env) -> Measure:
         value = rows + 1 if renderer == CPU else 1
 
         def draw():
-            with tuning.override(**{RENDER_KNOB: value}):
+            with tuning.override(**{RENDERER_SETTING: value}):
                 return other.render(state)
 
         return draw, other.close
@@ -45,13 +45,13 @@ def on_host(env, path: str, rows: int, backend: str = "auto") -> bool:
     ``backend`` is the renderer that the call requests. Only ``"auto"`` switches; an explicit renderer draws every
     batch size.
     """
-    rungs = getattr(env, "render_rungs", None)
-    if not rungs or env.device.type == "cpu" or backend != "auto":
+    pairs = getattr(env, "render_backends", None)
+    if not pairs or env.device.type == "cpu" or backend != "auto":
         return False
     measure = env.__dict__.get("_render_measure")
     if measure is None:
         measure = env.__dict__["_render_measure"] = _measure(env)
-    return select_renderer(f"{path}/{type(env).__name__}", rows, env.device, rungs, measure=measure) == CPU
+    return select_renderer(f"{path}/{type(env).__name__}", rows, env.device, pairs, measure=measure) == CPU
 
 
 def pinned(shape: tuple[int, ...]) -> torch.Tensor:

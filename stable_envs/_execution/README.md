@@ -9,7 +9,7 @@
 | `policy.py` | Shared process-selection policy |
 | `backends.py` | The `simulation_backend="auto"` rule: small-batch or large-batch backend from the measured, cached switch point |
 | `host.py` | `HostAdapter`: a CPU adapter whose results move to an accelerator in one copy |
-| `requests.py` | Lane slices, worker start-up, request lifecycle and worker-failure cleanup |
+| `requests.py` | Environment slices, worker start-up, request lifecycle and worker-failure cleanup |
 | `workers.py` | Worker CPU pinning and ready/failure replies |
 | `shared_memory.py`, `state_columns.py` | Typed shared outputs and owned State assembly |
 | `mjbatch.py` | Batched MuJoCo physics for B environments (`mujoco.batch` on CPU, MuJoCo Warp on CUDA), backend routing and the parallel source-reset pool |
@@ -27,16 +27,16 @@ Family code owns State validation, RNG, reset, task behavior and inactive batch 
 
 The local adapter declares what the parent needs:
 
-- `process_attributes` names attributes that the parent copies from a one-lane prototype, for example `action_dim` or `fields`. The prototype stays open in the parent as `_metadata`.
-- `process_methods` names family methods that run on every worker, for example `{"configure": "per_lane"}`. `ProcessAdapter.call(name, *args)` runs one. For `per_lane`, each worker receives the rows of the first argument that it owns. For `broadcast`, every worker receives the same arguments. The parent joins the return values in lane order. A listed method without a parent wrapper is also available as an attribute of the process adapter.
+- `process_attributes` names attributes that the parent copies from a one-environment prototype, for example `action_dim` or `fields`. The prototype stays open in the parent as `_metadata`.
+- `process_methods` names family methods that run on every worker, for example `{"configure": "per_instance"}`. `ProcessAdapter.call(name, *args)` runs one. For `per_instance`, each worker receives the rows of the first argument that it owns. For `broadcast`, every worker receives the same arguments. The parent joins the return values in environment order. A listed method without a parent wrapper is also available as an attribute of the process adapter.
 - `check_step(actions, active)` checks a step and returns the host arrays. The parent calls it with the process adapter as `self`, so it can read only `num_envs` and `process_attributes`. A step that fails it reaches no worker.
-- `probe_actions()` returns actions for one lane. The parent steps the prototype once with them to size the shared task buffers.
+- `probe_actions()` returns actions for one environment. The parent steps the prototype once with them to size the shared task buffers.
 - `step(actions, *, active=None, capture_state=True)`. With `capture_state=False`, the adapter does not export State, and the worker copies only the task outputs.
 - `process_static_leaves` (optional) names the State leaves that only reset, restore and process methods change. After a step with State, the worker writes only `process_step_state()`, a `{key tuple: array}` of the other leaves in the shared buffers. The parent copies the static leaves from a cache. A thread copies the cache for the next snapshot while the workers step.
 - `render_live()` and `frame_shape` (optional) let the workers draw the frame of their running batch rows into a shared buffer. `live_frames` is then true, and `submit_step(..., capture_frame=True)` returns the frame as `"frame"`. The step then needs no State to draw the frame.
 - `frame_fields()` (optional) returns a `{name: array}` with one row per batch row. When `frame_mode` is `FRAME_FIELDS` before `ProcessAdapter.__init__` runs, the workers write it to shared buffers after a step that needs a frame. `take_frame()` then gives a copy of the fields to the family's `_fields_frame`, which draws the frame in the parent while the workers run the next step. Rocket uses this to draw CUDA frames.
 
-`policy.process_count(..., lanes_per_process=n)` gives a batch larger than `n` rows enough workers to hold it. Rocket uses this for the PyBullet client limit.
+`policy.process_count(..., envs_per_process=n)` gives a batch larger than `n` rows enough workers to hold it. Rocket uses this for the PyBullet client limit.
 
 A family subclass adds parent-side checks that need the whole batch: State checks (`validate`), reset arguments and the arguments of family methods.
 

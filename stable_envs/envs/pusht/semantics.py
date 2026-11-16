@@ -9,7 +9,7 @@ from tensordict import TensorDict, TensorDictBase
 from ... import tuning
 from ..._core.state_schema import schema_of
 from ..._execution import host_render
-from ..._execution.backends import Rungs
+from ..._execution.backends import BackendPair
 from ..._execution.protocol import StepPipeline, step_pipeline
 from ...env import Env
 from ...registry import REGISTRY, _require_extra, register
@@ -149,7 +149,7 @@ class PushT(Env):
     #: Every step returns new reward, success, terminated and truncated tensors.
     _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
-    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
+    render_backends = {"cpu": BackendPair("cpu", "cpu"), "cuda": BackendPair("cpu", "cuda", CUDA_RENDER_MIN_ROWS)}
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
@@ -424,8 +424,8 @@ class PushT(Env):
             for key, off, width in self.variation_space.flat_layout():
                 overrides[key] = rows[:, off : off + width].reshape(self.B, *self.variation_space._walk(key).shape)
                 flat_keys.add(key)
-        lanes = resolve_variation(self._simulator.template.env.variation_space, overrides, self.B, flat_keys)
-        self._simulator.install_variation(lanes, self.immediate_variation_leaves)
+        instances = resolve_variation(self._simulator.template.env.variation_space, overrides, self.B, flat_keys)
+        self._simulator.install_variation(instances, self.immediate_variation_leaves)
         return self._variation_rows("init_value")
 
     def to_render_state(self, state=None):
@@ -607,7 +607,7 @@ class PushT(Env):
             from .render_pool import PushTRenderPool
 
             self._render_pool = PushTRenderPool(processes, cpus)
-        elif count < int(tuning.get("worker_min_lanes", path="pusht-render", size=self.size, batch=count) or 0):
+        elif count < int(tuning.get("worker_min_envs", path="pusht-render", size=self.size, batch=count) or 0):
             return None
         return self._render_pool
 

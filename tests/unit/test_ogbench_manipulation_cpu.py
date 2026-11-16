@@ -119,7 +119,7 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         for seed in (None, 0, 17, 42, None):
             assert_same_state(a.reset(seed), b.reset(seed))
         anchor = a.get_state()
-        # Every leaf's presence and dtype is checked, including the final lane, before mutation.
+        # Every leaf's presence and dtype is checked, including the final environment, before mutation.
         for key in anchor.keys(True, True):
             bad = anchor.clone()
             del bad[key]
@@ -222,7 +222,7 @@ def test_variation_anchors_model_restore_and_rejections(family):
 
 
 @pytest.mark.parametrize("family", CLASSES)
-def test_variation_values_take_one_row_per_lane(family):
+def test_variation_values_take_one_row_per_environment(family):
     with CLASSES[family](num_envs=2, seed=3) as env:
         sizes = np.array([[0.012], [0.028]])
         state = env.reset(3, {"variation_values": {"cube.size": sizes, "cube.goal_yaw": np.array([0.5])}})
@@ -361,7 +361,7 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                     assert_same_state(saved, b.get_state())
                 out = a.step(action[None], frames=None)
                 raw.step(action)
-                # The batch writes the lanes it advanced into their OGBench objects when they are read.
+                # The batch writes the environments it advanced into their OGBench objects when they are read.
                 u = a._simulator.envs[0]
                 assert_oracle(u, raw, oracle)
                 if i >= 20:
@@ -584,7 +584,7 @@ def test_identical_genuine_box_settling_actions(family, seed, oracle):
 def test_restore_failure_cannot_partially_commit_a_batch(family):
     cls = CompatibleCube if family == "Cube" else CompatibleScene
     # The test patches and reads the OGBench objects, so they stay in this process.
-    with tuning.override(worker_min_lanes=64), CLASSES[family](num_envs=2, seed=17) as a:
+    with tuning.override(worker_min_envs=64), CLASSES[family](num_envs=2, seed=17) as a:
         saved = a.get_state()
         for name, value in [("controller/site_xmat", 0.0), ("task/reward_id", 5)]:
             bad = saved.clone()
@@ -634,13 +634,13 @@ def test_scene_drawer_window_and_button_success_boundaries():
 
 @pytest.mark.parametrize("family", CLASSES)
 def test_lean_transition_matches_upstream_step(family):
-    lanes, rng = 3, np.random.default_rng(5)
-    a = OGBManipulationAdapter(family, lanes, seed=23)
-    b = OGBManipulationAdapter(family, lanes, seed=23)
+    instances, rng = 3, np.random.default_rng(5)
+    a = OGBManipulationAdapter(family, instances, seed=23)
+    b = OGBManipulationAdapter(family, instances, seed=23)
     try:
         for t in range(40):
             # Long pushes toward the table reach the Scene buttons; the rest are random.
-            action = rng.uniform(-1, 1, (lanes, 5)).astype(np.float32 if t % 2 else np.float64)
+            action = rng.uniform(-1, 1, (instances, 5)).astype(np.float32 if t % 2 else np.float64)
             if t % 10 < 4:
                 action[:, 2] = -1.0
             out = a.step(action)

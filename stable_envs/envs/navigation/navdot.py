@@ -153,7 +153,7 @@ def _tile(H: int, W: int) -> tuple[int, int, int, int]:
     Rectangular tiles permit spatial culling that long flattened strips cannot.
     """
     block = tuning.get("navdot_block")
-    bh, bw = tile_shape(H, W, lanes=block, max_width=block)
+    bh, bw = tile_shape(H, W, instances=block, max_width=block)
     ntx = -(-W // bw)
     return bh, bw, ntx, ntx * (-(-H // bh))
 

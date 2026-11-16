@@ -115,7 +115,7 @@ def _piecewise(px, py, ax, ay, row, cols):
 
 @njit(cache=True)
 def advance(kind, rows, action, style, cols, active, masked):
-    """Move columns 0 and 1 of ``rows`` in place; lanes with a false ``active`` entry hold when ``masked``."""
+    """Move columns 0 and 1 of ``rows`` in place; environments with a false ``active`` entry hold when ``masked``."""
     for i in range(rows.shape[0]):
         if masked and not active[i]:
             continue

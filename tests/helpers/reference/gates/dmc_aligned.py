@@ -175,9 +175,9 @@ def run_gate(device="cpu"):
                         check_reset_matches_reference(env, reference, seed=0)
                         evidence["construction"][domain] = {
                             "numeric_model_arrays_exact": compare_models(env, reference, minimum=500),
-                            "nq": env._simulator.lanes.envs[0].physics.model.nq,
-                            "nv": env._simulator.lanes.envs[0].physics.model.nv,
-                            "na": env._simulator.lanes.envs[0].physics.model.na,
+                            "nq": env._simulator.instances.envs[0].physics.model.nq,
+                            "nv": env._simulator.instances.envs[0].physics.model.nv,
+                            "na": env._simulator.instances.envs[0].physics.model.na,
                             "action_dim": reference.action_dim,
                             "observation_dim": int(reference.envs[0].observation_space.shape[0]),
                             "control_timestep": reference.envs[0].env._env.control_timestep(),

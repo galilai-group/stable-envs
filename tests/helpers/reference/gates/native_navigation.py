@@ -71,7 +71,7 @@ def _diagnostic_case(env, ref, domain, case):
         "case": case,
         "probe": case,
         "batch": env.B,
-        "lanes": list(range(env.B)),
+        "instances": list(range(env.B)),
         "seed": None,
         "candidate": {},
         "reference": {},
@@ -306,7 +306,7 @@ def _piecewise_zone_boundaries(device):
                 with _diagnostic_case(env, ref, "piecewise", "all_zone_boundaries"):
                     check_reset_matches_reference(env, ref, seed=5)
                     for index in range(len(positions)):
-                        rows = [positions[(index + lane) % len(positions)] for lane in range(batch)]
+                        rows = [positions[(index + instance) % len(positions)] for instance in range(batch)]
                         _probe(f"zone_planes_{index}_positions_{rows}")
                         state = ref.get_state()
                         se.set_field(state, "agent.position", torch.tensor(rows, dtype=torch.float32))
@@ -626,7 +626,7 @@ def run_gate(device="cpu"):
             "TwoRoomTarget, PiecewiseZones, nondefault task surfaces and full visual variation are excluded."
         ),
         "rng_scope": {
-            "seeded_reset": "source-shaped Gymnasium Dict.seed routing, one seed+i per independent lane",
+            "seeded_reset": "source-shaped Gymnasium Dict.seed routing, one seed+i per independent environment",
             "step_rng": "none in pinned source",
             "seed_none": (
                 "Pinned SWM calls variation_space.seed(None) on every reset, drawing fresh external entropy; "

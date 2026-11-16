@@ -26,7 +26,7 @@ def test_reset_leaf_matches_swm(domain, leaf):
 
 def test_piecewise_target_and_bias_field_match_swm():
     pytest.importorskip("matplotlib")
-    assert all(appearance_gate()["px_moved_by_leaves_per_lane"])
+    assert all(appearance_gate()["px_moved_by_leaves_per_instance"])
     assert zones_bias_field_gate()["first_frame"]["interior_bad_px"] == 0
 
 

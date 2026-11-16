@@ -48,9 +48,9 @@ def test_real_history_slice_roundtrip(discrete, device, sequence, selection):
     with ReplayStepHarness(discrete, device) as env:
         dtype = np.int64 if discrete else np.float64
         action = np.array([4, 3] if discrete else [0.2, -0.3], dtype=dtype)
-        for lane, prefix in zip(env.adapter.envs, (3, 1), strict=True):
+        for instance, prefix in zip(env.adapter.envs, (3, 1), strict=True):
             for _ in range(prefix):
-                lane.step(action)
+                instance.step(action)
         initial = env.get_state()
         count = 4 if sequence else 1
         actions = np.broadcast_to(action, (2, count, 2)).copy()

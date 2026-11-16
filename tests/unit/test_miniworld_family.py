@@ -25,8 +25,8 @@ def _make(num_envs=2, **options):
     return snv.MiniWorldMovingBlockWorld(num_envs=num_envs, size=SIZE, device="cpu", **options)
 
 
-def _actions(seed, steps, lanes=2):
-    return np.random.default_rng(seed).integers(0, 9, size=(steps, lanes, 1))
+def _actions(seed, steps, instances=2):
+    return np.random.default_rng(seed).integers(0, 9, size=(steps, instances, 1))
 
 
 @pytest.mark.parametrize("preset", ["flowm", "flowm-textured"])
@@ -69,15 +69,15 @@ def test_a_carried_block_is_restored():
             assert_same_state(env.step(np.array([[a]]), frames=None), want)
 
 
-def test_render_of_a_state_matches_the_live_frames_and_leaves_the_lanes_alone():
+def test_render_of_a_state_matches_the_live_frames_and_leaves_the_environments_alone():
     with _make(num_envs=3) as env:
         env.reset(seed=SEED)
-        env.step(_actions(4, 1, lanes=3)[0], frames=None)
+        env.step(_actions(4, 1, instances=3)[0], frames=None)
         state = env.get_state()
         live = env.render()
         torch.testing.assert_close(env.render(state), live, rtol=0, atol=0)
         torch.testing.assert_close(env.render(state[2:3]), live[2:3], rtol=0, atol=0)
-        # A stacked batch with repeated and reordered lanes.
+        # A stacked batch with repeated and reordered environments.
         stacked = torch.cat([state[1:2], state[0:1], state[1:2]])
         torch.testing.assert_close(env.render(stacked), live[[1, 0, 1]], rtol=0, atol=0)
         assert_same_state(env.get_state(), state)
@@ -91,18 +91,18 @@ def _bad(state, name, value):
     return bad
 
 
-def test_invalid_states_are_rejected_before_any_lane_changes():
+def test_invalid_states_are_rejected_before_any_environment_changes():
     with _make() as env:
         env.reset(seed=SEED)
         good = env.get_state()
         before = env.get_state()
         kind = get_field(good, "blocks/kind").clone()
         texture = get_field(good, "blocks/texture").clone()
-        kind[1, 0], texture[1, 0] = 1, 3  # a textured ball on the second lane
+        kind[1, 0], texture[1, 0] = 1, 3  # a textured ball on the second environment
         floats, _, flags = (group.path for group in schema_of(good).groups.values())
         cases = [
             _bad(good, "blocks/color", torch.full_like(get_field(good, "blocks/color"), 6)),
-            # past the lane's blocks
+            # past the environment's blocks
             _bad(good, "agent/carrying", get_field(good, "blocks/present").sum(-1, keepdim=True)),
             _bad(good, "agent/dir", torch.full_like(get_field(good, "agent/dir"), float("nan"))),
             _bad(good, "rng/episode", torch.full_like(get_field(good, "rng/episode"), -1)),
@@ -159,7 +159,7 @@ def test_numba_and_torch_give_the_same_episodes(preset):
 
     Torch's cosine and sine may differ from libm's in the last bit, so continuous motion agrees to 1e-9.
     """
-    actions = _actions(5, 40, lanes=6)
+    actions = _actions(5, 40, instances=6)
     with _make(6, preset=preset) as numba, _make(6, preset=preset, simulation_backend="torch") as torch_env:
         assert (numba.simulation_backend, numba.execution_mode) == ("numba", "NATIVE_NUMBA")
         assert (torch_env.simulation_backend, torch_env.execution_mode) == ("torch", "NATIVE_TORCH")
@@ -224,12 +224,12 @@ def test_each_environment_draws_its_block_count_at_reset():
     """FloWM presets draw 6 to 10 blocks per environment and reset; State pads to 10 and marks its blocks first."""
     with _make(num_envs=8) as env:
         counts = set()
-        for seed in range(0, 60, 10):  # 48 distinct lane seeds
+        for seed in range(0, 60, 10):  # 48 distinct environment seeds
             state = env.reset(seed=seed)
             present = get_field(state, "blocks/present")
             n = present.sum(-1)
             assert present.shape == (8, 10) and ((n >= 6) & (n <= 10)).all()
-            assert torch.equal(present, torch.arange(10) < n[:, None])  # a lane's blocks come first
+            assert torch.equal(present, torch.arange(10) < n[:, None])  # an environment's blocks come first
             counts |= set(n.tolist())
         assert counts == set(range(6, 11))
         assert_same_state(env.reset(seed=50), state)  # the same seed draws the same counts
@@ -254,10 +254,10 @@ def test_render_takes_size_and_out_and_refuses_what_it_cannot_draw():
             env.render(state, variation={"color": 1})
 
 
-def test_lanes_that_share_a_room_compile_its_display_list_once(monkeypatch):
+def test_environments_that_share_a_room_compile_its_display_list_once(monkeypatch):
     from miniworld.miniworld import MiniWorldEnv
 
-    with _make(num_envs=4) as env:  # flowm: every lane is the same plain room
+    with _make(num_envs=4) as env:  # flowm: every environment is the same plain room
         env.reset(seed=SEED)
         compiles = []
         compile_static = MiniWorldEnv._render_static

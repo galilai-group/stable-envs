@@ -28,7 +28,7 @@ SCENARIOS = {
 def rocket_trace(
     scenario: str, dtype: type[np.float32] | type[np.float64], horizon: int
 ) -> Iterator[tuple[dict[str, Any], PixelTrace]]:
-    """Witness candidate checkpoints against independent, never-restored source lanes."""
+    """Witness candidate checkpoints against independent, never-restored source environments."""
     from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
     from tests.helpers.reference.rocket_semantics import capture, differences
 
@@ -43,14 +43,14 @@ def rocket_trace(
     ) as reference:
         try:
             reference.reset(seed=17, options=options)
-            for lane, prefix in enumerate(prefixes):
+            for instance, prefix in enumerate(prefixes):
                 oracle = Oracle(**config)
                 source.append(oracle)
-                oracle.reset(seed=17 + lane, options=options)
+                oracle.reset(seed=17 + instance, options=options)
                 for _ in range(prefix):
                     oracle.step(np.zeros(7, dtype=dtype))
-                    reference._simulator.envs[lane].step(np.zeros(7, dtype=dtype))
-                assert not differences(capture(oracle), capture(reference._simulator.envs[lane].env))
+                    reference._simulator.envs[instance].step(np.zeros(7, dtype=dtype))
+                assert not differences(capture(oracle), capture(reference._simulator.envs[instance].env))
             initial = reference.get_state()
             actions = np.zeros((2, horizon, 7), dtype=dtype)
             if scenario == "flight":
@@ -61,14 +61,14 @@ def rocket_trace(
                 validity.append(active.copy())
                 row = np.zeros((2, 4), np.float64)
                 next_active = active.copy()
-                for lane, oracle in enumerate(source):
-                    if active[lane]:
-                        out = oracle.step(actions[lane, t].copy())
-                        row[lane] = [out[1], out[2], out[3], out[4]["env_complete"]]
-                        next_active[lane] = not (out[2] or out[3])
+                for instance, oracle in enumerate(source):
+                    if active[instance]:
+                        out = oracle.step(actions[instance, t].copy())
+                        row[instance] = [out[1], out[2], out[3], out[4]["env_complete"]]
+                        next_active[instance] = not (out[2] or out[3])
                 reference._simulator.step(actions[:, t], active=torch.from_numpy(active))
-                for lane, oracle in enumerate(source):
-                    assert not differences(capture(oracle), capture(reference._simulator.envs[lane].env))
+                for instance, oracle in enumerate(source):
+                    assert not differences(capture(oracle), capture(reference._simulator.envs[instance].env))
                 states.append(reference.get_state())
                 tasks.append(row)
                 frames.append(np.stack([oracle.render() for oracle in source]))

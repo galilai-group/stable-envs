@@ -1,4 +1,4 @@
-"""PushT process lanes match local lanes, through the adapter and the public env."""
+"""PushT process environments match local environments, through the adapter and the public env."""
 
 import numpy as np
 import pytest
@@ -41,7 +41,7 @@ def test_process_matches_local(discrete):
     )
 
 
-def test_invalid_last_lane_restores_no_lane():
+def test_invalid_last_environment_restores_no_environment():
     adapter = PushTProcessAdapter(4, seed=17, config=CONFIG, processes=2)
     try:
         adapter.step(np.full((4, 2), 0.5), active=np.array([True, False, True, True]))
@@ -67,7 +67,7 @@ def test_public_env_with_workers_matches_local(monkeypatch):
         patch.setattr(execution, "process_count", lambda num_envs, cpus, **_: 2)
         remote = se.make("PushT", num_envs=4, size=32, device="cpu", seed=17)
     try:
-        # Workers reset the lanes; the batched Numba step runs in this process.
+        # Workers reset the environments; the batched Numba step runs in this process.
         assert isinstance(remote._simulator, PushTNumbaAdapter) and remote._simulator._pool is not None
         pool = remote._simulator._pool
         actions = np.random.default_rng(3).uniform(-1, 1, (4, 6, 2)).astype(np.float32)
@@ -85,8 +85,8 @@ def test_public_env_with_workers_matches_local(monkeypatch):
         torch.testing.assert_close(local.render(), remote.render(), rtol=0, atol=0)
         rows = local.sample_variation(rng=np.random.default_rng(1))
         torch.testing.assert_close(local.set_variation(rows), remote.set_variation(rows), rtol=0, atol=0)
-        lanes = {"variation": [], "variation_values": {"block.shape": np.asarray([1, 4, 2, 6])}}
-        assert_same_state(local.reset(seed=8, options=lanes), remote.reset(seed=8, options=lanes))
+        instances = {"variation": [], "variation_values": {"block.shape": np.asarray([1, 4, 2, 6])}}
+        assert_same_state(local.reset(seed=8, options=instances), remote.reset(seed=8, options=instances))
         assert_same_state(local.step(actions[:, 0]), remote.step(actions[:, 0]))
     finally:
         local.close()

@@ -9,7 +9,7 @@ from .adapter import FetchAdapter
 from .process import FetchProcessAdapter
 
 #: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
-#: The knob and the tuning cache (``stable-envs tune``) take precedence.
+#: The setting and the tuning cache (``stable-envs tune``) take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 CUDA_MIN_ENVS: dict[str, int | None] = {
     "Reach": 256,

@@ -8,7 +8,7 @@ from stable_envs._core.state_schema import unfold
 
 
 def oracle(envs):
-    """Read the source fields that candidate Fetch State must reproduce, one row per lane."""
+    """Read the source fields that candidate Fetch State must reproduce, one row per environment."""
     result = []
     for e in envs:
         u = e.unwrapped
@@ -33,13 +33,13 @@ def oracle(envs):
 
 def compare_state(state, expected):
     rows = unfold(state.cpu())
-    for lane, r in enumerate(expected):
-        row = rows[lane]
+    for instance, r in enumerate(expected):
+        row = rows[instance]
         for f in ("qpos", "qvel", "warmstart", "goal"):
             got = get_field(row, f).numpy()
-            assert np.array_equal(got, r[f]), (lane, f, np.max(abs(got - r[f])))
+            assert np.array_equal(got, r[f]), (instance, f, np.max(abs(got - r[f])))
         for f in ("position", "quaternion"):
-            assert np.array_equal(get_field(row, f"controller/{f}").numpy(), r[f]), (lane, f)
+            assert np.array_equal(get_field(row, f"controller/{f}").numpy(), r[f]), (instance, f)
         assert get_field(row, "lifecycle/elapsed_steps").item() == r["elapsed"]
         for field, source in [("state_words", "state"), ("increment_words", "inc")]:
             value = sum(int(x) << (32 * i) for i, x in enumerate(get_field(row, f"rng/{field}")))
@@ -58,10 +58,10 @@ def exact_array(actual, expected, label):
 def full_compare(state, refs):
     """Compare every State field, simulation time and reset anchor, plus declared shapes and dtypes."""
     compare_state(state, oracle(refs))
-    for lane, e in enumerate(refs):
-        exact_array(get_field(state, "time")[lane].numpy(), np.array([e.unwrapped.data.time]), "time")
+    for instance, e in enumerate(refs):
+        exact_array(get_field(state, "time")[instance].numpy(), np.array([e.unwrapped.data.time]), "time")
         exact_array(
-            get_field(state, "task/initial_gripper_xpos")[lane].numpy(),
+            get_field(state, "task/initial_gripper_xpos")[instance].numpy(),
             e.unwrapped.initial_gripper_xpos,
             "reset_anchor",
         )

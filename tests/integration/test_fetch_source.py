@@ -14,15 +14,15 @@ from tests.helpers.reference.fetch_compare import full_compare  # noqa: E402
 @pytest.mark.parametrize("scene", ["Reach", "Push", "Slide", "PickAndPlace"])
 def test_default_episode_matches_gymnasium_robotics(scene):
     gym.register_envs(gymnasium_robotics)
-    seed, lanes = 31, 3
-    refs = [gym.make(f"Fetch{scene}-v4") for _ in range(lanes)]
+    seed, instances = 31, 3
+    refs = [gym.make(f"Fetch{scene}-v4") for _ in range(instances)]
     try:
-        with se.make(f"Fetch{scene}", num_envs=lanes, device="cpu") as env:
+        with se.make(f"Fetch{scene}", num_envs=instances, device="cpu") as env:
             state = env.reset(seed=seed)
-            for lane, ref in enumerate(refs):
-                ref.reset(seed=seed + lane)
+            for instance, ref in enumerate(refs):
+                ref.reset(seed=seed + instance)
             full_compare(state.cpu(), refs)
-            for action in np.random.default_rng(seed).uniform(-1, 1, (10, lanes, 4)).astype(np.float32):
+            for action in np.random.default_rng(seed).uniform(-1, 1, (10, instances, 4)).astype(np.float32):
                 state = env.step(action, frames=None)["state"]
                 for ref, a in zip(refs, action, strict=True):
                     ref.step(a)

@@ -202,8 +202,8 @@ def test_reset_workers_match_in_process_resets(device, discrete):
         same(lambda adapter: adapter.reset(seed=17))
         play(3)
         shapes = [
-            dict(variation=[], variation_values={"agent.shape": lane % 8, "block.shape": (lane + 2) % 7 + 1})
-            for lane in range(count)
+            dict(variation=[], variation_values={"agent.shape": instance % 8, "block.shape": (instance + 2) % 7 + 1})
+            for instance in range(count)
         ]
         same(lambda adapter: adapter.reset(seed=18, options=shapes))
         play(4)
@@ -211,15 +211,15 @@ def test_reset_workers_match_in_process_resets(device, discrete):
         same(lambda adapter: adapter.reset(seed=19, options=dict(variation_values=values)))
         play(2)
 
-        # Variation changes while the workers own the lanes.
+        # Variation changes while the workers own the environments.
         space = ref.template.env.variation_space
-        lanes = resolve_variation(
+        instances = resolve_variation(
             space,
             {"agent.color": np.arange(3 * count, dtype=np.uint8).reshape(count, 3), "block.scale": 45.0},
             count,
         )
         for adapter in adapters:
-            adapter.install_variation(lanes, PushT.immediate_variation_leaves)
+            adapter.install_variation(instances, PushT.immediate_variation_leaves)
         same(lambda adapter: adapter.get_state())
         keys = ["agent.color", "agent.start_position", "block.scale"]
         for attribute in ("value", "init_value"):
@@ -227,14 +227,14 @@ def test_reset_workers_match_in_process_resets(device, discrete):
         same(lambda adapter: adapter.reset(seed=20))
         play(2)
 
-        # After a restore the parent owns the lanes; the next reset gives the workers their metadata.
+        # After a restore the parent owns the environments; the next reset gives the workers their metadata.
         checkpoint = ref.get_state()
         same(lambda adapter: adapter.reset(seed=21))
         same(lambda adapter: (adapter.set_state(checkpoint), adapter.get_state())[1])
         play(1)
         same(lambda adapter: adapter.reset(seed=22))
 
-        # A reset that fails in one lane changes no lane.
+        # A reset that fails in one environment changes no environment.
         before = env.get_state()
         bad = [dict(variation=[])] * (count - 1) + [dict(variation=[], variation_values={"agent.shape": 99})]
         for adapter in adapters:

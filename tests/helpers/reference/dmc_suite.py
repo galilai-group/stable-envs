@@ -1,6 +1,6 @@
 """dm_control's own registered tasks as an independent State/task oracle.
 
-Each lane is ``suite.load(domain, task)`` seeded with ``seed + lane``, driven like the
+Each environment is ``suite.load(domain, task)`` seeded with ``seed + instance``, driven like the
 stable-envs cells: actions normalized to [-1, 1] and two control steps per action.
 """
 
@@ -27,22 +27,22 @@ class SuiteReference:
         self.domain, self.task, self.fields = domain, task, EPISODE_FIELDS.get((domain, task), {})
         self.envs = [
             action_scale.Wrapper(
-                suite.load(domain, task, task_kwargs={"random": seed + lane}), minimum=-1.0, maximum=1.0
+                suite.load(domain, task, task_kwargs={"random": seed + instance}), minimum=-1.0, maximum=1.0
             )
-            for lane in range(num_envs)
+            for instance in range(num_envs)
         ]
         self.cumulative = np.zeros(num_envs)
 
     def reset(self, seed):
-        for lane, env in enumerate(self.envs):
-            env.task._random = np.random.RandomState(seed + lane)
+        for instance, env in enumerate(self.envs):
+            env.task._random = np.random.RandomState(seed + instance)
             env.reset()
         self.cumulative[:] = 0
         return self.get_state()
 
     def get_state(self):
         rows = []
-        for lane, wrapper in enumerate(self.envs):
+        for instance, wrapper in enumerate(self.envs):
             env, physics = wrapper._env, wrapper.physics
             algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
             assert algorithm == "MT19937"
@@ -51,7 +51,7 @@ class SuiteReference:
                 "qvel": physics.data.qvel.copy(),
                 "time": np.array([physics.data.time]),
                 "warmstart": physics.data.qacc_warmstart.copy(),
-                "task": {"cumulative_reward": np.array([self.cumulative[lane]])},
+                "task": {"cumulative_reward": np.array([self.cumulative[instance]])},
                 "lifecycle": {
                     "step_count": np.array([env._step_count], np.int64),
                     "reset_next_step": np.array([env._reset_next_step], bool),
@@ -71,12 +71,12 @@ class SuiteReference:
 
     def step(self, actions):
         rewards, observations = [], []
-        for lane, env in enumerate(self.envs):
+        for instance, env in enumerate(self.envs):
             reward = 0.0
             for _ in range(2):
-                step = env.step(np.asarray(actions[lane], np.float64))
+                step = env.step(np.asarray(actions[instance], np.float64))
                 reward += step.reward or 0.0
-            self.cumulative[lane] += reward
+            self.cumulative[instance] += reward
             rewards.append(reward)
             observations.append(np.concatenate([v.flatten() for v in step.observation.values()], dtype=np.float32))
         return self.get_state(), torch.tensor(rewards, dtype=torch.float64), torch.as_tensor(np.stack(observations))

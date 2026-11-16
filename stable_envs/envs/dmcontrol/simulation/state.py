@@ -49,12 +49,12 @@ def state_schema(key, fields):
 
 
 def new_groups(schema, batch):
-    """Empty host group arrays of ``schema`` for ``batch`` lanes, ``{group key: (batch, size)}``."""
+    """Empty host group arrays of ``schema`` for ``batch`` environments, ``{group key: (batch, size)}``."""
     return {key: np.empty((batch, group.size), _DTYPES[group.dtype]) for key, group in schema.groups.items()}
 
 
 def group_views(schema, groups, fields):
-    """``{field key: (lanes, width) view}`` of ``groups`` for each key of ``fields``."""
+    """``{field key: (environments, width) view}`` of ``groups`` for each key of ``fields``."""
     views = schema.views(groups, [field_name(key) for key in fields], numpy=True)
     return {key: views[field_name(key)] for key in fields}
 
@@ -71,12 +71,12 @@ def groups_to_state(groups, device):
 
 
 def field_arrays(schema, state, fields):
-    """``{field key: (lanes, width) NumPy view}`` of a host State."""
+    """``{field key: (environments, width) NumPy view}`` of a host State."""
     return group_views(schema, schema.buffers(state), fields)
 
 
 def core_fields(nq, nv, na=0):
-    """Fields that resume a dm_control lane: physics, lifecycle, reward and task RNG."""
+    """Fields that resume a dm_control environment: physics, lifecycle, reward and task RNG."""
     fields = {
         "qpos": (nq, torch.float64),
         "qvel": (nv, torch.float64),
@@ -96,7 +96,7 @@ def core_fields(nq, nv, na=0):
 
 
 class Columns(dict):
-    """``{field key: (lanes, width) view}`` of fresh host group arrays; ``groups`` holds the arrays."""
+    """``{field key: (environments, width) view}`` of fresh host group arrays; ``groups`` holds the arrays."""
 
     def __init__(self, schema, batch, fields):
         self.groups = new_groups(schema, batch)
@@ -109,7 +109,7 @@ def model_columns(columns):
 
 
 def write_row(columns, i, env, cumulative, model_fields):
-    """Read live lane ``env`` into row ``i`` of ``columns``; lanes in different rows may be written concurrently."""
+    """Read live environment ``env`` into row ``i`` of ``columns``; environments in different rows may be written concurrently."""
     physics, base = env.physics, env._env
     data = physics.data
     columns["qpos"][i] = data.qpos
@@ -125,7 +125,7 @@ def write_row(columns, i, env, cumulative, model_fields):
 
 
 def write_task_row(columns, i, env, model_fields):
-    """Read the task RNG and episode-drawn model entries of lane ``env`` into row ``i`` of ``columns``."""
+    """Read the task RNG and episode-drawn model entries of environment ``env`` into row ``i`` of ``columns``."""
     algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
     if algorithm != "MT19937":
         raise ValueError(f"Unsupported DMC RNG algorithm: {algorithm}")
@@ -145,9 +145,9 @@ def columns_to_state(columns, device, extra=None):
 
 
 def export_state(envs, cumulative, schema, fields, device, extra=None):
-    """Export a fresh State of live lane owners with one device transfer per group.
+    """Export a fresh State of live environment owners with one device transfer per group.
 
-    Read live lane owners into owned host arrays. CPU tensors retain those arrays;
+    Read live environment owners into owned host arrays. CPU tensors retain those arrays;
     later simulation and exports cannot overwrite the snapshot.
     """
     columns = Columns(schema, len(envs), fields)
@@ -157,8 +157,8 @@ def export_state(envs, cumulative, schema, fields, device, extra=None):
     return columns_to_state(columns, device, extra)
 
 
-def restore_lane(env, values, i, cumulative):
-    """Write row ``i`` of host field arrays ``values`` back into a lane, model entries before forward kinematics."""
+def restore_instance(env, values, i, cumulative):
+    """Write row ``i`` of host field arrays ``values`` back into an environment, model entries before forward kinematics."""
     physics, base = env.physics, env._env
     for key, (field, index) in MODEL_FIELDS.items():
         if key in values:

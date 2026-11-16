@@ -7,7 +7,7 @@ z-buffer that a double depth must reach, the default light without shadows, and 
 The meshes are the ones TinyRenderer builds from the URDFs: Bullet's 42-direction convex hull of each cylinder
 (``btShapeHull`` and ``HullLibrary``), the textured cube of each box and the ``plane100.obj`` ground.
 
-All lanes draw in one call, one lane per Numba thread.
+All environments draw in one call, one environment per Numba thread.
 """
 
 from __future__ import annotations
@@ -1031,7 +1031,7 @@ def _clip_edge(tri, a, b, poly, count):
 @njit(parallel=True, cache=True, error_model="numpy")
 def _frames(verts, norms, uvs, faces, vstart, fstart, textured, tex, models, views, proj, colors, light, near, far, ss,
             fast, out):  # fmt: skip
-    """Draw lane ``b`` of ``models``, ``views`` and ``colors`` into ``out[b]``, one lane per thread."""
+    """Draw environment ``b`` of ``models``, ``views`` and ``colors`` into ``out[b]``, one environment per thread."""
     B, size = out.shape[0], out.shape[1]
     R = size * ss
     nobj = len(vstart) - 1

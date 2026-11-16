@@ -1,4 +1,4 @@
-"""Craftax CPU lanes split over XLA host devices give the same results as lanes on one device."""
+"""Craftax CPU environments split over XLA host devices give the same results as environments on one device."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Seven lanes with their own variation values over four devices: two lanes per device and one padding row.
+# Seven environments with their own variation values over four devices: two environments per device and one padding row.
 # The sequences step in one fused call each.
 ROLLOUT = """
 import sys
@@ -29,11 +29,11 @@ import jax
 from stable_envs import get_field
 from stable_envs.envs.craftax import kernel
 
-kernel.MIN_LANES_PER_HOST_DEVICE = 1
+kernel.MIN_ENVS_PER_HOST_DEVICE = 1
 name, out = sys.argv[1], sys.argv[2]
 saved = {"devices": np.array(len(jax.devices("cpu")))}
 with se.make(name, num_envs=7, device="cpu") as env:
-    assert env._lanes.parts == len(jax.devices("cpu"))
+    assert env._instances.parts == len(jax.devices("cpu"))
     env.set_variation(env.sample_variation(rng=np.random.default_rng(5)))
     first = env.reset(seed=11)
     assert env._varied
@@ -71,7 +71,7 @@ def _rollout(tmp_path, name, devices: str | None) -> dict:
 
 
 @pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxPixels"])
-def test_lanes_split_over_host_devices_equal_lanes_on_one_device(tmp_path, name):
+def test_environments_split_over_host_devices_equal_environments_on_one_device(tmp_path, name):
     one = _rollout(tmp_path, name, "1")
     split = _rollout(tmp_path, name, "4")
     assert int(one.pop("devices")) == 1 and int(split.pop("devices")) == 4
@@ -131,11 +131,11 @@ def test_importing_the_kernel_keeps_the_cpu_device_count():
 
 
 @pytest.mark.parametrize("count", [1, 2, 3, 8, 9, 64])
-def test_each_host_device_steps_at_least_the_fewest_lanes(count):
+def test_each_host_device_steps_at_least_the_fewest_environments(count):
     from stable_envs.envs.craftax import kernel as kernel_module
 
     k = kernel_module.kernel("Craftax-Classic-Symbolic-v1")
-    lanes = k.lanes(count, jax.devices("cpu")[0])
-    per = lanes.rows // lanes.parts
-    assert lanes.parts == 1 or per >= kernel_module.MIN_LANES_PER_HOST_DEVICE
-    assert lanes.rows - lanes.count < per and lanes.parts <= len(jax.devices("cpu"))
+    instances = k.instances(count, jax.devices("cpu")[0])
+    per = instances.rows // instances.parts
+    assert instances.parts == 1 or per >= kernel_module.MIN_ENVS_PER_HOST_DEVICE
+    assert instances.rows - instances.count < per and instances.parts <= len(jax.devices("cpu"))

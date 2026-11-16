@@ -83,7 +83,7 @@ def per_row_style(env, groups: int = 4, seed: int = 3):
 
 
 def _ops(env, s, sty):
-    """The env's op list at the geometry its render draws, per-lane physics lengths included."""
+    """The env's op list at the geometry its render draws, per-environment physics lengths included."""
     geo = env._varied_geometry(sty, own=False)
     return env._ops(s, sty, *(() if geo is None else (geo,)))
 
@@ -137,7 +137,7 @@ def test_the_description_carries_per_row_appearance(name):
         _described(env, states, style),
         _per_primitive(env, states, style),
         what=f"{name} per-row style, mixed antialias",
-        why="every appearance knob must flow through the op list per row",
+        why="every appearance setting must flow through the op list per row",
     )
 
 
@@ -216,7 +216,7 @@ def test_env_render_agrees_under_a_per_row_style(name):
         fast,
         slow,
         what=f"{name} per-row style, kernel on vs off",
-        why="every appearance knob must reach the kernel as data",
+        why="every appearance setting must reach the kernel as data",
     )
 
 

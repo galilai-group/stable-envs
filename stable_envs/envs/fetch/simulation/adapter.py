@@ -11,7 +11,7 @@ from .... import tuning
 from ...._core.cpus import cpu_limit
 from ...._core.state_schema import Field, StateSchema
 from ...._core.tensordicts import build_tensordict
-from ...._execution.process import BROADCAST, PER_LANE
+from ...._execution.process import BROADCAST, PER_INSTANCE
 from ...._execution.protocol import SimulatorAdapter
 
 #: State groups: ``physics`` changes on every step, ``task`` on reset and restore, ``host`` holds the step counter
@@ -103,15 +103,15 @@ def host_active(active, num_envs):
 
 
 def episode_limits(limits, num_envs):
-    """Return ``limits`` as an array, rejecting anything but one positive integer per lane."""
+    """Return ``limits`` as an array, rejecting anything but one positive integer per environment."""
     limits = np.asarray(limits)
     if limits.shape != (num_envs,) or limits.dtype.kind not in "iu" or np.any(limits < 1):
-        raise ValueError("Expected positive integer episode limits, one per lane")
+        raise ValueError("Expected positive integer episode limits, one per environment")
     return limits
 
 
 class FetchAdapter(SimulatorAdapter):
-    """CPU Fetch simulators with a 50-step time limit and optional lane threads.
+    """CPU Fetch simulators with a 50-step time limit and optional environment threads.
 
     ``device`` selects returned tensor placement. State preserves controller caches
     and warmstart in addition to poses, goals, lifecycle and RNG.
@@ -119,9 +119,9 @@ class FetchAdapter(SimulatorAdapter):
 
     execution_mode = "DELEGATED_CPU"
     process_methods = {
-        "configure_object_mass": PER_LANE,
-        "reset_visual_colors": PER_LANE,
-        "_set_episode_limits": PER_LANE,
+        "configure_object_mass": PER_INSTANCE,
+        "reset_visual_colors": PER_INSTANCE,
+        "_set_episode_limits": PER_INSTANCE,
         "object_mass": BROADCAST,
     }
     process_attributes = ("schema", "has_object")
@@ -156,11 +156,11 @@ class FetchAdapter(SimulatorAdapter):
         # Bound threads by scheduler affinity and keep small batches serial.
         available = cpu_limit()
         where = dict(path="fetch-sim", size=0, batch=self.num_envs)
-        if self.num_envs >= tuning.get("worker_min_lanes", **where) and available > 1:
+        if self.num_envs >= tuning.get("worker_min_envs", **where) and available > 1:
             self._set_workers(min(tuning.get("fetch_threads", **where), available, self.num_envs))
 
     def _set_workers(self, workers):
-        """Assign disjoint simulator lanes to each thread; wait for existing work first."""
+        """Assign disjoint simulator environments to each thread; wait for existing work first."""
         self._check_open()
         if type(workers) is not int or not 1 <= workers <= self.num_envs:
             raise ValueError("workers must be an integer between 1 and num_envs")
@@ -169,8 +169,8 @@ class FetchAdapter(SimulatorAdapter):
         self._workers = workers
         self._executor = ThreadPoolExecutor(max_workers=workers) if workers > 1 else None
 
-    def _advance_shard(self, lanes, actions):
-        return [(lane, self.envs[lane].step(actions[lane])) for lane in lanes]
+    def _advance_shard(self, instances, actions):
+        return [(instance, self.envs[instance].step(actions[instance])) for instance in instances]
 
     def _check_open(self):
         if self._closed:
@@ -183,7 +183,7 @@ class FetchAdapter(SimulatorAdapter):
 
     @property
     def object_mass(self) -> np.ndarray:
-        """Return an owned copy of the configured mass for each lane."""
+        """Return an owned copy of the configured mass for each environment."""
         self._check_open()
         return self._mass.copy()
 
@@ -238,14 +238,14 @@ class FetchAdapter(SimulatorAdapter):
 
     def reset(self, seed: int | None = None, variations=None) -> TensorDict:
         self._check_open()
-        for lane, e in enumerate(self.envs):
-            values = {} if variations is None else variations[lane]
+        for instance, e in enumerate(self.envs):
+            values = {} if variations is None else variations[instance]
             u = e.unwrapped
             # An episode that does not name the start returns to the registered anchor.
-            u.initial_gripper_xpos[:] = self._anchor[lane]
+            u.initial_gripper_xpos[:] = self._anchor[instance]
             if "agent.start_position" in values:
                 u.initial_gripper_xpos[:2] = values["agent.start_position"]
-            e.reset(seed=None if seed is None else int(seed) + lane)
+            e.reset(seed=None if seed is None else int(seed) + instance)
             changed = False
             if "block.start_position" in values:
                 u.data.qpos[15:17] = values["block.start_position"]
@@ -258,10 +258,10 @@ class FetchAdapter(SimulatorAdapter):
                 u.goal = np.asarray(values["goal.start_position"], np.float64).copy()
                 changed = True
             if "block.mass" in values:
-                self._mass[lane] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
+                self._mass[instance] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
             # Reset must run with the previous mass before installing the new value.
             if self.has_object:
-                e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]
+                e.unwrapped.model.body_mass[self._object[instance]] = self._mass[instance]
             if changed:
                 self._mujoco.mj_forward(u.model, u.data)
         self._last_outputs = [
@@ -278,13 +278,13 @@ class FetchAdapter(SimulatorAdapter):
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        # Owned column arrays: one tensor conversion/transfer per group, not per lane.
+        # Owned column arrays: one tensor conversion/transfer per group, not per environment.
         slices = self.schema.slices
         columns = {
             name: np.empty((self.num_envs, *where.shape), np.float64 if where.dtype == torch.float64 else np.int64)
             for name, where in slices.items()
         }
-        for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
+        for instance, (e, i) in enumerate(zip(self.envs, self._gripper)):
             u = e.unwrapped
             r = u.np_random.bit_generator.state
             if r["bit_generator"] != "PCG64":
@@ -305,7 +305,7 @@ class FetchAdapter(SimulatorAdapter):
                 "rng/uinteger": [r["uinteger"]],
             }
             for name in slices:
-                columns[name][lane] = values[name]
+                columns[name][instance] = values[name]
         groups = {key: torch.from_numpy(value).to(self.device) for key, value in self.schema.pack(columns).items()}
         return nest(groups, self.num_envs, self.device)
 
@@ -329,30 +329,30 @@ class FetchAdapter(SimulatorAdapter):
     def set_state(self, state: TensorDict) -> None:
         self._validate_state(state)
         v = self.schema.views(state.cpu(), numpy=True)
-        for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
+        for instance, (e, i) in enumerate(zip(self.envs, self._gripper)):
             u = e.unwrapped
-            u.data.qpos[:] = v["qpos"][lane]
-            u.data.qvel[:] = v["qvel"][lane]
-            u.goal = v["goal"][lane].copy()
-            u.data.time = float(v["time"][lane, 0])
-            u.initial_gripper_xpos[:] = v["task/initial_gripper_xpos"][lane]
+            u.data.qpos[:] = v["qpos"][instance]
+            u.data.qvel[:] = v["qvel"][instance]
+            u.goal = v["goal"][instance].copy()
+            u.data.time = float(v["time"][instance, 0])
+            u.initial_gripper_xpos[:] = v["task/initial_gripper_xpos"][instance]
             # Controller overwrites mocap and ctrl before every public step.
             # Applied-force arrays remain zero under this registration's API.
             u.data.qfrc_applied[:] = 0
             u.data.xfrc_applied[:] = 0
             self._mujoco.mj_forward(u.model, u.data)
-            u.data.qacc_warmstart[:] = v["warmstart"][lane]
-            u.data.xpos[i] = v["controller/position"][lane]
-            u.data.xquat[i] = v["controller/quaternion"][lane]
-            e._elapsed_steps = int(v["lifecycle/elapsed_steps"][lane, 0])
+            u.data.qacc_warmstart[:] = v["warmstart"][instance]
+            u.data.xpos[i] = v["controller/position"][instance]
+            u.data.xquat[i] = v["controller/quaternion"][instance]
+            e._elapsed_steps = int(v["lifecycle/elapsed_steps"][instance, 0])
             u.np_random.bit_generator.state = {
                 "bit_generator": "PCG64",
                 "state": {
-                    "state": _integer(v["rng/state_words"][lane].tolist()),
-                    "inc": _integer(v["rng/increment_words"][lane].tolist()),
+                    "state": _integer(v["rng/state_words"][instance].tolist()),
+                    "inc": _integer(v["rng/increment_words"][instance].tolist()),
                 },
-                "has_uint32": int(v["rng/has_uint32"][lane, 0]),
-                "uinteger": int(v["rng/uinteger"][lane, 0]),
+                "has_uint32": int(v["rng/has_uint32"][instance, 0]),
+                "uinteger": int(v["rng/uinteger"][instance, 0]),
             }
 
     def check_step(self, actions, active):
@@ -365,18 +365,18 @@ class FetchAdapter(SimulatorAdapter):
         return out
 
     def advance(self, actions: torch.Tensor | np.ndarray, *, active=None) -> TensorDict:
-        """Advance active lanes without capturing state; retain inactive lane outputs."""
+        """Advance active environments without capturing state; retain inactive environment outputs."""
         self._check_open()
         active = host_active(active, self.num_envs)
         actions = host_actions(actions, self.num_envs)
         # Preserve public dtype: upstream multiplication before concatenation is observable.
-        lanes = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        instances = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
         if self._executor is None:
-            updates = self._advance_shard(lanes, actions)
+            updates = self._advance_shard(instances, actions)
         else:
             futures = [
                 self._executor.submit(self._advance_shard, shard, actions)
-                for shard in np.array_split(lanes, self._workers)
+                for shard in np.array_split(instances, self._workers)
                 if len(shard)
             ]
             updates = []
@@ -390,8 +390,8 @@ class FetchAdapter(SimulatorAdapter):
             if errors:
                 raise errors[0]
         outputs = list(self._last_outputs) if active is not None else [None] * self.num_envs
-        for lane, output in updates:
-            outputs[lane] = output
+        for instance, output in updates:
+            outputs[instance] = output
         self._last_outputs = outputs
         return TensorDict(
             {

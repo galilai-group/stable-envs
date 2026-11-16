@@ -15,7 +15,7 @@ from tests.helpers.reference.semantics import assert_same_state
 
 
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
-def test_state_task_rng_variation_and_inactive_lanes(dtype):
+def test_state_task_rng_variation_and_inactive_environments(dtype):
     local = ClassicControlAdapter("acrobot", 5)
     remote = AcrobotProcessAdapter("acrobot", 5, seed=17, processes=2)
     try:
@@ -46,7 +46,7 @@ def test_state_task_rng_variation_and_inactive_lanes(dtype):
     assert all(not p.is_alive() for p in remote._processes)
 
 
-def test_invalid_last_lane_does_not_mutate_other_owners():
+def test_invalid_last_environment_does_not_mutate_other_owners():
     remote = AcrobotProcessAdapter("acrobot", 5, seed=17, processes=2)
     try:
         initial = remote.get_state()

@@ -20,7 +20,7 @@ SOURCES = {
 
 
 class NativeNavigationReference:
-    """One independent pinned stable-worldmodel environment per batch lane."""
+    """One independent pinned stable-worldmodel environment per batch environment."""
 
     def __init__(self, domain, num_envs=1, options=None, persistent_values=None):
         module_name, class_name, kwargs = SOURCES[domain]
@@ -37,20 +37,20 @@ class NativeNavigationReference:
                 leaf.set_init_value(np.asarray(value, dtype=leaf.dtype).reshape(leaf.shape))
         self.cached_goal_positions = [np.asarray([0.5, 0.5], np.float32) for _ in self.envs]
         if domain == "simple_point_maze":
-            for lane, env in enumerate(self.envs):
+            for instance, env in enumerate(self.envs):
                 leaf = env.variation_space["agent"]["position"]
                 original = leaf.sample
 
-                def recorded(*args, _original=original, _lane=lane, **kwargs):
+                def recorded(*args, _original=original, _instance=instance, **kwargs):
                     value = _original(*args, **kwargs)
-                    self.cached_goal_positions[_lane] = np.asarray(value, np.float32).copy()
+                    self.cached_goal_positions[_instance] = np.asarray(value, np.float32).copy()
                     return value
 
                 leaf.sample = recorded
 
     def reset(self, seed=None):
-        for lane, env in enumerate(self.envs):
-            env.reset(seed=None if seed is None else int(seed) + lane, options=self.options)
+        for instance, env in enumerate(self.envs):
+            env.reset(seed=None if seed is None else int(seed) + instance, options=self.options)
         return self.get_state()
 
     @property
@@ -84,36 +84,38 @@ class NativeNavigationReference:
 
     def set_state(self, state):
         fields = self.schema.views(state.cpu())
-        for lane, env in enumerate(self.envs):
+        for instance, env in enumerate(self.envs):
             if self.domain == "simple_point_maze":
-                is_float64 = bool(fields["task/state_is_float64"][lane].item())
+                is_float64 = bool(fields["task/state_is_float64"][instance].item())
                 agent = (
-                    fields["agent/position"][lane].numpy().astype(np.float64 if is_float64 else np.float32, copy=True)
+                    fields["agent/position"][instance]
+                    .numpy()
+                    .astype(np.float64 if is_float64 else np.float32, copy=True)
                 )
-                goal = fields["goal/position"][lane].numpy().copy()
-                cached = fields["task/cached_goal_agent_position"][lane].numpy().copy()
+                goal = fields["goal/position"][instance].numpy().copy()
+                cached = fields["task/cached_goal_agent_position"][instance].numpy().copy()
                 env.variation_space["goal"]["position"]._value = goal
                 env.state = cached
                 env.variation_space["agent"]["position"]._value = cached.copy()
                 env._goal = env.render("rgb_array")
                 env.state = agent
                 env.variation_space["agent"]["position"]._value = agent.copy()
-                self.cached_goal_positions[lane] = cached
+                self.cached_goal_positions[instance] = cached
             else:
-                env.agent_position = fields["agent/position"][lane].clone()
-                env.target_position = fields["target/position"][lane].clone()
+                env.agent_position = fields["agent/position"][instance].clone()
+                env.target_position = fields["target/position"][instance].clone()
 
     def _actions(self, actions):
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions)
         assert actions.shape == (self.num_envs, 2)
-        return [actions[lane] for lane in range(self.num_envs)]
+        return [actions[instance] for instance in range(self.num_envs)]
 
     def step(self, actions, active=None):
         outputs = [
-            env.step(action) if active is None or active[lane] else self._last_outputs[lane]
-            for lane, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
+            env.step(action) if active is None or active[instance] else self._last_outputs[instance]
+            for instance, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
         ]
         self._last_outputs = outputs
         observation = torch.as_tensor(np.stack([out[0] for out in outputs])).clone()

@@ -350,10 +350,10 @@ class DMCWarpAdapter(SimulatorAdapter):
         self._check_float32(models.fixed_positions, "fixed geom positions")
         self._check_float32(models.fixed_rotations, "fixed geom rotations")
 
-    def _upload_models(self, models, lanes=None):
-        """Write the model rows of ``lanes`` (all when None) into the batched fields and fixed geom poses."""
-        rows = slice(None) if lanes is None else np.asarray(lanes)
-        index = None if lanes is None else self._upload(rows)
+    def _upload_models(self, models, instances=None):
+        """Write the model rows of ``instances`` (all when None) into the batched fields and fixed geom poses."""
+        rows = slice(None) if instances is None else np.asarray(instances)
+        index = None if instances is None else self._upload(rows)
         columns = {name: models.columns[name] for name in self._model_fields}
         options = {}
         for name in self._option_fields:
@@ -394,14 +394,14 @@ class DMCWarpAdapter(SimulatorAdapter):
                 else:
                     view[index[:, None], self._fixed] = values
 
-    def _write_physics(self, state, lanes=None):
-        """Load the physical columns of ``state`` rows ``lanes`` (all when None) and forward every world."""
+    def _write_physics(self, state, instances=None):
+        """Load the physical columns of ``state`` rows ``instances`` (all when None) and forward every world."""
         get = self.schema.get
         values = {name: get(state, key).to(torch.float32) for key, name in self._physical.items()}
         values["time"] = get(state, "time").to(torch.float32)[:, 0]
         # dm_control forwards a reset with actuation disabled; the next step writes the controls again.
         self.batch.data("ctrl").zero_()
-        self.batch.set_physics(values, lanes, forward=True)
+        self.batch.set_physics(values, instances, forward=True)
 
     def _to_device(self, state):
         if state.device is not None and state.device.type == "cpu":
@@ -526,7 +526,7 @@ class DMCWarpAdapter(SimulatorAdapter):
             active = torch.as_tensor(active)
             if active.shape != (self.num_envs,) or not bool(active.all()):
                 raise ValueError(
-                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                    "Accepted DMC wrappers do not expose terminal environments; partial active masks are unsupported"
                 )
         return actions, self._controls(actions)
 
@@ -566,24 +566,24 @@ class DMCWarpAdapter(SimulatorAdapter):
         graph.replay()
         return values
 
-    def _reset_lanes(self, lanes):
-        """Draw native resets for ``lanes`` and load them; the other worlds are forwarded at their state."""
-        prepared = self._source.prepare_reset(lanes=lanes)
+    def _reset_instances(self, instances):
+        """Draw native resets for ``instances`` and load them; the other worlds are forwarded at their state."""
+        prepared = self._source.prepare_reset(instances=instances)
         models = prepared.models
         self._validate_models(models)
-        ids = self._upload(lanes)
-        rows = self._to_device(prepared.state[lanes])
-        self._upload_models(models, lanes)
-        self._write_physics(rows, lanes)
+        ids = self._upload(instances)
+        rows = self._to_device(prepared.state[instances])
+        self._upload_models(models, instances)
+        self._write_physics(rows, instances)
         self._source.commit(prepared)
         # The other worlds' physics is read back lazily; these rows keep the exact float64 reset.
-        self._stale[lanes] = False
+        self._stale[instances] = False
         cumulative = self._views["task/cumulative_reward"][ids]
         self._state[ids] = rows
         self._views["task/cumulative_reward"][ids] = cumulative
-        self._clock[lanes] = self.schema.get(prepared.state, "time")[lanes, 0].numpy()
-        self._counts[lanes] = 0
-        self._pending[lanes] = False
+        self._clock[instances] = self.schema.get(prepared.state, "time")[instances, 0].numpy()
+        self._counts[instances] = 0
+        self._pending[instances] = False
 
     @_ordered
     def step(self, actions, *, active=None, capture_state=True):
@@ -604,7 +604,7 @@ class DMCWarpAdapter(SimulatorAdapter):
             if len(resetting):
                 ids = self._upload(resetting)
                 round_reward = round_reward.index_fill(0, ids, 0.0)
-                self._reset_lanes(resetting)
+                self._reset_instances(resetting)
                 if last:
                     fresh = self._task_values(full=True)
                     for key, value in fresh.items():

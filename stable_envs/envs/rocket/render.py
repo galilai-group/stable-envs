@@ -34,7 +34,7 @@ STATE_READS = {
     ("current", "diagnostic", "cached_links"): ((1, 7), True),
     ("render", "rgba"): ((6, 4), False),
 }
-#: Fewest CPU frames one ``render`` draws in render workers when the ``render_worker_min_rows`` knob is not set.
+#: Fewest CPU frames one ``render`` draws in render workers when the ``render_worker_min_rows`` setting is not set.
 MIN_WORKER_ROWS = 2
 #: CPU renderers. ``"pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer; ``"numba"`` draws
 #: all frames in one call of the Numba port in ``tiny_raster``. ``"auto"`` selects ``CPU_AUTO``.

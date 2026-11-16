@@ -70,8 +70,8 @@ def test_process_state_rng_variations_and_owned_outputs(family):
         assert_same_state(
             local.reset(42, {"task_id": 4, "variation": []}), remote.reset(42, {"task_id": 4, "variation": []})
         )
-        lanes = {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}}
-        assert_same_state(local.reset(5, lanes), remote.reset(5, lanes))
+        instances = {"variation_values": {"cube.size": np.array([[0.012], [0.02], [0.028]])}}
+        assert_same_state(local.reset(5, instances), remote.reset(5, instances))
         remote.set_state(initial)
         assert_same_state(initial, remote.get_state())
         snapshot = remote.get_state()

@@ -40,8 +40,8 @@ def xml() -> str:
 class Weather:
     """Wind (mean + gusts, with its own RNG) and rain (strength 0..1: drops, haze, sun and tire grip).
 
-    Lanes that share one compiled model each hold a ``Weather``; ``base`` (another lane's) gives the model's
-    own friction, sun, haze and fog, and the lane writes its grip into the model with ``apply_grip`` before
+    Environments that share one compiled model each hold a ``Weather``; ``base`` (another environment's) gives the model's
+    own friction, sun, haze and fog, and the environment writes its grip into the model with ``apply_grip`` before
     it steps.
     """
 
@@ -129,7 +129,7 @@ class Weather:
         self._wind_rng.bit_generator.state = st["rng"]
 
     def apply_grip(self):
-        """Write this lane's tire grip into the (possibly shared) model."""
+        """Write this environment's tire grip into the (possibly shared) model."""
         self.m.geom_friction[self.tires] = self.tire_friction * np.array([self.grip, 1.0, 1.0])
 
     @property

@@ -6,16 +6,16 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._execution.process import BROADCAST, PER_LANE, fresh_copy, leaf_tensordict
+from ...._execution.process import BROADCAST, PER_INSTANCE, fresh_copy, leaf_tensordict
 from ...._execution.protocol import SimulatorAdapter
 from .actions import validate_actions
 from .replay import RocketReplay, generator_state, install_generator, is_zero_view
 
 
 def check_values(template, values, num_envs):
-    """Check one ``{path: value}`` per lane against the variation space of engine ``template``."""
+    """Check one ``{path: value}`` per environment against the variation space of engine ``template``."""
     if len(values) != num_envs:
-        raise ValueError("Expected one Rocket Variation row per lane")
+        raise ValueError("Expected one Rocket Variation row per environment")
     for row in values:
         for key, value in row.items():
             node = template.env.variation_space._walk(key)
@@ -26,7 +26,7 @@ def check_values(template, values, num_envs):
 def state_columns(state, fields, template, batch):
     """Check a ``[batch]`` state against ``fields`` and its rows with engine ``template``; return the host columns.
 
-    The lanes of one batch share one configuration, so one engine checks every row.
+    The environments of one batch share one configuration, so one engine checks every row.
     """
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
         raise ValueError("Rocket full State requires batch [num_envs]")
@@ -48,7 +48,7 @@ def state_columns(state, fields, template, batch):
 
 
 def split_rows(columns):
-    """Host columns -> one ``{key: value}`` row per lane."""
+    """Host columns -> one ``{key: value}`` row per environment."""
     batch = len(columns["history/length"])
     return [{k: v[i, ...].copy() for k, v in columns.items()} for i in range(batch)]
 
@@ -56,14 +56,14 @@ def split_rows(columns):
 class RocketAdapter(SimulatorAdapter):
     """Batch CPU Rocket owners with CPU/CUDA state storage.
 
-    Validate every action before stepping any lane. Reset and restoration replace
-    the engines one lane at a time, so the batch holds at most one extra engine.
-    Reset checks the arguments of every lane before it replaces an engine.
-    Restoration keeps the State row of each replaced lane until it commits, and a
+    Validate every action before stepping any environment. Reset and restoration replace
+    the engines one environment at a time, so the batch holds at most one extra engine.
+    Reset checks the arguments of every environment before it replaces an engine.
+    Restoration keeps the State row of each replaced environment until it commits, and a
     discarded restoration replays these rows.
     """
 
-    process_methods = {"configure": PER_LANE, "rgba": BROADCAST, "variation_rows": BROADCAST}
+    process_methods = {"configure": PER_INSTANCE, "rgba": BROADCAST, "variation_rows": BROADCAST}
     process_attributes = ("fields",)
     action_dim = 7
 
@@ -77,8 +77,8 @@ class RocketAdapter(SimulatorAdapter):
         # ``(size, supersample)`` of the TinyRenderer frames ``render_live`` draws; None draws none.
         self.frame, self._scene = frame, None
         try:
-            for lane in range(batch):
-                self.envs.append(RocketReplay(config, None if seed is None else seed + lane))
+            for instance in range(batch):
+                self.envs.append(RocketReplay(config, None if seed is None else seed + instance))
         except BaseException:
             self.close()
             raise
@@ -88,7 +88,7 @@ class RocketAdapter(SimulatorAdapter):
 
     @property
     def template(self):
-        """A lane whose configuration and variation space describe the batch."""
+        """An environment whose configuration and variation space describe the batch."""
         return self.envs[0]
 
     @property
@@ -108,7 +108,7 @@ class RocketAdapter(SimulatorAdapter):
             for key in self.process_static_leaves:
                 column = [row["/".join(key)] for row in rows]
                 if all(is_zero_view(value) for value in column):
-                    # A large zero leaf of every lane, such as an unused image, is not stacked.
+                    # A large zero leaf of every environment, such as an unused image, is not stacked.
                     value = torch.zeros((), dtype=self.fields[key][1], device=self.device)
                     self._static[key] = value.expand(self.num_envs, *column[0].shape)
                     zero.add(key)
@@ -143,17 +143,17 @@ class RocketAdapter(SimulatorAdapter):
         return state_columns(state, self.fields, self.template, self.num_envs)
 
     def prepare_restore(self, state):
-        """Replace each lane's engine with one replayed from ``state``; on failure restore the replaced lanes."""
+        """Replace each environment's engine with one replayed from ``state``; on failure restore the replaced environments."""
         if self._prepared is not None:
             raise RuntimeError("A Rocket restore is already prepared")
         rows = split_rows(self.validate(state))
         previous, self._static = [], None
         try:
-            for lane, env in enumerate(self.envs):
+            for instance, env in enumerate(self.envs):
                 row = env.get_state()
-                staged = env.reconstruct(rows[lane])
-                rows[lane] = None
-                self.envs[lane] = staged
+                staged = env.reconstruct(rows[instance])
+                rows[instance] = None
+                self.envs[instance] = staged
                 previous.append(row)
                 env.close()
         except BaseException:
@@ -162,11 +162,11 @@ class RocketAdapter(SimulatorAdapter):
         self._prepared = previous
 
     def _replay(self, rows):
-        """Replace the engines of the first ``len(rows)`` lanes with engines replayed from ``rows``."""
+        """Replace the engines of the first ``len(rows)`` environments with engines replayed from ``rows``."""
         self._static = None
-        for lane, row in enumerate(rows):
-            env = self.envs[lane]
-            self.envs[lane] = env.reconstruct(row)
+        for instance, row in enumerate(rows):
+            env = self.envs[instance]
+            self.envs[instance] = env.reconstruct(row)
             env.close()
 
     def commit_restore(self):
@@ -184,28 +184,28 @@ class RocketAdapter(SimulatorAdapter):
         self.commit_restore()
 
     def reset(self, seed=None, options=None, values=None):
-        # Reset keeps only the persistent configuration and owned RNG of a lane. It needs no
+        # Reset keeps only the persistent configuration and owned RNG of an environment. It needs no
         # physics replay because an authoritative reset discards the old episode.
         if values is not None and len(values) != self.num_envs:
-            raise ValueError("Expected one Rocket Variation row per lane")
-        lanes = [
-            (None if seed is None else seed + lane, None if values is None else values[lane])
-            for lane in range(self.num_envs)
+            raise ValueError("Expected one Rocket Variation row per environment")
+        instances = [
+            (None if seed is None else seed + instance, None if values is None else values[instance])
+            for instance in range(self.num_envs)
         ]
-        for env, (lane_seed, row) in zip(self.envs, lanes, strict=True):
-            env.check_reset(lane_seed, options, row)
+        for env, (instance_seed, row) in zip(self.envs, instances, strict=True):
+            env.check_reset(instance_seed, options, row)
         self._static = None
-        for lane, (env, (lane_seed, row)) in enumerate(zip(self.envs, lanes, strict=True)):
+        for instance, (env, (instance_seed, row)) in enumerate(zip(self.envs, instances, strict=True)):
             target = RocketReplay(env.config, initialize=False)
             try:
                 target.env.variation_space = copy.deepcopy(env.env.variation_space)
                 install_generator(target.env, generator_state(env.env))
                 install_generator(target.env.action_space, generator_state(env.env.action_space))
-                target.reset(lane_seed, options, row)
+                target.reset(instance_seed, options, row)
             except BaseException:
                 target.close()
                 raise
-            self.envs[lane] = target
+            self.envs[instance] = target
             env.close()
         return self.get_state()
 
@@ -256,12 +256,12 @@ class RocketAdapter(SimulatorAdapter):
         return draw_tiny(self._scene, body, links, colors, size, ss)
 
     def render_live(self):
-        """Draw every lane's running scene with TinyRenderer, as ``render`` draws its state."""
+        """Draw every environment's running scene with TinyRenderer, as ``render`` draws its state."""
         body, links, colors = (np.stack(column) for column in zip(*(env.render_fields() for env in self.envs)))
         return self.draw(body, links, colors, *self.frame)
 
     def frame_fields(self):
-        """Every lane's body poses, camera link pose, colours and float32 camera view matrix, for a GPU frame."""
+        """Every environment's body poses, camera link pose, colours and float32 camera view matrix, for a GPU frame."""
         import pybullet
 
         from ..render import frame_views
@@ -276,7 +276,7 @@ class RocketAdapter(SimulatorAdapter):
             env.configure(row)
 
     def variation_rows(self, attribute, keys):
-        """Return each lane's variation leaves ``keys`` as one flat row of ``attribute`` values."""
+        """Return each environment's variation leaves ``keys`` as one flat row of ``attribute`` values."""
         return np.stack(
             [
                 np.concatenate(

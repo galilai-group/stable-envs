@@ -10,11 +10,11 @@ from ...._core.state_schema import unfold
 from ...._execution.protocol import SimulatorAdapter
 from . import physics as _physics
 from .registered import normalized
-from .state import export_state, field_arrays, restore_lane, state_schema, validate_state
+from .state import export_state, field_arrays, restore_instance, state_schema, validate_state
 
 
 def _clone_envs(make, seed, count):
-    """Compile once, then copy lanes with independent physics models."""
+    """Compile once, then copy environments with independent physics models."""
     wrapped = make(int(seed))
     template = wrapped._env
     envs = [wrapped]
@@ -27,11 +27,11 @@ def _clone_envs(make, seed, count):
     return envs
 
 
-class DMCLanes(SimulatorAdapter):
-    """Independent CPU dm_control lanes; each action advances the source twice.
+class DMCInstances(SimulatorAdapter):
+    """Independent CPU dm_control environments; each action advances the source twice.
 
     ``device`` controls returned tensor placement. State holds physics, lifecycle,
-    task RNG, episode-drawn model entries and the lane's physics variation.
+    task RNG, episode-drawn model entries and the environment's physics variation.
     """
 
     def __init__(self, key, num_envs, device, seed, make, fields):
@@ -41,7 +41,7 @@ class DMCLanes(SimulatorAdapter):
             raise ValueError("num_envs must be a positive integer")
         self.device = torch.device(device)
         self.envs = _clone_envs(make, seed, self.num_envs)
-        self.physics = _physics.make_lanes(key, [env.physics.model.ptr for env in self.envs])
+        self.physics = _physics.make_instances(key, [env.physics.model.ptr for env in self.envs])
         self.fields = {**fields, **_physics.state_fields(key)}
         self._base_fields = fields
         self.schema = state_schema(key, self.fields)
@@ -86,7 +86,7 @@ class DMCLanes(SimulatorAdapter):
         return export_state(self.envs, self._cumulative, self.schema, self.fields, self.device, extra)
 
     def validate(self, state):
-        """Check every lane of ``state`` and return its physics rows, or None without physics variation."""
+        """Check every environment of ``state`` and return its physics rows, or None without physics variation."""
         self._check_open()
         validate_state(self.schema, state, self.num_envs, self.key)
         return None if self.physics is None else self.physics.rows_from_state(unfold(state))
@@ -97,7 +97,7 @@ class DMCLanes(SimulatorAdapter):
         if rows is not None:
             self.physics.configure(rows)
         for i, env in enumerate(self.envs):
-            restore_lane(env, values, i, self._cumulative)
+            restore_instance(env, values, i, self._cumulative)
 
     def check_step(self, actions, active):
         if torch.is_tensor(actions):
@@ -109,11 +109,11 @@ class DMCLanes(SimulatorAdapter):
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or not active.all():
                 raise ValueError(
-                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                    "Accepted DMC wrappers do not expose terminal environments; partial active masks are unsupported"
                 )
         return actions, None
 
-    def _info(self, env, lane):
+    def _info(self, env, instance):
         """Return ``(success, info)`` for task outputs beyond reward, or None."""
         return None
 
@@ -121,7 +121,7 @@ class DMCLanes(SimulatorAdapter):
         self._check_open()
         if active is not None and not bool(torch.as_tensor(active).all()):
             raise ValueError(
-                "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                "Accepted DMC wrappers do not expose terminal environments; partial active masks are unsupported"
             )
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()

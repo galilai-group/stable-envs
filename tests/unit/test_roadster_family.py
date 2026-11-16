@@ -21,7 +21,7 @@ from tests.helpers.stepping import branch_step
 pytestmark = pytest.mark.unit
 
 NAMES = [name for name, _ in CELLS]
-LANES = 2
+NUM_ENVS = 2
 SEED = 3
 FLOATS, BOOLS = ("roadster_state", "float64"), ("roadster_state", "bool")
 
@@ -33,17 +33,17 @@ def _actions(env, steps: int, seed: int = 0) -> list[np.ndarray]:
 
 @pytest.fixture(scope="module")
 def jam():
-    with snv.RoadsterTrafficJam(num_envs=LANES, device="cpu", seed=SEED) as env:
+    with snv.RoadsterTrafficJam(num_envs=NUM_ENVS, device="cpu", seed=SEED) as env:
         yield env
 
 
 @pytest.mark.parametrize("name", NAMES)
 def test_cell_builds_resets_steps_and_restores_state(name):
-    with snv.make(name, num_envs=LANES, device="cpu", seed=SEED) as env:
+    with snv.make(name, num_envs=NUM_ENVS, device="cpu", seed=SEED) as env:
         assert env.family == "roadster" and env.TASK in A.TASKS
         state = env.reset(seed=SEED)
         env.state_spec.validate(state, owner="state")
-        assert snv.get_field(state, "task/id").flatten().tolist() == [A.TASKS.index(env.TASK)] * LANES
+        assert snv.get_field(state, "task/id").flatten().tolist() == [A.TASKS.index(env.TASK)] * NUM_ENVS
         assert (snv.get_field(state, "lifecycle/elapsed_steps") == 0).all()
         actions = _actions(env, 3)
         out = env.step(np.stack(actions, 1), frames=None)
@@ -68,13 +68,13 @@ def test_the_integration_state_is_split_in_mujoco_order(jam):
 
     from stable_envs.envs.roadster.source import RoadsterPlanEnv
 
-    lane = RoadsterPlanEnv(task="traffic")
-    lane.reset(seed=SEED)
+    instance = RoadsterPlanEnv(task="traffic")
+    instance.reset(seed=SEED)
     action = _actions(jam, 1)[0]
-    lane.step(action[0])
-    n = mujoco.mj_stateSize(lane.model, mujoco.mjtState.mjSTATE_INTEGRATION)
+    instance.step(action[0])
+    n = mujoco.mj_stateSize(instance.model, mujoco.mjtState.mjSTATE_INTEGRATION)
     phys = np.empty(n)
-    mujoco.mj_getState(lane.model, lane.data, phys, mujoco.mjtState.mjSTATE_INTEGRATION)
+    mujoco.mj_getState(instance.model, instance.data, phys, mujoco.mjtState.mjSTATE_INTEGRATION)
     jam.reset(seed=SEED)
     row = jam.step(action, frames=None)["state"][0]
     joined = np.concatenate([snv.get_field(row, f"sim/{name}").numpy() for name in jam._simulator.layout])
@@ -92,7 +92,7 @@ def test_the_integration_state_is_split_in_mujoco_order(jam):
     }
 
 
-def test_set_state_validates_everything_before_changing_any_lane(jam):
+def test_set_state_validates_everything_before_changing_any_environment(jam):
     state = jam.reset(seed=SEED)
     jam.step(_actions(jam, 1)[0], frames=None)
     live = jam.get_state()
@@ -104,7 +104,7 @@ def test_set_state_validates_everything_before_changing_any_lane(jam):
 
     refused(state.exclude(BOOLS), "missing")
     extra = state.clone()
-    extra["spare"] = torch.zeros(LANES, 1)
+    extra["spare"] = torch.zeros(NUM_ENVS, 1)
     refused(extra, "outside its schema")
     refused(state[:1], "batch")
     wrong_dtype = state.clone()
@@ -128,7 +128,7 @@ def test_set_state_validates_everything_before_changing_any_lane(jam):
     refused(jam._pack_render_state(state), "TensorDict")
     refused(jam._unpack_render_state(jam._pack_render_state(state)), "missing")
     with pytest.raises((TypeError, ValueError)):
-        branch_step(jam, jam._pack_render_state(state), torch.zeros(LANES, 4))
+        branch_step(jam, jam._pack_render_state(state), torch.zeros(NUM_ENVS, 4))
 
 
 def test_snapshots_are_independent_of_each_other_and_of_the_simulator(jam):
@@ -147,8 +147,8 @@ def test_snapshots_are_independent_of_each_other_and_of_the_simulator(jam):
 @pytest.mark.parametrize("name", ["RoadsterLoop", "RoadsterCarHop"])
 def test_restore_after_a_different_history_continues_bit_exactly(name):
     with (
-        snv.make(name, num_envs=LANES, device="cpu") as source,
-        snv.make(name, num_envs=LANES, device="cpu") as target,
+        snv.make(name, num_envs=NUM_ENVS, device="cpu") as source,
+        snv.make(name, num_envs=NUM_ENVS, device="cpu") as target,
     ):
         source.reset(seed=SEED, options={"variation_values": {"weather.wind": [6.0], "weather.rain": [0.4]}})
         for action in _actions(source, 4):
@@ -161,7 +161,7 @@ def test_restore_after_a_different_history_continues_bit_exactly(name):
         assert target.set_state(saved) is None
         assert_same_state(target.get_state(), saved)
         wind = target.variation_names.index("weather.wind")
-        torch.testing.assert_close(target.get_variation()[:, wind], torch.full((LANES,), 6.0), rtol=0, atol=0)
+        torch.testing.assert_close(target.get_variation()[:, wind], torch.full((NUM_ENVS,), 6.0), rtol=0, atol=0)
         assert (snv.get_field(saved, "physics/weather/wind") == 6.0).all() and (
             snv.get_field(saved, "physics/weather/rain") == 0.4
         ).all()
@@ -171,7 +171,7 @@ def test_restore_after_a_different_history_continues_bit_exactly(name):
         assert_same_state(saved, held)
 
 
-def test_an_inactive_lane_holds_its_state_and_reports_zeros(jam):
+def test_an_inactive_environment_holds_its_state_and_reports_zeros(jam):
     jam.reset(seed=SEED)
     before = jam.get_state()
     action = torch.as_tensor(_actions(jam, 1)[0])
@@ -188,9 +188,9 @@ def test_actions_are_validated_before_the_simulator_moves(jam):
     jam.reset(seed=SEED)
     live = jam.get_state()
     for bad in (
-        np.zeros((LANES, 3), np.float32),
-        np.full((LANES, 4), np.nan, np.float32),
-        np.zeros((LANES, 4), np.int64),
+        np.zeros((NUM_ENVS, 3), np.float32),
+        np.full((NUM_ENVS, 4), np.nan, np.float32),
+        np.zeros((NUM_ENVS, 4), np.int64),
     ):
         with pytest.raises((TypeError, ValueError)):
             jam._step(bad)
@@ -198,7 +198,7 @@ def test_actions_are_validated_before_the_simulator_moves(jam):
 
 
 def test_wind_and_rain_reach_the_physics_at_reset():
-    with snv.RoadsterTrafficJam(num_envs=LANES, device="cpu") as env:
+    with snv.RoadsterTrafficJam(num_envs=NUM_ENVS, device="cpu") as env:
         assert env.variation_names == ["rendering.cinematic", "weather.rain", "weather.wind"]
         assert env.dynamics_variation_leaves == {"weather.wind", "weather.rain"}
         assert env.physics_variation_leaves == ("weather.wind", "weather.rain")
@@ -214,7 +214,7 @@ def test_wind_and_rain_reach_the_physics_at_reset():
         ).all()
         assert (snv.get_field(windy, "weather/rain") == 0.3).all(), "the float64 value reaches the source exactly"
         torch.testing.assert_close(
-            snv.get_field(windy, "weather/wind_mean").norm(dim=-1), torch.full((LANES,), 10.0, dtype=torch.float64)
+            snv.get_field(windy, "weather/wind_mean").norm(dim=-1), torch.full((NUM_ENVS,), 10.0, dtype=torch.float64)
         )
         assert (snv.get_field(windy, "weather/gust_std") == 3.0).all() and (
             snv.get_field(windy, "weather/grip") == 1 - 0.45 * 0.3
@@ -229,7 +229,7 @@ def test_wind_and_rain_reach_the_physics_at_reset():
         env.set_variation({"weather.wind": [4.0]})
         state = env.reset(seed=SEED)
         torch.testing.assert_close(
-            snv.get_field(state, "weather/wind_mean").norm(dim=-1), torch.full((LANES,), 4.0, dtype=torch.float64)
+            snv.get_field(state, "weather/wind_mean").norm(dim=-1), torch.full((NUM_ENVS,), 4.0, dtype=torch.float64)
         )
         sampled = env.reset(seed=SEED, options={"variation": ["weather.rain"]})
         assert (snv.get_field(sampled, "weather/rain") > 0).all() and (
@@ -241,18 +241,18 @@ def test_render_draws_the_wm_camera_without_touching_the_simulation(jam):
     state = jam.reset(seed=SEED)
     held = state.clone()
     frames = jam.render(state)
-    assert frames.shape == (LANES, 96, 96, 3) and frames.dtype == torch.uint8
+    assert frames.shape == (NUM_ENVS, 96, 96, 3) and frames.dtype == torch.uint8
     assert tuple(jam.frame_spec.shape) == (96, 96, 3)
     assert frames.float().std() > 10, "a blank frame"
-    assert not torch.equal(frames[0], frames[1]), "the lanes start at different places"
+    assert not torch.equal(frames[0], frames[1]), "the environments start at different places"
     assert torch.equal(frames, jam.render(state)), "rendering is not deterministic"
     rows = jam._pack_render_state(state)
     assert torch.equal(frames, jam._render(rows))
     assert_same_state(state, held)
     assert_same_state(jam.get_state(), state)
-    assert jam.render(state, size=48).shape == (LANES, 48, 48, 3)
+    assert jam.render(state, size=48).shape == (NUM_ENVS, 48, 48, 3)
     assert jam.render(state[:1]).shape == (1, 96, 96, 3)
-    out = torch.empty((LANES, 96, 96, 3), dtype=torch.uint8)
+    out = torch.empty((NUM_ENVS, 96, 96, 3), dtype=torch.uint8)
     assert jam.render(state, out=out) is out and torch.equal(out, frames)
     control = jam.step(_actions(jam, 1)[0], frames=None)["state"]
     jam.set_state(state)
@@ -360,7 +360,7 @@ def test_cinematic_look_renders_same_state():
         snv.RoadsterTrafficJam(num_envs=1, device="cpu", look="cinematic")
 
 
-def test_each_lane_is_drawn_in_its_own_look():
+def test_each_environment_is_drawn_in_its_own_look():
     with snv.RoadsterTrafficJam(num_envs=2, device="cpu", size=48) as env:
         state = env.reset(seed=SEED)
         env.set_variation({"rendering.cinematic": [1, 0]})
@@ -393,7 +393,7 @@ def test_the_weather_seed_survives_the_render_row_exactly():
         assert not torch.equal(env.render(big), env.render(neighbour)), "neighbouring seeds draw different rain"
 
 
-def test_lanes_with_different_weather_match_lanes_simulated_alone():
+def test_environments_with_different_weather_match_environments_simulated_alone():
     """The environments share one physics batch; each one's tire grip must still apply only to it."""
     weather = np.array([[0.0, 0.0], [9.0, 1.0], [4.0, 0.5]])
     batch = RoadsterNativeAdapter("traffic", 3)
@@ -401,13 +401,15 @@ def test_lanes_with_different_weather_match_lanes_simulated_alone():
     try:
         batch.configure_physics(weather)
         batch.reset(SEED)
-        for lane, single in enumerate(alone):
-            single.configure_physics(weather[lane : lane + 1])
-            single.reset(SEED + lane)
+        for instance, single in enumerate(alone):
+            single.configure_physics(weather[instance : instance + 1])
+            single.reset(SEED + instance)
         for action in _actions(batch, 12, seed=4):
             together = batch.step(action)["state"]
-            for lane, single in enumerate(alone):
-                assert_same_state(together[lane : lane + 1], single.step(action[lane : lane + 1])["state"])
+            for instance, single in enumerate(alone):
+                assert_same_state(
+                    together[instance : instance + 1], single.step(action[instance : instance + 1])["state"]
+                )
     finally:
         for adapter in (batch, *alone):
             adapter.close()

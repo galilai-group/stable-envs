@@ -1,4 +1,4 @@
-"""Cube/Scene lanes sharing compiled models behave exactly like lanes that own them."""
+"""Cube/Scene environments sharing compiled models behave exactly like environments that own them."""
 
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ def model_arrays(model):
 
 
 @pytest.mark.parametrize("family", ["Cube", "Scene"])
-def test_shared_lanes_match_owned_lanes(family):
+def test_shared_environments_match_owned_environments(family):
     pooled = OGBManipulationAdapter(family, 3, seed=17)
     owned = [OGBManipulationAdapter(family, 1, seed=17 + i) for i in range(3)]
     rng = np.random.default_rng(0)
@@ -89,7 +89,7 @@ def test_configure_matches_recompiling_from_source(family):
         recompiled.close()
 
 
-def test_closing_lanes_releases_their_shared_models():
+def test_closing_environments_releases_their_shared_models():
     adapter = OGBManipulationAdapter("Cube", 2, seed=1)
     pool = adapter._pool
     adapter.configure([{"light.intensity": np.array([0.3])}, {}])

@@ -71,7 +71,7 @@ import numpy as np
 import torch
 
 from .._core.cpus import cpu_limit
-from .backends import Measure, Rungs, select_backend
+from .backends import BackendPair, Measure, select_backend
 
 if TYPE_CHECKING:
     from .mjwarp_fused import TreeWalks
@@ -114,7 +114,7 @@ def mujoco_backend(
     """
     if requested == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
-    backends = {"cpu": Rungs("native", "native"), "cuda": Rungs("native", "mjwarp", cuda_min_envs)}
+    backends = {"cpu": BackendPair("native", "native"), "cuda": BackendPair("native", "mjwarp", cuda_min_envs)}
     return select_backend(path, num_envs, device, requested, backends, choices=BACKENDS, measure=measure)
 
 

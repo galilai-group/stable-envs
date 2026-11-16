@@ -69,8 +69,8 @@ def test_public_cuda_env_with_reset_workers_matches_local(name, monkeypatch):
             )
         torch.testing.assert_close(remote.render(), local.render(), rtol=0, atol=0)
         saved = local.get_state()
-        lanes = {"variation": [], "variation_values": {"block.shape": np.asarray([1, 4, 2, 6])}}
-        assert_same_state(remote.reset(seed=8, options=lanes), local.reset(seed=8, options=lanes))
+        instances = {"variation": [], "variation_values": {"block.shape": np.asarray([1, 4, 2, 6])}}
+        assert_same_state(remote.reset(seed=8, options=instances), local.reset(seed=8, options=instances))
         for env in envs:
             env.set_state(saved)
         assert_same_state(remote.reset(seed=9), local.reset(seed=9))

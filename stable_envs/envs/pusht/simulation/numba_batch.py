@@ -23,45 +23,45 @@ def _finish(
     body, active, counts, contacts, segment_count, relative, actions, code, tag, latest, latest_type, present,
     history, codes, lengths, observation, goal, shape, reward, success,
 ):  # fmt: skip
-    """Record the step of the ``active`` lanes and write their observation, reward and success.
+    """Record the step of the ``active`` environments and write their observation, reward and success.
 
     The same arithmetic, in the same order, as the NumPy expressions of the source task.
     """
-    for lane in range(body.shape[0]):
-        on = active[lane]
-        n = lengths[lane]
+    for instance in range(body.shape[0]):
+        on = active[instance]
+        n = lengths[instance]
         if on:
-            contacts[lane] = counts[lane, 0]
-            segment_count[lane] = counts[lane, 1]
-            history[lane, n, 0] = actions[lane, 0]
-            history[lane, n, 1] = actions[lane, 1]
-            codes[lane, n] = code
-            lengths[lane] = n + 1
-            latest[lane, 0] = relative[lane, 0]
-            latest[lane, 1] = relative[lane, 1]
-            latest_type[lane, 0] = tag[0]
-            latest_type[lane, 1] = tag[1]
-            present[lane] = True
+            contacts[instance] = counts[instance, 0]
+            segment_count[instance] = counts[instance, 1]
+            history[instance, n, 0] = actions[instance, 0]
+            history[instance, n, 1] = actions[instance, 1]
+            codes[instance, n] = code
+            lengths[instance] = n + 1
+            latest[instance, 0] = relative[instance, 0]
+            latest[instance, 1] = relative[instance, 1]
+            latest_type[instance, 0] = tag[0]
+            latest_type[instance, 1] = tag[1]
+            present[instance] = True
         else:
-            history[lane, n, 0] = 0.0
-            history[lane, n, 1] = 0.0
-            codes[lane, n] = 0
-        obs = observation[lane]
-        obs[0], obs[1] = body[lane, 0, 0], body[lane, 0, 1]
-        obs[2], obs[3] = body[lane, 1, 0], body[lane, 1, 1]
-        obs[4] = body[lane, 1, 4] % _TURN
-        obs[5], obs[6] = body[lane, 0, 2], body[lane, 0, 3]
+            history[instance, n, 0] = 0.0
+            history[instance, n, 1] = 0.0
+            codes[instance, n] = 0
+        obs = observation[instance]
+        obs[0], obs[1] = body[instance, 0, 0], body[instance, 0, 1]
+        obs[2], obs[3] = body[instance, 1, 0], body[instance, 1, 1]
+        obs[4] = body[instance, 1, 4] % _TURN
+        obs[5], obs[6] = body[instance, 0, 2], body[instance, 0, 3]
         total = 0.0
         near = 0.0
         for i in range(obs.shape[0]):
-            d = goal[lane, i] - obs[i]
+            d = goal[instance, i] - obs[i]
             total += d * d
             if i == 3:
                 near = total
-        reward[lane] = -math.sqrt(total)
-        symmetry = _SYMMETRIES[int(shape[lane])]
-        angle = abs(goal[lane, 4] - obs[4]) % symmetry
-        success[lane] = (math.sqrt(near) < 20) & (min(angle, symmetry - angle) < _SUCCESS_ANGLE)
+        reward[instance] = -math.sqrt(total)
+        symmetry = _SYMMETRIES[int(shape[instance])]
+        angle = abs(goal[instance, 4] - obs[4]) % symmetry
+        success[instance] = (math.sqrt(near) < 20) & (min(angle, symmetry - angle) < _SUCCESS_ANGLE)
 
 
 class PushTNumbaAdapter(PushTBatchAdapter):
@@ -238,7 +238,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         return TensorDict._new_unsafe(outputs, batch_size=torch.Size([n]), device=device)
 
     def step_leaves(self, actions, capacity=False):
-        """Step every lane; the outputs and the State as host arrays by key path, or None off the CPU.
+        """Step every environment; the outputs and the State as host arrays by key path, or None off the CPU.
 
         The arrays may be live buffers: the caller copies them before the next call. With ``capacity``, the action
         history has the width of its buffers, which changes only when they grow, so the leaf shapes stay the same
@@ -260,11 +260,11 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         return leaves
 
     def history_width(self):
-        """The width of the exported action history: the longest lane's history."""
+        """The width of the exported action history: the longest environment's history."""
         return self._history_width()
 
     def _advance_host(self, actions, active):
-        """Step the lanes on the host; the reward, then success, terminated and truncated, in one byte buffer."""
+        """Step the environments on the host; the reward, then success, terminated and truncated, in one byte buffer."""
         actions = actions.numpy() if torch.is_tensor(actions) else np.asarray(actions)
         if actions.shape != (self.num_envs, 2):
             raise ValueError("PushT actions require shape [num_envs, 2] and a supported dtype")
@@ -324,7 +324,7 @@ class PushTNumbaAdapter(PushTBatchAdapter):
         return raw
 
     def _reserve_history(self):
-        """Widen the action history buffers when a lane's next action would not fit."""
+        """Widen the action history buffers when an environment's next action would not fit."""
         width = self._history_width() + 1
         if width > self._actions.shape[1]:
             capacity = max(16, 2 * self._actions.shape[1])

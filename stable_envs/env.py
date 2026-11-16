@@ -341,13 +341,15 @@ class ResetLeaf:
     dtype: str = "float32"
 
 
-def _lane_value(value, lane: int, batch: int, width: int) -> np.ndarray:
+def _instance_value(value, instance: int, batch: int, width: int) -> np.ndarray:
     v = np.asarray(value)
     if v.size == width:
         return v.reshape(width).copy()
     if v.size == batch * width:
-        return v.reshape(batch, width)[lane].copy()
-    raise ValueError(f"expected {width} value(s) shared by the batch or ({batch}, {width}) per lane, got {v.shape}")
+        return v.reshape(batch, width)[instance].copy()
+    raise ValueError(
+        f"expected {width} value(s) shared by the batch or ({batch}, {width}) per environment, got {v.shape}"
+    )
 
 
 class Env:
@@ -396,16 +398,16 @@ class Env:
     state_layout: tuple[tuple, ...] = ()
 
     reset_leaves: tuple[ResetLeaf, ...] = ()
-    #: Returns a fresh distribution tree for ``reset_leaves``; reset seeds it with ``seed + lane``.
+    #: Returns a fresh distribution tree for ``reset_leaves``; reset seeds it with ``seed + instance``.
     reset_tree_factory = None
     #: Variation leaves ``reset`` accepts in ``options["variation_values"]`` for that episode.
     reset_value_paths: frozenset[str] = frozenset()
-    #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
+    #: Variation leaves ``reset`` samples per environment when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
-    #: ``{device type: Rungs("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
-    #: ``"cpu"`` entry: on a device whose rungs differ, a batch of fewer than ``min_rows`` frames draws with the CPU
+    #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
+    #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
-    render_rungs: Mapping[str, Any] | None = None
+    render_backends: Mapping[str, Any] | None = None
     #: The rows ``render`` checked for the call in progress; ``_render`` does not check them again.
     _checked_rows: torch.Tensor | None = None
 
@@ -928,9 +930,9 @@ class Env:
         """
         return self.variation_space.value
 
-    def _reset_value_ok(self, path: str, value, lane: int) -> bool:
-        """Return whether a sampled reset value is acceptable for ``lane``; rejected draws are resampled."""
-        del path, value, lane
+    def _reset_value_ok(self, path: str, value, instance: int) -> bool:
+        """Return whether a sampled reset value is acceptable for ``instance``; rejected draws are resampled."""
+        del path, value, instance
         return True
 
     def _reset_request(self, options: Mapping | None) -> tuple[tuple[str, ...], dict]:
@@ -953,7 +955,7 @@ class Env:
             )
         return tuple(sampled), values
 
-    def _draw_reset_lane(self, tree, lane: int, sampled, values) -> dict[str, np.ndarray]:
+    def _draw_reset_instance(self, tree, instance: int, sampled, values) -> dict[str, np.ndarray]:
         from ._core.reset_tree import sample as sample_space
 
         out = {}
@@ -965,13 +967,13 @@ class Env:
                     node = node[part]
                 for _ in range(1000):
                     candidate = sample_space(node)
-                    if self._reset_value_ok(leaf.path, candidate, lane):
+                    if self._reset_value_ok(leaf.path, candidate, instance):
                         value = candidate
                         break
                 else:
                     raise RuntimeError(f"{leaf.path} rejection sampling did not converge")
             if leaf.path in values:
-                value = _lane_value(values[leaf.path], lane, self.B, len(leaf.default)).astype(leaf.dtype)
+                value = _instance_value(values[leaf.path], instance, self.B, len(leaf.default)).astype(leaf.dtype)
             out[leaf.path] = value
         return out
 
@@ -980,8 +982,8 @@ class Env:
         for part in path.split("."):
             node = node[part]
         rows = []
-        for lane in range(self.B):
-            rng = self.rng if seed is None else np.random.default_rng((int(seed), lane))
+        for instance in range(self.B):
+            rng = self.rng if seed is None else np.random.default_rng((int(seed), instance))
             if hasattr(node, "low"):
                 rows.append(node.batch_sample(1, rng).reshape(-1))
             else:
@@ -1018,18 +1020,18 @@ class Env:
             return out
         from ._core.reset_tree import PathSeeder
 
-        lanes = []
-        # Seeding replaces the generators that the lane reads, so one tree serves every lane and every reset.
+        instances = []
+        # Seeding replaces the generators that the environment reads, so one tree serves every environment and every reset.
         seeder = self.__dict__.get("_reset_seeder")
         if seeder is None:
             seeder = PathSeeder(self.reset_tree_factory(), [leaf.path for leaf in self.reset_leaves])
             self.__dict__["_reset_seeder"] = seeder
         tree = seeder.tree
-        for lane in range(self.B):
-            seeder.seed(None if seed is None else int(seed) + lane)
-            lanes.append(self._draw_reset_lane(tree, lane, sampled, values))
-        for path in lanes[0]:
-            out[path] = np.stack([row[path] for row in lanes])
+        for instance in range(self.B):
+            seeder.seed(None if seed is None else int(seed) + instance)
+            instances.append(self._draw_reset_instance(tree, instance, sampled, values))
+        for path in instances[0]:
+            out[path] = np.stack([row[path] for row in instances])
         return out
 
     @property

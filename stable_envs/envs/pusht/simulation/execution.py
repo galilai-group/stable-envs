@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("triton", "jax", "numba")
 #: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
-#: Numba. None uses the GPU backend at every batch size. The knob and the tuning cache take precedence.
+#: Numba. None uses the GPU backend at every batch size. The setting and the tuning cache take precedence.
 #: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
 #: Measured on 15 November 2026 with ``python -m benchmarks.backend_switch PushT`` on an RTX A5000 with an AMD EPYC 7532,
 #: an RTX A5000 with an AMD EPYC 7662 and an RTX A5500 with an AMD EPYC 7662, 8 cores each: Numba with one copy of
@@ -24,10 +24,10 @@ CUDA_MIN_ENVS: int | None = 128
 
 #: The ``select_backend`` path of the PushT physics backend choice.
 PATH = "pusht-sim"
-#: Smallest batch whose resets run in worker processes, unless the ``worker_min_lanes`` knob is set. A lane's source
+#: Smallest batch whose resets run in worker processes, unless the ``worker_min_envs`` setting is set. An environment's source
 #: reset takes milliseconds of Python. From this batch size, parallel resets save more time than the round trip to
 #: the workers costs. docs/performance-tuning.md (Worker processes) says how the value was measured.
-RESET_WORKER_MIN_LANES = 8
+RESET_WORKER_MIN_ENVS = 8
 
 
 def _measure(env_type, device, config: dict):
@@ -55,7 +55,7 @@ def pusht_backend(
     """
     import torch
 
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
@@ -65,7 +65,7 @@ def pusht_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", _gpu_backend(), CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", _gpu_backend(), CUDA_MIN_ENVS)},
         choices=SIMULATION_BACKENDS,
         measure=measure,
     )
@@ -88,7 +88,7 @@ def make_pusht_adapter(
 ) -> PushTBatchAdapter:
     cpus = cpu_affinity()
     valid = type(num_envs) is int and num_envs > 0
-    count = process_count(num_envs, cpus, path=PATH, min_lanes=RESET_WORKER_MIN_LANES) if valid else 0
+    count = process_count(num_envs, cpus, path=PATH, min_envs=RESET_WORKER_MIN_ENVS) if valid else 0
     backend = pusht_backend(num_envs, device, simulation_backend, discrete=discrete, config=config)
     if backend == "triton":
         from .triton_batch import PushTTritonAdapter as adapter
@@ -106,5 +106,5 @@ def make_pusht_adapter(
             return host
         host.export_device = torch.device(device)
         return HostAdapter(host, device)
-    # Workers reset the lanes; one batched call steps them.
+    # Workers reset the environments; one batched call steps them.
     return adapter(num_envs, device, seed, discrete=discrete, config=config, processes=count, cpus=cpus)

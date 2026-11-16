@@ -12,7 +12,7 @@ _REGISTERED_SMALL_TARGET = 0.015
 
 # Keep the compiled model target as a third choice and the default.
 # Wrapper box/sphere choices use a smaller size and must not replace the source default.
-SHAPE_KNOB_SPECS: dict[str, dict] = {
+SHAPE_CHOICE_SPECS: dict[str, dict] = {
     "DMCManipulatorBringBall": {
         "target_ball": (
             (R3.BOX, (_REGISTERED_SMALL_TARGET,) * 3),  # target.shape = 0
@@ -53,7 +53,7 @@ DMCManipulatorBringBall = parity_cell(
     "manipulator",
     "bring_ball",
     default_size=DEFAULT_SIZE,
-    SHAPE_KNOBS=SHAPE_KNOB_SPECS["DMCManipulatorBringBall"],
+    SHAPE_CHOICES=SHAPE_CHOICE_SPECS["DMCManipulatorBringBall"],
     RENDER_INVARIANT_DIMS=RENDER_INVARIANT_DIMS["DMCManipulatorBringBall"],
     state_dims_note=STATE_DIMS_NOTE["DMCManipulatorBringBall"],
     bases=(DMCAlignedSemantics,),

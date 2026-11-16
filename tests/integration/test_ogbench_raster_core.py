@@ -35,8 +35,8 @@ def software_gl() -> None:
         pytest.skip("Requires an OSMesa or GLFW software-GL test environment")
 
 
-def _state(name, lanes=4):
-    env = se.make(name, num_envs=lanes, device="cpu", seed=5)
+def _state(name, instances=4):
+    env = se.make(name, num_envs=instances, device="cpu", seed=5)
     env.reset(seed=11)
     rng = np.random.default_rng(0)
     for _ in range(8):
@@ -73,7 +73,7 @@ def test_raster_follows_opengl(name, software_gl):
 
 @pytest.mark.parametrize("name", FAMILIES)
 def test_raster_draws_every_look_leaf(name, software_gl):
-    env, state = _state(name, lanes=1)
+    env, state = _state(name, instances=1)
     leaves = [leaf for leaf in LOOK if leaf != "lock_color" or name == "OGBScene"]
     try:
         base = env.render(state, backend="opengl")
@@ -93,21 +93,25 @@ def test_raster_batches_rows_and_mixed_looks_alike(name, software_gl):
     env, state = _state(name)
     try:
         batch = env.render(state, backend="numba")
-        for lane in range(len(state)):
-            assert torch.equal(env.render(state[lane : lane + 1], backend="numba"), batch[lane : lane + 1])
+        for instance in range(len(state)):
+            assert torch.equal(
+                env.render(state[instance : instance + 1], backend="numba"), batch[instance : instance + 1]
+            )
         mixed = state.clone()
         mixed[1:2] = _vary(state[1:2], "light.intensity", LOOK["light.intensity"])
         mixed[2:3] = _vary(state[2:3], "camera.angle_delta", LOOK["camera.angle_delta"])
         frames = env.render(mixed, backend="numba")
         assert torch.equal(frames[0], batch[0]) and torch.equal(frames[3], batch[3])
-        for lane in (1, 2):
-            assert torch.equal(frames[lane : lane + 1], env.render(mixed[lane : lane + 1], backend="numba"))
+        for instance in (1, 2):
+            assert torch.equal(
+                frames[instance : instance + 1], env.render(mixed[instance : instance + 1], backend="numba")
+            )
     finally:
         env.close()
 
 
 def test_raster_supersample_and_resize(software_gl):
-    env, state = _state("OGBCube", lanes=2)
+    env, state = _state("OGBCube", instances=2)
     try:
         for size, ss in ((64, 1), (63, 1), (96, 2)):
             expected = env.render(state, backend="opengl", size=size, supersample=ss)
@@ -120,7 +124,7 @@ def test_raster_supersample_and_resize(software_gl):
 
 @pytest.mark.parametrize("name", FAMILIES)
 def test_render_semantic_shapes_and_depth(name, software_gl):
-    env, _ = _state(name, lanes=2)
+    env, _ = _state(name, instances=2)
     try:
         rows = env._pack_render_state(env.get_state())
         seg, depth = env.render_semantic(rows)

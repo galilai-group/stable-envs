@@ -38,7 +38,7 @@ PROCESSES = (0, 1, 2, 8)
 
 
 def force_processes(count):
-    """Make every family's routing return ``count`` workers (capped by lanes) for eligible targets."""
+    """Make every family's routing return ``count`` workers (capped by environments) for eligible targets."""
     for name in EXECUTION.values():
         try:
             module = importlib.import_module(name)
@@ -86,21 +86,21 @@ def random_actions(env, rng, length):
 
 
 def keep_engines_off(env, actions):
-    """Hold the ignition command at zero in odd lanes, so the batch mixes ignited and unignited lanes."""
+    """Hold the ignition command at zero in odd environments, so the batch mixes ignited and unignited environments."""
     if env.family == "pyflyt":
         actions[1::2, :, 3] = 0
     return actions
 
 
-def finish_some_lanes(env, state):
-    """Edit State so some lanes end inside the next chunks, where the family allows it."""
+def finish_some_instances(env, state):
+    """Edit State so some environments end inside the next chunks, where the family allows it."""
     state = state.clone()
-    lanes = torch.arange(env.num_envs)
+    instances = torch.arange(env.num_envs)
     if env.family == "classic_control":
         limit = CLASSIC_LIMITS[env.CLASSIC_DOMAIN]
-        get_field(state, "lifecycle/elapsed_steps")[:, 0] = limit - 1 - (lanes % 7) * 3
+        get_field(state, "lifecycle/elapsed_steps")[:, 0] = limit - 1 - (instances % 7) * 3
     if env.family == "ogbench" and env.domain.endswith("maze"):
-        even = lanes[lanes % 2 == 0]
+        even = instances[instances % 2 == 0]
         get_field(state, "root/position")[even, :2] = get_field(state, "task/goal_pos")[even, :2]
     return state
 
@@ -131,7 +131,7 @@ def scenario(name, num_envs, count, seed=17):
         if env.family == "fetch":
             env._simulator._set_episode_limits(np.arange(num_envs) % 7 + 2)
         else:
-            env.set_state(finish_some_lanes(env, env.get_state()))
+            env.set_state(finish_some_instances(env, env.get_state()))
         actions = [keep_engines_off(env, random_actions(env, rng, 10)) for _ in range(5)]
         saved = [env.get_state()]
         frames = getattr(env, "produces_rgb", True)

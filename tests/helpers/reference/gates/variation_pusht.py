@@ -1,7 +1,7 @@
 """PushT variation leaves against pinned stable_worldmodel.
 
-Each leaf is set per lane (``variation_values`` with one value per lane) and, where stable-worldmodel
-samples it, drawn per lane (``variation``); one stable-worldmodel PushT per lane is reset with the same seed
+Each leaf is set per environment (``variation_values`` with one value per environment) and, where stable-worldmodel
+samples it, drawn per environment (``variation``); one stable-worldmodel PushT per environment is reset with the same seed
 and options. The reset bodies, observation, goal and frame must match exactly. A short rollout's
 terminations must match too, its observations and rewards within ``ROLLOUT_ATOL`` and its frames within
 ``ROLLOUT_FRAME_MSE``. A leaf must also move stable-worldmodel away from its default, so the comparison is not two
@@ -52,14 +52,16 @@ def _swm_value(value):
     return int(value) if value.dtype.kind in "iu" and not value.shape else value.copy()
 
 
-def _swm_lanes(name, seed, options):
+def _swm_instances(name, seed, options):
     envs = []
-    for lane in range(3):
-        lane_options = dict(options)
+    for instance in range(3):
+        instance_options = dict(options)
         if "variation_values" in options:
-            lane_options["variation_values"] = {k: _swm_value(v[lane]) for k, v in options["variation_values"].items()}
+            instance_options["variation_values"] = {
+                k: _swm_value(v[instance]) for k, v in options["variation_values"].items()
+            }
         env = _swm(name)()
-        env.reset(seed=seed + lane, options=lane_options)
+        env.reset(seed=seed + instance, options=instance_options)
         envs.append(env)
     return envs
 
@@ -70,12 +72,14 @@ def _body(env, name, field):
 
 
 def _compare_reset(state, envs):
-    for lane, env in enumerate(envs):
+    for instance, env in enumerate(envs):
         for name in ("agent", "block"):
             for field in BODY_FIELDS:
-                ours = get_field(state, f"current/body/{name}/{field}")[lane].cpu().numpy()
-                np.testing.assert_array_equal(ours, _body(env, name, field), err_msg=f"{name}.{field} lane {lane}")
-        np.testing.assert_array_equal(get_field(state, "current/observation")[lane].cpu().numpy(), env._get_obs())
+                ours = get_field(state, f"current/body/{name}/{field}")[instance].cpu().numpy()
+                np.testing.assert_array_equal(
+                    ours, _body(env, name, field), err_msg=f"{name}.{field} environment {instance}"
+                )
+        np.testing.assert_array_equal(get_field(state, "current/observation")[instance].cpu().numpy(), env._get_obs())
 
 
 def _frames(ours, envs):
@@ -92,7 +96,7 @@ def _actions(name, seed):
 
 
 def _run(env, name, seed, options) -> dict:
-    envs = _swm_lanes(name, seed, options)
+    envs = _swm_instances(name, seed, options)
     try:
         state = env.reset(seed=seed, options=options)
         _compare_reset(state, envs)
@@ -102,15 +106,15 @@ def _run(env, name, seed, options) -> dict:
         for action in _actions(name, seed):
             out = env.step(action, frames=None)
             expected = [e.step(a) for e, a in zip(envs, action, strict=True)]
-            for lane, (obs, reward, terminated, _, _) in enumerate(expected):
+            for instance, (obs, reward, terminated, _, _) in enumerate(expected):
                 np.testing.assert_allclose(
-                    get_field(out["state"], "current/observation")[lane].cpu().numpy(),
+                    get_field(out["state"], "current/observation")[instance].cpu().numpy(),
                     obs["state"],
                     rtol=0,
                     atol=ROLLOUT_ATOL,
                 )
-                assert abs(float(out["reward"][lane]) - reward) <= ROLLOUT_ATOL
-                assert bool(out["terminated"][lane]) == terminated
+                assert abs(float(out["reward"][instance]) - reward) <= ROLLOUT_ATOL
+                assert bool(out["terminated"][instance]) == terminated
             frames.append(env.render().cpu().numpy())
             rollout = max(rollout, _frames(frames[-1], envs)[0])
     finally:
@@ -136,7 +140,7 @@ def leaf_gate(name: str, leaf: str, seed: int = 31) -> dict:
         moved = (result.pop("frames") != default.pop("frames")).any(-1).reshape(3, -1).sum(1)
         assert (moved[1:] > 0).all(), moved
         evidence["explicit"] = result
-        evidence["px_moved_vs_default_per_lane"] = moved.tolist()
+        evidence["px_moved_vs_default_per_instance"] = moved.tolist()
         if leaf in SAMPLED:
             sampled = _run(env, name, seed + 1, {"variation": [leaf]})
             sampled.pop("frames")
@@ -148,7 +152,7 @@ def leaf_gate(name: str, leaf: str, seed: int = 31) -> dict:
     return evidence
 
 
-#: Per-lane appearance applied mid-episode, then configured shape for the next reset.
+#: Per-environment appearance applied mid-episode, then configured shape for the next reset.
 APPEARANCE = {
     "agent.color": np.asarray([[10, 200, 30], [250, 250, 0], [0, 0, 0]], np.uint8),
     "background.color": np.asarray([[30, 30, 30], [255, 255, 255], [200, 180, 220]], np.uint8),
@@ -166,7 +170,7 @@ def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
     ``set_init_value`` is what a later reset restores. stable-worldmodel draws the goal pose cached at reset, so
     its frame for a moved goal is the one drawn with ``goal_pose`` set to that pose.
     """
-    envs = _swm_lanes(name, seed, {"variation": []})
+    envs = _swm_instances(name, seed, {"variation": []})
     actions = _actions(name, seed)
     with se.make(name, num_envs=3, device="cpu") as env:
         try:
@@ -177,13 +181,13 @@ def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
                     e.step(a)
             before = env.render().cpu().numpy()
             env.set_variation({**APPEARANCE, **CONFIGURED})
-            for lane, e in enumerate(envs):
+            for instance, e in enumerate(envs):
                 for path, values in {**APPEARANCE, **CONFIGURED}.items():
                     group, leaf = path.split(".")
                     node = e.variation_space[group][leaf]
-                    node.set_init_value(_swm_value(values[lane]))
+                    node.set_init_value(_swm_value(values[instance]))
                     if path in APPEARANCE:
-                        node.set_value(_swm_value(values[lane]))
+                        node.set_value(_swm_value(values[instance]))
                 goal = e.variation_space["goal"]
                 e.goal_pose = np.concatenate([goal["position"].value, [goal["angle"].value]])
             now = env.render().cpu().numpy()
@@ -199,12 +203,12 @@ def set_variation_gate(name: str = "PushT", seed: int = 41) -> dict:
             for e in envs:
                 e.close()
             envs = []
-            for lane in range(3):
+            for instance in range(3):
                 e = _swm(name)()
                 for path, values in {**APPEARANCE, **CONFIGURED}.items():
                     group, leaf = path.split(".")
-                    e.variation_space[group][leaf].set_init_value(_swm_value(values[lane]))
-                e.reset(seed=seed + 1 + lane, options={"variation": []})
+                    e.variation_space[group][leaf].set_init_value(_swm_value(values[instance]))
+                e.reset(seed=seed + 1 + instance, options={"variation": []})
                 envs.append(e)
             state = env.reset(seed=seed + 1, options={"variation": []})
             _compare_reset(state, envs)

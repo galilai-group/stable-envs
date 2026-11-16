@@ -1,4 +1,4 @@
-"""OGBench Cube and Scene lanes on MuJoCo Warp: float32 physics, the controller in one float64 kernel."""
+"""OGBench Cube and Scene environments on MuJoCo Warp: float32 physics, the controller in one float64 kernel."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from ...._execution.mjbatch import WarpBatch
 from .compatibility import COMPILED_FIELDS, compiled_fields
 from .manipulation import field, groups_of, site_ids, state_schema
 from .manipulation_batch import (
-    LaneModels,
+    InstanceModels,
     OGBManipulationBatchAdapter,
     live_view,
-    make_lanes,
+    make_instances,
     metadata_env,
     state_layout,
 )
@@ -277,9 +277,9 @@ def _orthonormal(rotations):
 
 
 class WarpController:
-    """``ManipSpaceEnv.set_control`` for every lane in one MuJoCo Warp kernel, in float64.
+    """``ManipSpaceEnv.set_control`` for every environment in one MuJoCo Warp kernel, in float64.
 
-    The kernel runs OGBench's differential IK, each lane to its own stop, on the arm's kinematics written out for
+    The kernel runs OGBench's differential IK, each environment to its own stop, on the arm's kinematics written out for
     its serial chain of hinges.
     """
 
@@ -374,7 +374,7 @@ _WARP_LOADED = {"mocap_pos": "mocap_pos", "mocap_quat": "mocap_quat", "qfrc_appl
 
 
 class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
-    """Cube/Scene lanes on MuJoCo Warp (float32 physics) with OGBench's resets, restores and Variations.
+    """Cube/Scene environments on MuJoCo Warp (float32 physics) with OGBench's resets, restores and Variations.
 
     The step follows ``ManipSpaceEnv.step``: the controller (one float64 Warp kernel), ``frame_skip`` substeps,
     ``rne_postconstraint`` and the family's ``post_step`` in Torch, without a host synchronization (Scene
@@ -383,14 +383,14 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     """
 
     execution_mode = "NATIVE_MJWARP"
-    #: The lanes step on the device, so a step has no host arrays to move.
+    #: The environments step on the device, so a step has no host arrays to move.
     step_leaves = None
     step_host = None
-    #: A step with a lane mask runs the same graphs as one without, so a sequence passes its mask without a readback.
+    #: A step with an environment mask runs the same graphs as one without, so a sequence passes its mask without a readback.
     masks_on_device = True
 
     def __init__(
-        self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, lanes=None, exclude_contacts=True
+        self, family, num_envs=1, device="cuda", seed=0, reward_task_id=None, *, instances=None, exclude_contacts=True
     ):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
             raise ValueError("Cube/Scene require a positive integer batch")
@@ -400,10 +400,10 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         self.family, self.num_envs, self.device = family, num_envs, device
         self._closed = False
         self.physics = self._control = None
-        self.lanes = make_lanes(family, num_envs, seed, reward_task_id) if lanes is None else lanes
+        self.instances = make_instances(family, num_envs, seed, reward_task_id) if instances is None else instances
         try:
             self._meta = env = metadata_env(family)
-            self.fields, self.nq = self.lanes.fields, self.lanes.nq
+            self.fields, self.nq = self.instances.fields, self.instances.nq
             self.schema = schema = state_schema(family, self.fields)
             self._layout = state_layout(schema, num_envs)
             # Every group lives on the device. MuJoCo Warp steps the physics fields in _WARP_PHYSICS; the other
@@ -420,13 +420,13 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 for name in self._physics
                 if name.split("/")[1] not in _WARP_PHYSICS
             }
-            # Variations recompile these fields per lane, and Scene's locks and targets set damping and sites.
+            # Variations recompile these fields per environment, and Scene's locks and targets set damping and sites.
             batched = _batchable((*COMPILED_FIELDS, "dof_damping", "site_pos"))
-            self._models = LaneModels(env, (), schema)
+            self._models = InstanceModels(env, (), schema)
             self._variants = {}
-            state = self.lanes.get_state()
+            state = self.instances.get_state()
             self.physics = WarpBatch(
-                self._lane_models(groups_of(schema, state)),
+                self._instance_models(groups_of(schema, state)),
                 num_envs,
                 device,
                 frame_skip=int(env._n_steps),
@@ -479,18 +479,18 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     @property
     def envs(self):
         """The in-process OGBench objects as of the last reset or restore, or the metadata object."""
-        return getattr(self.lanes, "envs", [self._meta])
+        return getattr(self.instances, "envs", [self._meta])
 
     def _push(self):
         if self.family == "Scene":
             self._poll_repairs(wait=True)
         super()._push()
 
-    def _lane_models(self, columns):
-        """One MjModel per lane: the metadata model, or a copy with the compiled fields of the lane's Variation."""
+    def _instance_models(self, columns):
+        """One MjModel per environment: the metadata model, or a copy with the compiled fields of the environment's Variation."""
         base = self._meta.model
         models = [base] * self.num_envs
-        for key, (values, lanes) in self._models.variants(columns).items():
+        for key, (values, instances) in self._models.variants(columns).items():
             model = self._variants.get(key)
             if model is None:
                 model = self._variants[key] = copy.copy(base)
@@ -501,11 +501,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                         model.tex_data[start : start + len(value)] = value
                     else:
                         getattr(model, name)[:] = value
-            for i in lanes:
+            for i in instances:
                 models[i] = model
         return models
 
-    # Loading lanes from State.
+    # Loading environments from State.
 
     def _load(self, state):
         state = state.to(self.device)
@@ -517,7 +517,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             self._repair_count.zero_()
             rng = {key: value.cpu().numpy() for key, value in self._env_rng.items()}
             self._draw_repairs(rng, np.arange(self.num_envs))
-        models = self._lane_models(host)
+        models = self._instance_models(host)
         ids = tuple(id(m) for m in models)
         if ids != getattr(self, "_model_ids", None):
             self.physics.set_models(models)
@@ -553,11 +553,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     @staticmethod
     def _host_models(columns):
-        """Host copies of the model and Scene groups, which ``LaneModels`` reads."""
+        """Host copies of the model and Scene groups, which ``InstanceModels`` reads."""
         return {k: v.cpu().numpy() for k, v in columns.items() if k.split("/")[0] in ("model", "scene")}
 
     def _load_models(self, columns):
-        models = self._lane_models(self._host_models(columns))
+        models = self._instance_models(self._host_models(columns))
         ids = tuple(id(m) for m in models)
         if ids != getattr(self, "_model_ids", None):
             self.physics.set_models(models)
@@ -585,8 +585,8 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     def configure(self, values):
         self._check_open()
         self._push()
-        self.lanes.configure(values)
-        current = self.lanes.get_state().to(self.device)
+        self.instances.configure(values)
+        current = self.instances.get_state().to(self.device)
         for key, group in self.schema.groups.items():
             if key.split("/")[0] in ("variation", "model"):
                 self._live[key].copy_(current.get(group.path))
@@ -678,10 +678,10 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         self.physics.forward()
 
     def _repair(self, unhealthy):
-        """OGBench's reset of a cube that left the workspace, with values drawn ahead from the lane's generator.
+        """OGBench's reset of a cube that left the workspace, with values drawn ahead from the environment's generator.
 
-        The host draws ``REPAIR_DRAWS`` repairs per lane ahead; it draws again for a lane when it sees that the lane
-        used them, which it checks without waiting for the device. A lane that needs more repairs before then
+        The host draws ``REPAIR_DRAWS`` repairs per environment ahead; it draws again for an environment when it sees that the environment
+        used them, which it checks without waiting for the device. An environment that needs more repairs before then
         repeats the last drawn one.
         """
         slot = self._repair_count.long().clamp(max=REPAIR_DRAWS - 1)
@@ -694,23 +694,23 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
             torch.where(fire, self._repair_rng[key][self._rows, slot], column, out=column)
         self._repair_count += unhealthy
 
-    def _draw_repairs(self, rng, lanes):
-        """Draw ``REPAIR_DRAWS`` cube repairs of ``lanes`` from their environment generators, as OGBench does."""
+    def _draw_repairs(self, rng, instances):
+        """Draw ``REPAIR_DRAWS`` cube repairs of ``instances`` from their environment generators, as OGBench does."""
         generator = np.random.Generator(np.random.PCG64())
-        qpos = np.empty((len(lanes), REPAIR_DRAWS, 7))
+        qpos = np.empty((len(instances), REPAIR_DRAWS, 7))
         after = {
-            key: np.empty((len(lanes), REPAIR_DRAWS, *value.shape[1:]), value.dtype) for key, value in rng.items()
+            key: np.empty((len(instances), REPAIR_DRAWS, *value.shape[1:]), value.dtype) for key, value in rng.items()
         }
-        for row, lane in enumerate(lanes):
-            generator.bit_generator.state = pcg_decode({key: value[lane] for key, value in rng.items()})
+        for row, instance in enumerate(instances):
+            generator.bit_generator.state = pcg_decode({key: value[instance] for key, value in rng.items()})
             for k in range(REPAIR_DRAWS):
                 xy = generator.uniform(*self._object_bounds)
                 yaw = generator.uniform(0, 2 * np.pi)
                 qpos[row, k] = [*xy, 0.02, *lie.SO3.from_z_radians(yaw).wxyz.tolist()]
                 for key, value in pcg_encode(generator).items():
                     after[key][row, k] = value
-        index = torch.as_tensor(lanes, device=self.device)
-        if len(lanes) == self.num_envs:
+        index = torch.as_tensor(instances, device=self.device)
+        if len(instances) == self.num_envs:
             self._repair_qpos = torch.as_tensor(qpos, dtype=self._qpos.dtype, device=self.device)
             self._repair_rng = {key: torch.as_tensor(value, device=self.device) for key, value in after.items()}
         else:
@@ -719,7 +719,7 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 self._repair_rng[key][index] = torch.as_tensor(value, device=self.device)
 
     def _poll_repairs(self, wait=False):
-        """Print OGBench's message for each repair the device made, and draw new repairs for those lanes.
+        """Print OGBench's message for each repair the device made, and draw new repairs for those environments.
 
         Without ``wait`` this reads the repair counts only when the copy of an earlier step's counts has arrived.
         """
@@ -731,12 +731,12 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
                 return
         # The repairs of every queued step, read after they finish.
         counts = self._repair_count.cpu().numpy()
-        lanes = np.flatnonzero(counts)
-        if not len(lanes):
+        instances = np.flatnonzero(counts)
+        if not len(instances):
             return
         for _ in range(int(counts.sum())):
             print("Numerical instability detected. Resetting cube positions.", flush=True)
         rng = {key: value.cpu().numpy() for key, value in self._env_rng.items()}
-        self._draw_repairs(rng, lanes)
+        self._draw_repairs(rng, instances)
         self._repair_count.zero_()
         self._dirty = True

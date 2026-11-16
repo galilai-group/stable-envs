@@ -19,7 +19,7 @@ pytestmark = pytest.mark.unit
 def test_worker_count_keeps_state_and_frames(workers):
     with tuning.override(workers=0):
         reference = snv.make("Acrobot", num_envs=8, seed=11, device="cpu")
-    with tuning.override(workers=workers, worker_min_lanes=4):
+    with tuning.override(workers=workers, worker_min_envs=4):
         candidate = snv.make("Acrobot", num_envs=8, seed=11, device="cpu")
     with reference, candidate:
         assert_same_state(reference.reset(seed=11), candidate.reset(seed=11))

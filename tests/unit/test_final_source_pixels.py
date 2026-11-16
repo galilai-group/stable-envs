@@ -135,8 +135,8 @@ def test_disposable_fetch_branches_keep_physics_independent(fake_fetch, scenario
     assert len(branches) == 16 and all(source.renders == 1 and source.closed for source in branches)
     assert all(
         row["differences"] == {"/controller": {"max_abs": 3.0, "shape": [], "dtype": "float64"}}
-        for lane in identities
-        for row in lane["mutations"]
+        for instance in identities
+        for row in instance["mutations"]
     )
     assert all(bool((state["controller"] == 0).all()) for state in trace.states)
     if scenario == "horizon":

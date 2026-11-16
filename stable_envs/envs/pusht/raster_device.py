@@ -48,8 +48,8 @@ class Tables:
         first, inverse = R._unique_rows(raw)
         ids = np.empty(len(first), np.int64)
         changed = False
-        for index, lane0 in enumerate(first.tolist()):
-            key = R.template_key(fields_host, lane0)
+        for index, instance0 in enumerate(first.tolist()):
+            key = R.template_key(fields_host, instance0)
             if key not in self.keys:
                 try:
                     layout = R._layout(R._template(key))
@@ -59,7 +59,7 @@ class Tables:
                 self.layouts.append(layout)
                 changed = True
             ids[index] = self.keys[key]
-            row = raw[lane0].tobytes()
+            row = raw[instance0].tobytes()
             if row not in self.rows:
                 self.rows[row] = ids[index]
                 self.known = None
@@ -442,13 +442,13 @@ class StaticFrames:
 
     def add(self, keys, missing, records, counts, background, segments, size, tile):
         """Draw the frames of the missing keys; skip when they are too many to share."""
-        lanes = torch.nonzero(missing).view(-1)
-        new, inverse = torch.unique(keys[lanes], dim=0, return_inverse=True)
+        instances = torch.nonzero(missing).view(-1)
+        new, inverse = torch.unique(keys[instances], dim=0, return_inverse=True)
         if len(new) * 4 > max(len(keys), 16):
             return
-        first = lanes[
+        first = instances[
             torch.zeros(len(new), dtype=torch.int64, device=self.device).scatter_(
-                0, inverse, torch.arange(len(lanes), device=self.device)
+                0, inverse, torch.arange(len(instances), device=self.device)
             )
         ]
         static = (records[first, :, R.STATIC] != 0) & (records[first, :, R.KIND] != 0)
@@ -507,9 +507,9 @@ class DeviceRenderer:
             records, counts, background, segments, segment_counts, size, tile, None, static, bins, warps
         )
         if flags[2]:
-            lanes = torch.nonzero(unsupported).view(-1)
-            host = {k: v[lanes].cpu().numpy() for k, v in fields.items()}
-            out[lanes] = torch.as_tensor(fallback(host), device=self.device)
+            instances = torch.nonzero(unsupported).view(-1)
+            host = {k: v[instances].cpu().numpy() for k, v in fields.items()}
+            out[instances] = torch.as_tensor(fallback(host), device=self.device)
         return out
 
 

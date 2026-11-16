@@ -113,16 +113,16 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
             actions = (actions.float() if actions.dtype == torch.bfloat16 else actions).detach().cpu().numpy()
         ctrl = np.asarray(actions, np.float32).reshape(self.num_envs, self.action_dim)
         # Clamp as MuJoCo Warp does, NaN to the lower bound: native MuJoCo would instead zero the
-        # lane's controls on a NaN, inf or huge value and warn, which raises below.
+        # environment's controls on a NaN, inf or huge value and warn, which raises below.
         self.batch.step(np.fmin(np.fmax(ctrl, self._ctrl_low), self._ctrl_high))
         self._sync(write_back=True)
         if (bad := self.batch.unstable_envs()).size:
-            raise RuntimeError(f"Physics state is invalid in lanes {bad.tolist()}")
+            raise RuntimeError(f"Physics state is invalid in environments {bad.tolist()}")
         return TensorDict({"state": self._snapshot()}, batch_size=[self.num_envs], device=self.device)
 
 
 class MSHumanWarpAdapter(_MSHumanAdapter):
-    """One MuJoCo Warp world per lane, simulated on CUDA ``device``."""
+    """One MuJoCo Warp world per environment, simulated on CUDA ``device``."""
 
     def __init__(self, num_envs: int, device, model):
         super().__init__(num_envs, device, model)

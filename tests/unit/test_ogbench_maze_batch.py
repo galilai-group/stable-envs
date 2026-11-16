@@ -1,4 +1,4 @@
-"""Batched maze lanes on mujoco.batch give the source's State and outputs bit for bit."""
+"""Batched maze environments on mujoco.batch give the source's State and outputs bit for bit."""
 
 import numpy as np
 import pytest
@@ -24,25 +24,25 @@ BODIES = [
 ]
 
 
-def _smooth(rng, lanes, steps, dim):
+def _smooth(rng, instances, steps, dim):
     """Slowly varying actions, so that bodies travel and reach teleports and walls."""
-    phase = rng.uniform(0, 2 * np.pi, (lanes, 1, dim))
+    phase = rng.uniform(0, 2 * np.pi, (instances, 1, dim))
     t = np.arange(steps)[None, :, None]
-    return np.clip(np.sin(0.05 * t + phase) + 0.3 * rng.standard_normal((lanes, steps, dim)), -1, 1)
+    return np.clip(np.sin(0.05 * t + phase) + 0.3 * rng.standard_normal((instances, steps, dim)), -1, 1)
 
 
 @pytest.mark.parametrize("loco,maze", BODIES)
-def test_batch_matches_source_lanes(loco, maze):
-    lanes, steps = 6, 60
+def test_batch_matches_source_environments(loco, maze):
+    instances, steps = 6, 60
     batch, source = (
-        OGBMazeBatchAdapter(lanes, seed=11, loco=loco, maze=maze),
-        OGBMazeAdapter(lanes, seed=11, loco=loco, maze=maze),
+        OGBMazeBatchAdapter(instances, seed=11, loco=loco, maze=maze),
+        OGBMazeAdapter(instances, seed=11, loco=loco, maze=maze),
     )
     try:
         assert_same_state(batch.get_state(), source.get_state())
-        actions = _smooth(np.random.default_rng(4), lanes, steps, batch.action_dim).astype(np.float32)
+        actions = _smooth(np.random.default_rng(4), instances, steps, batch.action_dim).astype(np.float32)
         for t in range(steps):
-            mask = None if t < 2 else torch.tensor([(t + lane) % 3 != 0 for lane in range(lanes)])
+            mask = None if t < 2 else torch.tensor([(t + instance) % 3 != 0 for instance in range(instances)])
             assert_same_state(batch.step(actions[:, t], active=mask), source.step(actions[:, t], active=mask))
         assert_same_state(
             batch.step(actions[:, 0], capture_state=False), source.step(actions[:, 0], capture_state=False)
@@ -61,9 +61,12 @@ def test_batch_matches_source_lanes(loco, maze):
         source.close()
 
 
-def test_teleport_lanes_teleport_as_the_source_does():
-    lanes = 4
-    batch, source = OGBMazeBatchAdapter(lanes, seed=3, maze="teleport"), OGBMazeAdapter(lanes, seed=3, maze="teleport")
+def test_teleport_environments_teleport_as_the_source_does():
+    instances = 4
+    batch, source = (
+        OGBMazeBatchAdapter(instances, seed=3, maze="teleport"),
+        OGBMazeAdapter(instances, seed=3, maze="teleport"),
+    )
     try:
         state = batch.get_state()
         centre = torch.tensor(batch.task.teleport["teleport_in_xys"][0], dtype=torch.float64)
@@ -71,7 +74,7 @@ def test_teleport_lanes_teleport_as_the_source_does():
         set_field(state, "root/position", centre + offsets)
         for adapter in (batch, source):
             adapter.set_state(state)
-        zero = np.zeros((lanes, 2), np.float32)
+        zero = np.zeros((instances, 2), np.float32)
         out = batch.step(zero)
         assert_same_state(out, source.step(zero))
         moved = (get_field(out["state"], "root/position") - get_field(state, "root/position")).abs().sum(-1) > 0.5
@@ -137,7 +140,7 @@ def test_legacy_streams_draw_as_random_state():
     rows = np.arange(len(seeds))
     mt.seed(rows, seeds)
     states = [np.random.RandomState(seed) for seed in seeds]
-    # More than one block of 624 outputs, so every lane twists its key at least twice.
+    # More than one block of 624 outputs, so every environment twists its key at least twice.
     for k in range(700):
         if k % 3 == 0:
             got, want = mt.randint(rows, 1, 6), [s.randint(1, 6) for s in states]

@@ -22,7 +22,7 @@ _FAST_SPEED = {"pendulum": 14.0, "mountain_car": 0.2, "mountain_car_continuous":
 def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
     """Every physics leaf of a classic-control cell, explicit and sampled, against stable-worldmodel.
 
-    Lanes sit at 10 %, 50 % and 90 % of each leaf's range; State and the whole step output
+    Environments sit at 10 %, 50 % and 90 % of each leaf's range; State and the whole step output
     (reward, termination) must equal stable-worldmodel's exactly. Where the cell's frame draws physics leaves
     (CartPole's pole length, Acrobot's link lengths), every reset and step frame must equal stable-worldmodel's
     too, as worst-frame normalized MSE 0. A plain reset then restores the defaults.
@@ -74,19 +74,19 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
         baselines = {fast: run(env, None, fast=fast, frames=draws)[0][-1] for fast in (False, domain in _FAST_FIELD)}
         for leaf, (lo, hi) in leaves.items():
             values = np.asarray([[lo + f * (hi - lo)] for f in (0.1, 0.5, 0.9)], np.float32)
-            per_lane = [{"variation_values": {leaf: v}} for v in values]
+            per_instance = [{"variation_values": {leaf: v}} for v in values]
             fast = leaf.endswith("max_speed") and domain in _FAST_FIELD
             states, worst = run(
-                env, per_lane, {"variation_values": {leaf: values}}, fast=fast, frames=leaf in drawn_leaves
+                env, per_instance, {"variation_values": {leaf: values}}, fast=fast, frames=leaf in drawn_leaves
             )
             last, baseline = unfold(states[-1]), unfold(baselines[fast])
             moved = [
                 any(
-                    not torch.equal(last[k][lane], baseline[k][lane])
+                    not torch.equal(last[k][instance], baseline[k][instance])
                     for k in last.keys(True, True)
                     if k[0] not in ("rng", "physics")
                 )
-                for lane in (0, 2)
+                for instance in (0, 2)
             ]
             evidence["leaves"][leaf] = {"values": values.reshape(-1).tolist(), "moved_vs_default": moved}
             if leaf in drawn_leaves:
@@ -96,8 +96,10 @@ def classic_physics_gate(domain: str, seed: int = 13, steps: int = 24) -> dict:
         for leaf, (lo, hi) in leaves.items():
             assert len(set(sampled[leaf].reshape(-1).tolist())) == batch, leaf
             assert ((sampled[leaf] >= lo) & (sampled[leaf] <= hi)).all(), leaf
-        per_lane = [{"variation_values": {leaf: sampled[leaf][lane] for leaf in leaves}} for lane in range(batch)]
-        ref = NativeClassicReference(domain, batch, options=per_lane, render_mode="rgb_array" if draws else None)
+        per_instance = [
+            {"variation_values": {leaf: sampled[leaf][instance] for leaf in leaves}} for instance in range(batch)
+        ]
+        ref = NativeClassicReference(domain, batch, options=per_instance, render_mode="rgb_array" if draws else None)
         try:
             _classic_compare(drawn, ref.reset(seed + 1))
             worst = [frame_mse(env, ref)] if draws else [0.0]

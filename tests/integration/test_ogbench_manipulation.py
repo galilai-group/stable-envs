@@ -26,7 +26,7 @@ def test_rollout_restore_and_software_opengl_frames_follow_the_simulation(cell):
         saved = env.get_state()
         first = render_or_skip(env, saved)
         assert first.shape == (2, 64, 64, 3) and first.dtype == torch.uint8
-        assert not torch.equal(first[0], first[1]), "lanes with different seeds drew the same frame"
+        assert not torch.equal(first[0], first[1]), "environments with different seeds drew the same frame"
         assert torch.equal(first, render_or_skip(env, saved)), "rendering is not a function of the State"
 
         action = torch.ones(2, 5)

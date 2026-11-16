@@ -13,24 +13,24 @@ ARRAYS = ("body_mass", "body_ipos", "body_subtreemass", "cam_poscom0", "light_po
 class MassRows:
     """Per-row model arrays that place tracking cameras and lights under a cell's mass leaves.
 
-    The same arithmetic as ``PhysicsKnobs``: a leaf scales its geoms' contribution to their body,
+    The same arithmetic as ``PhysicsParams``: a leaf scales its geoms' contribution to their body,
     and a model compiled with settotalmass rescales every body. A tracking camera sits at its
     body's subtree center of mass plus an offset taken at qpos0, so both move with the masses."""
 
     def __init__(self, key: str, model):
         import mujoco
 
-        knobs = [k for k in _leaves.knobs(key) if isinstance(k, _physics.GeomMass)]
-        spec = _physics.PhysicsKnobs(knobs, model, **_leaves.compile_options(key))
-        self.paths = tuple(dict.fromkeys(k.leaf for k in knobs))
+        params = [k for k in _leaves.params(key) if isinstance(k, _physics.GeomMass)]
+        spec = _physics.PhysicsParams(params, model, **_leaves.compile_options(key))
+        self.paths = tuple(dict.fromkeys(k.leaf for k in params))
         nbody, count = int(model.nbody), len(self.paths)
         self.leaf_nominal = np.zeros(count)
         self.part_mass = np.zeros((count, nbody))
         self.part_moment = np.zeros((count, nbody, 3))
         self.unscaled = np.zeros(count)
         for mass in spec._masses:
-            i = self.paths.index(mass.knob.leaf)
-            self.leaf_nominal[i] = float(mass.knob.nominal)
+            i = self.paths.index(mass.param.leaf)
+            self.leaf_nominal[i] = float(mass.param.nominal)
             self.part_mass[i, mass.body] += float(mass.part[0])
             self.part_moment[i, mass.body] += np.asarray(mass.part[1], np.float64)
             self.unscaled[i] += float(mass.unscaled_mass)

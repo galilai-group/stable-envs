@@ -54,8 +54,8 @@ install_on_classes()
 
 
 def pytest_configure(config):
-    # Tests check the renderer of their device at every batch size. Tests of the CPU render rung on CUDA override
-    # the knob.
+    # Tests check the renderer of their device at every batch size. Tests of the CPU render backend on CUDA override
+    # the setting.
     os.environ.setdefault("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS", "1")
     config.addinivalue_line("markers", "family(name): the ci/families.toml family this test needs installed")
     for name in families.FAMILIES:

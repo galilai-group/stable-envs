@@ -70,8 +70,8 @@ PIXEL_ALPHAS = {
     "ur5e/linkgray": 0.1,
     "ur5e/lightblue": 0.1,
 }
-# MjModel arrays written per lane after compilation; lanes sharing a model swap them in.
-LANE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
+# MjModel arrays written per environment after compilation; environments sharing a model swap them in.
+INSTANCE_FIELDS = ("geom_rgba", "mat_rgba", "site_pos", "dof_damping", "actuator_gainprm", "actuator_biasprm")
 
 
 def arm_alpha(pixel_alpha, opacity):
@@ -152,15 +152,15 @@ class _SharedModel:
 
     def __init__(self, model, key):
         self.model, self.key, self.active, self.users = model, key, None, 0
-        self.pristine = {name: getattr(model, name).copy() for name in LANE_FIELDS}
+        self.pristine = {name: getattr(model, name).copy() for name in INSTANCE_FIELDS}
 
-    def activate(self, lane):
+    def activate(self, instance):
         if self.active is not None:
-            for name, value in self.active._lane_fields.items():
+            for name, value in self.active._instance_fields.items():
                 np.copyto(value, getattr(self.model, name))
-        for name, value in lane._lane_fields.items():
+        for name, value in instance._instance_fields.items():
             getattr(self.model, name)[...] = value
-        self.active = lane
+        self.active = instance
 
 
 class _SharedTree:
@@ -176,23 +176,23 @@ class _SharedTree:
     def read(self):
         return [None if (v := getattr(element, attr)) is None else np.array(v) for element, attr in self.slots]
 
-    def activate(self, lane):
-        if self.active is not lane:
+    def activate(self, instance):
+        if self.active is not instance:
             if self.active is not None:
                 self.active._tree_values = self.read()
-            for (element, attr), value in zip(self.slots, lane._tree_values):
+            for (element, attr), value in zip(self.slots, instance._tree_values):
                 setattr(element, attr, None if value is None else value.copy())
-            self.active = lane
+            self.active = instance
         return self.root
 
 
-class LanePool:
-    """Compiled models, MJCF tree and IK solver shared by the lanes of one adapter.
+class InstancePool:
+    """Compiled models, MJCF tree and IK solver shared by the environments of one adapter.
 
-    Lanes whose MJCF compiles to the same XML share one MjModel; a variation write
-    to compiled arrays moves the lane to a copy keyed by the written values. Each
-    lane keeps its own LANE_FIELDS and MJCF variation attributes, swapped in when
-    it next touches the shared object. Lanes of one pool must not run concurrently.
+    Environments whose MJCF compiles to the same XML share one MjModel; a variation write
+    to compiled arrays moves the environment to a copy keyed by the written values. Each
+    environment keeps its own INSTANCE_FIELDS and MJCF variation attributes, swapped in when
+    it next touches the shared object. Environments of one pool must not run concurrently.
     """
 
     def __init__(self):
@@ -200,25 +200,25 @@ class LanePool:
         self.tree = None
         self.models = {}
 
-    def join(self, lane, key, compile_model):
-        shared = getattr(lane, "_shared", None)
+    def join(self, instance, key, compile_model):
+        shared = getattr(instance, "_shared", None)
         if shared is not None and shared.key == key:
-            # The lane keeps its model; a lone lane would otherwise recompile it at every reset.
-            if shared.active is lane:
+            # The environment keeps its model; a lone environment would otherwise recompile it at every reset.
+            if shared.active is instance:
                 shared.active = None
-            lane._lane_fields = {name: value.copy() for name, value in shared.pristine.items()}
+            instance._instance_fields = {name: value.copy() for name, value in shared.pristine.items()}
             return
-        self.leave(lane)
+        self.leave(instance)
         shared = self.models.get(key)
         if shared is None:
             shared = self.models[key] = _SharedModel(compile_model(), key)
         shared.users += 1
-        lane._shared = shared
-        lane._lane_fields = {name: value.copy() for name, value in shared.pristine.items()}
+        instance._shared = shared
+        instance._instance_fields = {name: value.copy() for name, value in shared.pristine.items()}
 
-    def derive(self, lane, values):
-        """Move ``lane`` to its model with compiled arrays for ``values``; True if that model is new."""
-        current = lane._shared
+    def derive(self, instance, values):
+        """Move ``instance`` to its model with compiled arrays for ``values``; True if that model is new."""
+        current = instance._shared
         key = (current.key if isinstance(current.key, str) else current.key[0], values)
         if key == current.key:
             return False
@@ -226,27 +226,27 @@ class LanePool:
         fresh = shared is None
         if fresh:
             shared = self.models[key] = _SharedModel(copy.copy(current.model), key)
-        lane_fields = lane._lane_fields
-        if current.active is lane:
-            for name, value in lane_fields.items():
+        instance_fields = instance._instance_fields
+        if current.active is instance:
+            for name, value in instance_fields.items():
                 np.copyto(value, getattr(current.model, name))
-        self.leave(lane)
+        self.leave(instance)
         shared.users += 1
-        lane._shared, lane._lane_fields = shared, lane_fields
+        instance._shared, instance._instance_fields = shared, instance_fields
         return fresh
 
-    def leave(self, lane):
-        shared, lane._shared = lane._shared, None
+    def leave(self, instance):
+        shared, instance._shared = instance._shared, None
         if shared is not None:
-            if shared.active is lane:
+            if shared.active is instance:
                 shared.active = None
             shared.users -= 1
             if not shared.users:
                 del self.models[shared.key]
 
-    def release(self, lane):
-        self.leave(lane)
-        if self.tree is not None and self.tree.active is lane:
+    def release(self, instance):
+        self.leave(instance)
+        if self.tree is not None and self.tree.active is instance:
             self.tree.active = None
 
 
@@ -254,7 +254,7 @@ class Compatibility:
     """Registered reset, variation and output rules over OGBench 1.2.1.
 
     Physics, task construction, controller, IK and reset remain upstream. OGBench
-    draws the task from NumPy's global RNG; each lane keeps its own copy, seeded as
+    draws the task from NumPy's global RNG; each environment keeps its own copy, seeded as
     ``np.random.seed(seed)`` at each seeded reset. The arm starts at
     ``agent.ee_start_position`` instead of OGBench's sampled position only when the
     reset options name that leaf or its anchor is not the registered default.
@@ -321,7 +321,7 @@ class Compatibility:
         elif value is None:
             self._tree_values = None
         elif value is not self._pool.tree.root:
-            raise ValueError("Pooled lanes use their pool's MJCF tree")
+            raise ValueError("Pooled environments use their pool's MJCF tree")
 
     def build_mjcf_model(self):
         pool = self._pool
@@ -385,27 +385,27 @@ class Compatibility:
                 raise ValueError(f"Invalid Variation {key}")
         return options
 
-    def lane_options(self, options, batch):
-        """Validated options per lane; a ``variation_values`` entry may hold one value per lane."""
+    def instance_options(self, options, batch):
+        """Validated options per environment; a ``variation_values`` entry may hold one value per environment."""
         if options is not None and not isinstance(options, dict):
             raise TypeError("Reset options must be a dictionary")
         values = (options or {}).get("variation_values")
         if not isinstance(values, dict):
             return [self.validate_options(options)] * batch
-        lanes = []
-        for lane in range(batch):
-            per_lane = {key: self._lane_value(key, value, lane, batch) for key, value in values.items()}
-            lanes.append(self.validate_options({**options, "variation_values": per_lane}))
-        return lanes
+        instances = []
+        for instance in range(batch):
+            per_instance = {key: self._instance_value(key, value, instance, batch) for key, value in values.items()}
+            instances.append(self.validate_options({**options, "variation_values": per_instance}))
+        return instances
 
-    def _lane_value(self, key, value, lane, batch):
+    def _instance_value(self, key, value, instance, batch):
         if key not in self.supported_variations:
             return value
         if hasattr(value, "detach"):
             value = value.detach().cpu().numpy()
         shape = self.variation_space._walk(key).shape
         if np.shape(value) == (batch, *shape) and np.shape(value) != shape:
-            return value[lane]
+            return value[instance]
         return value
 
     def configure_variation(self, values):
@@ -684,7 +684,7 @@ COLOUR_VALUES = ("agent.color", "agent.opacity", "target.opacity")
 
 
 def compiled_key(values):
-    """The key of the COMPILED_FIELDS arrays of ``values``: lanes that differ only in COLOUR_VALUES share it."""
+    """The key of the COMPILED_FIELDS arrays of ``values``: environments that differ only in COLOUR_VALUES share it."""
     return tuple(np.asarray(values[k], np.float64).tobytes() for k in MODEL_VALUES if k not in COLOUR_VALUES)
 
 

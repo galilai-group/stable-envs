@@ -18,15 +18,15 @@ from stable_envs.envs.classic_control.simulation.batched import MAX_EPISODE_STEP
 from stable_envs.envs.classic_control.simulation.device import DeviceClassicAdapter  # noqa: E402
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
-from tests.unit.test_classic_batched import CLASSES, DOMAINS, LANES, PHYSICS, _actions, _assert_agree  # noqa: E402
+from tests.unit.test_classic_batched import CLASSES, DOMAINS, NUM_ENVS, PHYSICS, _actions, _assert_agree  # noqa: E402
 
 #: Torch agrees with Gymnasium to rounding: one step from the same State, and 40 steps of a trajectory.
 STEP_ATOL, TRAJECTORY_ATOL = 1e-9, 1e-7
 
 
 def _pair(domain, seed=7, fused=True):
-    reference = ClassicControlAdapter(domain, LANES, "cpu", seed)
-    fast = DeviceClassicAdapter(domain, LANES, "cuda", seed)
+    reference = ClassicControlAdapter(domain, NUM_ENVS, "cpu", seed)
+    fast = DeviceClassicAdapter(domain, NUM_ENVS, "cuda", seed)
     # Without the Triton kernel, the graph replays the batched Torch kernel.
     fast._fused = fast._fused and fused
     values = {name: np.asarray(rows, np.float64) for name, rows in PHYSICS[domain].items()}
@@ -54,7 +54,7 @@ def test_each_step_matches_gymnasium_through_truncation(domain):
 
 @pytest.mark.parametrize("fused", [True, False], ids=["triton", "torch"])
 @pytest.mark.parametrize("domain", DOMAINS)
-def test_trajectories_and_inactive_lanes_match_gymnasium(domain, fused):
+def test_trajectories_and_inactive_environments_match_gymnasium(domain, fused):
     reference, fast = _pair(domain, fused=fused)
     try:
         for t, action in enumerate(_actions(domain, 40, 5)):
@@ -81,7 +81,7 @@ def test_float64_actions_match_gymnasium(domain):
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_resets_equal_the_gymnasium_resets(domain):
-    """For a seed, the GPU lanes start where the CPU backends start, and later resets continue the same streams."""
+    """For a seed, the GPU environments start where the CPU backends start, and later resets continue the same streams."""
     n = 64
     fast = DeviceClassicAdapter(domain, n, "cuda", 0)
     reference = ClassicControlAdapter(domain, n, "cpu", 0)
@@ -165,15 +165,15 @@ DEVIATION_STEPS = {"acrobot": 100}
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_closed_loop_rollouts_keep_the_gymnasium_outcome(domain):
-    """300 steps of a scripted policy on each side: the same lanes reach the goal, with a bounded State deviation.
+    """300 steps of a scripted policy on each side: the same environments reach the goal, with a bounded State deviation.
 
-    Where the dynamics are not chaotic, each lane also ends at the same step.
+    Where the dynamics are not chaotic, each environment also ends at the same step.
     """
     reference, fast = _pair(domain, seed=11)
     keys = [key for key, (_, dtype) in CLASSIC_FIELDS[domain].items() if dtype == torch.float64]
     try:
         theirs = ours = None
-        ended = {"gym": torch.full((LANES,), -1), "torch": torch.full((LANES,), -1)}
+        ended = {"gym": torch.full((NUM_ENVS,), -1), "torch": torch.full((NUM_ENVS,), -1)}
         deviation = 0.0
         for t in range(300):
             a_ref = _policy(domain, theirs["observation"]) if theirs is not None else _policy0(domain)
@@ -199,5 +199,5 @@ def test_closed_loop_rollouts_keep_the_gymnasium_outcome(domain):
 
 def _policy0(domain):
     if domain in ("pendulum", "mountain_car_continuous"):
-        return torch.zeros(LANES, 1)
-    return torch.ones(LANES, 1, dtype=torch.long)
+        return torch.zeros(NUM_ENVS, 1)
+    return torch.ones(NUM_ENVS, 1, dtype=torch.long)

@@ -4,7 +4,7 @@ Each class is compared with an environment in its [upstream library](../terms.md
 
 ## Read the upstream source
 
-Read the full construction path: registration, constructor defaults, wrappers, reset and goal sampler, controller, physics, reward and success, `TimeLimit`, RNG and rendering. Pin the upstream versions and record hashes of the source and assets you use, including dependency versions that change arithmetic. Keep and document unusual upstream behavior, such as dtype conversions, knobs that do nothing or odd task rules: users compare against what the upstream library does, not what it should have done. Then check your reading with [runtime comparisons](#measure-constants-against-the-upstream-library).
+Read the full construction path: registration, constructor defaults, wrappers, reset and goal sampler, controller, physics, reward and success, `TimeLimit`, RNG and rendering. Pin the upstream versions and record hashes of the source and assets you use, including dependency versions that change arithmetic. Keep and document unusual upstream behavior, such as dtype conversions, settings that do nothing or odd task rules: users compare against what the upstream library does, not what it should have done. Then check your reading with [runtime comparisons](#measure-constants-against-the-upstream-library).
 
 ## Find the upstream renderer
 

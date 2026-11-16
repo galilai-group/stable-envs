@@ -142,7 +142,7 @@ def run_gate(device="cpu"):
             try:
                 if batch == 1:
                     check_reset_matches_reference(env, reference, seed=0)
-                    base = env._simulator.lanes.envs[0]._env
+                    base = env._simulator.instances.envs[0]._env
                     assert (base._n_sub_steps, base._step_limit, base.control_timestep()) == (5, 1000, 0.025)
                     evidence["construction"] = {
                         "numeric_model_arrays_exact": compare_models(env, reference, minimum=580),
@@ -155,7 +155,7 @@ def run_gate(device="cpu"):
                         "physics_substeps": 5,
                         "dmc_step_limit": 1000,
                         "action_repeat": 2,
-                        "floor_friction": env._simulator.lanes.envs[0].physics.model.geom_friction[0].tolist(),
+                        "floor_friction": env._simulator.instances.envs[0].physics.model.geom_friction[0].tolist(),
                     }
                     evidence["warmstart_experiment"] = _warmstart_experiment(env, reference)
 
@@ -175,7 +175,7 @@ def run_gate(device="cpu"):
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
                         other.step(action, states=None, frames=None).exclude("valid")
-                    # set_state reloads every lane's ctrl from dm_control, so the divergence is read before it.
+                    # set_state reloads every environment's ctrl from dm_control, so the divergence is read before it.
                     control_diverged = not np.array_equal(env._simulator.b.ctrl, other._simulator.b.ctrl)
                     snapshot = env.get_state()
                     env.set_state(snapshot)
@@ -284,7 +284,7 @@ def run_gate(device="cpu"):
         try:
             env.set_variation({"light.diffuse_scale": [1.1]})
             assert np.array_equal(
-                env._simulator.lanes.envs[0].physics.model.opt.gravity,
+                env._simulator.instances.envs[0].physics.model.opt.gravity,
                 np.array([0.0, 0.0, -9.81], np.float64),
             )
             check_reset_matches_reference(env, nominal, seed=23)

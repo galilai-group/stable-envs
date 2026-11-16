@@ -1,4 +1,4 @@
-"""``stable-envs tune``: time the knobs of one render path on this machine and cache the fastest values."""
+"""``stable-envs tune``: time the settings of one render path on this machine and cache the fastest values."""
 
 from __future__ import annotations
 
@@ -15,12 +15,12 @@ from ._core.cpus import cpu_limit
 STEPS = 4
 
 
-def knobs_for(env) -> list[tuning.Knob]:
-    """Return the knobs ``tune`` sweeps for ``env`` on its device."""
+def settings_for(env) -> list[tuning.Setting]:
+    """Return the settings ``tune`` sweeps for ``env`` on its device."""
     paths = tuning.paths_of(type(env))
     return [
         k
-        for k in tuning.KNOBS.values()
+        for k in tuning.SETTINGS.values()
         if k.unit is not None
         and any(p in k.paths for p in paths)
         and k.device in ("any", env.device.type)
@@ -28,9 +28,9 @@ def knobs_for(env) -> list[tuning.Knob]:
     ]
 
 
-def candidates(knob: tuning.Knob, start: int, env) -> list[int]:
+def candidates(setting: tuning.Setting, start: int, env) -> list[int]:
     """Return ``start`` and its powers-of-two neighbors, one per distinct work split, within memory."""
-    raw = [start >> 2, start >> 1, start, start << 1, start << 2] + ([0] if knob.unit == "cpus" else [])
+    raw = [start >> 2, start >> 1, start, start << 1, start << 2] + ([0] if setting.unit == "cpus" else [])
     free = tuning.free_cuda_bytes(env.device) if env.device.type == "cuda" else None
     frame = env.size * env.size * env.ss * env.ss
     cpus = cpu_limit()
@@ -38,15 +38,15 @@ def candidates(knob: tuning.Knob, start: int, env) -> list[int]:
         "rows": lambda v: min(v, env.num_envs),
         "rays": lambda v: min(env.num_envs, max(1, v // frame)),
         "cpus": lambda v: min(v, cpus, env.num_envs),
-    }.get(knob.unit, lambda v: v)
+    }.get(setting.unit, lambda v: v)
     out: dict[int, int] = {}
     for value in sorted(raw):
         try:
-            knob.check(value)
+            setting.check(value)
         except ValueError:
             continue
-        rays = value * 256 if knob.name == "dmc_ray_budget" else value
-        if value != start and free is not None and knob.unit in ("bytes", "rays") and rays > free // 2:
+        rays = value * 256 if setting.name == "dmc_ray_budget" else value
+        if value != start and free is not None and setting.unit in ("bytes", "rays") and rays > free // 2:
             continue
         if split(value) not in out or value == start:
             out[split(value)] = value
@@ -65,8 +65,8 @@ def _same(a, b) -> bool:
     return fa.keys() == fb.keys() and all(torch.equal(fa[k].cpu(), fb[k].cpu()) for k in fa)
 
 
-def _time(env, knob: tuning.Knob, repeats: int):
-    if knob.step:
+def _time(env, setting: tuning.Setting, repeats: int):
+    if setting.step:
         state = env.reset(seed=0)
         rng = np.random.default_rng(0)
         actions = torch.stack([env.action_spec.sample(env.num_envs, rng=rng) for _ in range(STEPS)], 1)
@@ -98,38 +98,40 @@ def _time(env, knob: tuning.Knob, repeats: int):
     return statistics.median(times), result
 
 
-def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> dict[str, int]:
-    """Sweep the knobs ``env`` reads one at a time from their defaults; cache and return the fastest values."""
+def tune(env, *, settings=(), repeats: int = 5, write: bool = True, echo=print) -> dict[str, int]:
+    """Sweep the settings ``env`` reads one at a time from their defaults; cache and return the fastest values."""
     from . import registry
     from ._execution import backends
 
     say = echo or (lambda *_: None)
-    tuning.check(dict.fromkeys(knobs))
-    if not knobs or backends.KNOB in knobs:
+    tuning.check(dict.fromkeys(settings))
+    if not settings or backends.BACKEND_SETTING in settings:
         # The simulation backends of the paths this env selected for: the one place that times them.
         # The env's own path when it names one: other environments built in this process keep their choices.
         own = getattr(env, "simulation_backend_path", None)
         scope = {"paths": (own,)} if own else {"prefixes": tuning.paths_of(type(env))}
         for path, pick in backends.calibrate(env.num_envs, env.device, write=write, **scope).items():
             say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
-    if (not knobs or backends.RENDER_KNOB in knobs) and env.render_rungs and env.has_dynamics:
+    if (not settings or backends.RENDERER_SETTING in settings) and env.render_backends and env.has_dynamics:
         # A first draw registers the render paths of the class; then both renderers of this class are timed.
         env.render()
         mine = [
             path
-            for path, _, _ in backends.registered(env.device, tuning.paths_of(type(env)), knob=backends.RENDER_KNOB)
+            for path, _, _ in backends.registered(
+                env.device, tuning.paths_of(type(env)), setting=backends.RENDERER_SETTING
+            )
             if path.endswith(f"/{type(env).__name__}")
         ]
         render_paths = (
-            backends.calibrate(env.num_envs, env.device, paths=mine, write=write, knob=backends.RENDER_KNOB)
+            backends.calibrate(env.num_envs, env.device, paths=mine, write=write, setting=backends.RENDERER_SETTING)
             if mine
             else {}
         )
         for path, pick in render_paths.items():
             say(f"  {path}: {env.num_envs} frames draw with the {pick} renderer")
-    chosen = [k for k in knobs_for(env) if not knobs or k.name in knobs]
+    chosen = [k for k in settings_for(env) if not settings or k.name in settings]
     if not chosen:
-        say(f"{type(env).__name__} reads no other tunable knob on {env.device.type}.")
+        say(f"{type(env).__name__} reads no other tunable setting on {env.device.type}.")
         return {}
     paths = tuning.paths_of(type(env))
     try:
@@ -139,34 +141,36 @@ def tune(env, *, knobs=(), repeats: int = 5, write: bool = True, echo=print) -> 
     kwargs = dict(num_envs=env.num_envs, size=env.size, device=str(env.device))
     best, rows = {}, []
     try:
-        for knob in chosen:
-            path = next(p for p in paths if p in knob.paths)
-            size = 0 if knob.step else env.size
-            where = dict(path=path if knob.per_path else None, size=size, batch=env.num_envs, device=env.device)
-            own = getattr(env, "_tuning_default", lambda *_: None)(knob.name, size)
-            start = tuning.lookup(knob.name, measured=False, **where, **({} if own is None else {"default": own}))[0]
+        for setting in chosen:
+            path = next(p for p in paths if p in setting.paths)
+            size = 0 if setting.step else env.size
+            where = dict(path=path if setting.per_path else None, size=size, batch=env.num_envs, device=env.device)
+            own = getattr(env, "_tuning_default", lambda *_: None)(setting.name, size)
+            start = tuning.lookup(setting.name, measured=False, **where, **({} if own is None else {"default": own}))[
+                0
+            ]
             times, reference = {}, None
-            for value in candidates(knob, start, env):
-                with tuning.override(**best, **{knob.name: value}):
-                    if knob.step:
+            for value in candidates(setting, start, env):
+                with tuning.override(**best, **{setting.name: value}):
+                    if setting.step:
                         with registry.make(type(env).__name__, **kwargs) as fresh:
-                            seconds, result = _time(fresh, knob, repeats)
+                            seconds, result = _time(fresh, setting, repeats)
                     else:
-                        seconds, result = _time(env, knob, repeats)
+                        seconds, result = _time(env, setting, repeats)
                 if reference is not None and not _same(reference, result):
                     raise RuntimeError(
-                        f"{knob.name}={value} changed the output of {type(env).__name__}; please report it"
+                        f"{setting.name}={value} changed the output of {type(env).__name__}; please report it"
                     )
                 reference = result if reference is None else reference
                 times[value] = seconds
-            best[knob.name] = min(times, key=lambda v: (times[v], v != start))
-            rows.append((knob, where, start, best[knob.name], times[start] / times[best[knob.name]]))
+            best[setting.name] = min(times, key=lambda v: (times[v], v != start))
+            rows.append((setting, where, start, best[setting.name], times[start] / times[best[setting.name]]))
     finally:
         if saved is not None:
             env.set_state(saved)
-    say(f"  {'knob':<22} {'default':>12} {'tuned':>12} {'speedup':>8}")
-    for knob, _, start, pick, gain in rows:
-        say(f"  {knob.name:<22} {start:>12} {pick:>12} {gain:>7.2f}x")
+    say(f"  {'setting':<22} {'default':>12} {'tuned':>12} {'speedup':>8}")
+    for setting, _, start, pick, gain in rows:
+        say(f"  {setting.name:<22} {start:>12} {pick:>12} {gain:>7.2f}x")
     if write:
         _save(env, rows, say)
     return best
@@ -176,14 +180,14 @@ def _save(env, rows, say) -> None:
     from . import registry
 
     files: dict[str, dict[str, dict[str, int]]] = {}
-    for knob, where, _, pick, _ in rows:
-        device = "cpu" if knob.device == "cpu" else str(env.device)
+    for setting, where, _, pick, _ in rows:
+        device = "cpu" if setting.device == "cpu" else str(env.device)
         key = (
             tuning.DEVICE_ENTRY
             if where["path"] is None
             else tuning.entry_key(where["path"], where["size"], env.num_envs)
         )
-        files.setdefault(device, {}).setdefault(key, {})[knob.name] = pick
+        files.setdefault(device, {}).setdefault(key, {})[setting.name] = pick
     for device, entries in files.items():
         path = tuning.write_cache(entries, device)
         for key in entries:
@@ -210,7 +214,7 @@ def representatives(device: str, skipped: dict[str, tuple[str, str]] | None = No
     from . import registry
 
     kind = torch.device(device).type
-    wanted = {p for k in tuning.KNOBS.values() if k.unit is not None and k.device in ("any", kind) for p in k.paths}
+    wanted = {p for k in tuning.SETTINGS.values() if k.unit is not None and k.device in ("any", kind) for p in k.paths}
     out: dict[str, str] = {}
     missing: dict[str, tuple[str, str]] = {}
     for name in registry.list_envs():
@@ -242,10 +246,10 @@ def show() -> int:
             found = True
             state = "current" if current else "stale (device, driver, CPU or version changed; ignored)"
             print(f"{tuning.cache_path(device)}: {data.get('stamp', {}).get('device')}, {state}")
-            for key, knobs in sorted(data.get("entries", {}).items()):
-                print(f"  {key:<36} " + ", ".join(f"{k}={v}" for k, v in sorted(knobs.items())))
+            for key, settings in sorted(data.get("entries", {}).items()):
+                print(f"  {key:<36} " + ", ".join(f"{k}={v}" for k, v in sorted(settings.items())))
     if not found:
-        print("no tuning cached on this machine; every knob uses its derived default")
+        print("no tuning cached on this machine; every setting uses its derived default")
     return 0
 
 
@@ -309,7 +313,7 @@ def main(args) -> int:
         kwargs = dict(num_envs=args.batch, device=device) | ({"size": args.size} if args.size else {})
         try:
             with registry.make(name, **kwargs) as env:
-                tune(env, knobs=args.knob or (), repeats=args.repeats)
+                tune(env, settings=args.setting or (), repeats=args.repeats)
         except (ImportError, RuntimeError) as e:
             if not args.all:
                 if not isinstance(e, ImportError):

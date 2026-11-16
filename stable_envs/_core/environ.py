@@ -81,7 +81,7 @@ def read(name: str) -> Any:
 
 def variables() -> dict[str, Variable]:
     """Return every registered variable, including those of modules not imported yet."""
-    from .. import tuning  # noqa: F401  (registers the knob variables)
+    from .. import tuning  # noqa: F401  (registers the setting variables)
 
     return dict(sorted(VARIABLES.items()))
 

@@ -25,7 +25,7 @@ def pair():
         b.close()
 
 
-def test_whole_batch_invalid_action_does_not_step_first_lane(pair):
+def test_whole_batch_invalid_action_does_not_step_first_environment(pair):
     a, b = pair
     b.set_state(a.get_state())
     saved = a.get_state()
@@ -39,7 +39,7 @@ def test_whole_batch_invalid_action_does_not_step_first_lane(pair):
 
 
 @pytest.mark.parametrize(
-    "kind", ["nan", "missing", "dtype", "history_mask", "config", "unreachable_second_lane", "rng_increment"]
+    "kind", ["nan", "missing", "dtype", "history_mask", "config", "unreachable_second_instance", "rng_increment"]
 )
 def test_invalid_whole_state_is_atomic(pair, kind):
     a, b = pair
@@ -55,7 +55,7 @@ def test_invalid_whole_state_is_atomic(pair, kind):
         corrupted["history", "valid"][1, 0] = True
     elif kind == "config":
         corrupted["recipe", "config"][1, 0] += 1
-    elif kind == "unreachable_second_lane":
+    elif kind == "unreachable_second_instance":
         corrupted["current", "wrapper", "reward"][1] += 1
     elif kind == "rng_increment":
         corrupted["recipe", "main_rng"][1, 5] = 2
@@ -166,9 +166,9 @@ def test_variation_getter_tracks_reset_and_restore(pair):
     e.reset(seed=17, options={"variation": ["all"]})
     actual = e.get_variation()
     for key, offset, width in e.variation_space.flat_layout():
-        for lane, replay in enumerate(e._simulator.envs):
+        for instance, replay in enumerate(e._simulator.envs):
             value = np.asarray(replay.env.variation_space._walk(key).value).reshape(-1)
-            np.testing.assert_array_equal(actual[lane, offset : offset + width].numpy(), value.astype(np.float32))
+            np.testing.assert_array_equal(actual[instance, offset : offset + width].numpy(), value.astype(np.float32))
     destination.set_state(e.get_state())
     assert torch.equal(actual, destination.get_variation())
     anchor = e.set_variation({"environment.start_tilt": np.array([0.1, -0.1], np.float32)})

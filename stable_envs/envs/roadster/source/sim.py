@@ -32,7 +32,7 @@ class RoadsterSim:
     / retro in [0, 1], lat_* in [-1, 1]) and returns ``terminated``.
 
     ``xml_patch`` rewrites the model XML before compiling (``cinematic.patch_space``); visual only.
-    ``template`` (another sim) shares its compiled model instead of compiling one: the only physics a lane
+    ``template`` (another sim) shares its compiled model instead of compiling one: the only physics an environment
     writes into the model is its tire grip, which it applies before each step.
     """
 
@@ -315,7 +315,7 @@ class RoadsterSim:
         d.ctrl[self.jet_ids] = jets
         burn = float(np.sum(np.abs(jets) * self.jet_force)) / 1000.0  # kN
         prev_x = float(self.pos[0])
-        self.weather.apply_grip()  # the model may be shared with other lanes
+        self.weather.apply_grip()  # the model may be shared with other environments
         for _ in range(FRAME_SKIP):
             v = self.vel
             self.weather.step_wind(self.model.opt.timestep)

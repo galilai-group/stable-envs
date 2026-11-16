@@ -111,7 +111,7 @@ class _Plate:
 
 
 class GoalPainter:
-    """Draw goal frames lane by lane and keep the most recent backgrounds."""
+    """Draw goal frames environment by environment and keep the most recent backgrounds."""
 
     def __init__(self, world: float, capacity: int = 8):
         self.world = float(world)
@@ -144,32 +144,34 @@ class GoalPainter:
         agent_color: np.ndarray,
         out: np.ndarray,
     ) -> np.ndarray:
-        """Write ``(B, H, W, 3)`` uint8 goal frames from per-lane NumPy rows into ``out``."""
+        """Write ``(B, H, W, 3)`` uint8 goal frames from per-environment NumPy rows into ``out``."""
         n = len(agent)
-        for lane in range(n):
-            count = int(number[lane])
-            walls = list(zip(positions[lane, :count], shapes[lane, :count], strict=True))
+        for instance in range(n):
+            count = int(number[instance])
+            walls = list(zip(positions[instance, :count], shapes[instance, :count], strict=True))
             args = (
-                background[lane],
+                background[instance],
                 walls,
-                wall_color[lane],
-                goal[lane],
-                float(goal_radius[lane]),
-                goal_color[lane],
+                wall_color[instance],
+                goal[instance],
+                float(goal_radius[instance]),
+                goal_color[instance],
             )
             key = b"".join(
                 np.ascontiguousarray(a).tobytes()
                 for a in (
-                    background[lane],
-                    positions[lane, :count],
-                    shapes[lane, :count],
-                    wall_color[lane],
-                    goal[lane],
-                    goal_radius[lane],
-                    goal_color[lane],
+                    background[instance],
+                    positions[instance, :count],
+                    shapes[instance, :count],
+                    wall_color[instance],
+                    goal[instance],
+                    goal_radius[instance],
+                    goal_color[instance],
                 )
             )
-            self._plate(key, args).paint(agent[lane], float(agent_radius[lane]), agent_color[lane], out[lane])
+            self._plate(key, args).paint(
+                agent[instance], float(agent_radius[instance]), agent_color[instance], out[instance]
+            )
         return out
 
 

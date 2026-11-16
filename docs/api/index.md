@@ -23,11 +23,11 @@ print(snv.get_config())  # {'verbose': 'WARNING', 'default_device': 'auto'}
 | `snv.get_field(state, name)`, `snv.set_field(state, name, value)`, `snv.schema_of(state)` | Read or write one named field of a State, also of a folded State, and find the schema of a folded State. |
 | `snv.set(...)`, `snv.get_config()` | Change and read the log level and the default device. |
 | `snv.FrameLoader(env, states, batch_size)` | Give the frames of stored states a batch at a time, drawn ahead in large `render` calls. |
-| `snv.tune(env)` | Measure the fastest tuning knob values for an environment's render path. |
+| `snv.tune(env)` | Measure the fastest tuning setting values for an environment's render path. |
 | `snv.__version__` | The installed version. Put it in bug reports next to `stable-envs doctor --json`. |
 | `snv.Env`, `snv.State`, `snv.StepResult`, `snv.VariationLike` | The environment base class and its types; see [Env](env.md). |
 | `snv.Spec`, `snv.CompositeSpec` | Shape and dtype descriptions; see [Specs and spaces](specs.md). |
-| `snv.tuning` | The tuning knobs; see [Tuning](tuning.md). |
+| `snv.tuning` | The tuning settings; see [Tuning](tuning.md). |
 
 ## Build an environment
 

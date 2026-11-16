@@ -82,7 +82,7 @@ def _seeds(value):
 
 
 def _action_array(batch, width, seed, calls):
-    """Reproduce the PR harness's lane-major PCG64 draws, including batch prefixes."""
+    """Reproduce the PR harness's environment-major PCG64 draws, including batch prefixes."""
     return (
         np.random.default_rng(seed + ACTION_SEED_OFFSET)
         .uniform(-1, 1, (batch, calls, width))
@@ -108,7 +108,7 @@ def _protocol(args):
         "measurement_profile": args.measurement_profile,
         "seeds": args.seeds,
         "action_generator": "numpy.default_rng(seed + 91717).uniform(-1, 1, (batch, calls, action_dim))",
-        "action_layout": "draw lane-major, transpose to contiguous [call, lane, component] float64",
+        "action_layout": "draw environment-major, transpose to contiguous [call, environment, component] float64",
         "generated_calls": max(args.warmup, args.repeats),
         "warmup_calls": args.warmup,
         "timed_calls": args.repeats,

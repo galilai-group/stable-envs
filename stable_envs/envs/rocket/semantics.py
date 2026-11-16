@@ -79,7 +79,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         check_backend(backend, device)
         self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, simulator_config)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
-        # CPU lanes draw their own step frames, at the size and supersample ``Env`` resolves.
+        # CPU environments draw their own step frames, at the size and supersample ``Env`` resolves.
         frame = (
             (int(size or self.default_size), int(1 if supersample is None else supersample))
             if torch.device(device).type == "cpu"
@@ -123,10 +123,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return CompositeSpec(fields, device=self.device)
 
     def reset(self, seed=None, options=None):
-        """Reset every lane.
+        """Reset every environment.
 
         ``options["variation_values"]`` sets leaves for this episode only, with one value shared by
-        the batch or one per lane.
+        the batch or one per environment.
         """
         self._check_open("reset")
         options = dict(options or {})
@@ -134,7 +134,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         if values is not None:
             if not isinstance(values, dict):
                 raise ValueError("variation_values must map Variation paths to values")
-            values = self._lane_values(values)
+            values = self._instance_values(values)
         return self._simulator.reset(seed, options, values)
 
     def get_state(self):
@@ -190,7 +190,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self.render()
 
     def _draw_fields(self, fields):
-        """Draw the live lanes' ``frame_fields`` on CUDA, without a State snapshot."""
+        """Draw the live environments' ``frame_fields`` on CUDA, without a State snapshot."""
         from . import render as rocket_render
 
         self._check_open("render")
@@ -274,11 +274,11 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
                 raise ValueError("Invalid Rocket Variation shape")
             for key, off, width in self.variation_space.flat_layout():
                 overrides[key] = rows[:, off : off + width].reshape(self.B, *self.variation_space._walk(key).shape)
-        self._simulator.configure(self._lane_values(overrides))
+        self._simulator.configure(self._instance_values(overrides))
         return self._variation_rows("init_value")
 
-    def _lane_values(self, overrides):
-        """``{path: one value or one per lane}`` -> one validated ``{path: value}`` per lane."""
+    def _instance_values(self, overrides):
+        """``{path: one value or one per environment}`` -> one validated ``{path: value}`` per environment."""
         values = [{} for _ in range(self.B)]
         for key, raw in overrides.items():
             if key not in self.variation_space.names():

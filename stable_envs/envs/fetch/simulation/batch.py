@@ -1,4 +1,4 @@
-"""Fetch lanes stepped together: gymnasium-robotics' step and reset on lane arrays, MuJoCo in one batched call."""
+"""Fetch environments stepped together: gymnasium-robotics' step and reset on environment arrays, MuJoCo in one batched call."""
 
 from __future__ import annotations
 
@@ -47,10 +47,10 @@ def physics_threads(num_envs: int) -> int:
     return max(1, min(MAX_THREADS, cpus, int(num_envs)))
 
 
-class LaneBatch:
+class InstanceBatch:
     """The part of ``mujoco.batch.Batch`` that Fetch uses, for MuJoCo builds without it.
 
-    Each lane's integration state is a row of one array, as in ``mujoco.batch``. Worker threads load a row into
+    Each environment's integration state is a row of one array, as in ``mujoco.batch``. Worker threads load a row into
     their own MjData, call ``mj_step`` or ``mj_forward`` (which release the GIL), and store the row and the
     outputs back. A loaded state steps exactly as the MjData it was read from.
     """
@@ -83,21 +83,21 @@ class LaneBatch:
 
     def expand(self, name):
         if name != "body_mass":
-            raise ValueError("LaneBatch varies body_mass only")
+            raise ValueError("InstanceBatch varies body_mass only")
         if self._mass is None:
             self._mass = np.repeat(self._model.body_mass[None], self.nsim, 0)
         return self._mass
 
-    def _lane_model(self, lane):
-        if self._mass is None or np.array_equal(self._mass[lane], self._model.body_mass):
+    def _instance_model(self, instance):
+        if self._mass is None or np.array_equal(self._mass[instance], self._model.body_mass):
             return self._model
-        key = self._mass[lane].tobytes()
+        key = self._mass[instance].tobytes()
         model = self._models.get(key)
         if model is None:
             import copy
 
             model = self._models[key] = copy.deepcopy(self._model)
-            model.body_mass[:] = self._mass[lane]
+            model.body_mass[:] = self._mass[instance]
         return model
 
     def _run(self, ids, work):
@@ -105,58 +105,58 @@ class LaneBatch:
         if self._pool is None or len(ids) < 2:
             work(self._datas[0], ids)
             return
-        # The threads take lanes from one queue, so a thread whose lanes step faster takes more of them. The
-        # calling thread takes lanes too instead of waiting idle.
-        lanes = iter(ids.tolist())
+        # The threads take environments from one queue, so a thread whose environments step faster takes more of them. The
+        # calling thread takes environments too instead of waiting idle.
+        instances = iter(ids.tolist())
         count = min(self._threads, len(ids))
-        futures = [self._pool.submit(work, d, lanes) for d in self._datas[: count - 1]]
+        futures = [self._pool.submit(work, d, instances) for d in self._datas[: count - 1]]
         try:
-            work(self._datas[count - 1], lanes)
+            work(self._datas[count - 1], instances)
         finally:
             for future in futures:
                 future.result()
 
-    def _store(self, data, lane):
-        self._mj.mj_getState(self._model, data, self.state[lane], self._spec)
+    def _store(self, data, instance):
+        self._mj.mj_getState(self._model, data, self.state[instance], self._spec)
         for name, out in self._outputs.items():
-            out[lane] = getattr(data, name)
+            out[instance] = getattr(data, name)
 
     def step(self, ids=None, nstep: int = 1, stage: int = 0, zero_qpos=None):
         """``mj_step``; with ``zero_qpos``, then zero those coordinates and ``mj_forward``, in one pass."""
         mj, spec = self._mj, self._spec
 
-        def work(data, lanes):
-            for lane in lanes:
-                model = self._lane_model(lane)
-                mj.mj_setState(model, data, self.state[lane], spec)
+        def work(data, instances):
+            for instance in instances:
+                model = self._instance_model(instance)
+                mj.mj_setState(model, data, self.state[instance], spec)
                 mj.mj_step(model, data, nstep=nstep)
                 if zero_qpos is not None:
                     data.qpos[zero_qpos] = 0.0
                     mj.mj_forward(model, data)
-                self._store(data, lane)
+                self._store(data, instance)
 
         self._run(ids, work)
 
     def forward(self, ids=None, stage: int = 3):
         mj, spec = self._mj, self._spec
 
-        def work(data, lanes):
-            for lane in lanes:
-                model = self._lane_model(lane)
-                mj.mj_setState(model, data, self.state[lane], spec)
+        def work(data, instances):
+            for instance in instances:
+                model = self._instance_model(instance)
+                mj.mj_setState(model, data, self.state[instance], spec)
                 mj.mj_forward(model, data)
-                self._store(data, lane)
+                self._store(data, instance)
 
         self._run(ids, work)
 
     def reset(self, ids=None, keyframe=-1, stage: int = 3):
         mj, spec = self._mj, self._spec
 
-        def work(data, lanes):
-            for lane in lanes:
-                model = self._lane_model(lane)
+        def work(data, instances):
+            for instance in instances:
+                model = self._instance_model(instance)
                 mj.mj_resetData(model, data)
-                mj.mj_getState(model, data, self.state[lane], spec)
+                mj.mj_getState(model, data, self.state[instance], spec)
 
         self._run(ids, work)
         if stage:
@@ -169,11 +169,11 @@ class LaneBatch:
 
 
 def make_batch(model, nsim: int, nthread: int):
-    """``mujoco.batch.Batch`` when this MuJoCo has it, else ``LaneBatch``; both step as ``mj_step``."""
+    """``mujoco.batch.Batch`` when this MuJoCo has it, else ``InstanceBatch``; both step as ``mj_step``."""
     try:
         from mujoco.batch import Batch
     except ImportError:
-        return LaneBatch(model, nsim, nthread)
+        return InstanceBatch(model, nsim, nthread)
     return Batch(model, nsim, nthread=nthread)
 
 
@@ -232,14 +232,14 @@ class FetchTask:
         self.source.close()
 
 
-def lane_rng(seed):
+def instance_rng(seed):
     from gymnasium.utils import seeding
 
     return seeding.np_random(seed)[0]
 
 
 def sample_reset(task: FetchTask, rng, anchor):
-    """gymnasium-robotics' reset draws for one lane: the object's xy (or None) and the goal."""
+    """gymnasium-robotics' reset draws for one environment: the object's xy (or None) and the goal."""
     object_xy = None
     if task.has_object:
         object_xy = anchor[:2]
@@ -284,22 +284,22 @@ def visual_colors(model, values):
 
 
 def rng_words(rngs):
-    """PCG64 words of each lane's generator: state, increment, has_uint32, uinteger, as ``(B, 10)`` int64."""
+    """PCG64 words of each environment's generator: state, increment, has_uint32, uinteger, as ``(B, 10)`` int64."""
     words = np.empty((len(rngs), 10), np.int64)
-    for lane, rng in enumerate(rngs):
+    for instance, rng in enumerate(rngs):
         r = rng.bit_generator.state
         if r["bit_generator"] != "PCG64":
             raise ValueError("Fetch requires PCG64 RNG")
-        words[lane] = [*_words(r["state"]["state"]), *_words(r["state"]["inc"]), r["has_uint32"], r["uinteger"]]
+        words[instance] = [*_words(r["state"]["state"]), *_words(r["state"]["inc"]), r["has_uint32"], r["uinteger"]]
     return words
 
 
-class FetchLanes(SimulatorAdapter):
+class FetchInstances(SimulatorAdapter):
     """Host bookkeeping that every batched Fetch backend shares: RNG, goals, reset anchors, masses and limits."""
 
     action_dim = 4
 
-    def _init_lanes(self, num_envs, device, task, reward_type):
+    def _init_instances(self, num_envs, device, task, reward_type):
         self.num_envs, self.device = int(num_envs), torch.device(device)
         self.task = t = FetchTask(task, reward_type)
         self.schema = fetch_schema(t.nq, t.nv)
@@ -341,36 +341,36 @@ class FetchLanes(SimulatorAdapter):
         return visual_colors(self.task.model, values)
 
     def _draw_resets(self, seed, variations, qpos):
-        """Seed, sample and vary every lane as gymnasium-robotics' reset and ``FetchAdapter.reset`` do.
+        """Seed, sample and vary every environment as gymnasium-robotics' reset and ``FetchAdapter.reset`` do.
 
-        Write each lane's start configuration into ``qpos`` and its goal, reset anchor and mass into the lane arrays.
+        Write each environment's start configuration into ``qpos`` and its goal, reset anchor and mass into the environment arrays.
         """
         t = self.task
         qpos[:] = t.initial_qpos
-        for lane in range(self.num_envs):
-            values = {} if variations is None else variations[lane]
-            if seed is not None or self._rngs[lane] is None:
-                self._rngs[lane] = lane_rng(None if seed is None else int(seed) + lane)
-            anchor = self._anchor[lane]
+        for instance in range(self.num_envs):
+            values = {} if variations is None else variations[instance]
+            if seed is not None or self._rngs[instance] is None:
+                self._rngs[instance] = instance_rng(None if seed is None else int(seed) + instance)
+            anchor = self._anchor[instance]
             anchor[:] = t.anchor
             if "agent.start_position" in values:
                 anchor[:2] = values["agent.start_position"]
-            object_xy, self._goal[lane] = sample_reset(t, self._rngs[lane], anchor)
+            object_xy, self._goal[instance] = sample_reset(t, self._rngs[instance], anchor)
             if object_xy is not None:
-                qpos[lane, t.object_qpos : t.object_qpos + 2] = object_xy
+                qpos[instance, t.object_qpos : t.object_qpos + 2] = object_xy
             if "block.start_position" in values:
-                qpos[lane, 15:17] = values["block.start_position"]
+                qpos[instance, 15:17] = values["block.start_position"]
             if "block.angle" in values:
                 angle = float(np.asarray(values["block.angle"]).reshape(-1)[0])
-                qpos[lane, 18:22] = [np.cos(angle / 2), 0, 0, np.sin(angle / 2)]
+                qpos[instance, 18:22] = [np.cos(angle / 2), 0, 0, np.sin(angle / 2)]
             if "goal.start_position" in values:
-                self._goal[lane] = np.asarray(values["goal.start_position"], np.float64)
+                self._goal[instance] = np.asarray(values["goal.start_position"], np.float64)
             if "block.mass" in values:
-                self._mass[lane] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
+                self._mass[instance] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
         self._words = None
 
     def _rng_words(self):
-        """PCG64 words of every lane; they change only when a lane resets or restores."""
+        """PCG64 words of every environment; they change only when an environment resets or restores."""
         if self._words is None:
             self._words = rng_words(self._rngs)
         return self._words
@@ -378,12 +378,15 @@ class FetchLanes(SimulatorAdapter):
     def _restore_rngs(self, v):
         state_words, inc_words = v["rng/state_words"], v["rng/increment_words"]
         has_uint32, uinteger = v["rng/has_uint32"][:, 0], v["rng/uinteger"][:, 0]
-        for lane, rng in enumerate(self._rngs):
+        for instance, rng in enumerate(self._rngs):
             rng.bit_generator.state = {
                 "bit_generator": "PCG64",
-                "state": {"state": _integer(state_words[lane].tolist()), "inc": _integer(inc_words[lane].tolist())},
-                "has_uint32": int(has_uint32[lane]),
-                "uinteger": int(uinteger[lane]),
+                "state": {
+                    "state": _integer(state_words[instance].tolist()),
+                    "inc": _integer(inc_words[instance].tolist()),
+                },
+                "has_uint32": int(has_uint32[instance]),
+                "uinteger": int(uinteger[instance]),
             }
         self._words = None
 
@@ -399,13 +402,13 @@ class FetchLanes(SimulatorAdapter):
         return out
 
 
-class FetchBatchAdapter(FetchLanes):
-    """CPU Fetch lanes in one batch: gymnasium-robotics' step and reset, bit for bit, on lane arrays."""
+class FetchBatchAdapter(FetchInstances):
+    """CPU Fetch environments in one batch: gymnasium-robotics' step and reset, bit for bit, on environment arrays."""
 
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse", threads=None):
-        self._init_lanes(num_envs, device, task, reward_type)
+        self._init_instances(num_envs, device, task, reward_type)
         t, B = self.task, self.num_envs
         self.b = make_batch(t.model, B, physics_threads(B) if threads is None else int(threads))
         for name in ("qpos", "qvel", "time", "qacc_warmstart", "ctrl", "mocap_pos", "mocap_quat"):
@@ -533,7 +536,7 @@ class FetchBatchAdapter(FetchLanes):
         return self._export(self._advance(actions, active), "step")
 
     def _advance(self, actions, active) -> dict[str, np.ndarray]:
-        """robot_env.step, _set_action, _step_callback, compute_reward and TimeLimit on the active lanes."""
+        """robot_env.step, _set_action, _step_callback, compute_reward and TimeLimit on the active environments."""
         self._check_open()
         t = self.task
         active = host_active(active, self.num_envs)
@@ -552,7 +555,7 @@ class FetchBatchAdapter(FetchLanes):
             mocap = t.welds[0][0]
             self._mocap_pos[ids, mocap] = self._grip_pos[ids] + pos_ctrl
             self._mocap_quat[ids, mocap] = self._grip_quat[ids] + np.array([1.0, 0.0, 1.0, 0.0])
-            if isinstance(self.b, LaneBatch):
+            if isinstance(self.b, InstanceBatch):
                 self.b.step(ids, t.n_substeps, zero_qpos=t.fingers if t.block_gripper else None)
             else:
                 self.b.step(ids, t.n_substeps)

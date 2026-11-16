@@ -1,4 +1,4 @@
-"""Acrobot process lanes match local lanes for every worker count, and a rejected State restores no lane."""
+"""Acrobot process environments match local environments for every worker count, and a rejected State restores no environment."""
 
 import numpy as np
 import torch
@@ -33,7 +33,7 @@ def test_process_matches_local():
     )
 
 
-def test_invalid_last_lane_rng_restores_no_lane():
+def test_invalid_last_environment_rng_restores_no_environment():
     adapter = AcrobotProcessAdapter("acrobot", 5, seed=17, processes=2)
     try:
 

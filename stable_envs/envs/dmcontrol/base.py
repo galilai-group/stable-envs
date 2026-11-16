@@ -34,12 +34,12 @@ class _DMCModel(Env):
     default_size = 84
     default_supersample = 1
     # Renderer capability: MJWarp does not batch cam_fovy per world.
-    CAMERA_KNOB = True
+    CAMERA_VARIATION = True
     # Renderer capability: cached MJWarp contexts fix visibility at construction.
-    VISIBILITY_KNOB = True
+    VISIBILITY_VARIATION = True
     # Per-geom or per-site alternatives: ((mjtGeom, (sx, sy, sz)), ...). Exactly one must
     # match the compiled model; shape changes are shared within an appearance group.
-    SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
+    SHAPE_CHOICES: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
     # ``group -> geom names`` whose explicit rgba a ``<group>.color`` leaf writes, overriding their material.
     GEOM_COLORS: dict[str, tuple[str, ...]] = {}
     # ``physics leaf -> sphere geom`` drawn at the leaf's radius per row.
@@ -142,7 +142,7 @@ class _DMCModel(Env):
             light_specular=np.array(m.light_specular, copy=True),
             mat_reflectance=np.array(m.mat_reflectance, copy=True),
             cam_fovy=np.array(m.cam_fovy, copy=True),
-            # Restore shape arrays for every appearance, including domains without shape knobs.
+            # Restore shape arrays for every appearance, including domains without shape settings.
             geom_type=np.array(m.geom_type, copy=True),
             geom_size=np.array(m.geom_size, copy=True),
             site_type=np.array(m.site_type, copy=True),
@@ -247,7 +247,7 @@ class _DMCModel(Env):
 
     @classmethod
     def _shape_element(cls, name: str) -> tuple[str, int]:
-        """Resolve a SHAPE_KNOBS name to a geom, or to a site when no geom has it."""
+        """Resolve a SHAPE_CHOICES name to a geom, or to a site when no geom has it."""
         import mujoco
 
         m = cls._model()
@@ -256,7 +256,7 @@ class _DMCModel(Env):
             if ident >= 0:
                 return kind, ident
         raise RuntimeError(
-            f"{cls.__name__}: SHAPE_KNOBS names {name!r}, which this model has as neither geom nor site"
+            f"{cls.__name__}: SHAPE_CHOICES names {name!r}, which this model has as neither geom nor site"
         )
 
     @classmethod
@@ -340,10 +340,10 @@ class _DMCModel(Env):
             "material": Dict(mats),
             "light": Dict({"diffuse_scale": Box(low=0.2, high=1.8, shape=(1,), init_value=[1.0])}),
         }
-        if self.CAMERA_KNOB:
+        if self.CAMERA_VARIATION:
             space["camera"] = Dict({"fovy_scale": Box(low=0.55, high=1.8, shape=(1,), init_value=[1.0])})
         vis = {}
-        if self.VISIBILITY_KNOB:
+        if self.VISIBILITY_VARIATION:
             for kind, name, eids in self._hideable():
                 a = effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
                 # A body landmark is visible if any of its pristine geoms are visible.
@@ -355,7 +355,7 @@ class _DMCModel(Env):
             mid, rgba = int(m.geom_matid[gid]), pr["geom_rgba"][gid]
             rgb = pr["mat_rgba"][mid][:3] if mid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]) else rgba[:3]
             space[group] = Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=[float(x) for x in rgb])})
-        for gname, alts in self.SHAPE_KNOBS.items():
+        for gname, alts in self.SHAPE_CHOICES.items():
             kind, gid = self._shape_element(gname)
             ptype, psize = pr[f"{kind}_type"][gid], pr[f"{kind}_size"][gid]
             cur = [

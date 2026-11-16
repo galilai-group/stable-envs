@@ -210,7 +210,7 @@ def make_dataset(name: str, path: Path, episodes: int, length: int) -> None:
     np.savez(path, seeds=np.arange(episodes, dtype=np.int64) + SEED, actions=actions)
 
 
-def make_states(name: str, path: Path, n: int, *, lanes=64, steps=1000, every=30) -> None:
+def make_states(name: str, path: Path, n: int, *, num_envs=64, steps=1000, every=30) -> None:
     """``n`` full States saved every ``every`` random actions after seeded resets, up to ``steps`` per reset."""
     import torch
 
@@ -219,7 +219,7 @@ def make_states(name: str, path: Path, n: int, *, lanes=64, steps=1000, every=30
     rng = np.random.default_rng(SEED)
     cls = snv.info(name)["class"]
     saved, have = [], 0
-    with snv.make(name, num_envs=min(lanes, n), size=cls.native_size or 224, device="cpu") as env:
+    with snv.make(name, num_envs=min(num_envs, n), size=cls.native_size or 224, device="cpu") as env:
         while have < n:
             env.reset(seed=int(rng.integers(0, 2**31 - 1)))
             for t in range(1, steps + 1):
@@ -269,10 +269,10 @@ def rows_path(states_path) -> Path:
 # Sides. Each runs in its own process (see ``_side``).
 
 
-def _ours_env(name, lanes, device):
+def _ours_env(name, num_envs, device):
     import stable_envs as snv
 
-    return snv.make(name, num_envs=lanes, size=snv.info(name)["class"].native_size or 224, device=device)
+    return snv.make(name, num_envs=num_envs, size=snv.info(name)["class"].native_size or 224, device=device)
 
 
 def ours_online(spec) -> dict:
@@ -281,9 +281,9 @@ def ours_online(spec) -> dict:
     data = np.load(spec["data"])
     seeds, actions = data["seeds"][: spec["B"]], data["actions"][: spec["B"]]
     n, length = actions.shape[:2]
-    lanes, chunk, dev = min(spec["B"], n), spec["T"], spec["device"]
+    num_envs, chunk, dev = min(spec["B"], n), spec["T"], spec["device"]
     torch.set_num_threads(spec["threads"])
-    env = _ours_env(spec["env"], lanes, dev)
+    env = _ours_env(spec["env"], num_envs, dev)
     sync = torch.cuda.synchronize if dev.startswith("cuda") else None
     acts = torch.as_tensor(actions, device=dev)
     frames = slice(None) if spec["render"] else None
@@ -293,18 +293,18 @@ def ours_online(spec) -> dict:
         for s in groups:
             env.reset(seed=int(seeds[s]))
             for t0 in range(0, length, chunk):
-                env.step(acts[s : s + lanes, t0 : min(t0 + chunk, length)], states=states, frames=frames)
-            yield lanes * length
+                env.step(acts[s : s + num_envs, t0 : min(t0 + chunk, length)], states=states, frames=frames)
+            yield num_envs * length
 
-    groups = list(range(0, n - lanes + 1, lanes))
+    groups = list(range(0, n - num_envs + 1, num_envs))
     try:
         if spec["render"]:
             env.reset(seed=int(seeds[0]))
-            env.step(acts[:lanes, :1], states=None, frames=slice(None))
-        t = timed(cycle(lambda: play(groups)), sync=sync, **_timing(spec, lanes))
+            env.step(acts[:num_envs, :1], states=None, frames=slice(None))
+        t = timed(cycle(lambda: play(groups)), sync=sync, **_timing(spec, num_envs))
     finally:
         env.close()
-    return {"lanes": lanes, "actions_per_call": chunk, "steps_per_episode": length, **t}
+    return {"num_envs": num_envs, "actions_per_call": chunk, "steps_per_episode": length, **t}
 
 
 def ours_render(spec) -> dict:
@@ -352,7 +352,7 @@ def _timing(spec, per_item) -> dict:
     )
 
 
-def _lanes_worker(conn, name, size, render, start, count, seed, cpus, total):
+def _instances_worker(conn, name, size, render, start, count, seed, cpus, total):
     """Own instances ``start:start + count`` of a ``SourcePool`` and serve the parent's requests."""
     import torch
 
@@ -407,16 +407,16 @@ class SourcePool:
     before the next submit.
     """
 
-    def __init__(self, name, size, render, lanes, seed, processes, cpus):
+    def __init__(self, name, size, render, num_envs, seed, processes, cpus):
         ctx = mp.get_context("spawn")
         self._conns, self._procs, self._shm, self._frames, self._capture = [], [], None, None, False
-        self._slices = [slice(int(r[0]), int(r[-1]) + 1) for r in np.array_split(np.arange(lanes), processes)]
+        self._slices = [slice(int(r[0]), int(r[-1]) + 1) for r in np.array_split(np.arange(num_envs), processes)]
         groups = [g.tolist() for g in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups):
                 parent, child = ctx.Pipe()
-                args = (child, name, size, render, rows.start, rows.stop - rows.start, seed, group, lanes)
-                proc = ctx.Process(target=_lanes_worker, args=args)
+                args = (child, name, size, render, rows.start, rows.stop - rows.start, seed, group, num_envs)
+                proc = ctx.Process(target=_instances_worker, args=args)
                 proc.start()
                 child.close()
                 self._conns.append(parent)
@@ -424,8 +424,8 @@ class SourcePool:
             shapes = self._gather()
             if render:
                 shape = tuple(shapes[0])
-                self._shm = shared_memory.SharedMemory(create=True, size=int(lanes * np.prod(shape)))
-                self._frames = np.ndarray((lanes, *shape), np.uint8, self._shm.buf)
+                self._shm = shared_memory.SharedMemory(create=True, size=int(num_envs * np.prod(shape)))
+                self._frames = np.ndarray((num_envs, *shape), np.uint8, self._shm.buf)
                 for conn in self._conns:
                     conn.send(("frames", self._shm.name))
                 self._gather()
@@ -489,16 +489,16 @@ def source_online(spec) -> dict:
     seeds, actions = data["seeds"][: spec["B"]], data["actions"][: spec["B"]]
     n, length = actions.shape[:2]
     procs = min(spec["B"], len(spec["cores"]))
-    lanes = min(procs * math.ceil(spec["B"] / procs), n)
+    num_envs = min(procs * math.ceil(spec["B"] / procs), n)
     cpus = spec["cores"][:procs]
     render = spec["render"]
-    pool = SourcePool(spec["env"], 224, render, lanes, int(seeds[0]), procs, cpus)
-    out = {"procs": procs, "lanes": lanes, "cpus": cpus, "steps_per_episode": length}
+    pool = SourcePool(spec["env"], 224, render, num_envs, int(seeds[0]), procs, cpus)
+    out = {"procs": procs, "num_envs": num_envs, "cpus": cpus, "steps_per_episode": length}
     try:
         probe, t0 = 3, time.perf_counter()
         pool.reset(int(seeds[0]))
         for t in range(probe):
-            pool.submit_step(actions[:lanes, t], capture_frame=render)
+            pool.submit_step(actions[:num_envs, t], capture_frame=render)
             pool.receive_step()
         per_step = (time.perf_counter() - t0) / probe
         # The warm-up and every window hold whole episodes.
@@ -506,26 +506,26 @@ def source_online(spec) -> dict:
         projected = per_step * (length + window * spec["repeats"])
         out["projected_s"] = projected
         if projected > spec["source_cap"]:
-            return {**out, **_partial(pool, spec, seeds, actions, lanes, render), "estimated": True}
+            return {**out, **_partial(pool, spec, seeds, actions, num_envs, render), "estimated": True}
 
         def play():
             pool.reset(int(seeds[0]))
-            pool.submit_step(actions[:lanes, 0], capture_frame=render)
+            pool.submit_step(actions[:num_envs, 0], capture_frame=render)
             for t in range(length):
                 pool.receive_step()
                 if t + 1 < length:
-                    pool.submit_step(actions[:lanes, t + 1], capture_frame=render)
-            yield lanes * length
+                    pool.submit_step(actions[:num_envs, t + 1], capture_frame=render)
+            yield num_envs * length
 
         units = cycle(play)
-        t = timed(units, **_timing(spec, lanes))
+        t = timed(units, **_timing(spec, num_envs))
         units.close()
-        got = _worker_frames(pool, seeds, actions, lanes) if render and spec.get("check_frames") else None
+        got = _worker_frames(pool, seeds, actions, num_envs) if render and spec.get("check_frames") else None
     finally:
         pool.close()
     res = {**out, **t, "estimated": False}
     if got is not None:
-        res["frame_check"] = check = _frame_check(spec, got, seeds, actions, lanes)
+        res["frame_check"] = check = _frame_check(spec, got, seeds, actions, num_envs)
         if check["reproducible"] and check["mismatched"]:
             res["status"] = "invalid"
     return res
@@ -536,20 +536,20 @@ def _check_steps(length: int) -> list[int]:
     return sorted({t for t in (0, 1, 20, length - 1) if 0 <= t < length})
 
 
-def _worker_frames(pool, seeds, actions, lanes) -> dict:
+def _worker_frames(pool, seeds, actions, num_envs) -> dict:
     """Digests of the pool workers' frames of a few instances, spread across workers, at the check steps."""
     import hashlib
 
     steps = _check_steps(actions.shape[1])
-    check_lanes = sorted({0, lanes // 2, lanes - 1})
+    check_instances = sorted({0, num_envs // 2, num_envs - 1})
     got = {}
     pool.reset(int(seeds[0]))
     for step in range(max(steps) + 1):
-        pool.submit_step(actions[:lanes, step], capture_frame=True)
+        pool.submit_step(actions[:num_envs, step], capture_frame=True)
         frame = pool.receive_step()
         if step in steps:
-            for lane in check_lanes:
-                got[lane, step] = hashlib.sha1(np.ascontiguousarray(frame[lane]).tobytes()).hexdigest()
+            for instance in check_instances:
+                got[instance, step] = hashlib.sha1(np.ascontiguousarray(frame[instance]).tobytes()).hexdigest()
     return got
 
 
@@ -577,7 +577,7 @@ def _replay_in_new_process(name, seed, actions):
         return p.apply(_replay, (name, seed, actions))
 
 
-def _frame_check(spec, got, seeds, actions, lanes) -> dict:
+def _frame_check(spec, got, seeds, actions, num_envs) -> dict:
     """Compare the pool workers' frames with one-env replays, and ours' frames with the replays.
 
     A second replay of the first instance tells whether swm's seeded reset is reproducible; without that the
@@ -591,21 +591,30 @@ def _frame_check(spec, got, seeds, actions, lanes) -> dict:
     import stable_envs as snv
 
     name, steps = spec["env"], _check_steps(actions.shape[1])
-    check_lanes = sorted({0, lanes // 2, lanes - 1})
-    theirs = {lane: _replay_in_new_process(name, int(seeds[lane]), actions[lane]) for lane in check_lanes}
-    again = _replay_in_new_process(name, int(seeds[check_lanes[0]]), actions[check_lanes[0]])[0]
-    reproducible = bool(again.shape == theirs[check_lanes[0]][0].shape and (again == theirs[check_lanes[0]][0]).all())
+    check_instances = sorted({0, num_envs // 2, num_envs - 1})
+    theirs = {
+        instance: _replay_in_new_process(name, int(seeds[instance]), actions[instance]) for instance in check_instances
+    }
+    again = _replay_in_new_process(name, int(seeds[check_instances[0]]), actions[check_instances[0]])[0]
+    reproducible = bool(
+        again.shape == theirs[check_instances[0]][0].shape and (again == theirs[check_instances[0]][0]).all()
+    )
     digest = lambda f: hashlib.sha1(np.ascontiguousarray(f).tobytes()).hexdigest()  # noqa: E731
-    bad = [f"{lane}/{t}" for lane in check_lanes for t in steps if got[lane, t] != digest(theirs[lane][0][t])]
+    bad = [
+        f"{instance}/{t}"
+        for instance in check_instances
+        for t in steps
+        if got[instance, t] != digest(theirs[instance][0][t])
+    ]
     device = "cuda" if spec.get("gl") == "egl" else "cpu"
     per_frame = []
-    for lane in check_lanes:
-        source, source_end = theirs[lane]
+    for instance in check_instances:
+        source, source_end = theirs[instance]
         with snv.make(name, num_envs=1, size=source.shape[1], device=device) as env:
-            env.reset(seed=int(seeds[lane]))
-            out = env.step(torch.as_tensor(actions[lane][None], device=device), states=None, frames=slice(None))
+            env.reset(seed=int(seeds[instance]))
+            out = env.step(torch.as_tensor(actions[instance][None], device=device), states=None, frames=slice(None))
             ours = out["frames"][0].cpu().numpy()
-            ended = np.zeros(len(actions[lane]), bool)
+            ended = np.zeros(len(actions[instance]), bool)
             for k in ("terminated", "truncated", "done"):
                 if k in out.keys():
                     ended |= out[k][0].reshape(len(ended), -1).any(-1).cpu().numpy().astype(bool)
@@ -617,7 +626,7 @@ def _frame_check(spec, got, seeds, actions, lanes) -> dict:
     mse = np.concatenate(per_frame) if per_frame else None
     return {
         "reproducible": reproducible,
-        "instances": check_lanes,
+        "instances": check_instances,
         "steps": steps,
         "frames": len(got),
         "mismatched": len(bad),
@@ -628,7 +637,7 @@ def _frame_check(spec, got, seeds, actions, lanes) -> dict:
     }
 
 
-def _partial(pool, spec, seeds, actions, lanes, render) -> dict:
+def _partial(pool, spec, seeds, actions, num_envs, render) -> dict:
     """Rate from windows of ``partial_window`` seconds counted in steps; resets at the episode length count."""
     length = actions.shape[1]
     step = {"t": 0}
@@ -636,7 +645,7 @@ def _partial(pool, spec, seeds, actions, lanes, render) -> dict:
     def submit():
         if step["t"] == 0:
             pool.reset(int(seeds[0]))
-        pool.submit_step(actions[:lanes, step["t"]], capture_frame=render)
+        pool.submit_step(actions[:num_envs, step["t"]], capture_frame=render)
         step["t"] = (step["t"] + 1) % length
 
     submit()
@@ -656,7 +665,7 @@ def _partial(pool, spec, seeds, actions, lanes, render) -> dict:
             el = time.perf_counter() - s0
             if el >= spec["partial_window"]:
                 break
-        rates.append(k * lanes / el)
+        rates.append(k * num_envs / el)
         secs.append(el)
         steps.append(k)
     pool.receive_step()
@@ -666,7 +675,7 @@ def _partial(pool, spec, seeds, actions, lanes, render) -> dict:
         "window_s": secs,
         "steps": steps,
         "repeats": len(rates),
-        "warmup_items": warmed * lanes,
+        "warmup_items": warmed * num_envs,
         "warmup_s": warm_s,
         "method": "partial run, windows counted in steps",
     }

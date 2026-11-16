@@ -169,7 +169,7 @@ class ReacherMJXAdapter(ReacherAdapter):
             raise ValueError("Reacher actions must be finite with shape (num_envs, 2)")
         if active is not None and (active.shape != (self.num_envs,) or not bool(torch.as_tensor(active).all())):
             raise ValueError(
-                "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                "Accepted DMC wrappers do not expose terminal environments; partial active masks are unsupported"
             )
         action = _from_torch(actions.to(torch.float32))
         reward = torch.zeros(self.num_envs, dtype=torch.float64, device=self.device)
@@ -177,8 +177,8 @@ class ReacherMJXAdapter(ReacherAdapter):
             resetting = self._reset_next[:, 0].copy()
             if resetting.any():
                 cumulative = self._views["task/cumulative_reward"].clone()
-                for lane in np.flatnonzero(resetting):
-                    self.envs[lane].reset()
+                for instance in np.flatnonzero(resetting):
+                    self.envs[instance].reset()
                 mask = torch.as_tensor(resetting, device=self.device)
                 self._state[mask] = super().get_state()[mask]
                 self._views["task/cumulative_reward"].copy_(cumulative)

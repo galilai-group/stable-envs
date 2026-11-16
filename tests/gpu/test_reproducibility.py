@@ -589,7 +589,7 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     if env.style_dim == 0:
         pytest.skip(f"{type(env).__name__} declares no style, so there is nothing to collapse")
     if not S.has_render_rows(env):
-        # A full State carries each lane's Variation, so a sub-batch draws its own lanes' appearance.
+        # A full State carries each environment's Variation, so a sub-batch draws its own environments' appearance.
         st = S.styled_inputs(env, N, C.uniform_style(env, N, groups=2))
         d = RS.max_diff(RS.frames(env, st[3:4])[0], RS.frames(env, st)[3])
         assert d == 0, f"{type(env).__name__}: State 3 rendered alone is {d}/255 away from row 3 of the batch"
@@ -648,7 +648,7 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
         pytest.skip(f"{type(env).__name__} declares no continuous variation leaf")
     path, off, w, v = chosen
     if not S.has_render_rows(env):
-        _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v)
+        _assert_an_override_keeps_the_per_instance_variation(env, path, off, w, v)
         return
     states, _ = inputs
     sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
@@ -671,8 +671,8 @@ def _leaf_value(env, path, v):
     return np.asarray(v).reshape(node.shape).astype(node.dtype)
 
 
-def _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v):
-    """``set_variation({path: v})`` over a per-lane Variation equals installing those rows with one column replaced."""
+def _assert_an_override_keeps_the_per_instance_variation(env, path, off, w, v):
+    """``set_variation({path: v})`` over a per-environment Variation equals installing those rows with one column replaced."""
     sty = C.uniform_style(env, N, groups=2)
     want = np.array(sty, np.float32)
     want[:, off : off + w] = v
@@ -681,12 +681,12 @@ def _assert_an_override_keeps_the_per_lane_variation(env, path, off, w, v):
         rows_a = a.set_variation({path: _leaf_value(env, path, v)}).detach().cpu().numpy()
         rows_b = b.set_variation(want).detach().cpu().numpy()
         assert np.array_equal(rows_a, rows_b), (
-            f"{type(env).__name__}: set_variation({{{path!r}: v}}) over a per-lane Variation installed other "
+            f"{type(env).__name__}: set_variation({{{path!r}: v}}) over a per-environment Variation installed other "
             f"rows than the same rows with that one column replaced"
         )
         fa, fb = RS.frames_under(a), RS.frames_under(b)
     assert np.array_equal(fa, fb), (
-        f"{type(env).__name__}: after set_variation({{{path!r}: v}}) over a per-lane Variation the frames differ "
+        f"{type(env).__name__}: after set_variation({{{path!r}: v}}) over a per-environment Variation the frames differ "
         f"from those of the same rows with that column replaced (max {RS.max_diff(fa, fb)}/255)"
     )
 
@@ -912,19 +912,19 @@ APPROXIMATE_BACKENDS = frozenset({"mjwarp"})
 #: Steps to the restored State, then steps of the continued rollout, for approximate backends.
 ROLLOUT_WARMUP, ROLLOUT_STEPS = 20, 300
 #: Bounds on a continued rollout of an approximate backend, on the largest ``qpos`` difference per step between
-#: the env that reached the State and the env restored to it: its rollout mean in the median lane, its largest
-#: value in any lane, and the lanes whose final ``success`` may differ.
+#: the env that reached the State and the env restored to it: its rollout mean in the median environment, its largest
+#: value in any environment, and the environments whose final ``success`` may differ.
 ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS, ROLLOUT_SUCCESS_FLIPS = 0.01, 0.25, 1
-#: The median lane's accumulated reward may differ between the two envs by this fraction of its size (at least 1).
+#: The median environment's accumulated reward may differ between the two envs by this fraction of its size (at least 1).
 ROLLOUT_REWARD_RTOL = 0.05
 #: Wider bounds for tasks whose own source amplifies small differences. Slide's puck slides freely and can leave
 #: the table: on CPU MuJoCo an action noise of 1e-6 alone moves it 3.3 cm on average over 200 steps.
 #: MuJoCo Warp does not repeat a contact solve bit for bit, so bodies in contact are chaotic: two envs restored from
 #: the same State differ from each other as much as from the original (largest gap over 300 steps, original against
 #: restored and restored against restored: Hopper 0.85 and 1.12, Walker 0.59 and 1.04, HumanoidMaze 2.8 and 2.9,
-#: OGBScene 0.85 and 0.61, OGBCube 0.72 and 0.11). One lane drifts far in qpos while the return and the success of
-#: the median lane stay the same, which the checks below the qpos bounds cover. The DMC Humanoid falls under these
-#: actions and every lane is in contact: over three runs, mean gap of the median lane 0.27 to 0.45, largest gap 2.69
+#: OGBScene 0.85 and 0.61, OGBCube 0.72 and 0.11). One environment drifts far in qpos while the return and the success of
+#: the median environment stay the same, which the checks below the qpos bounds cover. The DMC Humanoid falls under these
+#: actions and every environment is in contact: over three runs, mean gap of the median environment 0.27 to 0.45, largest gap 2.69
 #: to 2.74, returns equal. Against native CPU physics on 16 environments the same rollout gives 0.77 and 2.95.
 ROLLOUT_QPOS_BOUNDS = {
     "FetchSlide*": (0.05, 2.5),
@@ -936,7 +936,7 @@ ROLLOUT_QPOS_BOUNDS = {
     # Under the smooth policy a Roadster leaves a roof, clips a parked car or touches down a step earlier or later,
     # and the paths separate by tens of metres: two envs reset alike and given the same actions differ by 50 m
     # (Rooftop) and 95 m (TrafficJam) on an RTX 4090, and on CPU a 1e-5 m/s change of the source's velocity moves
-    # TrafficJam's car 271 m. Restored against original: median lane 1.7 m (Rooftop), largest 380 m. MuJoCo
+    # TrafficJam's car 271 m. Restored against original: median environment 1.7 m (Rooftop), largest 380 m. MuJoCo
     # Warp's deterministic mode allocates memory inside the captured step, so the step graph cannot use it.
     "Roadster*": (2.5, 600.0),
 }
@@ -994,7 +994,7 @@ def test_a_step_from_a_restored_state_matches_the_original(env):
 
 
 def _smooth_policy(env):
-    """Slow sinusoids inside the action bounds, one phase and frequency per lane and action."""
+    """Slow sinusoids inside the action bounds, one phase and frequency per environment and action."""
     spec = env.action_spec
     shape = (N, *spec.shape)
     low = np.broadcast_to(np.asarray(-1.0 if spec.low is None else spec.low, np.float64), shape)
@@ -1066,18 +1066,20 @@ def test_an_approximate_backend_continues_a_restored_rollout(env):
             (ROLLOUT_MEDIAN_QPOS, ROLLOUT_MAX_QPOS),
         )
         median = float(gaps.mean(0).median())
-        assert median <= median_bound, f"{cls.__name__}: mean qpos gap of the median lane {median:.3g}"
+        assert median <= median_bound, f"{cls.__name__}: mean qpos gap of the median environment {median:.3g}"
         assert float(gaps.max()) <= max_bound, f"{cls.__name__}: largest qpos gap {float(gaps.max()):.3g}"
         if returns:
             ra, rb = torch.stack(returns).sum(0).double()
             scale = max(1.0, float(ra.abs().median()))
             drift = float((ra - rb).abs().median())
-            assert drift <= ROLLOUT_REWARD_RTOL * scale, f"{cls.__name__}: median lane return differs by {drift:.3g}"
+            assert drift <= ROLLOUT_REWARD_RTOL * scale, (
+                f"{cls.__name__}: median environment return differs by {drift:.3g}"
+            )
         if "success" in oa.keys():
             final = lambda out: out["success"].reshape(N, -1)[:, -1]  # noqa: E731
             sa, sb = final(oa).double(), final(ob).double()
             flips = int(((sa != sb) & ~(sa.isnan() & sb.isnan())).sum())
-            assert flips <= ROLLOUT_SUCCESS_FLIPS, f"{cls.__name__}: {flips} of {N} lanes changed task outcome"
+            assert flips <= ROLLOUT_SUCCESS_FLIPS, f"{cls.__name__}: {flips} of {N} environments changed task outcome"
 
 
 @pytest.mark.reference
@@ -1101,7 +1103,7 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
 
 
 def _visibility_capable_envs():
-    """Envs whose renderer supports a visibility knob, found without building anything.
+    """Envs whose renderer supports a visibility setting, found without building anything.
 
     Whether an env actually declares a ``visibility.*`` leaf needs its compiled model, so that is
     checked in the test body rather than at collection.
@@ -1109,7 +1111,7 @@ def _visibility_capable_envs():
     return [
         name
         for name, cls in sorted(se.registry.REGISTRY.items())
-        if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")
+        if getattr(cls, "VISIBILITY_VARIATION", False) and hasattr(cls, "_hideable")
     ]
 
 
@@ -1134,8 +1136,8 @@ def test_some_env_actually_declares_a_hideable_task_object():
     if not names:
         errs = se.import_errors()
         if "dmcontrol" in errs:
-            pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import ({errs['dmcontrol']})")
-        pytest.fail("no registered env sets VISIBILITY_KNOB, and every env module imported cleanly")
+            pytest.skip(f"no env can carry a visibility setting here: dmcontrol did not import ({errs['dmcontrol']})")
+        pytest.fail("no registered env sets VISIBILITY_VARIATION, and every env module imported cleanly")
     declared = _declared_visibility_leaves(names)
     if not declared:
         pytest.skip(
@@ -1143,7 +1145,7 @@ def test_some_env_actually_declares_a_hideable_task_object():
         )
     with_leaf = {n: v for n, v in declared.items() if v}
     assert with_leaf, (
-        f"{len(declared)} env(s) advertise VISIBILITY_KNOB and none declares a visibility.* leaf, "
+        f"{len(declared)} env(s) advertise VISIBILITY_VARIATION and none declares a visibility.* leaf, "
         f"so the scene-cache check skips on all of them. Check _episode_slots and _hideable: {declared}"
     )
     print(f"\nvisibility leaves declared by {len(with_leaf)} of {len(declared)} capable env(s): {with_leaf}")

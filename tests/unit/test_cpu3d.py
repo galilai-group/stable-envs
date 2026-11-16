@@ -75,8 +75,8 @@ def test_swimmer_builds_the_cpu_backend(se):
     assert f.shape == (2, env.size, env.size, 3) and f.dtype == torch.uint8 and f.device.type == "cpu"
 
 
-def test_trackcom_material_knobs_are_geom_wearers_only(se):
-    """Materials worn only by sites are not knobs, since neither trackcom backend draws sites.
+def test_trackcom_material_settings_are_geom_wearers_only(se):
+    """Materials worn only by sites are not settings, since neither trackcom backend draws sites.
 
     On ``CELLS`` the list equals the base class's; on quadruped it drops ``eye``, worn only by the
     two pupil sites.

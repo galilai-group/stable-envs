@@ -94,7 +94,7 @@ def _make_maze(loco, maze):
     )
 
 
-# Clearance in world units between the ball and every wall below which a lane takes a full MuJoCo step.
+# Clearance in world units between the ball and every wall below which an environment takes a full MuJoCo step.
 _REST_CLEARANCE = 1e-3
 
 
@@ -156,11 +156,11 @@ def _rest_walls(model):
     return lo, hi, radius, offset
 
 
-def _resting_lanes(rest, envs, qpos):
-    """Lanes whose step leaves the ball where it is, so only the clock advances.
+def _resting_instances(rest, envs, qpos):
+    """Environments whose step leaves the ball where it is, so only the clock advances.
 
     This is exact: the step sets the velocity to zero, ``_rest_walls`` checked that no joint, gravity
-    or fluid term then makes a force, and here the lane has no control or applied force and its ball
+    or fluid term then makes a force, and here the environment has no control or applied force and its ball
     keeps a clearance from every wall. The only contact is the floor, whose normal is orthogonal to
     both joints, so MuJoCo computes zero acceleration and the warmstart it stores is zero.
     """
@@ -189,7 +189,7 @@ def tree(groups: dict) -> dict:
 
 
 def decode_state(state, num_envs, schema, num_tasks):
-    """Return ``(host State, field views, [(task id, PCG64 state, legacy MT19937 state)] per lane)``, or raise."""
+    """Return ``(host State, field views, [(task id, PCG64 state, legacy MT19937 state)] per environment)``, or raise."""
     if not isinstance(state, TensorDict) or state.batch_size != torch.Size([num_envs]):
         raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
     schema.validate(state, finite=True)
@@ -222,7 +222,7 @@ def decode_state(state, num_envs, schema, num_tasks):
 class OGBMazeAdapter(SimulatorAdapter):
     """Independent CPU locomotion-maze simulators with owned state snapshots.
 
-    ``device`` selects output placement. Each lane owns both its environment PCG64
+    ``device`` selects output placement. Each environment owns both its environment PCG64
     and its own copy of NumPy's legacy global RNG (``np.random`` MT19937), which
     upstream draws from; calls must be serialized.
     """
@@ -238,7 +238,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         self._qpos, self._qvel, self.action_dim = BODIES[loco]
         self.envs = [_make_maze(loco, maze) for _ in range(self.num_envs)]
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
-        # A point step outside the teleport maze draws no random numbers, so the lanes step in one loop.
+        # A point step outside the teleport maze draws no random numbers, so the environments step in one loop.
         self._point = loco == "point" and all(env._teleport_info is None for env in self.envs)
         self._rest = _rest_walls(self.envs[0].model) if self._point else None
         self._static_keys = tuple(group_path(key) for key in HOST_GROUPS)
@@ -247,7 +247,7 @@ class OGBMazeAdapter(SimulatorAdapter):
 
     @property
     def process_static_leaves(self):
-        """State groups that only reset and restore change, for point lanes."""
+        """State groups that only reset and restore change, for point environments."""
         return self._static_keys if self._point else ()
 
     def _check_open(self):
@@ -262,18 +262,18 @@ class OGBMazeAdapter(SimulatorAdapter):
             self._in_legacy_rng(i, env.reset, seed=None if seed is None else int(seed) + i)
         return self.get_state()
 
-    def _in_legacy_rng(self, lane, function, *args, **kwargs):
-        """Install a lane's NumPy legacy global RNG state for one call, restoring the caller's on exit."""
+    def _in_legacy_rng(self, instance, function, *args, **kwargs):
+        """Install an environment's NumPy legacy global RNG state for one call, restoring the caller's on exit."""
         outside = np.random.get_state()
-        np.random.set_state(self._global_rng[lane])
+        np.random.set_state(self._global_rng[instance])
         try:
             return function(*args, **kwargs)
         finally:
-            self._global_rng[lane] = np.random.get_state()
+            self._global_rng[instance] = np.random.get_state()
             np.random.set_state(outside)
 
-    def _values(self, lane, env):
-        algorithm, keys, position, has_gauss, cached = self._global_rng[lane]
+    def _values(self, instance, env):
+        algorithm, keys, position, has_gauss, cached = self._global_rng[instance]
         assert algorithm == "MT19937"
         pcg = env.np_random.bit_generator.state
         assert pcg["bit_generator"] == "PCG64"
@@ -381,7 +381,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         )
 
     def _success(self, xy, goal):
-        """``norm(xy - goal) <= tol`` per lane, with the source's norm wherever rounding could flip it."""
+        """``norm(xy - goal) <= tol`` per environment, with the source's norm wherever rounding could flip it."""
         tol = self.envs[0]._goal_tol
         diff = xy - goal
         dist = np.sqrt(diff[:, 0] * diff[:, 0] + diff[:, 1] * diff[:, 1])
@@ -390,7 +390,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         return dist <= tol
 
     def _step_point(self, actions, active, capture_state):
-        """Step point lanes as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
+        """Step point environments as ``PointEnv.step`` and ``MazeEnv.step`` do, with task outputs for the whole batch."""
         import mujoco
 
         envs = self.envs
@@ -401,7 +401,7 @@ class OGBMazeAdapter(SimulatorAdapter):
         if first._success_timing == "pre":
             success = self._success(prev_qpos, goal)
         target = prev_qpos + 0.2 * actions
-        resting = _resting_lanes(self._rest, envs, target)
+        resting = _resting_instances(self._rest, envs, target)
         for i in range(self.num_envs) if active is None else np.flatnonzero(active):
             env = envs[i]
             data = env.data

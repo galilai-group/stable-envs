@@ -78,21 +78,24 @@ def test_a_seed_gives_the_source_start(options, backend, device):
     atol = 1e-12 if device == "cpu" else 1e-9
     with make("PyFlytRocketLanding", num_envs=batch, device=device, simulation_backend=backend) as env:
         state = env.reset(seed=seed, options=options).cpu()
-        for lane in range(batch):
+        for instance in range(batch):
             source = RocketLandingEnv()
             try:
-                observation, _ = source.reset(seed=seed + lane, options=options)
+                observation, _ = source.reset(seed=seed + instance, options=options)
                 rocket = source.env.drones[0].Id
                 position, quaternion = source.env.getBasePositionAndOrientation(rocket)
-                ours = state["current", "wrapper", "state"][lane].numpy()
+                ours = state["current", "wrapper", "state"][instance].numpy()
                 np.testing.assert_allclose(ours, observation, rtol=0, atol=atol)
                 np.testing.assert_allclose(
-                    state["current", "physics", "body_1", "position"][lane].numpy(), position, rtol=0, atol=atol
+                    state["current", "physics", "body_1", "position"][instance].numpy(), position, rtol=0, atol=atol
                 )
                 np.testing.assert_allclose(
-                    state["current", "physics", "body_1", "quaternion"][lane].numpy(), quaternion, rtol=0, atol=atol
+                    state["current", "physics", "body_1", "quaternion"][instance].numpy(),
+                    quaternion,
+                    rtol=0,
+                    atol=atol,
                 )
-                assert _generator_words(env._simulator._generator(lane)) == _generator_words(source.np_random)
+                assert _generator_words(env._simulator._generator(instance)) == _generator_words(source.np_random)
             finally:
                 source.close()
 
@@ -299,11 +302,11 @@ def test_rollouts_keep_the_source_outcome(policy, options, backend, device):
             source.close()
     length = max(len(a) for a, _, _ in rollouts) + END_STEP_TOLERANCE
     actions = np.zeros((len(seeds), length, 7))
-    for lane, (a, _, _) in enumerate(rollouts):
-        actions[lane, : len(a)] = a
-        actions[lane, len(a) :] = a[-1]
+    for instance, (a, _, _) in enumerate(rollouts):
+        actions[instance, : len(a)] = a
+        actions[instance, len(a) :] = a[-1]
     with make("PyFlytRocketLanding", num_envs=len(seeds), seed=0, device=device, simulation_backend=backend) as env:
-        # Environment ``lane`` resets with seed ``lane``, as its source rollout did.
+        # Environment ``instance`` resets with seed ``instance``, as its source rollout did.
         env.reset(seed=0, options=options)
         positions, ends, outcomes = [], [None] * len(seeds), [None] * len(seeds)
         for t in range(length):
@@ -312,14 +315,18 @@ def test_rollouts_keep_the_source_outcome(policy, options, backend, device):
             terminated, truncated, success = (
                 out[k].reshape(len(seeds), -1)[:, -1].numpy() for k in ("terminated", "truncated", "success")
             )
-            for lane in np.flatnonzero(terminated | truncated):
-                if ends[lane] is None:
-                    ends[lane] = t + 1
-                    outcomes[lane] = (bool(terminated[lane]), bool(truncated[lane]), bool(success[lane]))
+            for instance in np.flatnonzero(terminated | truncated):
+                if ends[instance] is None:
+                    ends[instance] = t + 1
+                    outcomes[instance] = (
+                        bool(terminated[instance]),
+                        bool(truncated[instance]),
+                        bool(success[instance]),
+                    )
     positions = np.stack(positions, 1)
-    for lane, (a, source_positions, outcome) in enumerate(rollouts):
-        assert outcomes[lane] == outcome, (lane, outcomes[lane], outcome)
-        assert abs(ends[lane] - len(a)) <= END_STEP_TOLERANCE, (lane, ends[lane], len(a))
-        common = min(ends[lane], len(a))
-        deviation = np.abs(positions[lane, :common] - source_positions[:common]).max()
-        assert deviation <= POSITION_TOLERANCE, (lane, deviation)
+    for instance, (a, source_positions, outcome) in enumerate(rollouts):
+        assert outcomes[instance] == outcome, (instance, outcomes[instance], outcome)
+        assert abs(ends[instance] - len(a)) <= END_STEP_TOLERANCE, (instance, ends[instance], len(a))
+        common = min(ends[instance], len(a))
+        deviation = np.abs(positions[instance, :common] - source_positions[:common]).max()
+        assert deviation <= POSITION_TOLERANCE, (instance, deviation)

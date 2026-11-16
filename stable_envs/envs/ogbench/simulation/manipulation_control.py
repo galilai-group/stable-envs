@@ -1,4 +1,4 @@
-"""OGBench's Cube/Scene end-effector controller for a batch of lanes, equal to the source bit for bit."""
+"""OGBench's Cube/Scene end-effector controller for a batch of environments, equal to the source bit for bit."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ import numpy as np
 _MINVAL = mujoco.mjMINVAL
 _IDENTITY = np.array([1.0, 0.0, 0.0, 0.0])
 _INVERT = np.array([1.0, -1.0, -1.0, -1.0])
-#: Lanes per IK batch thread. docs/performance-tuning.md (DM Control threads) gives the hosts it was measured on.
-IK_LANES_PER_THREAD = 128
+#: Environments per IK batch thread. docs/performance-tuning.md (DM Control threads) gives the hosts it was measured on.
+IK_ENVS_PER_THREAD = 128
 
 
 def _normalize4(q):
@@ -444,7 +444,7 @@ def _squares(q):
 
 
 class BatchController:
-    """``ManipSpaceEnv.set_control`` for every lane of a batch.
+    """``ManipSpaceEnv.set_control`` for every environment of a batch.
 
     The differential IK runs OGBench's iterations on a ``mujoco.batch`` of the
     IK model: its kinematics and Jacobians are MuJoCo's own, and the NumPy
@@ -456,8 +456,8 @@ class BatchController:
 
         ik = env._ik
         self._source_ik = ik
-        # A forward pass of the arm takes microseconds, so a thread pays off only for many lanes.
-        threads = max(1, min(threads, num_envs // IK_LANES_PER_THREAD))
+        # A forward pass of the arm takes microseconds, so a thread pays off only for many environments.
+        threads = max(1, min(threads, num_envs // IK_ENVS_PER_THREAD))
         # The IK reads kinematics only; without contacts and constraints the position stage skips collision.
         model = copy.copy(ik._model)
         model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT | mujoco.mjtDisableBit.mjDSBL_CONTACT
@@ -503,13 +503,13 @@ class BatchController:
         self._down64, self._t_pa64 = np.asarray(self._down, np.float64), np.asarray(self._t_pa, np.float64)
 
     def control(self, actions, qpos, pinch_pos, pinch_mat, ctrl, ids):
-        """Write the controls of lanes ``ids`` into ``ctrl`` from their actions and pinch site poses."""
+        """Write the controls of environments ``ids`` into ``ctrl`` from their actions and pinch site poses."""
         n = len(ids)
         action = 0.5 * (np.asarray(actions) + 1) * (self._high - self._low) + self._low
         if self._pose is not None and action.dtype == np.float64:
             pos, quat, target_gripper = self._targets(action, qpos, pinch_pos, pinch_mat, ids)
             if n == 1:
-                # One lane solves with OGBench's own controller, which costs less than a batch of one.
+                # One environment solves with OGBench's own controller, which costs less than a batch of one.
                 arm = self._source_ik.solve(pos=pos[0], quat=quat[0], curr_qpos=qpos[ids[0]][self._arm_qpos])
                 ctrl[ids[0], self._arm_actuators] = arm
                 ctrl[ids[0], self._gripper_actuators] = 255.0 * target_gripper[0]
@@ -558,7 +558,7 @@ class BatchController:
         return pos, quat_out, np.clip(gripper_opening + a_gripper, 0.0, 1.0)
 
     def _control_one(self, action, qpos, pinch_pos, pinch_mat):
-        """``ManipSpaceEnv.set_control`` of one lane, with OGBench's own pose types and controller.
+        """``ManipSpaceEnv.set_control`` of one environment, with OGBench's own pose types and controller.
 
         Returns the arm and gripper controls.
         """
@@ -593,7 +593,7 @@ class BatchController:
         n = len(pos)
         b = self._ik
         qpos = qpos.copy()
-        # The IK batch has a row per lane; a call for fewer lanes uses its first rows by index.
+        # The IK batch has a row per environment; a call for fewer environments uses its first rows by index.
         ids = None if n == len(self._ik_qpos) else np.arange(n)
         site_xpos, site_xmat = self._ik_site_xpos[:, self._site], self._ik_site_xmat[:, self._site]
         for _ in range(max_iters):

@@ -16,7 +16,7 @@ BACKENDS = ("numba", "triton", "torch")
 PARALLEL_MIN_ENVS = 64
 _EXECUTION_MODES = {"numba": "NATIVE_NUMBA", "triton": "NATIVE_TRITON", "torch": "NATIVE_TORCH"}
 #: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on Triton; smaller batches step with Numba.
-#: None uses Triton at every batch size. The knob and the tuning cache take precedence.
+#: None uses Triton at every batch size. The setting and the tuning cache take precedence.
 #: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
 CUDA_MIN_ENVS: int | None = None
 
@@ -44,7 +44,7 @@ def miniworld_backend(
     ``stable-envs tune`` measures with environments of ``config`` and frame ``size``. ``"torch"``
     runs on any device; ``"triton"`` needs CUDA.
     """
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
@@ -55,7 +55,7 @@ def miniworld_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "triton", CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "triton", CUDA_MIN_ENVS)},
         choices=BACKENDS,
         measure=measure,
     )

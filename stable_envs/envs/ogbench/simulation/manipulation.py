@@ -9,13 +9,13 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.state_schema import Field, StateSchema
-from ...._execution.process import PER_LANE
+from ...._execution.process import PER_INSTANCE
 from ...._execution.protocol import SimulatorAdapter
 from .compatibility import (
     MODEL_VALUES,
     CompatibleCube,
     CompatibleScene,
-    LanePool,
+    InstancePool,
     nodes,
     target_alpha,
     variation_tree,
@@ -146,7 +146,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     execution_mode = "DELEGATED_CPU"
     rotation_tolerance = 1e-8
-    process_methods = {"configure": PER_LANE}
+    process_methods = {"configure": PER_INSTANCE}
     process_attributes = ("family", "fields", "schema", "nq")
     action_dim = 5
 
@@ -155,7 +155,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise ValueError("Cube/Scene require a positive integer batch")
         self.family, self.num_envs, self.device = family, num_envs, torch.device(device)
         self.cls = CompatibleCube if family == "Cube" else CompatibleScene
-        self._pool = LanePool()
+        self._pool = InstancePool()
         self.envs = [
             self.cls(seed=None if seed is None else int(seed) + i, reward_task_id=reward_task_id, pool=self._pool)
             for i in range(num_envs)
@@ -170,7 +170,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         )
         self.signature = np.frombuffer(hashlib.sha256(fingerprint.encode()).digest(), np.uint8).copy()
         self.reset_envs(seed)
-        #: ``{field name: (per-lane shape, dtype)}`` in State order.
+        #: ``{field name: (per-environment shape, dtype)}`` in State order.
         self.fields = {
             name: (tuple(value.shape), torch.from_numpy(value).dtype)
             for name, value in self._values(self.envs[0]).items()
@@ -196,10 +196,10 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._check_open()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
-        lanes = options if isinstance(options, list) else self.envs[0].lane_options(options, self.num_envs)
+        instances = options if isinstance(options, list) else self.envs[0].instance_options(options, self.num_envs)
         self._forget_static(self.envs)
-        for lane, env in enumerate(self.envs):
-            env.reset(seed=None if seed is None else int(seed) + lane, options=lanes[lane])
+        for instance, env in enumerate(self.envs):
+            env.reset(seed=None if seed is None else int(seed) + instance, options=instances[instance])
 
     def _dynamic_values(self, env):
         """The state fields a step can change, by field name."""
@@ -242,7 +242,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return values
 
     def _static_values(self, env):
-        """The state fields only reset, restore and ``configure`` change, cached on the lane until then.
+        """The state fields only reset, restore and ``configure`` change, cached on the environment until then.
 
         The fields are copies of the PCG64 generators, the task, the variation and the compiled model values.
         """
@@ -327,7 +327,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         return values
 
     def validate(self, state, *, _batch_size=None):
-        """Check full State and return one ``{group key: array}`` row per lane, each a view of a fresh host copy."""
+        """Check full State and return one ``{group key: array}`` row per environment, each a view of a fresh host copy."""
         batch = self.num_envs if _batch_size is None else _batch_size
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
             raise TypeError(
@@ -337,7 +337,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         if set(state.keys(True, False)) != self._keys:
             raise ValueError("Full State has missing or extra leaves")
         schema.validate(state)
-        # One transfer per group. The rows view fresh host columns, so neither the input nor another lane aliases.
+        # One transfer per group. The rows view fresh host columns, so neither the input nor another environment aliases.
         columns = {key: state.get(group.path).detach().cpu().numpy().copy() for key, group in schema.groups.items()}
         for key, value in columns.items():
             if value.dtype.kind == "f" and not np.isfinite(value).all():
@@ -483,7 +483,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._check_open()
         if self._prepared_envs is not None:
             raise RuntimeError("A Cube/Scene restore is already prepared")
-        rows = self.validate(state)  # All lanes before any simulator mutation/construction.
+        rows = self.validate(state)  # All environments before any simulator mutation/construction.
         candidates = []
         try:
             for row in rows:

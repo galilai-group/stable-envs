@@ -63,21 +63,21 @@ def fetch_trace(
 def _fetch_trace(
     case: Registration, seed: int, dtype: str, horizon: int, scenario: str, device: str, source_root: str
 ) -> tuple[PixelTrace, list[dict]]:
-    """Compare rendering and no-render source lanes before extracting source-owned State."""
+    """Compare rendering and no-render source environments before extracting source-owned State."""
     if case.domain not in ("Reach", "Push", "Slide"):
         raise ValueError("PickAndPlace requires a separate render-mutation protocol")
     load_source(source_root, "fetch")
     importlib.import_module("stable_worldmodel.envs.gymnasium_robotics")
     with ExitStack() as stack:
         physics, rendered = [], []
-        for lane in range(2):
+        for instance in range(2):
             for worlds, options in (
                 (physics, {}),
                 (rendered, NATIVE),
             ):
                 source = stack.enter_context(closing(gym.make(case.registration, **options)))
                 worlds.append(source)
-                source.reset(seed=seed + lane, options={"variation": []})
+                source.reset(seed=seed + instance, options={"variation": []})
         limit = physics[0].spec.max_episode_steps
         assert limit == 50
         prefixes = {"reached": (0, 7), "horizon": (limit - 1, limit - 3)}[scenario]
@@ -96,13 +96,13 @@ def _fetch_trace(
         for t in range(horizon):
             validity.append(active.copy())
             rows, images = [], []
-            for lane, (plain, visual) in enumerate(zip(physics, rendered, strict=True)):
-                if active[lane]:
-                    output = plain.step(actions[lane, t].copy())
-                    assert not differences(output, visual.step(actions[lane, t].copy()))
-                    previous[lane] = output
+            for instance, (plain, visual) in enumerate(zip(physics, rendered, strict=True)):
+                if active[instance]:
+                    output = plain.step(actions[instance, t].copy())
+                    assert not differences(output, visual.step(actions[instance, t].copy()))
+                    previous[instance] = output
                 else:
-                    output = previous[lane]
+                    output = previous[instance]
                 rows.append(output)
                 assert not differences(snapshot(plain), snapshot(visual))
                 frame, identity = _render(visual, device)
@@ -111,7 +111,7 @@ def _fetch_trace(
                 if t == 0:
                     identities.append(identity)
                 else:
-                    assert identity == identities[lane]
+                    assert identity == identities[instance]
             tasks = {
                 **task_columns(rows),
                 "success": torch.as_tensor(np.asarray([row[4]["is_success"] for row in rows])),
@@ -124,8 +124,8 @@ def _fetch_trace(
             frames.append(np.stack(images))
             active &= ~done
         # A final following transition catches render mutations that become observable only on step.
-        for lane, (plain, visual) in enumerate(zip(physics, rendered, strict=True)):
-            action = -actions[lane, -1]
+        for instance, (plain, visual) in enumerate(zip(physics, rendered, strict=True)):
+            action = -actions[instance, -1]
             assert not differences(plain.step(action.copy()), visual.step(action.copy()))
             assert not differences(snapshot(plain), snapshot(visual))
             assert not plain.unwrapped.mujoco_renderer._viewers
@@ -152,13 +152,13 @@ def _pickandplace_trace(
         physics = [stack.enter_context(closing(gym.make(case.registration))) for _ in range(2)]
         histories = [[], []]
         prefixes = {"reached": (0, 7), "horizon": (49, 47)}[scenario]
-        for lane, source in enumerate(physics):
+        for instance, source in enumerate(physics):
             assert source.spec.max_episode_steps == 50
-            source.reset(seed=seed + lane, options={"variation": []})
-            for _ in range(prefixes[lane]):
+            source.reset(seed=seed + instance, options={"variation": []})
+            for _ in range(prefixes[instance]):
                 action = np.zeros(4, dtype=dtype)
                 output = source.step(action.copy())
-                histories[lane].append(action)
+                histories[instance].append(action)
                 assert not (output[2] or output[3])
         initial = source_state([snapshot(source) for source in physics])
         actions = np.random.default_rng(seed + 1000).uniform(-1, 1, (2, horizon, 4)).astype(dtype)
@@ -168,16 +168,16 @@ def _pickandplace_trace(
         for step in range(horizon):
             validity.append(active.copy())
             rows, images = [], []
-            for lane, source in enumerate(physics):
-                if active[lane]:
-                    previous[lane] = source.step(actions[lane, step].copy())
-                    histories[lane].append(actions[lane, step].copy())
-                rows.append(previous[lane])
+            for instance, source in enumerate(physics):
+                if active[instance]:
+                    previous[instance] = source.step(actions[instance, step].copy())
+                    histories[instance].append(actions[instance, step].copy())
+                rows.append(previous[instance])
                 before = snapshot(source)
                 with closing(gym.make(case.registration, **NATIVE)) as branch:
-                    branch.reset(seed=seed + lane, options={"variation": []})
+                    branch.reset(seed=seed + instance, options={"variation": []})
                     branch_output = None
-                    for action in histories[lane]:
+                    for action in histories[instance]:
                         branch_output = branch.step(action.copy())
                     assert not differences(rows[-1], branch_output)
                     assert not differences(before, snapshot(branch)), (
@@ -191,8 +191,8 @@ def _pickandplace_trace(
                 if step == 0:
                     identities.append(dict(gl=identity, oracle_mode="disposable-forward-source-branch", mutations=[]))
                 else:
-                    assert identity == identities[lane]["gl"]
-                identities[lane]["mutations"].append(dict(step=step, differences=mutation))
+                    assert identity == identities[instance]["gl"]
+                identities[instance]["mutations"].append(dict(step=step, differences=mutation))
             tasks = {
                 **task_columns(rows),
                 "success": torch.as_tensor(np.asarray([row[4]["is_success"] for row in rows])),

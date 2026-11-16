@@ -10,20 +10,20 @@ from tests.helpers.reference.semantics import compare_state
 
 
 def navigation_trace(case: Registration, seed: int, dtype: str, horizon: int, scenario: str) -> PixelTrace:
-    """Capture scalar CPU source rollouts at native resolution, without restoring source lanes."""
+    """Capture scalar CPU source rollouts at native resolution, without restoring source environments."""
     with closing(NativeNavigationReference(case.domain, 2)) as source:
         if scenario == "terminal":
-            for lane, env in enumerate(source.envs):
+            for instance, env in enumerate(source.envs):
                 if case.domain == "simple_point_maze":
                     # Source reset preserves these initial positions; all appearance stays at defaults.
                     env.variation_space["goal"]["position"].set_init_value(
-                        np.asarray([0.8 + 0.4 * lane, 0.5], dtype=np.float32)
+                        np.asarray([0.8 + 0.4 * instance, 0.5], dtype=np.float32)
                     )
                     options = {"variation": []}
                 else:
-                    offset = (20, 34 if case.domain == "piecewise" else 30)[lane]
+                    offset = (20, 34 if case.domain == "piecewise" else 30)[instance]
                     options = {"state": [50, 50], "target_state": [50 + offset, 50]}
-                env.reset(seed=seed + lane, options=options)
+                env.reset(seed=seed + instance, options=options)
             actions = np.zeros((2, horizon, 2), dtype=dtype)
             actions[..., 0] = 0.2 if case.domain == "simple_point_maze" else 1.0
         else:

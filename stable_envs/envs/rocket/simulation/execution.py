@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
 #: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on ``"numba_cuda"``; smaller batches step on
-#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The knob and the tuning cache take precedence.
+#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The setting and the tuning cache take precedence.
 #: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
 CUDA_MIN_ENVS: int | None = None
 
 
 def _measure(device, config: dict | None):
-    """Build and step Rocket lanes on one backend, for ``stable-envs tune``."""
+    """Build and step Rocket environments on one backend, for ``stable-envs tune``."""
     import torch
 
     from ...._execution.backends import measure_adapter
@@ -43,7 +43,7 @@ def rocket_backend(
     """
     import torch
 
-    from ...._execution.backends import Rungs, select_backend
+    from ...._execution.backends import BackendPair, select_backend
 
     if backend == "numba_cuda" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='numba_cuda' requires device='cuda'")
@@ -52,7 +52,7 @@ def rocket_backend(
         num_envs,
         device,
         backend,
-        {"cpu": Rungs("numba", "numba"), "cuda": Rungs("numba", "numba_cuda", CUDA_MIN_ENVS)},
+        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "numba_cuda", CUDA_MIN_ENVS)},
         choices=SIMULATION_BACKENDS,
         measure=_measure(device, config) if type(num_envs) is int and num_envs > 0 else None,
     )
@@ -97,11 +97,11 @@ def make_rocket_adapter(
 
         return RocketCudaAdapter(num_envs, device, seed, config, frame)
     from .adapter import RocketAdapter
-    from .process import LANES_PER_PROCESS
+    from .process import ENVS_PER_PROCESS
 
     cpus = cpu_affinity()
     count = (
-        process_count(num_envs, cpus, path="rocket-sim", lanes_per_process=LANES_PER_PROCESS)
+        process_count(num_envs, cpus, path="rocket-sim", envs_per_process=ENVS_PER_PROCESS)
         if type(num_envs) is int and num_envs > 0
         else 0
     )

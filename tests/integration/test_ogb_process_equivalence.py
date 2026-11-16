@@ -1,4 +1,4 @@
-"""OGBench process lanes match local lanes for every worker count, and a rejected State restores no lane."""
+"""OGBench process environments match local environments for every worker count, and a rejected State restores no environment."""
 
 import numpy as np
 import pytest
@@ -53,7 +53,7 @@ def test_manipulation_process_matches_local(family):
     )
 
 
-def test_maze_invalid_last_lane_restores_no_lane():
+def test_maze_invalid_last_environment_restores_no_environment():
     adapter = OGBMazeProcessAdapter(5, seed=17, processes=2)
     try:
 

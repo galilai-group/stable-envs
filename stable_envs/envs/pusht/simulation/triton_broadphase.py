@@ -29,88 +29,88 @@ WORK = tl.constexpr(2 * _CALLS + 2 * layout.NODES + 2 + layout.LEAVES)
 
 
 @triton.jit
-def _get(tree, lane, index, mask):
+def _get(tree, instance, index, mask):
     # Volatile, and the loops below start with a barrier: each thread reads the tree right after it rewrites
     # it, and a cached or reordered read misses the write.
-    return tl.load(tree + lane * WIDTH + index, mask=mask, other=-1, volatile=True)
+    return tl.load(tree + instance * WIDTH + index, mask=mask, other=-1, volatile=True)
 
 
 @triton.jit
-def _set(tree, lane, index, value, mask):
-    tl.store(tree + lane * WIDTH + index, value, mask=mask)
+def _set(tree, instance, index, value, mask):
+    tl.store(tree + instance * WIDTH + index, value, mask=mask)
 
 
 @triton.jit
-def _bb(bounds, lane, node, k: tl.constexpr, mask):
-    return tl.load(bounds + (lane * NODES + node) * 4 + k, mask=mask, other=0.0, volatile=True).to(tl.float32)
+def _bb(bounds, instance, node, k: tl.constexpr, mask):
+    return tl.load(bounds + (instance * NODES + node) * 4 + k, mask=mask, other=0.0, volatile=True).to(tl.float32)
 
 
 @triton.jit
-def _set_bb(bounds, lane, node, k: tl.constexpr, value, mask):
-    tl.store(bounds + (lane * NODES + node) * 4 + k, value.to(tl.float64), mask=mask)
+def _set_bb(bounds, instance, node, k: tl.constexpr, value, mask):
+    tl.store(bounds + (instance * NODES + node) * 4 + k, value.to(tl.float64), mask=mask)
 
 
 @triton.jit
-def _work(work, field, B, lane, mask):
-    return tl.load(work + field * B + lane, mask=mask, other=0, volatile=True)
+def _work(work, field, B, instance, mask):
+    return tl.load(work + field * B + instance, mask=mask, other=0, volatile=True)
 
 
 @triton.jit
-def _put(work, field, B, lane, value, mask):
-    tl.store(work + field * B + lane, value.to(tl.int32), mask=mask)
+def _put(work, field, B, instance, value, mask):
+    tl.store(work + field * B + instance, value.to(tl.int32), mask=mask)
 
 
 @triton.jit
-def _area(bounds, lane, n, mask):
-    return (_bb(bounds, lane, n, 2, mask) - _bb(bounds, lane, n, 0, mask)) * (
-        _bb(bounds, lane, n, 3, mask) - _bb(bounds, lane, n, 1, mask)
+def _area(bounds, instance, n, mask):
+    return (_bb(bounds, instance, n, 2, mask) - _bb(bounds, instance, n, 0, mask)) * (
+        _bb(bounds, instance, n, 3, mask) - _bb(bounds, instance, n, 1, mask)
     )
 
 
 @triton.jit
-def _merged_area(bounds, lane, a, b, mask):
-    width = tl.maximum(_bb(bounds, lane, a, 2, mask), _bb(bounds, lane, b, 2, mask)) - tl.minimum(
-        _bb(bounds, lane, a, 0, mask), _bb(bounds, lane, b, 0, mask)
+def _merged_area(bounds, instance, a, b, mask):
+    width = tl.maximum(_bb(bounds, instance, a, 2, mask), _bb(bounds, instance, b, 2, mask)) - tl.minimum(
+        _bb(bounds, instance, a, 0, mask), _bb(bounds, instance, b, 0, mask)
     )
-    height = tl.maximum(_bb(bounds, lane, a, 3, mask), _bb(bounds, lane, b, 3, mask)) - tl.minimum(
-        _bb(bounds, lane, a, 1, mask), _bb(bounds, lane, b, 1, mask)
+    height = tl.maximum(_bb(bounds, instance, a, 3, mask), _bb(bounds, instance, b, 3, mask)) - tl.minimum(
+        _bb(bounds, instance, a, 1, mask), _bb(bounds, instance, b, 1, mask)
     )
     return width * height
 
 
 @triton.jit
-def _proximity(bounds, lane, a, b, mask):
+def _proximity(bounds, instance, a, b, mask):
     return tl.abs(
-        _bb(bounds, lane, a, 0, mask)
-        + _bb(bounds, lane, a, 2, mask)
-        - _bb(bounds, lane, b, 0, mask)
-        - _bb(bounds, lane, b, 2, mask)
+        _bb(bounds, instance, a, 0, mask)
+        + _bb(bounds, instance, a, 2, mask)
+        - _bb(bounds, instance, b, 0, mask)
+        - _bb(bounds, instance, b, 2, mask)
     ) + tl.abs(
-        _bb(bounds, lane, a, 1, mask)
-        + _bb(bounds, lane, a, 3, mask)
-        - _bb(bounds, lane, b, 1, mask)
-        - _bb(bounds, lane, b, 3, mask)
+        _bb(bounds, instance, a, 1, mask)
+        + _bb(bounds, instance, a, 3, mask)
+        - _bb(bounds, instance, b, 1, mask)
+        - _bb(bounds, instance, b, 3, mask)
     )
 
 
 @triton.jit
-def _overlap(bounds, lane, a, l, b, r, t, mask):
+def _overlap(bounds, instance, a, l, b, r, t, mask):
     """Whether node ``a``'s box intersects the box (l, b, r, t)."""
     return (
-        (_bb(bounds, lane, a, 0, mask) <= r)
-        & (l <= _bb(bounds, lane, a, 2, mask))
-        & (_bb(bounds, lane, a, 1, mask) <= t)
-        & (b <= _bb(bounds, lane, a, 3, mask))
+        (_bb(bounds, instance, a, 0, mask) <= r)
+        & (l <= _bb(bounds, instance, a, 2, mask))
+        & (_bb(bounds, instance, a, 1, mask) <= t)
+        & (b <= _bb(bounds, instance, a, 3, mask))
     )
 
 
 @triton.jit
-def _insert(tree, bounds, lane, leaf, go):
-    """``SubtreeInsert`` of ``leaf`` from the root, in the lanes ``go``."""
-    node = _get(tree, lane, 0, go)
+def _insert(tree, bounds, instance, leaf, go):
+    """``SubtreeInsert`` of ``leaf`` from the root, in the environments ``go``."""
+    node = _get(tree, instance, 0, go)
     empty = go & (node < 0)
-    _set(tree, lane, 0, leaf, empty)
-    _set(tree, lane, 1 + 3 * leaf, tl.full(leaf.shape, -1, tl.int64), empty)
+    _set(tree, instance, 0, leaf, empty)
+    _set(tree, instance, 1 + 3 * leaf, tl.full(leaf.shape, -1, tl.int64), empty)
     go = go & (node >= 0)
     above = tl.full(leaf.shape, -1, tl.int64)
     side = tl.zeros(leaf.shape, tl.int64)
@@ -119,36 +119,36 @@ def _insert(tree, bounds, lane, leaf, go):
         make = go & (node < LEAVES)
         inner = tl.full(leaf.shape, -1, tl.int64)
         for n in tl.static_range(LEAVES, NODES):
-            free = _get(tree, lane, 1 + 3 * n, make) == -2
+            free = _get(tree, instance, 1 + 3 * n, make) == -2
             inner = tl.where((inner < 0) & free, n, inner)
         for k in tl.static_range(4):
             if k < 2:
-                value = tl.minimum(_bb(bounds, lane, leaf, k, make), _bb(bounds, lane, node, k, make))
+                value = tl.minimum(_bb(bounds, instance, leaf, k, make), _bb(bounds, instance, node, k, make))
             else:
-                value = tl.maximum(_bb(bounds, lane, leaf, k, make), _bb(bounds, lane, node, k, make))
-            _set_bb(bounds, lane, inner, k, value, make)
-        _set(tree, lane, 2 + 3 * inner, leaf, make)
-        _set(tree, lane, 3 + 3 * inner, node, make)
-        _set(tree, lane, 1 + 3 * leaf, inner, make)
-        _set(tree, lane, 1 + 3 * node, inner, make)
-        _set(tree, lane, 1 + 3 * inner, above, make)
-        _set(tree, lane, 0, inner, make & (above < 0))
-        _set(tree, lane, 2 + side + 3 * above, inner, make & (above >= 0))
+                value = tl.maximum(_bb(bounds, instance, leaf, k, make), _bb(bounds, instance, node, k, make))
+            _set_bb(bounds, instance, inner, k, value, make)
+        _set(tree, instance, 2 + 3 * inner, leaf, make)
+        _set(tree, instance, 3 + 3 * inner, node, make)
+        _set(tree, instance, 1 + 3 * leaf, inner, make)
+        _set(tree, instance, 1 + 3 * node, inner, make)
+        _set(tree, instance, 1 + 3 * inner, above, make)
+        _set(tree, instance, 0, inner, make & (above < 0))
+        _set(tree, instance, 2 + side + 3 * above, inner, make & (above >= 0))
         down = go & (node >= LEAVES)
-        a = _get(tree, lane, 2 + 3 * node, down)
-        b = _get(tree, lane, 3 + 3 * node, down)
-        cost_a = _area(bounds, lane, b, down) + _merged_area(bounds, lane, a, leaf, down)
-        cost_b = _area(bounds, lane, a, down) + _merged_area(bounds, lane, b, leaf, down)
+        a = _get(tree, instance, 2 + 3 * node, down)
+        b = _get(tree, instance, 3 + 3 * node, down)
+        cost_a = _area(bounds, instance, b, down) + _merged_area(bounds, instance, a, leaf, down)
+        cost_b = _area(bounds, instance, a, down) + _merged_area(bounds, instance, b, leaf, down)
         tie = cost_a == cost_b
-        cost_a = tl.where(tie, _proximity(bounds, lane, a, leaf, down), cost_a)
-        cost_b = tl.where(tie, _proximity(bounds, lane, b, leaf, down), cost_b)
+        cost_a = tl.where(tie, _proximity(bounds, instance, a, leaf, down), cost_a)
+        cost_b = tl.where(tie, _proximity(bounds, instance, b, leaf, down), cost_b)
         turn = tl.where(cost_b < cost_a, 1, 0)
         for k in tl.static_range(4):
             if k < 2:
-                value = tl.minimum(_bb(bounds, lane, node, k, down), _bb(bounds, lane, leaf, k, down))
+                value = tl.minimum(_bb(bounds, instance, node, k, down), _bb(bounds, instance, leaf, k, down))
             else:
-                value = tl.maximum(_bb(bounds, lane, node, k, down), _bb(bounds, lane, leaf, k, down))
-            _set_bb(bounds, lane, node, k, value, down)
+                value = tl.maximum(_bb(bounds, instance, node, k, down), _bb(bounds, instance, leaf, k, down))
+            _set_bb(bounds, instance, node, k, value, down)
         above = tl.where(down, node, above)
         side = tl.where(down, turn, side)
         node = tl.where(down, tl.where(turn == 1, b, a), node)
@@ -156,93 +156,93 @@ def _insert(tree, bounds, lane, leaf, go):
 
 
 @triton.jit
-def _remove(tree, bounds, lane, leaf, go):
-    """``SubtreeRemove`` of ``leaf`` from the root, in the lanes ``go``."""
+def _remove(tree, bounds, instance, leaf, go):
+    """``SubtreeRemove`` of ``leaf`` from the root, in the environments ``go``."""
     gone = tl.full(leaf.shape, -2, tl.int64)
-    root = _get(tree, lane, 0, go)
+    root = _get(tree, instance, 0, go)
     alone = go & (root == leaf)
-    _set(tree, lane, 0, tl.full(leaf.shape, -1, tl.int64), alone)
-    _set(tree, lane, 1 + 3 * leaf, gone, alone)
+    _set(tree, instance, 0, tl.full(leaf.shape, -1, tl.int64), alone)
+    _set(tree, instance, 1 + 3 * leaf, gone, alone)
     go = go & (root != leaf)
-    parent = _get(tree, lane, 1 + 3 * leaf, go)
-    a = _get(tree, lane, 2 + 3 * parent, go)
-    b = _get(tree, lane, 3 + 3 * parent, go)
+    parent = _get(tree, instance, 1 + 3 * leaf, go)
+    a = _get(tree, instance, 2 + 3 * parent, go)
+    b = _get(tree, instance, 3 + 3 * parent, go)
     other = tl.where(a == leaf, b, a)
-    grand = _get(tree, lane, 1 + 3 * parent, go)
-    _set(tree, lane, 1 + 3 * leaf, gone, go)
-    _set(tree, lane, 1 + 3 * parent, gone, go)
-    _set(tree, lane, 1 + 3 * other, grand, go)
-    _set(tree, lane, 0, other, go & (grand < 0))
+    grand = _get(tree, instance, 1 + 3 * parent, go)
+    _set(tree, instance, 1 + 3 * leaf, gone, go)
+    _set(tree, instance, 1 + 3 * parent, gone, go)
+    _set(tree, instance, 1 + 3 * other, grand, go)
+    _set(tree, instance, 0, other, go & (grand < 0))
     go = go & (grand >= 0)
-    first = _get(tree, lane, 2 + 3 * grand, go)
-    _set(tree, lane, tl.where(first == parent, 2, 3) + 3 * grand, other, go)
+    first = _get(tree, instance, 2 + 3 * grand, go)
+    _set(tree, instance, tl.where(first == parent, 2, 3) + 3 * grand, other, go)
     node = grand
     while tl.max(go.to(tl.int32), axis=0) > 0:
         tl.debug_barrier()
-        a = _get(tree, lane, 2 + 3 * node, go)
-        b = _get(tree, lane, 3 + 3 * node, go)
+        a = _get(tree, instance, 2 + 3 * node, go)
+        b = _get(tree, instance, 3 + 3 * node, go)
         for k in tl.static_range(4):
             if k < 2:
-                value = tl.minimum(_bb(bounds, lane, a, k, go), _bb(bounds, lane, b, k, go))
+                value = tl.minimum(_bb(bounds, instance, a, k, go), _bb(bounds, instance, b, k, go))
             else:
-                value = tl.maximum(_bb(bounds, lane, a, k, go), _bb(bounds, lane, b, k, go))
-            _set_bb(bounds, lane, node, k, value, go)
-        node = _get(tree, lane, 1 + 3 * node, go)
+                value = tl.maximum(_bb(bounds, instance, a, k, go), _bb(bounds, instance, b, k, go))
+            _set_bb(bounds, instance, node, k, value, go)
+        node = _get(tree, instance, 1 + 3 * node, go)
         go = go & (node >= 0)
 
 
 @triton.jit
-def _push(tree, lane, leaf, entry, go):
+def _push(tree, instance, leaf, entry, go):
     base = LIST + leaf * PAIRS
     for k in range(PAIRS - 1):
         j = PAIRS - 1 - k
-        _set(tree, lane, base + j, _get(tree, lane, base + j - 1, go), go)
-    _set(tree, lane, base, entry, go)
+        _set(tree, instance, base + j, _get(tree, instance, base + j - 1, go), go)
+    _set(tree, instance, base, entry, go)
 
 
 @triton.jit
-def _drop(tree, lane, leaf, other, go):
+def _drop(tree, instance, leaf, other, go):
     """Remove the entry for ``other`` from ``leaf``'s pair list."""
     base = LIST + leaf * PAIRS
     at = tl.zeros(leaf.shape, tl.int64)
     for j in range(PAIRS):
-        entry = _get(tree, lane, base + j, go)
+        entry = _get(tree, instance, base + j, go)
         keep = go & (entry >= 0) & (entry // 2 != other)
-        _set(tree, lane, base + at, entry, keep)
+        _set(tree, instance, base + at, entry, keep)
         at += keep.to(tl.int64)
     for j in range(PAIRS):
-        _set(tree, lane, base + j, tl.full(leaf.shape, -1, tl.int64), go & (at <= j))
+        _set(tree, instance, base + j, tl.full(leaf.shape, -1, tl.int64), go & (at <= j))
 
 
 @triton.jit
-def _pair(tree, lane, a, b, go):
+def _pair(tree, instance, a, b, go):
     """``PairInsert``: ``a`` first, ``b`` second; walls keep no list."""
-    _push(tree, lane, a, 2 * b, go & (a < LEAVES))
-    _push(tree, lane, b, 2 * a + 1, go & (b < LEAVES))
+    _push(tree, instance, a, 2 * b, go & (a < LEAVES))
+    _push(tree, instance, b, 2 * a + 1, go & (b < LEAVES))
 
 
 @triton.jit
-def _clear(tree, lane, leaf, go):
+def _clear(tree, instance, leaf, go):
     """``PairsClear``."""
     base = LIST + leaf * PAIRS
     for j in range(PAIRS):
-        entry = _get(tree, lane, base + j, go)
-        _drop(tree, lane, entry // 2, leaf, go & (entry >= 0) & (entry // 2 < LEAVES))
-        _set(tree, lane, base + j, tl.full(leaf.shape, -1, tl.int64), go)
+        entry = _get(tree, instance, base + j, go)
+        _drop(tree, instance, entry // 2, leaf, go & (entry >= 0) & (entry // 2 < LEAVES))
+        _set(tree, instance, base + j, tl.full(leaf.shape, -1, tl.int64), go)
 
 
 @triton.jit
-def _call(work, B, lane, count, a, b, go):
-    _put(work, 2 * count, B, lane, a, go)
-    _put(work, 2 * count + 1, B, lane, b, go)
+def _call(work, B, instance, count, a, b, go):
+    _put(work, 2 * count, B, instance, a, go)
+    _put(work, 2 * count + 1, B, instance, b, go)
     return count + go.to(tl.int32)
 
 
 @triton.jit
-def _walls(tree, bounds, work, B, lane, leaf, count, go):
+def _walls(tree, bounds, work, B, instance, leaf, count, go):
     """``MarkLeafQuery`` against the walls: their static tree visits walls 3, 2, 1, 0."""
-    l, b = _bb(bounds, lane, leaf, 0, go), _bb(bounds, lane, leaf, 1, go)
-    r, t = _bb(bounds, lane, leaf, 2, go), _bb(bounds, lane, leaf, 3, go)
+    l, b = _bb(bounds, instance, leaf, 0, go), _bb(bounds, instance, leaf, 1, go)
+    r, t = _bb(bounds, instance, leaf, 2, go), _bb(bounds, instance, leaf, 3, go)
     for k in range(4):
         w = 3 - k
         # Wall w's box: (3, 3, 7, 508), (3, 3, 508, 7), (504, 3, 508, 508), (3, 504, 508, 508).
@@ -252,59 +252,59 @@ def _walls(tree, bounds, work, B, lane, leaf, count, go):
         top = tl.where(w == 1, 7.0, 508.0)
         hit = go & (left <= r) & (l <= right) & (bottom <= t) & (b <= top)
         wall = tl.zeros(leaf.shape, tl.int64) + LEAVES + w
-        _push(tree, lane, leaf, 2 * wall + 1, hit)
-        count = _call(work, B, lane, count, leaf, wall, hit)
+        _push(tree, instance, leaf, 2 * wall + 1, hit)
+        count = _call(work, B, instance, count, leaf, wall, hit)
     return count
 
 
 @triton.jit
-def _query(tree, bounds, work, B, lane, root, leaf, count, go, left):
-    """``MarkLeafQuery`` of ``leaf`` over the dynamic subtree at ``root``; ``left`` per lane."""
-    l, b = _bb(bounds, lane, leaf, 0, go), _bb(bounds, lane, leaf, 1, go)
-    r, t = _bb(bounds, lane, leaf, 2, go), _bb(bounds, lane, leaf, 3, go)
+def _query(tree, bounds, work, B, instance, root, leaf, count, go, left):
+    """``MarkLeafQuery`` of ``leaf`` over the dynamic subtree at ``root``; ``left`` per environment."""
+    l, b = _bb(bounds, instance, leaf, 0, go), _bb(bounds, instance, leaf, 1, go)
+    r, t = _bb(bounds, instance, leaf, 2, go), _bb(bounds, instance, leaf, 3, go)
     top = go.to(tl.int32)
-    _put(work, _STACK, B, lane, root, go)
+    _put(work, _STACK, B, instance, root, go)
     while tl.max(top, axis=0) > 0:
         tl.debug_barrier()
         on = top > 0
         top -= on.to(tl.int32)
-        node = _work(work, _STACK + top, B, lane, on).to(tl.int64)
-        hit = on & _overlap(bounds, lane, node, l, b, r, t, on)
+        node = _work(work, _STACK + top, B, instance, on).to(tl.int64)
+        hit = on & _overlap(bounds, instance, node, l, b, r, t, on)
         found = hit & (node < LEAVES)
-        fresh = _work(work, _FRESH + node, B, lane, found & ~left) != 0
+        fresh = _work(work, _FRESH + node, B, instance, found & ~left) != 0
         # Left: pair (leaf, node). Right: pair (node, leaf) unless node also refit, and report it.
         insert = found & (left | ~fresh)
-        _pair(tree, lane, tl.where(left, leaf, node), tl.where(left, node, leaf), insert)
-        count = _call(work, B, lane, count, leaf, node, found & ~left)
+        _pair(tree, instance, tl.where(left, leaf, node), tl.where(left, node, leaf), insert)
+        count = _call(work, B, instance, count, leaf, node, found & ~left)
         inner = hit & (node >= LEAVES)
-        _put(work, _STACK + top, B, lane, _get(tree, lane, 3 + 3 * node, inner), inner)
-        _put(work, _STACK + top + 1, B, lane, _get(tree, lane, 2 + 3 * node, inner), inner)
+        _put(work, _STACK + top, B, instance, _get(tree, instance, 3 + 3 * node, inner), inner)
+        _put(work, _STACK + top + 1, B, instance, _get(tree, instance, 2 + 3 * node, inner), inner)
         top += 2 * inner.to(tl.int32)
     return count
 
 
 @triton.jit
-def reindex(tree, bounds, work, tight, order, B, lane, mask, need):
-    """``numba_broadphase.refit`` and ``report`` for the lanes ``mask``; returns the reported pair counts.
+def reindex(tree, bounds, work, tight, order, B, instance, mask, need):
+    """``numba_broadphase.refit`` and ``report`` for the environments ``mask``; returns the reported pair counts.
 
     ``tight`` is a float32 ``[6 * LEAVES, B]`` scratch: the leaves' boxes, then their body velocities
-    (fields ``4 * LEAVES + 2 * leaf``). A lane reports only if a leaf moved or it ``need``s the order.
+    (fields ``4 * LEAVES + 2 * leaf``). An environment reports only if a leaf moved or it ``need``s the order.
     """
     tl.debug_barrier()
     for k in range(LEAVES):
-        _put(work, _FRESH + k, B, lane, tl.zeros(lane.shape, tl.int32), mask)
+        _put(work, _FRESH + k, B, instance, tl.zeros(instance.shape, tl.int32), mask)
     for j in range(LEAVES):
-        leaf = tl.load(order + lane * LEAVES + j, mask=mask, other=-1)
+        leaf = tl.load(order + instance * LEAVES + j, mask=mask, other=-1)
         go = mask & (leaf >= 0)
-        tl_ = tl.load(tight + (4 * leaf) * B + lane, mask=go, other=0.0)
-        tb = tl.load(tight + (4 * leaf + 1) * B + lane, mask=go, other=0.0)
-        tr = tl.load(tight + (4 * leaf + 2) * B + lane, mask=go, other=0.0)
-        tt = tl.load(tight + (4 * leaf + 3) * B + lane, mask=go, other=0.0)
+        tl_ = tl.load(tight + (4 * leaf) * B + instance, mask=go, other=0.0)
+        tb = tl.load(tight + (4 * leaf + 1) * B + instance, mask=go, other=0.0)
+        tr = tl.load(tight + (4 * leaf + 2) * B + instance, mask=go, other=0.0)
+        tt = tl.load(tight + (4 * leaf + 3) * B + instance, mask=go, other=0.0)
         inside = (
-            (_bb(bounds, lane, leaf, 0, go) <= tl_)
-            & (_bb(bounds, lane, leaf, 2, go) >= tr)
-            & (_bb(bounds, lane, leaf, 1, go) <= tb)
-            & (_bb(bounds, lane, leaf, 3, go) >= tt)
+            (_bb(bounds, instance, leaf, 0, go) <= tl_)
+            & (_bb(bounds, instance, leaf, 2, go) >= tr)
+            & (_bb(bounds, instance, leaf, 1, go) <= tb)
+            & (_bb(bounds, instance, leaf, 3, go) >= tt)
         )
         go = go & ~inside
         # Most steps move no leaf out of its box in a whole block of environments.
@@ -312,59 +312,59 @@ def reindex(tree, bounds, work, tight, order, B, lane, mask, need):
             # ``GetBB``: the tight box grown by a tenth of its size and by a tenth of the velocity.
             x = (tr - tl_) * 0.1
             y = (tt - tb) * 0.1
-            vx = tl.load(tight + (4 * LEAVES + 2 * leaf) * B + lane, mask=go, other=0.0) * 0.1
-            vy = tl.load(tight + (4 * LEAVES + 2 * leaf + 1) * B + lane, mask=go, other=0.0) * 0.1
-            _set_bb(bounds, lane, leaf, 0, tl_ + tl.minimum(-x, vx), go)
-            _set_bb(bounds, lane, leaf, 1, tb + tl.minimum(-y, vy), go)
-            _set_bb(bounds, lane, leaf, 2, tr + tl.maximum(x, vx), go)
-            _set_bb(bounds, lane, leaf, 3, tt + tl.maximum(y, vy), go)
-            _remove(tree, bounds, lane, leaf, go)
-            _insert(tree, bounds, lane, leaf, go)
-            _clear(tree, lane, leaf, go)
-            _put(work, _FRESH + leaf, B, lane, tl.full(lane.shape, 1, tl.int32), go)
+            vx = tl.load(tight + (4 * LEAVES + 2 * leaf) * B + instance, mask=go, other=0.0) * 0.1
+            vy = tl.load(tight + (4 * LEAVES + 2 * leaf + 1) * B + instance, mask=go, other=0.0) * 0.1
+            _set_bb(bounds, instance, leaf, 0, tl_ + tl.minimum(-x, vx), go)
+            _set_bb(bounds, instance, leaf, 1, tb + tl.minimum(-y, vy), go)
+            _set_bb(bounds, instance, leaf, 2, tr + tl.maximum(x, vx), go)
+            _set_bb(bounds, instance, leaf, 3, tt + tl.maximum(y, vy), go)
+            _remove(tree, bounds, instance, leaf, go)
+            _insert(tree, bounds, instance, leaf, go)
+            _clear(tree, instance, leaf, go)
+            _put(work, _FRESH + leaf, B, instance, tl.full(instance.shape, 1, tl.int32), go)
             tl.debug_barrier()
-    count = tl.zeros(lane.shape, tl.int32)
-    moved = tl.zeros(lane.shape, tl.int32)
+    count = tl.zeros(instance.shape, tl.int32)
+    moved = tl.zeros(instance.shape, tl.int32)
     for k in range(LEAVES):
-        moved = tl.maximum(moved, _work(work, _FRESH + k, B, lane, mask))
+        moved = tl.maximum(moved, _work(work, _FRESH + k, B, instance, mask))
     run = mask & ((moved != 0) | need)
     # ``MarkSubtree``: leaves depth first, child A before child B.
-    root = _get(tree, lane, 0, run)
+    root = _get(tree, instance, 0, run)
     top = (run & (root >= 0)).to(tl.int32)
-    _put(work, _PATH, B, lane, root, top > 0)
+    _put(work, _PATH, B, instance, root, top > 0)
     while tl.max(top, axis=0) > 0:
         tl.debug_barrier()
         on = top > 0
         top -= on.to(tl.int32)
-        node = _work(work, _PATH + top, B, lane, on).to(tl.int64)
+        node = _work(work, _PATH + top, B, instance, on).to(tl.int64)
         inner = on & (node >= LEAVES)
-        _put(work, _PATH + top, B, lane, _get(tree, lane, 3 + 3 * node, inner), inner)
-        _put(work, _PATH + top + 1, B, lane, _get(tree, lane, 2 + 3 * node, inner), inner)
+        _put(work, _PATH + top, B, instance, _get(tree, instance, 3 + 3 * node, inner), inner)
+        _put(work, _PATH + top + 1, B, instance, _get(tree, instance, 2 + 3 * node, inner), inner)
         top += 2 * inner.to(tl.int32)
         found = on & (node < LEAVES)
-        fresh = found & (_work(work, _FRESH + node, B, lane, found) != 0)
-        count = _walls(tree, bounds, work, B, lane, node, count, fresh)
+        fresh = found & (_work(work, _FRESH + node, B, instance, found) != 0)
+        count = _walls(tree, bounds, work, B, instance, node, count, fresh)
         child = node
-        parent = _get(tree, lane, 1 + 3 * child, fresh)
+        parent = _get(tree, instance, 1 + 3 * child, fresh)
         up = fresh & (parent >= 0)
         while tl.max(up.to(tl.int32), axis=0) > 0:
             tl.debug_barrier()
-            first = _get(tree, lane, 2 + 3 * parent, up)
-            second = _get(tree, lane, 3 + 3 * parent, up)
+            first = _get(tree, instance, 2 + 3 * parent, up)
+            second = _get(tree, instance, 3 + 3 * parent, up)
             is_a = first == child
-            count = _query(tree, bounds, work, B, lane, tl.where(is_a, second, first), node, count, up, is_a)
+            count = _query(tree, bounds, work, B, instance, tl.where(is_a, second, first), node, count, up, is_a)
             child = tl.where(up, parent, child)
-            parent = _get(tree, lane, 1 + 3 * child, up)
+            parent = _get(tree, instance, 1 + 3 * child, up)
             up = up & (parent >= 0)
         listed = found & ~fresh
         for j in range(PAIRS):
-            entry = _get(tree, lane, LIST + node * PAIRS + j, listed)
+            entry = _get(tree, instance, LIST + node * PAIRS + j, listed)
             listed = listed & (entry >= 0)
-            count = _call(work, B, lane, count, entry // 2, node, listed & (entry % 2 == 1))
+            count = _call(work, B, instance, count, entry // 2, node, listed & (entry % 2 == 1))
     return count
 
 
 @triton.jit
-def pair_at(work, B, lane, c, mask):
+def pair_at(work, B, instance, c, mask):
     """The ``c``-th reported pair."""
-    return _work(work, 2 * c, B, lane, mask), _work(work, 2 * c + 1, B, lane, mask)
+    return _work(work, 2 * c, B, instance, mask), _work(work, 2 * c + 1, B, instance, mask)

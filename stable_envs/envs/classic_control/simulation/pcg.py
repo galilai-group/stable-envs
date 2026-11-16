@@ -1,7 +1,7 @@
 """NumPy's ``SeedSequence`` seeding of ``PCG64`` and its ``uniform`` draws, for many generators at once.
 
 ``reset(seed=s)`` of a Gymnasium environment seeds ``Generator(PCG64(SeedSequence(s)))``, and its initial state
-comes from ``uniform`` draws. These functions repeat both on arrays of generators, one per lane, and give the same
+comes from ``uniform`` draws. These functions repeat both on arrays of generators, one per environment, and give the same
 128-bit states and the same doubles. The 128-bit values are ``(high, low)`` pairs of uint64 arrays.
 """
 
@@ -82,7 +82,7 @@ def seed(seeds: np.ndarray) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.nda
     """``(state, inc)`` of ``PCG64(SeedSequence(s))`` for each non-negative integer seed ``s`` below 2**64."""
     seeds = np.asarray(seeds, dtype=np.uint64)
     state_hi, state_lo, inc_hi, inc_lo = (np.zeros_like(seeds) for _ in range(4))
-    # SeedSequence takes the seed's 32-bit words, at least one; lanes with as many words hash together.
+    # SeedSequence takes the seed's 32-bit words, at least one; environments with as many words hash together.
     lengths = np.where((seeds >> np.uint64(32)) == 0, 1, 2)
     for length in np.unique(lengths):
         rows = lengths == length

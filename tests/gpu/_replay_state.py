@@ -121,7 +121,7 @@ def check_default_style_is_official(env) -> dict:
 
 
 def check_per_env_variation(env) -> dict:
-    """With a leaf at ``low`` on the first half of the lanes and ``high`` on the rest, each lane draws its own value.
+    """With a leaf at ``low`` on the first half of the environments and ``high`` on the rest, each environment draws its own value.
 
     Each half must equal the frames of a uniform ``low`` or ``high`` install on the same seeds.
     """
@@ -142,7 +142,7 @@ def check_per_env_variation(env) -> dict:
                 f_hi = frames_under(other, {path: hi})
                 f = frames_under(other, {path: ramp})
             except Exception:  # noqa: BLE001
-                continue  # the env may not accept a per-lane form for this leaf
+                continue  # the env may not accept a per-environment form for this leaf
             if not (np.array_equal(f[:h], f_lo[:h]) and np.array_equal(f[h:], f_hi[h:])):
                 collapsed.append(path)
     return {"collapsed_variations": collapsed}

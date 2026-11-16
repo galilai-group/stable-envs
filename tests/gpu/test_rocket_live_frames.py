@@ -1,4 +1,4 @@
-"""CUDA Rocket step frames drawn from the live lanes equal ``render`` of the step States."""
+"""CUDA Rocket step frames drawn from the live environments equal ``render`` of the step States."""
 
 from __future__ import annotations
 

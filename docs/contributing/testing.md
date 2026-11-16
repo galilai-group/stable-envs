@@ -79,7 +79,7 @@ The family's profile checks every registered class, with no list to add a new cl
 
 A `VariationMap` says how each variation leaf of a stable-worldmodel environment relates to the stable-envs class. Matching by name would get cases like PushT's absolute scales against stable-worldmodel's multipliers wrong. Each stable-worldmodel leaf lands in exactly one group: mapped (identical, renamed, scaled, affine, color or enum), unsupported, dead upstream, not applicable, or stable-worldmodel only. The maps run as tests and stay out of the package's API.
 
-`tests/exemptions.toml` is the only place that can waive a check. Each entry names the environment (a class name or glob), the family, the checks (`specs`, `seeded`, `lanes`, `state`, `variation`, `batch_render`, `owner`, `original`, `swm` and `variation_map`) and the reason. A waived check still runs and must keep failing. Once it passes, the suite fails until you remove the entry, which keeps a waiver from outliving its reason. `.github/CODEOWNERS` assigns the file a code owner.
+`tests/exemptions.toml` is the only place that can waive a check. Each entry names the environment (a class name or glob), the family, the checks (`specs`, `seeded`, `instances`, `state`, `variation`, `batch_render`, `owner`, `original`, `swm` and `variation_map`) and the reason. A waived check still runs and must keep failing. Once it passes, the suite fails until you remove the entry, which keeps a waiver from outliving its reason. `.github/CODEOWNERS` assigns the file a code owner.
 
 To add a gate for a new environment:
 
@@ -109,7 +109,7 @@ python -m tests._runner.supervisor -- tests/gpu -v   # crash-isolated
 | `test_per_env_variation_is_per_env` | a per-environment variation that collapses to one value |
 | `test_style_is_state` | a frame that depends on something not stored with the state |
 | `test_default_style_is_the_official_appearance` | a default appearance that differs from the upstream library's |
-| `test_color_knobs_apply_the_requested_color` | a color knob wired to the wrong primitive or channel |
+| `test_color_settings_apply_the_requested_color` | a color setting wired to the wrong primitive or channel |
 | `test_determinism` | dependence on allocation order, cache state or a stale bake |
 | `test_backend_agreement` | a fused Triton kernel that differs from the torch reference |
 | `test_variations_all_do_something` | a variation leaf that the renderer ignores |

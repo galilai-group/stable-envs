@@ -49,7 +49,7 @@ def test_a_device_simulator_steps_its_sequences_on_the_device():
 
 @pytest.mark.family("ogbench")
 def test_a_device_masked_sequence_equals_the_sequence_that_reads_its_masks_back(monkeypatch):
-    """Lane 0 succeeds on its first action and holds; the device-masked loop gives the same bytes as the readback."""
+    """Environment 0 succeeds on its first action and holds; the device-masked loop gives the same bytes as the readback."""
     pytest.importorskip("mujoco_warp")
     actions = torch.as_tensor(np.random.default_rng(1).uniform(-1, 1, (4, 12, 5)), dtype=torch.float32).cuda()
     runs = []
@@ -58,7 +58,7 @@ def test_a_device_masked_sequence_equals_the_sequence_that_reads_its_masks_back(
             assert env._masks_on_device()
             monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
             env.reset(seed=3)
-            # The cube target of lane 0 moves onto its cube.
+            # The cube target of environment 0 moves onto its cube.
             sim = env._simulator
             sim._mocap_pos[0, sim._target] = sim._qpos[0, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
             runs.append(env.step(actions, frames=None))
@@ -72,8 +72,8 @@ def test_a_device_masked_sequence_equals_the_sequence_that_reads_its_masks_back(
 
 @pytest.mark.family("ogbench")
 @pytest.mark.parametrize("name", ["OGBCube", "OGBScene"])
-def test_a_device_masked_sequence_where_every_lane_ends_early_equals_the_readback(monkeypatch, name):
-    """Every lane succeeds on its first action; the device-masked loop gives the same bytes as the readback."""
+def test_a_device_masked_sequence_where_every_environment_ends_early_equals_the_readback(monkeypatch, name):
+    """Every environment succeeds on its first action; the device-masked loop gives the same bytes as the readback."""
     pytest.importorskip("mujoco_warp")
     actions = torch.as_tensor(np.random.default_rng(2).uniform(-0.1, 0.1, (3, 6, 5)), dtype=torch.float32).cuda()
     runs = []
@@ -82,7 +82,7 @@ def test_a_device_masked_sequence_where_every_lane_ends_early_equals_the_readbac
             assert env._masks_on_device()
             monkeypatch.setattr(type(env), "_masks_on_device", lambda self, value=device_masks: value)
             env.reset(seed=4)
-            # Every task target moves onto the current pose, so every lane succeeds at once.
+            # Every task target moves onto the current pose, so every environment succeeds at once.
             sim = env._simulator
             sim._mocap_pos[:, sim._target] = sim._qpos[:, sim._cube : sim._cube + 3].to(sim._mocap_pos.dtype)
             if name == "OGBScene":

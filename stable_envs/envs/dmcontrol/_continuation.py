@@ -5,7 +5,7 @@ from .simulation.continuation import _make_env
 
 
 class DMCContinuationSemantics(DelegatedSemantics):
-    """Cheetah, Hopper and Walker on CPU dm_control lanes."""
+    """Cheetah, Hopper and Walker on CPU dm_control environments."""
 
     @classmethod
     def _load_env(cls, seed: int):

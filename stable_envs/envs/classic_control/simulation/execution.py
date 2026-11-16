@@ -32,7 +32,7 @@ def make_classic_adapter(
 
 
 def make_step_adapter(domain: str, backend: str, num_envs: int, device: str | torch.device, seed: int, sink=None):
-    """The simulator of ``backend``; on an accelerator, Gymnasium and NumPy lanes in this process step on the CPU.
+    """The simulator of ``backend``; on an accelerator, Gymnasium and NumPy environments in this process step on the CPU.
 
     Their results move to ``device`` in one copy. ``sink`` is the environment's rows that the CUDA Torch simulator
     writes (see ``DeviceClassicAdapter``).

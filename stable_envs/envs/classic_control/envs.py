@@ -238,7 +238,7 @@ class _Classic(Env):
         return img.view(*lead, H, W, 3) if lead else img
 
     def _render_frame_rows(self, rows: torch.Tensor) -> torch.Tensor:
-        """Draw (B, F, state_dim) rows of the live lanes to (B, F, H, W, 3) frames in one render call."""
+        """Draw (B, F, state_dim) rows of the live environments to (B, F, H, W, 3) frames in one render call."""
         from ..._core.stepping import _padded_buffer
 
         b, f = rows.shape[:2]
@@ -257,7 +257,7 @@ class _Classic(Env):
     _geometry_host = None
 
     def _varied_geometry(self, sty, own: bool) -> np.ndarray | None:
-        """Return host (n, k) float64 geometry-leaf values, or None when every lane draws the constant geometry.
+        """Return host (n, k) float64 geometry-leaf values, or None when every environment draws the constant geometry.
 
         The answer is cached per installed variation, so rendering the env's own appearance reads
         nothing back from the device after the first frame.
@@ -671,7 +671,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
     geometry_leaves = {"physics.link_length_1": L1, "physics.link_length_2": L1}
 
     def _varied_bounds(self, geo):
-        """Joint radii present, and each link's per-edge step bounds and window, over every lane."""
+        """Joint radii present, and each link's per-edge step bounds and window, over every environment."""
         if self._varied_host is not None and self._varied_host[0] is geo:
             return self._varied_host[1]
         H, W = self.frame_shape
@@ -688,7 +688,7 @@ class Acrobot(ClassicControlSemantics, _Classic):
         return radii, bounds
 
     def _varied(self, s, sty):
-        """Per-lane ground row and joint radius, then both links' (B, 2, ...) quads and joint centers.
+        """Per-environment ground row and joint radius, then both links' (B, 2, ...) quads and joint centers.
 
         The whole picture scales with 500 / (2 * (l1 + l2 + 0.2)), as AcrobotEnv.render draws it.
         """
@@ -756,14 +756,14 @@ class Acrobot(ClassicControlSemantics, _Classic):
         row = cv.buf[:, bi, gy]
         cv.buf[:, bi, gy] = torch.where(hit.unsqueeze(0), _u8(sty["ground.color"]).t().unsqueeze(-1), row)
         lc, jc = sty["link.color"], sty["joint.color"]
-        # Each radius draws only its own lanes, so a batch spanning many radii costs about one disc pass.
-        lanes = [(rad, at) for rad in radii if len(at := (r == rad).nonzero().view(-1))]
+        # Each radius draws only its own environments, so a batch spanning many radii costs about one disc pass.
+        instances = [(rad, at) for rad in radii if len(at := (r == rad).nonzero().view(-1))]
         for i, (kmax, win) in enumerate(bounds):
             _poly(cv, quads[:, i], lc, bi, kmax, win)
             cv.use(jc)
-            for rad, at in lanes:
+            for rad, at in instances:
                 G.circle(
-                    cv, jx[at, i], jy[at, i], rad, None, None, at, None, g.stencil(rad), disc=g.disc(rad), lanes=at
+                    cv, jx[at, i], jy[at, i], rad, None, None, at, None, g.stencil(rad), disc=g.disc(rad), instances=at
                 )
 
     disc_radii = (JOINT_R,)
@@ -867,7 +867,7 @@ class MountainCar(ClassicControlSemantics, _Classic):
         )
 
     def _terrain_images(self, bg, terrain):
-        """Return the distinct baked (U, 3, H, W) terrain images and the (B,) image index of each lane.
+        """Return the distinct baked (U, 3, H, W) terrain images and the (B,) image index of each environment.
 
         Pygame quantizes each color blend, so coverage derived from one baked color
         pair cannot reproduce arbitrary other pairs exactly.

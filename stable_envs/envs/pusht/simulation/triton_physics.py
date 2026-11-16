@@ -37,21 +37,21 @@ def _outward(x0, y0, x1, y1):
 
 
 @triton.jit
-def _world(vertices, lane, index, shape, k, px, py, c, s, mask, S: tl.constexpr):
-    base = vertices + (((lane * 2 + index) * S + shape) * 4 + k) * 2
+def _world(vertices, instance, index, shape, k, px, py, c, s, mask, S: tl.constexpr):
+    base = vertices + (((instance * 2 + index) * S + shape) * 4 + k) * 2
     vx = tl.load(base, mask=mask, other=0.0).to(tl.float32)
     vy = tl.load(base + 1, mask=mask, other=0.0).to(tl.float32)
     return px + c * vx - s * vy, py + s * vx + c * vy
 
 
 @triton.jit
-def _put(scratch, slot, B, lane, mask, field: tl.constexpr, value):
-    tl.store(scratch + (slot * FIELDS + field) * B + lane, value, mask=mask)
+def _put(scratch, slot, B, instance, mask, field: tl.constexpr, value):
+    tl.store(scratch + (slot * FIELDS + field) * B + instance, value, mask=mask)
 
 
 @triton.jit
-def _get(scratch, slot, B, lane, mask, field: tl.constexpr):
-    return tl.load(scratch + (slot * FIELDS + field) * B + lane, mask=mask, other=0.0)
+def _get(scratch, slot, B, instance, mask, field: tl.constexpr):
+    return tl.load(scratch + (slot * FIELDS + field) * B + instance, mask=mask, other=0.0)
 
 
 @triton.jit
@@ -301,7 +301,7 @@ def _segment_polygon(w, x0, y0, x1, y1, x2, y2, x3, y3):
 def _contacts(
     scratch,
     B,
-    lane,
+    instance,
     mask,
     vertices,
     enabled,
@@ -326,33 +326,33 @@ def _contacts(
     disc = radius > 0
     if CIRCLE:
         for b in range(S):
-            x0, y0 = _world(vertices, lane, 1, b, 0, bx, by, cb, sb, mask, S)
-            x1, y1 = _world(vertices, lane, 1, b, 1, bx, by, cb, sb, mask, S)
-            x2, y2 = _world(vertices, lane, 1, b, 2, bx, by, cb, sb, mask, S)
-            x3, y3 = _world(vertices, lane, 1, b, 3, bx, by, cb, sb, mask, S)
+            x0, y0 = _world(vertices, instance, 1, b, 0, bx, by, cb, sb, mask, S)
+            x1, y1 = _world(vertices, instance, 1, b, 1, bx, by, cb, sb, mask, S)
+            x2, y2 = _world(vertices, instance, 1, b, 2, bx, by, cb, sb, mask, S)
+            x3, y3 = _world(vertices, instance, 1, b, 3, bx, by, cb, sb, mask, S)
             px, py, nx, ny, depth, ident = _circle_polygon(ax, ay, radius, x0, y0, x1, y1, x2, y2, x3, y3)
-            on = (tl.load(enabled + lane * 2 * S, mask=mask, other=0) != 0) & (
-                tl.load(enabled + lane * 2 * S + S + b, mask=mask, other=0) != 0
+            on = (tl.load(enabled + instance * 2 * S, mask=mask, other=0) != 0) & (
+                tl.load(enabled + instance * 2 * S + S + b, mask=mask, other=0) != 0
             )
-            _put(scratch, b, B, lane, mask, 0, px)
-            _put(scratch, b, B, lane, mask, 1, py)
-            _put(scratch, b, B, lane, mask, 2, nx)
-            _put(scratch, b, B, lane, mask, 3, ny)
-            _put(scratch, b, B, lane, mask, 4, tl.where(on, depth, -1.0))
-            _put(scratch, b, B, lane, mask, 16, ident.to(tl.float32))
+            _put(scratch, b, B, instance, mask, 0, px)
+            _put(scratch, b, B, instance, mask, 1, py)
+            _put(scratch, b, B, instance, mask, 2, nx)
+            _put(scratch, b, B, instance, mask, 3, ny)
+            _put(scratch, b, B, instance, mask, 4, tl.where(on, depth, -1.0))
+            _put(scratch, b, B, instance, mask, 16, ident.to(tl.float32))
     else:
         for pair in range(S * S):
             a = pair // S
             b = pair % S
             slot = 2 * pair
-            p0, p1 = _world(vertices, lane, 0, a, 0, ax, ay, ca, sa, mask, S)
-            p2, p3 = _world(vertices, lane, 0, a, 1, ax, ay, ca, sa, mask, S)
-            p4, p5 = _world(vertices, lane, 0, a, 2, ax, ay, ca, sa, mask, S)
-            p6, p7 = _world(vertices, lane, 0, a, 3, ax, ay, ca, sa, mask, S)
-            q0, q1 = _world(vertices, lane, 1, b, 0, bx, by, cb, sb, mask, S)
-            q2, q3 = _world(vertices, lane, 1, b, 1, bx, by, cb, sb, mask, S)
-            q4, q5 = _world(vertices, lane, 1, b, 2, bx, by, cb, sb, mask, S)
-            q6, q7 = _world(vertices, lane, 1, b, 3, bx, by, cb, sb, mask, S)
+            p0, p1 = _world(vertices, instance, 0, a, 0, ax, ay, ca, sa, mask, S)
+            p2, p3 = _world(vertices, instance, 0, a, 1, ax, ay, ca, sa, mask, S)
+            p4, p5 = _world(vertices, instance, 0, a, 2, ax, ay, ca, sa, mask, S)
+            p6, p7 = _world(vertices, instance, 0, a, 3, ax, ay, ca, sa, mask, S)
+            q0, q1 = _world(vertices, instance, 1, b, 0, bx, by, cb, sb, mask, S)
+            q2, q3 = _world(vertices, instance, 1, b, 1, bx, by, cb, sb, mask, S)
+            q4, q5 = _world(vertices, instance, 1, b, 2, bx, by, cb, sb, mask, S)
+            q6, q7 = _world(vertices, instance, 1, b, 3, bx, by, cb, sb, mask, S)
             u0x, u0y, u1x, u1y, nx, ny, d0, d1, ident = _polygon_polygon(
                 p0, p1, p2, p3, p4, p5, p6, p7, q0, q1, q2, q3, q4, q5, q6, q7
             )
@@ -366,21 +366,21 @@ def _contacts(
             hide = disc & (a > 0)
             d0, d1 = tl.where(hide, -1.0, d0), tl.where(hide, -1.0, d1)
             first, second = tl.where(use, cident, ident), tl.where(use, -1, ident + 1)
-            on = (tl.load(enabled + lane * 2 * S + a, mask=mask, other=0) != 0) & (
-                tl.load(enabled + lane * 2 * S + S + b, mask=mask, other=0) != 0
+            on = (tl.load(enabled + instance * 2 * S + a, mask=mask, other=0) != 0) & (
+                tl.load(enabled + instance * 2 * S + S + b, mask=mask, other=0) != 0
             )
-            _put(scratch, slot, B, lane, mask, 0, u0x)
-            _put(scratch, slot, B, lane, mask, 1, u0y)
-            _put(scratch, slot, B, lane, mask, 2, nx)
-            _put(scratch, slot, B, lane, mask, 3, ny)
-            _put(scratch, slot, B, lane, mask, 4, tl.where(on, d0, -1.0))
-            _put(scratch, slot, B, lane, mask, 16, first.to(tl.float32))
-            _put(scratch, slot + 1, B, lane, mask, 0, u1x)
-            _put(scratch, slot + 1, B, lane, mask, 1, u1y)
-            _put(scratch, slot + 1, B, lane, mask, 2, nx)
-            _put(scratch, slot + 1, B, lane, mask, 3, ny)
-            _put(scratch, slot + 1, B, lane, mask, 4, tl.where(on, d1, -1.0))
-            _put(scratch, slot + 1, B, lane, mask, 16, second.to(tl.float32))
+            _put(scratch, slot, B, instance, mask, 0, u0x)
+            _put(scratch, slot, B, instance, mask, 1, u0y)
+            _put(scratch, slot, B, instance, mask, 2, nx)
+            _put(scratch, slot, B, instance, mask, 3, ny)
+            _put(scratch, slot, B, instance, mask, 4, tl.where(on, d0, -1.0))
+            _put(scratch, slot, B, instance, mask, 16, first.to(tl.float32))
+            _put(scratch, slot + 1, B, instance, mask, 0, u1x)
+            _put(scratch, slot + 1, B, instance, mask, 1, u1y)
+            _put(scratch, slot + 1, B, instance, mask, 2, nx)
+            _put(scratch, slot + 1, B, instance, mask, 3, ny)
+            _put(scratch, slot + 1, B, instance, mask, 4, tl.where(on, d1, -1.0))
+            _put(scratch, slot + 1, B, instance, mask, 16, second.to(tl.float32))
     if CIRCLE:
         start = 1
         base = S
@@ -394,11 +394,11 @@ def _contacts(
         px_, py_ = tl.where(agent, ax, bx), tl.where(agent, ay, by)
         c_, s_ = tl.where(agent, ca, cb), tl.where(agent, sa, sb)
         dynamic = tl.where(agent, inv_agent, inv_block) > 0
-        x0, y0 = _world(vertices, lane, index, shape, 0, px_, py_, c_, s_, mask, S)
-        x1, y1 = _world(vertices, lane, index, shape, 1, px_, py_, c_, s_, mask, S)
-        x2, y2 = _world(vertices, lane, index, shape, 2, px_, py_, c_, s_, mask, S)
-        x3, y3 = _world(vertices, lane, index, shape, 3, px_, py_, c_, s_, mask, S)
-        live = (tl.load(enabled + lane * 2 * S + index * S + shape, mask=mask, other=0) != 0) & dynamic
+        x0, y0 = _world(vertices, instance, index, shape, 0, px_, py_, c_, s_, mask, S)
+        x1, y1 = _world(vertices, instance, index, shape, 1, px_, py_, c_, s_, mask, S)
+        x2, y2 = _world(vertices, instance, index, shape, 2, px_, py_, c_, s_, mask, S)
+        x3, y3 = _world(vertices, instance, index, shape, 3, px_, py_, c_, s_, mask, S)
+        live = (tl.load(enabled + instance * 2 * S + index * S + shape, mask=mask, other=0) != 0) & dynamic
         low_x = tl.minimum(tl.minimum(x0, x1), tl.minimum(x2, x3))
         low_y = tl.minimum(tl.minimum(y0, y1), tl.minimum(y2, y3))
         high_x = tl.maximum(tl.maximum(x0, x1), tl.maximum(x2, x3))
@@ -410,28 +410,30 @@ def _contacts(
             line = tl.where(w < 2, 5.0, 506.0)
             low, high = tl.where(w % 2 == 0, low_x, low_y), tl.where(w % 2 == 0, high_x, high_y)
             near = mask & live & (low <= line + 2.0) & (high >= line - 2.0)
-            _put(scratch, slot, B, lane, mask, 4, tl.zeros_like(x0) - 1.0)
-            _put(scratch, slot + 1, B, lane, mask, 4, tl.zeros_like(x0) - 1.0)
-            _put(scratch, slot, B, lane, mask, 16, tl.zeros_like(x0) - 1.0)
-            _put(scratch, slot + 1, B, lane, mask, 16, tl.zeros_like(x0) - 1.0)
+            _put(scratch, slot, B, instance, mask, 4, tl.zeros_like(x0) - 1.0)
+            _put(scratch, slot + 1, B, instance, mask, 4, tl.zeros_like(x0) - 1.0)
+            _put(scratch, slot, B, instance, mask, 16, tl.zeros_like(x0) - 1.0)
+            _put(scratch, slot + 1, B, instance, mask, 16, tl.zeros_like(x0) - 1.0)
             if tl.max(near.to(tl.int32), axis=0) > 0:
                 u0x, u0y, d0, id0, u1x, u1y, d1, id1, nx, ny = _segment_polygon(w, x0, y0, x1, y1, x2, y2, x3, y3)
-                _put(scratch, slot, B, lane, mask, 0, u0x)
-                _put(scratch, slot, B, lane, mask, 1, u0y)
-                _put(scratch, slot, B, lane, mask, 2, nx)
-                _put(scratch, slot, B, lane, mask, 3, ny)
-                _put(scratch, slot, B, lane, near, 4, d0)
-                _put(scratch, slot, B, lane, near, 16, id0.to(tl.float32))
-                _put(scratch, slot + 1, B, lane, mask, 0, u1x)
-                _put(scratch, slot + 1, B, lane, mask, 1, u1y)
-                _put(scratch, slot + 1, B, lane, mask, 2, nx)
-                _put(scratch, slot + 1, B, lane, mask, 3, ny)
-                _put(scratch, slot + 1, B, lane, near, 4, d1)
-                _put(scratch, slot + 1, B, lane, near, 16, id1.to(tl.float32))
+                _put(scratch, slot, B, instance, mask, 0, u0x)
+                _put(scratch, slot, B, instance, mask, 1, u0y)
+                _put(scratch, slot, B, instance, mask, 2, nx)
+                _put(scratch, slot, B, instance, mask, 3, ny)
+                _put(scratch, slot, B, instance, near, 4, d0)
+                _put(scratch, slot, B, instance, near, 16, id0.to(tl.float32))
+                _put(scratch, slot + 1, B, instance, mask, 0, u1x)
+                _put(scratch, slot + 1, B, instance, mask, 1, u1y)
+                _put(scratch, slot + 1, B, instance, mask, 2, nx)
+                _put(scratch, slot + 1, B, instance, mask, 3, ny)
+                _put(scratch, slot + 1, B, instance, near, 4, d1)
+                _put(scratch, slot + 1, B, instance, near, 16, id1.to(tl.float32))
 
 
 @triton.jit
-def _store_tight(tight, B, lane, mask, vertices, radius, ax, ay, aa, bx, by, ba, vax, vay, bvx, bvy, S: tl.constexpr):
+def _store_tight(
+    tight, B, instance, mask, vertices, radius, ax, ay, aa, bx, by, ba, vax, vay, bvx, bvy, S: tl.constexpr
+):
     """Each shape's bounding box and body velocity, in ``triton_broadphase.reindex``'s ``tight`` layout."""
     for index in tl.static_range(2):
         if index == 0:
@@ -441,10 +443,10 @@ def _store_tight(tight, B, lane, mask, vertices, radius, ax, ay, aa, bx, by, ba,
         c, s = tl.cos(angle), tl.sin(angle)
         for shape in tl.static_range(S):
             leaf = 3 * index + shape
-            x0, y0 = _world(vertices, lane, index, shape, 0, px, py, c, s, mask, S)
-            x1, y1 = _world(vertices, lane, index, shape, 1, px, py, c, s, mask, S)
-            x2, y2 = _world(vertices, lane, index, shape, 2, px, py, c, s, mask, S)
-            x3, y3 = _world(vertices, lane, index, shape, 3, px, py, c, s, mask, S)
+            x0, y0 = _world(vertices, instance, index, shape, 0, px, py, c, s, mask, S)
+            x1, y1 = _world(vertices, instance, index, shape, 1, px, py, c, s, mask, S)
+            x2, y2 = _world(vertices, instance, index, shape, 2, px, py, c, s, mask, S)
+            x3, y3 = _world(vertices, instance, index, shape, 3, px, py, c, s, mask, S)
             low_x = tl.minimum(tl.minimum(x0, x1), tl.minimum(x2, x3))
             low_y = tl.minimum(tl.minimum(y0, y1), tl.minimum(y2, y3))
             high_x = tl.maximum(tl.maximum(x0, x1), tl.maximum(x2, x3))
@@ -453,12 +455,12 @@ def _store_tight(tight, B, lane, mask, vertices, radius, ax, ay, aa, bx, by, ba,
                 disc = radius > 0
                 low_x, low_y = tl.where(disc, ax - radius, low_x), tl.where(disc, ay - radius, low_y)
                 high_x, high_y = tl.where(disc, ax + radius, high_x), tl.where(disc, ay + radius, high_y)
-            tl.store(tight + (4 * leaf) * B + lane, low_x, mask=mask)
-            tl.store(tight + (4 * leaf + 1) * B + lane, low_y, mask=mask)
-            tl.store(tight + (4 * leaf + 2) * B + lane, high_x, mask=mask)
-            tl.store(tight + (4 * leaf + 3) * B + lane, high_y, mask=mask)
-            tl.store(tight + (4 * LEAVES + 2 * leaf) * B + lane, vx, mask=mask)
-            tl.store(tight + (4 * LEAVES + 2 * leaf + 1) * B + lane, vy, mask=mask)
+            tl.store(tight + (4 * leaf) * B + instance, low_x, mask=mask)
+            tl.store(tight + (4 * leaf + 1) * B + instance, low_y, mask=mask)
+            tl.store(tight + (4 * leaf + 2) * B + instance, high_x, mask=mask)
+            tl.store(tight + (4 * leaf + 3) * B + instance, high_y, mask=mask)
+            tl.store(tight + (4 * LEAVES + 2 * leaf) * B + instance, vx, mask=mask)
+            tl.store(tight + (4 * LEAVES + 2 * leaf + 1) * B + instance, vy, mask=mask)
 
 
 @triton.jit
@@ -474,12 +476,12 @@ def _group(i, walls: tl.constexpr, CIRCLE: tl.constexpr):
 
 
 @triton.jit
-def _needs_order(scratch, B, lane, mask, walls: tl.constexpr, C: tl.constexpr, CIRCLE: tl.constexpr):
+def _needs_order(scratch, B, instance, mask, walls: tl.constexpr, C: tl.constexpr, CIRCLE: tl.constexpr):
     """Whether contacts of more than one arbiter touch, so the solver order matters."""
-    first = tl.full(lane.shape, -1, tl.int32)
-    need = tl.zeros(lane.shape, tl.int1)
+    first = tl.full(instance.shape, -1, tl.int32)
+    need = tl.zeros(instance.shape, tl.int1)
     for i in range(C):
-        on = _get(scratch, i, B, lane, mask, 15) != 0
+        on = _get(scratch, i, B, instance, mask, 15) != 0
         start, _ = _group(i, walls, CIRCLE)
         need = need | (on & (first >= 0) & (first != start))
         first = tl.where(on, start, first)
@@ -488,16 +490,25 @@ def _needs_order(scratch, B, lane, mask, walls: tl.constexpr, C: tl.constexpr, C
 
 @triton.jit
 def _visit_order(
-    scratch, work, B, lane, mask, reported, walls: tl.constexpr, S: tl.constexpr, C: tl.constexpr, CIRCLE: tl.constexpr
+    scratch,
+    work,
+    B,
+    instance,
+    mask,
+    reported,
+    walls: tl.constexpr,
+    S: tl.constexpr,
+    C: tl.constexpr,
+    CIRCLE: tl.constexpr,
 ):
     """Write the active contact slots to ``work`` from ``WORK`` by arbiter, in broadphase report order."""
     seen = broadphase.WORK + C
     for i in range(C):
-        tl.store(work + (seen + i) * B + lane, tl.zeros_like(lane), mask=mask)
-    live = tl.zeros_like(lane)
+        tl.store(work + (seen + i) * B + instance, tl.zeros_like(instance), mask=mask)
+    live = tl.zeros_like(instance)
     for c in range(tl.max(reported, axis=0)):
         on = mask & (c < reported)
-        x, y = broadphase.pair_at(work, B, lane, c, on)
+        x, y = broadphase.pair_at(work, B, instance, c, on)
         swap = (x >= LEAVES) | ((y < LEAVES) & (y // 3 < x // 3))
         x, y = tl.where(swap, y, x), tl.where(swap, x, y)
         index, shape = x // 3, x % 3
@@ -515,36 +526,36 @@ def _visit_order(
         for d in tl.static_range(2):
             slot = start + d
             ok = on & ~skip & (d < size)
-            add = ok & (_get(scratch, slot, B, lane, ok, 15) != 0)
-            add = add & (tl.load(work + (seen + slot) * B + lane, mask=add, other=1, volatile=True) == 0)
-            tl.store(work + (broadphase.WORK + live) * B + lane, slot, mask=add)
-            tl.store(work + (seen + slot) * B + lane, tl.full(lane.shape, 1, tl.int32), mask=add)
+            add = ok & (_get(scratch, slot, B, instance, ok, 15) != 0)
+            add = add & (tl.load(work + (seen + slot) * B + instance, mask=add, other=1, volatile=True) == 0)
+            tl.store(work + (broadphase.WORK + live) * B + instance, slot, mask=add)
+            tl.store(work + (seen + slot) * B + instance, tl.full(instance.shape, 1, tl.int32), mask=add)
             live += add.to(tl.int32)
     for i in range(C):
-        add = mask & (_get(scratch, i, B, lane, mask, 15) != 0)
-        add = add & (tl.load(work + (seen + i) * B + lane, mask=add, other=1, volatile=True) == 0)
-        tl.store(work + (broadphase.WORK + live) * B + lane, tl.zeros_like(lane) + i, mask=add)
+        add = mask & (_get(scratch, i, B, instance, mask, 15) != 0)
+        add = add & (tl.load(work + (seen + i) * B + instance, mask=add, other=1, volatile=True) == 0)
+        tl.store(work + (broadphase.WORK + live) * B + instance, tl.zeros_like(instance) + i, mask=add)
         live += add.to(tl.int32)
     return live
 
 
 @triton.jit
-def _keep(scratch, cached, identifiers, B, lane, mask, walls: tl.constexpr, C: tl.constexpr, CIRCLE: tl.constexpr):
+def _keep(scratch, cached, identifiers, B, instance, mask, walls: tl.constexpr, C: tl.constexpr, CIRCLE: tl.constexpr):
     """Store the solved impulses and ids; an arbiter without contacts ages its old ones (``numba_physics._keep``)."""
     for i in range(C):
         start, size = _group(i, walls, CIRCLE)
-        touching = _get(scratch, start, B, lane, mask, 15) != 0
-        touching = touching | ((size == 2) & (_get(scratch, start + 1, B, lane, mask & (size == 2), 15) != 0))
-        on = _get(scratch, i, B, lane, mask, 15) != 0
-        old = tl.load(identifiers + lane * C + i, mask=mask, other=-1)
-        old_impulse = tl.load(cached + lane * C + i, mask=mask, other=0.0)
-        ident = _get(scratch, i, B, lane, mask, 16).to(tl.int64)
+        touching = _get(scratch, start, B, instance, mask, 15) != 0
+        touching = touching | ((size == 2) & (_get(scratch, start + 1, B, instance, mask & (size == 2), 15) != 0))
+        on = _get(scratch, i, B, instance, mask, 15) != 0
+        old = tl.load(identifiers + instance * C + i, mask=mask, other=-1)
+        old_impulse = tl.load(cached + instance * C + i, mask=mask, other=0.0)
+        ident = _get(scratch, i, B, instance, mask, 16).to(tl.int64)
         aged = tl.where((old >= 0) & (old < 2 * _STALE), old + _STALE, -1)
         impulse = tl.where(
-            touching, tl.where(on, _get(scratch, i, B, lane, mask, 13), 0.0), tl.where(aged >= 0, old_impulse, 0.0)
+            touching, tl.where(on, _get(scratch, i, B, instance, mask, 13), 0.0), tl.where(aged >= 0, old_impulse, 0.0)
         )
-        tl.store(cached + lane * C + i, impulse, mask=mask)
-        tl.store(identifiers + lane * C + i, tl.where(touching, tl.where(on, ident, -1), aged), mask=mask)
+        tl.store(cached + instance * C + i, impulse, mask=mask)
+        tl.store(identifiers + instance * C + i, tl.where(touching, tl.where(on, ident, -1), aged), mask=mask)
 
 
 @triton.jit
@@ -587,10 +598,10 @@ def advance_kernel(
     CIRCLE: tl.constexpr,
     BLOCK: tl.constexpr,
 ):
-    lane = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-    mask = lane < B
-    mask = mask & (tl.load(active + lane, mask=mask, other=0) != 0)
-    row = body + lane * 12
+    instance = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    mask = instance < B
+    mask = mask & (tl.load(active + instance, mask=mask, other=0) != 0)
+    row = body + instance * 12
     ax, ay = tl.load(row, mask=mask, other=0.0).to(tl.float32), tl.load(row + 1, mask=mask, other=0.0).to(tl.float32)
     avx, avy = (
         tl.load(row + 2, mask=mask, other=0.0).to(tl.float32),
@@ -612,7 +623,7 @@ def advance_kernel(
         tl.load(row + 10, mask=mask, other=0.0).to(tl.float32),
         tl.load(row + 11, mask=mask, other=0.0).to(tl.float32),
     )
-    brow = bias + lane * 6
+    brow = bias + instance * 6
     pax, pay, paw = (
         tl.load(brow, mask=mask, other=0.0).to(tl.float32),
         tl.load(brow + 1, mask=mask, other=0.0).to(tl.float32),
@@ -624,25 +635,25 @@ def advance_kernel(
         tl.load(brow + 5, mask=mask, other=0.0).to(tl.float32),
     )
     gax, gay = (
-        tl.load(cog + lane * 4, mask=mask, other=0.0).to(tl.float32),
-        tl.load(cog + lane * 4 + 1, mask=mask, other=0.0).to(tl.float32),
+        tl.load(cog + instance * 4, mask=mask, other=0.0).to(tl.float32),
+        tl.load(cog + instance * 4 + 1, mask=mask, other=0.0).to(tl.float32),
     )
     gbx, gby = (
-        tl.load(cog + lane * 4 + 2, mask=mask, other=0.0).to(tl.float32),
-        tl.load(cog + lane * 4 + 3, mask=mask, other=0.0).to(tl.float32),
+        tl.load(cog + instance * 4 + 2, mask=mask, other=0.0).to(tl.float32),
+        tl.load(cog + instance * 4 + 3, mask=mask, other=0.0).to(tl.float32),
     )
     ima, iia = (
-        tl.load(inverse + lane * 4, mask=mask, other=0.0).to(tl.float32),
-        tl.load(inverse + lane * 4 + 1, mask=mask, other=0.0).to(tl.float32),
+        tl.load(inverse + instance * 4, mask=mask, other=0.0).to(tl.float32),
+        tl.load(inverse + instance * 4 + 1, mask=mask, other=0.0).to(tl.float32),
     )
     imb, iib = (
-        tl.load(inverse + lane * 4 + 2, mask=mask, other=0.0).to(tl.float32),
-        tl.load(inverse + lane * 4 + 3, mask=mask, other=0.0).to(tl.float32),
+        tl.load(inverse + instance * 4 + 2, mask=mask, other=0.0).to(tl.float32),
+        tl.load(inverse + instance * 4 + 3, mask=mask, other=0.0).to(tl.float32),
     )
-    radius = tl.load(radius_ptr + lane, mask=mask, other=0.0).to(tl.float32)
+    radius = tl.load(radius_ptr + instance, mask=mask, other=0.0).to(tl.float32)
     tx, ty = (
-        tl.load(target + lane * 2, mask=mask, other=0.0).to(tl.float32),
-        tl.load(target + lane * 2 + 1, mask=mask, other=0.0).to(tl.float32),
+        tl.load(target + instance * 2, mask=mask, other=0.0).to(tl.float32),
+        tl.load(target + instance * 2 + 1, mask=mask, other=0.0).to(tl.float32),
     )
     total = tl.zeros([BLOCK], dtype=tl.int64)
     if CIRCLE:
@@ -665,19 +676,19 @@ def advance_kernel(
         ba = ba + (bw + pbw) * 0.01
         c, s = tl.cos(ba), tl.sin(ba)
         bx, by = cbx - (c * gbx - s * gby), cby - (s * gbx + c * gby)
-        _store_tight(tight, B, lane, mask, vertices, radius, ax, ay, aa, bx, by, ba, vax, vay, bvx, bvy, S)
+        _store_tight(tight, B, instance, mask, vertices, radius, ax, ay, aa, bx, by, ba, vax, vay, bvx, bvy, S)
         # Space.damping zeroes dynamic bodies after integration.
         vaw = aw
         vax, vay, vaw = tl.where(ima > 0, 0.0, vax), tl.where(ima > 0, 0.0, vay), tl.where(ima > 0, 0.0, vaw)
         vbx, vby, vbw = tl.where(imb > 0, 0.0, bvx), tl.where(imb > 0, 0.0, bvy), tl.where(imb > 0, 0.0, bw)
-        _contacts(scratch, B, lane, mask, vertices, enabled, radius, ima, imb, ax, ay, aa, bx, by, ba, S, CIRCLE)
+        _contacts(scratch, B, instance, mask, vertices, enabled, radius, ima, imb, ax, ay, aa, bx, by, ba, S, CIRCLE)
         # Contact geometry; the starting impulse of each contact from its arbiter's cached contacts.
         for i in range(C):
             a_agent, b = _pair(i, S, CIRCLE)
-            px, py = _get(scratch, i, B, lane, mask, 0), _get(scratch, i, B, lane, mask, 1)
-            nx, ny = _get(scratch, i, B, lane, mask, 2), _get(scratch, i, B, lane, mask, 3)
-            depth = _get(scratch, i, B, lane, mask, 4)
-            ident = _get(scratch, i, B, lane, mask, 16).to(tl.int64)
+            px, py = _get(scratch, i, B, instance, mask, 0), _get(scratch, i, B, instance, mask, 1)
+            nx, ny = _get(scratch, i, B, instance, mask, 2), _get(scratch, i, B, instance, mask, 3)
+            depth = _get(scratch, i, B, instance, mask, 4)
+            ident = _get(scratch, i, B, instance, mask, 16).to(tl.int64)
             rax = tl.where(a_agent, px - cax, px)
             ray = tl.where(a_agent, py - cay, py)
             rbx = tl.where(b == 0, px - cax, px - cbx)
@@ -694,36 +705,36 @@ def advance_kernel(
             fresh = tl.full(px.shape, 1, tl.int32)
             for d in tl.static_range(2):
                 valid = mask & (d < size)
-                old = tl.load(identifiers + lane * C + start + d, mask=valid, other=-1)
-                value = tl.load(cached + lane * C + start + d, mask=valid, other=0.0).to(tl.float32)
+                old = tl.load(identifiers + instance * C + start + d, mask=valid, other=-1)
+                value = tl.load(cached + instance * C + start + d, mask=valid, other=0.0).to(tl.float32)
                 impulse = tl.where(on & (old >= 0) & (old % _STALE == ident), value, impulse)
                 fresh = tl.where(old >= _STALE, 0, fresh)
-            _put(scratch, i, B, lane, mask, 5, rax)
-            _put(scratch, i, B, lane, mask, 6, ray)
-            _put(scratch, i, B, lane, mask, 7, rbx)
-            _put(scratch, i, B, lane, mask, 8, rby)
-            _put(scratch, i, B, lane, mask, 9, cra)
-            _put(scratch, i, B, lane, mask, 10, crb)
-            _put(scratch, i, B, lane, mask, 11, mass)
-            _put(scratch, i, B, lane, mask, 12, _RATE * tl.maximum(depth - 0.1, 0.0))
-            _put(scratch, i, B, lane, mask, 13, impulse)
-            _put(scratch, i, B, lane, mask, 14, tl.zeros_like(impulse))
-            _put(scratch, i, B, lane, mask, 15, on.to(tl.float32))
-            _put(scratch, i, B, lane, mask, 17, fresh.to(tl.float32))
+            _put(scratch, i, B, instance, mask, 5, rax)
+            _put(scratch, i, B, instance, mask, 6, ray)
+            _put(scratch, i, B, instance, mask, 7, rbx)
+            _put(scratch, i, B, instance, mask, 8, rby)
+            _put(scratch, i, B, instance, mask, 9, cra)
+            _put(scratch, i, B, instance, mask, 10, crb)
+            _put(scratch, i, B, instance, mask, 11, mass)
+            _put(scratch, i, B, instance, mask, 12, _RATE * tl.maximum(depth - 0.1, 0.0))
+            _put(scratch, i, B, instance, mask, 13, impulse)
+            _put(scratch, i, B, instance, mask, 14, tl.zeros_like(impulse))
+            _put(scratch, i, B, instance, mask, 15, on.to(tl.float32))
+            _put(scratch, i, B, instance, mask, 17, fresh.to(tl.float32))
         # The solver visits the touching shape pairs in the order the broadphase reports them; with one
         # touching pair the order is moot, and the broadphase need only refit its tree.
-        need = _needs_order(scratch, B, lane, mask, walls, C, CIRCLE)
-        reported = broadphase.reindex(tree, tree_bounds, work, tight, order, B, lane, mask, need)
-        live = _visit_order(scratch, work, B, lane, mask, tl.where(need, reported, 0), walls, S, C, CIRCLE)
+        need = _needs_order(scratch, B, instance, mask, walls, C, CIRCLE)
+        reported = broadphase.reindex(tree, tree_bounds, work, tight, order, B, instance, mask, need)
+        live = _visit_order(scratch, work, B, instance, mask, tl.where(need, reported, 0), walls, S, C, CIRCLE)
         tl.debug_barrier()
         for j in range(tl.max(live, axis=0)):
             on = mask & (j < live)
-            slot = tl.load(work + (broadphase.WORK + j) * B + lane, mask=on, other=0, volatile=True)
+            slot = tl.load(work + (broadphase.WORK + j) * B + instance, mask=on, other=0, volatile=True)
             a_agent, b = _pair(slot, S, CIRCLE)
-            on = on & (_get(scratch, slot, B, lane, on, 17) != 0)
-            nx, ny = _get(scratch, slot, B, lane, on, 2), _get(scratch, slot, B, lane, on, 3)
-            cra, crb = _get(scratch, slot, B, lane, on, 9), _get(scratch, slot, B, lane, on, 10)
-            impulse = tl.where(on, _get(scratch, slot, B, lane, on, 13), 0.0)
+            on = on & (_get(scratch, slot, B, instance, on, 17) != 0)
+            nx, ny = _get(scratch, slot, B, instance, on, 2), _get(scratch, slot, B, instance, on, 3)
+            cra, crb = _get(scratch, slot, B, instance, on, 9), _get(scratch, slot, B, instance, on, 10)
+            impulse = tl.where(on, _get(scratch, slot, B, instance, on, 13), 0.0)
             ia_m, ia_i = tl.where(a_agent, ima, 0.0), tl.where(a_agent, iia, 0.0)
             ib_m, ib_i = tl.where(b == 0, ima, imb), tl.where(b == 0, iia, iib)
             jx, jy = impulse * nx, impulse * ny
@@ -738,14 +749,14 @@ def advance_kernel(
         for _ in range(10):
             for j in range(tl.max(live, axis=0)):
                 on = mask & (j < live)
-                slot = tl.load(work + (broadphase.WORK + j) * B + lane, mask=on, other=0, volatile=True)
+                slot = tl.load(work + (broadphase.WORK + j) * B + instance, mask=on, other=0, volatile=True)
                 a_agent, b = _pair(slot, S, CIRCLE)
-                nx, ny = _get(scratch, slot, B, lane, on, 2), _get(scratch, slot, B, lane, on, 3)
-                rax, ray = _get(scratch, slot, B, lane, on, 5), _get(scratch, slot, B, lane, on, 6)
-                rbx, rby = _get(scratch, slot, B, lane, on, 7), _get(scratch, slot, B, lane, on, 8)
-                cra, crb = _get(scratch, slot, B, lane, on, 9), _get(scratch, slot, B, lane, on, 10)
-                mass, goal = _get(scratch, slot, B, lane, on, 11), _get(scratch, slot, B, lane, on, 12)
-                old, old_bias = _get(scratch, slot, B, lane, on, 13), _get(scratch, slot, B, lane, on, 14)
+                nx, ny = _get(scratch, slot, B, instance, on, 2), _get(scratch, slot, B, instance, on, 3)
+                rax, ray = _get(scratch, slot, B, instance, on, 5), _get(scratch, slot, B, instance, on, 6)
+                rbx, rby = _get(scratch, slot, B, instance, on, 7), _get(scratch, slot, B, instance, on, 8)
+                cra, crb = _get(scratch, slot, B, instance, on, 9), _get(scratch, slot, B, instance, on, 10)
+                mass, goal = _get(scratch, slot, B, instance, on, 11), _get(scratch, slot, B, instance, on, 12)
+                old, old_bias = _get(scratch, slot, B, instance, on, 13), _get(scratch, slot, B, instance, on, 14)
                 ia_m, ia_i = tl.where(a_agent, ima, 0.0), tl.where(a_agent, iia, 0.0)
                 ib_m, ib_i = tl.where(b == 0, ima, imb), tl.where(b == 0, iia, iib)
                 # Relative normal speed of b against a, for the velocities and the bias velocities.
@@ -776,12 +787,12 @@ def advance_kernel(
                 qbx = qbx + tl.where(b == 1, jx * ib_m, 0.0)
                 qby = qby + tl.where(b == 1, jy * ib_m, 0.0)
                 qbw = qbw + tl.where(b == 1, e * crb * ib_i, 0.0)
-                _put(scratch, slot, B, lane, on, 13, impulse)
-                _put(scratch, slot, B, lane, on, 14, correction)
+                _put(scratch, slot, B, instance, on, 13, impulse)
+                _put(scratch, slot, B, instance, on, 14, correction)
         avx, avy, aw = vax, vay, vaw
         bvx, bvy, bw = vbx, vby, vbw
         pax, pay, paw, pbx, pby, pbw = qax, qay, qaw, qbx, qby, qbw
-        _keep(scratch, cached, identifiers, B, lane, mask, walls, C, CIRCLE)
+        _keep(scratch, cached, identifiers, B, instance, mask, walls, C, CIRCLE)
     tl.store(row, ax, mask=mask)
     tl.store(row + 1, ay, mask=mask)
     tl.store(row + 2, avx, mask=mask)
@@ -801,18 +812,18 @@ def advance_kernel(
     tl.store(brow + 4, pby, mask=mask)
     tl.store(brow + 5, pbw, mask=mask)
     # Render segments of the final contacts, active first.
-    _contacts(scratch, B, lane, mask, vertices, enabled, radius, ima, imb, ax, ay, aa, bx, by, ba, S, CIRCLE)
-    out = lines + lane * (90 * 8)
+    _contacts(scratch, B, instance, mask, vertices, enabled, radius, ima, imb, ax, ay, aa, bx, by, ba, S, CIRCLE)
+    out = lines + instance * (90 * 8)
     # Rows from the new count on must be zero; only rows below the old count can hold segments.
-    old_rows = tl.load(segments_out + lane, mask=mask, other=0)
+    old_rows = tl.load(segments_out + instance, mask=mask, other=0)
     for r in range(tl.max(old_rows, axis=0)):
         for f in tl.static_range(8):
             tl.store(out + r * 8 + f, tl.zeros_like(ax), mask=mask & (r < old_rows))
     rows = tl.zeros([BLOCK], dtype=tl.int64)
     for i in range(C):
-        px, py = _get(scratch, i, B, lane, mask, 0), _get(scratch, i, B, lane, mask, 1)
-        nx, ny = _get(scratch, i, B, lane, mask, 2), _get(scratch, i, B, lane, mask, 3)
-        depth = _get(scratch, i, B, lane, mask, 4)
+        px, py = _get(scratch, i, B, instance, mask, 0), _get(scratch, i, B, instance, mask, 1)
+        nx, ny = _get(scratch, i, B, instance, mask, 2), _get(scratch, i, B, instance, mask, 3)
+        depth = _get(scratch, i, B, instance, mask, 4)
         on = mask & (depth >= 0)
         at = out + rows * 8
         tl.store(at, px + nx * (depth - 2), mask=on)
@@ -824,8 +835,8 @@ def advance_kernel(
         tl.store(at + 6, tl.zeros_like(px) + 60.0, mask=on)
         tl.store(at + 7, tl.zeros_like(px) + 255.0, mask=on)
         rows += on.to(tl.int64)
-    tl.store(contacts_out + lane, total, mask=mask)
-    tl.store(segments_out + lane, rows, mask=mask)
+    tl.store(contacts_out + instance, total, mask=mask)
+    tl.store(segments_out + instance, rows, mask=mask)
 
 
 def advance(
@@ -925,23 +936,25 @@ def record_kernel(
     BLOCK: tl.constexpr,
 ):
     """After a step: append the actions to the histories, set the latest action, the observation, reward and success."""
-    lane = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-    valid = lane < B
-    on = valid & (tl.load(active + lane, mask=valid, other=0) != 0)
-    length = tl.load(lengths + lane, mask=valid, other=0)
-    at = history + (lane * capacity + length) * 2
-    tl.store(at, tl.where(on, tl.load(actions + lane * 2, mask=valid, other=0).to(tl.float64), 0.0), mask=valid)
+    instance = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    valid = instance < B
+    on = valid & (tl.load(active + instance, mask=valid, other=0) != 0)
+    length = tl.load(lengths + instance, mask=valid, other=0)
+    at = history + (instance * capacity + length) * 2
+    tl.store(at, tl.where(on, tl.load(actions + instance * 2, mask=valid, other=0).to(tl.float64), 0.0), mask=valid)
     tl.store(
-        at + 1, tl.where(on, tl.load(actions + lane * 2 + 1, mask=valid, other=0).to(tl.float64), 0.0), mask=valid
+        at + 1, tl.where(on, tl.load(actions + instance * 2 + 1, mask=valid, other=0).to(tl.float64), 0.0), mask=valid
     )
-    tl.store(codes + lane * capacity + length, tl.where(on, CODE, 0).to(tl.uint8), mask=valid)
-    tl.store(lengths + lane, length + on.to(tl.int64), mask=valid)
-    tl.store(latest_value + lane * 2, tl.load(relative + lane * 2, mask=on, other=0).to(tl.float64), mask=on)
-    tl.store(latest_value + lane * 2 + 1, tl.load(relative + lane * 2 + 1, mask=on, other=0).to(tl.float64), mask=on)
-    tl.store(latest_type + lane * 2, tl.full([BLOCK], 4, tl.uint8), mask=on)
-    tl.store(latest_type + lane * 2 + 1, tl.full([BLOCK], TAG, tl.uint8), mask=on)
-    tl.store(latest_present + lane, tl.full([BLOCK], 1, tl.int1), mask=on)
-    row = body + lane * 12
+    tl.store(codes + instance * capacity + length, tl.where(on, CODE, 0).to(tl.uint8), mask=valid)
+    tl.store(lengths + instance, length + on.to(tl.int64), mask=valid)
+    tl.store(latest_value + instance * 2, tl.load(relative + instance * 2, mask=on, other=0).to(tl.float64), mask=on)
+    tl.store(
+        latest_value + instance * 2 + 1, tl.load(relative + instance * 2 + 1, mask=on, other=0).to(tl.float64), mask=on
+    )
+    tl.store(latest_type + instance * 2, tl.full([BLOCK], 4, tl.uint8), mask=on)
+    tl.store(latest_type + instance * 2 + 1, tl.full([BLOCK], TAG, tl.uint8), mask=on)
+    tl.store(latest_present + instance, tl.full([BLOCK], 1, tl.int1), mask=on)
+    row = body + instance * 12
     two_pi = tl.full([BLOCK], 6.283185307179586, tl.float64)
     obs0 = tl.load(row, mask=valid, other=0.0)
     obs1 = tl.load(row + 1, mask=valid, other=0.0)
@@ -950,7 +963,7 @@ def record_kernel(
     obs4 = _remainder(tl.load(row + 10, mask=valid, other=0.0), two_pi)
     obs5 = tl.load(row + 2, mask=valid, other=0.0)
     obs6 = tl.load(row + 3, mask=valid, other=0.0)
-    out = observation + lane * 7
+    out = observation + instance * 7
     tl.store(out, obs0, mask=valid)
     tl.store(out + 1, obs1, mask=valid)
     tl.store(out + 2, obs2, mask=valid)
@@ -958,7 +971,7 @@ def record_kernel(
     tl.store(out + 4, obs4, mask=valid)
     tl.store(out + 5, obs5, mask=valid)
     tl.store(out + 6, obs6, mask=valid)
-    g = goal + lane * 7
+    g = goal + instance * 7
     d0 = tl.load(g, mask=valid, other=0.0) - obs0
     d1 = tl.load(g + 1, mask=valid, other=0.0) - obs1
     d2 = tl.load(g + 2, mask=valid, other=0.0) - obs2
@@ -967,11 +980,11 @@ def record_kernel(
     d5 = tl.load(g + 5, mask=valid, other=0.0) - obs5
     d6 = tl.load(g + 6, mask=valid, other=0.0) - obs6
     near = d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3
-    tl.store(reward + lane, -tl.sqrt(near + d4 * d4 + d5 * d5 + d6 * d6), mask=valid)
-    period = tl.load(symmetry + lane, mask=valid, other=1.0)
+    tl.store(reward + instance, -tl.sqrt(near + d4 * d4 + d5 * d5 + d6 * d6), mask=valid)
+    period = tl.load(symmetry + instance, mask=valid, other=1.0)
     angle = _remainder(tl.abs(d4), period)
     hit = (tl.sqrt(near) < 20) & (tl.minimum(angle, period - angle) < 0.3490658503988659)
-    tl.store(success + lane, hit, mask=valid)
+    tl.store(success + instance, hit, mask=valid)
 
 
 def record(body, actions, relative, active, lengths, history, codes, latest, observation, goal, symmetry):

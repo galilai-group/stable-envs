@@ -1,4 +1,4 @@
-"""OGBench Cube and Scene lanes stepped together in one ``mujoco.batch``, equal to OGBench bit for bit."""
+"""OGBench Cube and Scene environments stepped together in one ``mujoco.batch``, equal to OGBench bit for bit."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def live_view(schema, live, name):
 
 
 def physics_model(env):
-    """The lane's model with a sensor that makes every forward pass run ``mj_rnePostConstraint``.
+    """The environment's model with a sensor that makes every forward pass run ``mj_rnePostConstraint``.
 
     OGBench calls ``mj_rnePostConstraint`` once after the substeps of a step; its ``cfrc_ext`` is that of the last
     substep's forward pass, which the sensor computes. The sensor reads nothing that the physics reads.
@@ -85,30 +85,30 @@ def copy_model_fields(source, target):
 class _IntegrationState:
     """``mujoco.batch``'s ``state`` rows for one ``MjData``: ``mjSTATE_INTEGRATION`` read and written whole."""
 
-    def __init__(self, lane):
-        self._lane = lane
+    def __init__(self, instance):
+        self._instance = instance
 
     def __getitem__(self, row):
-        lane = self._lane
-        value = np.empty(mujoco.mj_stateSize(lane.model, _INTEGRATION))
-        mujoco.mj_getState(lane.model, lane.data, value, _INTEGRATION)
+        instance = self._instance
+        value = np.empty(mujoco.mj_stateSize(instance.model, _INTEGRATION))
+        mujoco.mj_getState(instance.model, instance.data, value, _INTEGRATION)
         return value if isinstance(row, int | np.integer) else value[None][row]
 
     def __setitem__(self, row, value):
-        lane = self._lane
-        value = np.asarray(value, np.float64).reshape(-1, mujoco.mj_stateSize(lane.model, _INTEGRATION))
-        mujoco.mj_setState(lane.model, lane.data, value[-1], _INTEGRATION)
-        lane._time[0] = lane.data.time
+        instance = self._instance
+        value = np.asarray(value, np.float64).reshape(-1, mujoco.mj_stateSize(instance.model, _INTEGRATION))
+        mujoco.mj_setState(instance.model, instance.data, value[-1], _INTEGRATION)
+        instance._time[0] = instance.data.time
 
 
-class OneLane:
-    """One lane on one ``MjData``, with the ``NativeBatch`` calls that the Cube/Scene batch makes.
+class OneInstance:
+    """One environment on one ``MjData``, with the ``NativeBatch`` calls that the Cube/Scene batch makes.
 
     A step is OGBench's own: ``mj_step`` for ``frame_skip`` substeps, then one ``mj_rnePostConstraint``. A batch
     reads the contact forces through a sensor that runs ``mj_rnePostConstraint`` in every substep instead.
 
     Args:
-        model: The lane's model. The Variation writes its per-lane fields into it.
+        model: The environment's model. The Variation writes its per-environment fields into it.
         frame_skip: Substeps per step.
     """
 
@@ -141,16 +141,16 @@ class OneLane:
         self.data = None
 
 
-#: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_lanes`` knob is set. A
-#: reset of one lane runs milliseconds of OGBench's Python, many times the round trip to a worker, so two lanes that
+#: Smallest batch whose OGBench objects live in worker processes, unless the ``worker_min_envs`` setting is set. A
+#: reset of one environment runs milliseconds of OGBench's Python, many times the round trip to a worker, so two environments that
 #: reset in parallel take less time than one process that resets them in turn.
-WORKER_MIN_LANES = 2
+WORKER_MIN_ENVS = 2
 
 
-def make_lanes(family, num_envs, seed, reward_task_id):
-    """The OGBench objects that reset, restore and vary the lanes: in worker processes from two lanes."""
+def make_instances(family, num_envs, seed, reward_task_id):
+    """The OGBench objects that reset, restore and vary the environments: in worker processes from two environments."""
     cpus = cpu_affinity()
-    count = process_count(num_envs, cpus, path="ogb-sim", min_lanes=WORKER_MIN_LANES)
+    count = process_count(num_envs, cpus, path="ogb-sim", min_envs=WORKER_MIN_ENVS)
     if count:
         from .manipulation_process import OGBManipulationProcessAdapter
 
@@ -167,8 +167,8 @@ def metadata_env(family):
     return env
 
 
-class LaneModels:
-    """The model fields that differ between lanes, from State: compiled Variation values, Scene locks and targets.
+class InstanceModels:
+    """The model fields that differ between environments, from State: compiled Variation values, Scene locks and targets.
 
     The methods read ``{group key: (B, size) array}`` host groups of the State.
     """
@@ -185,7 +185,7 @@ class LaneModels:
         return {name: self.schema.get(columns, field("model", "compiled", name)) for name in MODEL_VALUES}
 
     def variants(self, columns):
-        """``{key: (compiled values, lane ids)}`` of the lanes whose compiled arrays differ from the model's."""
+        """``{key: (compiled values, environment ids)}`` of the environments whose compiled arrays differ from the model's."""
         compiled = self._compiled(columns)
         groups = {}
         for i in range(len(compiled[MODEL_VALUES[0]])):
@@ -196,18 +196,18 @@ class LaneModels:
         return groups
 
     def fields(self, columns):
-        """``{name: (B, ...) values}`` of the per-lane model fields among ``names``."""
+        """``{name: (B, ...) values}`` of the per-environment model fields among ``names``."""
         at = self.schema.get
         n = len(at(columns, field("model", "compiled", MODEL_VALUES[0])))
         out = {}
-        for values, lanes in self.variants(columns).values():
+        for values, instances in self.variants(columns).values():
             fields, _ = compiled_fields(self.family, values)
             for name, value in fields.items():
                 if name not in self.names:
                     continue
                 if name not in out:
                     out[name] = np.repeat(getattr(self.model, name)[None], n, axis=0)
-                out[name][lanes] = value
+                out[name][instances] = value
         if self.family == "Scene":
             damping = np.repeat(self.model.dof_damping[None], n, axis=0)
             damping[:, self._lock_dofs] = np.where(at(columns, "scene/cur_button_states") == 0, 1e6, 2.0)
@@ -220,7 +220,7 @@ class LaneModels:
 
 
 class OGBManipulationBatchAdapter:
-    """Cube/Scene lanes stepped in one ``mujoco.batch``; OGBench objects reset, restore and vary them.
+    """Cube/Scene environments stepped in one ``mujoco.batch``; OGBench objects reset, restore and vary them.
 
     The step repeats ``ManipSpaceEnv.step``: the controller, ``mj_step`` substeps, ``mj_rnePostConstraint`` and
     the family's ``post_step``. The OGBench objects (in worker processes for large batches) hand over full State
@@ -229,7 +229,7 @@ class OGBManipulationBatchAdapter:
 
     execution_mode = "DELEGATED_CPU"
 
-    def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None, *, threads=None, lanes=None):
+    def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None, *, threads=None, instances=None):
         if family not in ("Cube", "Scene") or type(num_envs) is not int or num_envs < 1:
             raise ValueError("Cube/Scene require a positive integer batch")
         self.family, self.num_envs, self.device = family, num_envs, torch.device(device)
@@ -237,14 +237,14 @@ class OGBManipulationBatchAdapter:
         self._closed = False
         self.physics = self._control = None
         # Workers spawn before the batch threads start.
-        self.lanes = make_lanes(family, num_envs, seed, reward_task_id) if lanes is None else lanes
+        self.instances = make_instances(family, num_envs, seed, reward_task_id) if instances is None else instances
         try:
             self._meta = env = metadata_env(family)
             threads = native_threads(num_envs) if threads is None else max(1, min(int(threads), num_envs))
             if num_envs == 1:
-                # The lane's model keeps the Variation's fields; _base keeps the defaults.
+                # The environment's model keeps the Variation's fields; _base keeps the defaults.
                 self._base = copy.copy(env.model)
-                self.physics = OneLane(copy.copy(env.model), int(env._n_steps))
+                self.physics = OneInstance(copy.copy(env.model), int(env._n_steps))
             else:
                 self._base = physics_model(env)
                 self.physics = NativeBatch(
@@ -259,7 +259,7 @@ class OGBManipulationBatchAdapter:
             self.close()
             raise
         self.b = self.physics.b
-        self.fields, self.nq = self.lanes.fields, self.lanes.nq
+        self.fields, self.nq = self.instances.fields, self.instances.nq
         self.schema = schema = state_schema(family, self.fields)
         #: Physics fields in State order, which is ``mjSTATE_INTEGRATION`` order, and their batch views.
         self._physics = tuple(name for name in self.fields if name.startswith("physics/"))
@@ -274,7 +274,9 @@ class OGBManipulationBatchAdapter:
         self._cut_views()
         self._layout = state_layout(schema, num_envs)
         self._all = np.arange(num_envs)
-        self._models = LaneModels(env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"}, schema)
+        self._models = InstanceModels(
+            env, set(_model_fields()) & {*COMPILED_FIELDS, "dof_damping", "site_pos"}, schema
+        )
         self._expanded = {}
         p = self.physics
         self._qpos, self._qvel, self._ctrl = p.numpy("qpos"), p.numpy("qvel"), p.numpy("ctrl")
@@ -299,14 +301,14 @@ class OGBManipulationBatchAdapter:
                 [int(env.model.joint(name).dofadr[0]) for name in ("drawer_slide", "window_slide")]
             )
             self._num_button_states = int(env._num_button_states)
-        # Lanes whose environment generator a cube repair advanced; the OGBench objects take it before a reset.
+        # Environments whose environment generator a cube repair advanced; the OGBench objects take it before a reset.
         self._dirty = self._stale = False
-        self._load(self._lane_state())
+        self._load(self._instance_state())
 
     @property
     def envs(self):
         """The in-process OGBench objects, holding the batch's State, or the metadata object when workers own them."""
-        envs = getattr(self.lanes, "envs", None)
+        envs = getattr(self.instances, "envs", None)
         if envs is None:
             return [self._meta]
         if self._stale:
@@ -327,7 +329,7 @@ class OGBManipulationBatchAdapter:
             self._drawer_goal, self._window_goal = view("scene/target_drawer_pos"), view("scene/target_window_pos")
 
     def _sync_envs(self, envs):
-        """Write the batch's lanes into their OGBench objects, as ``OGBManipulationAdapter`` restores them."""
+        """Write the batch's environments into their OGBench objects, as ``OGBManipulationAdapter`` restores them."""
         spec = mujoco.mjtState.mjSTATE_INTEGRATION
         pad = "ur5e/robotiq/right_pad"
         for i, env in enumerate(envs):
@@ -352,13 +354,13 @@ class OGBManipulationBatchAdapter:
         if self._closed:
             raise RuntimeError("OGBManipulationBatchAdapter is closed")
 
-    # Loading lanes from State.
+    # Loading environments from State.
 
-    def _lane_state(self):
+    def _instance_state(self):
         """The State of the OGBench objects: their columns in process, else a CPU State."""
-        if isinstance(self.lanes, OGBManipulationAdapter):
-            return self.lanes.columns()
-        return self.lanes.get_state()
+        if isinstance(self.instances, OGBManipulationAdapter):
+            return self.instances.columns()
+        return self.instances.get_state()
 
     def _load(self, state):
         """Write full CPU State, or its ``{group key: array}`` columns, into the batch and the live groups."""
@@ -411,42 +413,42 @@ class OGBManipulationBatchAdapter:
         return {name: self.schema.get(values, name).copy() for name in projected_keys(self.family)}
 
     def validate(self, state, **kwargs):
-        return self.lanes.validate(state)
+        return self.instances.validate(state)
 
     def set_state(self, state):
         self._check_open()
-        self.lanes.set_state(state)
+        self.instances.set_state(state)
         self._dirty = False
-        self._load(self._lane_state())
+        self._load(self._instance_state())
 
     def make_variation_space(self):
-        return self.lanes.make_variation_space()
+        return self.instances.make_variation_space()
 
     def variation_values(self, layout, *, anchor=False):
-        return self.lanes.variation_values(layout, anchor=anchor).to(self.device)
+        return self.instances.variation_values(layout, anchor=anchor).to(self.device)
 
     # Lifecycle.
 
     def _push(self):
         """Give the OGBench objects the State that the batch advanced, when a cube repair drew from a generator."""
         if self._dirty:
-            self.lanes.set_state(self.get_state().cpu())
+            self.instances.set_state(self.get_state().cpu())
             self._dirty = False
 
     def reset(self, seed=None, options=None):
         self._check_open()
         self._push()
-        if isinstance(self.lanes, OGBManipulationAdapter):
-            self._load(self.lanes.reset_columns(seed, options))
+        if isinstance(self.instances, OGBManipulationAdapter):
+            self._load(self.instances.reset_columns(seed, options))
         else:
-            self._load(self.lanes.reset(seed, options).cpu())
+            self._load(self.instances.reset(seed, options).cpu())
         return self.get_state()
 
     def configure(self, values):
         self._check_open()
         self._push()
-        self.lanes.configure(values)
-        current = groups_of(self.schema, self.lanes.get_state())
+        self.instances.configure(values)
+        current = groups_of(self.schema, self.instances.get_state())
         for key, value in self._live.items():
             if key.split("/")[0] in ("variation", "model"):
                 value[...] = current[key]
@@ -456,7 +458,7 @@ class OGBManipulationBatchAdapter:
         if self._closed:
             return
         self._closed = True
-        for part in (self.physics, self._control, getattr(self, "lanes", None), getattr(self, "_meta", None)):
+        for part in (self.physics, self._control, getattr(self, "instances", None), getattr(self, "_meta", None)):
             if part is not None:
                 part.close()
         self.physics = self.b = self._control = None
@@ -496,7 +498,7 @@ class OGBManipulationBatchAdapter:
         return build_tensordict(result, [self.num_envs], _CPU)
 
     def step_leaves(self, actions, *, state=True):
-        """Advance every lane one step; the State and the outputs as host arrays by key path, for one device copy.
+        """Advance every environment one step; the State and the outputs as host arrays by key path, for one device copy.
 
         With ``state`` False, the State is left out. The arrays may be live buffers: the caller copies them before
         the next call.
@@ -511,7 +513,7 @@ class OGBManipulationBatchAdapter:
         return {**outputs, **self._layout.host_leaves(self._state_values(), ("state",))}
 
     def _advance(self, actions, ids):
-        # Every lane steps in most calls; a slice selects them without index copies.
+        # Every environment steps in most calls; a slice selects them without index copies.
         rows = slice(None) if ids is self._all else ids
         site_xpos, site_xmat = self._site_xpos, self._site_xmat
         # The pinch site is the first cached site row.
@@ -566,7 +568,7 @@ class OGBManipulationBatchAdapter:
         self.physics.forward(None if ids is self._all else ids)
 
     def _repair(self, ids):
-        """OGBench's reset of a cube that left the workspace, drawing from the lane's environment generator."""
+        """OGBench's reset of a cube that left the workspace, drawing from the environment's environment generator."""
         rng = np.random.Generator(np.random.PCG64())
         for i in ids:
             print("Numerical instability detected. Resetting cube positions.", flush=True)

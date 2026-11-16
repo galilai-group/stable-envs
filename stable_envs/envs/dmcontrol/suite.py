@@ -189,7 +189,7 @@ class DMControlSuite(_DMCModel):
             rgba = np.r_[self._var(variation, f"{group}.color"), 1.0]
             for name in geoms:
                 m.geom_rgba[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, name)] = rgba
-        for gname, alts in self.SHAPE_KNOBS.items():
+        for gname, alts in self.SHAPE_CHOICES.items():
             kind, gid = self._shape_element(gname)
             k = int(round(float(self._var(variation, f"{gname}.shape")[0])))
             if not 0 <= k < len(alts):
@@ -680,8 +680,8 @@ class DMControlSuite(_DMCModel):
 
         frame_rows, groups = self._plan(sty, B, size)
         # Rays per chunk, counting supersamples; smaller CPU chunks stay cache-resident.
-        knob = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
-        budget = tuning.get(knob, path="dmc-suite", size=size, batch=B, device=self.device)
+        setting = "dmc_cpu_ray_budget" if self.device.type == "cpu" else "dmc_ray_budget"
+        budget = tuning.get(setting, path="dmc-suite", size=size, batch=B, device=self.device)
         step = max(1, int(budget // max(1, size * size * ss * ss)))
         graph_rows = 0
         if self.device.type == "cuda" and self.CUDA_GRAPHS:

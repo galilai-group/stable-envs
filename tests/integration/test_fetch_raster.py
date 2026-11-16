@@ -48,8 +48,10 @@ def test_numba_supersample_and_resize(software_gl: None) -> None:
             assert ((actual - expected) ** 2).mean() < (2.0 if size > 8 else 40.0)
         rows = env._pack_render_state(state)
         together = env._render(rows, backend="numba")
-        for lane in range(2):
-            torch.testing.assert_close(env._render(rows[lane : lane + 1], backend="numba"), together[lane : lane + 1])
+        for instance in range(2):
+            torch.testing.assert_close(
+                env._render(rows[instance : instance + 1], backend="numba"), together[instance : instance + 1]
+            )
         out = torch.empty((2, 64, 64, 3), dtype=torch.uint8)
         returned = env.render(state, size=64, out=out)
         assert returned.data_ptr() == out.data_ptr()

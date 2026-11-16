@@ -3,7 +3,7 @@
 A family declares, per device type, the backend it uses for small batches and the one it uses for large batches.
 With ``simulation_backend="auto"``, a batch of ``large_backend_min_envs`` or more rows uses the large-batch backend.
 Renderers switch the same way at ``large_renderer_min_rows`` rows (see ``select_renderer``). The switch point comes
-from the knob, else from the tuning cache that ``stable-envs tune`` writes, else from the value the family ships in
+from the setting, else from the tuning cache that ``stable-envs tune`` writes, else from the value the family ships in
 its declaration. Nothing is timed when an environment is built or draws, so without tuning the same batch size
 selects the same backend on every machine.
 """
@@ -20,10 +20,10 @@ from .. import tuning
 from .._core.config import log
 from .._core.stepping import _threads
 
-#: The knob that holds the switch point.
-KNOB = "large_backend_min_envs"
-#: The knob that holds the switch point of renderers.
-RENDER_KNOB = "large_renderer_min_rows"
+#: The setting that holds the switch point.
+BACKEND_SETTING = "large_backend_min_envs"
+#: The setting that holds the switch point of renderers.
+RENDERER_SETTING = "large_renderer_min_rows"
 #: Request that selects a backend from the device and the batch size.
 AUTO = "auto"
 
@@ -98,7 +98,7 @@ def measure_adapter(make: Callable[[str, int], object], actions: Callable[[int],
     return measure
 
 
-def _cached_neighbours(path: str, device, num_envs: int, knob: str = KNOB) -> str | None:
+def _cached_neighbours(path: str, device, num_envs: int, setting: str = BACKEND_SETTING) -> str | None:
     """Return ``"large"`` or ``"small"`` when a cached range of ``path`` decides ``num_envs``.
 
     The small-batch backend steps rows with a cost that grows with the batch, and the large-batch backend has a
@@ -109,12 +109,12 @@ def _cached_neighbours(path: str, device, num_envs: int, knob: str = KNOB) -> st
     if not current:
         return None
     lo, _ = tuning.batch_range(num_envs)
-    for key, knobs in data.get("entries", {}).items():
+    for key, settings in data.get("entries", {}).items():
         parts = key.split("|")
-        if len(parts) != 3 or parts[0] != path or knob not in knobs:
+        if len(parts) != 3 or parts[0] != path or setting not in settings:
             continue
         a, b = (int(x) for x in parts[2].split("-"))
-        large = knobs[knob] <= a
+        large = settings[setting] <= a
         if large and b < lo:
             return "large"
         if not large and a > num_envs:
@@ -151,67 +151,69 @@ def _calibrate(path: str, num_envs: int, device: torch.device, small: str, large
     return wins
 
 
-class Rungs(NamedTuple):
+class BackendPair(NamedTuple):
     """The backends of one device type and the shipped switch point between them."""
 
     small: str
     large: str
-    #: Smallest batch that uses ``large`` when neither the knob nor the tuning cache sets the switch point. The
+    #: Smallest batch that uses ``large`` when neither the setting nor the tuning cache sets the switch point. The
     #: family records next to the value how it was measured. None uses ``large`` at every batch size.
     min_envs: int | None = None
 
 
-#: ``(knob, path, device type) -> (rungs, measure)`` of the simulation and render paths that this process selected
+#: ``(setting, path, device type) -> (pair, measure)`` of the simulation and render paths that this process selected
 #: for; ``stable-envs tune`` calibrates them.
-_REGISTERED: dict[tuple[str, str, str], tuple[Rungs, Measure]] = {}
+_REGISTERED: dict[tuple[str, str, str], tuple[BackendPair, Measure]] = {}
 
 
-def _rungs(backends: Mapping[str, Rungs], device: torch.device) -> Rungs:
-    return Rungs(*backends.get(device.type, backends["cpu"]))
+def _pair_of(backends: Mapping[str, BackendPair], device: torch.device) -> BackendPair:
+    return BackendPair(*backends.get(device.type, backends["cpu"]))
 
 
-#: ``(knob, path, device, rows, rungs) -> (tuning state, rung)``: a choice holds while the knob's sources don't change.
+#: ``(setting, path, device, rows, pair) -> (tuning state, backend)``: a choice holds while the setting's sources don't change.
 _PICKS: dict[tuple, tuple[tuple, str]] = {}
 
 
 def _pick(
-    knob: str,
+    setting: str,
     path: str,
     num_envs: int,
     device: torch.device,
-    rungs: Rungs,
+    pair: BackendPair,
     measure: Measure | None,
-    use_knob: bool = True,
+    use_setting: bool = True,
 ) -> str:
-    """The rung of ``num_envs`` rows: from the knob, else the tuning cache, else the shipped switch point. With
-    ``use_knob`` False, the knob is not read; the tuning cache entry of ``path`` and the switch point still apply."""
+    """The backend of ``num_envs`` rows: from the setting, else the tuning cache, else the shipped switch point. With
+    ``use_setting`` False, the setting is not read; the tuning cache entry of ``path`` and the switch point still apply."""
     if measure is not None:
-        _REGISTERED[knob, path, device.type] = (rungs, measure)
-    if rungs.small == rungs.large:
-        return rungs.small
-    key = (knob, path, str(device), num_envs, rungs, use_knob)
-    state = tuning.sources_state(knob, device)
+        _REGISTERED[setting, path, device.type] = (pair, measure)
+    if pair.small == pair.large:
+        return pair.small
+    key = (setting, path, str(device), num_envs, pair, use_setting)
+    state = tuning.sources_state(setting, device)
     hit = _PICKS.get(key)
     if hit is not None and hit[0] == state:
         return hit[1]
-    rung = _choose(knob, path, num_envs, device, rungs, use_knob)
-    _PICKS[key] = (state, rung)
-    return rung
+    backend = _choose(setting, path, num_envs, device, pair, use_setting)
+    _PICKS[key] = (state, backend)
+    return backend
 
 
-def _choose(knob: str, path: str, num_envs: int, device: torch.device, rungs: Rungs, use_knob: bool = True) -> str:
-    if use_knob:
-        value = tuning.get(knob, path=path, size=0, batch=num_envs, device=device)
+def _choose(
+    setting: str, path: str, num_envs: int, device: torch.device, pair: BackendPair, use_setting: bool = True
+) -> str:
+    if use_setting:
+        value = tuning.get(setting, path=path, size=0, batch=num_envs, device=device)
     else:
         data, current = tuning.read_cache(device)
         entry = data.get("entries", {}).get(tuning.entry_key(path, 0, num_envs), {}) if current else {}
-        value = entry.get(knob)
+        value = entry.get(setting)
     if value is not None:
-        return rungs.large if num_envs >= value else rungs.small
-    side = _cached_neighbours(path, device, num_envs, knob)
+        return pair.large if num_envs >= value else pair.small
+    side = _cached_neighbours(path, device, num_envs, setting)
     if side is not None:
-        return rungs.large if side == "large" else rungs.small
-    return rungs.large if rungs.min_envs is None or num_envs >= rungs.min_envs else rungs.small
+        return pair.large if side == "large" else pair.small
+    return pair.large if pair.min_envs is None or num_envs >= pair.min_envs else pair.small
 
 
 def select_backend(
@@ -219,24 +221,24 @@ def select_backend(
     num_envs: int,
     device: str | torch.device,
     requested: str | None,
-    backends: Mapping[str, Rungs],
+    backends: Mapping[str, BackendPair],
     *,
     choices: Sequence[str],
     measure: Measure | None = None,
-    knob: bool = True,
+    use_setting: bool = True,
 ) -> str:
-    """Return the simulation backend of a batch. It reads the knob and the tuning cache, and times nothing.
+    """Return the simulation backend of a batch. It reads the setting and the tuning cache, and times nothing.
 
     Args:
         path: Simulation path of the family and task, for example ``"dmc-sim/reacher"``. It keys the cache.
         num_envs: Number of rows in the batch.
         device: Device of the outputs.
         requested: ``"auto"`` (or None) to select from ``backends``, else one of ``choices``.
-        backends: ``{device type: Rungs}``. A device type that isn't a key uses the ``"cpu"`` entry. This is the
+        backends: ``{device type: BackendPair}``. A device type that isn't a key uses the ``"cpu"`` entry. This is the
             family's one declaration of its backends and shipped switch points.
         choices: Backends that ``requested`` may name.
         measure: Builds and steps one backend; ``stable-envs tune`` uses it to calibrate ``path``.
-        knob: False ignores the ``large_backend_min_envs`` knob for this path, for a split that the knob doesn't
+        use_setting: False ignores the ``large_backend_min_envs`` setting for this path, for a split that the setting doesn't
             describe. The tuning cache and the shipped switch point still apply.
 
     Raises:
@@ -250,42 +252,42 @@ def select_backend(
             raise ValueError(f"simulation_backend must be one of {names}; got {requested!r}")
         return requested
     device = torch.device(device)
-    return _pick(KNOB, path, num_envs, device, _rungs(backends, device), measure, use_knob=knob)
+    return _pick(BACKEND_SETTING, path, num_envs, device, _pair_of(backends, device), measure, use_setting=use_setting)
 
 
 def select_renderer(
     path: str,
     rows: int,
     device: str | torch.device,
-    renderers: Mapping[str, Rungs],
+    renderers: Mapping[str, BackendPair],
     *,
     measure: Measure | None = None,
 ) -> str:
-    """Return the renderer of a batch of ``rows`` frames. It reads the knob and the tuning cache, and times nothing.
+    """Return the renderer of a batch of ``rows`` frames. It reads the setting and the tuning cache, and times nothing.
 
-    The rule is that of ``select_backend``, with the ``large_renderer_min_rows`` knob.
+    The rule is that of ``select_backend``, with the ``large_renderer_min_rows`` setting.
 
     Args:
         path: Render path of the class, for example ``"navigation/TwoRoom"``. It keys the cache.
         rows: Number of frames in the call.
         device: Device of the frames.
-        renderers: ``{device type: Rungs}``. A device type that isn't a key uses the ``"cpu"`` entry.
+        renderers: ``{device type: BackendPair}``. A device type that isn't a key uses the ``"cpu"`` entry.
         measure: Builds and draws with one renderer; ``stable-envs tune`` uses it to calibrate ``path``.
     """
     device = torch.device(device)
-    return _pick(RENDER_KNOB, path, rows, device, _rungs(renderers, device), measure)
+    return _pick(RENDERER_SETTING, path, rows, device, _pair_of(renderers, device), measure)
 
 
 def registered(
-    device: str | torch.device, prefixes: Sequence[str] = (), paths: Sequence[str] = (), knob: str = KNOB
-) -> list[tuple[str, Rungs, Measure]]:
-    """``(path, rungs, measure)`` of the paths selected for with ``knob`` on the type of ``device``; with ``paths``,
+    device: str | torch.device, prefixes: Sequence[str] = (), paths: Sequence[str] = (), setting: str = BACKEND_SETTING
+) -> list[tuple[str, BackendPair, Measure]]:
+    """``(path, pair, measure)`` of the paths selected for with ``setting`` on the type of ``device``; with ``paths``,
     only those paths; with ``prefixes``, only the paths whose first part is one of them."""
     kind = torch.device(device).type
     return [
-        (path, rungs, measure)
-        for (name, path, where), (rungs, measure) in _REGISTERED.items()
-        if name == knob
+        (path, pair, measure)
+        for (name, path, where), (pair, measure) in _REGISTERED.items()
+        if name == setting
         and where == kind
         and (not paths or path in paths)
         and (not prefixes or path.split("/")[0] in prefixes)
@@ -299,22 +301,22 @@ def calibrate(
     prefixes: Sequence[str] = (),
     paths: Sequence[str] = (),
     write: bool = True,
-    knob: str = KNOB,
+    setting: str = BACKEND_SETTING,
 ) -> dict[str, str]:
-    """Time both backends of the paths registered with ``knob`` on ``device`` (see ``registered``) at ``num_envs``
+    """Time both backends of the paths registered with ``setting`` on ``device`` (see ``registered``) at ``num_envs``
     rows.
 
-    ``stable-envs tune`` calls it for the environment it tunes, once per knob. Each choice goes to the tuning cache of
+    ``stable-envs tune`` calls it for the environment it tunes, once per setting. Each choice goes to the tuning cache of
     the device unless ``write`` is False. Returns ``{path: chosen backend}``.
     """
     device = torch.device(device)
     chosen = {}
-    for path, rungs, measure in registered(device, prefixes, paths, knob):
-        if rungs.small == rungs.large:
+    for path, pair, measure in registered(device, prefixes, paths, setting):
+        if pair.small == pair.large:
             continue
-        wins = _calibrate(path, num_envs, device, rungs.small, rungs.large, measure)
-        chosen[path] = rungs.large if wins else rungs.small
+        wins = _calibrate(path, num_envs, device, pair.small, pair.large, measure)
+        chosen[path] = pair.large if wins else pair.small
         if write:
             lo, hi = tuning.batch_range(num_envs)
-            tuning.write_cache({tuning.entry_key(path, 0, num_envs): {knob: lo if wins else hi + 1}}, device)
+            tuning.write_cache({tuning.entry_key(path, 0, num_envs): {setting: lo if wins else hi + 1}}, device)
     return chosen

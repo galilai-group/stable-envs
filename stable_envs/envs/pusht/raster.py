@@ -160,14 +160,15 @@ def _template(key):
     return Template(values)
 
 
-def template_key(fields, lane):
-    """Return the anchor shape and scale values of row ``lane`` with their Python types."""
+def template_key(fields, instance):
+    """Return the anchor shape and scale values of row ``instance`` with their Python types."""
     key = []
     for body in ("agent", "block"):
         for leaf in ("shape", "scale"):
             base = f"anchor/variation/{body}/{leaf}/current"
             value = get_value(
-                {base + "/value": fields[base + "/value"][lane], base + "/type": fields[base + "/type"][lane]}, base
+                {base + "/value": fields[base + "/value"][instance], base + "/type": fields[base + "/type"][instance]},
+                base,
             )
             # Equal values of different types (Python float, NumPy float32) give different vertices.
             if isinstance(value, np.ndarray):
@@ -270,9 +271,9 @@ def primitives(fields):
     # Rows with equal anchor shape and scale fields (values and type tags) share a template.
     first, inverse = _unique_rows(_shape_bytes(fields, count))
     layouts = {}
-    for index, lane0 in enumerate(first.tolist()):
+    for index, instance0 in enumerate(first.tolist()):
         try:
-            layouts[index] = _layout(_template(template_key(fields, lane0)))
+            layouts[index] = _layout(_template(template_key(fields, instance0)))
         except NotImplementedError:
             fallback[inverse == index] = True
     records = np.empty((count, max([1] + [layout.slots for layout in layouts.values()]), RECORD), np.int32)
@@ -280,12 +281,12 @@ def primitives(fields):
     counts = np.zeros(count, np.int64)
     pose, color, light, goal, _ = _scene(fields, count)
     for index, layout in layouts.items():
-        lanes = np.flatnonzero(inverse == index)
+        instances = np.flatnonzero(inverse == index)
         cpu.build(
-            lanes, pose, color, light, goal, layout.shapes, layout.owners, layout.starts,
+            instances, pose, color, light, goal, layout.shapes, layout.owners, layout.starts,
             layout.discs, layout.walls, layout.wall_slots.reshape(-1), records,
         )  # fmt: skip
-        counts[lanes] = layout.slots
+        counts[instances] = layout.slots
     return records, counts, fallback
 
 
@@ -1207,12 +1208,12 @@ def _cpu_layouts(fields, count):
         first, inverse = _unique_rows(raw)
         first = first.tolist()
     groups, unsupported = [], np.zeros(count, np.bool_)
-    for index, lane in enumerate(first):
+    for index, instance in enumerate(first):
         rows = np.arange(count) if inverse is None else np.flatnonzero(inverse == index)
-        name = raw[lane].tobytes()
+        name = raw[instance].tobytes()
         entry = _CPU_LAYOUTS.get(name)
         if entry is None:
-            key = template_key(fields, lane)
+            key = template_key(fields, instance)
             try:
                 entry = (key, _layout(_template(key)))
             except NotImplementedError:
@@ -1303,11 +1304,11 @@ def _markers(fields, frames, rows, size):
     """Draw the source's action marker, ``cv2.drawMarker`` on the resized frame, on ``frames[rows]``."""
     import cv2
 
-    for lane in rows.tolist():
-        row = {key: fields[key][lane] for key in ("current/latest/value", "current/latest/type")}
+    for instance in rows.tolist():
+        row = {key: fields[key][instance] for key in ("current/latest/value", "current/latest/type")}
         coord = (np.array(get_value(row, "current/latest")) / 512 * 96).astype(np.int32)
-        frames[lane] = cv2.drawMarker(
-            frames[lane], coord, color=(255, 0, 0), markerType=cv2.MARKER_CROSS,
+        frames[instance] = cv2.drawMarker(
+            frames[instance], coord, color=(255, 0, 0), markerType=cv2.MARKER_CROSS,
             markerSize=int(8 / 96 * size), thickness=int(1 / 96 * size),
         )  # fmt: skip
 
@@ -1352,8 +1353,8 @@ def render_cpu(fields, size, fallback, out=None):
         present = np.asarray(fields["current/latest_present"]).reshape(count, -1)[:, 0] != 0
         _markers(fields, frames, np.flatnonzero((config[:, 2] != 0) & present & ~unsupported), size)
     if unsupported.any():
-        lanes = np.flatnonzero(unsupported)
-        frames[lanes] = np.asarray(fallback({key: value[lanes] for key, value in fields.items()}))
+        instances = np.flatnonzero(unsupported)
+        frames[instances] = np.asarray(fallback({key: value[instances] for key, value in fields.items()}))
     return out
 
 
@@ -1371,9 +1372,9 @@ def render(fields, size, device, fallback, chunk=1024):
         background = pack(rows["owned/variation/background/color/current/value"].astype(np.int64))
         frames = draw_cuda(records, counts, background, contact_writes(rows), size, device)
         if unsupported.any():
-            lanes = np.flatnonzero(unsupported)
-            drawn = fallback({key: value[lanes] for key, value in rows.items()})
-            frames[torch.as_tensor(lanes, device=device)] = torch.as_tensor(drawn, device=device)
+            instances = np.flatnonzero(unsupported)
+            drawn = fallback({key: value[instances] for key, value in rows.items()})
+            frames[torch.as_tensor(instances, device=device)] = torch.as_tensor(drawn, device=device)
         parts.append(frames)
     if len(parts) == 1:
         return parts[0]

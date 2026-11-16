@@ -1,4 +1,4 @@
-"""Classic-control Acrobot lanes in worker processes."""
+"""Classic-control Acrobot environments in worker processes."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from ...._execution.process import ProcessAdapter
 from .local import ClassicControlAdapter, validate_classic_state
 
 
-def _lanes(domain, count, seed):
+def _instances(domain, count, seed):
     adapter = ClassicControlAdapter(domain, count)
     try:
         adapter.reset(seed)
@@ -30,7 +30,7 @@ class AcrobotProcessAdapter(ProcessAdapter):
             raise ValueError("AcrobotProcessAdapter is bounded to Acrobot")
         seed = int(seed)
         np.random.SeedSequence(seed)  # rejects invalid seeds before workers spawn
-        super().__init__(partial(_lanes, domain), num_envs, device, seed, processes=processes, cpus=cpus)
+        super().__init__(partial(_instances, domain), num_envs, device, seed, processes=processes, cpus=cpus)
 
     def validate(self, state):
         validate_classic_state(self.domain, state, batch=self.num_envs)
@@ -46,5 +46,5 @@ class AcrobotProcessAdapter(ProcessAdapter):
         self._check_idle()
         columns = {key: np.asarray(value) for key, value in values.items()}
         if any(value.shape != (self.num_envs,) for value in columns.values()):
-            raise ValueError("Physical parameters must have one scalar per lane")
+            raise ValueError("Physical parameters must have one scalar per environment")
         self.call("configure", columns)

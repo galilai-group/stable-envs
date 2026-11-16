@@ -48,7 +48,7 @@ Howling Moon Software"). The license text is distributed in `licenses/Munk2D-MIT
 The `craftax` family (`stable_envs/envs/craftax/`) runs
 [Craftax](https://github.com/MichaelTMatthews/Craftax), which is MIT-licensed ("Copyright (c) 2024
 Michael Matthews"), as an external dependency. Its simulator, renderer and textures are not copied
-here; frames are the pixel observations Craftax computes. The per-lane key handling and the uint8
+here; frames are the pixel observations Craftax computes. The per-environment key handling and the uint8
 frame scaling follow stable-worldmodel's `stable_worldmodel/envs/craftax/craftax.py` at commit
 `21446f1ede6d5284e981bd7b47f432b994e6d812` (MIT).
 

@@ -1,4 +1,4 @@
-"""Pooled native resets preserve independent lane state and physics variation."""
+"""Pooled native resets preserve independent environment state and physics variation."""
 
 from contextlib import closing
 
@@ -21,18 +21,18 @@ def pool(key):
 
 
 def assert_models_equal(pooled, native):
-    for lane, env in enumerate(native.envs):
+    for instance, env in enumerate(native.envs):
         model = env.physics.model.ptr
         for name, column in pooled.models.columns.items():
-            np.testing.assert_array_equal(column[lane], getattr(model, name), err_msg=name)
+            np.testing.assert_array_equal(column[instance], getattr(model, name), err_msg=name)
         for name, column in pooled.models.options.items():
-            np.testing.assert_array_equal(column[lane], getattr(model.opt, name), err_msg=name)
+            np.testing.assert_array_equal(column[instance], getattr(model.opt, name), err_msg=name)
         for name, column in pooled.models.statistics.items():
-            np.testing.assert_array_equal(column[lane], getattr(model.stat, name), err_msg=name)
+            np.testing.assert_array_equal(column[instance], getattr(model.stat, name), err_msg=name)
         ids = pooled.models.fixed_indices
-        np.testing.assert_array_equal(pooled.models.fixed_positions[lane], env.physics.data.geom_xpos[ids])
+        np.testing.assert_array_equal(pooled.models.fixed_positions[instance], env.physics.data.geom_xpos[ids])
         np.testing.assert_array_equal(
-            pooled.models.fixed_rotations[lane], env.physics.data.geom_xmat[ids].reshape(-1, 3, 3)
+            pooled.models.fixed_rotations[instance], env.physics.data.geom_xmat[ids].reshape(-1, 3, 3)
         )
 
 
@@ -53,10 +53,10 @@ def test_pool_matches_initial_seeded_unseeded_and_subset_resets(key):
         native.set_state(saved)
         assert_same_state(pooled.get_state(), native.get_state())
         held = pooled.get_state()
-        # Deliberately visit lanes out of order, leaving the middle lane alone.
-        pooled.commit(pooled.prepare_reset(lanes=[2, 0]))
-        for lane in (2, 0):
-            native.envs[lane].reset()
+        # Deliberately visit environments out of order, leaving the middle environment alone.
+        pooled.commit(pooled.prepare_reset(instances=[2, 0]))
+        for instance in (2, 0):
+            native.envs[instance].reset()
         assert_same_state(pooled.get_state(), native.get_state())
         assert_same_state(held, saved)
         assert_models_equal(pooled, native)
@@ -64,7 +64,7 @@ def test_pool_matches_initial_seeded_unseeded_and_subset_resets(key):
 
 
 @pytest.mark.parametrize("key", sorted(LEAVES))
-def test_pool_preserves_per_lane_variation_and_restored_models(key):
+def test_pool_preserves_per_environment_variation_and_restored_models(key):
     with closing(pool(key)) as pooled, closing(make_local(key, 3, "cpu", 91000)) as native:
         original = native.get_state()
         values = {leaf.path: [[leaf.low], [leaf.default], [leaf.high]] for leaf in LEAVES[key]}
@@ -92,15 +92,15 @@ def test_invalid_later_row_keeps_installed_state_models_and_rng():
         assert_same_state(pooled.get_state(), before)
         assert_models_equal(pooled, native)
         # The scratch owner may have been partially modified; the next reset
-        # must reinstall a valid lane and consume exactly its saved RNG stream.
+        # must reinstall a valid environment and consume exactly its saved RNG stream.
         assert_same_state(pooled.reset(None), native.reset(None))
 
 
-def _sharded_pool(key, threads, monkeypatch, lanes=5):
+def _sharded_pool(key, threads, monkeypatch, instances=5):
     from stable_envs.envs.dmcontrol.simulation import mjwarp_reset
 
     monkeypatch.setattr(mjwarp_reset, "batch_threads", lambda count: min(threads, count))
-    return WarpResetPool(key, lanes, 91000, *warp_batch_fields())
+    return WarpResetPool(key, instances, 91000, *warp_batch_fields())
 
 
 @pytest.mark.parametrize("key", ["cheetah"])
@@ -113,9 +113,9 @@ def test_threaded_domains_reset_shards_on_one_owner_per_thread(key, monkeypatch)
         for seed in (None, 91020, None):
             assert_same_state(sharded.reset(seed), single.reset(seed))
         # A subset smaller than the owner count leaves some owners idle.
-        for lanes in ([4, 1], [0], [3, 0, 2, 1, 4]):
-            sharded.commit(sharded.prepare_reset(lanes=lanes))
-            single.commit(single.prepare_reset(lanes=lanes))
+        for instances in ([4, 1], [0], [3, 0, 2, 1, 4]):
+            sharded.commit(sharded.prepare_reset(instances=instances))
+            single.commit(single.prepare_reset(instances=instances))
             assert_same_state(sharded.get_state(), single.get_state())
             for name, column in sharded.models.columns.items():
                 np.testing.assert_array_equal(column, single.models.columns[name], err_msg=name)

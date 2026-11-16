@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from .adapter import nest
-from .batch import FetchLanes
+from .batch import FetchInstances
 
 #: Contacts per world: a grasp of the block on the table makes fewer than twenty.
 CONTACTS_PER_WORLD = 32
@@ -59,10 +59,10 @@ def physics_model(task):
     return model
 
 
-class FetchWarpAdapter(FetchLanes):
-    """Fetch lanes on CUDA: the shared ``WarpBatch`` steps float32 MuJoCo Warp physics; the Fetch step runs in Torch.
+class FetchWarpAdapter(FetchInstances):
+    """Fetch environments on CUDA: the shared ``WarpBatch`` steps float32 MuJoCo Warp physics; the Fetch step runs in Torch.
 
-    The step needs no host synchronization. Resets draw from each lane's PCG64 generator on the host, as the CPU
+    The step needs no host synchronization. Resets draw from each environment's PCG64 generator on the host, as the CPU
     backend does, so seeds give the same starts and goals. Physics is approximate: float32, and the contact
     changes of ``physics_model``.
     """
@@ -72,7 +72,7 @@ class FetchWarpAdapter(FetchLanes):
     def __init__(self, num_envs, device="cuda", seed=0, task="PickAndPlace", reward_type="sparse"):
         from ...._execution.mjbatch import WarpBatch
 
-        self._init_lanes(num_envs, device, task, reward_type)
+        self._init_instances(num_envs, device, task, reward_type)
         t, B = self.task, self.num_envs
         self.batch = WarpBatch(
             physics_model(t),
@@ -106,10 +106,10 @@ class FetchWarpAdapter(FetchLanes):
         self.reset(seed=seed)
 
     def _body_mass(self):
-        # WarpBatch batches body_mass per world; Fetch writes one value per lane rather than one model per lane.
+        # WarpBatch batches body_mass per world; Fetch writes one value per environment rather than one model per environment.
         return self.batch._wp.to_torch(self.batch._m.body_mass)
 
-    def _upload_lanes(self):
+    def _upload_instances(self):
         dev = self.device
         self._goal64 = torch.as_tensor(self._goal, device=dev)
         self._anchor64 = torch.as_tensor(self._anchor, device=dev)
@@ -130,7 +130,7 @@ class FetchWarpAdapter(FetchLanes):
         qpos = np.empty((B, t.nq))
         self._draw_resets(seed, variations, qpos)
         self._words_tensor = None
-        self._upload_lanes()
+        self._upload_instances()
         self.batch.check_buffers()
         if t.has_object:
             self._body_mass()[:, t.object] = torch.as_tensor(self._mass, device=dev, dtype=torch.float32)
@@ -193,7 +193,7 @@ class FetchWarpAdapter(FetchLanes):
         self._anchor[:] = host["task/initial_gripper_xpos"]
         self._restore_rngs(host)
         self._words_tensor = None
-        self._upload_lanes()
+        self._upload_instances()
 
     def check_step(self, actions, active):
         if tuple(actions.shape) != (self.num_envs, 4):

@@ -26,17 +26,17 @@ def sweep(name: str, largest: int, render: bool = False) -> dict:
             # A first draw registers the render paths.
             env.render(env.reset(seed=0))
     out = {}
-    for path, rungs, measure in _paths(render):
-        if path in before or rungs.small == rungs.large:
+    for path, pair, measure in _paths(render):
+        if path in before or pair.small == pair.large:
             continue
         rows, small_lost = [], 0
         for batch in [1 << k for k in range(largest.bit_length())]:
-            large = tuning.time_backend(measure, rungs.large, batch, "cuda")
+            large = tuning.time_backend(measure, pair.large, batch, "cuda")
             # The small-batch backend only gets slower with the batch; stop timing it after it lost twice.
-            small = tuning.time_backend(measure, rungs.small, batch, "cuda") if small_lost < 2 else float("inf")
+            small = tuning.time_backend(measure, pair.small, batch, "cuda") if small_lost < 2 else float("inf")
             small_lost = small_lost + 1 if small > large else 0
             rows.append((batch, small, large))
-            times = f"{rungs.small}={small * 1e6:.0f}us {rungs.large}={large * 1e6:.0f}us"
+            times = f"{pair.small}={small * 1e6:.0f}us {pair.large}={large * 1e6:.0f}us"
             print(f"{name} {path} B={batch} {times}", flush=True)
         switch = next((b for i, (b, _, _) in enumerate(rows) if all(lg <= sm for _, sm, lg in rows[i:])), None)
         out[path] = {"switch": switch, "rows": rows}

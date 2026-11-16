@@ -57,16 +57,17 @@ _RECOLOR_NOTE = (
 
 
 _DYNAMICS_MAPPED = (
-    "MAPPED, identical path and units: the value is written onto each lane's Gymnasium env exactly as "
-    "swm writes it (a float32 Box value widened to float64), sampled per lane under `variation` or set "
+    "MAPPED, identical path and units: the value is written onto each environment's Gymnasium env exactly as "
+    "swm writes it (a float32 Box value widened to float64), sampled per environment under `variation` or set "
     "under `variation_values`, and plain resets restore the default. Gated by "
     "tests/integration/test_classic_variation.py::test_classic_physics_matches_swm: reset State and every "
-    "step output equal swm's exactly over 24 steps, with lanes at 10/50/90 % of the range."
+    "step output equal swm's exactly over 24 steps, with environments at 10/50/90 % of the range."
 )
 
 
 _GEOMETRY_MAPPED = (
-    _DYNAMICS_MAPPED + " The official render also draws this leaf ({what}), and so does ours, per lane; the same gate "
+    _DYNAMICS_MAPPED
+    + " The official render also draws this leaf ({what}), and so does ours, per environment; the same gate "
     "compares every reset and step frame with swm's own, explicit and sampled, at worst-frame "
     "normalized MSE 0."
 )
@@ -276,11 +277,11 @@ _FLOOR_TRACKCOM = (
 
 _PHYSICS_MAPPED = (
     "MAPPED through the physics hook (stable_envs._core.physics): the value is written into each "
-    "lane's compiled model as swm writes it after its recompile (a direct field write, or an analytic "
+    "environment's compiled model as swm writes it after its recompile (a direct field write, or an analytic "
     "mass change that agrees with the recompile to 1e-12), and travels in State under "
     "('physics', *leaf) as float64, so a restored State keeps its physics. The style column is "
     "float32; an explicit float64 value set through reset options or State is kept exactly. Gated by "
-    "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-lane values: "
+    "tests/integration/test_dmc_physics_variation.py against swm stepping the same per-environment values: "
     "direct writes 0 State error, mass leaves at most 3e-7 (relative, humanoid's torso over 40 "
     "contact-rich steps; 1e-12 in the model itself), while the leaf moves swm's own trajectory by 3e-3 "
     "to 2.7"
@@ -397,17 +398,17 @@ def _dmc(
     )
 
 
-#: ``ours_only`` entries that recur. ``material.grid`` is our floor material knob, not the mapping for
+#: ``ours_only`` entries that recur. ``material.grid`` is our floor material setting, not the mapping for
 #: ``floor.color``, which is the checker texture.
 _GRID_OURS = {
     "material.grid": "a 3-vector multiplying the floor MATERIAL's rgba, which is a "
-    "different knob from the checker TEXTURE and composes with it: swm "
-    "has no material-level floor knob. Our floor.color is swm's "
+    "different setting from the checker TEXTURE and composes with it: swm "
+    "has no material-level floor setting. Our floor.color is swm's "
     "floor.color and is mapped `identical`"
 }
 _FOVY_OURS = {
     "camera.fovy_scale": "a field-of-view multiplier; swm's DMControlWrapper renders at the "
-    "model's own camera and offers no such knob"
+    "model's own camera and offers no such setting"
 }
 _DECOR_OURS = {
     "material.decoration": "the rails/arena furniture material; swm recolours only "
@@ -438,7 +439,7 @@ def _trackcom(cell, swm_id, densities, *, ours_only, tilt=False, dead_upstream=N
 
 
 _SHAPE_NOTE = (
-    "MAPPED at both alternatives: SHAPE_KNOBS declares swm's box and sphere at the task's target size, "
+    "MAPPED at both alternatives: SHAPE_CHOICES declares swm's box and sphere at the task's target size, "
     "and the sphere is the compiled model's own, so the default style stays a render of it. Visible only "
     "with rendering.render_target = 1, which swm's registered default is not. The task reads only the "
     "target's first size, which both alternatives share, so the shape never reaches the dynamics. "

@@ -85,7 +85,7 @@ def test_package_exports_the_names_callers_import():
         "DEFAULT_SIZES",
         "CPU_UNCERTIFIED",
         "TRACKCOM_BASES",
-        "SHAPE_KNOB_SPECS",
+        "SHAPE_CHOICE_SPECS",
         "RENDER_INVARIANT_DIMS",
         "STATE_DIMS_NOTE",
         "VISUAL_NOTE",

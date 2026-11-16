@@ -1,4 +1,4 @@
-"""A three-lane counting Env, plain and pipelined, for exercising public stepping."""
+"""A three-environment counting Env, plain and pipelined, for exercising public stepping."""
 
 import torch
 from tensordict import TensorDict

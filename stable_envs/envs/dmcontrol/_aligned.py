@@ -4,7 +4,7 @@ from ._delegated import DelegatedSemantics
 
 
 class DMCAlignedSemantics(DelegatedSemantics):
-    """BallInCup, Finger, Manipulator, Quadruped, PointMass and Swimmer on CPU dm_control lanes."""
+    """BallInCup, Finger, Manipulator, Quadruped, PointMass and Swimmer on CPU dm_control environments."""
 
     @classmethod
     def _hideable(cls):
