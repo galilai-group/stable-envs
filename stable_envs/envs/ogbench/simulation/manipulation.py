@@ -136,6 +136,16 @@ class OGBManipulationAdapter(SimulatorAdapter):
             raise RuntimeError("OGBManipulationAdapter is closed")
 
     def reset(self, seed=None, options=None):
+        self.reset_envs(seed, options)
+        return self.get_state()
+
+    def reset_columns(self, seed=None, options=None):
+        """``reset`` that returns ``columns()`` instead of a State."""
+        self.reset_envs(seed, options)
+        return self.columns()
+
+    def reset_envs(self, seed=None, options=None):
+        """``reset`` without building the State."""
         self._check_open()
         if seed is not None and (not isinstance(seed, (int, np.integer)) or seed < 0):
             raise ValueError("seed must be a nonnegative integer or None")
@@ -143,7 +153,6 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._forget_static(self.envs)
         for lane, env in enumerate(self.envs):
             env.reset(seed=None if seed is None else int(seed) + lane, options=lanes[lane])
-        return self.get_state()
 
     def _dynamic_values(self, env):
         """The state leaves a step can change."""
@@ -234,7 +243,8 @@ class OGBManipulationAdapter(SimulatorAdapter):
             device=self.device,
         )
 
-    def get_state(self):
+    def columns(self):
+        """The State as ``{key: (num_envs, ...) array}``; static leaves are this adapter's own arrays."""
         self._check_open()
         dynamic = [self._dynamic_values(env) for env in self.envs]
         if self._static_columns is None:
@@ -242,12 +252,13 @@ class OGBManipulationAdapter(SimulatorAdapter):
             self._static_columns = {key: np.stack([row[key] for row in rows]) for key in rows[0]}
         if self._order is None:
             self._order = tuple(sorted({**self._static_columns, **dynamic[0]}, key=_leaf_rank))
-        columns = {}
-        for key in self._order:
-            if key in self._static_columns:
-                columns[key] = self._static_columns[key].copy()
-            else:
-                columns[key] = np.stack([row[key] for row in dynamic])
+        static = self._static_columns
+        return {key: static[key] if key in static else np.stack([row[key] for row in dynamic]) for key in self._order}
+
+    def get_state(self):
+        columns = self.columns()
+        static = self._static_columns
+        columns = {key: value.copy() if key in static else value for key, value in columns.items()}
         return TensorDict(
             {key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
             [self.num_envs],

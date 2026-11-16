@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import copy
 import ctypes
 import math
-import time
 
 import numpy as np
 import torch
@@ -21,10 +19,6 @@ _pow = np.frompyfunc(math.pow, 2, 1)
 #: MuJoCo Warp reset owners reset on threads. The resets of other domains are faster in one thread: Quadruped's
 #: height search makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
 THREADED_RESETS = frozenset({"cheetah"})
-#: MuJoCo work, in seconds, that each batch thread gets per step call. Waking a thread can cost about this much.
-THREAD_WORK = 1e-4
-#: Fewest lanes per batch thread: each thread that a call waits for can be the late one.
-THREAD_LANES = 2
 
 _CPU = torch.device("cpu")
 
@@ -50,21 +44,6 @@ def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value
     return np.where((lower <= x) & (x <= upper), 1.0, value)
 
 
-def step_threads(physics, nsub, lanes, most):
-    """Threads for a step call: one per ``THREAD_WORK`` of the lanes' MuJoCo work, timed on a copy of ``physics``."""
-    most = min(most, -(-lanes // THREAD_LANES))
-    if most <= 1:
-        return 1
-    import mujoco
-
-    m, d = physics.model.ptr, copy.copy(physics.data.ptr)
-    reps, start = 0, time.perf_counter()
-    while (elapsed := time.perf_counter() - start) < 1e-3 or reps < 2:
-        mujoco.mj_step(m, d, nsub)
-        reps += 1
-    return max(1, min(most, math.ceil(lanes * elapsed / reps / THREAD_WORK)))
-
-
 #: State fields read from the batch: ``State key -> MjData field``.
 _LIVE = {"qpos": "qpos", "qvel": "qvel", "time": "time", "warmstart": "qacc_warmstart", "activation": "act"}
 
@@ -75,8 +54,8 @@ class DMCBatchAdapter(SimulatorAdapter):
     #: Each step returns fresh output tensors.
     outputs_owned = True
 
-    def __init__(self, lanes, task, threads, *, fit_threads=False):
-        """Step on ``threads`` threads, or on at most that many by ``step_threads`` with ``fit_threads``."""
+    def __init__(self, lanes, task, threads):
+        """Step on ``threads`` threads."""
         import mujoco
         from dm_control.rl.control import PhysicsError
         from mujoco.batch import Batch
@@ -91,16 +70,14 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._get_state, self._spec = mujoco.mj_getState, mujoco.mjtState.mjSTATE_INTEGRATION
         self._vel, self._error = mujoco.mjtStage.mjSTAGE_VEL, PhysicsError
         self._actuation = mujoco.mjtDisableBit.mjDSBL_ACTUATION
-        if fit_threads:
-            nthread = step_threads(lanes.envs[0].physics, self._nsub, self.num_envs, threads)
-        else:
-            nthread = threads
         # A persistent batch keeps each lane's MjData, so a step continues from the stages the last call computed,
         # as dm_control's step does.
-        self.b = Batch(self._models[0], self.num_envs, nthread=nthread, persistent=True)
+        self.b = Batch(self._models[0], self.num_envs, nthread=threads, persistent=True)
         self.b.set_models(self._models)
         self.task = task(self.b, self._models)
         self._live = {key: self.b.bind(name) for key, name in _LIVE.items() if key in self.fields}
+        # Bound once: ``Batch.ctrl`` makes a new view at each access.
+        self._ctrl, self._warning = self.b.bind("ctrl"), self.b.warning[:, :, 1]
         self._count, self._reset_next = np.zeros(self.num_envs, np.int64), np.zeros(self.num_envs, bool)
         self._rng_views = {}
         self._layout = None
@@ -276,17 +253,24 @@ class DMCBatchAdapter(SimulatorAdapter):
         actions, _ = self.lanes.check_step(actions, active)
         ctrl, reward = self._transform(actions), np.zeros(self.num_envs)
         for _ in range(2):
-            reset = self._reset_next.copy()
-            if reset.any():
+            reset = self._reset_next
+            resetting = reset.any()
+            if resetting:
+                reset = reset.copy()
                 ids = np.flatnonzero(reset)
                 self._reset_lanes(ids)
                 self._load(ids)
-            self.b.ctrl[:] = ctrl
-            self.b.step(~reset, self._nsub, stage=self._vel)
-            if (bad := np.flatnonzero((self.b.warning[:, :, 1] > self._warnings).any(axis=1))).size:
+            self._ctrl[:] = ctrl
+            self.b.step(~reset if resetting else None, self._nsub, stage=self._vel)
+            if (self._warning > self._warnings).any():
+                bad = np.flatnonzero((self._warning > self._warnings).any(axis=1))
                 raise self._error(f"Physics state is invalid in lanes {bad.tolist()}")
-            reward += np.where(reset, 0.0, self.task.reward())
-            self._count += ~reset
+            if resetting:
+                reward += np.where(reset, 0.0, self.task.reward())
+                self._count += ~reset
+            else:
+                reward += self.task.reward()
+                self._count += 1
             self._reset_next = self._count >= self._limit
         self._cumulative += reward
         out = {

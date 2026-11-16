@@ -221,6 +221,15 @@ def test_worker_knobs_drive_process_count(monkeypatch, knobs, batch, expected):
         assert policy.process_count(batch, list(range(16)), path="classic-sim") == expected
 
 
+@pytest.mark.parametrize(("knobs", "batch", "expected"), [({}, 2, 2), ({}, 1, 0), ({"worker_min_lanes": 64}, 32, 0)])
+def test_the_caller_sets_the_smallest_worker_batch_unless_the_knob_does(monkeypatch, knobs, batch, expected):
+    monkeypatch.setattr(policy.sys, "platform", "linux")
+    monkeypatch.setattr(policy.mp, "current_process", lambda: SimpleNamespace(daemon=False))
+    monkeypatch.setattr(policy, "cpu_limit", lambda: 16)
+    with tuning.override(**knobs):
+        assert policy.process_count(batch, list(range(16)), path="ogb-sim", min_lanes=2) == expected
+
+
 @pytest.mark.parametrize(("knobs", "expected"), [({}, 120), ({"worker_timeout": 7}, 7)])
 def test_worker_timeout_sets_how_long_a_reply_can_take(monkeypatch, knobs, expected):
     from stable_envs._execution import requests

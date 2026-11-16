@@ -126,7 +126,9 @@ def _manipulation_trace(
     oracle = load_oracle()
     source_class = getattr(oracle, "Owned" + case.domain)
     with ExitStack() as stack:
-        reference = stack.enter_context(se.make(case.name, num_envs=2, size=64, device="cpu"))
+        # The trace reads the reference's OGBench objects, so they stay in this process.
+        with se.tuning.override(worker_min_lanes=3):
+            reference = stack.enter_context(se.make(case.name, num_envs=2, size=64, device="cpu"))
         reference.reset(seed=seed)
         sources = [
             stack.enter_context(closing(source_class(entropy_seed=lane, width=64, height=64))) for lane in range(2)

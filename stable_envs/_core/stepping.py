@@ -188,8 +188,18 @@ def _native_cpu_step(env) -> bool:
     return getattr(env, "native_step_threads", False)
 
 
-@torch.no_grad()
 def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True):
+    if not torch.is_grad_enabled():
+        return _dispatch(env, actions, states, frames, state)
+    # Switching the thread's grad mode costs less per step than entering the no_grad context manager.
+    torch._C._set_grad_enabled(False)
+    try:
+        return _dispatch(env, actions, states, frames, state)
+    finally:
+        torch._C._set_grad_enabled(True)
+
+
+def _dispatch(env, actions, states, frames, state):
     env._check_open("step")
     if type(state) is not bool:
         raise TypeError(f"state must be a bool, got {state!r}")

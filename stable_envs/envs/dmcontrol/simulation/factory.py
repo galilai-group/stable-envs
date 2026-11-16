@@ -52,10 +52,39 @@ def make_local(domain: str, num_envs: int, device: str | torch.device = "cpu", s
     return factory(num_envs, device, seed)
 
 
+#: Batch rows per ``mujoco.batch`` thread by domain: about 0.1 ms of MuJoCo work per thread and step call (waking a
+#: thread can cost about as much), and at least two rows, as each thread that a call waits for can be the late one.
+#: Measured on two hosts; see "DM Control threads" in docs/performance-tuning.md.
+LANES_PER_THREAD: dict[str, int] = {
+    "acrobot": 13,
+    "ball_in_cup": 2,
+    "cartpole": 12,
+    "cartpole-balance": 12,
+    "cheetah": 10,
+    "finger": 10,
+    "finger-spin": 10,
+    "finger-turn_easy": 10,
+    "hopper": 3,
+    "humanoid": 2,
+    "manipulator": 2,
+    "pendulum": 40,
+    "point_mass-easy": 36,
+    "quadruped": 2,
+    "reacher": 33,
+    "swimmer-swimmer6": 2,
+    "walker": 2,
+}
+
+
 def batch_threads(num_envs: int) -> int:
     """The ``dmc_threads`` knob, at most one thread per CPU in the process affinity and one per lane."""
     cpus = cpu_limit()
     return min(tuning.get("dmc_threads", path="dmc-sim", size=0, batch=num_envs) or 1, cpus, num_envs)
+
+
+def step_threads(domain: str, num_envs: int, most: int) -> int:
+    """At most ``most`` threads, and one per ``LANES_PER_THREAD`` rows of ``domain``."""
+    return max(1, min(most, -(-num_envs // LANES_PER_THREAD.get(domain, 1))))
 
 
 def make_batch(
@@ -63,11 +92,10 @@ def make_batch(
 ) -> DMCBatchAdapter:
     """``make_local`` lanes stepped in one mujoco.batch on ``threads`` threads.
 
-    Without ``threads``, a step uses at most ``batch_threads`` threads, and fewer when its MuJoCo work is small
-    (``step_threads``).
+    Without ``threads``, a step uses at most ``batch_threads`` threads, and fewer for a domain whose step has little
+    MuJoCo work (``step_threads``).
     """
-    fit = threads is None
-    if fit:
-        threads = batch_threads(num_envs)
+    if threads is None:
+        threads = step_threads(domain, num_envs, batch_threads(num_envs))
     lanes = make_local(domain, num_envs, device, seed)
-    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads, fit_threads=fit)
+    return DMCBatchAdapter(lanes, BATCH_TASKS[domain], threads)
