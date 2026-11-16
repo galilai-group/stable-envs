@@ -220,6 +220,16 @@ pin-craftax = [
   "jax==0.11.2; python_version >= '3.12'",
   "jaxlib==0.11.2; python_version >= '3.12'",
 ]
+# The benchmark scripts in benchmarks/: stable-worldmodel at the commit the paper compares with, and the
+# extras its PushT and monitoring need. Combine with the pin-* group and the extra of each family.
+bench = [
+  "stable-worldmodel @ git+https://github.com/galilai-group/stable-worldmodel@21446f1ede6d5284e981bd7b47f432b994e6d812",
+  "pymunk==7.2.0",
+  "shapely",
+  "opencv-python-headless",
+  "psutil",
+  "nvidia-ml-py",
+]
 # GPU add-on, combinable with pin-dmc or pin-ogbench.
 gpu-mjwarp = ["mujoco-warp==3.17.0; python_version >= '3.12'", "warp-lang==1.17.0; python_version >= '3.12'"]
 

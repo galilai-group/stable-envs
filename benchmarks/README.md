@@ -9,8 +9,8 @@ Two scripts measure rendering cost through the public `stable_envs` API:
 They do not test pixel correctness, fidelity or dynamics. The test suite covers those.
 Neither script imports `stable_worldmodel` or renderer internals.
 
-`offline_sweep.py` and `online_ladder.py` compare the speed and the frames of stable-envs with the source
-libraries. See [Comparison with the source libraries](#comparison-with-the-source-libraries).
+`speed.py`, `render_mse.py` and `rollout_parity.py` compare stable-envs with stable-worldmodel. See
+[Comparison with stable-worldmodel](#comparison-with-stable-worldmodel).
 
 ## Run
 
@@ -65,26 +65,57 @@ configuration and the Git revision.
 - `pipeline.py` writes one point per environment, with State and frame byte sizes. The JPEG
   result and the throughput ratio are nested under that environment.
 
-## Comparison with the source libraries
+## Comparison with stable-worldmodel
 
-`offline_sweep.py` and `online_ladder.py` measure the speed of stable-envs against the source library ("the
-source"), and `offline_sweep.py` also writes the frame MSE between them. They use only the public
-`stable_envs` API. Facts about the source libraries, such as which source draws on a GPU, are in
-`tests/helpers/reference/sources.py`.
+These scripts compare stable-envs with stable-worldmodel (swm) at commit `21446f1`. Each class uses its swm id
+from `tests/helpers/reference/crosswalk.py`. `swm_source.py` builds the swm envs, writes a stable-envs State into
+an swm env, and reads it back. Install the `bench` dependency group, and the `pin-*` group and the extra of each
+family:
+
+```bash
+uv sync --group bench --group pin-pusht --extra pusht --group torch-cuda
+```
 
 | File | Function |
 |---|---|
-| `offline_sweep.py` | Saves frame inputs, and times stable-envs and the source on the same inputs. Also writes the frame MSE |
-| `online_ladder.py` | Times seeded episodes with fixed actions: steps, and steps with frames |
-| `draw.py` | The one call that draws stable-envs frames from stored inputs (`env.render`) |
+| `speed.py` | Times stable-envs and swm on the same cores in one run, and writes one CSV row per cell |
+| `render_mse.py` | Draws the same States with swm and stable-envs, and writes the frame MSE per env |
+| `rollout_parity.py` | Plays the same start State and actions in both, and writes the state error per env |
+| `swm_source.py` | The swm source: ids, the swm env calls, and the State mapping |
 | `backend_switch.py` | Times both CUDA simulation backends of a class at batches 1 to 4096 and prints its switch point |
 
-`python benchmarks/offline_sweep.py --help` and `python benchmarks/online_ladder.py --help` list the options.
-Pin each measurement to the same CPU cores, for example with `taskset`, so that stable-envs and the source
-use the same hardware.
+Run the scripts from the repository root.
 
-- Offline: stable-envs draws stored inputs with `env.render` at each batch. The inputs are rows from the
-  family sampler (`sample_states`). For a class without a sampler, the inputs are full States from
-  random-action rollouts. The source draws the same inputs. The frame MSE compares the two on the 0-255 scale.
-- Online: physics steps of L environments, and steps with a frame after each step, against the source stepping L
-  envs on CPU.
+```bash
+python -m benchmarks.speed --cpu --gpu --step --render --step-and-render --env PushT TwoRoom \
+  --batch 1 8 16 64 --actions-per-call 1 16 --out speed.csv
+python -m benchmarks.render_mse --env PushT TwoRoom --device cpu cuda --out render_mse.csv
+python -m benchmarks.rollout_parity --env PushT TwoRoom --steps 20 --out rollout_parity.csv
+```
+
+### Method of `speed.py`
+
+- The script runs every combination of device (`--cpu`, `--gpu`), workload, env, batch B and actions per call T.
+- Each cell times stable-envs ("ours") first and then swm. Each side runs in a new process. Both sides use the
+  same CPU cores (`--cores`, default: the first 8 cores of the process).
+- Ours uses the default keyword arguments of `snv.make`. Ours imports `stable_envs` before `torch`.
+- Workloads:
+  - `step`: physics steps without frames. Ours steps B instances with T actions per `step` call. swm steps B
+    envs in min(B, cores) worker processes, one core each. The parent sends step t+1 before it takes step t.
+  - `step-and-render`: the same, with a frame after each step.
+  - `render` (the default): frames of stored States. Ours draws them with `snv.FrameLoader`, B frames at a time.
+    swm writes each State into an env and draws it, in 1 process and in one process per core. The CSV keeps
+    the faster of the two.
+- Each episode starts with a seeded reset, and the stored actions are uniform random actions.
+- Each side warms up for `--warmup` seconds and at least `--warmup-steps` steps per instance (default 20).
+  Then it times `--repeats` windows (default 3), or `--repeats-small` windows (default 7) at B up to
+  `--small-max-batch` (default 16). A window holds `--timed-steps` steps per instance (default 100), rounded up
+  to whole episodes. With `--timed-steps 0`, a window lasts `--window` seconds. The CSV gives the median rate.
+- On the GPU device, swm also draws with MuJoCo EGL when the env draws with MuJoCo. The CSV keeps the faster
+  swm result and names it in `source_kind`.
+- A short probe times the first steps of each swm step cell. When the cell would take more than
+  `--source-cap` seconds, the script estimates the rate from a partial run: `--repeats` windows of
+  `--partial-window` seconds, counted in steps. The CSV sets `estimated` to true for these cells.
+- The CSV has the host, the CPU model, the GPU, the driver, the cores, the stable-envs commit and the swm
+  commit and source library versions of each cell. A `.jsonl` file next to the CSV holds every window of
+  every cell.
