@@ -22,15 +22,9 @@
  },
  "state": [
   {
-   "key": "agent",
+   "key": "navigation",
    "leaves": 1,
-   "numel": 2,
-   "dtypes": ["float32"]
-  },
-  {
-   "key": "target",
-   "leaves": 1,
-   "numel": 2,
+   "numel": 4,
    "dtypes": ["float32"]
   }
  ],

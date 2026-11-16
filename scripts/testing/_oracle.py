@@ -8,6 +8,8 @@ from pathlib import Path
 
 import numpy as np
 
+from stable_envs._core.state_schema import unfold
+
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 
 
@@ -42,16 +44,15 @@ def _name(key):
 def rollout(ref, actions):
     """Reset ``ref`` with seed 17, step it through ``actions(ref)`` and return the outcomes and stacked State.
 
-    The returned values hold ``actions`` and each State leaf as ``state/<path>``, initial State first.
+    The returned values hold ``actions`` and each State field as ``state/<path>``, initial State first.
     """
     initial = ref.reset(seed=17)
     actions = actions(ref)
     outcomes = [ref.step(action) for action in actions]
     values = {"actions": actions}
-    for key in initial.keys(True, True):
-        values[f"state/{_name(key)}"] = np.stack(
-            [initial[key].numpy(), *[outcome["state"][key].numpy() for outcome in outcomes]]
-        )
+    fields = [unfold(initial), *(unfold(outcome["state"]) for outcome in outcomes)]
+    for key in fields[0].keys(True, True):
+        values[f"state/{_name(key)}"] = np.stack([state[key].numpy() for state in fields])
     return initial, outcomes, values
 
 

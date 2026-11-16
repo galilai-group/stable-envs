@@ -53,48 +53,45 @@ class NativeNavigationReference:
             env.reset(seed=None if seed is None else int(seed) + lane, options=self.options)
         return self.get_state()
 
+    @property
+    def schema(self):
+        """The layout of the States of the native environment."""
+        from stable_envs.envs.navigation.envs import MAZE_STATE, TARGET_STATE
+
+        return MAZE_STATE if self.domain == "simple_point_maze" else TARGET_STATE
+
     def get_state(self):
         if self.domain == "simple_point_maze":
-            return TensorDict(
-                {
-                    "agent": {
-                        "position": torch.as_tensor(np.stack([env.state for env in self.envs]), dtype=torch.float64)
-                    },
-                    "goal": {
-                        "position": torch.as_tensor(
-                            np.stack([env.variation_space["goal"]["position"].value for env in self.envs]),
-                            dtype=torch.float32,
-                        )
-                    },
-                    "task": {
-                        "cached_goal_agent_position": torch.as_tensor(
-                            np.stack(self.cached_goal_positions), dtype=torch.float32
-                        ),
-                        "state_is_float64": torch.tensor(
-                            [[np.asarray(env.state).dtype == np.float64] for env in self.envs], dtype=torch.bool
-                        ),
-                    },
-                },
-                batch_size=[self.num_envs],
-            )
-        return TensorDict(
-            {
-                "agent": {"position": torch.stack([env.agent_position.detach().clone() for env in self.envs])},
-                "target": {"position": torch.stack([env.target_position.detach().clone() for env in self.envs])},
-            },
-            batch_size=[self.num_envs],
-        )
+            values = {
+                "agent/position": torch.as_tensor(np.stack([env.state for env in self.envs]), dtype=torch.float64),
+                "goal/position": torch.as_tensor(
+                    np.stack([env.variation_space["goal"]["position"].value for env in self.envs]),
+                    dtype=torch.float32,
+                ),
+                "task/cached_goal_agent_position": torch.as_tensor(
+                    np.stack(self.cached_goal_positions), dtype=torch.float32
+                ),
+                "task/state_is_float64": torch.tensor(
+                    [[np.asarray(env.state).dtype == np.float64] for env in self.envs], dtype=torch.bool
+                ),
+            }
+        else:
+            values = {
+                "agent/position": torch.stack([env.agent_position.detach().clone() for env in self.envs]),
+                "target/position": torch.stack([env.target_position.detach().clone() for env in self.envs]),
+            }
+        return self.schema.fold(values, [self.num_envs])
 
     def set_state(self, state):
-        host = state.cpu()
+        fields = self.schema.views(state.cpu())
         for lane, env in enumerate(self.envs):
             if self.domain == "simple_point_maze":
-                is_float64 = bool(host[lane]["task", "state_is_float64"].item())
+                is_float64 = bool(fields["task/state_is_float64"][lane].item())
                 agent = (
-                    host[lane]["agent", "position"].numpy().astype(np.float64 if is_float64 else np.float32, copy=True)
+                    fields["agent/position"][lane].numpy().astype(np.float64 if is_float64 else np.float32, copy=True)
                 )
-                goal = host[lane]["goal", "position"].numpy().copy()
-                cached = host[lane]["task", "cached_goal_agent_position"].numpy().copy()
+                goal = fields["goal/position"][lane].numpy().copy()
+                cached = fields["task/cached_goal_agent_position"][lane].numpy().copy()
                 env.variation_space["goal"]["position"]._value = goal
                 env.state = cached
                 env.variation_space["agent"]["position"]._value = cached.copy()
@@ -103,8 +100,8 @@ class NativeNavigationReference:
                 env.variation_space["agent"]["position"]._value = agent.copy()
                 self.cached_goal_positions[lane] = cached
             else:
-                env.agent_position = host[lane]["agent", "position"].clone()
-                env.target_position = host[lane]["target", "position"].clone()
+                env.agent_position = fields["agent/position"][lane].clone()
+                env.target_position = fields["target/position"][lane].clone()
 
     def _actions(self, actions):
         if torch.is_tensor(actions):

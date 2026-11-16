@@ -8,14 +8,15 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
-from ..._core.state_layout import StateLayout
+from ..._core.state_schema import Field, StateSchema
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution.backends import Rungs, measure_env, select_backend
-from ...env import Env, ResetLeaf, StepResult, check_states
+from ...env import Env, ResetLeaf, StepResult, check_drawn_fields, check_states
 from ...registry import register
 from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
 from ...spaces import Box, Dict, Discrete, RGBBox
+from ...specs import CompositeSpec, Spec
 from . import navdot
 from .maze_goal import GoalPainter, goal_frames
 
@@ -143,6 +144,52 @@ def _bias_field_rgba(biases) -> np.ndarray:
     rgba = np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4).copy()
     fig.clear()
     return rgba
+
+
+#: State of TwoRoom, TwoRoomTarget and Piecewise: the agent and target positions.
+TARGET_STATE = StateSchema(
+    "Navigation",
+    [
+        Field("agent/position", (2,), torch.float32, "navigation/float32"),
+        Field("target/position", (2,), torch.float32, "navigation/float32"),
+    ],
+)
+#: State of PiecewiseZones: the agent position.
+AGENT_STATE = StateSchema("Navigation", [Field("agent/position", (2,), torch.float32, "navigation/float32")])
+#: State of SimplePointMaze.
+MAZE_STATE = StateSchema(
+    "SimplePointMaze",
+    [
+        Field("agent/position", (2,), torch.float64, "simple_point_maze/float64"),
+        Field("goal/position", (2,), torch.float32, "simple_point_maze/float32"),
+        Field("task/cached_goal_agent_position", (2,), torch.float32, "simple_point_maze/float32"),
+        Field("task/state_is_float64", (1,), torch.bool, "simple_point_maze/bool"),
+    ],
+)
+#: The one group of TARGET_STATE, which the Numba task step fills.
+(_TARGET_GROUP,) = TARGET_STATE.groups.values()
+
+
+def _leaf(state, path: tuple[str, ...]):
+    """The value of ``state`` at ``path``, or None; reads the nodes of a TensorDict without its key handling."""
+    node = state
+    try:
+        for part in path:
+            node = node._tensordict[part]
+    except (AttributeError, KeyError):
+        return state.get(path, None)
+    return node
+
+
+def _nest(leaves: dict) -> dict:
+    """The nested dict of ``{key path: value}``."""
+    tree: dict = {}
+    for key, value in leaves.items():
+        node = tree
+        for part in key[:-1]:
+            node = node.setdefault(part, {})
+        node[key[-1]] = value
+    return tree
 
 
 _WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
@@ -387,6 +434,163 @@ class _GymReferencePort(Env):
             out.append(np.ascontiguousarray(u.render(*cls.reference_render_args)))
         return np.stack(out)
 
+    #: Fields of the State and their groups; ``state_layout`` names the same fields.
+    STATE: StateSchema
+
+    def get_state(self) -> TensorDict:
+        self._require_state("get_state")
+        rows = self._get_render_state()
+        if not bool(torch.isfinite(rows).all()):
+            check_states(self, rows, f"{type(self).__name__}.unpack")
+        n = int(rows.shape[0])
+        hidden, live = self._hidden_state(), self._live_state()
+        values = {}
+        for key, width, offset, dtype in self._state_plan():
+            if offset is None:
+                value = hidden[key]
+            elif key in live:
+                value = live[key]
+            else:
+                value = rows[:, offset : offset + width]
+            values["/".join(key)] = value.reshape(-1, width)[:n].to(dtype)
+        return self._fold(values)
+
+    def _fold(self, values) -> TensorDict:
+        """A new State from ``{field name: (n, ...) value}``, with one copy per group.
+
+        NumPy values move to an accelerator in one copy.
+        """
+        groups = self.STATE.pack(values)
+        leaves = {self.STATE.groups[key].path: value for key, value in groups.items()}
+        first = next(iter(groups.values()))
+        if isinstance(first, np.ndarray):
+            if self.device.type != "cpu":
+                return pack_to_device(list(leaves.items()), (len(first),), self.device)
+            return build_tensordict(leaf_tree(leaves), [len(first)], self.device)
+        return build_tensordict(_nest(leaves), [len(first)], self.device)
+
+    def _groups(self, state) -> dict | None:
+        """``{group key: leaf or None}`` of ``state``; None when ``state`` holds no group of ``STATE``."""
+        if not isinstance(state, TensorDict):
+            return None
+        groups = {key: _leaf(state, group.path) for key, group in self.STATE.groups.items()}
+        return groups if any(torch.is_tensor(value) for value in groups.values()) else None
+
+    def _fields(self, state, names, groups=None) -> list[torch.Tensor]:
+        """``(*batch, width)`` views of the named fields of a folded ``state``, cut from its groups."""
+        out = []
+        for where in map(self.STATE.slices.__getitem__, names):
+            group = _leaf(state, self.STATE.groups[where.group].path) if groups is None else groups[where.group]
+            if group is None:
+                raise KeyError(f"{self.STATE.name} State has no group {where.group!r}")
+            out.append(group.narrow(-1, where.start, where.stop - where.start))
+        return out
+
+    def _check_finite(self, state, names=None, groups=None) -> None:
+        """Raise if a floating-point field of ``names`` (all by default) holds NaN or infinity.
+
+        All values are checked with one host synchronization; only a failure reads the fields one by one.
+        """
+        groups = self.STATE.buffers(state) if groups is None else groups
+        values = groups.values() if names is None else self._fields(state, names, groups)
+        checks = [torch.isfinite(value).all() for value in values if value.is_floating_point()]
+        if checks and not bool(checks[0] if len(checks) == 1 else torch.stack(checks).all()):
+            names = self.STATE.names if names is None else names
+            for name, value in zip(names, self._fields(state, names, groups), strict=True):
+                if value.is_floating_point() and not bool(torch.isfinite(value).all()):
+                    raise ValueError(f"State field {name.replace('/', '.')} contains non-finite values")
+
+    def _validate_state(self, state, *, batch: int | None = None) -> None:
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        self.STATE.validate(state)
+        self._check_finite(state)
+
+    def _render_plan(self) -> tuple[list[tuple[str, int, int]], list[str]]:
+        """``(field name, width, column)`` of each field of the compact rows, and the names of the drawn fields."""
+        cached = self.__dict__.get("_render_plan_cache")
+        if cached is None or cached[0] is not self.state_layout:
+            rows = [
+                ("/".join(key), width, offset) for key, width, offset in self._check_layout() if offset is not None
+            ]
+            cached = (self.state_layout, rows, ["/".join(key) for key, _ in self._drawn_fields()])
+            self.__dict__["_render_plan_cache"] = cached
+        return cached[1], cached[2]
+
+    def _check_drawn(self, state, groups) -> None:
+        """Check the fields that ``render`` draws; a TensorDict with one leaf per field draws too."""
+        if groups is None:
+            check_drawn_fields(state, self._drawn_fields())
+            return
+        if len(state.batch_size) != 1:
+            raise ValueError(f"Expected State batch [N], got {list(state.batch_size)}")
+        for key, group in self.STATE.groups.items():
+            value = groups[key]
+            if not torch.is_tensor(value) or value.dtype != group.dtype or value.shape[1:] != (group.size,):
+                # The schema names the group that doesn't fit.
+                self.STATE.validate(state)
+        self._check_finite(state, self._render_plan()[1], groups)
+
+    def _rows(self, state, groups) -> torch.Tensor:
+        """The float32 compact rows of ``state``."""
+        if groups is None:
+            return super()._pack_render_state(state)
+        fields = self._render_plan()[0]
+        values = self._fields(state, [name for name, _, _ in fields], groups)
+        n = int(state.batch_size[0]) if state.batch_size else 1
+        out = torch.zeros(n, int(self.state_dim), device=self.device, dtype=torch.float32)
+        for (_, width, offset), value in zip(fields, values, strict=True):
+            out[:, offset : offset + width] = value.to(device=self.device, dtype=torch.float32).reshape(n, width)
+        return out
+
+    def _validate_render_state(self, state) -> None:
+        self._check_drawn(state, self._groups(state))
+
+    def _pack_render_state(self, state) -> torch.Tensor:
+        return self._rows(state, self._groups(state))
+
+    def _render_state_input(self, state, **kwargs) -> torch.Tensor:
+        state = self.get_state() if state is None else state
+        groups = self._groups(state)
+        self._check_drawn(state, groups)
+        return self._render_checked(self._rows(state, groups), **kwargs)
+
+    #: ``{field name: (low, high, column names)}`` of the State fields that have bounds.
+    STATE_FIELD_BOUNDS: dict[str, tuple[float, float, tuple[str, ...]]] = {}
+
+    @property
+    def state_spec(self) -> CompositeSpec:
+        """Specs of the State groups, without the batch axis, with bounds and column names where every field of
+        the group declares them."""
+        out = self.STATE.spec(self.device)
+        for group in self.STATE.groups.values():
+            if not all(field.name in self.STATE_FIELD_BOUNDS for field in group.fields):
+                continue
+            low: list[float] = []
+            high: list[float] = []
+            names: list[str] = []
+            for field in group.fields:
+                lo, hi, labels = self.STATE_FIELD_BOUNDS[field.name]
+                where = self.STATE.slices[field.name]
+                low += [lo] * (where.stop - where.start)
+                high += [hi] * (where.stop - where.start)
+                names += labels
+            spec = Spec(
+                (group.size,),
+                dtype=group.dtype,
+                low=np.array(low),
+                high=np.array(high),
+                device=self.device,
+                names=tuple(names) if len(names) == group.size else (),
+            )
+            node = out
+            for part in group.path[:-1]:
+                node = node[part]
+            node.specs[group.path[-1]] = spec
+        return out
+
     @staticmethod
     def reference_step(ref, a):
         return ref.step(np.asarray(a, np.float32))
@@ -434,13 +638,14 @@ class _HiddenTargetSemantics:
 
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
+    STATE = TARGET_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
+        "target/position": (POS_LO, POS_HI, ("target_x", "target_y")),
+    }
     # TwoRoom observations append the door centers.
     _numba_doors = False
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, None))
-    state_bounds = {
-        ("agent", "position"): (POS_LO, POS_HI),
-        ("target", "position"): (POS_LO, POS_HI),
-    }
     reset_leaves = (
         ResetLeaf("agent.position", (60.0, 112.0)),
         ResetLeaf("target.position", (164.0, 112.0)),
@@ -451,6 +656,15 @@ class _HiddenTargetSemantics:
         self._target_position = torch.full((self.B, 2), 0.0, device=self.device, dtype=torch.float32)
         self._target_position[:, 0] = 164.0
         self._target_position[:, 1] = 112.0
+        if self.device.type != "cpu" and self.state_dim == 2:
+            # The live rows and target are columns of one State group, so a moved State refreshes them in one copy.
+            agent, target = (TARGET_STATE.slices[name] for name in ("agent/position", "target/position"))
+            lanes = torch.empty(self.B, _TARGET_GROUP.size, device=self.device, dtype=torch.float32)
+            lanes[:, agent.start : agent.stop] = self._render_state
+            lanes[:, target.start : target.stop] = self._target_position
+            self._render_state = lanes.narrow(1, agent.start, agent.stop - agent.start)
+            self._target_position = lanes.narrow(1, target.start, target.stop - target.start)
+            self._lanes = lanes
         if self.device.type == "cuda":
             from torch._inductor import list_options
 
@@ -468,9 +682,8 @@ class _HiddenTargetSemantics:
 
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
-        self._target_position.copy_(
-            torch.as_tensor(state["target", "position"], device=self.device, dtype=torch.float32).reshape(self.B, 2)
-        )
+        (target,) = self._fields(state, ("target/position",))
+        self._target_position.copy_(target.to(device=self.device, dtype=torch.float32).reshape(self.B, 2))
 
     @staticmethod
     def _option_position(value, lane, batch):
@@ -497,25 +710,18 @@ class _HiddenTargetSemantics:
             self._live_rows = self.B
             return self.get_state()
         agent = check_states(self, np.stack(agent_rows), f"{type(self).__name__}.set_state", move=False)
-        leaves = [(("agent", "position"), agent.numpy()), (("target", "position"), np.stack(target_rows))]
-        leaves = [(key, value.astype(np.float32, copy=False)) for key, value in leaves]
-        if self.device.type == "cpu":
-            state = build_tensordict(leaf_tree(dict(leaves)), [self.B], self.device)
-        else:
-            # The State moves in one copy; the live rows and target come from it, with no host wait.
-            state = pack_to_device(leaves, (self.B,), self.device)
-        self._render_state.copy_(state["agent", "position"])
-        self._target_position.copy_(state["target", "position"])
+        values = {"agent/position": agent.numpy(), "target/position": np.stack(target_rows)}
+        # The State moves in one copy; the live rows and target come from it, with no host wait.
+        state = self._fold({name: value.astype(np.float32, copy=False) for name, value in values.items()})
+        agent, target = self._fields(state, ("agent/position", "target/position"))
+        self._render_state.copy_(agent)
+        self._target_position.copy_(target)
         self._live_rows = self.B
         return state
 
     def _full_state(self, agent):
         n = int(agent.shape[0])
-        layouts = self.__dict__.setdefault("_state_layouts", {})
-        if n not in layouts:
-            leaves = [("agent/position", (2,), agent.dtype), ("target/position", (2,), agent.dtype)]
-            layouts[n] = StateLayout(leaves, n)
-        return layouts[n].export({"agent/position": agent, "target/position": self._target_position[:n]}, self.device)
+        return self._fold({"agent/position": agent, "target/position": self._target_position[:n]})
 
     def _observation(self, agent, target):
         return torch.cat([agent, target], dim=1)
@@ -546,7 +752,7 @@ class _HiddenTargetSemantics:
         }
 
     def _outputs(self, state):
-        values = self._task_tensors(state["agent", "position"], state["target", "position"])
+        values = self._task_tensors(*self._fields(state, ("agent/position", "target/position")))
         return build_tensordict({"state": state, **values}, state.batch_size, self.device)
 
     @torch.no_grad()
@@ -595,8 +801,21 @@ class _HiddenTargetSemantics:
         """Put the rows that ``_host_advance`` advanced on the device."""
         hit = self.__dict__.get("_host_arrays", {}).get("rows")
         if hit is not None and hit[0] is self._render_state and hit[1] == self._render_state._version:
+            before = self._target_position._version
             self._render_state.copy_(torch.from_numpy(hit[2]))
-            self._host_arrays["rows"] = (self._render_state, self._render_state._version, hit[2])
+            self._keep_host_copies(hit[2], before)
+
+    def _keep_host_copies(self, rows, before):
+        """Record ``rows`` as the host copy of the device rows after a write that left the target as it was.
+
+        The rows and the target can share a version counter, so the target's host copy is kept when its version
+        was ``before`` the write.
+        """
+        cache = self._host_arrays
+        cache["rows"] = (self._render_state, self._render_state._version, rows)
+        hit = cache.get("target")
+        if hit is not None and hit[0] is self._target_position and hit[1] == before:
+            cache["target"] = (hit[0], self._target_position._version, hit[2])
 
     def _numba_step(self, action, active, move=None, host=False):
         """Advance the lanes and build state and task outputs in one Numba call.
@@ -609,13 +828,13 @@ class _HiddenTargetSemantics:
         inputs = self._numba_inputs(action, active)
         target = self._host_array("target", self._target_position)
         values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
-        agent, target, observation, proprio, state, goal_state, distance, terminated = values
+        positions, observation, proprio, state, goal_state, distance, terminated = values
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
-            observation = self._observation(torch.from_numpy(agent), torch.from_numpy(target)).numpy()
+            fields = self.STATE.views({_TARGET_GROUP.key: torch.from_numpy(positions)})
+            observation = self._observation(fields["agent/position"], fields["target/position"]).numpy()
         n = self.B
         leaves = {
-            ("state", "agent", "position"): agent,
-            ("state", "target", "position"): target,
+            ("state", *_TARGET_GROUP.path): positions,
             ("reward",): np.zeros(n, np.float64),
             ("terminated",): terminated,
             ("truncated",): np.zeros(n, np.bool_),
@@ -638,13 +857,15 @@ class _HiddenTargetSemantics:
             # The kernel advanced the live rows in place.
             return result
         rows = inputs[0]
+        before = self._target_position._version
         if self.state_dim == 2:
-            # The rows are the agent positions, already on the device: a device copy, without a host wait.
-            self._render_state.copy_(moved["agent", "position"])
+            # The moved State group holds the new rows and the target, already on the device: one device copy,
+            # without a host wait.
+            self._lanes.copy_(_leaf(moved, _TARGET_GROUP.path))
         else:
             self._render_state.copy_(torch.from_numpy(rows))
         # The host rows already hold the new values: the next step reads them without a device copy.
-        self._host_arrays["rows"] = (self._render_state, self._render_state._version, rows)
+        self._keep_host_copies(rows, before)
         return result
 
 
@@ -749,14 +970,13 @@ class _TorchNavBase(_GymReferencePort):
 
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        agent, rest, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, active))
+        rows, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, active))
         if not finite:
             # get_state names the non-finite lanes and raises.
             return self._step_result(self.state)
-        state = {"agent": {"position": torch.from_numpy(agent)}}
-        if self.state_dim == 4:
-            state["target"] = {"position": torch.from_numpy(rest)}
-        return build_tensordict({"state": state}, [self.B], self.device)
+        # The State of these classes is one group that holds the rows as they are.
+        (group,) = self.STATE.groups.values()
+        return build_tensordict({"state": _nest({group.path: torch.from_numpy(rows)})}, [self.B], self.device)
 
     def _agent_space(self) -> dict:
         return {
@@ -1208,7 +1428,11 @@ class TwoRoomTarget(_TwoRoomBase):
     state_names = ("agent_x", "agent_y", "target_x", "target_y")
     reference_kwargs = {"render_target": True}
     state_layout = ((("agent", "position"), 2, 0), (("target", "position"), 2, 2))
-    state_bounds = {("agent", "position"): (POS_LO, POS_HI), ("target", "position"): (POS_LO, POS_HI)}
+    STATE = TARGET_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
+        "target/position": (POS_LO, POS_HI, ("target_x", "target_y")),
+    }
     step_reference_groups = (("agent", (0, 1), "euclidean"), ("target", (2, 3), "euclidean"))
     # Seeded resets draw from the same tree and rejection rule as TwoRoom, so they start where
     # stable-worldmodel's TwoRoom does.
@@ -1283,7 +1507,8 @@ class _PiecewiseBase(_TorchNavBase):
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
-    state_bounds = {("agent", "position"): (POS_LO, POS_HI)}
+    STATE = AGENT_STATE
+    STATE_FIELD_BOUNDS = {"agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y"))}
     dynamics_variation_leaves = frozenset(
         {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
     )
@@ -1417,9 +1642,14 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     def _render_state_input(self, state, **kwargs) -> torch.Tensor:
         """Render full state; the target, hidden from the compact rows, is drawn from it when enabled."""
         state = self.get_state() if state is None else state
-        self._frame_targets = state.get(("target", "position"), None)
+        groups = self._groups(state)
+        self._check_drawn(state, groups)
+        if groups is None:
+            self._frame_targets = state.get(("target", "position"))
+        else:
+            (self._frame_targets,) = self._fields(state, ("target/position",), groups)
         try:
-            return super()._render_state_input(state, **kwargs)
+            return self._render_checked(self._rows(state, groups), **kwargs)
         finally:
             self._frame_targets = None
 
@@ -1550,11 +1780,12 @@ class SimplePointMaze(_GymReferencePort):
         (("task", "cached_goal_agent_position"), 2, None),
         (("task", "state_is_float64"), 1, None, torch.bool),
     )
-    state_bounds = {
-        ("agent", "position"): (0.0, WORLD),
-        ("goal", "position"): (0.0, WORLD),
-        ("task", "cached_goal_agent_position"): (0.0, WORLD),
-        ("task", "state_is_float64"): (0, 1),
+    STATE = MAZE_STATE
+    STATE_FIELD_BOUNDS = {
+        "agent/position": (0.0, WORLD, ("agent_x", "agent_y")),
+        "goal/position": (0.0, WORLD, ("goal_x", "goal_y")),
+        "task/cached_goal_agent_position": (0.0, WORLD, ()),
+        "task/state_is_float64": (0, 1, ()),
     }
 
     reset_tree_factory = staticmethod(_simple_maze_reset_tree)
@@ -1632,17 +1863,12 @@ class SimplePointMaze(_GymReferencePort):
 
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
-        self._cached_goal_agent_position.copy_(
-            torch.as_tensor(
-                state["task", "cached_goal_agent_position"],
-                device=self.device,
-                dtype=torch.float32,
-            ).reshape(self.B, 2)
+        cached, state_is_float64, agent = self._fields(
+            state, ("task/cached_goal_agent_position", "task/state_is_float64", "agent/position")
         )
-        state_is_float64 = torch.as_tensor(
-            state["task", "state_is_float64"], device=self.device, dtype=torch.bool
-        ).reshape(self.B, 1)
-        agent = torch.as_tensor(state["agent", "position"], device=self.device, dtype=torch.float64).reshape(self.B, 2)
+        self._cached_goal_agent_position.copy_(cached.to(device=self.device, dtype=torch.float32).reshape(self.B, 2))
+        state_is_float64 = state_is_float64.to(device=self.device, dtype=torch.bool).reshape(self.B, 1)
+        agent = agent.to(device=self.device, dtype=torch.float64).reshape(self.B, 2)
         agent = torch.where(state_is_float64, agent, agent.to(torch.float32).to(torch.float64))
         self._agent_position.copy_(agent)
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))
@@ -1858,9 +2084,8 @@ class SimplePointMaze(_GymReferencePort):
         return out
 
     def _outputs(self, state):
-        agent = state["agent", "position"]
-        goal = state["goal", "position"]
-        was64 = state["task", "state_is_float64"].reshape(-1)
+        agent, goal, flags = self._fields(state, ("agent/position", "goal/position", "task/state_is_float64"))
+        was64 = flags.reshape(-1)
         distance32 = torch.linalg.vector_norm(agent.to(torch.float32) - goal, dim=1).to(torch.float64)
         distance64 = torch.linalg.vector_norm(agent - goal.to(torch.float64), dim=1)
         distance = torch.where(was64, distance64, distance32)
@@ -1871,7 +2096,7 @@ class SimplePointMaze(_GymReferencePort):
             torch.ones(n, device=self.device, dtype=torch.float64),
             torch.full((n,), -0.01, device=self.device, dtype=torch.float64),
         )
-        observation = agent.clone() if bool(state["task", "state_is_float64"].any()) else agent.to(torch.float32)
+        observation = agent.clone() if bool(flags.any()) else agent.to(torch.float32)
         return StepResult(
             {
                 "state": state,

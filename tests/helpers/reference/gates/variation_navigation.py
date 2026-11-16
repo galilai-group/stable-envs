@@ -127,7 +127,7 @@ def _rollout(env, refs, seed, steps):
 
 
 def _position(state, leaf):
-    return state[tuple(leaf.split("."))].cpu().numpy().astype(np.float32)
+    return se.get_field(state, leaf).cpu().numpy().astype(np.float32)
 
 
 def _case(env, domain, leaf, seed, explicit):
@@ -213,7 +213,7 @@ def appearance_gate(seed: int = 5, steps: int = 4) -> dict:
                     compare_state(env.step(actions[t - 1], frames=None)["state"], torch.cat(theirs))
                 ours = env.render().cpu().numpy()
                 theirs = np.stack([np.asarray(ref.envs[0].render()) for ref in refs])
-                starts = env.get_state()["agent", "position"].cpu().numpy()
+                starts = se.get_field(env.get_state(), "agent.position").cpu().numpy()
                 frames = _start_frames("piecewise", starts, ours, theirs, _mse_ceiling(env))
                 assert _frames_agree(frames), frames
                 evidence["frames"].append(frames)

@@ -108,7 +108,7 @@ def test_collisions_with_fractional_per_lane_geometry(backend):
                     [100, 130 - 7.25 * step],
                 ]
             )
-            assert_same_state(result["state", "agent", "position"], expected)
+            assert_same_state(se.get_field(result["state"], "agent.position"), expected)
 
 
 def test_sequence_masks_freeze_each_lane_after_success():
@@ -117,7 +117,9 @@ def test_sequence_masks_freeze_each_lane_after_success():
     with se.TwoRoom(num_envs=3, device="cpu") as env:
         env.reset(seed=0, options=options)
         result = env.step(actions, frames=None)
-        assert_same_state(result["state", "agent", "position"], torch.tensor([[65, 112], [70, 112], [90, 112.0]]))
+        assert_same_state(
+            se.get_field(result["state"], "agent.position"), torch.tensor([[65, 112], [70, 112], [90, 112.0]])
+        )
         assert result["valid"].sum(dim=1).tolist() == [1, 2, 6]
 
 
@@ -162,7 +164,7 @@ def test_task_snapshots_and_output_leaves_have_independent_storage(name, device)
         result["info", "proprio"].zero_()
         assert_same_state(result.exclude("info"), held.exclude("info"))
         assert_same_state(result["info", "state"], held["info", "state"])
-        result["state", "target", "position"].zero_()
+        se.get_field(result["state"], "target.position").zero_()
         assert_same_state(result["info", "goal_state"], held["info", "goal_state"])
         assert_same_state(env.get_state(), held["state"])
         modified = result.clone()
@@ -176,11 +178,11 @@ def test_noncontiguous_actions_and_one_lane_offset_views():
         action = torch.arange(8, dtype=torch.float32).reshape(4, 2)[1:2]
         assert action.storage_offset() > 0
         result = env.step(action, frames=None)
-        assert_same_state(result["state", "agent", "position"], torch.tensor([[55.0, 55.0]]))
+        assert_same_state(se.get_field(result["state"], "agent.position"), torch.tensor([[55.0, 55.0]]))
         actions = (torch.arange(20, dtype=torch.float32).reshape(1, 5, 4) / 32)[..., ::2]
         assert not actions.is_contiguous()
         result = env.step(actions, frames=None)
-        assert_same_state(result["state", "agent", "position"], torch.tensor([[61.25, 62.8125]]))
+        assert_same_state(se.get_field(result["state"], "agent.position"), torch.tensor([[61.25, 62.8125]]))
 
 
 @pytest.mark.parametrize("name", ["TwoRoom", "Piecewise"])
@@ -190,7 +192,7 @@ def test_shared_distance_matches_cpu_norm_without_host_conversion(name, monkeypa
     target = np.concatenate((target, np.random.default_rng(7).uniform(14, 209, (512, 2)).astype(np.float32)))
     with se.make(name, num_envs=len(target), device="cpu") as env:
         state = env.reset(seed=0, options={"state": [60, 60], "target_state": target})
-        delta = state["agent", "position"] - state["target", "position"]
+        delta = se.get_field(state, "agent.position") - se.get_field(state, "target.position")
         expected = torch.tensor([float(torch.norm(row)) for row in delta], dtype=torch.float64)
 
         def forbidden(*args, **kwargs):
@@ -221,4 +223,4 @@ def test_continuous_action_multiply_rounds_before_position_addition(backend):
     with se.TwoRoom(device="cpu", simulation_backend=backend) as env:
         env.reset(seed=0, options=options)
         actual = env.step(action, frames=None)
-        assert actual["state", "agent", "position"][0, 0].item() == 48.541664123535156
+        assert se.get_field(actual["state"], "agent.position")[0, 0].item() == 48.541664123535156

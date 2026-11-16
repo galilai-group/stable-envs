@@ -86,6 +86,19 @@ PHYSICS = {
 }
 for _name, _leaves in PHYSICS.items():
     FULL_KEYS[_name] = FULL_KEYS[_name] + [("physics", leaf) for leaf in _leaves]
+#: The State leaves of the navigation cells: groups that hold the fields of FULL_KEYS.
+LEAVES = {
+    **dict.fromkeys(("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones"), [("navigation", "float32")]),
+    "SimplePointMaze": [
+        ("simple_point_maze", "float64"),
+        ("simple_point_maze", "float32"),
+        ("simple_point_maze", "bool"),
+    ],
+}
+
+
+def _field(state, key):
+    return snv.get_field(state, "/".join(key))
 
 
 def _initialize(env, name, seed):
@@ -171,7 +184,7 @@ def test_snapshot_branch_is_bit_identical_to_the_stateful_step(name):
     stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
-        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
+        assert torch.equal(_field(functional, k), _field(stateful, k)), f"{'.'.join(k)} differs"
     env.close()
 
 
@@ -194,13 +207,13 @@ def test_snapshot_branch_does_not_touch_the_env_and_unroll_is_repeated_transitio
     for t in range(4):
         cur = branch_step(env, cur, acts[t])
         for k in FULL_KEYS[name]:
-            assert torch.equal(traj[t][k], cur[k])
+            assert torch.equal(_field(traj[t], k), _field(cur, k))
 
     # Four stateful steps land on the same numbers.
     for t in range(4):
         env.step(acts[t], frames=None)
     for k in FULL_KEYS[name]:
-        assert torch.equal(traj[3][k], env.state[k]), f"{'.'.join(k)} drifted over four steps"
+        assert torch.equal(_field(traj[3], k), _field(env.state, k)), f"{'.'.join(k)} drifted over four steps"
     env.close()
 
 
@@ -238,7 +251,7 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert tuple(env.action_spec.shape) == (env.action_dim,)
     spec = env.state_spec
     assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(
-        FULL_KEYS[name]
+        LEAVES.get(name, FULL_KEYS[name])
     )
     env.close()
 
@@ -345,7 +358,7 @@ def test_snapshot_branch_still_equals_step_after_the_env_has_been_stepped(name):
     stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
-        assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
+        assert torch.equal(_field(functional, k), _field(stateful, k)), f"{'.'.join(k)} differs after five steps"
     env.close()
 
 
@@ -355,10 +368,10 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     env = _env(name)
     _initialize(env, name, 7)
     out = env.step(_actions(env, 4, seed=7), frames=None)
-    held = {k: out["state"][k].clone() for k in FULL_KEYS[name]}
+    held = {k: _field(out["state"], k).clone() for k in FULL_KEYS[name]}
     env.step(_actions(env, 4, seed=8), frames=None)
     for k in FULL_KEYS[name]:
-        assert torch.equal(out["state"][k], held[k]), (
+        assert torch.equal(_field(out["state"], k), held[k]), (
             f"{'.'.join(k)} in a StepResult changed when the env was stepped again"
         )
     env.close()
@@ -379,8 +392,8 @@ def test_step_returns_exactly_env_state(name):
     held = env.state
     assert sorted(out["state"].keys()) == sorted(held.keys())
     for k in FULL_KEYS[name]:
-        assert torch.equal(out["state"][k], held[k]), k
-        assert out["state"][k].dtype == held[k].dtype
+        assert torch.equal(_field(out["state"], k), _field(held, k)), k
+        assert _field(out["state"], k).dtype == _field(held, k).dtype
     env.close()
 
 

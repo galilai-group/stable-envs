@@ -77,6 +77,27 @@ ADOPTED: dict[str, tuple[tuple[str, ...], list[Path]]] = {
         ("current", "static", "anchor", "owned", "recipe", "history"),
         sorted((ROOT / "examples" / "lewm").rglob("*.py")),
     ),
+    "navigation": (
+        ("navigation", "simple_point_maze"),
+        [
+            ROOT / "tests" / path
+            for path in (
+                "gpu/test_navdot_fused.py",
+                "gpu/test_tworoom_jax.py",
+                "integration/test_tworoom_jax_source.py",
+                "unit/test_envs_classic_nav.py",
+                "unit/test_full_state_contract.py",
+                "unit/test_nav_dynamics_variation.py",
+                "unit/test_nav_render_checks.py",
+                "unit/test_nav_tuning_invariance.py",
+                "unit/test_nav_variation_maps.py",
+                "unit/test_navdot_cpu.py",
+                "unit/test_navstep_numba.py",
+                "unit/test_step_capture.py",
+                "unit/test_tworoom_jax.py",
+            )
+        ],
+    ),
 }
 
 FIELDS = [

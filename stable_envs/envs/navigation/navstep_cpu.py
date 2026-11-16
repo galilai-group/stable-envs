@@ -129,36 +129,31 @@ def advance(kind, rows, action, style, cols, active, masked):
 
 @njit(cache=True)
 def state_step(kind, rows, action, style, cols, active, masked):
-    """Advance ``rows`` and return copies of the agent and the other columns, and whether all are finite."""
+    """Advance ``rows`` and return a copy of them, and whether all values are finite."""
     advance(kind, rows, action, style, cols, active, masked)
     n, width = rows.shape
-    agent = np.empty((n, 2), np.float32)
-    rest = np.empty((n, width - 2), np.float32)
+    out = np.empty((n, width), np.float32)
     finite = True
     for i in range(n):
         for j in range(width):
             v = rows[i, j]
             if not np.isfinite(v):
                 finite = False
-            if j < 2:
-                agent[i, j] = v
-            else:
-                rest[i, j - 2] = v
-    return agent, rest, finite
+            out[i, j] = v
+    return out, finite
 
 
 @njit(cache=True)
 def task_step(kind, rows, action, style, cols, active, masked, target, doors):
     """Advance ``rows`` and return state and task outputs of the classes with a hidden target.
 
-    The tuple holds agent, target, observation, proprio, info state, goal state, distance and
-    terminated. ``doors`` appends the TwoRoom door centers to the observation.
+    The tuple holds the State positions (agent, then target), observation, proprio, info state, goal state,
+    distance and terminated. ``doors`` appends the TwoRoom door centers to the observation.
     """
     advance(kind, rows, action, style, cols, active, masked)
     n = rows.shape[0]
     width = 4 + 2 * MAX_DOOR if doors else 4
-    agent = np.empty((n, 2), np.float32)
-    goal = np.empty((n, 2), np.float32)
+    positions = np.empty((n, 4), np.float32)
     observation = np.zeros((n, width), np.float32)
     proprio = np.empty((n, 2), np.float32)
     state = np.empty((n, 2), np.float32)
@@ -170,12 +165,15 @@ def task_step(kind, rows, action, style, cols, active, masked, target, doors):
         y = rows[i, 1]
         tx = target[i, 0]
         ty = target[i, 1]
-        for out in (agent, proprio, state):
+        positions[i, 0] = x
+        positions[i, 1] = y
+        positions[i, 2] = tx
+        positions[i, 3] = ty
+        for out in (proprio, state):
             out[i, 0] = x
             out[i, 1] = y
-        for out in (goal, goal_state):
-            out[i, 0] = tx
-            out[i, 1] = ty
+        goal_state[i, 0] = tx
+        goal_state[i, 1] = ty
         observation[i, 0] = x
         observation[i, 1] = y
         observation[i, 2] = tx
@@ -197,4 +195,4 @@ def task_step(kind, rows, action, style, cols, active, masked, target, doors):
                     p = row[cols[5] + k]
                     observation[i, 4 + 2 * k] = _F32(_CENTER) if axis1 else p
                     observation[i, 5 + 2 * k] = p if axis1 else _F32(_CENTER)
-    return agent, goal, observation, proprio, state, goal_state, distance, terminated
+    return positions, observation, proprio, state, goal_state, distance, terminated

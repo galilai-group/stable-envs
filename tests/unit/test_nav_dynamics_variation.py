@@ -19,8 +19,8 @@ def test_two_room_speed_scales_the_step():
     slow = branch_step(env, state, action)
     env.set_variation({"agent.speed": [5.0]})
     fast = branch_step(env, state, action)
-    dx_slow = float((slow["agent", "position"] - state["agent", "position"])[0, 0])
-    dx_fast = float((fast["agent", "position"] - state["agent", "position"])[0, 0])
+    dx_slow = float((snv.get_field(slow, "agent.position") - snv.get_field(state, "agent.position"))[0, 0])
+    dx_fast = float((snv.get_field(fast, "agent.position") - snv.get_field(state, "agent.position"))[0, 0])
     assert dx_fast > dx_slow > 0
     env.close()
 
@@ -29,11 +29,11 @@ def test_piecewise_zone_bias_shifts_only_the_step_taken_in_that_zone():
     env = snv.Piecewise(num_envs=1, device="cpu")
     state = env.reset(seed=0)
     idle = torch.zeros(1, 2)
-    default = branch_step(env, state, idle)["agent", "position"]
+    default = snv.get_field(branch_step(env, state, idle), "agent.position")
     shifts = []
     for zone in range(4):
         env.set_variation({f"zones.bias_{zone}": [[7.0, 0.0]]})
-        shifts.append(branch_step(env, state, idle)["agent", "position"] - default)
+        shifts.append(snv.get_field(branch_step(env, state, idle), "agent.position") - default)
         env.set_variation({f"zones.bias_{zone}": [list(ZONE_BIAS[zone])]})
     moved = [i for i, shift in enumerate(shifts) if shift.abs().max() > 0]
     assert len(moved) == 1
@@ -63,17 +63,17 @@ def test_reset_leaves_take_one_value_per_lane_and_follow_the_rule():
     starts = np.asarray([[31.25, 47.5], [180.0, 60.0]], np.float32)
     with snv.make("TwoRoom", num_envs=2, device="cpu") as env:
         assert [leaf.path for leaf in env.reset_leaves] == ["agent.position", "target.position"]
-        sampled = env.reset(seed=3)["agent", "position"]
+        sampled = snv.get_field(env.reset(seed=3), "agent.position")
         state = env.reset(seed=3, options={"variation_values": {"agent.position": starts}})
-        np.testing.assert_array_equal(state["agent", "position"].numpy(), starts)
-        assert torch.equal(env.reset(seed=3)["agent", "position"], sampled)
+        np.testing.assert_array_equal(snv.get_field(state, "agent.position").numpy(), starts)
+        assert torch.equal(snv.get_field(env.reset(seed=3), "agent.position"), sampled)
         state = env.reset(seed=3, options={"variation": []})
-        np.testing.assert_array_equal(state["agent", "position"].numpy(), [[60.0, 112.0]] * 2)
-        np.testing.assert_array_equal(state["target", "position"].numpy(), [[164.0, 112.0]] * 2)
+        np.testing.assert_array_equal(snv.get_field(state, "agent.position").numpy(), [[60.0, 112.0]] * 2)
+        np.testing.assert_array_equal(snv.get_field(state, "target.position").numpy(), [[164.0, 112.0]] * 2)
         with pytest.raises(ValueError, match="per lane"):
             env.reset(options={"variation_values": {"agent.position": np.zeros((3, 2))}})
     with snv.make("SimplePointMaze", num_envs=2, device="cpu") as env:
-        goals = env.reset(seed=4, options={"variation": ["goal.position"]})["goal", "position"].numpy()
+        goals = snv.get_field(env.reset(seed=4, options={"variation": ["goal.position"]}), "goal.position").numpy()
         assert len({tuple(row) for row in goals.tolist()} - {(4.5, 4.5)}) == 2
         state = env.reset(seed=4, options={"variation": [], "variation_values": {"goal.position": [2.5, 1.5]}})
-        np.testing.assert_array_equal(state["goal", "position"].numpy(), [[2.5, 1.5]] * 2)
+        np.testing.assert_array_equal(snv.get_field(state, "goal.position").numpy(), [[2.5, 1.5]] * 2)

@@ -71,7 +71,7 @@ def test_goal_frames_near_the_frame_edge_match_a_full_figure():
     edge = [(0.02, 2.5), (4.99, 2.5), (2.5, 0.0), (2.5, 4.97), (0.1, 0.1), (4.9, 4.95), (0.13, 2.0), (2.6, 4.87)]
     with snv.make("SimplePointMaze", num_envs=len(edge), device="cpu") as env:
         state = env.reset(seed=2)
-        state["task", "cached_goal_agent_position"] = torch.tensor(edge, dtype=torch.float32)
+        snv.set_field(state, "task.cached_goal_agent_position", torch.tensor(edge, dtype=torch.float32))
         env.set_state(state)
         _assert_goal_frames(env)
 
@@ -92,7 +92,7 @@ def test_finished_lanes_zero_the_goal_after_their_end():
     actions = torch.zeros(3, 4, 2)
     with snv.make("SimplePointMaze", num_envs=3, device="cpu") as env:
         state = env.reset(seed=8)
-        state["agent", "position"][1] = state["goal", "position"][1].to(torch.float64)
+        snv.get_field(state, "agent.position")[1] = snv.get_field(state, "goal.position")[1].to(torch.float64)
         env.set_state(state)
         goal = env._cached_goal_image.clone()
         out = env.step(actions, frames=None)
@@ -111,7 +111,9 @@ def test_a_held_padded_goal_is_not_written_by_later_steps():
         held = []
         for lane in (1, 0, 2):
             state = start.clone()
-            state["agent", "position"][lane] = state["goal", "position"][lane].to(torch.float64)
+            snv.get_field(state, "agent.position")[lane] = snv.get_field(state, "goal.position")[lane].to(
+                torch.float64
+            )
             env.set_state(state)
             held.append((lane, env.step(actions, frames=None)))
             env.step(actions, frames=None)
@@ -125,7 +127,7 @@ def test_a_dropped_padded_goal_lends_its_memory_to_the_next_step():
     actions = torch.zeros(3, 4, 2)
     with snv.make("SimplePointMaze", num_envs=3, device="cpu") as env:
         state = env.reset(seed=8)
-        state["agent", "position"][1] = state["goal", "position"][1].to(torch.float64)
+        snv.get_field(state, "agent.position")[1] = snv.get_field(state, "goal.position")[1].to(torch.float64)
         env.set_state(state)
         first = env.step(actions, frames=None)["info", "goal"].data_ptr()
         held = env.step(actions, frames=None)

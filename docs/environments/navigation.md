@@ -18,6 +18,26 @@ TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones run with the core install. 
 
 The agent moves to a target. TwoRoom, Piecewise and SimplePointMaze terminate the episode when it reaches the target, and TwoRoomTarget and PiecewiseZones return only the state, with no reward or episode flags. Each class in [Classes](#classes) gives its arena and its success condition.
 
+## State
+
+The state is [folded](../api/index.md#read-a-state-field). The fields of one dtype are in one leaf:
+
+| Class | Leaf | Fields |
+|---|---|---|
+| TwoRoom, TwoRoomTarget, Piecewise | `navigation/float32` | `agent/position`, `target/position` |
+| PiecewiseZones | `navigation/float32` | `agent/position` |
+| SimplePointMaze | `simple_point_maze/float64` | `agent/position` |
+| | `simple_point_maze/float32` | `goal/position`, `task/cached_goal_agent_position` |
+| | `simple_point_maze/bool` | `task/state_is_float64` |
+
+Read a field by name:
+
+```python
+with snv.TwoRoom(num_envs=8, device="cpu") as env:
+    state = env.reset(seed=0)
+    print(snv.get_field(state, "target.position").shape)  # torch.Size([8, 2])
+```
+
 ## Simulation
 
 TwoRoomTarget, Piecewise and PiecewiseZones take `simulation_backend`. `"auto"` (the default) steps CPU batches with the Numba kernel when Numba imports and uses Torch otherwise, and `"torch"` and `"numba"` select one implementation. Both give the same state and task outputs.
