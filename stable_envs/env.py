@@ -396,6 +396,10 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per lane when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
+    #: ``{device type: Rungs("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
+    #: ``"cpu"`` entry: on a device whose rungs differ, a batch of fewer than ``min_rows`` frames draws with the CPU
+    #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
+    render_rungs: Mapping[str, Any] | None = None
     #: The rows ``render`` checked for the call in progress; ``_render`` does not check them again.
     _checked_rows: torch.Tensor | None = None
 
@@ -889,6 +893,8 @@ class Env:
         """
         B = int(self.B if batch is None else batch)
         variation, style = _split_appearance(variation, style)
+        if isinstance(style, StyleTensor) and not variation:
+            return style.for_batch(B, owner=f"{type(self).__name__}.render")
         if style is None:
             current = self._style.for_batch(B, owner=f"{type(self).__name__}.render")
             if not variation:
@@ -1457,6 +1463,10 @@ class Env:
         closer = getattr(self, "_close", None)
         if callable(closer):
             closer()
+        if "_host_twin" in self.__dict__:
+            from ._execution import host_render
+
+            host_render.close(self)
 
     def __enter__(self) -> Env:
         return self

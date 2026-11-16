@@ -10,6 +10,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.state_schema import Field, StateSchema
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
+from ..._execution import host_render
 from ..._execution.backends import Rungs, measure_env, select_backend
 from ...env import Env, ResetLeaf, StepResult, check_drawn_fields, check_states
 from ...registry import register
@@ -203,6 +204,11 @@ _NO_MASK = np.zeros(0, np.bool_)
 #: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and it is faster than Numba
 #: from 8192 environments on both GPU types.
 TWO_ROOM_CUDA_MIN_ENVS: int | None = 8192
+
+#: Shipped CUDA render switch point of TwoRoom and TwoRoomTarget: the smallest batch that draws with the Triton
+#: compositor; smaller batches draw with the Numba compositor on the CPU and move the frames to CUDA in one copy.
+#: docs/performance-tuning.md (Renderers) says how the shipped value was measured.
+TWO_ROOM_CUDA_RENDER_MIN_ROWS: int | None = 64  # RTX 3090 64, RTX A5000 64
 
 
 def _numba_available() -> bool:
@@ -1030,6 +1036,11 @@ class _TorchNavBase(_GymReferencePort):
                 )
             img = out.view(n, IMG, IMG, 3)
         else:
+            img = None
+        if host_render.on_host(self, "navigation", n, self.backend):
+            img = host_render.draw_rows(self, s, sty, IMG, 1, img)
+            return img.view(*lead, IMG, IMG, 3) if lead else img
+        if img is None:
             img = torch.empty((n, IMG, IMG, 3), dtype=torch.uint8, device=self.device)
 
         # Chunks bound intermediate image memory independently of the batch size.
@@ -1184,6 +1195,7 @@ class _TorchNavBase(_GymReferencePort):
 
 class _TwoRoomBase(_TorchNavBase):
     reference_id = None
+    render_rungs = {"cpu": Rungs("cpu", "cpu"), "cuda": Rungs("cpu", "cuda", TWO_ROOM_CUDA_RENDER_MIN_ROWS)}
     _numba_paths = (
         "agent.speed",
         "agent.radius",

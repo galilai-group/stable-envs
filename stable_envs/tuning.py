@@ -34,6 +34,7 @@ __all__ = [
     "describe",
     "cache_path",
     "simulation_paths",
+    "render_paths",
     "time_backend",
 ]
 
@@ -153,6 +154,7 @@ KNOBS: dict[str, Knob] = {
     for k in (
         Knob("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
         Knob("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
+        Knob("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
         Knob("worker_min_lanes", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Knob("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
         Knob("render_workers", 8, _RENDER, "cpu", "n0", "cpus", "Most worker processes of a CPU render batch on Linux; 0 or 1 draws in-process."),
@@ -303,6 +305,15 @@ def cache_path(device="cpu") -> Path | None:
     where = _dev(device)
     if where is None:
         return None
+    return _cache_file(where, os.environ.get("XDG_CACHE_HOME", ""))
+
+
+@cache
+def _cache_file(where: str, base: str) -> Path:
+    """The cache file of ``where`` while ``$XDG_CACHE_HOME`` is ``base``.
+
+    One Path per pair, so that each ``read_cache`` call reuses its string form.
+    """
     slug = re.sub(r"[^a-z0-9._-]+", "-", stamp(where)["device"].lower()).strip("-") or "device"
     return _cache_dir() / "tuning" / f"{slug}.json"
 
@@ -459,6 +470,22 @@ def lookup(name, *, path=None, size=None, batch=None, device=None, default=_MISS
     return (knob.fallback, "fallback") if default is _MISSING else (default, "default")
 
 
+def sources_state(name: str, device=None) -> tuple:
+    """Return a value that changes whenever a source of knob ``name`` on ``device`` may change.
+
+    The sources are the ``override`` blocks of this thread, ``set``, the environment variable and the cache file.
+    Callers keep a choice they made from the knob while this value stays equal.
+    """
+    knob = KNOBS[name]
+    where = _where(knob, device)
+    path = None if where is None else cache_path(where)
+    try:
+        mtime = path.stat().st_mtime_ns if path is not None else None
+    except OSError:
+        mtime = None
+    return (_scopes.get(), _set.get(name), os.environ.get(knob.env_var), path, mtime)
+
+
 def get(
     name: str,
     *,
@@ -612,6 +639,7 @@ def _clear_caches() -> None:
     _noticed.clear()
     _cuda.cache_clear()
     stamp.cache_clear()
+    _cache_file.cache_clear()
     _environ._parsed.cache_clear()
 
 
@@ -626,6 +654,20 @@ def simulation_paths(device="cuda"):
     from ._execution.backends import registered
 
     return registered(device)
+
+
+def render_paths(device="cuda"):
+    """Return ``(path, renderers, measure)`` of the render paths that drew in this process on ``device``.
+
+    Classes with a CPU and a GPU renderer register them when they draw; ``renderers`` has the ``small`` (CPU) and
+    ``large`` renderer names, and ``time_backend`` times either one.
+
+    Args:
+        device: ``"cpu"`` or ``"cuda"``.
+    """
+    from ._execution.backends import RENDER_KNOB, registered
+
+    return registered(device, knob=RENDER_KNOB)
 
 
 def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:
