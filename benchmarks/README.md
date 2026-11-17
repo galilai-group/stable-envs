@@ -146,8 +146,8 @@ Install the `bench` group, and the extra and the `pin-*` group of the family, as
 [Comparison with stable-worldmodel](#comparison-with-stable-worldmodel). The paper used torch 2.14.1+cu126.
 Run every command from the repository root with these settings:
 
-- `PYTHONPATH=.`, `SDL_VIDEODRIVER=dummy` and `STEP_STATES=all`. With `STEP_STATES=all`, ours calls
-  `env.step(actions)` with its default `states` argument.
+- `PYTHONPATH=.` and `SDL_VIDEODRIVER=dummy`. Ours calls `env.step(actions)` with its default `states` argument.
+  `STEP_STATES=none` passes `states=None` instead. The paper did not use it.
 - `WARMUP_MAX_S=300`. This stops the warm-up step count of a slow source after 300 s.
 - `taskset -c 0-7`. Each process, and each source worker that it starts, uses the same 8 cores.
 - CPU cells: software OpenGL, that is `xvfb-run -a` with `LIBGL_ALWAYS_SOFTWARE=1 MUJOCO_GL=glfw PYOPENGL_PLATFORM=glx`.

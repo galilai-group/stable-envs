@@ -558,8 +558,8 @@ def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:
     sync = torch.cuda.synchronize if dev.startswith("cuda") else None
     acts = torch.as_tensor(actions, device=dev)
     frames = slice(None) if render else None
-    # STEP_STATES=all times step() with its default states=slice(None) (a state per action) instead of states=None.
-    states = slice(None) if os.environ.get("STEP_STATES") == "all" else None
+    # step() keeps its default states=slice(None) (a state per action); STEP_STATES=none times states=None.
+    states = None if os.environ.get("STEP_STATES") == "none" else slice(None)
 
     def play(groups):
         for s in groups:
