@@ -472,6 +472,7 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._rest_grid = None if self._rest is None else RestGrid(*self._rest)
         self._goal = np.zeros((self.num_envs, 3))
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
+        self._all = np.arange(self.num_envs)
         self._last = None
         self._layouts: dict[str, StateLayout] = {}
         # The packed task and RNG groups, which change only at reset, restore and teleport.
@@ -544,20 +545,19 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._random.load(decoded)
         self._last = self._host_groups = None
 
-    def _resting(self, target, ids):
-        """Point environments whose step leaves the ball where it is (see ``_resting_instances``)."""
-        return self._rest_grid.resting(target[ids])
-
     def _advance(self, actions, ids):
         b, task = self._live, self.task
+        # Every environment steps in most calls; a slice selects them without index copies.
+        rows = slice(None) if ids is self._all else ids
         if self.loco == "point":
             target = b.qpos + 0.2 * actions
-            b.qpos[ids] = target[ids]
-            b.qvel[ids] = 0.0
+            b.qpos[rows] = target[rows]
+            b.qvel[rows] = 0.0
             if self._rest is not None:
-                resting = self._resting(target, ids)
-                idle, ids = ids[resting], ids[~resting]
-                if idle.size:
+                # Point environments whose step leaves the ball where it is (see ``_resting_instances``).
+                resting = self._rest_grid.resting(target[rows])
+                if resting.any():
+                    idle, ids = ids[resting], ids[~resting]
                     h = task.model.opt.timestep
                     time = b.time[idle]
                     for _ in range(task.frame_skip):
@@ -565,10 +565,10 @@ class OGBMazeBatchAdapter(_MazeInstances):
                     b.time[idle] = time
                     b.qacc_warmstart[idle] = 0.0
         else:
-            b.ctrl[ids] = actions[ids]
+            b.ctrl[rows] = actions[rows]
         if ids.size:
             stage = mujoco.mjtStage.mjSTAGE_VEL if self._kinematic else mujoco.mjtStage.mjSTAGE_NONE
-            self.b.step(ids, task.frame_skip, stage=stage)
+            self.b.step(None if ids is self._all else ids, task.frame_skip, stage=stage)
 
     def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
@@ -599,7 +599,7 @@ class OGBMazeBatchAdapter(_MazeInstances):
         """Advance the ``active`` environments (all for None) and return the step's outputs as new host arrays."""
         if active is not None and self._last is None:
             raise RuntimeError("An active mask needs a previous step")
-        ids = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        ids = self._all if active is None else np.flatnonzero(active)
         b, out = self._live, self._outputs
         prev_qpos, prev_qvel = b.qpos.copy(), b.qvel.copy()
         goal = self._goal[:, :2]
