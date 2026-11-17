@@ -95,6 +95,37 @@ def test_every_environment_matches_upstream_over_a_long_rollout(name, device):
         assert not mse.any(), f"CUDA frames differ from upstream frames on the GPU in {int((mse > 0).sum())} frames"
 
 
+@pytest.mark.parametrize("name", NAMES)
+def test_the_unrolled_cuda_step_equals_the_step_with_loops(name):
+    """The CUDA step program with its loops unrolled gives every output of the program with loops, bit for bit."""
+    from stable_envs.envs.craftax.kernel import GPU_UNROLL
+
+    rng = np.random.default_rng(SEED)
+    with se.make(name, num_envs=NUM_ENVS, device="cuda") as env:
+        k, instances = env._k, env._instances
+        function, donate = k._functions[("step", True, True, False)]
+        programs = [
+            jax.jit(function, donate_argnums=donate, compiler_options=GPU_UNROLL),
+            jax.jit(function, donate_argnums=donate),
+        ]
+        live = []
+        for _ in programs:
+            env.reset(seed=SEED)
+            live.append([env._keys, env._state])
+            env._state = None
+        active = k.everyone(instances)
+        for t in range(STEPS):
+            drawn = rng.integers(0, env.action_high + 1, NUM_ENVS)
+            actions = instances.put(torch.as_tensor(drawn, dtype=torch.int32, device="cuda"))
+            outs = []
+            for program, box in zip(programs, live):
+                out = program(box[0], box[1], actions, active)
+                box[1], box[0] = out[0], out[1]
+                outs.append(jax.tree.leaves(out))
+            for got, expected in zip(*outs, strict=True):
+                np.testing.assert_array_equal(np.asarray(got), np.asarray(expected), err_msg=f"step {t}")
+
+
 @pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxPixels"])
 def test_a_cuda_step_with_host_actions_reads_nothing_back_to_the_host(name):
     """Host actions are checked on the host, so the step needs no flag from the device."""
