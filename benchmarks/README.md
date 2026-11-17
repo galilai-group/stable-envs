@@ -142,12 +142,16 @@ Other classes use the library of their `reference_id`.
 
 ### Setup
 
-Install the `bench` group, and the extra and the `pin-*` group of the family, as in
+Check out the `paper-v1` tag. Install the `bench` group, and the extra and the `pin-*` group of the family, as in
 [Comparison with stable-worldmodel](#comparison-with-stable-worldmodel). The paper used torch 2.14.1+cu126.
 Run every command from the repository root with these settings:
 
 - `PYTHONPATH=.` and `SDL_VIDEODRIVER=dummy`. Ours calls `env.step(actions)` with its default `states` argument.
   `STEP_STATES=none` passes `states=None` instead. The paper did not use it.
+- GPU cells step and draw on the GPU backend of the class. Both scripts set `STABLE_ENVS_LARGE_BACKEND_MIN_ENVS=1`
+  and `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS=1` unless they are already set. With `SNV_AUTO_BACKENDS=1`, the scripts
+  keep the switch points of the library instead: a CUDA batch below a switch point then steps or draws on the CPU
+  and copies the result to CUDA. The paper did not use it.
 - `WARMUP_MAX_S=300`. This stops the warm-up step count of a slow source after 300 s.
 - `taskset -c 0-7`. Each process, and each source worker that it starts, uses the same 8 cores.
 - CPU cells: software OpenGL, that is `xvfb-run -a` with `LIBGL_ALWAYS_SOFTWARE=1 MUJOCO_GL=glfw PYOPENGL_PLATFORM=glx`.
@@ -163,7 +167,8 @@ The cells use B = 1, 16 and 128 and frames of 224 x 224. In the commands below, 
 ### Timing
 
 - Each command below is one cell and runs in its own process.
-- Ours uses the default keyword arguments of `snv.make` and one action per `step` call (`--chunks 1`).
+- Ours uses the default keyword arguments of `snv.make` and one action per `step` call (`--chunks 1`). GPU cells
+  set the switch points to 1, as in [Setup](#setup).
 - Each cell warms up for 2 s and at least 20 steps per environment (rendering only: 20 batches).
 - Then the script times `R` windows of at least 3 s and reports the median rate. All window rates are in the JSON
   file.

@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from benchmarks.offline_sweep import WARMUP_S, _class, _cycle, _host, _sources, _timed
+from benchmarks.offline_sweep import WARMUP_S, _class, _cycle, _host, _sources, _timed, gpu_backends
 
 #: Constructor keyword arguments of source gym ids that need them.
 SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {"resolution": 224}}
@@ -817,6 +817,7 @@ def main() -> None:
         help="compare the source workers' frames and a stable-envs rollout with one-env source replays",
     )
     args = p.parse_args()
+    gpu_backends()
     {"dataset": cmd_dataset, "run": cmd_run}[args.cmd](args)
 
 

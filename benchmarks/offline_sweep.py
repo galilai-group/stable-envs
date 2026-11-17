@@ -23,6 +23,17 @@ ROOT = Path(__file__).resolve().parents[1]
 WARMUP_S = 2.0
 
 
+def gpu_backends() -> None:
+    """Step and draw every CUDA batch on its GPU backend, as the paper's GPU rows do, unless SNV_AUTO_BACKENDS=1.
+
+    With ``device="cuda"`` and the defaults, a batch below a switch point steps or draws on the CPU and copies the
+    result to CUDA. A value that the caller already set for either variable is kept.
+    """
+    if os.environ.get("SNV_AUTO_BACKENDS") != "1":
+        os.environ.setdefault("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", "1")
+        os.environ.setdefault("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS", "1")
+
+
 def _host() -> dict:
     out = {
         "host": platform.node(),
@@ -605,6 +616,7 @@ def main() -> None:
     m.add_argument("--keep", default=None, help="save the worst, median and first frame pairs to this directory")
     m.add_argument("--output", required=True)
     args = p.parse_args()
+    gpu_backends()
     {
         "states": cmd_states,
         "ours": cmd_ours,
