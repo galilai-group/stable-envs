@@ -205,7 +205,7 @@ def dmc_factory(monkeypatch, tmp_path):
     monkeypatch.delenv("STABLE_ENVS_DMC_THREADS", raising=False)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.setattr(factory, "make_local", lambda *args: None)
-    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda instances, task, threads: threads)
+    monkeypatch.setattr(factory, "DMCBatchAdapter", lambda instances, task, threads, reset_threads: threads)
     monkeypatch.setattr(factory, "ENVS_PER_THREAD", {})
     tuning.reset()
     tuning._clear_caches()
