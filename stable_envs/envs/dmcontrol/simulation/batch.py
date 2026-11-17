@@ -51,7 +51,7 @@ def _outside(x, lower, upper, margin):
 
 
 def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
-    """dm_control's ``rewards.tolerance`` on environment arrays.
+    """dm_control's ``rewards.tolerance`` of a NumPy array ``x``, one value per element; not for scalars.
 
     The gaussian, linear and quadratic sigmoids run dm_control's array operations in its order, without its
     argument checks; the other sigmoids call dm_control.
@@ -81,7 +81,10 @@ def _libm_square(x):
 
 
 def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
-    """``rewards.tolerance`` of each environment's scalar, for the gaussian and long_tail sigmoids."""
+    """``rewards.tolerance`` of each element of the NumPy array ``x`` as dm_control computes it for one scalar.
+
+    Only the gaussian and long_tail sigmoids.
+    """
     if sigmoid not in ("gaussian", "long_tail"):
         raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
     distance, in_bounds = _outside(x, *bounds, margin)

@@ -45,7 +45,6 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - A Fetch step of one action on `mujoco.batch` puts the outputs, the state and the `states` into one host buffer and moves them in one copy, as DM Control does. On CUDA, a step at 16 environments takes about 30 % less time.
 - The DM Control rewards compute dm_control's `tolerance` with the same NumPy operations in the same order, without its argument checks, and without the in-bounds mask when both bounds are 0. The results do not change. A Cartpole Balance step of one environment on the CPU takes about 20 % less time.
 - The DM Control Cheetah reset runs its 199 settling steps on a `mujoco.batch` with `dmc_threads` threads, not on the step batch, which has fewer threads. The results do not change.
-- With `simulation_backend="auto"` on CUDA, DM Control Cheetah, Finger, Point Mass, Quadruped and Reacher step batches of fewer than 256 environments with native MuJoCo. On an NVIDIA L40S host, native MuJoCo was faster than MuJoCo Warp at every batch up to 128 for these tasks. See [Physics backends](https://galilai-group.github.io/stable-envs/performance-tuning/#physics-backends).
 
 ### Fixed
 

@@ -55,7 +55,7 @@ Read a field with `snv.get_field(state, "qpos")`, and write a field with `snv.se
 ```python
 # needs the dmcontrol-gpu extra; CUDA only
 with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # native: below the shipped switch point of 256
+    print(env.simulation_backend)  # native: below the shipped switch point of 128
 
 with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="mjwarp") as env:
     print(env.simulation_backend)  # mjwarp

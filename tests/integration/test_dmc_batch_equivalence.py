@@ -11,8 +11,9 @@ pytest.importorskip("dm_control")
 pytest.importorskip("mujoco.batch")
 
 from stable_envs._core.state_schema import get_field, set_field  # noqa: E402
-from stable_envs.envs.dmcontrol.simulation import first_family  # noqa: E402
-from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES, make_batch, make_local  # noqa: E402
+from stable_envs.envs.dmcontrol.simulation import factory, first_family  # noqa: E402
+from stable_envs.envs.dmcontrol.simulation.batch import DMCBatchAdapter  # noqa: E402
+from stable_envs.envs.dmcontrol.simulation.factory import BATCH_TASKS, FACTORIES, make_batch, make_local  # noqa: E402
 from stable_envs.envs.dmcontrol.simulation.physics import LEAVES  # noqa: E402
 from tests.helpers.process_equivalence import assert_process_matches_local  # noqa: E402
 from tests.helpers.reference.semantics import assert_same_state  # noqa: E402
@@ -86,6 +87,29 @@ def test_batch_matches_local(domain):
         actions,
         counts=(1, 2, 5),
         foreign=foreign,
+    )
+
+
+@pytest.mark.parametrize("threads,reset_threads", [(1, 5), (2, 3), (None, None)])
+def test_cheetah_batch_settles_resets_on_its_own_threads(monkeypatch, threads, reset_threads):
+    """The settling batch of a Cheetah reset, with more threads than the step batch, gives dm_control's resets."""
+
+    def settling(_):
+        if threads is None:
+            # Built as the default builds it: as many reset threads as CPUs, fewer step threads.
+            monkeypatch.setattr(factory, "cpu_limit", lambda: 8)
+            adapter = make_batch("cheetah", 5, seed=17)
+        else:
+            adapter = DMCBatchAdapter(
+                make_local("cheetah", 5, seed=17), BATCH_TASKS["cheetah"], threads, reset_threads
+            )
+        assert adapter._settle is not None
+        assert adapter._settle.nthread > adapter.b.nthread
+        return adapter
+
+    foreign, actions = _foreign_and_actions("cheetah")
+    assert_process_matches_local(
+        lambda: make_local("cheetah", 5, seed=17), settling, actions, counts=(1,), foreign=foreign
     )
 
 
