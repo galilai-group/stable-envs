@@ -784,7 +784,8 @@ class _HiddenTargetSemantics:
     _numba_observation = _observation
 
     def _task_tensors(self, agent, target, style=None):
-        observation = self._observation(agent, target, style)
+        # The hook takes two arguments unless a graph step passes its Variation rows.
+        observation = self._observation(agent, target) if style is None else self._observation(agent, target, style)
         # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
         # one float32 rounding, then round sqrt. Reassociation can flip success at 16 px.
         delta = (agent - target).detach().double()
