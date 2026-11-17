@@ -310,8 +310,8 @@ class MazeOutputs:
         self.task = task
         tp = task.teleport
         if tp is not None:
-            self.teleport_in = [np.array([x, y]) for x, y in tp["teleport_in_xys"]]
-            self.teleport_out = [np.array(xy) for xy in tp["teleport_out_xys"]]
+            self.teleport_in = np.array([[x, y] for x, y in tp["teleport_in_xys"]], np.float64)
+            self.teleport_out = np.array([np.array(xy) for xy in tp["teleport_out_xys"]])
             self.teleport_reach = tp["teleport_radius"] * 1.5
 
     def success(self, xy, goal):
@@ -333,13 +333,12 @@ class MazeOutputs:
         """Return ``(environments, destinations)`` that the source teleports after this step, drawing their RNGs."""
         if self.task.teleport is None or not len(ids):
             return np.zeros(0, np.int64), np.zeros((0, 2))
-        near = np.zeros(len(xy), bool)
-        for centre in self.teleport_in:
-            near |= norm_within(xy - centre, self.teleport_reach)
+        diff = (xy[:, None] - self.teleport_in).reshape(-1, 2)
+        near = norm_within(diff, self.teleport_reach).reshape(len(xy), -1).any(1)
         instances = np.asarray(ids)[near[ids]]
-        return instances, np.stack(self.teleport_out)[rand.mt.randint(instances, 0, len(self.teleport_out))].reshape(
-            -1, 2
-        )
+        if not instances.size:
+            return instances, np.zeros((0, 2))
+        return instances, self.teleport_out[rand.mt.randint(instances, 0, len(self.teleport_out))]
 
 
 def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
