@@ -807,7 +807,13 @@ class _HiddenTargetSemantics:
         }
 
     def _outputs(self, state, style=None):
-        values = self._task_tensors(*self._fields(state, ("agent/position", "target/position")), style)
+        fields = self._fields(state, ("agent/position", "target/position"))
+        if style is None:
+            values = self._task_tensors(*fields)
+        else:
+            # A graph step captures the class's own task code: the graph replays it in one launch, and compiling
+            # it again for the graph's Variation rows would spend the compiler's recompile budget.
+            values = type(self)._task_tensors(self, *fields, style)
         return build_tensordict({"state": state, **values}, state.batch_size, self.device)
 
     @torch.no_grad()
