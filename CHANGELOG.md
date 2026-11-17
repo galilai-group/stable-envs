@@ -23,7 +23,8 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
-- `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. They replace `benchmarks/offline_sweep.py` and `benchmarks/online_ladder.py`. The `bench` dependency group installs stable-worldmodel.
+- `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
+- `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.
 - `examples/lewm/throughput.py` measures LeWM training speed and GPU use with stored frames, the stable-worldmodel renderer and stable-envs.
 - The Craftax classes have physics variation: the variation leaves set fields of the upstream `EnvParams` for each environment, and the state keeps the values, so `set_state` restores them.
 - `snv.FrameLoader(env, states, batch_size)` yields the frames of stored States or rows a batch at a time. It draws many batches in one `env.render` call, with a chunk size that it picks from free device memory and caps at the environment's `render_ahead_rows`, so small batches draw at the per-frame cost of a large batch. Each batch has the same bytes as `env.render` of its states, except for `OGBCube` on CUDA, where a few pixels differ by 1 level.
