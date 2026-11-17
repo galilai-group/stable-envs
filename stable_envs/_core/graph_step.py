@@ -108,8 +108,9 @@ class GraphStep:
     ``compute(actions, *sources)`` advances every environment by the ``(num_envs, ...)`` actions and returns a
     TensorDict with the ``state`` and the task outputs. It must only launch device work: no host reads and no shapes
     that depend on values. ``live()`` returns the tensors it writes. The first call runs ``compute`` once to learn
-    the result layout and puts them back. ``key()`` returns a value that changes when ``compute`` would read or write
-    other tensors; a new key captures again.
+    the result layout and puts them back. A replay writes them in place without bumping their version counters.
+    ``key()`` returns a value that changes when ``compute`` would read or write other tensors; a new key captures
+    again.
 
     ``sources()``, when given, returns tensors that ``compute`` reads through copies the graph owns, such as the
     Variation rows, which a new Variation replaces. A replay first copies a source that is a new tensor or was
@@ -129,8 +130,8 @@ class GraphStep:
         """The step result of ``actions``, or None when the step can't be captured."""
         if self.failed:
             return None
-        sources = () if self._sources is None else tuple(self._sources())
-        key = (self._key(), actions.dtype, tuple(actions.shape), tuple(tuple(s.shape) for s in sources))
+        sources = () if self._sources is None else self._sources()
+        key = (self._key(), actions.dtype, actions.shape, *[source.shape for source in sources])
         entry = self._graphs.get(key)
         if entry is None:
             if len(self._graphs) >= 8:
@@ -163,8 +164,6 @@ class GraphStep:
         else:
             with torch.cuda.device(self.device):
                 graph.replay()
-        # In-place writes of a replay don't bump version counters; caches keyed on them must see the step.
-        torch.autograd.graph.increment_version(self._live())
         return build(buffer.clone(), extra)
 
     def _capture(self, actions: torch.Tensor, sources):
