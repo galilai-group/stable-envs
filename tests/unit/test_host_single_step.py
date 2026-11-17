@@ -26,6 +26,18 @@ FAMILIES = [
     pytest.param("PointMazeMediumNavigate", {}, marks=pytest.mark.family("ogbench")),
     pytest.param("PointMazeTeleportNavigate", {}, marks=pytest.mark.family("ogbench")),
     pytest.param("HumanoidMazeMediumNavigate", {}, marks=pytest.mark.family("ogbench")),
+    pytest.param("TwoRoomTarget", {"simulation_backend": "numba"}, marks=pytest.mark.family("navigation")),
+    pytest.param("PiecewiseZones", {"simulation_backend": "numba"}, marks=pytest.mark.family("navigation")),
+    *(
+        pytest.param(name, {"simulation_backend": backend}, marks=pytest.mark.family("classic"), id=f"{name}-{backend}")
+        for name, backend in (
+            ("CartPole", "numba"),
+            ("Acrobot", "gym"),
+            ("Pendulum", "numpy"),
+            ("MountainCarContinuous", "gym"),
+            ("MountainCarContinuous", "numpy"),
+        )
+    ),
 ]
 CALLS = [
     {"states": None, "frames": None},

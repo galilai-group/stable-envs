@@ -337,7 +337,8 @@ def _host_single_step(env, actions, states, final_state):
     microseconds, so the call path is a large part of it.
     """
     host_step = getattr(env, "_host_step", None)
-    if host_step is None or getattr(env, "_shared_outputs", ()):
+    # ``move`` copies every leaf it gets, so a family with shared outputs builds its result itself and owns it.
+    if host_step is None or (getattr(env, "_shared_outputs", ()) and not getattr(env, "_step_outputs_owned", False)):
         return None
     acts, sequence = _actions(env, actions)
     if sequence:
@@ -354,6 +355,8 @@ def _host_single_step(env, actions, states, final_state):
     # A family may leave the State out of ``leaves`` when the result doesn't hold it; on an accelerator the family
     # can read the moved State, so it always comes.
     move.needs_state = final_state or state_indices is not None or env.device.type != "cpu"
+    # A family that builds the result on the device itself reads the shape of the result from these.
+    move.sequence, move.state_indices, move.final_state = sequence, state_indices, final_state
     return host_step(acts, move)
 
 
@@ -489,7 +492,8 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     advance = getattr(env, "_advance_without_snapshot", env._step)
     outputs_owned = getattr(env, "_step_outputs_owned", False)
     shared = tuple(getattr(env, "_shared_outputs", ()))
-    if length == 1 and frame_indices is None and pipeline is None and not shared:
+    # Owned outputs pass through a single step as they are, so shared outputs need no padding copy.
+    if length == 1 and frame_indices is None and pipeline is None and (not shared or outputs_owned):
         return _single_step(env, acts[:, 0] if sequence else acts, sequence, state_indices, final_state, advance)
     history, saved_states, saved_frames, validity = [], {}, {}, []
     # Draws the live environments without rebuilding them from the state snapshot.

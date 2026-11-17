@@ -21,6 +21,7 @@ from gymnasium.envs.classic_control import utils as gym_utils
 from tensordict import TensorDict
 
 from ...._core.config import log
+from ...._core.graph_step import result_builder
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from . import pcg
@@ -54,6 +55,8 @@ _SIM_NAMES = {
 _RENDER_COLUMNS = {"cartpole": (0, 2), "pendulum": (0, 2), "acrobot": (0, 1), "mountain_car": (0,)}
 _RENDER_COLUMNS["mountain_car_continuous"] = _RENDER_COLUMNS["mountain_car"]
 _TORCH = _Torch(torch.device("cpu"))
+#: Prefix of the packed-buffer regions that hold the second copy of each State group.
+_STATES_COPY = "states:"
 # The step kernels and the reset rely on the simulation variables being the first columns of the float64 group.
 for _domain, _names in _SIM_NAMES.items():
     assert [STATES[_domain].slices[name].start for name in _names] == list(range(len(_names)))
@@ -63,7 +66,8 @@ def _regions(domain: str) -> list[tuple[str, torch.dtype, int]]:
     """``(name, dtype, width)`` of each region of the packed buffer: the State groups, then the step outputs.
 
     ``observation`` holds the observation and ``info_state`` side by side; ``flags`` holds ``terminated`` and
-    ``truncated``.
+    ``truncated``. A second copy of each group (``states:<group key>``) and two all-true columns (``ones``) give
+    the ``states`` and the masks of a single step, so its whole result is one copy of the buffer.
     """
     regions = [(key, group.dtype, group.size) for key, group in STATES[domain].groups.items()]
     width = _OBSERVATION_WIDTH[domain]
@@ -72,7 +76,10 @@ def _regions(domain: str) -> list[tuple[str, torch.dtype, int]]:
         ("reward", torch.float64, 1),
         ("observation", torch.float32, 2 * width),
         ("flags", torch.bool, 2),
+        *((f"{_STATES_COPY}{key}", dtype, size) for key, dtype, size in regions),
+        ("ones", torch.bool, 2),
     ]
+
 
 
 def _offsets(regions, num_envs: int) -> tuple[list[int], int]:
@@ -202,6 +209,12 @@ class DeviceClassicAdapter(SimulatorAdapter):
         self._packed = self._buffer()
         self._packed_blocks = _blocks(self._packed, self._regions, self.num_envs)
         self._outputs = _outputs_of(self._packed_blocks, self._width)
+        # The State groups lead the buffer, and their second copy has the same byte layout.
+        regions = [name for name, _, _ in self._regions]
+        self._group_bytes = offsets[len(schema.groups)]
+        self._copy_offset = offsets[regions.index(_STATES_COPY + next(iter(schema.groups)))]
+        self._packed_blocks["ones"].fill_(True)
+        self._results: dict = {}
         for name, (_, _, default) in _PHYSICS_SPACES[domain].items():
             self._fields[physics_field(name)].fill_(default)
         if sink is None:
@@ -402,6 +415,8 @@ class DeviceClassicAdapter(SimulatorAdapter):
                     tuple(self._sim_names), tuple(self._render_columns),
                 )  # fmt: skip
             self._pack(packed)
+            copy = self._packed[self._copy_offset : self._copy_offset + self._group_bytes]
+            copy.copy_(self._packed[: self._group_bytes])
 
         return step
 
@@ -431,6 +446,58 @@ class DeviceClassicAdapter(SimulatorAdapter):
         return self._graphs[(dtype, masked)]
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
+        self._replay(actions, active)
+        views = self._unpack(self._packed.clone())
+        outputs = _outputs_of(views, self._width)
+        if capture_state:
+            outputs["state"] = self._state(views, [self.num_envs])
+        return build_tensordict(outputs, [self.num_envs], self.device)
+
+    def step_result(self, actions, sequence: bool, state_indices, final_state: bool) -> TensorDict:
+        """The result of ``Env.step`` for one action of every environment, from one copy of the packed buffer.
+
+        It holds the same leaves as the step loop builds: the State, the outputs (with a time axis for a
+        ``sequence``), ``valid``, and the ``states`` and ``state_valid`` of ``state_indices``.
+        """
+        key = (sequence, None if state_indices is None else len(state_indices), final_state)
+        build = self._results.get(key)
+        if build is None:
+            build = self._results[key] = self._result_builder(*key)
+        self._replay(actions, None)
+        return build(self._packed.clone())
+
+    def _result_builder(self, sequence: bool, states: int | None, final_state: bool):
+        """``build(buffer)``: the step result whose leaves are views of a copy of the packed buffer."""
+        regions = {name: (dtype, offset, width) for name, dtype, offset, width in self._splits}
+
+        def group(key, region):
+            dtype, offset, width = regions[region]
+            return (self._paths[key], dtype, (width,), (1,), width, offset)
+
+        width = self._width
+        reward, flags, observation = regions["reward"][1], regions["flags"][1], regions["observation"][1]
+        outputs = [
+            (("reward",), torch.float64, (), (), 1, reward),
+            (("terminated",), torch.bool, (), (), 2, flags),
+            (("truncated",), torch.bool, (), (), 2, flags + 1),
+            (("observation",), torch.float32, (width,), (1,), 2 * width, observation),
+            (("info_state",), torch.float32, (width,), (1,), 2 * width, observation + width),
+        ]
+        ones = regions["ones"][1]
+        return result_builder(
+            self.num_envs,
+            self.device,
+            [group(key, key) for key in self._paths],
+            outputs,
+            [group(key, _STATES_COPY + key) for key in self._paths],
+            (ones, ones + self.num_envs),
+            sequence=sequence,
+            with_states=states,
+            final_state=final_state,
+        )
+
+    def _replay(self, actions, active) -> None:
+        """Advance every environment (those of ``active``) by one replay of the captured step."""
         self._check_open()
         a = actions if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
         if tuple(a.shape) != (self.num_envs, 1):
@@ -455,11 +522,6 @@ class DeviceClassicAdapter(SimulatorAdapter):
             step()
         else:
             graph.replay()
-        views = self._unpack(self._packed.clone())
-        outputs = _outputs_of(views, self._width)
-        if capture_state:
-            outputs["state"] = self._state(views, [self.num_envs])
-        return build_tensordict(outputs, [self.num_envs], self.device)
 
     def close(self) -> None:
         if not self._closed:

@@ -34,7 +34,7 @@ The `simulation_backend` argument selects how the batch steps:
 
 Gymnasium resets each environment and owns its PCG64 random stream for every backend, so a seed gives the same initial states on every backend and device. NumPy and Numba steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
 
-On CUDA, `"torch"` keeps the [state](../terms.md#state) on the GPU. One Triton kernel steps the batch and a CUDA graph replays it, so a step reads nothing back to the host. A reset draws the initial states with Gymnasium on the host and copies them to the GPU in one copy. The step doesn't check the range of discrete actions, because that check would read back to the host, and an action out of range gives undefined dynamics.
+On CUDA, `"torch"` keeps the [state](../terms.md#state) on the GPU. One Triton kernel steps the batch and a CUDA graph replays it, so a step reads nothing back to the host. The graph also writes the state and the outputs into one buffer. For a step of one action, one copy of this buffer gives the whole result. A reset draws the initial states with Gymnasium on the host and copies them to the GPU in one copy. The step doesn't check the range of discrete actions, because that check would read back to the host, and an action out of range gives undefined dynamics.
 
 ```python
 with snv.Acrobot(num_envs=256, simulation_backend="numpy", device="cpu") as env:

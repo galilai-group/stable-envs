@@ -8,11 +8,12 @@ from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
 from ... import tuning
+from ..._core.graph_step import GraphStep
 from ..._core.state_schema import Field, StateSchema
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution import host_render
 from ..._execution.backends import BackendPair, measure_env, select_backend
-from ...env import Env, ResetLeaf, StepResult, check_drawn_fields, check_states
+from ...env import Env, ResetLeaf, check_drawn_fields, check_states
 from ...registry import register
 from ...render import _resources as _RES
 from ...render.scene import Scene2D, SceneBuilder
@@ -448,6 +449,10 @@ class _GymReferencePort(Env):
         rows = self._get_render_state()
         if not bool(torch.isfinite(rows).all()):
             check_states(self, rows, f"{type(self).__name__}.unpack")
+        return self._snapshot(rows)
+
+    def _snapshot(self, rows) -> TensorDict:
+        """A new State of the live environments whose drawn fields are ``rows``, without a check."""
         n = int(rows.shape[0])
         hidden, live = self._hidden_state(), self._live_state()
         values = {}
@@ -785,10 +790,13 @@ class _HiddenTargetSemantics:
         with Numba.
         """
         if self.simulation_backend != "numba":
-            return None
+            return super()._host_step(action, move)
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         return self._numba_step(act, None, move)
+
+    def _graph_compute(self, action):
+        return self._step(action)
 
     def _steps_on_host(self) -> bool:
         """Whether a step of several actions advances host copies of the environments and moves its result once."""
@@ -985,6 +993,53 @@ class _TorchNavBase(_GymReferencePort):
         # The State of these classes is one group that holds the rows as they are.
         (group,) = self.STATE.groups.values()
         return build_tensordict({"state": _nest({group.path: torch.from_numpy(rows)})}, [self.B], self.device)
+
+    @torch.no_grad()
+    def _host_step(self, action, move):
+        """A single step: Numba on the CPU, or a Torch step on CUDA replayed as one CUDA graph; None otherwise."""
+        if self._live_rows != self.B:
+            return None
+        if self.device.type == "cpu":
+            if self.simulation_backend != "numba" or self.state_dim not in (2, 4):
+                return None
+            from . import navstep_cpu
+
+            self._check_open("step")
+            act = torch.as_tensor(action, dtype=torch.float32).reshape(self.B, self.action_dim)
+            rows, finite = navstep_cpu.state_step(self._numba_kind, *self._numba_inputs(act, None))
+            if not finite:
+                # get_state names the non-finite environments and raises.
+                return self._step_result(self.state)
+            (group,) = self.STATE.groups.values()
+            return move({("state", *group.path): rows})[0]
+        if self.device.type != "cuda" or self.simulation_backend != "torch" or not hasattr(move, "final_state"):
+            return None
+        graph = self.__dict__.get("_graph")
+        if graph is None:
+            graph = self._graph = GraphStep(self.B, self.device, self._graph_compute, self._graph_live, self._graph_key)
+        self._check_open("step")
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        return graph.result(act, move.sequence, move.state_indices, move.final_state)
+
+    def _graph_compute(self, action):
+        """``_step`` of every environment without host reads, for capture in a CUDA graph."""
+        next_rows = self._advance_rows(self._render_state, action, self._style)
+        self._render_state.copy_(next_rows)
+        state = self._snapshot(self._render_state)
+        return build_tensordict({"state": state}, state.batch_size, self.device)
+
+    def _graph_live(self):
+        return [self._render_state]
+
+    def _graph_key(self):
+        """The tensors the captured step reads and writes."""
+        target = self.__dict__.get("_target_position")
+        return (
+            self._render_state.data_ptr(),
+            self._style.values.data_ptr(),
+            tuple(self._style.values.shape),
+            None if target is None else target.data_ptr(),
+        )
 
     def _agent_space(self) -> dict:
         return {
@@ -1894,6 +1949,8 @@ class SimplePointMaze(_GymReferencePort):
         self._cached_goal_agent_position = torch.full((self.B, 2), 0.5, device=self.device, dtype=torch.float32)
         self._agent_position = torch.full((self.B, 2), 0.5, device=self.device, dtype=torch.float64)
         self._state_is_float64 = torch.zeros(self.B, 1, device=self.device, dtype=torch.bool)
+        # False while no environment holds a float64 state: steps of narrower actions then skip the float64 path.
+        self._wide = False
         self._cached_goal_image = torch.zeros(self.B, SIZE, SIZE, 3, device=self.device, dtype=torch.uint8)
         self._goal_painter = GoalPainter(WORLD)
         self._drawing_reset, self._reset_walls = False, None
@@ -1919,6 +1976,7 @@ class SimplePointMaze(_GymReferencePort):
         self._agent_position.copy_(agent)
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))
         self._state_is_float64.copy_(state_is_float64)
+        self._wide = bool(state_is_float64.any())
         self._regenerate_cached_goal()
 
     def _set_render_state(self, states, variation=None, style=None):
@@ -1926,6 +1984,8 @@ class SimplePointMaze(_GymReferencePort):
         n = self._live_rows
         self._agent_position[:n].copy_(self._render_state[:n, 0:2].to(torch.float64))
         self._state_is_float64[:n].zero_()
+        if n == self.B:
+            self._wide = False
         return self
 
     def _wall_rows(self):
@@ -1984,6 +2044,7 @@ class SimplePointMaze(_GymReferencePort):
         self._set_render_state(np.concatenate([starts, goals], axis=1))
         self._agent_position.copy_(torch.as_tensor(starts, device=self.device, dtype=torch.float64))
         self._state_is_float64.zero_()
+        self._wide = False
         self._cached_goal_agent_position.copy_(
             torch.as_tensor(values["task.cached_goal_agent_position"], device=self.device)
         )
@@ -2084,11 +2145,25 @@ class SimplePointMaze(_GymReferencePort):
 
     def _collides(self, p, sty, n) -> torch.Tensor:
         """Return whether each agent disc touches a live wall, using closest-point box distances."""
-        lo, hi, live = self._wall_boxes(sty, n)
-        r = sty["agent.radius"].reshape(n, 1)
+        lo, hi, live, reach = self._walls(sty, n)
         c = torch.clamp(p.unsqueeze(1), lo, hi)
         d2 = ((c - p.unsqueeze(1)) ** 2).sum(-1)
-        return (live & (d2 <= r * r)).any(1)
+        return (live & (d2 <= reach)).any(1)
+
+    def _walls(self, sty, n):
+        """The wall boxes, the live walls and the squared agent radius of ``sty``.
+
+        On the CPU they are kept for the installed Variation until its values change.
+        """
+        values = sty.values
+        hit = self.__dict__.get("_wall_cache")
+        if hit is not None and hit[0] is values and hit[1] == values._version and hit[2] == n:
+            return hit[3]
+        r = sty["agent.radius"].reshape(n, 1)
+        walls = (*self._wall_boxes(sty, n), r * r)
+        if sty is self._style and self.device.type == "cpu":
+            self.__dict__["_wall_cache"] = (values, values._version, n, walls)
+        return walls
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """Sample positions uniformly from [0, 5]^2, rejecting discs that touch walls."""
@@ -2129,12 +2204,12 @@ class SimplePointMaze(_GymReferencePort):
         out[:, 0:2] = nxt
         return out
 
-    def _outputs(self, state):
+    def _outputs(self, state, goal_image: bool = True):
         agent, goal, flags = self._fields(state, ("agent/position", "goal/position", "task/state_is_float64"))
-        was64 = flags.reshape(-1)
-        distance32 = torch.linalg.vector_norm(agent.to(torch.float32) - goal, dim=1).to(torch.float64)
-        distance64 = torch.linalg.vector_norm(agent - goal.to(torch.float64), dim=1)
-        distance = torch.where(was64, distance64, distance32)
+        distance = torch.linalg.vector_norm(agent.to(torch.float32) - goal, dim=1).to(torch.float64)
+        if self._wide:
+            distance64 = torch.linalg.vector_norm(agent - goal.to(torch.float64), dim=1)
+            distance = torch.where(flags.reshape(-1), distance64, distance)
         terminated = distance < self._style["goal.radius"][: len(agent)].reshape(-1).to(torch.float64)
         n = int(state.batch_size[0])
         reward = torch.where(
@@ -2142,29 +2217,31 @@ class SimplePointMaze(_GymReferencePort):
             torch.ones(n, device=self.device, dtype=torch.float64),
             torch.full((n,), -0.01, device=self.device, dtype=torch.float64),
         )
-        observation = agent.clone() if bool(flags.any()) else agent.to(torch.float32)
-        return StepResult(
-            {
-                "state": state,
-                "reward": reward,
-                "terminated": terminated,
-                "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
-                "observation": observation,
-                "info": {"goal": self._cached_goal_image if n == self.B else self._cached_goal_image[:n]},
-            },
-            batch_size=[n],
-            device=self.device,
-        )
+        observation = agent.clone() if self._wide and bool(flags.any()) else agent.to(torch.float32)
+        outputs = {
+            "state": state,
+            "reward": reward,
+            "terminated": terminated,
+            "truncated": torch.zeros(n, device=self.device, dtype=torch.bool),
+            "observation": observation,
+        }
+        if goal_image:
+            outputs["info"] = {"goal": self._cached_goal_image if n == self.B else self._cached_goal_image[:n]}
+        return build_tensordict(outputs, [n], self.device)
+
+    @staticmethod
+    def _action_tensor(action, device) -> torch.Tensor:
+        """The action as NumPy promotes it: float16 and float32 stay, other types become float64."""
+        action_tensor = torch.as_tensor(action, device=device)
+        if action_tensor.dtype not in (torch.float16, torch.float32, torch.float64):
+            action_tensor = action_tensor.to(torch.float64)
+        return action_tensor
 
     def _advance_agent(self, agent, action, sty, state_is_float64):
         """Advance with the source NumPy dtype-promotion rules for float16/32/64 actions."""
-        action_tensor = torch.as_tensor(action, device=self.device)
-        if not action_tensor.is_floating_point():
-            action_tensor = action_tensor.to(torch.float64)
-        if action_tensor.dtype not in (torch.float16, torch.float32, torch.float64):
-            action_tensor = action_tensor.to(torch.float64)
-        action_tensor = action_tensor.reshape(-1, self.action_dim)
-        use64 = state_is_float64.reshape(-1) | (action_tensor.dtype == torch.float64)
+        action_tensor = self._action_tensor(action, self.device).reshape(-1, self.action_dim)
+        action_promotes = action_tensor.dtype == torch.float64
+        use64 = state_is_float64.reshape(-1) | action_promotes
         limit = float(np.float32(ACTION_LIMIT))
 
         def advance(dtype):
@@ -2176,17 +2253,21 @@ class SimplePointMaze(_GymReferencePort):
             return torch.where(blocked.unsqueeze(1), p, nxt).clamp(0.0, WORLD), blocked
 
         value32, _ = advance(torch.float32)
+        if not (self._wide or action_promotes):
+            # No environment holds or takes a float64 value, so every one steps in float32.
+            return value32.to(torch.float64), state_is_float64
         value64, blocked64 = advance(torch.float64)
         value = torch.where(use64.unsqueeze(1), value64, value32.to(torch.float64))
-        action_promotes = action_tensor.dtype == torch.float64
         next_is_float64 = state_is_float64.reshape(-1) | (action_promotes & ~blocked64)
         return value, next_is_float64.reshape(-1, 1)
 
     def _step(self, action, *, active=None) -> TensorDict:
         self._check_open("step")
+        action = self._action_tensor(action, self.device)
         agent, state_is_float64 = self._advance_agent(
             self._agent_position, action, self._style, self._state_is_float64
         )
+        self._wide = self._wide or action.dtype == torch.float64
         if active is not None:
             agent = torch.where(active[:, None], agent, self._agent_position)
             state_is_float64 = torch.where(active[:, None], state_is_float64, self._state_is_float64)
@@ -2194,6 +2275,45 @@ class SimplePointMaze(_GymReferencePort):
         self._state_is_float64.copy_(state_is_float64)
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))
         return self._outputs(self.get_state())
+
+    @torch.no_grad()
+    def _host_step(self, action, move):
+        """A single float32 step on CUDA, replayed as one CUDA graph; None otherwise."""
+        if self.device.type != "cuda" or self._wide or self._live_rows != self.B or not hasattr(move, "final_state"):
+            return None
+        act = self._action_tensor(action, self.device)
+        if act.dtype == torch.float64:
+            return None
+        graph = self.__dict__.get("_graph")
+        if graph is None:
+            graph = self._graph = GraphStep(
+                self.B, self.device, self._graph_compute, self._graph_live, self._graph_key, self._graph_shared
+            )
+        self._check_open("step")
+        return graph.result(act.reshape(self.B, self.action_dim), move.sequence, move.state_indices, move.final_state)
+
+    def _graph_compute(self, action):
+        """``_step`` of float32 actions while no environment holds a float64 state, without host reads."""
+        agent, _ = self._advance_agent(self._agent_position, action, self._style, self._state_is_float64)
+        self._agent_position.copy_(agent)
+        self._render_state[:, 0:2].copy_(agent.to(torch.float32))
+        return self._outputs(self._snapshot(self._render_state), goal_image=False)
+
+    def _graph_live(self):
+        return [self._agent_position, self._render_state]
+
+    def _graph_key(self):
+        return (
+            self._agent_position.data_ptr(),
+            self._render_state.data_ptr(),
+            self._state_is_float64.data_ptr(),
+            self._cached_goal_agent_position.data_ptr(),
+            self._style.values.data_ptr(),
+            tuple(self._style.values.shape),
+        )
+
+    def _graph_shared(self):
+        return {("info", "goal"): self._cached_goal_image}
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
