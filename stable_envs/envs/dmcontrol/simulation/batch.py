@@ -39,6 +39,17 @@ def _scale(sigmoid, value_at_margin):
 _ARRAY_SIGMOIDS = frozenset({"gaussian", "linear", "quadratic"})
 
 
+def _outside(x, lower, upper, margin):
+    """dm_control's distance of ``x`` outside ``[lower, upper]`` over ``margin``, and the in-bounds mask.
+
+    With both bounds 0 the distance is ``abs(x) / margin``, equal in magnitude, and the mask is None: every sigmoid
+    is exactly 1 at distance 0, so the in-bounds values need no mask.
+    """
+    if type(lower) in (int, float) and type(upper) in (int, float) and lower == 0 and upper == 0:
+        return np.abs(x) / margin, None
+    return np.where(x < lower, lower - x, x - upper) / margin, np.logical_and(lower <= x, x <= upper)
+
+
 def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
     """dm_control's ``rewards.tolerance`` on environment arrays.
 
@@ -50,19 +61,18 @@ def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_mar
         from dm_control.utils import rewards
 
         return rewards.tolerance(x, bounds, margin, sigmoid, value_at_margin)
-    scale = _scale(sigmoid, value_at_margin)
     lower, upper = bounds
-    in_bounds = np.logical_and(lower <= x, x <= upper)
     if margin == 0:
-        return np.where(in_bounds, 1.0, 0.0)
-    scaled = np.where(x < lower, lower - x, x - upper) / margin * scale
+        return np.where(np.logical_and(lower <= x, x <= upper), 1.0, 0.0)
+    distance, in_bounds = _outside(x, lower, upper, margin)
+    scaled = distance * _scale(sigmoid, value_at_margin)
     if sigmoid == "gaussian":
         value = np.exp(-0.5 * scaled**2)
     elif sigmoid == "linear":
         value = np.where(abs(scaled) < 1, 1 - scaled, 0.0)
     else:
         value = np.where(abs(scaled) < 1, 1 - scaled**2, 0.0)
-    return np.where(in_bounds, 1.0, value)
+    return value if in_bounds is None else np.where(in_bounds, 1.0, value)
 
 
 def _libm_square(x):
@@ -74,12 +84,11 @@ def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value
     """``rewards.tolerance`` of each environment's scalar, for the gaussian and long_tail sigmoids."""
     if sigmoid not in ("gaussian", "long_tail"):
         raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
-    lower, upper = bounds
-    d = np.where(x < lower, lower - x, x - upper) / margin
+    distance, in_bounds = _outside(x, *bounds, margin)
     # dm_control squares a scalar with libm pow, which can round differently from x * x.
-    square = _libm_square(d * _scale(sigmoid, value_at_margin))
+    square = _libm_square(distance * _scale(sigmoid, value_at_margin))
     value = np.exp(-0.5 * square) if sigmoid == "gaussian" else 1 / (square + 1)
-    return np.where((lower <= x) & (x <= upper), 1.0, value)
+    return value if in_bounds is None else np.where(in_bounds, 1.0, value)
 
 
 #: State fields read from the batch: ``State key -> MjData field``.
