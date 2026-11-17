@@ -1530,6 +1530,14 @@ class MazeSemantics:
         stacked = None if stack is None else stack(values)
         return _stack_states(values) if stacked is None else stacked
 
+    def _host_step(self, actions, move):
+        """One step on the host simulator: ``move`` puts its arrays on the env's device in one copy."""
+        step = getattr(self._simulator, "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
+
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
 

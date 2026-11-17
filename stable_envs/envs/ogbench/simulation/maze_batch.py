@@ -15,6 +15,7 @@ from ...._execution.protocol import SimulatorAdapter
 from .maze import (
     _REST_CLEARANCE,
     BODIES,
+    PHYSICS,
     _make_maze,
     _rest_walls,
     decode_state,
@@ -99,13 +100,11 @@ class LegacyMT:
         self.gauss = np.zeros(num_envs)
 
     def seed(self, ids, seeds):
-        """``RandomState(seed)`` for each environment of ``ids``: MT19937's ``init_genrand``."""
-        value = np.asarray(seeds, np.uint64) & 0xFFFFFFFF
-        key = np.empty((len(ids), self.N), np.uint32)
-        for pos in range(self.N):
-            key[:, pos] = value
-            value = (1812433253 * (value ^ (value >> np.uint64(30))) + np.uint64(pos + 1)) & 0xFFFFFFFF
-        self.key[ids] = key
+        """``RandomState(seed)`` for each environment of ``ids``."""
+        legacy = np.random.RandomState()
+        for i, seed in zip(np.asarray(ids, np.int64), np.asarray(seeds, np.int64), strict=True):
+            legacy.seed(int(seed))
+            self.key[i] = legacy.get_state()[1]
         self.pos[ids] = self.N
         self.has_gauss[ids] = False
         self.gauss[ids] = 0.0
@@ -475,6 +474,8 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
         self._last = None
         self._layouts: dict[str, StateLayout] = {}
+        # The packed task and RNG groups, which change only at reset, restore and teleport.
+        self._host_groups = None
         self.reset(seed=seed)
 
     def reset(self, seed=None):
@@ -483,21 +484,22 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self.sim.reset()
         self.sim.set_physics({"qpos": qpos, "qvel": qvel})
         self._goal[:], self._task_id[:] = goal, task_id
-        self._last = None
+        self._last = self._host_groups = None
         return self.get_state()
 
     def _state_columns(self):
-        """The State groups, packed from the live arrays into new arrays."""
+        """The State groups by key path: the physics group a new array, the other groups shared until they change."""
         b = self._live
-        values = {
+        if self._host_groups is None:
+            host = {"task/goal_pos": self._goal, "task/id": self._task_id, **self._random.columns}
+            self._host_groups = self.schema.pack(host, [key for key in self.schema.groups if key != PHYSICS])
+        physics = {
             **self._split(b.qpos, b.qvel),
             "simulator/time": b.time[:, None],
             "simulator/warmstart": b.qacc_warmstart,
-            "task/goal_pos": self._goal,
-            "task/id": self._task_id,
-            **self._random.columns,
         }
-        return {group_path(key): value for key, value in self.schema.pack(values).items()}
+        groups = {**self.schema.pack(physics, (PHYSICS,)), **self._host_groups}
+        return {group_path(key): groups[key] for key in self.schema.groups}
 
     def _export(self, values, name, owned=()):
         """A TensorDict that owns copies of ``values``, on the env device; ``owned`` values are new arrays already.
@@ -525,7 +527,7 @@ class OGBMazeBatchAdapter(_MazeInstances):
     def get_state(self):
         self._check_open()
         columns = self._state_columns()
-        return self._export(columns, "state", owned=columns)
+        return self._export(columns, "state", owned=(group_path(PHYSICS),))
 
     def set_state(self, state):
         v, decoded = self.validate(state)
@@ -540,7 +542,7 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._goal[:] = v["task/goal_pos"]
         self._task_id[:] = v["task/id"]
         self._random.load(decoded)
-        self._last = None
+        self._last = self._host_groups = None
 
     def _resting(self, target, ids):
         """Point environments whose step leaves the ball where it is (see ``_resting_instances``)."""
@@ -571,6 +573,30 @@ class OGBMazeBatchAdapter(_MazeInstances):
     def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
         actions, active = self.check_step(actions, active)
+        values = self._transition(actions, active)
+        result = {key: values[key] for key in values if key not in INFO_KEYS}
+        result.update({("info", key): values[key] for key in INFO_KEYS})
+        if capture_state:
+            result.update({("state", *key): value for key, value in self._state_columns().items()})
+        owned = {("state", *group_path(PHYSICS))} if capture_state else ()
+        return self._export(result, "step+state" if capture_state else "step", owned)
+
+    def step_leaves(self, actions, *, state=True):
+        """Advance every environment one step; the outputs and, with ``state``, the State as host arrays by key path.
+
+        The arrays may be shared with later steps: the caller copies them before the next call.
+        """
+        self._check_open()
+        actions, _ = self.check_step(actions, None)
+        values = self._transition(actions, None)
+        leaves = {(key,): values[key] for key in values if key not in INFO_KEYS}
+        leaves.update({("info", key): values[key] for key in INFO_KEYS})
+        if state:
+            leaves.update({("state", *key): value for key, value in self._state_columns().items()})
+        return leaves
+
+    def _transition(self, actions, active):
+        """Advance the ``active`` environments (all for None) and return the step's outputs as new host arrays."""
         if active is not None and self._last is None:
             raise RuntimeError("An active mask needs a previous step")
         ids = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
@@ -602,20 +628,14 @@ class OGBMazeBatchAdapter(_MazeInstances):
         if instances.size:
             b.qpos[instances, :2] = dest
             self._random.sync_legacy(instances)
+            self._host_groups = None
         if active is not None:
             idle = ~active
             values = {
                 key: np.where(idle.reshape(-1, *[1] * (v.ndim - 1)), self._last[key], v) for key, v in values.items()
             }
         self._last = values
-        result = {key: values[key] for key in values if key not in INFO_KEYS}
-        result.update({("info", key): values[key] for key in INFO_KEYS})
-        owned = set()
-        if capture_state:
-            for key, value in self._state_columns().items():
-                result[("state", *key)] = value
-                owned.add(("state", *key))
-        return self._export(result, "step+state" if capture_state else "step", owned)
+        return values
 
     def close(self):
         if not self._closed:
