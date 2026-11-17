@@ -508,10 +508,10 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         return self._outputs(reward, terminated, truncated, observation, capture_state)
 
     def host_leaves(self, actions, with_state: bool = True) -> dict | None:
-        """One step of every environment as host arrays: ``{key path: array}`` of the outputs and, with
-        ``with_state``, the live State groups. None when the State is not held in host arrays.
+        """One step of every environment as ``{key path: host array}``; None without a State in host arrays.
 
-        The arrays are the live buffers or the step's own; the caller copies what it keeps.
+        The leaves are the outputs and, with ``with_state``, the live State groups. The arrays are the live buffers
+        or the step's own; the caller copies what it keeps.
         """
         if not self._in_place:
             return None

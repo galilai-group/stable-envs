@@ -451,8 +451,10 @@ class ClassicControlAdapter(SimulatorAdapter):
         return np.zeros(space.shape, space.dtype), 0.0, False, False, {}
 
     def host_leaves(self, actions, with_state: bool = True) -> dict | None:
-        """One step of every environment as host arrays: ``{key path: array}`` of the outputs and, with
-        ``with_state``, the State groups. The State arrays are live buffers; the caller copies what it keeps.
+        """One step of every environment as ``{key path: host array}``.
+
+        The leaves are the outputs and, with ``with_state``, the State groups. The State arrays are live buffers;
+        the caller copies what it keeps.
         """
         self._check_open()
         outputs = [env.step(action) for env, action in zip(self.envs, self._actions(actions), strict=True)]

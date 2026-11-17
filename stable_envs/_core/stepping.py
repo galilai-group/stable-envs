@@ -234,7 +234,7 @@ def _single_step(env, action, sequence, state_indices, final_state, advance):
     """One action without frames or a step pipeline: one transition, no masks to route and no history to stack."""
     host_step = getattr(env, "_host_step", None)
     if host_step is not None:
-        out = host_step(action, lambda leaves: _moved_leaves(env, leaves, sequence, state_indices, final_state))
+        out = host_step(action, HostMove(env, sequence, state_indices, final_state, needs_state=True))
         if out is not None:
             return out
     needs_state = final_state or state_indices is not None
@@ -349,15 +349,29 @@ def _host_single_step(env, actions, states, final_state):
     if torch.is_tensor(acts) and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
         acts = acts.detach().cpu().numpy()
 
-    def move(leaves):
-        return _moved_leaves(env, leaves, sequence, state_indices, final_state)
-
     # A family may leave the State out of ``leaves`` when the result doesn't hold it; on an accelerator the family
     # can read the moved State, so it always comes.
-    move.needs_state = final_state or state_indices is not None or env.device.type != "cpu"
-    # A family that builds the result on the device itself reads the shape of the result from these.
-    move.sequence, move.state_indices, move.final_state = sequence, state_indices, final_state
-    return host_step(acts, move)
+    needs_state = final_state or state_indices is not None or env.device.type != "cpu"
+    return host_step(acts, HostMove(env, sequence, state_indices, final_state, needs_state=needs_state))
+
+
+class HostMove:
+    """The ``move`` that a family's ``_host_step(actions, move)`` gets: the shape of the result, and its builder.
+
+    ``move(leaves)`` returns the step result of the host NumPy ``leaves`` (``{key path: (num_envs, ...) array}``)
+    on the device, and the moved State (``_moved_leaves``). A family that builds the result on the device itself
+    reads ``sequence``, ``state_indices`` and ``final_state``. ``needs_state`` is False when the family may leave
+    the State out of ``leaves``.
+    """
+
+    __slots__ = ("env", "sequence", "state_indices", "final_state", "needs_state")
+
+    def __init__(self, env, sequence: bool, state_indices, final_state: bool, *, needs_state: bool):
+        self.env, self.sequence, self.state_indices = env, sequence, state_indices
+        self.final_state, self.needs_state = final_state, needs_state
+
+    def __call__(self, leaves):
+        return _moved_leaves(self.env, leaves, self.sequence, self.state_indices, self.final_state)
 
 
 def _host_builder(keys, n, sequence, state_indices):

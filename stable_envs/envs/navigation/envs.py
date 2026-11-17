@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import math
 
 import numpy as np
@@ -10,6 +11,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.graph_step import GraphStep
 from ..._core.state_schema import Field, StateSchema
+from ..._core.style import StyleTensor
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution import host_render
 from ..._execution.backends import BackendPair, measure_env, select_backend
@@ -447,9 +449,50 @@ class _GymReferencePort(Env):
     def get_state(self) -> TensorDict:
         self._require_state("get_state")
         rows = self._get_render_state()
+        self._require_finite(rows)
+        return self._snapshot(rows)
+
+    def _require_finite(self, rows) -> None:
+        """Raise ValueError, naming the environments, when ``rows`` hold NaN or infinite values."""
         if not bool(torch.isfinite(rows).all()):
             check_states(self, rows, f"{type(self).__name__}.unpack")
+
+    def _stepped_state(self) -> TensorDict:
+        """The State after a step, checked as ``get_state`` checks it on the CPU only.
+
+        On an accelerator the check would read back to the host every step, so a step leaves it out.
+        """
+        rows = self._get_render_state()
+        if self.device.type == "cpu":
+            self._require_finite(rows)
         return self._snapshot(rows)
+
+    def _graph_step(self) -> GraphStep:
+        graph = self.__dict__.get("_graph")
+        if graph is None:
+            graph = self._graph = GraphStep(
+                self.B,
+                self.device,
+                self._graph_compute,
+                self._graph_live,
+                self._graph_key,
+                sources=lambda: (self._style.values,),
+                shared=self._graph_shared,
+            )
+        return graph
+
+    @contextlib.contextmanager
+    def _style_rows(self, values):
+        """Read the Variation from ``values``, a graph's copy of the installed rows, inside the block."""
+        installed = self._style
+        self._style = StyleTensor(values, installed._layout_list())
+        try:
+            yield
+        finally:
+            self._style = installed
+
+    #: Outputs that a graph step passes through as they are (see ``GraphStep``).
+    _graph_shared = None
 
     def _snapshot(self, rows) -> TensorDict:
         """A new State of the live environments whose drawn fields are ``rows``, without a check."""
@@ -635,7 +678,7 @@ class _GymReferencePort(Env):
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        return self._step_result(self.state)
+        return self._step_result(self._stepped_state())
 
     def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor, sty) -> torch.Tensor:
         """Compute the next packed rows from state, action and style without mutation."""
@@ -778,8 +821,9 @@ class _HiddenTargetSemantics:
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        # Physics already produces valid packed rows. Own the snapshot directly;
-        # the public get_state() validation would synchronize CUDA every step.
+        if self.device.type == "cpu":
+            self._require_finite(self._render_state)
+        # The snapshot leaves out get_state's check, which would read back from an accelerator every step.
         return self._outputs(self._full_state(self._render_state))
 
     @torch.no_grad()
@@ -795,8 +839,9 @@ class _HiddenTargetSemantics:
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         return self._numba_step(act, None, move)
 
-    def _graph_compute(self, action):
-        return self._step(action)
+    def _graph_compute(self, action, style):
+        with self._style_rows(style):
+            return self._step(action)
 
     def _steps_on_host(self) -> bool:
         """Whether a step of several actions advances host copies of the environments and moves its result once."""
@@ -845,6 +890,8 @@ class _HiddenTargetSemantics:
         target = self._host_array("target", self._target_position)
         values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
         positions, observation, proprio, state, goal_state, distance, terminated = values
+        if self.device.type == "cpu" and not np.isfinite(inputs[0]).all():
+            self._require_finite(self._render_state)
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
             fields = self.STATE.views({_TARGET_GROUP.key: torch.from_numpy(positions)})
             observation = self._observation(fields["agent/position"], fields["target/position"]).numpy()
@@ -1012,18 +1059,16 @@ class _TorchNavBase(_GymReferencePort):
                 return self._step_result(self.state)
             (group,) = self.STATE.groups.values()
             return move({("state", *group.path): rows})[0]
-        if self.device.type != "cuda" or self.simulation_backend != "torch" or not hasattr(move, "final_state"):
+        if self.device.type != "cuda" or self.simulation_backend != "torch":
             return None
-        graph = self.__dict__.get("_graph")
-        if graph is None:
-            graph = self._graph = GraphStep(self.B, self.device, self._graph_compute, self._graph_live, self._graph_key)
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        return graph.result(act, move.sequence, move.state_indices, move.final_state)
+        return self._graph_step().result(act, move.sequence, move.state_indices, move.final_state)
 
-    def _graph_compute(self, action):
+    def _graph_compute(self, action, style):
         """``_step`` of every environment without host reads, for capture in a CUDA graph."""
-        next_rows = self._advance_rows(self._render_state, action, self._style)
+        with self._style_rows(style):
+            next_rows = self._advance_rows(self._render_state, action, self._style)
         self._render_state.copy_(next_rows)
         state = self._snapshot(self._render_state)
         return build_tensordict({"state": state}, state.batch_size, self.device)
@@ -1032,14 +1077,9 @@ class _TorchNavBase(_GymReferencePort):
         return [self._render_state]
 
     def _graph_key(self):
-        """The tensors the captured step reads and writes."""
+        """The tensors the captured step reads and writes, besides the Variation rows."""
         target = self.__dict__.get("_target_position")
-        return (
-            self._render_state.data_ptr(),
-            self._style.values.data_ptr(),
-            tuple(self._style.values.shape),
-            None if target is None else target.data_ptr(),
-        )
+        return (self._render_state.data_ptr(), None if target is None else target.data_ptr())
 
     def _agent_space(self) -> dict:
         return {
@@ -2274,30 +2314,27 @@ class SimplePointMaze(_GymReferencePort):
         self._agent_position.copy_(agent)
         self._state_is_float64.copy_(state_is_float64)
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))
-        return self._outputs(self.get_state())
+        return self._outputs(self._stepped_state())
 
     @torch.no_grad()
     def _host_step(self, action, move):
         """A single float32 step on CUDA, replayed as one CUDA graph; None otherwise."""
-        if self.device.type != "cuda" or self._wide or self._live_rows != self.B or not hasattr(move, "final_state"):
+        if self.device.type != "cuda" or self._wide or self._live_rows != self.B:
             return None
         act = self._action_tensor(action, self.device)
         if act.dtype == torch.float64:
             return None
-        graph = self.__dict__.get("_graph")
-        if graph is None:
-            graph = self._graph = GraphStep(
-                self.B, self.device, self._graph_compute, self._graph_live, self._graph_key, self._graph_shared
-            )
         self._check_open("step")
+        graph = self._graph_step()
         return graph.result(act.reshape(self.B, self.action_dim), move.sequence, move.state_indices, move.final_state)
 
-    def _graph_compute(self, action):
+    def _graph_compute(self, action, style):
         """``_step`` of float32 actions while no environment holds a float64 state, without host reads."""
-        agent, _ = self._advance_agent(self._agent_position, action, self._style, self._state_is_float64)
-        self._agent_position.copy_(agent)
-        self._render_state[:, 0:2].copy_(agent.to(torch.float32))
-        return self._outputs(self._snapshot(self._render_state), goal_image=False)
+        with self._style_rows(style):
+            agent, _ = self._advance_agent(self._agent_position, action, self._style, self._state_is_float64)
+            self._agent_position.copy_(agent)
+            self._render_state[:, 0:2].copy_(agent.to(torch.float32))
+            return self._outputs(self._snapshot(self._render_state), goal_image=False)
 
     def _graph_live(self):
         return [self._agent_position, self._render_state]
@@ -2308,8 +2345,6 @@ class SimplePointMaze(_GymReferencePort):
             self._render_state.data_ptr(),
             self._state_is_float64.data_ptr(),
             self._cached_goal_agent_position.data_ptr(),
-            self._style.values.data_ptr(),
-            tuple(self._style.values.shape),
         )
 
     def _graph_shared(self):

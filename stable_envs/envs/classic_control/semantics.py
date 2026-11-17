@@ -230,20 +230,20 @@ class ClassicControlSemantics:
     def _host_step(self, actions, move):
         """One action without frames: the result from the simulator's arrays in one pass, or None.
 
-        A CPU simulator gives host arrays that ``move`` copies into the result. The CUDA simulator builds the result
-        from one copy of its packed buffer.
+        A CPU simulator gives host arrays that ``move`` copies into the result. The CUDA simulator replays its step as
+        one CUDA graph and builds the result from one copy of the graph's buffer.
         """
         self._check_open("step")
         simulator = self._simulator
         if self.device.type == "cpu":
             leaves = getattr(simulator, "host_leaves", None)
-            got = None if leaves is None else leaves(actions, getattr(move, "needs_state", True))
+            got = None if leaves is None else leaves(actions, move.needs_state)
             if got is None:
                 return None
             self._rows_stale = True
             return move(got)[0]
         result = getattr(simulator, "step_result", None)
-        if result is None or not hasattr(move, "final_state"):
+        if result is None:
             return None
         return result(actions, move.sequence, move.state_indices, move.final_state)
 
