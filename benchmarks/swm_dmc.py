@@ -8,7 +8,7 @@ the model entries of the row), at the swm camera. OGBCube and OGBScene draw with
 
 SNV_VARIATION (JSON, {class: {leaf: value}}) gives variation values that every stable-envs env of that class gets
 right after construction, followed by a reset with seed 0 (the leaves compile at reset), e.g.
-{"OGBCube": {"agent.opacity": [1.0]}} for the opaque robot arm of swm.
+{"OGBCube": {"agent.opacity": [1.0], "target.opacity": [1.0]}} for the opaque robot arm and the goal cube of swm.
 """
 
 from __future__ import annotations
@@ -40,7 +40,6 @@ def _dmc_reference_env(cls, size: int | None = None):
     env._se_size = int(size or cls.default_size)
     # The wrapper owns the GL context of the dm_control env; keep it alive with the env.
     env.swm_wrapper = wrapper
-    env.swm_id = sid
     return env
 
 
@@ -56,7 +55,6 @@ def _manipulation_reference_env(cls, size: int | None = None):
     sid = SWM_MANIPULATION[cls.__name__]
     env = gym.make(sid, width=size, height=size)
     env.reset(seed=0)
-    env.swm_id = sid
     if cls.__name__ == "OGBScene":
         # swm's SceneEnv.set_state takes the button states as keywords (button_state_0, ...); the reference
         # renderer passes them as a third positional argument, as OGBench's own SceneEnv does.
@@ -76,7 +74,7 @@ def variations() -> dict:
 
 
 def install() -> None:
-    """Point DMC and OGBCube reference_env at swm, and apply SNV_VARIATION to every env stable_envs.make builds."""
+    """Point DMC, OGBCube and OGBScene reference_env at swm, and apply SNV_VARIATION to every env stable_envs.make builds."""
     global _DONE
     if _DONE:
         return
@@ -86,11 +84,9 @@ def install() -> None:
     for name, cls in registry.REGISTRY.items():
         if getattr(cls, "family", "") == "dmcontrol" and swm_id(cls):
             cls.reference_env = classmethod(_dmc_reference_env)
-            cls.reference_source = "swm"
     for name in SWM_MANIPULATION:
         if name in registry.REGISTRY:
             registry.REGISTRY[name].reference_env = classmethod(_manipulation_reference_env)
-            registry.REGISTRY[name].reference_source = "swm"
     wanted = variations()
     if wanted:
         make = snv.make

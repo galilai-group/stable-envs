@@ -134,6 +134,9 @@ These scripts measured the speedup tables and the LeWM training numbers of the p
 | `swm_dmc.py` | Draws DM Control, `OGBCube` and `OGBScene` sources with the stable-worldmodel envs, and applies `SNV_VARIATION` |
 | `examples/lewm/throughput.py` | Trains LeWM and measures training steps/s and GPU use for three frame inputs |
 
+`online_ladder.py` and `offline_sweep.py` are the fixed record of the method of the paper. `speed.py` is the
+general tool that the project maintains.
+
 The source is stable-worldmodel at commit `21446f1` where it has the class. Fetch uses Gymnasium Robotics.
 Other classes use the library of their `reference_id`.
 
@@ -143,12 +146,13 @@ Install the `bench` group, and the extra and the `pin-*` group of the family, as
 [Comparison with stable-worldmodel](#comparison-with-stable-worldmodel). The paper used torch 2.14.1+cu126.
 Run every command from the repository root with these settings:
 
-- `PYTHONPATH=.` and `STEP_STATES=all`. With `STEP_STATES=all`, ours calls `env.step(actions)` with its default
-  `states` argument.
+- `PYTHONPATH=.`, `SDL_VIDEODRIVER=dummy` and `STEP_STATES=all`. With `STEP_STATES=all`, ours calls
+  `env.step(actions)` with its default `states` argument.
 - `WARMUP_MAX_S=300`. This stops the warm-up step count of a slow source after 300 s.
 - `taskset -c 0-7`. Each process, and each source worker that it starts, uses the same 8 cores.
 - CPU cells: software OpenGL, that is `xvfb-run -a` with `LIBGL_ALWAYS_SOFTWARE=1 MUJOCO_GL=glfw PYOPENGL_PLATFORM=glx`.
-- GPU cells: `MUJOCO_GL=egl PYOPENGL_PLATFORM=egl`.
+- GPU cells: `MUJOCO_GL=egl PYOPENGL_PLATFORM=egl CUDA_DEVICE_ORDER=PCI_BUS_ID`, and
+  `MUJOCO_EGL_DEVICE_ID` set to the value of `CUDA_VISIBLE_DEVICES`.
 - Rendering-only and both cells of `OGBCube`:
   `SNV_VARIATION='{"OGBCube": {"agent.opacity": [1.0], "target.opacity": [1.0]}}'`. Ours then draws the look
   of the stable-worldmodel env. Physics cells use no variation.
@@ -163,9 +167,17 @@ The cells use B = 1, 16 and 128 and frames of 224 x 224. In the commands below, 
 - Each cell warms up for 2 s and at least 20 steps per environment (rendering only: 20 batches).
 - Then the script times `R` windows of at least 3 s and reports the median rate. All window rates are in the JSON
   file.
+- After the first window, no new window starts when the windows took 60 s in total. The offline source in
+  several processes always times `R` windows. `repeats` in the JSON file gives the number of windows.
 - Online windows hold whole 64-step episodes. Each episode starts with a seeded reset, so the reset cost is part
   of the rate.
 - The source runs B envs in P worker processes, one core each. The parent sends step t+1 before it takes step t.
+- The paper marks two kinds of cells:
+  - `*` (OGBCube, CPU, both, source at B = 16 and 128): the source rate is an estimate from a partial run. The
+    partial run has a 180 s warm-up and then 3 windows of about 100 s, and gives their median. That script is
+    not in this directory. A full run of the command below gives the rate over whole episodes.
+  - `‡` (PushT physics): the value is the median of 5 pairs of the commands below, ours and the source in
+    turn.
 
 ### Physics and both
 
@@ -177,7 +189,7 @@ python -m benchmarks.online_ladder run $COMMON --measure src-pipelined-step --ou
 python -m benchmarks.online_ladder run $COMMON --measure snv-step --output snv-step-cpu-LB.json
 python -m benchmarks.online_ladder run $COMMON --measure snv-step-gpu --output snv-step-gpu-LB.json
 python -m benchmarks.online_ladder run $COMMON --measure src-pipelined-render --src-label cpu --output src-render-cpu-LB.json
-python -m benchmarks.online_ladder run $COMMON --measure src-pipelined-render --src-label gpu --ours-device cuda \
+python -m benchmarks.online_ladder run $COMMON --measure src-pipelined-render --src-label gpu \
   --output src-render-gpu-LB.json
 python -m benchmarks.online_ladder run $COMMON --measure snv-render-cpu --output snv-render-cpu-LB.json
 python -m benchmarks.online_ladder run $COMMON --measure snv-render-gpu --output snv-render-gpu-LB.json
@@ -234,8 +246,9 @@ python examples/lewm/throughput.py --env E --input ours --data E_state.h5 --step
 ```
 
 `E` is `tworoom`, `pusht`, `reacher` or `cube`. The data file holds the state rows of the LeWM dataset. Each run
-gives one GPU, 16 CPU cores and 8 DataLoader workers. Add `seed=S` to `--model-overrides` for more seeds. The
-docstring of the script lists the fields of `summary.json`. The steady state is steps 201 to 1000.
+gives one GPU, 16 CPU cores and 8 DataLoader workers. Add `seed=S` to `--model-overrides` for more seeds.
+Each run writes `summary-<env>-<input>.json` and appends one row to `throughput.csv` in `--out`. The
+docstring of the script lists the fields. The steady state is steps 201 to 1000.
 
 - Training speedup: `steps_per_s` of `ours` divided by `steps_per_s` of `source`.
 - Training-step GPU busy fraction: `steps_per_s` multiplied by `step_gpu_ms` / 1000 of the `ours` run of the same

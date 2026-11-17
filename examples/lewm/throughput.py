@@ -12,7 +12,7 @@ Inputs:
 
 The model is the full size of stable-worldmodel ``lewm.yaml`` (``config/pusht.yaml``); ``--model-overrides`` changes
 it. The script trains ``--steps`` steps and leaves the first ``--warmup-steps`` out of the steady-state numbers. It
-writes ``summary.json`` and one CSV row to ``--out``:
+writes ``summary-<env>-<input>.json`` to ``--out`` and appends one row to ``throughput.csv`` there:
 
   steps_per_s         training steps per second in the steady state.
   train_busy_frac     GPU time of the training step alone (CUDA events around the step, without frame drawing)
