@@ -532,6 +532,17 @@ class FetchBatchAdapter(FetchInstances):
         groups = {f"state/{key}": value for key, value in self._state_groups().items()}
         return self._export({**out, **groups}, "step+state", owned=groups)
 
+    def step_leaves(self, actions, *, state=True) -> dict[tuple[str, ...], np.ndarray]:
+        """Advance every environment one step; the outputs and the State as host arrays by key path, for one copy.
+
+        With ``state`` False, the State is left out. The outputs are live buffers: the caller copies them before the
+        next call.
+        """
+        outputs = {(key,): value for key, value in self._advance(actions, None).items()}
+        if not state:
+            return outputs
+        return {**{("state", *key.split("/")): value for key, value in self._state_groups().items()}, **outputs}
+
     def advance(self, actions, *, active=None) -> TensorDict:
         return self._export(self._advance(actions, active), "step")
 

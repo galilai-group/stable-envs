@@ -22,17 +22,17 @@ CUDA_MIN_ENVS: dict[str, int] = {
     "ball_in_cup": 512,  # 512, 256
     "cartpole": 512,  # 512, 128
     "cartpole-balance": 256,  # 256, 64
-    "cheetah": 64,
-    "finger": 128,  # 128, 64
-    "finger-spin": 128,
-    "finger-turn_easy": 128,  # 128, 64
+    "cheetah": 256,  # 64, 64, L40S above 128
+    "finger": 256,  # 128, 64, L40S above 128
+    "finger-spin": 256,  # 128, 128, L40S above 128
+    "finger-turn_easy": 256,  # 128, 64, L40S above 128
     "hopper": 256,  # 256, 128
-    "humanoid": 128,
+    "humanoid": 128,  # 128, 128, L40S 128
     "manipulator": 512,  # 256, 512
     "pendulum": 256,
-    "point_mass-easy": 64,
-    "quadruped": 128,
-    "reacher": 128,
+    "point_mass-easy": 256,  # 64, 64, L40S above 128
+    "quadruped": 256,  # 128, 128, L40S above 128
+    "reacher": 256,  # 128, 128, L40S above 128
     "swimmer-swimmer6": 256,
     "walker": 512,  # 256, 512
 }

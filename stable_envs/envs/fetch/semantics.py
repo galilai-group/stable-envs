@@ -284,6 +284,14 @@ class FetchSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
+    def _host_step(self, actions, move):
+        """One step on the host batch: ``move`` puts its arrays on the env's device in one copy; None elsewhere."""
+        step = getattr(self._simulator, "step_leaves", None)
+        if step is None:
+            return None
+        self._check_open("step")
+        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
+
     def _advance_without_snapshot(self, actions, *, active=None):
         """Advance without State capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
