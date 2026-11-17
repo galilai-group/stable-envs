@@ -116,7 +116,7 @@ def test_auto_uses_the_shipped_switch_point_of_each_body(monkeypatch):
     monkeypatch.setattr(tuning, "_cuda", lambda: False)
     monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
     tuning.reset()
-    assert MAZE_CUDA_MIN_ENVS == {"point": 64, "ant": 128, "humanoid": 128}
+    assert MAZE_CUDA_MIN_ENVS == {"point": 8, "ant": 128, "humanoid": 128}
     for loco, switch in MAZE_CUDA_MIN_ENVS.items():
         assert maze_backend(switch - 1, "cuda", loco) == "native"
         assert maze_backend(switch, "cuda", loco) == "mjwarp"
@@ -152,6 +152,25 @@ def test_legacy_streams_draw_as_random_state():
     for i, state in enumerate(states):
         _, keys, position, _, _ = state.get_state()
         assert np.array_equal(mt.key[i], keys) and mt.pos[i] == position
+
+
+def _init_genrand(seed):
+    """MT19937's ``init_genrand`` in Python integers."""
+    key = [seed & 0xFFFFFFFF]
+    for i in range(1, 624):
+        key.append((1812433253 * (key[-1] ^ (key[-1] >> 30)) + i) & 0xFFFFFFFF)
+    return key
+
+
+def test_legacy_seeding_is_init_genrand():
+    from stable_envs.envs.ogbench.simulation.maze_batch import LegacyMT
+
+    seeds = [0, 1, 5489, 2**31 + 7, 2**32 - 1]
+    mt = LegacyMT(len(seeds) + 1)
+    mt.seed(np.arange(1, len(seeds) + 1), seeds)
+    assert not mt.key[0].any()
+    for i, seed in enumerate(seeds, 1):
+        assert mt.key[i].tolist() == _init_genrand(seed) and mt.pos[i] == 624
 
 
 @pytest.mark.parametrize("maze", ["medium", "giant", "teleport"])

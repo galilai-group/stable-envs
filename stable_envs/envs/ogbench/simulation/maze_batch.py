@@ -101,6 +101,18 @@ def _norm_within(diff, limit, margin, out):
     return near
 
 
+@njit(cache=True)
+def _init_genrand(seeds, key):
+    """MT19937's ``init_genrand`` of each 32-bit seed into its row of ``key``."""
+    for row in range(len(seeds)):
+        value = seeds[row]
+        for pos in range(key.shape[1]):
+            key[row, pos] = value
+            value = (np.uint64(1812433253) * (value ^ (value >> np.uint64(30))) + np.uint64(pos + 1)) & np.uint64(
+                0xFFFFFFFF
+            )
+
+
 class LegacyMT:
     """NumPy's legacy ``RandomState`` (MT19937) streams of many environments, drawn together.
 
@@ -117,11 +129,10 @@ class LegacyMT:
         self.gauss = np.zeros(num_envs)
 
     def seed(self, ids, seeds):
-        """``RandomState(seed)`` for each environment of ``ids``."""
-        legacy = np.random.RandomState()
-        for i, seed in zip(np.asarray(ids, np.int64), np.asarray(seeds, np.int64), strict=True):
-            legacy.seed(int(seed))
-            self.key[i] = legacy.get_state()[1]
+        """``RandomState(seed)`` for each environment of ``ids``: MT19937's ``init_genrand``."""
+        key = np.empty((len(ids), self.N), np.uint32)
+        _init_genrand(np.asarray(seeds, np.uint64) & np.uint64(0xFFFFFFFF), key)
+        self.key[ids] = key
         self.pos[ids] = self.N
         self.has_gauss[ids] = False
         self.gauss[ids] = 0.0
@@ -613,13 +624,9 @@ class OGBMazeBatchAdapter(_MazeInstances):
     def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
         actions, active = self.check_step(actions, active)
-        values = self._transition(actions, active)
-        result = {key: values[key] for key in values if key not in INFO_KEYS}
-        result.update({("info", key): values[key] for key in INFO_KEYS})
-        if capture_state:
-            result.update({("state", *key): value for key, value in self._state_columns().items()})
+        leaves = self._leaves(self._transition(actions, active), capture_state)
         owned = {("state", *group_path(PHYSICS))} if capture_state else ()
-        return self._export(result, "step+state" if capture_state else "step", owned)
+        return self._export(leaves, "step+state" if capture_state else "step", owned)
 
     def step_leaves(self, actions, *, state=True):
         """Advance every environment one step; the outputs and, with ``state``, the State as host arrays by key path.
@@ -628,7 +635,10 @@ class OGBMazeBatchAdapter(_MazeInstances):
         """
         self._check_open()
         actions, _ = self.check_step(actions, None)
-        values = self._transition(actions, None)
+        return self._leaves(self._transition(actions, None), state)
+
+    def _leaves(self, values, state):
+        """The step's outputs, its info and, with ``state``, the State groups, by key path."""
         leaves = {(key,): values[key] for key in values if key not in INFO_KEYS}
         leaves.update({("info", key): values[key] for key in INFO_KEYS})
         if state:
