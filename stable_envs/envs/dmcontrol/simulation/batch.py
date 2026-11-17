@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import functools
+import itertools
 import math
 
 import numpy as np
@@ -14,7 +16,6 @@ from ...._execution.protocol import SimulatorAdapter
 from .state import group_views, model_columns, new_groups, write_task_row
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
-_pow = np.frompyfunc(math.pow, 2, 1)
 #: Domains whose dm_control reset is mostly long MuJoCo calls: CheetahRun settles for 200 steps in one call. Their
 #: MuJoCo Warp reset owners reset on threads. The resets of other domains are faster in one thread: Quadruped's
 #: height search makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
@@ -23,24 +24,61 @@ THREADED_RESETS = frozenset({"cheetah"})
 _CPU = torch.device("cpu")
 
 
-def tolerance(x, *args, **kwargs):
-    """dm_control's ``rewards.tolerance`` on environment arrays."""
-    from dm_control.utils import rewards
+@functools.cache
+def _scale(sigmoid, value_at_margin):
+    """The scale that dm_control's ``rewards._sigmoids`` computes for ``sigmoid``, by the same operations."""
+    if sigmoid == "gaussian":
+        return np.sqrt(-2 * np.log(value_at_margin))
+    if sigmoid == "long_tail":
+        return np.sqrt(1 / value_at_margin - 1)
+    if sigmoid == "linear":
+        return 1 - value_at_margin
+    return np.sqrt(1 - value_at_margin)
 
-    return rewards.tolerance(x, *args, **kwargs)
+
+_ARRAY_SIGMOIDS = frozenset({"gaussian", "linear", "quadratic"})
+
+
+def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
+    """dm_control's ``rewards.tolerance`` on environment arrays.
+
+    The gaussian, linear and quadratic sigmoids run dm_control's array operations in its order, without its
+    argument checks; the other sigmoids call dm_control.
+    """
+    low = 0 < value_at_margin if sigmoid == "gaussian" else 0 <= value_at_margin
+    if sigmoid not in _ARRAY_SIGMOIDS or not (low and value_at_margin < 1):
+        from dm_control.utils import rewards
+
+        return rewards.tolerance(x, bounds, margin, sigmoid, value_at_margin)
+    scale = _scale(sigmoid, value_at_margin)
+    lower, upper = bounds
+    in_bounds = np.logical_and(lower <= x, x <= upper)
+    if margin == 0:
+        return np.where(in_bounds, 1.0, 0.0)
+    scaled = np.where(x < lower, lower - x, x - upper) / margin * scale
+    if sigmoid == "gaussian":
+        value = np.exp(-0.5 * scaled**2)
+    elif sigmoid == "linear":
+        value = np.where(abs(scaled) < 1, 1 - scaled, 0.0)
+    else:
+        value = np.where(abs(scaled) < 1, 1 - scaled**2, 0.0)
+    return np.where(in_bounds, 1.0, value)
+
+
+def _libm_square(x):
+    """``pow(x, 2.0)`` of each element with the C library, as dm_control squares a scalar."""
+    return np.fromiter(map(math.pow, x.ravel().tolist(), itertools.repeat(2.0)), np.float64, x.size).reshape(x.shape)
 
 
 def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
     """``rewards.tolerance`` of each environment's scalar, for the gaussian and long_tail sigmoids."""
+    if sigmoid not in ("gaussian", "long_tail"):
+        raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
     lower, upper = bounds
     d = np.where(x < lower, lower - x, x - upper) / margin
     # dm_control squares a scalar with libm pow, which can round differently from x * x.
-    if sigmoid == "gaussian":
-        value = np.exp(-0.5 * _pow(d * np.sqrt(-2 * np.log(value_at_margin)), 2.0).astype(np.float64))
-    elif sigmoid == "long_tail":
-        value = 1 / (_pow(d * np.sqrt(1 / value_at_margin - 1), 2.0).astype(np.float64) + 1)
-    else:
-        raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
+    square = _libm_square(d * _scale(sigmoid, value_at_margin))
+    value = np.exp(-0.5 * square) if sigmoid == "gaussian" else 1 / (square + 1)
     return np.where((lower <= x) & (x <= upper), 1.0, value)
 
 
