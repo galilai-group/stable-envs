@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import math
 from types import SimpleNamespace
 
 import mujoco
 import numpy as np
 import torch
+from numba import njit
 
 from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
@@ -370,22 +372,49 @@ class RestGrid:
         self.hi_pad = np.concatenate([hi, np.full((1, 3), 1e30)])
 
     def resting(self, xy):
-        centre = np.zeros((len(xy), 3))
-        centre[:, :2] = xy
-        centre += self.offset
-        cell = np.floor((centre[:, :2] - self.origin) / self.CELL).astype(np.int64)
-        inside = ((cell >= 0) & (cell < self.shape)).all(1)
-        out = np.zeros(len(xy), bool)
-        if inside.any():
-            walls = self.table[cell[inside, 0] * self.shape[1] + cell[inside, 1]]
-            c = centre[inside][:, None]
-            near = np.clip(c, self.lo_pad[walls], self.hi_pad[walls]) - c
-            out[inside] = (near * near).sum(-1).min(1) > self.limit
-        if not inside.all():
-            c = centre[~inside][:, None]
-            near = np.clip(c, self.lo, self.hi) - c
-            out[~inside] = (near * near).sum(-1).min(1) > self.limit
+        out = np.empty(len(xy), bool)
+        _resting(
+            np.ascontiguousarray(xy, np.float64),
+            self.offset,
+            self.origin,
+            self.CELL,
+            self.shape,
+            self.table,
+            self.lo,
+            self.hi,
+            self.lo_pad,
+            self.hi_pad,
+            self.limit,
+            out,
+        )
         return out
+
+
+@njit(cache=True)
+def _clearance(c0, c1, c2, lo, hi, walls):
+    """The smallest squared distance from the point to the boxes ``walls``, summed per axis as NumPy sums."""
+    best = np.inf
+    for w in walls:
+        d0 = min(max(c0, lo[w, 0]), hi[w, 0]) - c0
+        d1 = min(max(c1, lo[w, 1]), hi[w, 1]) - c1
+        d2 = min(max(c2, lo[w, 2]), hi[w, 2]) - c2
+        best = min(best, d0 * d0 + d1 * d1 + d2 * d2)
+    return best
+
+
+@njit(cache=True)
+def _resting(xy, offset, origin, cell, shape, table, lo, hi, lo_pad, hi_pad, limit, out):
+    """``RestGrid.resting`` of every ball: its cell's walls inside the grid, every wall outside it."""
+    every = np.arange(len(lo))
+    for i in range(len(xy)):
+        c0, c1, c2 = xy[i, 0] + offset[0], xy[i, 1] + offset[1], 0.0 + offset[2]
+        g0 = math.floor((c0 - origin[0]) / cell)
+        g1 = math.floor((c1 - origin[1]) / cell)
+        if 0 <= g0 < shape[0] and 0 <= g1 < shape[1]:
+            best = _clearance(c0, c1, c2, lo_pad, hi_pad, table[int(g0) * shape[1] + int(g1)])
+        else:
+            best = _clearance(c0, c1, c2, lo, hi, every)
+        out[i] = best > limit
 
 
 class _MazeInstances(SimulatorAdapter):
