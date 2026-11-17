@@ -227,7 +227,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
         self._actions: dict = {}
         self._graphs: dict = {}
         #: The step of one action without a mask, whose whole result is one copy of the graph's buffer.
-        self._single = GraphStep(self.num_envs, self.device, self._single_step, self._single_live, tuple)
+        self._single = GraphStep(self.num_envs, self.device, self._graph_compute, self._graph_live, tuple)
         self._closed = False
 
     def _check_open(self) -> None:
@@ -453,7 +453,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
         a = a[:, 0].to(device=self.device, dtype=dtype)
         return self._single.result(a, sequence, state_indices, final_state)
 
-    def _single_step(self, actions: torch.Tensor) -> TensorDict:
+    def _graph_compute(self, actions: torch.Tensor) -> TensorDict:
         """Step every environment by ``actions`` and return views of the State and outputs, for ``GraphStep``."""
         self._kernel(actions, False)()
         views = self._unpack(self._packed)
@@ -463,7 +463,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
             self.device,
         )
 
-    def _single_live(self) -> list[torch.Tensor]:
+    def _graph_live(self) -> list[torch.Tensor]:
         return [*self._live.values(), self._sim, self._render]
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:

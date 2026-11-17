@@ -112,9 +112,9 @@ class GraphStep:
     ``key()`` returns a value that changes when ``compute`` would read or write other tensors; a new key captures
     again.
 
-    ``sources()``, when given, returns tensors that ``compute`` reads through copies the graph owns, such as the
-    Variation rows, which a new Variation replaces. A replay first copies a source that is a new tensor or was
-    written since the last copy, so a new Variation of the same shape needs no new capture. ``shared()``, when
+    ``sources()``, when given, returns small tensors that ``compute`` reads through copies the graph owns, such as
+    the Variation rows, which a new Variation replaces. Every replay first copies them, so a new Variation of the
+    same shape needs no new capture. ``shared()``, when
     given, returns ``{key path: tensor}`` outputs that ``compute`` leaves out and that the result holds as they
     are, such as a large image that steps never write.
     """
@@ -153,11 +153,8 @@ class GraphStep:
                 final_state=shape[2],
                 shared=() if extra is None else tuple(extra),
             )
-        for i, source in enumerate(sources):
-            seen = copies[i]
-            if seen[1] is not source or seen[2] != source._version:
-                seen[0].copy_(source)
-                copies[i] = (seen[0], source, source._version)
+        for copy, source in zip(copies, sources, strict=True):
+            copy.copy_(source)
         static.copy_(actions)
         if torch.cuda.current_device() == self.device.index:
             graph.replay()
@@ -173,8 +170,7 @@ class GraphStep:
     def _capture_here(self, actions: torch.Tensor, sources):
         static = torch.empty(actions.shape, dtype=actions.dtype, device=self.device)
         static.copy_(actions)
-        copies = [(source.clone(), source, source._version) for source in sources]
-        inputs = [copy for copy, _, _ in copies]
+        copies = [source.clone() for source in sources]
         live = self._live()
         held = [tensor.clone() for tensor in live]
         current = torch.cuda.current_stream(self.device)
@@ -183,7 +179,7 @@ class GraphStep:
             stream = torch.cuda.Stream(self.device)
             stream.wait_stream(current)
             with torch.cuda.stream(stream):
-                probe = self._compute(static, *inputs)
+                probe = self._compute(static, *copies)
             current.wait_stream(stream)
             leaves = _leaves(probe)
             regions, offset = [], 0
@@ -205,7 +201,7 @@ class GraphStep:
 
             graph = torch.cuda.CUDAGraph()
             with torch.cuda.graph(graph):
-                captured = dict(_leaves(self._compute(static, *inputs)))
+                captured = dict(_leaves(self._compute(static, *copies)))
                 for path, value, start in (*regions, *states):
                     slot(value, start).copy_(captured[path])
         except Exception as error:  # noqa: BLE001 - step without the graph, and say so

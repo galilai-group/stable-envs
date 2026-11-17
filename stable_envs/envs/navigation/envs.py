@@ -456,13 +456,17 @@ class _GymReferencePort(Env):
         if not bool(torch.isfinite(rows).all()):
             check_states(self, rows, f"{type(self).__name__}.unpack")
 
-    def _stepped_state(self) -> TensorDict:
-        """The State after a step, checked as ``get_state`` checks it on the CPU only.
+    def _step_checks_finite(self) -> bool:
+        """Whether a step checks its new state as ``get_state`` does: on the CPU, except for JAX steps.
 
-        On an accelerator the check would read back to the host every step, so a step leaves it out.
+        On an accelerator the check would wait for the device every step, and so would it for a JAX step.
         """
+        return self.device.type == "cpu" and getattr(self, "simulation_backend", None) != "jax"
+
+    def _stepped_state(self) -> TensorDict:
+        """The State after a step, checked when ``_step_checks_finite``."""
         rows = self._get_render_state()
-        if self.device.type == "cpu":
+        if self._step_checks_finite():
             self._require_finite(rows)
         return self._snapshot(rows)
 
@@ -772,14 +776,15 @@ class _HiddenTargetSemantics:
         n = int(agent.shape[0])
         return self._fold({"agent/position": agent, "target/position": self._target_position[:n]})
 
-    def _observation(self, agent, target):
+    def _observation(self, agent, target, style=None):
+        """The observation; ``style`` is Variation rows to read in place of the installed ones."""
         return torch.cat([agent, target], dim=1)
 
     #: The observation hook that the Numba step computes in its kernel; another hook runs after the kernel.
     _numba_observation = _observation
 
-    def _task_tensors(self, agent, target):
-        observation = self._observation(agent, target)
+    def _task_tensors(self, agent, target, style=None):
+        observation = self._observation(agent, target, style)
         # Match the two-element CPU torch.norm: round x*x, accumulate y*y with
         # one float32 rounding, then round sqrt. Reassociation can flip success at 16 px.
         delta = (agent - target).detach().double()
@@ -800,8 +805,8 @@ class _HiddenTargetSemantics:
             },
         }
 
-    def _outputs(self, state):
-        values = self._task_tensors(*self._fields(state, ("agent/position", "target/position")))
+    def _outputs(self, state, style=None):
+        values = self._task_tensors(*self._fields(state, ("agent/position", "target/position")), style)
         return build_tensordict({"state": state, **values}, state.batch_size, self.device)
 
     @torch.no_grad()
@@ -814,7 +819,7 @@ class _HiddenTargetSemantics:
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        if self.device.type == "cpu" and self.simulation_backend == "torch":
+        if self._step_checks_finite():
             self._require_finite(self._render_state)
         # The snapshot leaves out get_state's check, which would read back from an accelerator every step.
         return self._outputs(self._full_state(self._render_state))
@@ -835,14 +840,7 @@ class _HiddenTargetSemantics:
     def _graph_compute(self, action, style):
         next_rows = self._advance_rows(self._render_state, action, self._style_of(style))
         self._render_state.copy_(next_rows)
-        return self._outputs(self._full_state(self._render_state))
-
-    def _graph_key(self):
-        key = super()._graph_key()
-        if type(self)._observation is not _HiddenTargetSemantics._observation:
-            # This observation reads the installed Variation itself, so a new Variation captures again.
-            key = (*key, self._style.values.data_ptr())
-        return key
+        return self._outputs(self._full_state(self._render_state), style)
 
     def _steps_on_host(self) -> bool:
         """Whether a step of several actions advances host copies of the environments and moves its result once."""
@@ -891,7 +889,7 @@ class _HiddenTargetSemantics:
         target = self._host_array("target", self._target_position)
         values = navstep_cpu.task_step(self._numba_kind, *inputs, target, self._numba_doors)
         positions, observation, proprio, state, goal_state, distance, terminated = values
-        if self.device.type == "cpu" and not np.isfinite(inputs[0]).all():
+        if self._step_checks_finite() and not np.isfinite(inputs[0]).all():
             self._require_finite(self._render_state)
         if getattr(self._observation, "__func__", None) is not type(self)._numba_observation:
             fields = self.STATE.views({_TARGET_GROUP.key: torch.from_numpy(positions)})
@@ -1529,11 +1527,17 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             return self._jax_kernel.advance(rows, action, sty.values)
         return super()._advance_rows(rows, action, sty)
 
-    def _observation(self, agent, target):
+    def _observation(self, agent, target, style=None):
         n = int(agent.shape[0])
-        axis = (self._style["wall.axis"][:n] > 0.5).reshape(n, 1)
-        count = self._style["door.number"][:n].trunc().reshape(n, 1)
-        positions = self._style["door.position"][:n]
+        rows = self._style.values if style is None else style
+
+        def leaf(path):
+            offset, width = self._style.layout[path]
+            return rows[:n, offset : offset + width]
+
+        axis = (leaf("wall.axis") > 0.5).reshape(n, 1)
+        count = leaf("door.number").trunc().reshape(n, 1)
+        positions = leaf("door.position")
         center = torch.full_like(positions, float(WALL_CENTER))
         doors = torch.stack((torch.where(axis, center, positions), torch.where(axis, positions, center)), dim=-1)
         live = torch.arange(MAX_DOOR, device=self.device) < count

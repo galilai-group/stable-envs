@@ -27,7 +27,7 @@ FAMILIES = [
     pytest.param("PointMazeTeleportNavigate", {}, marks=pytest.mark.family("ogbench")),
     pytest.param("HumanoidMazeMediumNavigate", {}, marks=pytest.mark.family("ogbench")),
 ]
-#: Host steps of classic control and navigation, run long enough to reach truncation.
+#: Host steps of classic control and navigation; classic-control runs go past their time limit.
 LONG_FAMILIES = [
     *(
         pytest.param(name, {"simulation_backend": "numba"}, marks=pytest.mark.family("navigation"), id=name)
@@ -102,17 +102,30 @@ def test_short_path_matches_the_general_path(name, kwargs, num_envs, sequence, m
     assert calls and all(calls)
 
 
-def compare_runs(fast, general, num_envs, sequence, steps=216):
-    """Step ``fast`` and ``general`` alike for ``steps`` calls and compare every result, bit for bit.
+def _time_limit(env) -> int | None:
+    domain = getattr(env, "CLASSIC_DOMAIN", None)
+    if domain is None:
+        return None
+    from stable_envs.envs.classic_control.simulation.batched import MAX_EPISODE_STEPS
 
-    The calls cycle through ``LONG_CALLS``, every fifth floating-point action is float16, and the run restores a
-    State and installs a new Variation at step 90 and resets again at step 150.
+    return MAX_EPISODE_STEPS[domain]
+
+
+def compare_runs(fast, general, num_envs, sequence):
+    """Step ``fast`` and ``general`` alike and compare every result, bit for bit.
+
+    The calls cycle through ``LONG_CALLS``, and every fifth floating-point action is float16. The run restores a
+    State and installs a new Variation at step 90, steps past a classic-control time limit (the restore keeps the
+    elapsed steps) and checks that the episodes truncate, then resets again for its last 30 steps.
     """
+    limit = _time_limit(fast)
+    steps = (limit or 200) + 60
     fast.reset(seed=5)
     general.reset(seed=5)
     rng = np.random.default_rng(2)
     floating = fast.action_spec.dtype.is_floating_point
     previous = None
+    truncated = False
     for t in range(steps):
         if t == 90:
             saved = general.get_state()
@@ -120,7 +133,7 @@ def compare_runs(fast, general, num_envs, sequence, steps=216):
             for env in (fast, general):
                 env.set_state(saved)
                 env.set_variation(variation)
-        if t == 150:
+        if t == steps - 30:
             fast.reset(seed=9)
             general.reset(seed=9)
         action = fast.action_spec.sample(num_envs, rng=rng).to(fast.device)
@@ -131,11 +144,14 @@ def compare_runs(fast, general, num_envs, sequence, steps=216):
         call = LONG_CALLS[t % len(LONG_CALLS)]
         a, b = fast.step(action, **call), general.step(action, **call)
         _same(a, b)
+        if "truncated" in a.keys():
+            truncated = truncated or bool(a["truncated"].any())
         if previous is not None:
             # A result owns its memory: later steps don't change it.
             _same(previous[0], previous[1])
         previous = (a, b.clone())
     _same(fast.get_state(), general.get_state())
+    assert truncated or limit is None
 
 
 @pytest.mark.parametrize("name,kwargs", LONG_FAMILIES)
@@ -160,13 +176,30 @@ def test_long_host_runs_match_the_general_path(name, kwargs, num_envs, sequence,
     assert calls and all(calls)
 
 
+NON_FINITE_CPU = [
+    *((name, {}, True) for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")),
+    *(
+        (name, {"simulation_backend": "torch"}, True)
+        for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
+    ),
+    # A JAX step doesn't wait for the device, so it doesn't check; get_state does.
+    ("TwoRoom", {"simulation_backend": "jax"}, False),
+]
+
+
 @pytest.mark.family("navigation")
-@pytest.mark.parametrize("name", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze"])
-def test_a_cpu_step_to_a_non_finite_state_raises(name):
-    with snv.make(name, num_envs=2, device="cpu") as env:
+@pytest.mark.parametrize("name,kwargs,raises", NON_FINITE_CPU)
+def test_a_cpu_step_to_a_non_finite_state_raises_except_with_jax(name, kwargs, raises):
+    with snv.make(name, num_envs=2, device="cpu", **kwargs) as env:
         env.reset(seed=0)
-        with pytest.raises(ValueError, match="non-finite|nonfinite|NaN"):
-            env.step(torch.tensor([[0.0, 0.0], [float("nan"), 0.0]]), frames=None)
+        nan = torch.tensor([[0.0, 0.0], [float("nan"), 0.0]])
+        if raises:
+            with pytest.raises(ValueError, match="non-finite|nonfinite|NaN"):
+                env.step(nan, frames=None)
+        else:
+            env.step(nan, frames=None)
+            with pytest.raises(ValueError, match="non-finite|nonfinite|NaN"):
+                env.get_state()
 
 
 @pytest.mark.family("dmc")

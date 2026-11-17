@@ -1536,7 +1536,7 @@ class MazeSemantics:
         if step is None:
             return None
         self._check_open("step")
-        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
+        return move(step(actions, state=move.needs_state))[0]
 
     def _step_pipeline(self) -> StepPipeline | None:
         return step_pipeline(self._simulator)
