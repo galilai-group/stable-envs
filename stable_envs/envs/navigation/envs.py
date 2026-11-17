@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import math
 
 import numpy as np
@@ -481,15 +480,9 @@ class _GymReferencePort(Env):
             )
         return graph
 
-    @contextlib.contextmanager
-    def _style_rows(self, values):
-        """Read the Variation from ``values``, a graph's copy of the installed rows, inside the block."""
-        installed = self._style
-        self._style = StyleTensor(values, installed._layout_list())
-        try:
-            yield
-        finally:
-            self._style = installed
+    def _style_of(self, values) -> StyleTensor:
+        """The installed Variation's layout over ``values``, a graph's copy of the Variation rows."""
+        return StyleTensor(values, self._style._layout_list())
 
     #: Outputs that a graph step passes through as they are (see ``GraphStep``).
     _graph_shared = None
@@ -821,7 +814,7 @@ class _HiddenTargetSemantics:
         if active is not None:
             next_rows = torch.where(active[:, None], next_rows, self._render_state)
         self._render_state.copy_(next_rows)
-        if self.device.type == "cpu":
+        if self.device.type == "cpu" and self.simulation_backend == "torch":
             self._require_finite(self._render_state)
         # The snapshot leaves out get_state's check, which would read back from an accelerator every step.
         return self._outputs(self._full_state(self._render_state))
@@ -840,8 +833,16 @@ class _HiddenTargetSemantics:
         return self._numba_step(act, None, move)
 
     def _graph_compute(self, action, style):
-        with self._style_rows(style):
-            return self._step(action)
+        next_rows = self._advance_rows(self._render_state, action, self._style_of(style))
+        self._render_state.copy_(next_rows)
+        return self._outputs(self._full_state(self._render_state))
+
+    def _graph_key(self):
+        key = super()._graph_key()
+        if type(self)._observation is not _HiddenTargetSemantics._observation:
+            # This observation reads the installed Variation itself, so a new Variation captures again.
+            key = (*key, self._style.values.data_ptr())
+        return key
 
     def _steps_on_host(self) -> bool:
         """Whether a step of several actions advances host copies of the environments and moves its result once."""
@@ -1067,8 +1068,7 @@ class _TorchNavBase(_GymReferencePort):
 
     def _graph_compute(self, action, style):
         """``_step`` of every environment without host reads, for capture in a CUDA graph."""
-        with self._style_rows(style):
-            next_rows = self._advance_rows(self._render_state, action, self._style)
+        next_rows = self._advance_rows(self._render_state, action, self._style_of(style))
         self._render_state.copy_(next_rows)
         state = self._snapshot(self._render_state)
         return build_tensordict({"state": state}, state.batch_size, self.device)
@@ -2244,13 +2244,14 @@ class SimplePointMaze(_GymReferencePort):
         out[:, 0:2] = nxt
         return out
 
-    def _outputs(self, state, goal_image: bool = True):
+    def _outputs(self, state, goal_image: bool = True, style=None):
         agent, goal, flags = self._fields(state, ("agent/position", "goal/position", "task/state_is_float64"))
         distance = torch.linalg.vector_norm(agent.to(torch.float32) - goal, dim=1).to(torch.float64)
         if self._wide:
             distance64 = torch.linalg.vector_norm(agent - goal.to(torch.float64), dim=1)
             distance = torch.where(flags.reshape(-1), distance64, distance)
-        terminated = distance < self._style["goal.radius"][: len(agent)].reshape(-1).to(torch.float64)
+        radius = (self._style if style is None else style)["goal.radius"]
+        terminated = distance < radius[: len(agent)].reshape(-1).to(torch.float64)
         n = int(state.batch_size[0])
         reward = torch.where(
             terminated,
@@ -2330,11 +2331,11 @@ class SimplePointMaze(_GymReferencePort):
 
     def _graph_compute(self, action, style):
         """``_step`` of float32 actions while no environment holds a float64 state, without host reads."""
-        with self._style_rows(style):
-            agent, _ = self._advance_agent(self._agent_position, action, self._style, self._state_is_float64)
-            self._agent_position.copy_(agent)
-            self._render_state[:, 0:2].copy_(agent.to(torch.float32))
-            return self._outputs(self._snapshot(self._render_state), goal_image=False)
+        sty = self._style_of(style)
+        agent, _ = self._advance_agent(self._agent_position, action, sty, self._state_is_float64)
+        self._agent_position.copy_(agent)
+        self._render_state[:, 0:2].copy_(agent.to(torch.float32))
+        return self._outputs(self._snapshot(self._render_state), goal_image=False, style=sty)
 
     def _graph_live(self):
         return [self._agent_position, self._render_state]
