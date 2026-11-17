@@ -152,6 +152,8 @@ class CheetahBatch:
     RESET_STEPS = 199
     #: The reset draws no normal variates, so a seeded reset leaves no cached gaussian in the task RNG.
     RESET_DRAWS_NORMALS = False
+    #: A batch of the same models on more threads for the settling steps, or None to settle on the step batch.
+    settle_batch = None
 
     def __init__(self, b, models):
         import mujoco
@@ -173,6 +175,10 @@ class CheetahBatch:
         assert m.nq == m.njnt and m.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4
         limited = m.jnt_limited == 1
         return m, limited, *m.jnt_range[limited].T.copy()
+
+    @property
+    def _settling(self):
+        return self.b if self.settle_batch is None else self.settle_batch
 
     def begin_reset(self, env, instance):
         """dm_control's Cheetah reset up to its 200 settling steps, and ``mj_step2`` of the first one.
@@ -197,7 +203,7 @@ class CheetahBatch:
         warnings = physics._warnings.copy()
         d.qpos[limited] = env.task.random.uniform(lower, upper)
         mujoco.mj_step2(m, d)
-        mujoco.mj_getState(m, d, self.b.state[instance], self._spec)
+        mujoco.mj_getState(m, d, self._settling.state[instance], self._spec)
         return warnings
 
     def batch_reset(self, ids, begun):
@@ -205,9 +211,10 @@ class CheetahBatch:
         import mujoco
         from dm_control.rl.control import PhysicsError
 
-        warnings = self.b.warning[ids, :, 1].copy()
-        self.b.step(ids, self.RESET_STEPS, stage=mujoco.mjtStage.mjSTAGE_VEL)
-        if (bad := ids[(self.b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
+        b = self._settling
+        warnings = b.warning[ids, :, 1].copy()
+        b.step(ids, self.RESET_STEPS, stage=mujoco.mjtStage.mjSTAGE_VEL)
+        if (bad := ids[(b.warning[ids, :, 1] > warnings).any(axis=1)]).size:
             raise PhysicsError(f"Physics state is invalid in environments {bad.tolist()}")
         return begun
 
@@ -218,7 +225,7 @@ class CheetahBatch:
 
         physics, task = env.physics, env.task
         m, d = physics.model.ptr, physics.data.ptr
-        mujoco.mj_setState(m, d, self.b.state[instance], self._spec)
+        mujoco.mj_setState(m, d, self._settling.state[instance], self._spec)
         d.time = 0
         task._timeout_progress = 0
         if task.visualize_reward:

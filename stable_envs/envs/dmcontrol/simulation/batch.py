@@ -103,8 +103,8 @@ class DMCBatchAdapter(SimulatorAdapter):
     #: Each step returns fresh output tensors.
     outputs_owned = True
 
-    def __init__(self, instances, task, threads):
-        """Step on ``threads`` threads."""
+    def __init__(self, instances, task, threads, reset_threads=None):
+        """Step on ``threads`` threads; the settling steps of a ``THREADED_RESETS`` reset run on ``reset_threads``."""
         import mujoco
         from dm_control.rl.control import PhysicsError
         from mujoco.batch import Batch
@@ -123,7 +123,12 @@ class DMCBatchAdapter(SimulatorAdapter):
         # as dm_control's step does.
         self.b = Batch(self._models[0], self.num_envs, nthread=threads, persistent=True)
         self.b.set_models(self._models)
-        self.task = task(self.b, self._models)
+        # A reset that settles in one long MuJoCo call per environment runs it on a batch of its own, whose thread
+        # count fits that work rather than the work of one step.
+        self._settle = None
+        if self.key in THREADED_RESETS and reset_threads is not None and reset_threads > threads:
+            self._settle = Batch(self._models[0], self.num_envs, nthread=reset_threads)
+        self.task = self._new_task()
         # The State lives in host group arrays; the step copies the batch's physics and counters into their views.
         self._groups = new_groups(self.schema, self.num_envs)
         self._columns = group_views(self.schema, self._groups, self.fields)
@@ -232,7 +237,15 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._export_physics()
         self.b.set_models(self._models)
         self.b.forward(stage=self._vel)
-        self.task = self._task(self.b, self._models)
+        self.task = self._new_task()
+
+    def _new_task(self):
+        """The batch task on the installed models, with the settling batch when the domain has one."""
+        task = self._task(self.b, self._models)
+        if self._settle is not None:
+            self._settle.set_models(self._models)
+            task.settle_batch = self._settle
+        return task
 
     def reset(self, seed=None):
         self.instances._check_open()
@@ -265,7 +278,7 @@ class DMCBatchAdapter(SimulatorAdapter):
     def set_state(self, state):
         self.instances.set_state(state)
         self.b.set_models(self._models)
-        self.task = self._task(self.b, self._models)
+        self.task = self._new_task()
         self._load(np.arange(self.num_envs))
 
     def check_step(self, actions, active):
@@ -344,4 +357,4 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def close(self):
         self.instances.close()
-        self.b = self.task = None
+        self.b = self.task = self._settle = None

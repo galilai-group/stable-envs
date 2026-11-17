@@ -93,9 +93,11 @@ def make_batch(
     """``make_local`` environments stepped in one mujoco.batch on ``threads`` threads.
 
     Without ``threads``, a step uses at most ``batch_threads`` threads, and fewer for a domain whose step has little
-    MuJoCo work (``step_threads``).
+    MuJoCo work (``step_threads``); the long settling call of a ``THREADED_RESETS`` reset uses ``batch_threads``.
     """
+    reset_threads = threads
     if threads is None:
-        threads = step_threads(domain, num_envs, batch_threads(num_envs))
+        reset_threads = batch_threads(num_envs)
+        threads = step_threads(domain, num_envs, reset_threads)
     instances = make_local(domain, num_envs, device, seed)
-    return DMCBatchAdapter(instances, BATCH_TASKS[domain], threads)
+    return DMCBatchAdapter(instances, BATCH_TASKS[domain], threads, reset_threads)
