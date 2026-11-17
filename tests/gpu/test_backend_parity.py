@@ -16,9 +16,12 @@ def test_reacher_native_and_mjwarp():
 
 
 @pytest.mark.family("ogbench")
-def test_cube_native_and_mjwarp():
+@pytest.mark.parametrize("num_envs", [1, 2])
+@pytest.mark.parametrize("name", ["OGBCube", "OGBScene"])
+def test_manipulation_native_and_mjwarp(name, num_envs):
     pytest.importorskip("mujoco_warp")
-    check_backend_parity("OGBCube", ("native", "mjwarp"), num_envs=2, exclude=se.OGBCube.state_solver_caches)
+    cls = getattr(se, name)
+    check_backend_parity(name, ("native", "mjwarp"), num_envs=num_envs, exclude=cls.state_solver_caches)
 
 
 @pytest.mark.family("pusht")
