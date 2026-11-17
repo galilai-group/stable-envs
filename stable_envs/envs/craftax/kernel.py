@@ -45,11 +45,11 @@ def texture_lock(classic: bool):
         yield
 
 
-#: The fewest environments that one XLA host device steps. A split adds a fixed cost per device and per call (placing the
-#: inputs, launching the program, joining the outputs), so each device needs this much stepping to pay for it.
-#: Measured on two CPU hosts with 8 CPUs each, both games: below 32 environments per device a split was not faster than
-#: one device on at least one host. docs/environments/craftax.md (Simulation) says how.
-MIN_ENVS_PER_HOST_DEVICE = 32
+#: The fewest environments that one XLA host device steps. One XLA:CPU program that runs alone spreads its small
+#: operations over the threads of XLA's pool, which is slower than programs that run at the same time on several
+#: devices; each split also adds a cost per device and per call (placing the inputs, launching the program, joining the
+#: outputs). docs/environments/craftax.md (Simulation) says how the value was measured.
+MIN_ENVS_PER_HOST_DEVICE = 4
 
 #: XLA:GPU reads the condition of a while loop on the host after each iteration. A Craftax step runs short loops
 #: of fixed length (``lax.scan`` over mobs and block types), so the GPU step and reset unroll them and run without
