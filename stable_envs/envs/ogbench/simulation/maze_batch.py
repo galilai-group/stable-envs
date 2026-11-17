@@ -80,10 +80,25 @@ class MazeTask:
 
 def norm_within(diff, limit):
     """``np.linalg.norm(diff[i]) <= limit`` per row, with the source's norm wherever rounding could flip it."""
+    margin = 1e-9 * max(1.0, limit)
+    out = np.empty(len(diff), bool)
+    if not _norm_within(np.ascontiguousarray(diff, np.float64), float(limit), margin, out):
+        return out
     dist = np.sqrt(diff[:, 0] * diff[:, 0] + diff[:, 1] * diff[:, 1])
-    for i in np.flatnonzero(np.abs(dist - limit) <= 1e-9 * max(1.0, limit)):
+    for i in np.flatnonzero(np.abs(dist - limit) <= margin):
         dist[i] = np.linalg.norm(diff[i])
     return dist <= limit
+
+
+@njit(cache=True)
+def _norm_within(diff, limit, margin, out):
+    """``sqrt(x * x + y * y) <= limit`` per row into ``out``; True when a row is within ``margin`` of the limit."""
+    near = False
+    for i in range(len(diff)):
+        dist = math.sqrt(diff[i, 0] * diff[i, 0] + diff[i, 1] * diff[i, 1])
+        near |= abs(dist - limit) <= margin
+        out[i] = dist <= limit
+    return near
 
 
 class LegacyMT:
@@ -523,12 +538,9 @@ class OGBMazeBatchAdapter(_MazeInstances):
         if self._host_groups is None:
             host = {"task/goal_pos": self._goal, "task/id": self._task_id, **self._random.columns}
             self._host_groups = self.schema.pack(host, [key for key in self.schema.groups if key != PHYSICS])
-        physics = {
-            **self._split(b.qpos, b.qvel),
-            "simulator/time": b.time[:, None],
-            "simulator/warmstart": b.qacc_warmstart,
-        }
-        groups = {**self.schema.pack(physics, (PHYSICS,)), **self._host_groups}
+        # The physics group holds qpos, qvel, the time and the warm start, in this order (``maze_schema``).
+        physics = np.concatenate((b.qpos, b.qvel, b.time[:, None], b.qacc_warmstart), 1)
+        groups = {PHYSICS: physics, **self._host_groups}
         return {group_path(key): groups[key] for key in self.schema.groups}
 
     def _export(self, values, name, owned=()):
