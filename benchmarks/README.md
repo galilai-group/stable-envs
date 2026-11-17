@@ -158,6 +158,7 @@ The cells use B = 1, 16 and 128 and frames of 224 x 224. In the commands below, 
 
 ### Timing
 
+- Each command below is one cell and runs in its own process.
 - Ours uses the default keyword arguments of `snv.make` and one action per `step` call (`--chunks 1`).
 - Each cell warms up for 2 s and at least 20 steps per environment (rendering only: 20 batches).
 - Then the script times `R` windows of at least 3 s and reports the median rate. All window rates are in the JSON
