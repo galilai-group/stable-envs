@@ -7,7 +7,7 @@ from tensordict import TensorDict
 from ... import tuning
 from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor, rows_are_equal
-from ..._execution.protocol import StepPipeline, step_pipeline
+from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import Env, _split_appearance
 
 
@@ -193,12 +193,12 @@ class ManipulationSemantics:
 
     def _host_step(self, actions, move):
         """One step on a host simulator: ``move`` puts its arrays on the env's device in one copy."""
-        step = getattr(self._simulator, "step_leaves", None)
-        if step is None:
-            return None
         self._check_open("step")
         self._rows_installed = False
-        result, self._own_state = move(step(actions, state=getattr(move, "needs_state", True)))
+        moved = host_step(self._simulator, actions, move)
+        if moved is None:
+            return None
+        result, self._own_state = moved
         return result
 
     def _step_pipeline(self) -> StepPipeline | None:

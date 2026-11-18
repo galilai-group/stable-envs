@@ -20,6 +20,9 @@ FAMILIES = [
     pytest.param("DMCReacher", {}, marks=pytest.mark.family("dmc")),
     pytest.param("DMCCartpoleSwingup", {}, marks=pytest.mark.family("dmc")),
     pytest.param("TwoRoom", {"simulation_backend": "numba"}, marks=pytest.mark.family("navigation")),
+    pytest.param("FetchPush", {}, marks=pytest.mark.family("fetch")),
+    pytest.param("FetchPickAndPlace", {}, marks=pytest.mark.family("fetch")),
+    pytest.param("FetchReach", {}, marks=pytest.mark.family("fetch")),
 ]
 CALLS = [
     {"states": None, "frames": None},

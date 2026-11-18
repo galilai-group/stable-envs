@@ -7,7 +7,7 @@ from tensordict import TensorDict
 
 from ..._core.physics import state_key
 from ..._core.state_schema import StateSchema, get_field, schema_of
-from ..._execution.protocol import StepPipeline, step_pipeline
+from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import check_drawn_fields
 from ...spaces import Box, Dict
 from ...specs import CompositeSpec
@@ -263,11 +263,9 @@ class DelegatedSemantics:
 
     def _host_step(self, actions, move):
         """One step on a host simulator: ``move`` puts its arrays on the device in one copy."""
-        step = getattr(self._simulator, "step_leaves", None)
-        if step is None:
-            return None
         self._check_open("step")
-        return move(step(actions, state=getattr(move, "needs_state", True)))[0]
+        moved = host_step(self._simulator, actions, move)
+        return None if moved is None else moved[0]
 
     def _close(self):
         if hasattr(self, "_simulator"):

@@ -9,7 +9,7 @@ from tensordict import TensorDict
 from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
-from ..._execution.protocol import StepPipeline, step_pipeline
+from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import Env, _instance_value
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import PHYSICS, VISUAL_LEAVES
@@ -283,6 +283,12 @@ class FetchSemantics:
     def _step(self, actions, *, active=None):
         self._check_open("step")
         return self._simulator.step(actions, active=active)
+
+    def _host_step(self, actions, move):
+        """One step on the host batch: ``move`` puts its arrays on the env's device in one copy; None elsewhere."""
+        self._check_open("step")
+        moved = host_step(self._simulator, actions, move)
+        return None if moved is None else moved[0]
 
     def _advance_without_snapshot(self, actions, *, active=None):
         """Advance without State capture for sequences needing only a final checkpoint."""

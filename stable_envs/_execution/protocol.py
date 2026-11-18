@@ -116,3 +116,14 @@ def step_pipeline(adapter: SimulatorAdapter) -> StepPipeline | None:
         if all(hasattr(cls, name) for name in _PIPELINE_METHODS) or not hasattr(cls, "__getattr__"):
             _PIPELINE_TYPES[cls] = pipelined
     return cast(StepPipeline, adapter) if pipelined else None
+
+
+def host_step(adapter: SimulatorAdapter, actions, move):
+    """One step of a host adapter with ``step_leaves``: ``move`` puts its arrays on the device in one copy.
+
+    Returns what ``move`` returns, the result and the moved State, or None when the adapter has no ``step_leaves``.
+    """
+    step = getattr(adapter, "step_leaves", None)
+    if step is None:
+        return None
+    return move(step(actions, state=getattr(move, "needs_state", True)))

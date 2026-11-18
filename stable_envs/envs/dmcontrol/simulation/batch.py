@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import functools
+import itertools
 import math
 
 import numpy as np
@@ -14,7 +16,6 @@ from ...._execution.protocol import SimulatorAdapter
 from .state import group_views, model_columns, new_groups, write_task_row
 
 XX, XZ, ZX, ZY, ZZ = 0, 2, 6, 7, 8  # MuJoCo's row-major xmat entries
-_pow = np.frompyfunc(math.pow, 2, 1)
 #: Domains whose dm_control reset is mostly long MuJoCo calls: CheetahRun settles for 200 steps in one call. Their
 #: MuJoCo Warp reset owners reset on threads. The resets of other domains are faster in one thread: Quadruped's
 #: height search makes many short MuJoCo calls, and threads that take the GIL back after each call wait for each other.
@@ -23,25 +24,74 @@ THREADED_RESETS = frozenset({"cheetah"})
 _CPU = torch.device("cpu")
 
 
-def tolerance(x, *args, **kwargs):
-    """dm_control's ``rewards.tolerance`` on environment arrays."""
-    from dm_control.utils import rewards
+@functools.cache
+def _scale(sigmoid, value_at_margin):
+    """The scale that dm_control's ``rewards._sigmoids`` computes for ``sigmoid``, by the same operations."""
+    if sigmoid == "gaussian":
+        return np.sqrt(-2 * np.log(value_at_margin))
+    if sigmoid == "long_tail":
+        return np.sqrt(1 / value_at_margin - 1)
+    if sigmoid == "linear":
+        return 1 - value_at_margin
+    return np.sqrt(1 - value_at_margin)
 
-    return rewards.tolerance(x, *args, **kwargs)
+
+_ARRAY_SIGMOIDS = frozenset({"gaussian", "linear", "quadratic"})
+
+
+def _outside(x, lower, upper, margin):
+    """dm_control's distance of ``x`` outside ``[lower, upper]`` over ``margin``, and the in-bounds mask.
+
+    With both bounds 0 the distance is ``abs(x) / margin``, equal in magnitude, and the mask is None: every sigmoid
+    is exactly 1 at distance 0, so the in-bounds values need no mask.
+    """
+    if type(lower) in (int, float) and type(upper) in (int, float) and lower == 0 and upper == 0:
+        return np.abs(x) / margin, None
+    return np.where(x < lower, lower - x, x - upper) / margin, np.logical_and(lower <= x, x <= upper)
+
+
+def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
+    """dm_control's ``rewards.tolerance`` of a NumPy array ``x``, one value per element; not for scalars.
+
+    The gaussian, linear and quadratic sigmoids run dm_control's array operations in its order, without its
+    argument checks; the other sigmoids call dm_control.
+    """
+    low = 0 < value_at_margin if sigmoid == "gaussian" else 0 <= value_at_margin
+    if sigmoid not in _ARRAY_SIGMOIDS or not (low and value_at_margin < 1):
+        from dm_control.utils import rewards
+
+        return rewards.tolerance(x, bounds, margin, sigmoid, value_at_margin)
+    lower, upper = bounds
+    if margin == 0:
+        return np.where(np.logical_and(lower <= x, x <= upper), 1.0, 0.0)
+    distance, in_bounds = _outside(x, lower, upper, margin)
+    scaled = distance * _scale(sigmoid, value_at_margin)
+    if sigmoid == "gaussian":
+        value = np.exp(-0.5 * scaled**2)
+    elif sigmoid == "linear":
+        value = np.where(abs(scaled) < 1, 1 - scaled, 0.0)
+    else:
+        value = np.where(abs(scaled) < 1, 1 - scaled**2, 0.0)
+    return value if in_bounds is None else np.where(in_bounds, 1.0, value)
+
+
+def _libm_square(x):
+    """``pow(x, 2.0)`` of each element with the C library, as dm_control squares a scalar."""
+    return np.fromiter(map(math.pow, x.ravel().tolist(), itertools.repeat(2.0)), np.float64, x.size).reshape(x.shape)
 
 
 def scalar_tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid="gaussian", value_at_margin=0.1):
-    """``rewards.tolerance`` of each environment's scalar, for the gaussian and long_tail sigmoids."""
-    lower, upper = bounds
-    d = np.where(x < lower, lower - x, x - upper) / margin
-    # dm_control squares a scalar with libm pow, which can round differently from x * x.
-    if sigmoid == "gaussian":
-        value = np.exp(-0.5 * _pow(d * np.sqrt(-2 * np.log(value_at_margin)), 2.0).astype(np.float64))
-    elif sigmoid == "long_tail":
-        value = 1 / (_pow(d * np.sqrt(1 / value_at_margin - 1), 2.0).astype(np.float64) + 1)
-    else:
+    """``rewards.tolerance`` of each element of the NumPy array ``x`` as dm_control computes it for one scalar.
+
+    Only the gaussian and long_tail sigmoids.
+    """
+    if sigmoid not in ("gaussian", "long_tail"):
         raise ValueError(f"Unsupported scalar sigmoid {sigmoid!r}")
-    return np.where((lower <= x) & (x <= upper), 1.0, value)
+    distance, in_bounds = _outside(x, *bounds, margin)
+    # dm_control squares a scalar with libm pow, which can round differently from x * x.
+    square = _libm_square(distance * _scale(sigmoid, value_at_margin))
+    value = np.exp(-0.5 * square) if sigmoid == "gaussian" else 1 / (square + 1)
+    return value if in_bounds is None else np.where(in_bounds, 1.0, value)
 
 
 #: State fields read from the batch: ``State key -> MjData field``.
@@ -56,8 +106,8 @@ class DMCBatchAdapter(SimulatorAdapter):
     #: Each step returns fresh output tensors.
     outputs_owned = True
 
-    def __init__(self, instances, task, threads):
-        """Step on ``threads`` threads."""
+    def __init__(self, instances, task, threads, reset_threads=None):
+        """Step on ``threads`` threads; the settling steps of a ``THREADED_RESETS`` reset run on ``reset_threads``."""
         import mujoco
         from dm_control.rl.control import PhysicsError
         from mujoco.batch import Batch
@@ -76,7 +126,12 @@ class DMCBatchAdapter(SimulatorAdapter):
         # as dm_control's step does.
         self.b = Batch(self._models[0], self.num_envs, nthread=threads, persistent=True)
         self.b.set_models(self._models)
-        self.task = task(self.b, self._models)
+        # A reset that settles in one long MuJoCo call per environment runs it on a batch of its own, whose thread
+        # count fits that work rather than the work of one step.
+        self._settle = None
+        if self.key in THREADED_RESETS and reset_threads is not None and reset_threads > threads:
+            self._settle = Batch(self._models[0], self.num_envs, nthread=reset_threads)
+        self.task = self._new_task()
         # The State lives in host group arrays; the step copies the batch's physics and counters into their views.
         self._groups = new_groups(self.schema, self.num_envs)
         self._columns = group_views(self.schema, self._groups, self.fields)
@@ -185,7 +240,15 @@ class DMCBatchAdapter(SimulatorAdapter):
         self._export_physics()
         self.b.set_models(self._models)
         self.b.forward(stage=self._vel)
-        self.task = self._task(self.b, self._models)
+        self.task = self._new_task()
+
+    def _new_task(self):
+        """The batch task on the installed models, with the settling batch when the domain has one."""
+        task = self._task(self.b, self._models)
+        if self._settle is not None:
+            self._settle.set_models(self._models)
+            task.settle_batch = self._settle
+        return task
 
     def reset(self, seed=None):
         self.instances._check_open()
@@ -218,7 +281,7 @@ class DMCBatchAdapter(SimulatorAdapter):
     def set_state(self, state):
         self.instances.set_state(state)
         self.b.set_models(self._models)
-        self.task = self._task(self.b, self._models)
+        self.task = self._new_task()
         self._load(np.arange(self.num_envs))
 
     def check_step(self, actions, active):
@@ -297,4 +360,4 @@ class DMCBatchAdapter(SimulatorAdapter):
 
     def close(self):
         self.instances.close()
-        self.b = self.task = None
+        self.b = self.task = self._settle = None
