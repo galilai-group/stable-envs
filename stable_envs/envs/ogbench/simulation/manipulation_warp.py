@@ -508,9 +508,11 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
     # Loading environments from State.
 
     def _load(self, state):
-        state = state.to(self.device)
-        for key, group in self.schema.groups.items():
-            self._live[key].copy_(state.get(group.path))
+        """Write a State, or its ``{group key: array}`` columns, into the live groups and the physics."""
+        if not isinstance(state, dict):
+            state = {key: state.get(group.path) for key, group in self.schema.groups.items()}
+        for key, value in state.items():
+            self._live[key].copy_(torch.as_tensor(value))
         host = self._host_models(self._live)
         if self.family == "Scene":
             self._repair_pending = False
