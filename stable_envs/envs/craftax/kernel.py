@@ -51,6 +51,11 @@ def texture_lock(classic: bool):
 #: one device on at least one host. docs/environments/craftax.md (Simulation) says how.
 MIN_ENVS_PER_HOST_DEVICE = 32
 
+#: XLA:GPU reads the condition of a while loop on the host after each iteration. The one-step program unrolls the
+#: loops that XLA can unroll (``lax.scan`` over mobs and block types); other loops, and the ``(B, T, 1)`` sequence
+#: scan, still run from the host. Unrolling changes no result.
+GPU_UNROLL = {"xla_gpu_enable_while_loop_unrolling": "WHILE_LOOP_UNROLLING_FULL_UNROLL"}
+
 
 @dataclass(frozen=True)
 class Instances:
@@ -354,12 +359,17 @@ class Kernel:
 
     def _jit(self, name, instances: Instances):
         """The jitted function ``name``; on split environments, every output keeps the environments split as the inputs are."""
-        key = (name, instances.sharding)
+        unroll = instances.device.platform == "gpu" and isinstance(name, tuple) and name[0] == "step"
+        key = (name, instances.sharding, unroll)
         fn = self._jitted.get(key)
         if fn is None:
             function, donate = self._functions[name]
-            split = {} if instances.sharding is None else {"out_shardings": instances.sharding}
-            fn = self._jitted[key] = jax.jit(function, donate_argnums=donate, **split)
+            options = {}
+            if instances.sharding is not None:
+                options["out_shardings"] = instances.sharding
+            if unroll:
+                options["compiler_options"] = GPU_UNROLL
+            fn = self._jitted[key] = jax.jit(function, donate_argnums=donate, **options)
         return fn
 
     def instances(self, count: int, device) -> Instances:

@@ -110,12 +110,13 @@ mshuman = [
 # Rocket checks these exact PyFlyt and pybullet versions at construction. PyFlyt 0.29.0 declares
 # numpy<2; the rocket reference profile runs it on numpy 2.5.3.
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7", "numba>=0.60"]
-# Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda".
-craftax = ["craftax>=1.6.1", "jax>=0.4.30"]
+# Craftax on CPU; craftax-gpu takes JAX's CUDA 12 build for device="cuda". JAX 0.4.36 is the first release whose
+# jax.jit takes compiler_options, which the CUDA step uses.
+craftax = ["craftax>=1.6.1", "jax>=0.4.36"]
 roadster = ["mujoco>=3.17,<3.18", "pillow"]
 # Roadster on CUDA: MuJoCo Warp physics.
 roadster-gpu = ["mujoco>=3.17,<3.18", "mujoco-warp>=3.17,<3.18", "warp-lang>=1.16", "pillow"]
-craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.30; sys_platform == 'linux'"]
+craftax-gpu = ["craftax>=1.6.1", "jax[cuda12]>=0.4.36; sys_platform == 'linux'"]
 # MovingBlockWorld is in the hlillemark/Miniworld fork, not on PyPI; uv takes it from [tool.uv.sources],
 # pip needs `pip install "miniworld @ git+https://github.com/hlillemark/Miniworld@<commit>"` first.
 miniworld = ["miniworld>=2.1", "pyglet>=1.5.27,<2", "numba>=0.60"]

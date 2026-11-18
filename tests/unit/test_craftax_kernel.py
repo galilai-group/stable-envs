@@ -54,7 +54,7 @@ def test_an_environment_that_dies_and_an_environment_at_the_step_limit_end_as_up
 
 
 def _compiled_steps(env) -> int:
-    return sum(fn._cache_size() for (name, _), fn in env._k._jitted.items() if name[0] in ("step", "sequence"))
+    return sum(fn._cache_size() for (name, *_), fn in env._k._jitted.items() if name[0] in ("step", "sequence"))
 
 
 def test_finished_environments_reuse_the_compiled_step():

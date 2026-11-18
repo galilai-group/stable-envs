@@ -33,6 +33,8 @@ On the CPU, one XLA program uses only a few cores. So the batch rows are split e
 
 Each split adds a fixed cost to each call, for each device. So a device gets at least 32 rows (`MIN_ENVS_PER_HOST_DEVICE` in `stable_envs/envs/craftax/kernel.py`), and a smaller batch uses fewer devices or one device. The value was measured on 15 November 2026 on two CPU hosts with 8 CPUs each (Intel Xeon Platinum 8268 and 8358), for Craftax-Classic and Craftax, with one step per call and no frames, at batches 1 to 256 on 1, 2, 4 and 8 devices. Below 32 rows for each device, a split was not faster than one device on at least one of the hosts. Nothing is timed when you build an environment.
 
+On CUDA, XLA reads the condition of each loop iteration on the host. The one-step program unrolls some loops of the game, so that the GPU runs them without these round trips. Other loops still run from the host, and so does a step of a `(B, T, 1)` action sequence. The unrolled program gives the same results.
+
 The number of host devices is a JAX setting for the whole process, and JAX reads it when it starts its CPU backend. Craftax sets it when you make the first Craftax environment on the CPU, before Craftax imports its game code. A Craftax environment on CUDA does not change it. Thus:
 
 - If you set the number (`XLA_FLAGS=--xla_force_host_platform_device_count=N`, `JAX_NUM_CPU_DEVICES=N` or `jax.config.update("jax_num_cpu_devices", N)`), Craftax keeps it and uses up to `N` devices.

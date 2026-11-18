@@ -62,7 +62,7 @@ def test_a_fused_sequence_equals_its_steps_one_at_a_time(name, states, frames):
 
 
 def _compiled_sequences(env) -> int:
-    return sum(fn._cache_size() for (name, _), fn in env._k._jitted.items() if name[0] == "sequence")
+    return sum(fn._cache_size() for (name, *_), fn in env._k._jitted.items() if name[0] == "sequence")
 
 
 def test_lengths_up_to_a_power_of_two_share_one_program():
