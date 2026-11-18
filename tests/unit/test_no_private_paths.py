@@ -26,6 +26,7 @@ ALLOWED_PRIVATE = {
     "_pinch_site_id": "the gripper site of swm's OGBench manipulation envs, read for the controller fields",
     "_prev_qpos": "the previous qpos of swm's OGBench manipulation envs, an output field of the State",
     "_prev_qvel": "the previous qvel of swm's OGBench manipulation envs, an output field of the State",
+    "_se_size": "the frame size that DM Control reference_render reads from the source env",
 }
 
 #: Private stable-envs members named in shell code, such as ``python -c`` lines.

@@ -59,6 +59,8 @@ Neither harness imports stable-worldmodel. [benchmarks/README.md](https://github
 
 [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#comparison-with-stable-worldmodel) gives the commands, the timing method and the output columns.
 
+`benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` measured the speedup tables of the paper. `examples/lewm/throughput.py` measured the LeWM training speed and GPU use. [benchmarks/README.md](https://github.com/galilai-group/stable-envs/blob/main/benchmarks/README.md#paper-measurements) gives the commands for each table.
+
 ## Reproduce
 
 ```bash
