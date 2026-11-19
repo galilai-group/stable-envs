@@ -70,28 +70,32 @@ KERNEL = textwrap.dedent(
     from numba import njit
 
     @njit(cache=True)
-    def twice(x):
-        return x + x
+    def total(a):
+        return a.sum()
     """
 )
 
-COMPILE = "import kernel; kernel.twice(3); kernel.twice(1.5)"
+# One signature for a contiguous array and one for a strided view of it.
+COMPILE = "import numpy as np; import kernel; a = np.arange(6.0); kernel.total(a); kernel.total(a[::2])"
 
+# A call from another compiled function that types the strided signature first, as the Miniworld step did.
 CALL = textwrap.dedent(
     """
     import stable_envs._core.numba_cache as numba_cache
 
     numba_cache.install()
+    import numpy as np
     from numba import njit
 
     import kernel
 
     @njit
-    def caller(x):
-        return kernel.twice(x)
+    def caller(a):
+        return kernel.total(a)
 
-    assert caller(3) == 6
-    assert caller(1.5) == 3.0
+    a = np.arange(6.0)
+    assert caller(a[::2]) == 6.0
+    assert caller(a) == 15.0
     """
 )
 
@@ -108,7 +112,7 @@ def test_a_cache_entry_with_another_signature_compiles_again(tmp_path):
     (tmp_path / "kernel.py").write_text(KERNEL)
     done = _run(COMPILE, tmp_path)
     assert done.returncode == 0, done.stderr
-    (index_path,) = (tmp_path / "__pycache__").glob("kernel.twice-*.nbi")
+    (index_path,) = (tmp_path / "__pycache__").glob("kernel.total-*.nbi")
     with open(index_path, "rb") as f:
         version = pickle.load(f)
         stamp, overloads = pickle.loads(f.read())
