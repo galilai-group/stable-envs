@@ -25,20 +25,26 @@ def _dtype(value):
     return dtype
 
 
-def _host_copies(fields):
-    """Owned CPU tensors of the NumPy ``fields``: one copy per dtype, each field a contiguous block of it."""
+def _packed_copies(fields, device):
+    """Owned tensors on ``device`` of the NumPy ``fields``: one copy per dtype, each field a 16-byte aligned block of it."""
     keys: dict = {}
     for key, value in fields.items():
         keys.setdefault(value.dtype, []).append(key)
     out = {}
-    for names in keys.values():
-        flat = np.concatenate([fields[key].reshape(-1) for key in names])
-        start = 0
+    for dtype, names in keys.items():
+        align = max(1, 16 // dtype.itemsize)
+        starts, size = [], 0
         for key in names:
-            shape = fields[key].shape
-            stop = start + fields[key].size
-            out[key] = torch.from_numpy(flat[start:stop].reshape(shape))
-            start = stop
+            starts.append(size)
+            size += -(-fields[key].size // align) * align
+        flat = np.empty(size, dtype)
+        for key, start in zip(names, starts, strict=True):
+            flat[start : start + fields[key].size] = fields[key].reshape(-1)
+        packed = torch.from_numpy(flat)
+        if device.type != "cpu":
+            packed = packed.to(device)
+        for key, start in zip(names, starts, strict=True):
+            out[key] = packed[start : start + fields[key].size].view(fields[key].shape)
     return out
 
 
@@ -163,8 +169,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
-        if self.device.type == "cpu" and all(type(value) is np.ndarray for value in fields.values()):
-            self._fixed = _host_copies(fields)
+        if all(type(value) is np.ndarray for value in fields.values()):
+            self._fixed = _packed_copies(fields, self.device)
         else:
             self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
