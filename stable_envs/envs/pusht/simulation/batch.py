@@ -33,18 +33,22 @@ def _packed_copies(fields, device):
     out = {}
     for dtype, names in keys.items():
         align = max(1, 16 // dtype.itemsize)
-        starts, size = [], 0
-        for key in names:
-            starts.append(size)
-            size += -(-fields[key].size // align) * align
-        flat = np.empty(size, dtype)
-        for key, start in zip(names, starts, strict=True):
-            flat[start : start + fields[key].size] = fields[key].reshape(-1)
-        packed = torch.from_numpy(flat)
-        if device.type != "cpu":
-            packed = packed.to(device)
-        for key, start in zip(names, starts, strict=True):
-            out[key] = packed[start : start + fields[key].size].view(fields[key].shape)
+        sizes = [fields[key].size for key in names]
+        pads = [-size % align for size in sizes]
+        flat = np.empty(sum(sizes) + sum(pads), dtype)
+        start = 0
+        for key, size, pad in zip(names, sizes, pads, strict=True):
+            flat[start : start + size] = fields[key].reshape(-1)
+            start += size + pad
+        if device.type == "cpu":
+            start = 0
+            for key, size, pad in zip(names, sizes, pads, strict=True):
+                out[key] = torch.from_numpy(flat[start : start + size].reshape(fields[key].shape))
+                start += size + pad
+        else:
+            pieces = torch.from_numpy(flat).to(device).split([n for pair in zip(sizes, pads) for n in pair])
+            for key, piece in zip(names, pieces[::2], strict=True):
+                out[key] = piece.view(fields[key].shape)
     return {key: out[key] for key in fields}
 
 
