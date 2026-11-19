@@ -71,7 +71,7 @@ import numpy as np
 import torch
 
 from .._core.cpus import cpu_limit
-from .backends import BackendPair, Measure, select_backend
+from .backends import select_backend
 
 if TYPE_CHECKING:
     from .mjwarp_fused import TreeWalks
@@ -93,29 +93,18 @@ class BufferOverflowError(RuntimeError):
     """A MuJoCo Warp contact or constraint buffer is too small for the batch."""
 
 
-def mujoco_backend(
-    path: str,
-    num_envs: int,
-    device: str | torch.device,
-    requested: str | None = "auto",
-    *,
-    cuda_min_envs: int | None,
-    measure: Measure | None = None,
-) -> str:
+def mujoco_backend(device: str | torch.device, requested: str | None = "auto") -> str:
     """Return ``"native"`` (``mujoco.batch``) or ``"mjwarp"`` (MuJoCo Warp) for a batch.
 
-    ``"auto"`` (or None) selects native on CPU. On CUDA it selects native below the switch point and MuJoCo Warp from
-    it, with :func:`~stable_envs._execution.backends.select_backend` and the simulation path ``path``;
-    ``cuda_min_envs`` is the switch point the family ships. ``"native"`` and ``"mjwarp"`` select explicitly;
-    ``"mjwarp"`` requires a CUDA device.
+    ``"auto"`` (or None) selects native on every device. On CUDA, native steps on the CPU and one copy moves the
+    results to the device. ``"native"`` and ``"mjwarp"`` select explicitly; ``"mjwarp"`` requires a CUDA device.
 
     Raises:
         ValueError: If ``requested`` is not one of these, or is ``"mjwarp"`` on a device other than CUDA.
     """
     if requested == "mjwarp" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
-    backends = {"cpu": BackendPair("native", "native"), "cuda": BackendPair("native", "mjwarp", cuda_min_envs)}
-    return select_backend(path, num_envs, device, requested, backends, choices=BACKENDS, measure=measure)
+    return select_backend(device, requested, {"cpu": "native"}, choices=BACKENDS)
 
 
 def native_threads(num_envs: int) -> int:

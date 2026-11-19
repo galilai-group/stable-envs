@@ -7,7 +7,7 @@
 | `protocol.py` | `SimulatorAdapter` and `StepPipeline` interfaces, and the default two-phase restore |
 | `process.py` | `ProcessAdapter` and the worker loop that runs any local adapter in spawned processes |
 | `policy.py` | Shared process-selection policy |
-| `backends.py` | The `simulation_backend="auto"` rule: small-batch or large-batch backend from the measured, cached switch point |
+| `backends.py` | The `simulation_backend="auto"` rule (one default backend per device type), and the CPU or CUDA renderer of a batch from the measured, cached switch point |
 | `host.py` | `HostAdapter`: a CPU adapter whose results move to an accelerator in one copy |
 | `requests.py` | Environment slices, worker start-up, request lifecycle and worker-failure cleanup |
 | `workers.py` | Worker CPU pinning and ready/failure replies |

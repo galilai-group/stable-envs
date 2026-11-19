@@ -34,8 +34,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     ``simulation_backend="numba"`` steps every environment in one Numba kernel call on the CPU, with physical
     State; on CUDA the results move to the device. ``"numba_cuda"`` steps them with the CUDA build of the kernel.
-    ``"auto"`` (the default) selects ``"numba"`` on CPU. On CUDA it selects ``"numba"`` for small batches and
-    ``"numba_cuda"`` for large batches, from the ``large_backend_min_envs`` switch point. ``"pybullet"`` steps
+    ``"auto"`` (the default) selects ``"numba"`` on CPU and ``"numba_cuda"`` on CUDA. ``"pybullet"`` steps
     PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
     CPU or the nvdiffrast path on CUDA.
 
@@ -77,7 +76,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         _require_extra(type(self).__name__, "rocket", "PyFlyt", "pybullet", "numba", "scipy")
         device = Env.resolve_device(device)
         check_backend(backend, device)
-        self.simulation_backend = rocket_backend(num_envs, device, simulation_backend, simulator_config)
+        self.simulation_backend = rocket_backend(device, simulation_backend)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend, torch.device(device).type]
         # CPU environments draw their own step frames, at the size and supersample ``Env`` resolves.
         frame = (

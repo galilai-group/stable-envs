@@ -47,12 +47,12 @@ The `simulation_backend` argument selects the step:
 
 | Value | Step | Device |
 |---|---|---|
-| `"auto"` (default) | `"numba"` on CPU. On CUDA, `"numba"` for small batches and `"triton"` for large batches | |
+| `"auto"` (default) | `"numba"` on CPU and `"triton"` on CUDA | |
 | `"numba"` | a Numba kernel, from 64 environments on several CPU threads | CPU; on a CUDA device it returns the state on CUDA |
 | `"triton"` | a Triton kernel, one environment per GPU thread, in a CUDA graph | CUDA |
 | `"torch"` | Torch operations on the whole batch | any |
 
-`None` means `"auto"`. The class ships a switch point measured on RTX 3090 and RTX A5000 hosts. The `large_backend_min_envs` tuning setting and `stable-envs tune` can change it (see [Physics backends](../performance-tuning.md#physics-backends)). `env.simulation_backend` reports the selected backend.
+`None` means `"auto"`. The backend of `"auto"` is the same at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). `env.simulation_backend` reports the selected backend.
 
 The Numba step follows the fork's `MiniWorldEnv.step` and `MovingBlockWorld.step` operation by operation in float64, and from the same state it gives the fork's values bit for bit. The Triton and Torch steps use the same rules. On CUDA, the cosine and sine round differently and the Triton step compares squared distances, so continuous motion (`preset="upstream"`) agrees to 1e-9 per step in the tests, while the grid motion of the FloWM presets gives equal values.
 

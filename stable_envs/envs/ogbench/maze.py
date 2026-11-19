@@ -22,7 +22,7 @@ from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
-from .simulation.execution import make_maze_adapter, maze_backend, maze_path
+from .simulation.execution import make_maze_adapter, maze_backend
 from .simulation.maze import BODIES, PHYSICS, group_path, maze_schema
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
@@ -1413,17 +1413,15 @@ class MazeSemantics:
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction; outputs are on ``device``.
 
-        ``"auto"`` steps CPU batches on ``mujoco.batch``, which equals the source bit for bit. On CUDA it steps
-        small batches on ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the measured
-        ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``"auto"`` steps on ``mujoco.batch``, which equals the source bit for bit, on every device. On CUDA, one copy
+        moves its results to the device. ``"mjwarp"`` steps on MuJoCo Warp (float32). ``"native"`` and ``"mjwarp"``
+        select explicitly.
         """
         # Select before the scene and its OpenGL contexts exist, so a refused backend leaves nothing to release.
-        num_envs = kwargs.get("num_envs", args[0] if args else 1)
         device = Env.resolve_device(kwargs.get("device", args[3] if len(args) > 3 else "cuda"))
-        backend = maze_backend(int(num_envs), device, self.LOCO, simulation_backend, self.MAZE, env_type=type(self))
+        backend = maze_backend(device, simulation_backend)
         super().__init__(*args, **kwargs)
         self.simulation_backend = backend
-        self.simulation_backend_path = maze_path(self.LOCO, self.MAZE)
         self._simulator = make_maze_adapter(
             self.B, self.device, self._seed, loco=self.LOCO, maze=self.MAZE, simulation_backend=self.simulation_backend
         )

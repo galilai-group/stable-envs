@@ -44,14 +44,14 @@ TwoRoomTarget, Piecewise and PiecewiseZones take `simulation_backend`. `"auto"` 
 
 ### TwoRoom backends
 
-TwoRoom runs on CPU or CUDA and takes and returns Torch tensors. On CPU, one call of a Numba kernel moves every agent in the batch and computes the state, the observation, the reward and the termination flags. On CUDA, JAX steps the batch on the GPU. JAX comes with the core install, but CUDA also needs `stable-envs[navigation-gpu]`:
+TwoRoom runs on CPU or CUDA and takes and returns Torch tensors. One call of a Numba kernel moves every agent in the batch and computes the state, the observation, the reward and the termination flags. With `simulation_backend="jax"`, JAX steps the batch on the GPU. JAX comes with the core install, but CUDA also needs `stable-envs[navigation-gpu]`:
 
 ```python
 # needs the navigation-gpu extra; CUDA only
 import torch
 import stable_envs as snv
 
-with snv.TwoRoom(num_envs=1024, device="cuda") as env:
+with snv.TwoRoom(num_envs=1024, device="cuda", simulation_backend="jax") as env:
     env.reset(seed=0)
     actions = torch.zeros(1024, 2, device="cuda")
     result = env.step(actions, states=None, frames=None)
@@ -59,9 +59,9 @@ with snv.TwoRoom(num_envs=1024, device="cuda") as env:
 
 The first step compiles the physics kernel and, on supported CUDA installs, the shared Torch task outputs. Run a few warm-up steps before you measure throughput. A new batch shape can compile again. Torch and JAX exchange tensors through DLPack on the selected device, without copying them to CPU while stepping. If the JAX CUDA runtime is missing, the error names the extra to install.
 
-`simulation_backend="auto"` uses the Numba kernel on CPU when Numba imports, and JAX without Numba. On CUDA, a batch of `large_backend_min_envs` or more environments steps in JAX, and a smaller batch steps in Numba (Torch without Numba). When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). On CUDA, `TwoRoom` and `TwoRoomTarget` draw a batch of fewer than `large_renderer_min_rows` frames with the Numba compositor on the CPU, and move the frames to CUDA in one copy ([Renderers](../performance-tuning.md#renderers)).
+For TwoRoom, `simulation_backend="auto"` uses the Numba kernel on every device when Numba imports. Without Numba, it uses JAX on CPU and Torch on CUDA. The choice is the same at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). On CUDA, `TwoRoom` and `TwoRoomTarget` draw a batch of fewer than `large_renderer_min_rows` frames with the Numba compositor on the CPU, and move the frames to CUDA in one copy ([Renderers](../performance-tuning.md#renderers)).
 
-The choice is fixed at construction. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself at any batch size. Torch and JAX use the requested device. On CUDA, TwoRoom's Numba kernel steps a host copy of the batch rows that it keeps between steps: each step copies the actions to the host, then moves the new rows, the state and the outputs to the device in one copy. A reset, restore or other change of the rows on the device refreshes the host copy. TwoRoomTarget, Piecewise and PiecewiseZones run Numba on CPU only. On CUDA, a Torch step of one action replays one captured CUDA graph. The graph also writes the state and the outputs into one buffer, and one copy of this buffer gives the whole result. SimplePointMaze steps the same way on CUDA while no environment holds a float64 state and the actions are not float64. On the CPU, a Numba or Torch step raises a `ValueError` when the new state holds NaN or infinite values. CUDA steps don't check this, because the check reads the state back to the host. JAX steps don't check it either, because JAX steps don't wait for the device. `get_state()` checks the state on every device and backend. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
+The choice is fixed at construction. Set `simulation_backend="torch"`, `"jax"` or `"numba"` to choose yourself. Torch and JAX use the requested device. On CUDA, TwoRoom's Numba kernel steps a host copy of the batch rows that it keeps between steps: each step copies the actions to the host, then moves the new rows, the state and the outputs to the device in one copy. A reset, restore or other change of the rows on the device refreshes the host copy. TwoRoomTarget, Piecewise and PiecewiseZones run Numba on CPU only. On CUDA, a Torch step of one action replays one captured CUDA graph. The graph also writes the state and the outputs into one buffer, and one copy of this buffer gives the whole result. SimplePointMaze steps the same way on CUDA while no environment holds a float64 state and the actions are not float64. On the CPU, a Numba or Torch step raises a `ValueError` when the new state holds NaN or infinite values. CUDA steps don't check this, because the check reads the state back to the host. JAX steps don't check it either, because JAX steps don't wait for the device. `get_state()` checks the state on every device and backend. `env.simulation_backend` reports the selected implementation, and all three give the same state and task outputs.
 
 ## Rendering
 

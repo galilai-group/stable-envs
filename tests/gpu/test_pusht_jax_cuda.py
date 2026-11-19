@@ -18,11 +18,10 @@ def test_public_cuda_steps_use_dlpack_without_host_staging(batch, monkeypatch):
         raise AssertionError("Host staging during a warmed PushT transition")
 
     stream = torch.cuda.Stream()
-    # The GPU backend at every batch size: its steps keep the State on the device.
+    # The JAX backend keeps the State on the device.
     with (
-        se.tuning.override(large_backend_min_envs=1),
         torch.cuda.stream(stream),
-        se.PushT(num_envs=batch, size=32, device="cuda") as env,
+        se.PushT(num_envs=batch, size=32, device="cuda", simulation_backend="jax") as env,
     ):
         actions = torch.full((batch, 4), 0.25, device="cuda")[:, ::2]
         contiguous = actions.contiguous()

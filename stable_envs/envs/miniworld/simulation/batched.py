@@ -15,50 +15,19 @@ BACKENDS = ("numba", "triton", "torch")
 #: Environments from which the Numba step runs on several threads.
 PARALLEL_MIN_ENVS = 64
 _EXECUTION_MODES = {"numba": "NATIVE_NUMBA", "triton": "NATIVE_TRITON", "torch": "NATIVE_TORCH"}
-#: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on Triton; smaller batches step with Numba.
-#: None uses Triton at every batch size. The setting and the tuning cache take precedence.
-#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
-CUDA_MIN_ENVS: int | None = None
 
 
-def _measure(config: dict, size: int, device):
-    """Build and step MovingBlockWorld environments on one backend, for ``stable-envs tune``."""
-    from ...._execution.backends import measure_adapter
-
-    return measure_adapter(
-        lambda backend, n: BatchedMovingBlockWorldAdapter(config, n, size, device, backend),
-        lambda n: torch.full((n,), 2, dtype=torch.int64, device=device),
-    )
-
-
-def miniworld_backend(
-    device: str | torch.device,
-    num_envs: int,
-    backend: str | None = "auto",
-    config: dict | None = None,
-    size: int | None = None,
-) -> str:
+def miniworld_backend(device: str | torch.device, backend: str | None = "auto") -> str:
     """The step backend of a batch.
 
-    ``"auto"`` (or None) takes Numba on CPU. On CUDA it takes Numba below ``CUDA_MIN_ENVS`` and Triton from it.
-    ``stable-envs tune`` measures with environments of ``config`` and frame ``size``. ``"torch"``
-    runs on any device; ``"triton"`` needs CUDA.
+    ``"auto"`` (or None) takes Numba on CPU and Triton on CUDA. ``"torch"`` runs on any device; ``"triton"`` needs
+    CUDA.
     """
-    from ...._execution.backends import BackendPair, select_backend
+    from ...._execution.backends import select_backend
 
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    valid = type(num_envs) is int and num_envs > 0 and config is not None and size is not None
-    measure = _measure(config, size, device) if valid else None
-    return select_backend(
-        "miniworld-sim/moving_blockworld",
-        num_envs,
-        device,
-        backend,
-        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "triton", CUDA_MIN_ENVS)},
-        choices=BACKENDS,
-        measure=measure,
-    )
+    return select_backend(device, backend, {"cpu": "numba", "cuda": "triton"}, choices=BACKENDS)
 
 
 def execution_mode(backend: str) -> str:

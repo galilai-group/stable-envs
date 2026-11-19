@@ -32,11 +32,9 @@ class ClassicControlSemantics:
     def __init__(self, *args, simulation_backend: str | None = "auto", **kwargs):
         """Select the step backend.
 
-        ``"auto"`` selects from the device and the batch size. On the CPU, small batches step one Gymnasium
-        environment per batch row and large batches step in NumPy. On CUDA, small batches step with the CPU choice and
-        move their results to the GPU, and large batches step and keep their State on the GPU in Torch.
-        The class ships the switch points (``CPU_MIN_ENVS`` and ``CUDA_MIN_ENVS``); the ``large_backend_min_envs``
-        tuning setting and ``stable-envs tune`` take precedence.
+        ``"auto"`` selects Torch on CUDA, at every batch size: the State stays on the GPU. On the CPU, CartPole and
+        MountainCar step with the compiled step. The other classes step one Gymnasium environment per batch row for
+        small batches and in NumPy for large ones, which give the same values.
 
         ``"gym"`` steps one Gymnasium environment per batch row. ``"numpy"`` or ``"torch"`` selects a batched
         backend on any device. NumPy steps equal Gymnasium steps, and Torch steps agree with them to rounding.

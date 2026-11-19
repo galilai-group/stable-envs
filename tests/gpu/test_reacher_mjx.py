@@ -6,7 +6,6 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs import tuning
 from stable_envs._core.state_schema import get_field, unfold
 from tests.helpers.reference.semantics import assert_same_state
 
@@ -91,17 +90,14 @@ def test_cuda_reacher_tracks_native_physics_variation_and_resets():
     "simulation_backend,batch,backend",
     [
         ("mjwarp", 1, "mjwarp"),
-        (None, 32, "mjwarp"),
+        ("mjwarp", 8, "mjwarp"),
+        (None, 32, "native"),
         ("auto", 1, "native"),
-        ("auto", 7, "native"),
-        ("auto", 8, "mjwarp"),
+        ("auto", 8, "native"),
     ],
 )
 def test_reacher_routes_physics_and_preserves_cuda_outputs(simulation_backend, batch, backend):
-    with (
-        tuning.override(large_backend_min_envs=8),
-        se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env,
-    ):
+    with se.DMCReacher(num_envs=batch, device="cuda", simulation_backend=simulation_backend) as env:
         assert env.simulation_backend == backend
         assert env.execution_mode == ("MUJOCO_WARP" if backend == "mjwarp" else "DELEGATED_CPU")
         checkpoint = env.reset(seed=7)

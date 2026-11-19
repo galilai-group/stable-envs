@@ -60,17 +60,14 @@ class ManipulationSemantics:
     ):
         """Select physics at construction.
 
-        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``, equal to OGBench bit for bit. On
-        CUDA it steps small batches on native ``mujoco.batch`` and large ones on MuJoCo Warp (float32), from the
-        measured ``large_backend_min_envs`` switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps on native ``mujoco.batch``, equal to OGBench bit for bit, on every
+        device. On CUDA, one copy moves its results to the device. ``"mjwarp"`` steps on MuJoCo Warp (float32).
+        ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        from .simulation.execution import make_manipulation_adapter, manipulation_backend, manipulation_path
+        from .simulation.execution import make_manipulation_adapter, manipulation_backend
 
         device = Env.resolve_device(device)
-        self.simulation_backend = manipulation_backend(
-            self.CELL, num_envs, device, simulation_backend, env_type=type(self)
-        )
-        self.simulation_backend_path = manipulation_path(self.CELL)
+        self.simulation_backend = manipulation_backend(device, simulation_backend)
         self._simulator = make_manipulation_adapter(
             self.CELL, num_envs, device, seed, reward_task_id, self.simulation_backend
         )

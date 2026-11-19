@@ -4,8 +4,8 @@ Each class fixes one task of ``source.RoadsterPlanEnv`` (the simulator, autopilo
 horizon). The 4-D action ``[a_fwd, a_lat, a_up, yaw_rate]`` in [-1, 1] runs at
 10 Hz. Wind and rain are physics variation leaves (``weather.wind`` in m/s, ``weather.rain`` in [0, 1]) that
 reach the source at reset, as it sets the weather per episode; state records them under ``physics.weather``.
-Physics steps every environment in one batch: native ``mujoco.batch`` on CPU, MuJoCo Warp on CUDA
-(``simulation_backend``). Frames come from the ``wm`` camera (follows the car with a fixed world
+Physics steps every environment in one batch: native ``mujoco.batch`` by default, or MuJoCo Warp on CUDA
+(``simulation_backend="mjwarp"``). Frames come from the ``wm`` camera (follows the car with a fixed world
 orientation), 96 px by default, drawn by MuJoCo's OpenGL renderer on CPU; the exhaust smoke is drawn from the
 history in state.
 """
@@ -31,7 +31,7 @@ from ...registry import register
 from ...spaces import Box, Dict, Discrete
 from . import render as roadster_render
 from .simulation.adapter import PHYSICS_LEAVES, RAIN_MAX, RENDER_FIELDS, TASKS, WIND_MAX
-from .simulation.execution import make_roadster_adapter, roadster_backend, roadster_path
+from .simulation.execution import make_roadster_adapter, roadster_backend
 
 #: The visual variation leaf that picks the cinematic look for a frame.
 CINEMATIC = "rendering.cinematic"
@@ -76,18 +76,14 @@ class RoadsterBase(Env):
     ):
         """Build ``num_envs`` environments of the task.
 
-        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``. On CUDA it steps small batches
-        on native ``mujoco.batch`` and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs``
-        switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps on native ``mujoco.batch`` on every device. On CUDA, one copy moves its
+        results to the device. ``"native"`` and ``"mjwarp"`` select explicitly.
 
         Frames show the world-model camera; the ``rendering.cinematic`` variation leaf draws the same camera
         on the dark-space scene with shadows and MSAA (use a larger ``size``, e.g. 512).
         """
         device = Env.resolve_device(device)
-        self.simulation_backend = roadster_backend(
-            int(num_envs), device, simulation_backend, self.TASK, env_type=type(self)
-        )
-        self.simulation_backend_path = roadster_path(self.TASK)
+        self.simulation_backend = roadster_backend(device, simulation_backend)
         self.execution_mode = "MUJOCO_WARP" if self.simulation_backend == "mjwarp" else "DELEGATED_CPU"
         self._simulator = make_roadster_adapter(self.TASK, int(num_envs), device, self.simulation_backend)
         model = self._simulator.model

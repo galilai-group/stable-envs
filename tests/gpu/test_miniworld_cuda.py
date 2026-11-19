@@ -13,7 +13,7 @@ pytest.importorskip("miniworld.envs.moving_blockworld")
 pytest.importorskip("numba")
 
 import stable_envs as snv  # noqa: E402
-from stable_envs import get_field, tuning  # noqa: E402
+from stable_envs import get_field  # noqa: E402
 
 pytestmark = [
     pytest.mark.family("miniworld"),
@@ -78,12 +78,11 @@ def test_triton_steps_and_torch_resets_give_the_numba_episodes(case):
             assert carried > 0
 
 
-@pytest.mark.parametrize("batch,expected", [(8, "numba"), (64, "triton")])
-def test_auto_routes_small_cuda_batches_to_numba(batch, expected):
-    with (
-        tuning.override(large_backend_min_envs=64),
-        snv.MiniWorldMovingBlockWorld(num_envs=batch, size=32, device="cuda", simulation_backend="auto") as env,
-    ):
+@pytest.mark.parametrize(
+    "batch,requested,expected", [(8, "numba", "numba"), (8, "auto", "triton"), (64, "auto", "triton")]
+)
+def test_cuda_batches_step_on_triton_unless_numba_is_named(batch, requested, expected):
+    with snv.MiniWorldMovingBlockWorld(num_envs=batch, size=32, device="cuda", simulation_backend=requested) as env:
         assert env.simulation_backend == expected
         out = env.step(torch.full((batch, 1), 2, device="cuda"), frames=None)
         assert get_field(out["state"], "agent/pos").device.type == "cuda" and out["truncated"].device.type == "cuda"

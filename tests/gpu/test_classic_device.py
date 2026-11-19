@@ -13,7 +13,7 @@ if not torch.cuda.is_available():
     pytest.skip("CUDA required", allow_module_level=True)
 
 import stable_envs as se  # noqa: E402
-from stable_envs import get_field, tuning  # noqa: E402
+from stable_envs import get_field  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import MAX_EPISODE_STEPS  # noqa: E402
 from stable_envs.envs.classic_control.simulation.device import DeviceClassicAdapter  # noqa: E402
 from stable_envs.envs.classic_control.simulation.local import CLASSIC_FIELDS, ClassicControlAdapter  # noqa: E402
@@ -107,7 +107,7 @@ def test_resets_equal_the_gymnasium_resets(domain):
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
-    with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+    with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert isinstance(env._simulator, DeviceClassicAdapter)
         actions = _actions(domain, 3, 1)[:, :1].expand(3, 8, 1).cuda()
@@ -130,10 +130,11 @@ def test_cuda_default_steps_on_the_gpu_without_host_syncs(domain):
         assert torch.equal(env.render(), env.render(state))
 
 
-def test_auto_routes_small_cuda_batches_to_the_cpu():
-    with tuning.override(large_backend_min_envs=8), se.make("CartPole", num_envs=8, device="cuda") as env:
-        assert env.simulation_backend == "torch" and isinstance(env._simulator, DeviceClassicAdapter)
-    with tuning.override(large_backend_min_envs=4), se.make("Acrobot", num_envs=2, device="cuda") as env:
+def test_auto_steps_every_cuda_batch_in_torch_and_named_host_backends_copy_to_cuda():
+    for batch in (1, 8):
+        with se.make("CartPole", num_envs=batch, device="cuda") as env:
+            assert env.simulation_backend == "torch" and isinstance(env._simulator, DeviceClassicAdapter)
+    with se.make("Acrobot", num_envs=2, device="cuda", simulation_backend="gym") as env:
         assert env.simulation_backend == "gym" and env.execution_mode == "DELEGATED_CPU"
         assert env.step(torch.zeros(2, 1, dtype=torch.int64, device="cuda"))["reward"].device.type == "cuda"
 

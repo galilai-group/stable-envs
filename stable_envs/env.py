@@ -379,8 +379,6 @@ class Env:
     #: Most rows that ``FrameLoader`` draws in one ``render`` call: a batch size at which the family's render rate
     #: no longer grows. Free device memory can lower it.
     render_ahead_rows: int = 1024
-    #: The ``select_backend`` path of this environment's physics backend choice; ``stable-envs tune`` times only it.
-    simulation_backend_path: str | None = None
     reference_id: str | None = None
     #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()

@@ -15,47 +15,20 @@ if TYPE_CHECKING:
 
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
-#: Shipped CUDA switch point of ``"auto"``: the smallest batch that steps on ``"numba_cuda"``; smaller batches step on
-#: the CPU kernel. None uses ``"numba_cuda"`` at every batch size. The setting and the tuning cache take precedence.
-#: Measured on RTX 3090 and RTX A5000 hosts with ``python -m benchmarks.backend_switch`` (docs/performance-tuning.md).
-CUDA_MIN_ENVS: int | None = None
 
 
-def _measure(device, config: dict | None):
-    """Build and step Rocket environments on one backend, for ``stable-envs tune``."""
-    import torch
-
-    from ...._execution.backends import measure_adapter
-
-    return measure_adapter(
-        lambda backend, n: make_rocket_adapter(n, device, 0, config, None, backend),
-        lambda n: torch.zeros((n, 7), dtype=torch.float64, device=device),
-    )
-
-
-def rocket_backend(
-    num_envs: int, device: str | torch.device, backend: str | None = "auto", config: dict | None = None
-) -> str:
+def rocket_backend(device: str | torch.device, backend: str | None = "auto") -> str:
     """Return ``"numba"``, ``"numba_cuda"`` or ``"pybullet"``.
 
-    ``"auto"`` (or None) selects the CPU kernel on CPU. On CUDA it selects the CPU kernel below ``CUDA_MIN_ENVS`` and
-    the CUDA build of the kernel from it. ``stable-envs tune`` measures with the simulator configuration ``config``.
+    ``"auto"`` (or None) selects the CPU kernel on CPU and its CUDA build on CUDA.
     """
     import torch
 
-    from ...._execution.backends import BackendPair, select_backend
+    from ...._execution.backends import select_backend
 
     if backend == "numba_cuda" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='numba_cuda' requires device='cuda'")
-    return select_backend(
-        "rocket-sim/landing",
-        num_envs,
-        device,
-        backend,
-        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", "numba_cuda", CUDA_MIN_ENVS)},
-        choices=SIMULATION_BACKENDS,
-        measure=_measure(device, config) if type(num_envs) is int and num_envs > 0 else None,
-    )
+    return select_backend(device, backend, {"cpu": "numba", "cuda": "numba_cuda"}, choices=SIMULATION_BACKENDS)
 
 
 def require_nvvm() -> None:

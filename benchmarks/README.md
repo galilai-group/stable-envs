@@ -85,7 +85,7 @@ uv sync --group bench --group pin-pusht --extra pusht --group torch-cuda
 | `render_mse.py` | Draws the same States with swm and stable-envs, and writes the frame MSE per env |
 | `rollout_parity.py` | Plays the same actions in both from the same seeded reset, and from swm's own state loaded into ours, and writes the state error per env. It never writes a state into swm |
 | `swm_source.py` | The swm source: ids, the swm env calls, and the State mapping |
-| `backend_switch.py` | Times both CUDA simulation backends of a class at batches 1 to 4096 and prints its switch point |
+| `renderer_switch.py` | Times the CPU and the CUDA renderer of a class at batches 1 to 4096 and prints its switch point |
 
 Run the scripts from the repository root.
 
@@ -148,10 +148,11 @@ Run every command from the repository root with these settings:
 
 - `PYTHONPATH=.` and `SDL_VIDEODRIVER=dummy`. Ours calls `env.step(actions)` with its default `states` argument.
   `STEP_STATES=none` passes `states=None` instead. The paper did not use it.
-- GPU cells step and draw on the GPU backend of the class. Both scripts set `STABLE_ENVS_LARGE_BACKEND_MIN_ENVS=1`
-  and `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS=1` unless they are already set. With `SNV_AUTO_BACKENDS=1`, the scripts
-  keep the switch points of the library instead: a CUDA batch below a switch point then steps or draws on the CPU
-  and copies the result to CUDA. The paper did not use it.
+- GPU cells step and draw on the GPU backend of the class. Both scripts give each class its GPU physics backend
+  (`simulation_backend="mjwarp"`, `"triton"` or `"jax"`, see `gpu_kwargs` in `offline_sweep.py`), and set
+  `STABLE_ENVS_LARGE_RENDERER_MIN_ROWS=1` unless it is already set. With `SNV_AUTO_BACKENDS=1`, the scripts use the
+  defaults of the library instead. Then the MuJoCo classes and PushT step on the CPU and copy the result to CUDA, and
+  a CUDA batch below the renderer switch point draws on the CPU. The paper did not use it.
 - `WARMUP_MAX_S=300`. This stops the warm-up step count of a slow source after 300 s.
 - `taskset -c 0-7`. Each process, and each source worker that it starts, uses the same 8 cores.
 - CPU cells: software OpenGL, that is `xvfb-run -a` with `LIBGL_ALWAYS_SOFTWARE=1 MUJOCO_GL=glfw PYOPENGL_PLATFORM=glx`.
@@ -168,7 +169,7 @@ The cells use B = 1, 16 and 128 and frames of 224 x 224. In the commands below, 
 
 - Each command below is one cell and runs in its own process.
 - Ours uses the default keyword arguments of `snv.make` and one action per `step` call (`--chunks 1`). GPU cells
-  set the switch points to 1, as in [Setup](#setup).
+  select the GPU backends, as in [Setup](#setup).
 - Each cell warms up for 2 s and at least 20 steps per environment (rendering only: 20 batches).
 - Then the script times `R` windows of at least 3 s and reports the median rate. All window rates are in the JSON
   file.

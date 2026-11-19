@@ -9,7 +9,7 @@
  "default_size": 600,
  "native_size": 600,
  "frame_shape": [400, 600, 3],
- "physics": "batched NumPy, or batched Torch for large CUDA batches, with Gymnasium resets",
+ "physics": "Numba, NumPy or Gymnasium on CPU, Torch on CUDA, with Gymnasium resets",
  "renderers": {
   "cpu": "gfxdraw port (Numba; Torch or Gymnasium without Numba)",
   "cuda": "gfxdraw port (fused Triton kernel)"

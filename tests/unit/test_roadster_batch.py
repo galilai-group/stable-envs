@@ -34,36 +34,22 @@ def _actions(steps: int, seed: int = 0) -> list[np.ndarray]:
     return [rng.uniform(-1, 1, (NUM_ENVS, 4)).astype(np.float32) for _ in range(steps)]
 
 
-def test_the_backend_follows_the_device_and_the_switch_point():
-    assert roadster_backend(8, "cpu") == "native"
-    assert roadster_backend(8, "cpu", "auto") == "native"
-    with tuning.override(large_backend_min_envs=1):
-        assert roadster_backend(1, "cuda") == "mjwarp"
-    with tuning.override(large_backend_min_envs=4):
-        assert roadster_backend(3, "cuda", "auto") == "native"
-        assert roadster_backend(4, "cuda", None) == "mjwarp"
-    assert roadster_backend(4096, "cuda", "native") == "native"
+def test_auto_steps_native_on_every_device(monkeypatch):
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    for device in ("cpu", "cuda"):
+        assert roadster_backend(device) == "native"
+        assert roadster_backend(device, "auto") == "native"
+        assert roadster_backend(device, None) == "native"
+    assert roadster_backend("cuda", "native") == "native"
+    assert roadster_backend("cuda", "mjwarp") == "mjwarp"
     with pytest.raises(ValueError, match="cuda"):
-        roadster_backend(8, "cpu", "mjwarp")
+        roadster_backend("cpu", "mjwarp")
     for bad in ("source", "default"):
         with pytest.raises(ValueError, match="simulation_backend"):
-            roadster_backend(8, "cpu", bad)
+            roadster_backend("cpu", bad)
     with snv.RoadsterLoop(num_envs=2, device="cpu") as env:
         assert env.simulation_backend == "native" and env.execution_mode == "DELEGATED_CPU"
         assert isinstance(env._simulator, RoadsterNativeAdapter)
-
-
-def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch):
-    from stable_envs.envs.roadster.simulation.execution import CUDA_MIN_ENVS
-
-    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
-    monkeypatch.setattr(tuning, "_cuda", lambda: False)
-    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
-    tuning.reset()
-    assert CUDA_MIN_ENVS == {"loop": 32, "mission": 16, "traffic": 32, "rooftop": 64, "carhop": 32}
-    for task, switch in CUDA_MIN_ENVS.items():
-        assert roadster_backend(switch - 1, "cuda", "auto", task) == "native"
-        assert roadster_backend(switch, "cuda", "auto", task) == "mjwarp"
 
 
 def test_environments_that_end_within_an_action_continue_as_the_source():

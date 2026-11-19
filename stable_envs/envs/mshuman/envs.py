@@ -1,4 +1,4 @@
-"""MS-Human-700 musculoskeletal locomotion: MuJoCo Warp physics on CUDA, native ``mujoco.batch`` on CPU."""
+"""MS-Human-700 musculoskeletal locomotion: native ``mujoco.batch`` physics, or MuJoCo Warp on CUDA by request."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ from tensordict import TensorDict
 from ..._core.mujoco_gl import mujoco_renderer
 from ..._core.state_schema import get_field
 from ..._core.stepping import _stack_states, _threads
-from ..._execution.backends import measure_env
 from ..._execution.mjbatch import mujoco_backend
 from ...env import Env, require_contiguous_out
 from ...registry import register
@@ -26,12 +25,6 @@ from .simulation.adapter import NU as _NU
 from .simulation.adapter import NV as _NV
 from .simulation.adapter import STATE, MSHumanBatchAdapter, MSHumanWarpAdapter
 
-#: Shipped CUDA switch points: the smallest batch that steps on MuJoCo Warp; smaller batches step on ``mujoco.batch``.
-#: The setting and the tuning cache (``stable-envs tune``) take precedence.
-#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-#: The simulation path, which keys the switch point in the tuning cache.
-SIMULATION_PATH = "mshuman-sim/locomotion"
-CUDA_MIN_ENVS: int | None = 16  # RTX 3090 8, RTX A5000 16
 _LOCK = threading.RLock()
 _RENDERERS: dict[int, tuple] = {}
 
@@ -67,28 +60,17 @@ class MSHumanLocomotion(Env):
     def __init__(self, num_envs: int = 1, *, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``simulation_backend="auto"`` steps CPU batches on native ``mujoco.batch``. On CUDA it steps small batches
-        on native ``mujoco.batch`` and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs``
-        switch point. ``"native"`` and ``"mjwarp"`` select explicitly.
+        ``simulation_backend="auto"`` steps on native ``mujoco.batch`` on every device. On CUDA, one copy moves its
+        results to the device. ``"native"`` and ``"mjwarp"`` select explicitly.
         """
-        if simulation_backend not in (None, "auto", "native", "mjwarp"):
-            raise ValueError("simulation_backend must be 'auto', 'native' or 'mjwarp'")
-        if simulation_backend == "mjwarp" and torch.device(Env.resolve_device(kwargs.get("device"))).type != "cuda":
-            raise ValueError("simulation_backend='mjwarp' requires device='cuda'")
+        backend = mujoco_backend(Env.resolve_device(kwargs.get("device")), simulation_backend)
         super().__init__(num_envs, **kwargs)
         self._model = _model()
         dims = (self._model.nq, self._model.nv, self._model.na, self._model.nu)
         if dims != (_NQ, _NV, _NA, _NU):
             raise ValueError(f"MS-Human-700 model dimensions changed: {dims}")
 
-        device = self.device
-        cls = type(self)
-        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
-        path, requested = SIMULATION_PATH, simulation_backend
-        self.simulation_backend_path = path
-        self.simulation_backend = mujoco_backend(
-            path, self.B, self.device, requested, cuda_min_envs=CUDA_MIN_ENVS, measure=measure
-        )
+        self.simulation_backend = backend
         # nq == nv: every joint is a hinge or a slide with one qpos.
         self.state_names = tuple(
             mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"

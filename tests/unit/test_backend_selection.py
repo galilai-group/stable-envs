@@ -1,4 +1,4 @@
-"""The shared backend and renderer switch: explicit names, the settings, the calibration and its cache."""
+"""Backend selection: the default of each device, explicit names, and the renderer switch with its calibration."""
 
 import functools
 
@@ -12,14 +12,13 @@ from stable_envs._core.tensordicts import pack_to_device, stack_leaves, to_devic
 from stable_envs._execution import backends, host_render
 from stable_envs._execution.host import HostAdapter
 
-BACKENDS = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large")}
-CHOICES = ("small", "large")
+DEFAULTS = {"cpu": "host", "cuda": "device"}
+CHOICES = ("host", "device")
 
 
 @pytest.fixture(autouse=True)
 def cache(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
-    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
     monkeypatch.delenv("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS", raising=False)
     tuning.reset()
     tuning._clear_caches()
@@ -37,96 +36,26 @@ def _measure(costs, calls):
     return measure
 
 
-def _select(num_envs, device="cuda", requested="auto", measure=None):
-    return backends.select_backend("test-sim", num_envs, device, requested, BACKENDS, choices=CHOICES, measure=measure)
+def test_auto_selects_the_default_of_the_device_type():
+    for requested in ("auto", None):
+        assert backends.select_backend("cpu", requested, DEFAULTS, choices=CHOICES) == "host"
+        assert backends.select_backend("cuda:0", requested, DEFAULTS, choices=CHOICES) == "device"
+        assert backends.select_backend("meta", requested, DEFAULTS, choices=CHOICES) == "host"
+        assert backends.select_backend("cuda", requested, {"cpu": "host"}, choices=CHOICES) == "host"
 
 
-def test_explicit_names_and_cpu_need_no_measurement():
-    assert _select(8, requested="small") == "small"
-    assert _select(8, requested="large") == "large"
-    assert _select(8, device="cpu") == "small"
+def test_explicit_names_select_that_backend_on_every_device():
+    for device in ("cpu", "cuda"):
+        assert backends.select_backend(device, "host", DEFAULTS, choices=CHOICES) == "host"
+        assert backends.select_backend(device, "device", DEFAULTS, choices=CHOICES) == "device"
     with pytest.raises(ValueError, match="simulation_backend"):
-        _select(8, requested="default")
+        backends.select_backend("cpu", "default", DEFAULTS, choices=CHOICES)
 
 
-@pytest.mark.parametrize("switch,batch,expected", [(1, 1, "large"), (8, 7, "small"), (8, 8, "large")])
-def test_the_setting_sets_the_switch_point(switch, batch, expected):
-    with tuning.override(large_backend_min_envs=switch):
-        assert _select(batch, requested=None) == expected
-
-
-def test_a_path_can_ignore_the_setting():
-    pairs = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large", 8)}
-
-    def pick(n, use_setting):
-        return backends.select_backend("test-sim", n, "cuda", "auto", pairs, choices=CHOICES, use_setting=use_setting)
-
-    with tuning.override(large_backend_min_envs=2):
-        assert pick(4, use_setting=True) == "large"
-        assert pick(4, use_setting=False) == "small" and pick(8, use_setting=False) == "large"
-
-
-def test_without_a_value_auto_uses_the_shipped_switch_point():
-    assert _select(3) == "large"
-    shipped = {"cpu": backends.BackendPair("small", "small"), "cuda": backends.BackendPair("small", "large", 4)}
-    pick = lambda n: backends.select_backend("test-sim", n, "cuda", "auto", shipped, choices=CHOICES)  # noqa: E731
-    assert pick(3) == "small" and pick(4) == "large"
-    with tuning.override(large_backend_min_envs=2):
-        assert pick(3) == "large"
-
-
-def test_selection_times_nothing_and_tune_calibrates_and_caches(monkeypatch):
-    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: step())
-    monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
-    monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
-    monkeypatch.setattr(backends, "_REGISTERED", {})
-    calls = []
-    costs = {"small": lambda rows: 1e-4 * rows, "large": lambda rows: 4e-4}
-    measure = _measure(costs, calls)
-    assert _select(2, measure=measure) == "large"
-    assert calls == []
-    assert backends.calibrate(2, "cuda") == {"test-sim": "small"}
-    assert calls == [("large", 2), ("small", 1), ("small", 2)]
-    calls.clear()
-    assert _select(3, measure=measure) == "small"
-    assert calls == []
-    # From a large batch, the search stops once the small-batch backend is slower.
-    assert backends.calibrate(64, "cuda") == {"test-sim": "large"}
-    assert calls == [("large", 64), ("small", 1), ("small", 2), ("small", 4), ("small", 8)]
-    calls.clear()
-    # A larger range follows a smaller range that chose the large-batch backend.
-    assert _select(1024, measure=measure) == "large"
-    assert calls == []
-    data, current = tuning.read_cache("cuda")
-    assert current
-    assert data["entries"]["test-sim|0|2-3"] == {backends.BACKEND_SETTING: 4}
-    assert data["entries"]["test-sim|0|64-127"] == {backends.BACKEND_SETTING: 64}
-
-
-def test_a_backend_that_fails_to_build_loses(monkeypatch):
-    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
-    monkeypatch.setattr(tuning, "_dev", lambda device: str(device))
-    monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
-    monkeypatch.setattr(backends, "_REGISTERED", {})
-
-    def measure(backend, rows):
-        if backend == "large":
-            raise RuntimeError("no GPU backend")
-        return (lambda: None), (lambda: None)
-
-    _select(16, measure=measure)
-    assert backends.calibrate(16, "cuda", write=False) == {"test-sim": "small"}
-
-
-def test_calibrate_times_only_the_named_paths(monkeypatch):
-    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
-    monkeypatch.setattr(backends, "_REGISTERED", {})
-    calls = []
-    measure = _measure({"small": lambda rows: None, "large": lambda rows: None}, calls)
-    for path in ("test-sim/a", "test-sim/b"):
-        backends.select_backend(path, 4, "cuda", "auto", BACKENDS, choices=CHOICES, measure=measure)
-    assert set(backends.calibrate(4, "cuda", paths=("test-sim/b",), write=False)) == {"test-sim/b"}
-    assert set(backends.calibrate(4, "cuda", prefixes=("test-sim",), write=False)) == {"test-sim/a", "test-sim/b"}
+def test_the_renderer_setting_does_not_move_the_simulation_backend():
+    with tuning.override(large_renderer_min_rows=1):
+        assert backends.select_backend("cuda", "auto", {"cpu": "host"}, choices=CHOICES) == "host"
+    assert "large_backend_min_envs" not in tuning.SETTINGS
 
 
 RENDERERS = {"cpu": backends.BackendPair("cpu", "cpu"), "cuda": backends.BackendPair("cpu", "cuda", 16)}
@@ -136,8 +65,6 @@ def test_renderers_switch_at_their_own_setting():
     pick = lambda n: backends.select_renderer("test-render/Env", n, "cuda", RENDERERS)  # noqa: E731
     assert pick(15) == "cpu" and pick(16) == "cuda"
     assert backends.select_renderer("test-render/Env", 1, "cpu", RENDERERS) == "cpu"
-    with tuning.override(large_backend_min_envs=1):
-        assert pick(15) == "cpu"
     with tuning.override(large_renderer_min_rows=4):
         assert pick(3) == "cpu" and pick(4) == "cuda"
 
@@ -148,16 +75,42 @@ def test_tune_calibrates_renderers_under_the_render_setting(monkeypatch):
     monkeypatch.setattr(tuning, "stamp", functools.cache(lambda device: {"device": device}))
     monkeypatch.setattr(backends, "_REGISTERED", {})
     costs = {"cpu": lambda rows: 1e-4 * rows, "cuda": lambda rows: 4e-4}
-    measure = _measure(costs, [])
-    _select(2, measure=_measure({"small": lambda rows: 0.0, "large": lambda rows: 1.0}, []))
-    backends.select_renderer("test-render/Env", 2, "cuda", RENDERERS, measure=measure)
-    assert backends.calibrate(2, "cuda", setting=backends.RENDERER_SETTING) == {"test-render/Env": "cpu"}
-    assert backends.calibrate(64, "cuda", setting=backends.RENDERER_SETTING) == {"test-render/Env": "cuda"}
+    calls = []
+    measure = _measure(costs, calls)
+    assert backends.select_renderer("test-render/Env", 2, "cuda", RENDERERS, measure=measure) == "cpu"
+    assert calls == []
+    assert backends.calibrate(2, "cuda") == {"test-render/Env": "cpu"}
+    assert backends.calibrate(64, "cuda") == {"test-render/Env": "cuda"}
     data, _ = tuning.read_cache("cuda")
     assert data["entries"]["test-render/Env|0|2-3"] == {backends.RENDERER_SETTING: 4}
     assert data["entries"]["test-render/Env|0|64-127"] == {backends.RENDERER_SETTING: 64}
     assert backends.select_renderer("test-render/Env", 1024, "cuda", RENDERERS) == "cuda"
-    assert _select(2) == "large"
+
+
+def test_a_renderer_that_fails_to_build_loses(monkeypatch):
+    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
+    monkeypatch.setattr(backends, "_REGISTERED", {})
+
+    def measure(renderer, rows):
+        if renderer == "cuda":
+            raise RuntimeError("no GPU renderer")
+        return (lambda: None), (lambda: None)
+
+    backends.select_renderer("test-render/Env", 16, "cuda", RENDERERS, measure=measure)
+    assert backends.calibrate(16, "cuda", write=False) == {"test-render/Env": "cpu"}
+
+
+def test_calibrate_times_only_the_named_paths(monkeypatch):
+    monkeypatch.setattr(backends, "_seconds_per_step", lambda step, device: 1e-4)
+    monkeypatch.setattr(backends, "_REGISTERED", {})
+    measure = _measure({"cpu": lambda rows: None, "cuda": lambda rows: None}, [])
+    for path in ("test-render/A", "test-render/B"):
+        backends.select_renderer(path, 4, "cuda", RENDERERS, measure=measure)
+    assert set(backends.calibrate(4, "cuda", paths=("test-render/B",), write=False)) == {"test-render/B"}
+    assert set(backends.calibrate(4, "cuda", prefixes=("test-render",), write=False)) == {
+        "test-render/A",
+        "test-render/B",
+    }
 
 
 def test_cpu_envs_and_explicit_renderers_do_not_switch():
