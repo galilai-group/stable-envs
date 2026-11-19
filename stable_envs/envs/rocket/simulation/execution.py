@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import functools
+import warnings
 from typing import TYPE_CHECKING
 
 from ...._execution.policy import cpu_affinity, process_count
@@ -13,6 +15,10 @@ if TYPE_CHECKING:
     from .numba_batch import RocketNumbaAdapter
     from .process import RocketProcessAdapter
 
+_NUMBA_CUDA_FIX = (
+    "Install `stable-envs[rocket-gpu]`, which adds Numba CUDA with the CUDA 13 toolkit wheels (for a torch build "
+    "for CUDA 12, install `numba-cuda[cu12]` in its place), or pass simulation_backend='numba' to step on the CPU."
+)
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
 
@@ -20,7 +26,8 @@ SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
 def rocket_backend(device: str | torch.device, backend: str | None = "auto") -> str:
     """Return ``"numba"``, ``"numba_cuda"`` or ``"pybullet"``.
 
-    ``"auto"`` (or None) selects the CPU kernel on CPU and its CUDA build on CUDA.
+    ``"auto"`` (or None) selects the CPU kernel on CPU and its CUDA build on CUDA. Where Numba CUDA cannot compile,
+    ``"auto"`` selects the CPU kernel on CUDA and warns.
     """
     import torch
 
@@ -28,24 +35,46 @@ def rocket_backend(device: str | torch.device, backend: str | None = "auto") -> 
 
     if backend == "numba_cuda" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='numba_cuda' requires device='cuda'")
-    return select_backend(device, backend, {"cpu": "numba", "cuda": "numba_cuda"}, choices=SIMULATION_BACKENDS)
+    selected = select_backend(device, backend, {"cpu": "numba", "cuda": "numba_cuda"}, choices=SIMULATION_BACKENDS)
+    if selected == "numba_cuda" and backend in (None, "auto"):
+        error = numba_cuda_error()
+        if error is not None:
+            warnings.warn(
+                f"PyFlytRocketLanding steps on the CPU kernel because Numba CUDA cannot compile here ({error}). "
+                f"{_NUMBA_CUDA_FIX}",
+                RuntimeWarning,
+                stacklevel=3,
+            )
+            return "numba"
+    return selected
 
 
-def require_nvvm() -> None:
-    """Raise with the install steps when Numba CUDA cannot load libNVVM, which compiles the CUDA physics."""
+@functools.cache
+def numba_cuda_error() -> str | None:
+    """Return why Numba CUDA cannot compile the CUDA physics here, or None if it can.
+
+    The compile needs libNVVM and libdevice from a CUDA toolkit, which the ``rocket-gpu`` extra installs as wheels.
+    """
     try:
-        from numba.cuda.cudadrv.nvvm import NVVM
-    except ImportError:
-        return
+        from numba.cuda.cudadrv.nvvm import NVVM, LibDevice
+    except ImportError as e:
+        return f"{type(e).__name__}: {e}"
     try:
         NVVM()
-    except Exception as e:  # noqa: BLE001 — re-raised with the fix
+        LibDevice()
+    except Exception as e:  # noqa: BLE001 — reported with the fix
+        return f"{type(e).__name__}: {str(e).splitlines()[0]}"
+    return None
+
+
+def require_numba_cuda() -> None:
+    """Raise with the install steps when Numba CUDA cannot compile the CUDA physics."""
+    error = numba_cuda_error()
+    if error is not None:
         raise RuntimeError(
-            "PyFlytRocketLanding steps on CUDA with Numba CUDA, which compiles with libNVVM from a CUDA toolkit, "
-            f"and Numba cannot load it ({type(e).__name__}: {e}). Install a CUDA toolkit as the nvdiffrast "
-            "section of docs/install.md shows (for example `apt install cuda-nvcc-13-2` from NVIDIA's CUDA apt "
-            "repository) and set CUDA_HOME to it, or pass simulation_backend='numba' to step on the CPU."
-        ) from e
+            f"simulation_backend='numba_cuda' compiles the PyFlytRocketLanding physics with Numba CUDA, which needs "
+            f"libNVVM and libdevice from a CUDA toolkit, and Numba cannot load them ({error}). {_NUMBA_CUDA_FIX}"
+        )
 
 
 def make_rocket_adapter(
@@ -65,7 +94,7 @@ def make_rocket_adapter(
 
         return RocketNumbaAdapter(num_envs, device, seed, config, frame)
     if simulation_backend == "numba_cuda":
-        require_nvvm()
+        require_numba_cuda()
         from .numba_cuda_batch import RocketCudaAdapter
 
         return RocketCudaAdapter(num_envs, device, seed, config, frame)

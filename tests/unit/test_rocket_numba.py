@@ -9,6 +9,7 @@ pytest.importorskip("pybullet")
 pytest.importorskip("numba")
 
 from stable_envs import make  # noqa: E402
+from stable_envs.envs.rocket.simulation import execution  # noqa: E402
 from stable_envs.envs.rocket.simulation.numba_batch import RocketNumbaAdapter  # noqa: E402
 from stable_envs.envs.rocket.simulation.task import RocketLandingEnv  # noqa: E402
 
@@ -62,6 +63,16 @@ def test_routing():
         make("PyFlytRocketLanding", num_envs=1, simulation_backend="bullet")
     with pytest.raises(ValueError, match="agent_hz"):
         make("PyFlytRocketLanding", num_envs=1, simulator_config={"agent_hz": 20})
+
+
+def test_auto_steps_on_the_cpu_kernel_where_numba_cuda_cannot_compile(monkeypatch):
+    monkeypatch.setattr(execution, "numba_cuda_error", lambda: "RuntimeError: Missing libdevice file.")
+    for requested in ("auto", None):
+        with pytest.warns(RuntimeWarning, match=r"Missing libdevice file.*rocket-gpu"):
+            assert execution.rocket_backend("cuda", requested) == "numba"
+    assert execution.rocket_backend("cuda", "numba_cuda") == "numba_cuda"
+    with pytest.raises(RuntimeError, match=r"Missing libdevice file.*rocket-gpu"):
+        execution.make_rocket_adapter(4, "cuda", 0, simulation_backend="numba_cuda")
 
 
 @pytest.mark.parametrize("backend, device", BACKENDS)

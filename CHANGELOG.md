@@ -24,6 +24,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
+- The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
 - `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.
 - `examples/lewm/throughput.py` measures LeWM training speed and GPU use with stored frames, the stable-worldmodel renderer and stable-envs.
@@ -51,6 +52,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 - OpenGL contexts of OGBench environments are released. `env.close()` frees the shared OGBench renderers and stops the Cube and Scene OpenGL worker processes when the last environment closes, and interpreter exit frees any that remain before MuJoCo ends its EGL display. This removes the `EGLError` that `mujoco.Renderer.__del__` raised at exit.
 - Processes that compile the same Numba kernels at the same time no longer damage the Numba cache on disk. Before, two processes could save two signatures of one kernel under one data file. Each later process that loaded the entry then failed with `TypingError: Invalid use of type(CPUDispatcher(...))`. Saves and loads of the cache now hold a file lock, and an entry with the machine code of another signature compiles again.
+- `PyFlytRocketLanding` on CUDA with `simulation_backend="auto"` steps on the CPU kernel and gives a `RuntimeWarning` when Numba CUDA can't load libNVVM or libdevice. Before, the construction failed with `RuntimeError: Missing libdevice file`. With `"numba_cuda"`, the error names the `rocket-gpu` extra.
 
 ## [0.1.0] - 2026-11-13
 

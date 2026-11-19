@@ -56,7 +56,7 @@ Every family runs on CPU, so you can try any of them without a GPU. For CUDA, so
 | navigation | none. `navigation` adds Matplotlib and Numba for SimplePointMaze (its exact `info.goal` image), Piecewise's `rendering.render_bias_field` and the compiled CPU renderer | nothing else | a CUDA build of torch. TwoRoom with `simulation_backend="jax"` also needs `navigation-gpu`, JAX's CUDA 12 build (Linux) |
 | PushT | `pusht`: Pymunk 7.2.0, pygame, OpenCV, Shapely, Numba | nothing else | CUDA torch. Triton, which comes with CUDA torch on Linux, draws the frames on the GPU, and steps the physics with `simulation_backend="triton"`. `pusht-gpu` adds JAX's CUDA 12 build (Linux) for `simulation_backend="jax"` |
 | Craftax | `craftax`: Craftax, JAX | nothing else | CUDA torch and `craftax-gpu`, which takes JAX's CUDA 12 build |
-| PyFlyt rocket | `rocket`: PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy, Numba for the default physics and CPU renderer | nothing else | CUDA torch, Triton, [nvdiffrast](#nvdiffrast) and a CUDA toolkit. Numba needs the toolkit's libNVVM to compile the CUDA physics |
+| PyFlyt rocket | `rocket`: PyFlyt 0.29.0, pybullet 3.2.7, Pillow, SciPy, Numba for the default physics and CPU renderer | nothing else | CUDA torch, Triton and `rocket-gpu`, which adds Numba CUDA and the CUDA 13 wheels of libNVVM and libdevice for the CUDA physics (Linux). [nvdiffrast](#nvdiffrast) draws the frames |
 | DM Control | `dmcontrol`: `dm_control` 1.0.50 or later, MuJoCo 3.17, Numba for the compiled CPU renderer | MuJoCo OpenGL | MuJoCo OpenGL, CUDA torch and `dmcontrol-gpu`: MuJoCo, MuJoCo Warp and MJX 3.17, Warp, JAX's CUDA 12 build (Linux). MuJoCo Warp steps the physics with `simulation_backend="mjwarp"` and draws the TrackCom floor reflections |
 | OGBench mazes | `ogbench`: OGBench 1.2.1 or a later 1.2, MuJoCo 3.11 to 3.17, Numba for the compiled CPU light pass of `PointMazeLargeNavigate` | MuJoCo OpenGL | MuJoCo OpenGL and CUDA torch. `mjwarp` adds MuJoCo Warp physics (`simulation_backend="mjwarp"`) |
 | OGBench Cube and Scene | `ogbench-manipulation`: OGBench 1.2.1, MuJoCo 3.17.0, `dm_control` 1.0.50 or later, Numba for the default MuJoCo rasterizer | nothing else; MuJoCo OpenGL for `backend="opengl"` | NVIDIA OpenGL and CUDA torch. `ogbench-manipulation-gpu` adds MuJoCo Warp 3.17.0 and Warp 1.17.0 for MuJoCo Warp physics (`simulation_backend="mjwarp"`) and for `supersample` 2 or more |
@@ -69,7 +69,8 @@ The `pusht-reference` extra (gym-pusht) installs only the [upstream library](ter
 
 - MountainCar, MountainCarContinuous and Pendulum draw part of their scene with pygame, which the `classic` extra installs; the `pusht` extra also installs it.
 - On CUDA, TrackCom domains draw the floor reflection only with MuJoCo Warp 3.17, which `dmcontrol-gpu` installs. With another MuJoCo Warp, they render without the reflection and log a warning.
-- The `rocket` extra resolves numpy < 2, the limit PyFlyt 0.29.0 declares in its metadata.
+- The `rocket` and `rocket-gpu` extras resolve numpy < 2, the limit PyFlyt 0.29.0 declares in its metadata.
+- `rocket-gpu` takes the CUDA 13 build of Numba CUDA, which agrees with the CUDA version of PyPI's torch. With a torch build for CUDA 12, install `rocket` and `numba-cuda[cu12]`.
 
 The first construction, step or render of many classes compiles kernels: Numba on CPU, and Triton, Warp or JAX on CUDA. This can take from a few seconds to a few minutes for each class, and nothing shows progress during this time. Most compiled kernels stay in a cache on disk, so the next process starts faster. Do some warm-up calls before you measure speed.
 
