@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import math
 from types import SimpleNamespace
 
 import mujoco
 import numpy as np
 import torch
+from numba import njit
 
 from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
@@ -15,6 +17,7 @@ from ...._execution.protocol import SimulatorAdapter
 from .maze import (
     _REST_CLEARANCE,
     BODIES,
+    PHYSICS,
     _make_maze,
     _rest_walls,
     decode_state,
@@ -77,10 +80,37 @@ class MazeTask:
 
 def norm_within(diff, limit):
     """``np.linalg.norm(diff[i]) <= limit`` per row, with the source's norm wherever rounding could flip it."""
+    margin = 1e-9 * max(1.0, limit)
+    out = np.empty(len(diff), bool)
+    if not _norm_within(np.ascontiguousarray(diff, np.float64), float(limit), margin, out):
+        return out
     dist = np.sqrt(diff[:, 0] * diff[:, 0] + diff[:, 1] * diff[:, 1])
-    for i in np.flatnonzero(np.abs(dist - limit) <= 1e-9 * max(1.0, limit)):
+    for i in np.flatnonzero(np.abs(dist - limit) <= margin):
         dist[i] = np.linalg.norm(diff[i])
     return dist <= limit
+
+
+@njit(cache=True)
+def _norm_within(diff, limit, margin, out):
+    """``sqrt(x * x + y * y) <= limit`` per row into ``out``; True when a row is within ``margin`` of the limit."""
+    near = False
+    for i in range(len(diff)):
+        dist = math.sqrt(diff[i, 0] * diff[i, 0] + diff[i, 1] * diff[i, 1])
+        near |= abs(dist - limit) <= margin
+        out[i] = dist <= limit
+    return near
+
+
+@njit(cache=True)
+def _init_genrand(seeds, key):
+    """MT19937's ``init_genrand`` of each 32-bit seed into its row of ``key``."""
+    for row in range(len(seeds)):
+        value = seeds[row]
+        for pos in range(key.shape[1]):
+            key[row, pos] = value
+            value = (np.uint64(1812433253) * (value ^ (value >> np.uint64(30))) + np.uint64(pos + 1)) & np.uint64(
+                0xFFFFFFFF
+            )
 
 
 class LegacyMT:
@@ -100,11 +130,8 @@ class LegacyMT:
 
     def seed(self, ids, seeds):
         """``RandomState(seed)`` for each environment of ``ids``: MT19937's ``init_genrand``."""
-        value = np.asarray(seeds, np.uint64) & 0xFFFFFFFF
         key = np.empty((len(ids), self.N), np.uint32)
-        for pos in range(self.N):
-            key[:, pos] = value
-            value = (1812433253 * (value ^ (value >> np.uint64(30))) + np.uint64(pos + 1)) & 0xFFFFFFFF
+        _init_genrand(np.asarray(seeds, np.uint64) & np.uint64(0xFFFFFFFF), key)
         self.key[ids] = key
         self.pos[ids] = self.N
         self.has_gauss[ids] = False
@@ -294,8 +321,8 @@ class MazeOutputs:
         self.task = task
         tp = task.teleport
         if tp is not None:
-            self.teleport_in = [np.array([x, y]) for x, y in tp["teleport_in_xys"]]
-            self.teleport_out = [np.array(xy) for xy in tp["teleport_out_xys"]]
+            self.teleport_in = np.array([[x, y] for x, y in tp["teleport_in_xys"]], np.float64)
+            self.teleport_out = np.array([np.array(xy) for xy in tp["teleport_out_xys"]])
             self.teleport_reach = tp["teleport_radius"] * 1.5
 
     def success(self, xy, goal):
@@ -317,13 +344,12 @@ class MazeOutputs:
         """Return ``(environments, destinations)`` that the source teleports after this step, drawing their RNGs."""
         if self.task.teleport is None or not len(ids):
             return np.zeros(0, np.int64), np.zeros((0, 2))
-        near = np.zeros(len(xy), bool)
-        for centre in self.teleport_in:
-            near |= norm_within(xy - centre, self.teleport_reach)
+        diff = (xy[:, None] - self.teleport_in).reshape(-1, 2)
+        near = norm_within(diff, self.teleport_reach).reshape(len(xy), -1).any(1)
         instances = np.asarray(ids)[near[ids]]
-        return instances, np.stack(self.teleport_out)[rand.mt.randint(instances, 0, len(self.teleport_out))].reshape(
-            -1, 2
-        )
+        if not instances.size:
+            return instances, np.zeros((0, 2))
+        return instances, self.teleport_out[rand.mt.randint(instances, 0, len(self.teleport_out))]
 
 
 def humanoid_observation(qpos, qvel, xpos, xmat, sensordata):
@@ -371,22 +397,49 @@ class RestGrid:
         self.hi_pad = np.concatenate([hi, np.full((1, 3), 1e30)])
 
     def resting(self, xy):
-        centre = np.zeros((len(xy), 3))
-        centre[:, :2] = xy
-        centre += self.offset
-        cell = np.floor((centre[:, :2] - self.origin) / self.CELL).astype(np.int64)
-        inside = ((cell >= 0) & (cell < self.shape)).all(1)
-        out = np.zeros(len(xy), bool)
-        if inside.any():
-            walls = self.table[cell[inside, 0] * self.shape[1] + cell[inside, 1]]
-            c = centre[inside][:, None]
-            near = np.clip(c, self.lo_pad[walls], self.hi_pad[walls]) - c
-            out[inside] = (near * near).sum(-1).min(1) > self.limit
-        if not inside.all():
-            c = centre[~inside][:, None]
-            near = np.clip(c, self.lo, self.hi) - c
-            out[~inside] = (near * near).sum(-1).min(1) > self.limit
+        out = np.empty(len(xy), bool)
+        _resting(
+            np.ascontiguousarray(xy, np.float64),
+            self.offset,
+            self.origin,
+            self.CELL,
+            self.shape,
+            self.table,
+            self.lo,
+            self.hi,
+            self.lo_pad,
+            self.hi_pad,
+            self.limit,
+            out,
+        )
         return out
+
+
+@njit(cache=True)
+def _clearance(c0, c1, c2, lo, hi, walls):
+    """The smallest squared distance from the point to the boxes ``walls``, summed per axis as NumPy sums."""
+    best = np.inf
+    for w in walls:
+        d0 = min(max(c0, lo[w, 0]), hi[w, 0]) - c0
+        d1 = min(max(c1, lo[w, 1]), hi[w, 1]) - c1
+        d2 = min(max(c2, lo[w, 2]), hi[w, 2]) - c2
+        best = min(best, d0 * d0 + d1 * d1 + d2 * d2)
+    return best
+
+
+@njit(cache=True)
+def _resting(xy, offset, origin, cell, shape, table, lo, hi, lo_pad, hi_pad, limit, out):
+    """``RestGrid.resting`` of every ball: its cell's walls inside the grid, every wall outside it."""
+    every = np.arange(len(lo))
+    for i in range(len(xy)):
+        c0, c1, c2 = xy[i, 0] + offset[0], xy[i, 1] + offset[1], 0.0 + offset[2]
+        g0 = math.floor((c0 - origin[0]) / cell)
+        g1 = math.floor((c1 - origin[1]) / cell)
+        if 0 <= g0 < shape[0] and 0 <= g1 < shape[1]:
+            best = _clearance(c0, c1, c2, lo_pad, hi_pad, table[int(g0) * shape[1] + int(g1)])
+        else:
+            best = _clearance(c0, c1, c2, lo, hi, every)
+        out[i] = best > limit
 
 
 class _MazeInstances(SimulatorAdapter):
@@ -473,8 +526,11 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._rest_grid = None if self._rest is None else RestGrid(*self._rest)
         self._goal = np.zeros((self.num_envs, 3))
         self._task_id = np.zeros((self.num_envs, 1), np.int64)
+        self._all = np.arange(self.num_envs)
         self._last = None
         self._layouts: dict[str, StateLayout] = {}
+        # The packed task and RNG groups, which change only at reset, restore and teleport.
+        self._host_groups = None
         self.reset(seed=seed)
 
     def reset(self, seed=None):
@@ -483,21 +539,19 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self.sim.reset()
         self.sim.set_physics({"qpos": qpos, "qvel": qvel})
         self._goal[:], self._task_id[:] = goal, task_id
-        self._last = None
+        self._last = self._host_groups = None
         return self.get_state()
 
     def _state_columns(self):
-        """The State groups, packed from the live arrays into new arrays."""
+        """The State groups by key path: the physics group a new array, the other groups shared until they change."""
         b = self._live
-        values = {
-            **self._split(b.qpos, b.qvel),
-            "simulator/time": b.time[:, None],
-            "simulator/warmstart": b.qacc_warmstart,
-            "task/goal_pos": self._goal,
-            "task/id": self._task_id,
-            **self._random.columns,
-        }
-        return {group_path(key): value for key, value in self.schema.pack(values).items()}
+        if self._host_groups is None:
+            host = {"task/goal_pos": self._goal, "task/id": self._task_id, **self._random.columns}
+            self._host_groups = self.schema.pack(host, [key for key in self.schema.groups if key != PHYSICS])
+        # The physics group holds qpos, qvel, the time and the warm start, in this order (``maze_schema``).
+        physics = np.concatenate((b.qpos, b.qvel, b.time[:, None], b.qacc_warmstart), 1)
+        groups = {PHYSICS: physics, **self._host_groups}
+        return {group_path(key): groups[key] for key in self.schema.groups}
 
     def _export(self, values, name, owned=()):
         """A TensorDict that owns copies of ``values``, on the env device; ``owned`` values are new arrays already.
@@ -525,7 +579,7 @@ class OGBMazeBatchAdapter(_MazeInstances):
     def get_state(self):
         self._check_open()
         columns = self._state_columns()
-        return self._export(columns, "state", owned=columns)
+        return self._export(columns, "state", owned=(group_path(PHYSICS),))
 
     def set_state(self, state):
         v, decoded = self.validate(state)
@@ -540,22 +594,21 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._goal[:] = v["task/goal_pos"]
         self._task_id[:] = v["task/id"]
         self._random.load(decoded)
-        self._last = None
-
-    def _resting(self, target, ids):
-        """Point environments whose step leaves the ball where it is (see ``_resting_instances``)."""
-        return self._rest_grid.resting(target[ids])
+        self._last = self._host_groups = None
 
     def _advance(self, actions, ids):
         b, task = self._live, self.task
+        # Every environment steps in most calls; a slice selects them without index copies.
+        rows = slice(None) if ids is self._all else ids
         if self.loco == "point":
             target = b.qpos + 0.2 * actions
-            b.qpos[ids] = target[ids]
-            b.qvel[ids] = 0.0
+            b.qpos[rows] = target[rows]
+            b.qvel[rows] = 0.0
             if self._rest is not None:
-                resting = self._resting(target, ids)
-                idle, ids = ids[resting], ids[~resting]
-                if idle.size:
+                # Point environments whose step leaves the ball where it is (see ``_resting_instances``).
+                resting = self._rest_grid.resting(target[rows])
+                if resting.any():
+                    idle, ids = ids[resting], ids[~resting]
                     h = task.model.opt.timestep
                     time = b.time[idle]
                     for _ in range(task.frame_skip):
@@ -563,17 +616,40 @@ class OGBMazeBatchAdapter(_MazeInstances):
                     b.time[idle] = time
                     b.qacc_warmstart[idle] = 0.0
         else:
-            b.ctrl[ids] = actions[ids]
+            b.ctrl[rows] = actions[rows]
         if ids.size:
             stage = mujoco.mjtStage.mjSTAGE_VEL if self._kinematic else mujoco.mjtStage.mjSTAGE_NONE
-            self.b.step(ids, task.frame_skip, stage=stage)
+            self.b.step(None if ids is self._all else ids, task.frame_skip, stage=stage)
 
     def step(self, actions, *, active=None, capture_state=True):
         self._check_open()
         actions, active = self.check_step(actions, active)
+        leaves = self._leaves(self._transition(actions, active), capture_state)
+        owned = {("state", *group_path(PHYSICS))} if capture_state else ()
+        return self._export(leaves, "step+state" if capture_state else "step", owned)
+
+    def step_leaves(self, actions, *, state=True):
+        """Advance every environment one step; the outputs and, with ``state``, the State as host arrays by key path.
+
+        The arrays may be shared with later steps: the caller copies them before the next call.
+        """
+        self._check_open()
+        actions, _ = self.check_step(actions, None)
+        return self._leaves(self._transition(actions, None), state)
+
+    def _leaves(self, values, state):
+        """The step's outputs, its info and, with ``state``, the State groups, by key path."""
+        leaves = {(key,): values[key] for key in values if key not in INFO_KEYS}
+        leaves.update({("info", key): values[key] for key in INFO_KEYS})
+        if state:
+            leaves.update({("state", *key): value for key, value in self._state_columns().items()})
+        return leaves
+
+    def _transition(self, actions, active):
+        """Advance the ``active`` environments (all for None) and return the step's outputs as new host arrays."""
         if active is not None and self._last is None:
             raise RuntimeError("An active mask needs a previous step")
-        ids = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        ids = self._all if active is None else np.flatnonzero(active)
         b, out = self._live, self._outputs
         prev_qpos, prev_qvel = b.qpos.copy(), b.qvel.copy()
         goal = self._goal[:, :2]
@@ -602,20 +678,14 @@ class OGBMazeBatchAdapter(_MazeInstances):
         if instances.size:
             b.qpos[instances, :2] = dest
             self._random.sync_legacy(instances)
+            self._host_groups = None
         if active is not None:
             idle = ~active
             values = {
                 key: np.where(idle.reshape(-1, *[1] * (v.ndim - 1)), self._last[key], v) for key, v in values.items()
             }
         self._last = values
-        result = {key: values[key] for key in values if key not in INFO_KEYS}
-        result.update({("info", key): values[key] for key in INFO_KEYS})
-        owned = set()
-        if capture_state:
-            for key, value in self._state_columns().items():
-                result[("state", *key)] = value
-                owned.add(("state", *key))
-        return self._export(result, "step+state" if capture_state else "step", owned)
+        return values
 
     def close(self):
         if not self._closed:

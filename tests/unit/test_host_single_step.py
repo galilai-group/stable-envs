@@ -23,6 +23,9 @@ FAMILIES = [
     pytest.param("FetchPush", {}, marks=pytest.mark.family("fetch")),
     pytest.param("FetchPickAndPlace", {}, marks=pytest.mark.family("fetch")),
     pytest.param("FetchReach", {}, marks=pytest.mark.family("fetch")),
+    pytest.param("PointMazeMediumNavigate", {}, marks=pytest.mark.family("ogbench")),
+    pytest.param("PointMazeTeleportNavigate", {}, marks=pytest.mark.family("ogbench")),
+    pytest.param("HumanoidMazeMediumNavigate", {}, marks=pytest.mark.family("ogbench")),
 ]
 CALLS = [
     {"states": None, "frames": None},

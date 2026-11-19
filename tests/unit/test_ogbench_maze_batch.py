@@ -154,6 +154,25 @@ def test_legacy_streams_draw_as_random_state():
         assert np.array_equal(mt.key[i], keys) and mt.pos[i] == position
 
 
+def _init_genrand(seed):
+    """MT19937's ``init_genrand`` in Python integers."""
+    key = [seed & 0xFFFFFFFF]
+    for i in range(1, 624):
+        key.append((1812433253 * (key[-1] ^ (key[-1] >> 30)) + i) & 0xFFFFFFFF)
+    return key
+
+
+def test_legacy_seeding_is_init_genrand():
+    from stable_envs.envs.ogbench.simulation.maze_batch import LegacyMT
+
+    seeds = [0, 1, 5489, 2**31 + 7, 2**32 - 1]
+    mt = LegacyMT(len(seeds) + 1)
+    mt.seed(np.arange(1, len(seeds) + 1), seeds)
+    assert not mt.key[0].any()
+    for i, seed in enumerate(seeds, 1):
+        assert mt.key[i].tolist() == _init_genrand(seed) and mt.pos[i] == 624
+
+
 @pytest.mark.parametrize("maze", ["medium", "giant", "teleport"])
 def test_the_wall_grid_gives_the_clearance_test_against_every_wall(maze):
     from stable_envs.envs.ogbench.simulation.maze import _make_maze, _rest_walls
