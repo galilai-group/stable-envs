@@ -48,7 +48,7 @@ A GPU backend has a cost for each call that is almost the same for any batch up 
 
 Classic control and the navigation classes other than TwoRoom step in Torch on CUDA, because a step of one action replays one captured CUDA graph. On 19 November 2026, on an NVIDIA L40S host (AMD EPYC 9554, 8 cores), a classic-control step of one environment took about 60 µs in Torch on CUDA and 270 to 420 µs on a host backend with the copy to CUDA. TwoRoom steps in Numba on CUDA, because its Numba step of one environment (110 µs) was faster than its Torch step (130 µs) on the same host. The Numba and Torch steps of TwoRoom give the same values.
 
-On CPU, classic control steps Acrobot and MountainCarContinuous with one Gymnasium environment per batch row below 4 and 8 environments (`CPU_MIN_ENVS` in `stable_envs/envs/classic_control/simulation/batched.py`), and in NumPy from these batch sizes. NumPy steps equal Gymnasium steps bit for bit, so this choice changes only the speed. At one environment, Gymnasium stepped these two classes about twice as fast as NumPy on the L40S host and on the RTX 3090 and RTX A5000 hosts of the earlier measurements.
+On CPU, classic control steps Acrobot and MountainCarContinuous with one Gymnasium environment per batch row below 4 and 8 environments (`CPU_MIN_ENVS` in `stable_envs/envs/classic_control/simulation/batched.py`), and in NumPy from these batch sizes. NumPy steps equal Gymnasium steps bit for bit, so this choice changes only the speed. At one environment, Gymnasium stepped these two classes about twice as fast as NumPy on the L40S host.
 
 ## DM Control threads
 

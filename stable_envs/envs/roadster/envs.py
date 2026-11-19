@@ -45,8 +45,9 @@ _RENDER_KEYS = {
 class RoadsterBase(Env):
     """One Roadster planning task on ``num_envs`` environments.
 
-    The task logic runs on arrays of environments: NumPy with native ``mujoco.batch`` physics on CPU, bit for
-    bit as the source; Torch with MuJoCo Warp physics on CUDA, approximately as the source.
+    The task logic runs on arrays of environments: NumPy with native ``mujoco.batch`` physics by default, bit for
+    bit as the source; with ``simulation_backend="mjwarp"``, Torch with MuJoCo Warp physics on CUDA, approximately
+    as the source.
     """
 
     family = "roadster"

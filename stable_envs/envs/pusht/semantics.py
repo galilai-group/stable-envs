@@ -1,4 +1,4 @@
-"""PushT controls with batched Numba CPU physics and batched Triton or JAX CUDA physics."""
+"""PushT controls with batched Numba physics, and batched Triton or JAX physics by request."""
 
 import copy
 

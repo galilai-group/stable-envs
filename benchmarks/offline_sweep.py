@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import inspect
 import json
 import multiprocessing as mp
@@ -45,12 +46,14 @@ def gpu_kwargs(name: str, device: str) -> dict:
     """``simulation_backend`` of class ``name`` on ``device`` in the paper's GPU rows, unless SNV_AUTO_BACKENDS=1.
 
     On CUDA it names the first of ``GPU_SIMULATION_BACKENDS`` that the class has. A class without one of them
-    (classic control, the navigation classes other than TwoRoom, Miniworld and Rocket) steps on the GPU with the
+    (classic control, the navigation classes other than TwoRoom, and Rocket) steps on the GPU with the
     defaults, and gets no argument.
     """
     if _auto_backends() or not str(device).startswith("cuda"):
         return {}
-    names = getattr(_class(name), "simulation_backends", ())
+    names = set(getattr(_class(name), "simulation_backends", ()))
+    if importlib.util.find_spec("triton") is None:
+        names.discard("triton")
     return next(({"simulation_backend": b} for b in GPU_SIMULATION_BACKENDS if b in names), {})
 
 

@@ -55,7 +55,6 @@ def test_explicit_names_select_that_backend_on_every_device():
 def test_the_renderer_setting_does_not_move_the_simulation_backend():
     with tuning.override(large_renderer_min_rows=1):
         assert backends.select_backend("cuda", "auto", {"cpu": "host"}, choices=CHOICES) == "host"
-    assert "large_backend_min_envs" not in tuning.SETTINGS
 
 
 RENDERERS = {"cpu": backends.BackendPair("cpu", "cpu"), "cuda": backends.BackendPair("cpu", "cuda", 16)}

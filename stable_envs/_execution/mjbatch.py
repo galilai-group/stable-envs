@@ -1,4 +1,4 @@
-"""Batched MuJoCo physics for B environments: native ``mujoco.batch`` on CPU, MuJoCo Warp on CUDA.
+"""Batched MuJoCo physics for B environments: native ``mujoco.batch`` on every device, MuJoCo Warp on CUDA by request.
 
 A family builds one backend with :func:`make_backend` (or :class:`NativeBatch` / :class:`WarpBatch`) for one
 compiled ``mujoco.MjModel``, or for one model per environment that differ only in parameters (sizes, masses,

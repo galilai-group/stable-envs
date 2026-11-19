@@ -1,4 +1,4 @@
-"""MS-Human-700 physics on the shared batched MuJoCo backend: ``mujoco.batch`` on CPU, MuJoCo Warp on CUDA."""
+"""MS-Human-700 physics on the shared batched MuJoCo backend: ``mujoco.batch``, or MuJoCo Warp on CUDA by request."""
 
 from __future__ import annotations
 

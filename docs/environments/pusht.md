@@ -1,6 +1,6 @@
 # PushT
 
-In PushT, a 2D manipulation task with contact, a disc agent pushes a T-shaped block into a target pose. `PushT` and `PushTDiscrete` follow the stable-worldmodel version of [gym-pusht](https://github.com/huggingface/gym-pusht), which comes from Diffusion Policy ([Chi et al., 2023](https://arxiv.org/abs/2303.04137)). A batched port of the [Pymunk](https://www.pymunk.org/) contact solver steps the physics, in Numba on CPU and in Triton on CUDA, and Numba or Triton draw [frames](../terms.md#frame) that match the pygame frames byte for byte.
+In PushT, a 2D manipulation task with contact, a disc agent pushes a T-shaped block into a target pose. `PushT` and `PushTDiscrete` follow the stable-worldmodel version of [gym-pusht](https://github.com/huggingface/gym-pusht), which comes from Diffusion Policy ([Chi et al., 2023](https://arxiv.org/abs/2303.04137)). A batched port of the [Pymunk](https://www.pymunk.org/) contact solver steps the physics in Numba, or in Triton or JAX when `simulation_backend` names them, and Numba or Triton draw [frames](../terms.md#frame) that match the pygame frames byte for byte.
 
 ```python
 # needs the pusht extra

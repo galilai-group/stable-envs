@@ -1,6 +1,6 @@
 # Fetch
 
-A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. MuJoCo steps the batch in one call on CPU and MuJoCo Warp on CUDA. A Numba rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
+A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. `mujoco.batch` steps the batch in one call on every device, and MuJoCo Warp steps it on CUDA with `simulation_backend="mjwarp"`. A Numba rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
 
 ```python
 # needs the robotics extra

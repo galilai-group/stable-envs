@@ -191,7 +191,7 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
     "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
-    "miniworld": ("miniworld-render", "miniworld-sim"),
+    "miniworld": ("miniworld-render",),
     "roadster": ("roadster-render",),
 }
 

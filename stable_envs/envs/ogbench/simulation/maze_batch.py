@@ -1,4 +1,4 @@
-"""OGBench maze simulations stepped together: ``mujoco.batch`` on CPU, MuJoCo Warp on CUDA."""
+"""OGBench maze simulations stepped together: ``mujoco.batch`` on every device, MuJoCo Warp on CUDA by request."""
 
 from __future__ import annotations
 

@@ -12,7 +12,7 @@
 | `requests.py` | Environment slices, worker start-up, request lifecycle and worker-failure cleanup |
 | `workers.py` | Worker CPU pinning and ready/failure replies |
 | `shared_memory.py`, `state_columns.py` | Typed shared outputs and owned State assembly |
-| `mjbatch.py` | Batched MuJoCo physics for B environments (`mujoco.batch` on CPU, MuJoCo Warp on CUDA), backend routing and the parallel source-reset pool |
+| `mjbatch.py` | Batched MuJoCo physics for B environments (`mujoco.batch`, or MuJoCo Warp on CUDA by request), backend routing and the parallel source-reset pool |
 | `mjwarp_fused.py` | One-launch MuJoCo Warp tree passes (subtree center of mass, composite inertia, RNE internal forces) that `WarpBatch` graphs use |
 
 ## Interfaces and ownership
