@@ -11,6 +11,7 @@ import threading
 
 import pytest
 
+pytest.importorskip("fcntl")
 caching = pytest.importorskip("numba.core.caching")
 
 from stable_envs._core import numba_cache  # noqa: E402
@@ -78,7 +79,7 @@ KERNEL = textwrap.dedent(
 # One signature for a contiguous array and one for a strided view of it.
 COMPILE = "import numpy as np; import kernel; a = np.arange(6.0); kernel.total(a); kernel.total(a[::2])"
 
-# A call from another compiled function that types the strided signature first, as the Miniworld step did.
+# A call from another compiled function that types the strided signature first.
 CALL = textwrap.dedent(
     """
     import stable_envs._core.numba_cache as numba_cache

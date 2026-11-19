@@ -20,28 +20,48 @@ from collections.abc import Iterator
 LOCK_NAME = "numba-cache.lock"
 
 
+def _open_lock(path: str) -> int | None:
+    for flags in (os.O_RDWR | os.O_CREAT, os.O_RDONLY):
+        try:
+            return os.open(path, flags, 0o666)
+        except OSError:
+            continue
+    return None
+
+
 @contextlib.contextmanager
 def _locked(directory: str, exclusive: bool) -> Iterator[None]:
-    """Hold a lock on ``directory``; continue without one where the platform or the directory has no locks."""
+    """Hold a lock on ``directory``; continue without one where the platform or the file system has no locks."""
     try:
         import fcntl
-
-        fd = os.open(os.path.join(directory, LOCK_NAME), os.O_RDWR | os.O_CREAT, 0o666)
-    except (ImportError, OSError):
-        yield
-        return
+    except ImportError:
+        fcntl = None
+    fd = None if fcntl is None else _open_lock(os.path.join(directory, LOCK_NAME))
+    if fd is not None:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+        except OSError:
+            os.close(fd)
+            fd = None
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
         yield
     finally:
-        os.close(fd)
+        if fd is not None:
+            os.close(fd)
 
 
 def _requested_args(sig) -> tuple | None:
     if isinstance(sig, tuple):
         return sig
     args = getattr(sig, "args", None)
-    return tuple(args) if args is not None else None
+    if args is not None:
+        return tuple(args)
+    try:
+        from numba.core import sigutils
+
+        return tuple(sigutils.normalize_signature(sig)[0])
+    except Exception:  # noqa: BLE001 — an unknown form skips the check
+        return None
 
 
 def install() -> None:
@@ -64,8 +84,13 @@ def install() -> None:
 
 def _patch(caching) -> None:
     files = caching.IndexDataCacheFile
-    if getattr(files, "_stable_envs_locked", False):
-        return
+    if not getattr(files, "_stable_envs_locked", False):
+        _lock_files(files)
+    if not getattr(caching.Cache, "_stable_envs_checked", False):
+        _check_loads(caching.Cache)
+
+
+def _lock_files(files) -> None:
     save, load, flush = files.save, files.load, files.flush
 
     def locked_save(self, key, data):
@@ -83,7 +108,9 @@ def _patch(caching) -> None:
     files.save, files.load, files.flush = locked_save, locked_load, locked_flush
     files._stable_envs_locked = True
 
-    load_overload = caching.Cache._load_overload
+
+def _check_loads(cache) -> None:
+    load_overload = cache._load_overload
 
     def checked_load_overload(self, sig, target_context):
         data = load_overload(self, sig, target_context)
@@ -93,4 +120,5 @@ def _patch(caching) -> None:
             return None
         return data
 
-    caching.Cache._load_overload = checked_load_overload
+    cache._load_overload = checked_load_overload
+    cache._stable_envs_checked = True
