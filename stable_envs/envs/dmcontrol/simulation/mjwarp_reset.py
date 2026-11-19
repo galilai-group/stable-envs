@@ -119,11 +119,16 @@ class WarpModelBatch:
         return entry[1]
 
     def varying(self):
-        """The names of the columns, options and statistics whose rows are not all equal."""
+        """The names of the columns, options and statistics whose rows are not all bit-equal."""
         if self._varying is None:
 
             def differ(table):
-                return tuple(name for name, values in table.items() if not (values == values[:1]).all())
+                names = []
+                for name, values in table.items():
+                    bits = np.ascontiguousarray(values).view(np.uint8).reshape(len(values), -1)
+                    if not (bits == bits[:1]).all():
+                        names.append(name)
+                return tuple(names)
 
             self._varying = (differ(self.columns), differ(self.options), differ(self.statistics))
         return self._varying
@@ -196,11 +201,10 @@ class WarpResetPool:
             self.envs = self._owner.envs
             self.fields, self.action_dim = self._owner.fields, self._owner.action_dim
             self.schema = self._owner.schema
-            self._episode_models = tuple(
-                dict.fromkeys(MODEL_FIELDS[key][0] for key in self.fields if key in MODEL_FIELDS)
-            )
             reference = copy.copy(self.envs[0].physics.model.ptr)
             self.models = WarpModelBatch(reference, self.num_envs, model_fields, option_fields)
+            episode = (MODEL_FIELDS[key][0] for key in self.fields if key in MODEL_FIELDS)
+            self._episode_models = tuple(name for name in dict.fromkeys(episode) if name in self.models.columns)
             # This holder uses the native physics layout/column validation, but
             # only the owners' PhysicsInstances ever apply native changes.
             self.physics = None if self._owner.physics is None else copy.copy(self._owner.physics)
@@ -308,7 +312,7 @@ class WarpResetPool:
         # A reset writes only the State's episode-drawn model entries, and the installed physics values are those
         # of each environment. Model values that all environments share stay installed in an owner between environments.
         restore = capture = None
-        if not initial:
+        if not initial and len(ids):
             restore = self.models.varying()
             capture = (tuple(dict.fromkeys((*restore[0], *self._episode_models))), *restore[1:])
             for owner in self._owners:

@@ -127,8 +127,7 @@ def test_other_domains_reset_on_one_owner(key, monkeypatch):
         assert len(pooled._owners) == 1 and pooled._pool is None
 
 
-@pytest.mark.parametrize("key", sorted(FACTORIES))
-def test_resets_that_restore_only_varying_rows_match_full_restores(key, monkeypatch):
+def _check_partial_resets(make, key, monkeypatch):
     from stable_envs.envs.dmcontrol.simulation.mjwarp_reset import WarpModelBatch
 
     def every_row(models):
@@ -140,15 +139,28 @@ def test_resets_that_restore_only_varying_rows_match_full_restores(key, monkeypa
                 patch.setattr(WarpModelBatch, "varying", every_row)
             pooled.commit(pooled.prepare_reset(seed, instances=instances))
 
-    with closing(pool(key)) as partial, closing(pool(key)) as reference:
+    with closing(make()) as partial, closing(make()) as reference:
+        rounds = [None]
         if key in LEAVES:
-            values = {leaf.path: [[leaf.low], [leaf.default], [leaf.high]] for leaf in LEAVES[key]}
-            partial.configure_physics(values)
-            reference.configure_physics(values)
-        for seed, instances in ((None, None), (91020, None), (None, [2, 0]), (None, None)):
-            reset(partial, seed, instances, full=False)
-            reset(reference, seed, instances, full=True)
-            assert_same_state(partial.get_state(), reference.get_state())
-            for table in ("columns", "options", "statistics"):
-                for name, column in getattr(partial.models, table).items():
-                    np.testing.assert_array_equal(column, getattr(reference.models, table)[name], err_msg=name)
+            rows = partial.num_envs
+            rounds.append({leaf.path: np.linspace(leaf.low, leaf.high, rows)[:, None] for leaf in LEAVES[key]})
+        for values in rounds:
+            if values is not None:
+                partial.configure_physics(values)
+                reference.configure_physics(values)
+            for seed, instances in ((None, None), (91020, None), (None, [2, 0]), (None, None)):
+                reset(partial, seed, instances, full=False)
+                reset(reference, seed, instances, full=True)
+                assert_same_state(partial.get_state(), reference.get_state())
+                for table in ("columns", "options", "statistics"):
+                    for name, column in getattr(partial.models, table).items():
+                        np.testing.assert_array_equal(column, getattr(reference.models, table)[name], err_msg=name)
+
+
+@pytest.mark.parametrize("key", sorted(FACTORIES))
+def test_resets_that_restore_only_varying_rows_match_full_restores(key, monkeypatch):
+    _check_partial_resets(lambda: pool(key), key, monkeypatch)
+
+
+def test_sharded_resets_that_restore_only_varying_rows_match_full_restores(monkeypatch):
+    _check_partial_resets(lambda: _sharded_pool("cheetah", 3, monkeypatch), "cheetah", monkeypatch)
