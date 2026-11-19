@@ -13,7 +13,7 @@ with snv.PyFlytRocketLanding(num_envs=8, device="cpu") as env:
 
 ## Install
 
-The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. On CUDA, install the `rocket-gpu` extra in its place. It adds Numba CUDA and the CUDA 13 wheels that hold libNVVM and libdevice, which Numba CUDA needs to compile the CUDA physics. For a torch build for CUDA 12, install `numba-cuda[cu12]` in place of the `numba-cuda` of the extra. CUDA rendering needs Triton and nvdiffrast, which isn't on PyPI; [build it from source](../install.md#nvdiffrast).
+The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. On CUDA, install the `rocket-gpu` extra in its place. It adds Numba CUDA and the CUDA 13 wheels that hold libNVVM and libdevice, which Numba CUDA needs to compile the CUDA physics. With a torch build for CUDA 12, install `rocket` and `numba-cuda[cu12]`. CUDA rendering needs Triton and nvdiffrast, which isn't on PyPI; [build it from source](../install.md#nvdiffrast).
 
 `snv.import_errors()` reports a failed import of the family under `rocket_landing`, `rocket_render` and `rocket_semantics`.
 

@@ -16,8 +16,9 @@ if TYPE_CHECKING:
     from .process import RocketProcessAdapter
 
 _NUMBA_CUDA_FIX = (
-    "Install `stable-envs[rocket-gpu]`, which adds Numba CUDA with the CUDA 13 toolkit wheels (for a torch build "
-    "for CUDA 12, install `numba-cuda[cu12]` in its place), or pass simulation_backend='numba' to step on the CPU."
+    "Install `stable-envs[rocket-gpu]`, which adds Numba CUDA with the CUDA 13 toolkit wheels. With a torch build "
+    "for CUDA 12, install `stable-envs[rocket]` and `numba-cuda[cu12]`. Or pass simulation_backend='numba' to step on "
+    "the CPU."
 )
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("numba", "numba_cuda", "pybullet")
@@ -63,7 +64,8 @@ def numba_cuda_error() -> str | None:
         NVVM()
         LibDevice()
     except Exception as e:  # noqa: BLE001 — reported with the fix
-        return f"{type(e).__name__}: {str(e).splitlines()[0]}"
+        first_line = str(e).partition("\n")[0]
+        return f"{type(e).__name__}: {first_line}"
     return None
 
 

@@ -111,7 +111,7 @@ mshuman = [
 # numpy<2; the rocket reference profile runs it on numpy 2.5.3.
 rocket = ["pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7", "numba>=0.60"]
 # Rocket on CUDA: Numba CUDA compiles the CUDA physics with libNVVM and libdevice from the CUDA 13 wheels, the CUDA
-# version of PyPI's torch. For a torch build for CUDA 12, install numba-cuda[cu12] in place of this extra's numba-cuda.
+# version of PyPI's torch. With a torch build for CUDA 12, install the rocket extra and numba-cuda[cu12].
 rocket-gpu = [
   "pillow", "scipy", "PyFlyt==0.29.0", "pybullet==3.2.7", "numba>=0.60",
   "numba-cuda[cu13]>=0.30; sys_platform == 'linux'",

@@ -34,11 +34,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     ``simulation_backend="numba"`` steps every environment in one Numba kernel call on the CPU, with physical
     State; on CUDA the results move to the device. ``"numba_cuda"`` steps them with the CUDA build of the kernel.
-    ``"auto"`` (the default) selects ``"numba"`` on CPU and ``"numba_cuda"`` on CUDA. If Numba CUDA cannot
-    compile (no libNVVM or libdevice, which the ``rocket-gpu`` extra installs), ``"auto"`` selects ``"numba"`` and warns.
-    ``"pybullet"`` steps
-    PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with replay-backed State that is exact to the source. Explicit body and cached camera poses drive TinyRenderer on
-    CPU or the nvdiffrast path on CUDA.
+    ``"auto"`` (the default) selects ``"numba"`` on CPU and ``"numba_cuda"`` on CUDA. If Numba CUDA cannot compile
+    (no libNVVM or libdevice, which the ``rocket-gpu`` extra installs), ``"auto"`` selects ``"numba"`` and warns.
+    ``"pybullet"`` steps PyFlyt 0.29.0 and PyBullet 3.2.7 per environment, with replay-backed State that is exact to
+    the source. Explicit body and cached camera poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA.
 
     On CPU, ``backend="pybullet"`` (also ``"tiny"``) draws each frame with PyBullet's TinyRenderer, and ``"numba"``
     draws all frames in one call of a Numba port of it (``tiny_raster``). ``"auto"`` selects ``render.CPU_AUTO``.

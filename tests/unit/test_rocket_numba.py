@@ -75,6 +75,20 @@ def test_auto_steps_on_the_cpu_kernel_where_numba_cuda_cannot_compile(monkeypatc
         execution.make_rocket_adapter(4, "cuda", 0, simulation_backend="numba_cuda")
 
 
+def test_a_numba_cuda_error_without_a_message_is_reported(monkeypatch):
+    nvvm = pytest.importorskip("numba.cuda.cudadrv.nvvm")
+
+    def fail():
+        raise RuntimeError("")
+
+    monkeypatch.setattr(nvvm, "NVVM", fail)
+    execution.numba_cuda_error.cache_clear()
+    try:
+        assert execution.numba_cuda_error() == "RuntimeError: "
+    finally:
+        execution.numba_cuda_error.cache_clear()
+
+
 @pytest.mark.parametrize("backend, device", BACKENDS)
 @pytest.mark.parametrize("options", RESET_OPTIONS)
 def test_a_seed_gives_the_source_start(options, backend, device):
