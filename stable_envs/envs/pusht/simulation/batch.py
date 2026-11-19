@@ -45,7 +45,7 @@ def _packed_copies(fields, device):
             packed = packed.to(device)
         for key, start in zip(names, starts, strict=True):
             out[key] = packed[start : start + fields[key].size].view(fields[key].shape)
-    return out
+    return {key: out[key] for key in fields}
 
 
 def _changes_with_step(key):
