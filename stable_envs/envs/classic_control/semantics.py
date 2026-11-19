@@ -227,6 +227,26 @@ class ClassicControlSemantics:
             self._rows_stale = True
         return result
 
+    def _host_step(self, actions, move):
+        """One action without frames: the result from the simulator's arrays in one pass, or None.
+
+        A CPU simulator gives host arrays that ``move`` copies into the result. The CUDA simulator replays its step as
+        one CUDA graph and builds the result from one copy of the graph's buffer.
+        """
+        self._check_open("step")
+        simulator = self._simulator
+        if self.device.type == "cpu":
+            leaves = getattr(simulator, "host_leaves", None)
+            got = None if leaves is None else leaves(actions, move.needs_state)
+            if got is None:
+                return None
+            self._rows_stale = True
+            return move(got)[0]
+        result = getattr(simulator, "step_result", None)
+        if result is None:
+            return None
+        return result(actions, move.sequence, move.state_indices, move.final_state)
+
     def _advance_without_snapshot(self, actions, *, active=None):
         # The CUDA simulator copies its whole State with the outputs either way; a later snapshot costs more.
         capture = getattr(self._simulator, "writes_render_state", False)

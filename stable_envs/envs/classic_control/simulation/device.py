@@ -21,6 +21,7 @@ from gymnasium.envs.classic_control import utils as gym_utils
 from tensordict import TensorDict
 
 from ...._core.config import log
+from ...._core.graph_step import GraphStep
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from . import pcg
@@ -225,6 +226,8 @@ class DeviceClassicAdapter(SimulatorAdapter):
         self._active = torch.ones(self.num_envs, dtype=torch.bool, device=self.device)
         self._actions: dict = {}
         self._graphs: dict = {}
+        #: The step of one action without a mask, whose whole result is one copy of the graph's buffer.
+        self._single = GraphStep(self.num_envs, self.device, self._graph_compute, self._graph_live, tuple)
         self._closed = False
 
     def _check_open(self) -> None:
@@ -430,8 +433,8 @@ class DeviceClassicAdapter(SimulatorAdapter):
         self._graphs[(dtype, masked)] = (graph, step, actions)
         return self._graphs[(dtype, masked)]
 
-    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
-        self._check_open()
+    def _checked_actions(self, actions) -> tuple[torch.Tensor, torch.dtype]:
+        """The ``(num_envs, 1)`` actions and the dtype the step kernels take them in."""
         a = actions if torch.is_tensor(actions) else torch.as_tensor(np.asarray(actions))
         if tuple(a.shape) != (self.num_envs, 1):
             raise ValueError(f"{self.domain} action must have shape ({self.num_envs}, 1), got {tuple(a.shape)}")
@@ -440,9 +443,32 @@ class DeviceClassicAdapter(SimulatorAdapter):
                 # Gymnasium's Discrete check rejects float actions; Acrobot indexes a Python list with them.
                 message = f"{self.domain} actions must be integers, got dtype {a.dtype}"
                 raise TypeError(message) if self.domain == "acrobot" else AssertionError(message)
-            dtype = torch.int64
-        else:
-            dtype = a.dtype if a.is_floating_point() else torch.float64
+            return a, torch.int64
+        return a, a.dtype if a.is_floating_point() else torch.float64
+
+    def step_result(self, actions, sequence: bool, state_indices, final_state: bool) -> TensorDict | None:
+        """The result of ``Env.step`` for one action of every environment, from one copy of a graph's buffer."""
+        self._check_open()
+        a, dtype = self._checked_actions(actions)
+        a = a[:, 0].to(device=self.device, dtype=dtype)
+        return self._single.result(a, sequence, state_indices, final_state)
+
+    def _graph_compute(self, actions: torch.Tensor) -> TensorDict:
+        """Step every environment by ``actions`` and return views of the State and outputs, for ``GraphStep``."""
+        self._kernel(actions, False)()
+        views = self._unpack(self._packed)
+        return build_tensordict(
+            {"state": self._state(views, [self.num_envs]), **_outputs_of(views, self._width)},
+            [self.num_envs],
+            self.device,
+        )
+
+    def _graph_live(self) -> list[torch.Tensor]:
+        return [*self._live.values(), self._sim, self._render]
+
+    def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
+        self._check_open()
+        a, dtype = self._checked_actions(actions)
         if active is not None:
             active = torch.as_tensor(active)
             if tuple(active.shape) != (self.num_envs,) or active.dtype != torch.bool:

@@ -126,4 +126,4 @@ def host_step(adapter: SimulatorAdapter, actions, move):
     step = getattr(adapter, "step_leaves", None)
     if step is None:
         return None
-    return move(step(actions, state=getattr(move, "needs_state", True)))
+    return move(step(actions, state=move.needs_state))

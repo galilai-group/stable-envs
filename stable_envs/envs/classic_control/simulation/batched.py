@@ -504,6 +504,29 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             raise IndexError(message) if acrobot else AssertionError(message)
 
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
+        reward, terminated, truncated, observation = self._advance(actions, active)
+        return self._outputs(reward, terminated, truncated, observation, capture_state)
+
+    def host_leaves(self, actions, with_state: bool = True) -> dict | None:
+        """One step of every environment as ``{key path: host array}``; None without a State in host arrays.
+
+        The leaves are the outputs and, with ``with_state``, the live State groups. The arrays are the live buffers
+        or the step's own; the caller copies what it keeps.
+        """
+        if not self._in_place:
+            return None
+        reward, terminated, truncated, observation = self._advance(actions, None)
+        observation = observation if observation.dtype == np.float32 else observation.astype(np.float32)
+        leaves = {("state", *self._paths[key]): array for key, array in self._groups.items()} if with_state else {}
+        leaves[("reward",)] = reward
+        leaves[("terminated",)] = terminated
+        leaves[("truncated",)] = truncated
+        leaves[("observation",)] = observation
+        leaves[("info_state",)] = observation
+        return leaves
+
+    def _advance(self, actions, active):
+        """Step every environment in place; return ``(reward, terminated, truncated, observation)`` arrays."""
         self._check_open()
         if not self._ready:
             raise RuntimeError("Call reset before step")
@@ -521,10 +544,9 @@ class BatchedClassicAdapter(ClassicControlAdapter):
         else:
             a, dtype = xp.floats(a)
         if self._compiled is not None:
-            reward, terminated, truncated, observation = self._compiled(
+            return self._compiled(
                 self._packed.views, self._params, a, self._everyone if live is None else live, self._max_steps
             )
-            return self._outputs(reward, terminated, truncated, observation, capture_state)
         old = self._live
         new, observation, reward, terminated = self._kernel(xp, old, self._params, a, dtype)
         if live is not None:
@@ -540,7 +562,7 @@ class BatchedClassicAdapter(ClassicControlAdapter):
             observation = [xp.where(live, column, 0.0) for column in observation]
             reward = xp.where(live, reward, 0.0)
             terminated = live & terminated
-        return self._outputs(reward, terminated, truncated, xp.stack(observation), capture_state)
+        return reward, terminated, truncated, xp.stack(observation)
 
     def _outputs(self, reward, terminated, truncated, observation, capture_state: bool) -> TensorDict:
         xp = self._xp

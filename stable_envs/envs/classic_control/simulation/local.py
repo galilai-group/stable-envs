@@ -450,6 +450,29 @@ class ClassicControlAdapter(SimulatorAdapter):
         space = env.observation_space
         return np.zeros(space.shape, space.dtype), 0.0, False, False, {}
 
+    def host_leaves(self, actions, with_state: bool = True) -> dict | None:
+        """One step of every environment as ``{key path: host array}``.
+
+        The leaves are the outputs and, with ``with_state``, the State groups. The State arrays are live buffers;
+        the caller copies what it keeps.
+        """
+        self._check_open()
+        outputs = [env.step(action) for env, action in zip(self.envs, self._actions(actions), strict=True)]
+        observation = np.stack([out[0] for out in outputs])
+        leaves = {}
+        if with_state:
+            self._load_static()
+            self._write_moving()
+            leaves = {("state", *key.split("/")): array for key, array in self._packed.arrays.items()}
+        n = self.num_envs
+        leaves[("reward",)] = np.fromiter((out[1] for out in outputs), np.float64, n)
+        leaves[("terminated",)] = np.fromiter((out[2] for out in outputs), np.bool_, n)
+        leaves[("truncated",)] = np.fromiter((out[3] for out in outputs), np.bool_, n)
+        leaves[("observation",)] = observation
+        # ``info['state']`` is a float32 copy of the observation.
+        leaves[("info_state",)] = observation if observation.dtype == np.float32 else observation.astype(np.float32)
+        return leaves
+
     def step(self, actions, *, active=None, capture_state=True) -> TensorDict:
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
