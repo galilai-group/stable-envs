@@ -1,33 +1,32 @@
-"""Make the on-disk cache of Numba ``cache=True`` functions safe when several processes write it at once.
+"""Keep the on-disk cache of Numba ``cache=True`` functions correct when several processes write it at once.
 
-Numba saves a new signature of a cached function in two files: it reads the index, takes the first free data file
-number, writes the index, then writes the data file. No lock spans these steps. When two processes save different
-signatures of one function at the same time, both can take the same number: the index can then name the machine
-code of one signature under the key of the other. The entry stays on disk, and every later process that loads it
-adds an overload for the wrong signature. A call from another compiled function then fails with
-``TypingError: Invalid use of type(CPUDispatcher(...)) with parameters (...)``.
+To save a new signature, Numba reads the index, takes the first free data file number, writes the index and then
+writes the data file, with no lock between processes. Two processes that save two signatures of one function at the
+same time can take the same number. The index then gives the machine code of one signature to the other, and every
+later process that loads that entry fails with ``TypingError: Invalid use of type(CPUDispatcher(...))``.
 
-``install`` makes each save hold an exclusive lock, and each load a shared lock, on one file in the cache directory.
-It also makes a load whose machine code has another signature a cache miss, so Numba compiles the signature again
-and writes over a bad entry.
+``install`` makes a save hold an exclusive lock, and a load a shared lock, on a file in the cache directory. A load
+that returns the machine code of another signature is a cache miss, so Numba compiles again and replaces the entry.
 """
 
 from __future__ import annotations
 
 import contextlib
+import importlib
 import os
+import sys
 from collections.abc import Iterator
 
 LOCK_NAME = "numba-cache.lock"
 
 
 @contextlib.contextmanager
-def _locked(directory: str | None, exclusive: bool) -> Iterator[None]:
+def _locked(directory: str, exclusive: bool) -> Iterator[None]:
     """Hold a lock on ``directory``; continue without one where the platform or the directory has no locks."""
     try:
         import fcntl
 
-        fd = os.open(os.path.join(str(directory), LOCK_NAME), os.O_RDWR | os.O_CREAT, 0o666)
+        fd = os.open(os.path.join(directory, LOCK_NAME), os.O_RDWR | os.O_CREAT, 0o666)
     except (ImportError, OSError):
         yield
         return
@@ -46,26 +45,39 @@ def _requested_args(sig) -> tuple | None:
 
 
 def install() -> None:
-    """Patch Numba's cache classes once; does nothing without Numba."""
+    """Patch the cache classes of Numba, and of Numba CUDA when ``numba.cuda`` is imported; once each.
+
+    Does nothing without Numba. Call it again after ``import numba.cuda`` to cover the CUDA cache.
+    """
     try:
         from numba.core import caching
     except ImportError:
         return
+    _patch(caching)
+    if "numba.cuda" in sys.modules:
+        try:
+            cuda_caching = importlib.import_module("numba.cuda.core.caching")
+        except ImportError:
+            return
+        _patch(cuda_caching)
+
+
+def _patch(caching) -> None:
     files = caching.IndexDataCacheFile
     if getattr(files, "_stable_envs_locked", False):
         return
     save, load, flush = files.save, files.load, files.flush
 
     def locked_save(self, key, data):
-        with _locked(getattr(self, "_cache_path", None), exclusive=True):
+        with _locked(self._cache_path, exclusive=True):
             save(self, key, data)
 
     def locked_load(self, key):
-        with _locked(getattr(self, "_cache_path", None), exclusive=False):
+        with _locked(self._cache_path, exclusive=False):
             return load(self, key)
 
     def locked_flush(self):
-        with _locked(getattr(self, "_cache_path", None), exclusive=True):
+        with _locked(self._cache_path, exclusive=True):
             flush(self)
 
     files.save, files.load, files.flush = locked_save, locked_load, locked_flush
