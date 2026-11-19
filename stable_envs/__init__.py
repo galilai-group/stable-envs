@@ -17,6 +17,7 @@ from . import tuning  # noqa: E402
 from .__about__ import __version__  # noqa: E402,F401
 from ._core.config import get_config, set  # noqa: E402,A004,F401
 from ._core.cpus import limit_thread_defaults as _limit_thread_defaults  # noqa: E402
+from ._core.numba_cache import install as _install_numba_cache  # noqa: E402
 from ._core.state_schema import get_field, schema_of, set_field  # noqa: E402,F401
 from .env import Env, State, StepResult, VariationLike  # noqa: E402,F401
 from .frames import FrameLoader  # noqa: E402,F401
@@ -26,6 +27,8 @@ from .specs import CompositeSpec, Spec  # noqa: E402,F401
 
 # Size the Numba and Torch thread pools to the CPUs a container quota allows, before a family imports Numba.
 _limit_thread_defaults()
+# Before a family compiles a cached Numba function.
+_install_numba_cache()
 
 # Discover available families; report missing optional dependencies through import_errors().
 _registry.discover()
