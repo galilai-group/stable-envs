@@ -7,12 +7,12 @@
 | `protocol.py` | `SimulatorAdapter` and `StepPipeline` interfaces, and the default two-phase restore |
 | `process.py` | `ProcessAdapter` and the worker loop that runs any local adapter in spawned processes |
 | `policy.py` | Shared process-selection policy |
-| `backends.py` | The `simulation_backend="auto"` rule: small-batch or large-batch backend from the measured, cached switch point |
+| `backends.py` | The `simulation_backend="auto"` rule (one default backend per device type), and the CPU or CUDA renderer of a batch from the measured, cached switch point |
 | `host.py` | `HostAdapter`: a CPU adapter whose results move to an accelerator in one copy |
 | `requests.py` | Environment slices, worker start-up, request lifecycle and worker-failure cleanup |
 | `workers.py` | Worker CPU pinning and ready/failure replies |
 | `shared_memory.py`, `state_columns.py` | Typed shared outputs and owned State assembly |
-| `mjbatch.py` | Batched MuJoCo physics for B environments (`mujoco.batch` on CPU, MuJoCo Warp on CUDA), backend routing and the parallel source-reset pool |
+| `mjbatch.py` | Batched MuJoCo physics for B environments (`mujoco.batch`, or MuJoCo Warp on CUDA by request), backend routing and the parallel source-reset pool |
 | `mjwarp_fused.py` | One-launch MuJoCo Warp tree passes (subtree center of mass, composite inertia, RNE internal forces) that `WarpBatch` graphs use |
 
 ## Interfaces and ownership

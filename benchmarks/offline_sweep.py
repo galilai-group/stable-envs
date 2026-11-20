@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import inspect
 import json
 import multiprocessing as mp
@@ -23,15 +24,37 @@ ROOT = Path(__file__).resolve().parents[1]
 WARMUP_S = 2.0
 
 
-def gpu_backends() -> None:
-    """Step and draw every CUDA batch on its GPU backend, as the paper's GPU rows do, unless SNV_AUTO_BACKENDS=1.
+#: GPU physics backends that the paper's GPU rows use, in order of preference, where a class has one of them.
+GPU_SIMULATION_BACKENDS = ("mjwarp", "triton", "jax")
 
-    With ``device="cuda"`` and the defaults, a batch below a switch point steps or draws on the CPU and copies the
-    result to CUDA. A value that the caller already set for either variable is kept.
+
+def _auto_backends() -> bool:
+    return os.environ.get("SNV_AUTO_BACKENDS") == "1"
+
+
+def gpu_backends() -> None:
+    """Draw every CUDA batch on its GPU renderer, as the paper's GPU rows do, unless SNV_AUTO_BACKENDS=1.
+
+    With ``device="cuda"`` and the defaults, a batch below the renderer switch point draws on the CPU and copies the
+    frames to CUDA. A value that the caller already set is kept. ``gpu_kwargs`` selects the GPU physics.
     """
-    if os.environ.get("SNV_AUTO_BACKENDS") != "1":
-        os.environ.setdefault("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", "1")
+    if not _auto_backends():
         os.environ.setdefault("STABLE_ENVS_LARGE_RENDERER_MIN_ROWS", "1")
+
+
+def gpu_kwargs(name: str, device: str) -> dict:
+    """``simulation_backend`` of class ``name`` on ``device`` in the paper's GPU rows, unless SNV_AUTO_BACKENDS=1.
+
+    On CUDA it names the first of ``GPU_SIMULATION_BACKENDS`` that the class has. A class without one of them
+    (classic control, the navigation classes other than TwoRoom, and Rocket) steps on the GPU with the
+    defaults, and gets no argument.
+    """
+    if _auto_backends() or not str(device).startswith("cuda"):
+        return {}
+    names = set(getattr(_class(name), "simulation_backends", ()))
+    if importlib.util.find_spec("triton") is None:
+        names.discard("triton")
+    return next(({"simulation_backend": b} for b in GPU_SIMULATION_BACKENDS if b in names), {})
 
 
 def _host() -> dict:
@@ -256,7 +279,8 @@ def _rows_refused(snv, env, rows, devices) -> list[str]:
         if device == "cpu":
             refused += ["cpu"] if _refuses_rows(env, rows) else []
         elif torch.cuda.is_available():
-            with snv.make(env.class_name, num_envs=1, size=env.size, device=device) as probe:
+            kwargs = gpu_kwargs(env.class_name, device)
+            with snv.make(env.class_name, num_envs=1, size=env.size, device=device, **kwargs) as probe:
                 refused += [device] if _refuses_rows(probe, rows) else []
     return refused
 
@@ -379,7 +403,9 @@ def cmd_ours(args) -> None:
         for b in args.batches:
             env = None
             try:
-                env = snv.make(name, num_envs=b, size=blob["size"], device=args.device)
+                env = snv.make(
+                    name, num_envs=b, size=blob["size"], device=args.device, **gpu_kwargs(name, args.device)
+                )
                 n = len(data)
                 # The stored inputs are sliced into batches before the timed windows: slicing a State is not drawing.
                 pieces = [data[s:e] for s, e in _chunks(n, b)]
@@ -552,7 +578,8 @@ def cmd_mse(args) -> None:
             # The source draws before any stable-envs env exists in this process (see online_ladder).
             ref = _sources().reference_env(cls, blob["size"])
             theirs, keep = source_frames(cls, ref, inputs[:n])
-            with snv.make(name, num_envs=n, size=blob["size"], device=args.device) as env:
+            kwargs = gpu_kwargs(name, args.device)
+            with snv.make(name, num_envs=n, size=blob["size"], device=args.device, **kwargs) as env:
                 ours = env.render(_on_device(kind, data[:n], env.device)).cpu().numpy()
             per_frame = C.frame_mse(ours[keep], theirs[keep])
             row = {"status": "ok", "kind": kind, "input": INPUT_FORM[kind], "spread": blob["spread"].get(kind)}

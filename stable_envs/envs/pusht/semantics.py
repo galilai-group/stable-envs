@@ -1,4 +1,4 @@
-"""PushT controls with batched Numba CPU physics and batched Triton or JAX CUDA physics."""
+"""PushT controls with batched Numba physics, and batched Triton or JAX physics by request."""
 
 import copy
 
@@ -132,7 +132,7 @@ class PushT(Env):
     """Source-aligned continuous PushT with complete, replayable numeric state.
 
     Actions are relative controls in [-1, 1], not absolute pixel targets.
-    Physics is a port of the source Pymunk contact solver: Triton (or JAX) on CUDA, Numba on CPU. They run
+    Physics is a port of the source Pymunk contact solver: Numba by default, and Triton or JAX on request. They run
     the same math and differ from Pymunk numerically at contacts. Resets run the source reset. Checkpoints
     restore the solver cache.
     """
@@ -145,7 +145,7 @@ class PushT(Env):
     reference_id = "swm/PushT-v1"
     default_size = 224
     state_dim = 0
-    execution_mode = "AUTO_NUMBA_TRITON"
+    execution_mode = "AUTO_NUMBA_HOST"
     #: Every step returns new reward, success, terminated and truncated tensors.
     _step_outputs_owned = True
     cpu_render_support = "SUPPORTED_PYGAME"
@@ -181,15 +181,13 @@ class PushT(Env):
     ):
         """Select the physics backend.
 
-        ``simulation_backend="auto"`` steps Numba physics on CPU. On CUDA it steps small batches with Numba and
-        large ones with Triton, from the ``large_backend_min_envs`` switch point.
+        ``simulation_backend="auto"`` steps Numba physics on every device. On CUDA, Numba steps on the CPU and
+        returns CUDA tensors.
 
-        ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend; Numba on CUDA steps on the
-        CPU and returns CUDA tensors.
+        ``"triton"`` (CUDA only), ``"jax"`` or ``"numba"`` selects one backend.
         """
         _require_extra(type(self).__name__, "pusht", "pymunk", "pygame", "cv2", "numba")
         from .projection import PushTProjection
-        from .simulation.execution import PATH as SIMULATION_PATH
         from .simulation.execution import make_pusht_adapter, pusht_backend
 
         if backend not in ("auto", "source", "pygame"):
@@ -200,11 +198,8 @@ class PushT(Env):
         device = torch.device(Env.resolve_device(device))
         resolution = self.default_size if size is None else size
         config = dict(resolution=resolution, render_action=render_action, with_target=with_target)
-        self.simulation_backend = pusht_backend(
-            num_envs, device, simulation_backend, discrete=self.discrete, config=config, env_type=type(self)
-        )
+        self.simulation_backend = pusht_backend(device, simulation_backend)
         self.execution_mode = _EXECUTION_MODES[self.simulation_backend]
-        self.simulation_backend_path = SIMULATION_PATH
         # CPU batches step on Numba threads.
         self.native_step_threads = self.simulation_backend == "numba"
         # CPU renders return new storage.

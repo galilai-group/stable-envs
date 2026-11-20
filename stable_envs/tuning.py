@@ -33,7 +33,6 @@ __all__ = [
     "override",
     "describe",
     "cache_path",
-    "simulation_paths",
     "render_paths",
     "time_backend",
 ]
@@ -153,7 +152,6 @@ SETTINGS: dict[str, Setting] = {
     k.name: k
     for k in (
         Setting("workers", 8, _SIM, "cpu", "n0", "cpus", "Most worker processes of a CPU simulator batch or PushT render on Linux; 0 runs in-process.", step=True),
-        Setting("large_backend_min_envs", None, (), "any", "n", None, "Smallest batch that steps on the large-batch simulation backend with simulation_backend='auto'; stable-envs tune measures it, else each class ships a value."),
         Setting("large_renderer_min_rows", None, (), "any", "n", None, "Smallest render batch that draws with the GPU renderer of a class that has a CPU and a GPU renderer; smaller batches draw on the CPU and move the frames to the device in one copy; stable-envs tune measures it, else each class ships a value."),
         Setting("worker_min_envs", 64, _SIM, "cpu", "n", None, "Smallest batch that uses worker processes or Fetch threads."),
         Setting("worker_timeout", 120, _SIM, "cpu", "n", None, "Seconds a CPU simulator worker may take to answer one request before the batch fails; starting takes up to the larger of this and 300.", per_path=False),
@@ -192,8 +190,8 @@ RENDER_PATHS: dict[str, tuple[str, ...]] = {
     "PyFlytRocketLanding": ("rocket-nvdiff", "rocket-render", "rocket-sim"),
     "navigation": ("navigation", "raster2d"),
     "pusht": ("raster2d", "pusht-sim", "pusht-render"),
-    "classic_control": ("gfxdraw", "classic-render", "classic-sim", "classic-cpu"),
-    "miniworld": ("miniworld-render", "miniworld-sim"),
+    "classic_control": ("gfxdraw", "classic-render", "classic-sim"),
+    "miniworld": ("miniworld-render",),
     "roadster": ("roadster-render",),
 }
 
@@ -642,19 +640,6 @@ def _clear_caches() -> None:
     _environ._parsed.cache_clear()
 
 
-def simulation_paths(device="cuda"):
-    """Return ``(path, backends, measure)`` of the simulation paths selected for in this process on ``device``.
-
-    Environments built in this process register them; ``backends`` has the ``small`` and ``large`` backend names.
-
-    Args:
-        device: ``"cpu"`` or ``"cuda"``.
-    """
-    from ._execution.backends import registered
-
-    return registered(device)
-
-
 def render_paths(device="cuda"):
     """Return ``(path, renderers, measure)`` of the render paths that drew in this process on ``device``.
 
@@ -664,17 +649,17 @@ def render_paths(device="cuda"):
     Args:
         device: ``"cpu"`` or ``"cuda"``.
     """
-    from ._execution.backends import RENDERER_SETTING, registered
+    from ._execution.backends import registered
 
-    return registered(device, setting=RENDERER_SETTING)
+    return registered(device)
 
 
 def time_backend(measure, backend: str, num_envs: int, device="cuda") -> float:
-    """Seconds per step call of ``backend`` with ``num_envs`` environments, as ``stable-envs tune`` times it.
+    """Seconds per draw call of renderer ``backend`` with ``num_envs`` environments, as ``stable-envs tune`` times it.
 
     Args:
-        measure: The ``measure`` of a ``simulation_paths`` entry.
-        backend: A backend name of that entry.
+        measure: The ``measure`` of a ``render_paths`` entry.
+        backend: A renderer name of that entry.
         num_envs: Number of environments.
         device: Device of the outputs.
     """

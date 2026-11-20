@@ -105,28 +105,15 @@ def tune(env, *, settings=(), repeats: int = 5, write: bool = True, echo=print) 
 
     say = echo or (lambda *_: None)
     tuning.check(dict.fromkeys(settings))
-    if not settings or backends.BACKEND_SETTING in settings:
-        # The simulation backends of the paths this env selected for: the one place that times them.
-        # The env's own path when it names one: other environments built in this process keep their choices.
-        own = getattr(env, "simulation_backend_path", None)
-        scope = {"paths": (own,)} if own else {"prefixes": tuning.paths_of(type(env))}
-        for path, pick in backends.calibrate(env.num_envs, env.device, write=write, **scope).items():
-            say(f"  {path}: simulation_backend='auto' uses {pick} at {env.num_envs} environments")
     if (not settings or backends.RENDERER_SETTING in settings) and env.render_backends and env.has_dynamics:
         # A first draw registers the render paths of the class; then both renderers of this class are timed.
         env.render()
         mine = [
             path
-            for path, _, _ in backends.registered(
-                env.device, tuning.paths_of(type(env)), setting=backends.RENDERER_SETTING
-            )
+            for path, _, _ in backends.registered(env.device, tuning.paths_of(type(env)))
             if path.endswith(f"/{type(env).__name__}")
         ]
-        render_paths = (
-            backends.calibrate(env.num_envs, env.device, paths=mine, write=write, setting=backends.RENDERER_SETTING)
-            if mine
-            else {}
-        )
+        render_paths = backends.calibrate(env.num_envs, env.device, paths=mine, write=write) if mine else {}
         for path, pick in render_paths.items():
             say(f"  {path}: {env.num_envs} frames draw with the {pick} renderer")
     chosen = [k for k in settings_for(env) if not settings or k.name in settings]

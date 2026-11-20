@@ -1,6 +1,6 @@
 # PushT
 
-In PushT, a 2D manipulation task with contact, a disc agent pushes a T-shaped block into a target pose. `PushT` and `PushTDiscrete` follow the stable-worldmodel version of [gym-pusht](https://github.com/huggingface/gym-pusht), which comes from Diffusion Policy ([Chi et al., 2023](https://arxiv.org/abs/2303.04137)). A batched port of the [Pymunk](https://www.pymunk.org/) contact solver steps the physics, in Numba on CPU and in Triton on CUDA, and Numba or Triton draw [frames](../terms.md#frame) that match the pygame frames byte for byte.
+In PushT, a 2D manipulation task with contact, a disc agent pushes a T-shaped block into a target pose. `PushT` and `PushTDiscrete` follow the stable-worldmodel version of [gym-pusht](https://github.com/huggingface/gym-pusht), which comes from Diffusion Policy ([Chi et al., 2023](https://arxiv.org/abs/2303.04137)). A batched port of the [Pymunk](https://www.pymunk.org/) contact solver steps the physics in Numba, or in Triton or JAX when `simulation_backend` names them, and Numba or Triton draw [frames](../terms.md#frame) that match the pygame frames byte for byte.
 
 ```python
 # needs the pusht extra
@@ -32,12 +32,12 @@ stable-envs steps PushT with a port of the Pymunk contact solver, and one call s
 
 | Value | Physics device | Implementation |
 |---|---|---|
-| `"auto"` (default) | CPU or CUDA | on CPU, `"numba"`. On CUDA, `"numba"` for small batches and `"triton"` (`"jax"` without Triton) for large ones. |
+| `"auto"` (default) | CPU | `"numba"` on every device. |
 | `"numba"` | CPU | Numba in float64, in parallel over environments. |
 | `"triton"` | CUDA | one Triton kernel launch per step in float32, one GPU thread per environment. |
 | `"jax"` | the environment device | JAX `vmap` in float64. |
 
-With `"numba"` on CUDA, the physics and the live state stay on the CPU, and each call copies its outputs and the exported state to CUDA. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on the GPU. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Numba computes in float64 and Triton in float32, so the two backends can give different trajectories. A JAX step on CUDA is much slower than a Triton step, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, unless Triton has it in its cache. The compile takes longer for agent shapes other than the disc. On CUDA, a batch of fewer than `large_renderer_min_rows` frames draws with the Numba rasterizer on the CPU, and the frames move to CUDA in one copy. Both rasterizers draw the same bytes as pygame ([Renderers](../performance-tuning.md#renderers)).
+With `"numba"` on CUDA, the physics and the live state stay on the CPU, and each call copies its outputs and the exported state to CUDA. `"auto"` steps with Numba on every device. The default is the same at every batch size, so a seed gives the same trajectory at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). Numba computes in float64 and Triton in float32, so the two backends can give different trajectories. Pass `simulation_backend="triton"` to step large CUDA batches on the GPU. A JAX step on CUDA is much slower than a Triton step, because each substep runs the broadphase on the CPU through a host callback. The first Triton step in a process compiles the kernel, unless Triton has it in its cache. The compile takes longer for agent shapes other than the disc. On CUDA, a batch of fewer than `large_renderer_min_rows` frames draws with the Numba rasterizer on the CPU, and the frames move to CUDA in one copy. Both rasterizers draw the same bytes as pygame ([Renderers](../performance-tuning.md#renderers)).
 
 The port follows Munk2D, the Chipmunk2D fork that pymunk 7.2.0 builds. It uses the same integration, PD control, damping and sequential impulse solver, and these Munk2D details:
 

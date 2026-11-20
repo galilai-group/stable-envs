@@ -13,7 +13,7 @@ from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import Env, _instance_value
 from ...spaces import Box, Dict, Discrete
 from .simulation.adapter import PHYSICS, VISUAL_LEAVES
-from .simulation.execution import fetch_backend, fetch_path, make_fetch_adapter
+from .simulation.execution import fetch_backend, make_fetch_adapter
 from .simulation.execution import make_fetch_adapter as FetchAdapter
 
 #: Render backend names; ``auto`` draws with MJWarp on CUDA and with ``numba``, or ``opengl`` without Numba, on CPU.
@@ -70,16 +70,13 @@ class FetchSemantics:
     ):
         """``simulation_backend`` selects the physics; see ``fetch_backend``.
 
-        ``"auto"`` steps on the CPU batch, bit-exact with gymnasium-robotics, on CPU. On CUDA it steps small batches
-        on the CPU batch and large ones on MuJoCo Warp, from the measured ``large_backend_min_envs`` switch point.
+        ``"auto"`` steps on the CPU batch, bit-exact with gymnasium-robotics, on every device. On CUDA, one copy moves
+        its results to the device. ``"mjwarp"`` steps on MuJoCo Warp.
         """
         _check_render_backend(backend)
         device = Env.resolve_device(device)
         reward_type = "dense" if "Dense" in self.REF_ID else "sparse"
-        self.simulation_backend = fetch_backend(
-            num_envs, device, simulation_backend, self.SCENE, reward_type, env_type=type(self)
-        )
-        self.simulation_backend_path = fetch_path(self.SCENE)
+        self.simulation_backend = fetch_backend(device, simulation_backend)
         if self.simulation_backend == "source":
             self._simulator = FetchAdapter(num_envs, device, seed, self.SCENE, reward_type)
         else:

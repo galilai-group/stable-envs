@@ -13,7 +13,7 @@ from ..._core.state_schema import Field, StateSchema
 from ..._core.style import StyleTensor
 from ..._core.tensordicts import build_tensordict, leaf_tree, pack_to_device, to_device
 from ..._execution import host_render
-from ..._execution.backends import BackendPair, measure_env, select_backend
+from ..._execution.backends import BackendPair
 from ...env import Env, ResetLeaf, check_drawn_fields, check_states
 from ...registry import register
 from ...render import _resources as _RES
@@ -199,13 +199,6 @@ _WALL_RESET_PATHS = ("wall.axis", "wall.thickness", "agent.radius")
 _EXECUTION_MODES = {"torch": "NATIVE_TORCH", "jax": "NATIVE_JAX", "numba": "NATIVE_NUMBA"}
 _NO_MASK = np.zeros(0, np.bool_)
 
-
-#: Shipped CUDA switch point of TwoRoom: the smallest batch that steps in JAX; smaller batches step in Numba (Torch
-#: without Numba). None uses JAX at every batch size. The setting and the tuning cache take precedence.
-#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-#: Measured up to 65536 environments: JAX costs about 0.7-1 ms per call at every batch, and it is faster than Numba
-#: from 8192 environments on both GPU types.
-TWO_ROOM_CUDA_MIN_ENVS: int | None = 8192
 
 #: Shipped CUDA render switch point of TwoRoom and TwoRoomTarget: the smallest batch that draws with the Triton
 #: compositor; smaller batches draw with the Numba compositor on the CPU and move the frames to CUDA in one copy.
@@ -1495,12 +1488,10 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select the physics implementation.
 
-        With ``"auto"``, CPU environments step in Numba when it imports. CUDA environments step in Numba (Torch without Numba)
-        for small batches and in JAX for large ones, from the measured ``large_backend_min_envs`` switch point.
-        ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects that implementation at
-        every batch size. On CUDA, Numba steps host copies of the rows and moves the results to the device.
+        With ``"auto"``, environments step in Numba on every device when it imports. Without Numba, CPU environments
+        step in JAX and CUDA environments in Torch. ``simulation_backend="torch"``, ``"jax"`` or ``"numba"`` selects
+        that implementation. On CUDA, Numba steps host copies of the rows and moves the results to the device.
         """
-        self.simulation_backend_path = f"navigation/{self.name}"
         super().__init__(*args, simulation_backend=simulation_backend, **kwargs)
         if self.simulation_backend == "jax":
             from .tworoom_jax import Kernel
@@ -1508,23 +1499,9 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
             self._jax_kernel = Kernel(self.device, self._style.layout)
 
     def _auto_simulation_backend(self) -> str:
-        if self.device.type == "cpu" and _numba_available():
+        if _numba_available():
             return "numba"
-        cls, device = type(self), self.device
-        measure = measure_env(lambda backend, n: cls(num_envs=n, device=device, simulation_backend=backend))
-
-        return select_backend(
-            self.simulation_backend_path,
-            self.B,
-            self.device,
-            "auto",
-            {
-                "cpu": BackendPair("jax", "jax"),
-                "cuda": BackendPair("numba" if _numba_available() else "torch", "jax", TWO_ROOM_CUDA_MIN_ENVS),
-            },
-            choices=self.simulation_backends,
-            measure=measure,
-        )
+        return "jax" if self.device.type == "cpu" else "torch"
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})

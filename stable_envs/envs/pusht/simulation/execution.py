@@ -1,9 +1,10 @@
-"""Choose the PushT physics backend: Numba on CPU, Triton on CUDA, with worker processes for large resets."""
+"""Choose the PushT physics backend (Numba by default, Triton or JAX by request) and the reset workers."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...._execution.backends import select_backend
 from ...._execution.policy import cpu_affinity, process_count
 
 if TYPE_CHECKING:
@@ -13,16 +14,7 @@ if TYPE_CHECKING:
 
 #: Backends that ``simulation_backend`` accepts besides ``"auto"``.
 SIMULATION_BACKENDS = ("triton", "jax", "numba")
-#: Shipped CUDA switch point: the smallest batch that steps on Triton (JAX without Triton); smaller batches step with
-#: Numba. None uses the GPU backend at every batch size. The setting and the tuning cache take precedence.
-#: docs/performance-tuning.md (Physics backends) says how the shipped values were measured.
-#: Measured on 15 November 2026 with ``python -m benchmarks.backend_switch PushT`` on an RTX A5000 with an AMD EPYC 7532,
-#: an RTX A5000 with an AMD EPYC 7662 and an RTX A5500 with an AMD EPYC 7662, 8 cores each: Numba with one copy of
-#: the folded State to CUDA was faster up to 64 environments and Triton from 128 on all three.
-CUDA_MIN_ENVS: int | None = 128
-
-
-#: The ``select_backend`` path of the PushT physics backend choice.
+#: The path of the PushT physics settings.
 PATH = "pusht-sim"
 #: Smallest batch whose resets run in worker processes, unless the ``worker_min_envs`` setting is set. An environment's source
 #: reset takes milliseconds of Python. From this batch size, parallel resets save more time than the round trip to
@@ -30,51 +22,17 @@ PATH = "pusht-sim"
 RESET_WORKER_MIN_ENVS = 8
 
 
-def _measure(env_type, device, config: dict):
-    """Build and step ``env_type`` on one backend with ``config``, for ``stable-envs tune``."""
-    from ...._execution.backends import measure_env
-
-    options = dict(size=config["resolution"], render_action=config["render_action"], with_target=config["with_target"])
-    return measure_env(lambda backend, n: env_type(num_envs=n, device=device, simulation_backend=backend, **options))
-
-
-def pusht_backend(
-    num_envs: int,
-    device: str | torch.device,
-    backend: str | None = "auto",
-    *,
-    discrete: bool = False,
-    config: dict | None = None,
-    env_type: type | None = None,
-) -> str:
+def pusht_backend(device: str | torch.device, backend: str | None = "auto") -> str:
     """Return ``"triton"``, ``"jax"`` or ``"numba"``.
 
-    ``"auto"`` selects Numba on CPU. On CUDA it selects Numba for small batches and Triton (JAX without Triton) for
-    large ones; ``select_backend`` measures the switch point. ``stable-envs tune`` builds ``env_type`` with ``config``
-    to calibrate it.
+    ``"auto"`` selects Numba on every device. On CUDA, Numba steps on the CPU and one copy moves the results to the
+    device. ``"triton"`` (CUDA only) and ``"jax"`` select a GPU backend explicitly.
     """
     import torch
 
-    from ...._execution.backends import BackendPair, select_backend
-
     if backend == "triton" and torch.device(device).type != "cuda":
         raise ValueError("simulation_backend='triton' requires device='cuda'")
-    measure = None if config is None or env_type is None else _measure(env_type, device, config)
-    return select_backend(
-        PATH,
-        num_envs,
-        device,
-        backend,
-        {"cpu": BackendPair("numba", "numba"), "cuda": BackendPair("numba", _gpu_backend(), CUDA_MIN_ENVS)},
-        choices=SIMULATION_BACKENDS,
-        measure=measure,
-    )
-
-
-def _gpu_backend() -> str:
-    from .. import raster
-
-    return "triton" if raster.HAVE_TRITON else "jax"
+    return select_backend(device, backend, {"cpu": "numba"}, choices=SIMULATION_BACKENDS)
 
 
 def make_pusht_adapter(
@@ -89,7 +47,7 @@ def make_pusht_adapter(
     cpus = cpu_affinity()
     valid = type(num_envs) is int and num_envs > 0
     count = process_count(num_envs, cpus, path=PATH, min_envs=RESET_WORKER_MIN_ENVS) if valid else 0
-    backend = pusht_backend(num_envs, device, simulation_backend, discrete=discrete, config=config)
+    backend = pusht_backend(device, simulation_backend)
     if backend == "triton":
         from .triton_batch import PushTTritonAdapter as adapter
     elif backend == "jax":

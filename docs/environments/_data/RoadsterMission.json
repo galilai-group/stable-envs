@@ -9,7 +9,7 @@
  "default_size": 96,
  "native_size": null,
  "frame_shape": [96, 96, 3],
- "physics": "native MuJoCo on CPU; MuJoCo Warp on CUDA",
+ "physics": "native MuJoCo on CPU, results copied to CUDA; MuJoCo Warp by name",
  "renderers": {
   "cpu": "opengl (MuJoCo)",
   "cuda": "opengl (MuJoCo) on CPU, frames copied to CUDA"

@@ -11,7 +11,7 @@ from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import check_drawn_fields
 from ...spaces import Box, Dict
 from ...specs import CompositeSpec
-from .simulation.execution import dmc_backend, dmc_path, make_dmc_adapter
+from .simulation.execution import dmc_backend, make_dmc_adapter
 from .simulation.factory import ACTION_DIMS, FIELDS, RENDER_KEYS
 from .simulation.physics import LEAVES
 from .simulation.state import field_name, state_schema
@@ -46,9 +46,8 @@ class DelegatedSemantics:
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction.
 
-        ``"auto"`` uses native physics on CPU. On CUDA it uses native physics for small batches and MuJoCo Warp for
-        large ones, from the measured ``large_backend_min_envs`` switch point. ``"native"``, ``"mjwarp"`` and
-        (Reacher) ``"mjx"`` select explicitly.
+        ``"auto"`` uses native physics on every device. On CUDA, one copy moves its results to the device.
+        ``"native"``, ``"mjwarp"`` and (Reacher) ``"mjx"`` select explicitly.
         """
         self.simulation_backend = simulation_backend
         super().__init__(*args, **kwargs)
@@ -58,10 +57,7 @@ class DelegatedSemantics:
         ]
 
     def _make_simulator(self):
-        self.simulation_backend = dmc_backend(
-            self._simulator_key(), self.B, self.device, self.simulation_backend, env_type=type(self)
-        )
-        self.simulation_backend_path = dmc_path(self._simulator_key())
+        self.simulation_backend = dmc_backend(self._simulator_key(), self.device, self.simulation_backend)
         return make_dmc_adapter(
             self._simulator_key(),
             self.B,

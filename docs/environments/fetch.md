@@ -1,6 +1,6 @@
 # Fetch
 
-A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. MuJoCo steps the batch in one call on CPU and MuJoCo Warp on CUDA. A Numba rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
+A Fetch arm with seven joints and a parallel gripper works on a table: it moves the gripper to a goal, or pushes, slides or picks up an object. These are the Fetch tasks of [Gymnasium-Robotics](https://robotics.farama.org/envs/fetch/) ([Plappert et al., 2018](https://arxiv.org/abs/1802.09464)), in 12 classes that follow the stable-worldmodel wrappers. `mujoco.batch` steps the batch in one call on every device, and MuJoCo Warp steps it on CUDA with `simulation_backend="mjwarp"`. A Numba rasterizer, MuJoCo OpenGL or MJWarp draws the [frames](../terms.md#frame).
 
 ```python
 # needs the robotics extra
@@ -35,18 +35,18 @@ Each task comes in three classes:
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"auto"` (default) | CPU batch | CPU batch for small batches, [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) for large ones |
+| `"auto"` (default) | CPU batch | CPU batch |
 | `"native"` | CPU batch | CPU batch |
-| `"mjwarp"` | error | MuJoCo Warp |
+| `"mjwarp"` | error | [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) |
 | `"source"` | Gymnasium-Robotics' `step`, one environment at a time | the same |
 
 The [state](../terms.md#state) has three tensors: `fetch_state.physics.float64` (`qpos`, `qvel`, `time`, `warmstart`, `controller.position` and `controller.quaternion`), `fetch_state.task.float64` (`task.initial_gripper_xpos` and `goal`) and `fetch_state.host.int64` (`lifecycle.elapsed_steps` and the `rng.*` words). Read a field by name with `snv.get_field(state, "qpos")`.
 
-With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)).
+`"auto"` steps on the CPU batch on every device. On CUDA, one copy moves the results to the device. The default is the same at every batch size, so a seed gives the same trajectory at every batch size ([Physics backends](../performance-tuning.md#physics-backends)).
 
 The CPU batch runs Gymnasium-Robotics' step for every environment in one call: the action scaling, the mocap target and the gripper controls on arrays, then 20 MuJoCo substeps for every environment in `mujoco.batch`, then the reward and the 50-step time limit on arrays. Without `mujoco.batch` in the installed MuJoCo, up to 8 threads call `mj_step`, and each thread takes the next environment from one shared queue when it completes its last one. A thread that is slower than the others then steps fewer environments. Resets draw the object and goal positions from each environment's PCG64 stream, as Gymnasium-Robotics does. The [state](../terms.md#state) and the step outputs equal Gymnasium-Robotics' bit for bit on the same MuJoCo version, and a CUDA environment on the CPU batch returns its state on CUDA. With `"source"`, a batch of at least `worker_min_envs` environments steps in up to `workers` [worker processes](../performance-tuning.md#worker-processes) on Linux with at least four CPUs, and otherwise in one process on up to `fetch_threads` threads.
 
-MuJoCo Warp steps every environment in float32, with the 20 substeps of a step in one captured CUDA graph and no host synchronization. A step takes about the same time for any batch up to a few hundred environments, so a small CUDA batch steps faster on the CPU batch. Its resets draw the same starts and goals as the CPU batch. MuJoCo Warp doesn't support the source model as it is, so the model has two changes:
+MuJoCo Warp steps every environment in float32, with the 20 substeps of a step in one captured CUDA graph and no host synchronization. A step takes about the same time for any batch up to a few hundred environments, so MuJoCo Warp is faster than the CPU batch only for large batches. Its resets draw the same starts and goals as the CPU batch. MuJoCo Warp doesn't support the source model as it is, so the model has two changes:
 
 - Push, PickAndPlace and Reach turn off multi-contact and native collision detection, and keep the 1 mm contact margin of the robot geoms.
 - Slide replaces the cylinder puck with a 24-sided prism of the same size and inertia, and sets the contact margins to 0. MuJoCo Warp makes one contact for each cylinder pair, and with one contact the puck sinks into the table.

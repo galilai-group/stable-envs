@@ -37,32 +37,19 @@ def assert_identical(expected, actual, what):
         assert a.dtype == b.dtype and torch.equal(a, b), (what, key)
 
 
-def test_routing():
-    assert fetch_backend(1, "cpu") == "native"
-    assert fetch_backend(4096, "cpu", "auto") == "native"
-    with tuning.override(large_backend_min_envs=8):
-        assert fetch_backend(7, "cuda", "auto") == "native"
-        assert fetch_backend(8, "cuda", None) == "mjwarp"
-        assert fetch_backend(8, "cuda", "native") == "native"
-        assert fetch_backend(8, "cuda", "source") == "source"
+def test_routing(monkeypatch):
+    monkeypatch.setattr(tuning, "_cuda", lambda: False)
+    for device in ("cpu", "cuda"):
+        assert fetch_backend(device) == "native"
+        assert fetch_backend(device, "auto") == "native"
+        assert fetch_backend(device, None) == "native"
+        assert fetch_backend(device, "source") == "source"
+    assert fetch_backend("cuda", "mjwarp") == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
-        fetch_backend(8, "cpu", "mjwarp")
+        fetch_backend("cpu", "mjwarp")
     for bad in ("mjx", "default"):
         with pytest.raises(ValueError, match="simulation_backend"):
-            fetch_backend(8, "cpu", bad)
-
-
-def test_auto_uses_the_shipped_switch_point_of_each_task(monkeypatch):
-    from stable_envs.envs.fetch.simulation.execution import CUDA_MIN_ENVS
-
-    # Without a CUDA cache the shipped value decides, and no CUDA driver loads in this process.
-    monkeypatch.setattr(tuning, "_cuda", lambda: False)
-    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
-    tuning.reset()
-    assert CUDA_MIN_ENVS == {"Reach": 256, "Push": 256, "Slide": 256, "PickAndPlace": 256}
-    for task, switch in CUDA_MIN_ENVS.items():
-        assert fetch_backend(switch - 1, "cuda", "auto", task) == "native"
-        assert fetch_backend(switch, "cuda", "auto", task) == "mjwarp"
+            fetch_backend("cpu", bad)
 
 
 def test_public_env_steps_on_the_cpu_batch():
@@ -214,11 +201,9 @@ def test_mjwarp_resets_masks_and_routing():
         assert snv.get_field(out["state"], "lifecycle/elapsed_steps").cpu()[~held].eq(1).all()
     finally:
         adapter.close()
-    with tuning.override(large_backend_min_envs=2), snv.make("FetchReach", num_envs=2, device="cuda") as env:
+    with snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="mjwarp") as env:
         assert env.simulation_backend == "mjwarp"
-    with tuning.override(large_backend_min_envs=3):
-        env = snv.make("FetchReach", num_envs=2, device="cuda", simulation_backend="auto")
-    with env:
+    with snv.make("FetchReach", num_envs=2, device="cuda") as env:
         assert env.simulation_backend == "native"
         out = env.step(torch.zeros(2, 4, device="cuda"), frames=None)
         assert snv.get_field(out["state"], "qpos").device.type == "cuda" and out["reward"].device.type == "cuda"

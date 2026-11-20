@@ -229,28 +229,23 @@ def test_controller_site_jacobian_equals_mujoco(family):
 
 
 @pytest.mark.parametrize(
-    "batch,device,backend,switch,expected",
+    "batch,device,backend,expected",
     [
-        (1, "cpu", "auto", 1, "native"),
-        (4096, "cpu", None, 1, "native"),
-        (1, "cuda", "auto", 1, "mjwarp"),
-        (8, "cuda:1", None, 1, "mjwarp"),
-        (255, "cuda", "auto", 256, "native"),
-        (256, "cuda", "auto", 256, "mjwarp"),
-        (4096, "cpu", "auto", 256, "native"),
-        (64, "cuda", "auto", 64, "mjwarp"),
-        (4096, "cuda", "native", 256, "native"),
-        (1, "cuda", "mjwarp", 256, "mjwarp"),
+        (1, "cpu", "auto", "native"),
+        (4096, "cpu", None, "native"),
+        (1, "cuda", "auto", "native"),
+        (8, "cuda:1", None, "native"),
+        (256, "cuda", "auto", "native"),
+        (4096, "cuda", "native", "native"),
+        (1, "cuda", "mjwarp", "mjwarp"),
     ],
 )
-def test_manipulation_routing(monkeypatch, batch, device, backend, switch, expected):
-    from stable_envs import tuning
+def test_manipulation_routing(monkeypatch, batch, device, backend, expected):
     from stable_envs.envs.ogbench.simulation import manipulation_batch, manipulation_warp
 
     monkeypatch.setattr(manipulation_batch, "OGBManipulationBatchAdapter", lambda *a: ("native", a))
     monkeypatch.setattr(manipulation_warp, "OGBManipulationWarpAdapter", lambda *a: ("mjwarp", a))
-    with tuning.override(large_backend_min_envs=switch):
-        kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend)
+    kind, args = execution.make_manipulation_adapter("Cube", batch, device, 17, 1, backend)
     assert kind == expected and args == ("Cube", batch, device, 17, 1)
 
 

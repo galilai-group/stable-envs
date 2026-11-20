@@ -27,13 +27,3 @@ def test_worker_count_keeps_state_and_frames(workers):
         actions = torch.stack([reference.action_spec.sample(8, rng=rng) for _ in range(6)], 1)
         assert_same_state(reference.step(actions, frames=slice(None)), candidate.step(actions, frames=slice(None)))
         assert_same_state(reference.reset(), candidate.reset())
-
-
-def test_a_built_classic_env_registers_its_host_path_for_tune(monkeypatch):
-    from stable_envs._execution import backends
-
-    monkeypatch.setattr(backends, "_REGISTERED", {})
-    with snv.make("Acrobot", num_envs=2, device="cpu"):
-        pass
-    paths = [path for path, _, _ in backends.registered("cpu")]
-    assert "classic-cpu/acrobot" in paths

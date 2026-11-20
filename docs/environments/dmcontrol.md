@@ -45,17 +45,17 @@ Read a field with `snv.get_field(state, "qpos")`, and write a field with `snv.se
 
 | Value | CPU device | CUDA device |
 |---|---|---|
-| `"auto"` (default) | native MuJoCo | native MuJoCo for small batches, MuJoCo Warp for large ones |
+| `"auto"` (default) | native MuJoCo | native MuJoCo, with state and outputs on CUDA |
 | `"native"` | native MuJoCo | native MuJoCo on CPU, with state and outputs on CUDA |
 | `"mjwarp"` | error | MuJoCo Warp |
 | `"mjx"` | error | JAX/MJX, `DMCReacher` only |
 
-`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. With `"auto"` on CUDA, a batch of `large_backend_min_envs` or more environments steps on MuJoCo Warp, and a smaller batch steps on native MuJoCo. When the setting is not set, the switch point comes from the tuning cache that `stable-envs tune` writes, else from the value the class ships, so without tuning the same batch size selects the same backend on every machine ([Physics backends](../performance-tuning.md#physics-backends)). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Set `simulation_backend` explicitly when you need the same physics on every machine.
+`"mjwarp"` and `"mjx"` raise an error without CUDA or without the GPU dependencies. `"auto"` steps on native MuJoCo on every device. The default is the same at every batch size, so a seed gives the same trajectory at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). Native MuJoCo computes in float64 and MuJoCo Warp in float32, so the two backends can give different trajectories. Pass `simulation_backend="mjwarp"` to step large CUDA batches on the GPU.
 
 ```python
 # needs the dmcontrol-gpu extra; CUDA only
 with snv.DMCReacher(num_envs=1, device="cuda") as env:
-    print(env.simulation_backend)  # native: below the shipped switch point of 128
+    print(env.simulation_backend)  # native
 
 with snv.DMCReacher(num_envs=1, device="cuda", simulation_backend="mjwarp") as env:
     print(env.simulation_backend)  # mjwarp

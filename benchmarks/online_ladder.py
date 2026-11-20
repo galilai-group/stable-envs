@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from benchmarks.offline_sweep import WARMUP_S, _class, _cycle, _host, _sources, _timed, gpu_backends
+from benchmarks.offline_sweep import WARMUP_S, _class, _cycle, _host, _sources, _timed, gpu_backends, gpu_kwargs
 
 #: Constructor keyword arguments of source gym ids that need them.
 SOURCE_KWARGS = {"swm/PushT-v1": {"resolution": 224}, "swm/PushT-Discrete-v1": {"resolution": 224}}
@@ -542,7 +542,8 @@ def _make_ours(name: str, num_envs: int, size: int, device: str):
     from benchmarks.swm_dmc import install
 
     install()
-    return snv.make(name, num_envs=num_envs, size=_class(name).native_size or size, device=device)
+    size = _class(name).native_size or size
+    return snv.make(name, num_envs=num_envs, size=size, device=device, **gpu_kwargs(name, device))
 
 
 def run_ours(args, name: str, dev: str, render: bool, chunk: int) -> dict:

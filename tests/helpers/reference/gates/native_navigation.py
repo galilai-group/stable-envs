@@ -599,7 +599,7 @@ def _simple_reward_boundary(device):
 
 _EXPECTED_MODES = {
     "cpu": {"TwoRoom": "NATIVE_NUMBA", "Piecewise": "NATIVE_NUMBA", "SimplePointMaze": "NATIVE_TORCH"},
-    "cuda": {"TwoRoom": "NATIVE_JAX", "Piecewise": "NATIVE_TORCH", "SimplePointMaze": "NATIVE_TORCH"},
+    "cuda": {"TwoRoom": "NATIVE_NUMBA", "Piecewise": "NATIVE_TORCH", "SimplePointMaze": "NATIVE_TORCH"},
 }
 
 

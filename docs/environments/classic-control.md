@@ -24,13 +24,13 @@ The `simulation_backend` argument selects how the batch steps:
 
 | Value | Steps |
 |---|---|
-| `"auto"` (default) | on CPU, `"gym"` for small batches and `"numpy"` for large batches. On CUDA, the CPU choice for small batches and `"torch"` for large batches |
+| `"auto"` (default) | on CPU, `"numba"` for CartPole and MountainCar. For the other classes, `"gym"` for small batches and `"numpy"` for large batches. On CUDA, `"torch"` |
 | `"numpy"` | the whole batch in one NumPy operation on the host, with outputs moved to the environment device |
 | `"numba"` | CartPole and MountainCar: the whole batch in one compiled call on the host, in place on the state |
 | `"torch"` | the whole batch in one Torch operation on the environment device |
 | `"gym"` | one Gymnasium environment per batch row |
 
-`None` means `"auto"`. CartPole and MountainCar step with `"numba"` on the host at every batch size, because it was the fastest host backend from 1 to 4096 environments. Each other class ships two switch points, measured on RTX 3090 and RTX A5000 hosts: the batch size from which the host steps in NumPy instead of Gymnasium, and the batch size from which CUDA batches step in Torch. The `large_backend_min_envs` tuning setting changes only the CUDA switch point. `stable-envs tune --device cpu` changes the host switch point, and `stable-envs tune --device cuda` the CUDA one (see [Physics backends](../performance-tuning.md#physics-backends)). On CUDA, the CPU choice steps on the host and moves the outputs and the state of each step to the GPU in one copy.
+`None` means `"auto"`. On CUDA, `"auto"` selects Torch at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). On CPU, Acrobot and MountainCarContinuous step in Gymnasium below 4 and 8 environments, and in NumPy from these batch sizes. Pendulum steps in NumPy at every batch size. NumPy and Gymnasium steps give the same values, so this choice changes only the speed. On CUDA, `"numpy"`, `"numba"` and `"gym"` step on the host and move the outputs and the state of each step to the GPU in one copy.
 
 Gymnasium resets each environment and owns its PCG64 random stream for every backend, so a seed gives the same initial states on every backend and device. NumPy and Numba steps give state, observations, rewards and episode flags equal to Gymnasium's steps. `env.simulation_backend` reports the selected backend.
 
@@ -47,8 +47,8 @@ with snv.Acrobot(num_envs=256, simulation_backend="gym", device="cpu") as env:
 # CUDA only
 with snv.Acrobot(num_envs=64, device="cuda", simulation_backend="torch") as env:
     print(env.simulation_backend)  # torch
-with snv.tuning.override(large_backend_min_envs=256), snv.Acrobot(num_envs=64, device="cuda") as env:
-    print(env.simulation_backend)  # gym
+with snv.Acrobot(num_envs=64, device="cuda") as env:
+    print(env.simulation_backend)  # torch
 ```
 
 ## Rendering

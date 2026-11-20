@@ -343,5 +343,5 @@ def test_cache_changes_in_the_process_apply_at_the_next_call_without_a_stat(monk
 
 def test_a_cuda_index_this_host_lacks_has_no_cache_and_no_device_query():
     assert tuning.cache_path("cuda:99") is None
-    state = tuning.sources_state("large_backend_min_envs", "cuda:99")
+    state = tuning.sources_state("large_renderer_min_rows", "cuda:99")
     assert state[-1] is None

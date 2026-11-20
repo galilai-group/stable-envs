@@ -173,19 +173,16 @@ def test_numba_and_torch_give_the_same_episodes(preset):
                 )
 
 
-def test_the_simulation_backend_follows_the_device_and_the_switch_point():
-    from stable_envs import tuning
+def test_the_simulation_backend_follows_the_device():
     from stable_envs.envs.miniworld.simulation.batched import miniworld_backend
 
-    assert miniworld_backend("cpu", 4096) == "numba"
-    assert miniworld_backend("cuda", 1) == "triton"  # the shipped switch point steps every CUDA batch on Triton
-    with tuning.override(large_backend_min_envs=64):
-        assert miniworld_backend("cuda", 63, "auto") == "numba"
-        assert miniworld_backend("cuda", 64, None) == "triton"
-    assert miniworld_backend("cpu", 4096, "auto") == "numba"
-    assert miniworld_backend("cpu", 1, "torch") == "torch"
-    assert miniworld_backend("cuda", 4096, "numba") == "numba"
-    for bad in (("cpu", 1, "warp"), ("cpu", 1, "triton"), ("cuda", 1, "default")):
+    assert miniworld_backend("cpu") == "numba"
+    assert miniworld_backend("cuda") == "triton"
+    assert miniworld_backend("cuda", None) == "triton"
+    assert miniworld_backend("cpu", "auto") == "numba"
+    assert miniworld_backend("cpu", "torch") == "torch"
+    assert miniworld_backend("cuda", "numba") == "numba"
+    for bad in (("cpu", "warp"), ("cpu", "triton"), ("cuda", "default")):
         with pytest.raises(ValueError):
             miniworld_backend(*bad)
     with _make(1, simulation_backend="torch") as env:

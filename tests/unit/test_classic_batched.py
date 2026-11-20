@@ -9,10 +9,9 @@ pytest.importorskip("pygame")
 torch = pytest.importorskip("torch")
 
 import stable_envs as se  # noqa: E402
-from stable_envs import get_field, schema_of, set_field, tuning  # noqa: E402
+from stable_envs import get_field, schema_of, set_field  # noqa: E402
 from stable_envs._core.state_schema import unfold  # noqa: E402
 from stable_envs.envs.classic_control.simulation.batched import (  # noqa: E402
-    COMPILED_HOST,  # noqa: E402
     MAX_EPISODE_STEPS,
     BatchedClassicAdapter,
     classic_backend,
@@ -304,56 +303,27 @@ def test_invalid_discrete_actions_raise_like_gymnasium(backend):
         reference.close()
 
 
-def test_untuned_selection_uses_the_shipped_switch_points(monkeypatch, tmp_path):
-    from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS, CUDA_MIN_ENVS
-
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
-    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
-    tuning._clear_caches()
-    try:
-        for domain, fewest in CPU_MIN_ENVS.items():
-            for instances in (1, 2, 4, 8, 4096):
-                host = "numpy" if fewest is None or instances >= fewest else "gym"
-                host = "numba" if domain in COMPILED_HOST else host
-                assert classic_backend(domain, "cpu", instances) == host
-                cutoff = CUDA_MIN_ENVS[domain]
-                assert classic_backend(domain, "cuda", instances) == (
-                    "torch" if cutoff is None or instances >= cutoff else host
-                )
-        assert classic_backend("cartpole", "cpu", 1) == "numba"
-        assert classic_backend("acrobot", "cpu", 1) == "gym"
-        assert classic_backend("pendulum", "cpu", 1) == "numpy"
-    finally:
-        tuning._clear_caches()
-
-
-def _shipped_host(domain, instances):
+def _host(domain, instances=64):
     from stable_envs.envs.classic_control.simulation.batched import CPU_MIN_ENVS
 
-    if domain in COMPILED_HOST:
-        return "numba"
-    fewest = CPU_MIN_ENVS[domain]
-    return "numpy" if fewest is None or instances >= fewest else "gym"
+    fewest = CPU_MIN_ENVS.get(domain)
+    return "numba" if domain in STEPS else "gym" if fewest is not None and instances < fewest else "numpy"
 
 
-def test_backend_selection(monkeypatch, tmp_path):
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
-    tuning._clear_caches()
+def test_backend_selection():
+    assert classic_backend("acrobot", "cpu", 1) == "gym" and classic_backend("acrobot", "cpu", 4) == "numpy"
+    assert classic_backend("pendulum", "cpu", 1) == "numpy"
     for domain in MAX_EPISODE_STEPS:
         for backend in (None, "auto"):
-            # The setting moves the CUDA switch point and leaves the host choice to the shipped values.
-            with tuning.override(large_backend_min_envs=4):
-                for instances in (1, 3, 4, 64):
-                    assert classic_backend(domain, "cpu", instances, backend) == _shipped_host(domain, instances)
-                assert classic_backend(domain, "cuda", 4, backend) == "torch"
-                assert classic_backend(domain, "cuda", 3, backend) == _shipped_host(domain, 3)
-        for instances in (1, 4096):
-            assert classic_backend(domain, "cuda:0", instances, "gym") == "gym"
-            assert classic_backend(domain, "cpu", instances, "torch") == "torch"
+            for instances in (1, 3, 4, 8, 4096):
+                assert classic_backend(domain, "cpu", instances, backend) == _host(domain, instances)
+                assert classic_backend(domain, "cuda", instances, backend) == "torch"
+        assert classic_backend(domain, "cuda:0", 1, "gym") == "gym"
+        assert classic_backend(domain, "cpu", 4096, "torch") == "torch"
     with pytest.raises(ValueError, match="simulation_backend"):
         classic_backend("cartpole", "cpu", 2, "mjx")
     for name in CLASSES.values():
-        with tuning.override(large_backend_min_envs=8), se.make(name, num_envs=8, device="cpu") as env:
+        with se.make(name, num_envs=8, device="cpu") as env:
             want = "numba" if name in ("CartPole", "MountainCar") else "numpy"
             assert env.simulation_backend == want and env.execution_mode == f"NATIVE_{want.upper()}"
             assert isinstance(env._simulator, BatchedClassicAdapter) and env._simulator.backend == want
@@ -419,11 +389,11 @@ def test_cuda_steps_match_gymnasium(domain):
         finally:
             reference.close()
             fast.close()
-    with tuning.override(large_backend_min_envs=8), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
+    with se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
         assert env.simulation_backend == "torch" and env.execution_mode == "NATIVE_TORCH"
         assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"
-    with tuning.override(large_backend_min_envs=16), se.make(CLASSES[domain], num_envs=8, device="cuda") as env:
-        modes = {"gym": "DELEGATED_CPU", "numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
-        host = _shipped_host(domain, 8)
+    host = _host(domain)
+    with se.make(CLASSES[domain], num_envs=8, device="cuda", simulation_backend=host) as env:
+        modes = {"numpy": "NATIVE_NUMPY", "numba": "NATIVE_NUMBA"}
         assert (env.simulation_backend, env.execution_mode) == (host, modes[host])
         assert get_field(env.get_state(), "lifecycle/elapsed_steps").device.type == "cuda"

@@ -107,26 +107,22 @@ def _fake_adapters(monkeypatch):
 
 @pytest.mark.family("dmc")
 @pytest.mark.parametrize(
-    "batch,device,backend,switch,expected",
+    "batch,device,backend,expected",
     [
-        (1, "cuda", "auto", 1, "mjwarp"),
-        (4096, "cuda:1", None, 64, "mjwarp"),
-        (1, "cpu", None, 1, "native"),
-        (4096, "cpu", "auto", 64, "native"),
-        (4096, "cuda", "native", 64, "native"),
-        (1, "cuda", "mjwarp", 64, "mjwarp"),
-        (64, "cuda:1", "mjwarp", 64, "mjwarp"),
-        (1, "cuda", "mjx", 64, "mjx"),
-        (63, "cuda", "auto", 64, "native"),
-        (64, "cuda", "auto", 64, "mjwarp"),
-        (2, "cuda", "auto", 2, "mjwarp"),
+        (1, "cuda", "auto", "native"),
+        (4096, "cuda:1", None, "native"),
+        (1, "cpu", None, "native"),
+        (4096, "cpu", "auto", "native"),
+        (4096, "cuda", "native", "native"),
+        (1, "cuda", "mjwarp", "mjwarp"),
+        (64, "cuda:1", "mjwarp", "mjwarp"),
+        (1, "cuda", "mjx", "mjx"),
     ],
 )
-def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, device, backend, switch, expected):
+def test_reacher_routes_without_changing_the_output_device(monkeypatch, batch, device, backend, expected):
     execution = _fake_adapters(monkeypatch)
-    with tuning.override(large_backend_min_envs=switch):
-        assert execution.dmc_backend("reacher", batch, device, backend) == expected
-        kind, args, _ = execution.make_dmc_adapter("reacher", batch, device, 17, simulation_backend=backend)
+    assert execution.dmc_backend("reacher", device, backend) == expected
+    kind, args, _ = execution.make_dmc_adapter("reacher", batch, device, 17, simulation_backend=backend)
     assert kind == (expected if expected in {"mjx", "mjwarp"} else "batch")
     assert args == ((batch, device, 17) if expected == "mjx" else ("reacher", batch, device, 17))
 
@@ -139,7 +135,7 @@ def test_dmc_rejects_invalid_simulation_selection(backend, device):
     from stable_envs.envs.dmcontrol.simulation.execution import dmc_backend
 
     with pytest.raises(ValueError):
-        dmc_backend("reacher", 1, device, backend)
+        dmc_backend("reacher", device, backend)
 
 
 @pytest.mark.family("dmc")
@@ -155,16 +151,10 @@ def test_dmc_cuda_physics_without_warp_names_the_extra(monkeypatch):
 
 
 @pytest.mark.family("dmc")
-def test_dmc_explicit_names_select_and_auto_follows_the_switch_point(monkeypatch):
+def test_dmc_explicit_names_select_and_auto_steps_native(monkeypatch):
     execution = _fake_adapters(monkeypatch)
-    for switch, backend, kind in (
-        (1, None, "mjwarp"),
-        (2, "auto", "batch"),
-        (1, "native", "batch"),
-        (2, "mjwarp", "mjwarp"),
-    ):
-        with tuning.override(large_backend_min_envs=switch):
-            result = execution.make_dmc_adapter("walker", 1, "cuda:1", 17, simulation_backend=backend)
+    for backend, kind in ((None, "batch"), ("auto", "batch"), ("native", "batch"), ("mjwarp", "mjwarp")):
+        result = execution.make_dmc_adapter("walker", 1, "cuda:1", 17, simulation_backend=backend)
         assert result == (kind, ("walker", 1, "cuda:1", 17), {})
     assert execution.make_dmc_adapter("walker", 1, "cpu", 17) == ("batch", ("walker", 1, "cpu", 17), {})
     for domain, device, backend in (
@@ -253,22 +243,10 @@ def test_dmc_batch_threads_use_the_value_tuned_for_their_batch_range(monkeypatch
 
 
 @pytest.mark.family("dmc")
-def test_dmc_shipped_switch_points_name_simulators_and_positive_batches():
-    from stable_envs.envs.dmcontrol.simulation.execution import CUDA_MIN_ENVS
+def test_dmc_auto_steps_native_on_every_device():
+    from stable_envs.envs.dmcontrol.simulation import execution
     from stable_envs.envs.dmcontrol.simulation.factory import FACTORIES
 
-    assert set(CUDA_MIN_ENVS) <= set(FACTORIES)
-    assert all(isinstance(v, int) and not isinstance(v, bool) and v >= 1 for v in CUDA_MIN_ENVS.values())
-
-
-@pytest.mark.family("dmc")
-def test_untuned_dmc_selection_uses_the_shipped_switch_point(monkeypatch, tmp_path):
-    from stable_envs.envs.dmcontrol.simulation import execution
-
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
-    monkeypatch.delenv("STABLE_ENVS_LARGE_BACKEND_MIN_ENVS", raising=False)
-    tuning._clear_caches()
-    switch = execution.CUDA_MIN_ENVS["reacher"]
-    assert execution.dmc_backend("reacher", switch - 1, "cuda") == "native"
-    assert execution.dmc_backend("reacher", switch, "cuda") == "mjwarp"
-    assert execution.dmc_backend("reacher", switch, "cpu") == "native"
+    for key in FACTORIES:
+        assert execution.dmc_backend(key, "cuda") == "native"
+        assert execution.dmc_backend(key, "cpu") == "native"

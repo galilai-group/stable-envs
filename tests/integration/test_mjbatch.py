@@ -94,23 +94,18 @@ def _mocap(t, n=B):
     return pos
 
 
-def test_routing_follows_device_and_switch_point(monkeypatch):
+def test_auto_routes_native_on_every_device(monkeypatch):
     monkeypatch.setattr(tuning, "_cuda", lambda: False)
-    assert mujoco_backend("test-sim", 1, "cpu", cuda_min_envs=8) == "native"
-    assert mujoco_backend("test-sim", 7, "cuda", cuda_min_envs=8) == "native"
-    assert mujoco_backend("test-sim", 8, "cuda", cuda_min_envs=8) == "mjwarp"
-    assert mujoco_backend("test-sim", 1, "cuda", cuda_min_envs=None) == "mjwarp"
-    assert mujoco_backend("test-sim", 4096, "cpu", "auto", cuda_min_envs=8) == "native"
-    with tuning.override(large_backend_min_envs=256):
-        assert mujoco_backend("test-sim", 255, "cuda", "auto", cuda_min_envs=8) == "native"
-        assert mujoco_backend("test-sim", 256, "cuda", None, cuda_min_envs=8) == "mjwarp"
-        assert mujoco_backend("test-sim", 4096, "cuda", "native", cuda_min_envs=8) == "native"
-        assert mujoco_backend("test-sim", 1, "cuda", "mjwarp", cuda_min_envs=8) == "mjwarp"
+    for device in ("cpu", "cuda"):
+        assert mujoco_backend(device) == "native"
+        assert mujoco_backend(device, None) == "native"
+        assert mujoco_backend(device, "native") == "native"
+    assert mujoco_backend("cuda", "mjwarp") == "mjwarp"
     with pytest.raises(ValueError, match="requires device='cuda'"):
-        mujoco_backend("test-sim", 1, "cpu", "mjwarp", cuda_min_envs=8)
+        mujoco_backend("cpu", "mjwarp")
     for bad in ("mjx", "default"):
         with pytest.raises(ValueError, match="simulation_backend must be"):
-            mujoco_backend("test-sim", 1, "cpu", bad, cuda_min_envs=8)
+            mujoco_backend("cpu", bad)
 
 
 def test_native_threads_follow_the_cpu_limit(monkeypatch):
@@ -313,9 +308,8 @@ def test_mjwarp_excluded_pairs_make_no_contacts():
 
 @cuda
 def test_make_backend_builds_the_routed_backend():
-    for switch, kind in ((8, NativeBatch), (4, WarpBatch)):
-        with tuning.override(large_backend_min_envs=switch):
-            backend = mujoco_backend("test-sim", 4, "cuda", cuda_min_envs=8)
+    for requested, kind in (("auto", NativeBatch), ("mjwarp", WarpBatch)):
+        backend = mujoco_backend("cuda", requested)
         with make_backend(backend, _model(), 4, "cuda") as batch:
             assert isinstance(batch, kind)
 

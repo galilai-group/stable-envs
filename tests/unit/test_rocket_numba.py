@@ -8,7 +8,7 @@ pytest.importorskip("PyFlyt")
 pytest.importorskip("pybullet")
 pytest.importorskip("numba")
 
-from stable_envs import make, tuning  # noqa: E402
+from stable_envs import make  # noqa: E402
 from stable_envs.envs.rocket.simulation.numba_batch import RocketNumbaAdapter  # noqa: E402
 from stable_envs.envs.rocket.simulation.task import RocketLandingEnv  # noqa: E402
 
@@ -47,15 +47,10 @@ def test_routing():
         assert (env.simulation_backend, env.execution_mode) == ("pybullet", "DELEGATED_CPU")
         assert not isinstance(env._simulator, RocketNumbaAdapter)
     if CUDA:
-        with tuning.override(large_backend_min_envs=1), make("PyFlytRocketLanding", num_envs=2, device="cuda") as env:
-            assert (env.simulation_backend, env.execution_mode) == ("numba_cuda", "NATIVE_NUMBA_CUDA")
-            assert env.get_state()["physics", "float"].device.type == "cuda"
-        for batch, backend in ((7, "numba"), (8, "numba_cuda")):
-            with (
-                tuning.override(large_backend_min_envs=8),
-                make("PyFlytRocketLanding", num_envs=batch, device="cuda", simulation_backend="auto") as env,
-            ):
-                assert env.simulation_backend == backend
+        for batch in (1, 2, 8):
+            with make("PyFlytRocketLanding", num_envs=batch, device="cuda") as env:
+                assert (env.simulation_backend, env.execution_mode) == ("numba_cuda", "NATIVE_NUMBA_CUDA")
+                assert env.get_state()["physics", "float"].device.type == "cuda"
         with make("PyFlytRocketLanding", num_envs=2, device="cuda", simulation_backend="numba") as env:
             assert (env.simulation_backend, env.execution_mode) == ("numba", "HOST_NUMBA")
             assert env.get_state()["physics", "float"].device.type == "cuda"

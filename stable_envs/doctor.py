@@ -96,7 +96,7 @@ FAMILIES = (
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="dmcontrol-gpu",
-        warp_cells="Default CUDA steps and the TrackCom domains (cheetah, hopper, humanoid, quadruped, swimmer, walker)",
+        warp_cells="CUDA steps with simulation_backend='mjwarp' and the TrackCom domains (cheetah, hopper, humanoid, quadruped, swimmer, walker)",
     ),
     Family(
         "fetch",
@@ -114,7 +114,7 @@ FAMILIES = (
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="ogbench-manipulation-gpu",
-        warp_cells="Default CUDA steps and Cube and Scene MJWarp frames",
+        warp_cells="CUDA steps with simulation_backend='mjwarp' and Cube and Scene MJWarp frames",
     ),
     Family(
         "pyflyt",
@@ -135,7 +135,7 @@ FAMILIES = (
         cpu=("gl",),
         gpu=("gl", "cuda"),
         gpu_extra="mshuman",
-        warp_cells="Default CUDA steps",
+        warp_cells="CUDA steps with simulation_backend='mjwarp'",
     ),
 )
 
