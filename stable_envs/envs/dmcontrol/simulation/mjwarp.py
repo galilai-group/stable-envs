@@ -342,13 +342,18 @@ class DMCWarpAdapter(SimulatorAdapter):
             raise ValueError(f"Model field {name!r} must be finite in float32")
 
     def _validate_models(self, models):
-        for name in self._model_fields:
-            self._check_float32(models.columns[name], name)
-        for name, values in models.options.items():
-            self._check_float32(values, f"opt.{name}")
-        self._check_float32(models.columns["site_size"], "site_size")
-        self._check_float32(models.fixed_positions, "fixed geom positions")
-        self._check_float32(models.fixed_rotations, "fixed geom rotations")
+        named = (
+            *((name, models.columns[name]) for name in self._model_fields),
+            *((f"opt.{name}", values) for name, values in models.options.items()),
+            ("site_size", models.columns["site_size"]),
+            ("fixed geom positions", models.fixed_positions),
+            ("fixed geom rotations", models.fixed_rotations),
+        )
+        # One check of every value; the per-field checks only name the failing field. NaN fails the comparison.
+        flat = np.concatenate([np.ravel(values) for _, values in named], dtype=np.float64)
+        if not (np.abs(flat) <= np.finfo(np.float32).max).all():
+            for name, values in named:
+                self._check_float32(values, name)
 
     def _upload_models(self, models, instances=None):
         """Write the model rows of ``instances`` (all when None) into the batched fields and fixed geom poses."""

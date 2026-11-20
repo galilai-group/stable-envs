@@ -84,6 +84,7 @@ class WarpModelBatch:
         self.fixed_indices = np.flatnonzero(fixed)
         self.fixed_positions = np.empty((count, len(self.fixed_indices), 3))
         self.fixed_rotations = np.empty((count, len(self.fixed_indices), 3, 3))
+        self._varying = None
 
     def __len__(self):
         return self.count
@@ -99,6 +100,7 @@ class WarpModelBatch:
     def select(self, instances):
         selected = copy.copy(self)
         selected.count = len(instances)
+        selected._varying = None
         selected.columns = {name: values[instances].copy() for name, values in self.columns.items()}
         selected.options = {name: values[instances].copy() for name, values in self.options.items()}
         selected.statistics = {name: values[instances].copy() for name, values in self.statistics.items()}
@@ -116,30 +118,56 @@ class WarpModelBatch:
             entry = self._bound[id(model)] = (model, {name: getattr(model, name) for name in self.columns})
         return entry[1]
 
-    def capture(self, instance, physics):
+    def varying(self):
+        """The names of the columns, options and statistics whose rows are not all bit-equal."""
+        if self._varying is None:
+
+            def differ(table):
+                names = []
+                for name, values in table.items():
+                    bits = np.ascontiguousarray(values).view(np.uint8).reshape(len(values), -1)
+                    if not (bits == bits[:1]).all():
+                        names.append(name)
+                return tuple(names)
+
+            self._varying = (differ(self.columns), differ(self.options), differ(self.statistics))
+        return self._varying
+
+    def _tables(self, names):
+        if names is None:
+            return self.columns.items(), self.options.items(), self.statistics.items()
+        return tuple(
+            [(name, table[name]) for name in subset]
+            for table, subset in zip((self.columns, self.options, self.statistics), names, strict=True)
+        )
+
+    def capture(self, instance, physics, names=None):
+        """Read the model of ``physics`` into row ``instance``: all of it, or the ``(columns, options, statistics)`` in ``names``."""
         model, data = physics.model.ptr, physics.data.ptr
         arrays = self._arrays(model)
-        for name, values in self.columns.items():
+        columns, options, statistics = self._tables(names)
+        for name, values in columns:
             values[instance] = arrays[name]
-        for name, values in self.options.items():
+        for name, values in options:
             values[instance] = getattr(model.opt, name)
-        for name, values in self.statistics.items():
+        for name, values in statistics:
             values[instance] = getattr(model.stat, name)
         self.fixed_positions[instance] = data.geom_xpos[self.fixed_indices]
         self.fixed_rotations[instance] = data.geom_xmat[self.fixed_indices].reshape(-1, 3, 3)
 
-    def restore(self, instance, physics):
-        """Select an environment without recomputing its previously derived constants."""
+    def restore(self, instance, physics, names=None):
+        """Select an environment without recomputing its previously derived constants; ``names`` as in ``capture``."""
         model = physics.model.ptr
         arrays = self._arrays(model)
-        for name, values in self.columns.items():
+        columns, options, statistics = self._tables(names)
+        for name, values in columns:
             arrays[name][:] = values[instance]
-        for name, values in self.options.items():
+        for name, values in options:
             if values.ndim == 1:
                 setattr(model.opt, name, values[instance].item())
             else:
                 getattr(model.opt, name)[:] = values[instance]
-        for name, values in self.statistics.items():
+        for name, values in statistics:
             setattr(model.stat, name, values[instance].item())
 
 
@@ -175,6 +203,8 @@ class WarpResetPool:
             self.schema = self._owner.schema
             reference = copy.copy(self.envs[0].physics.model.ptr)
             self.models = WarpModelBatch(reference, self.num_envs, model_fields, option_fields)
+            episode = (MODEL_FIELDS[key][0] for key in self.fields if key in MODEL_FIELDS)
+            self._episode_models = tuple(name for name in dict.fromkeys(episode) if name in self.models.columns)
             # This holder uses the native physics layout/column validation, but
             # only the owners' PhysicsInstances ever apply native changes.
             self.physics = None if self._owner.physics is None else copy.copy(self._owner.physics)
@@ -200,11 +230,14 @@ class WarpResetPool:
         if self._closed:
             raise RuntimeError("WarpResetPool is closed")
 
-    def _select_owner(self, owner, columns, instance, values):
-        """Install environment ``instance`` in ``owner``: its model, its physics ``values`` and the RNG of State ``columns``."""
+    def _select_owner(self, owner, columns, instance, values, restore=None):
+        """Install environment ``instance`` in ``owner``: its model, its physics ``values`` and the RNG of State ``columns``.
+
+        ``restore`` limits the model rows written to the ``(columns, options, statistics)`` it names.
+        """
         env = owner.envs[0]
         if self._state is not None:
-            self.models.restore(instance, env.physics)
+            self.models.restore(instance, env.physics, restore)
             if self.physics is not None:
                 # Compare proposed values with this environment, not the previously
                 # selected owner. Reapplying unchanged variation can recompute
@@ -242,7 +275,7 @@ class WarpResetPool:
                 self._batch = task(b, [reference] * self.num_envs)
         return self._batch or None
 
-    def _reset_batched(self, task, ids, seed, values, models, columns, cumulative, model_fields):
+    def _reset_batched(self, task, ids, seed, models, columns, cumulative, model_fields, restore, capture):
         """Reset environments ``ids`` with the batch task's reset hooks, which run the MuJoCo work of all environments together.
 
         Each environment runs ``begin_reset`` on the owner, then the batch runs ``batch_reset`` for all environments, then each environment
@@ -252,17 +285,17 @@ class WarpResetPool:
         order = np.argsort(ids, kind="stable")
         instances, owner, begun, rng = ids[order], self._owners[0], [], []
         for instance in instances:
-            base = self._select_owner(owner, self._columns, instance, values)._env
+            base = self._select_owner(owner, self._columns, instance, None, restore)._env
             if seed is not None:
                 base.task._random = np.random.RandomState(int(seed) + int(instance))
             base._reset_next_step, base._step_count = False, 0
             begun.append(task.begin_reset(base, instance))
             rng.append(base.task.random.get_state())
         for k, (instance, value) in enumerate(zip(instances, task.batch_reset(instances, begun), strict=True)):
-            env = self._select_owner(owner, self._columns, instance, values)
+            env = self._select_owner(owner, self._columns, instance, None, restore)
             env._env.task.random.set_state(rng[k])
             task.end_reset(env._env, instance, value)
-            models.capture(instance, env.physics)
+            models.capture(instance, env.physics, capture)
             write_row(columns, order[k], env, cumulative[order[k]], model_fields)
 
     def prepare_reset(self, seed=None, instances=None, *, initial=False):
@@ -276,11 +309,19 @@ class WarpResetPool:
 
         columns = Columns(self.schema, len(ids), self.fields)
         model_fields = model_columns(columns)
+        # A reset writes only the State's episode-drawn model entries, and the installed physics values are those
+        # of each environment. Model values that all environments share stay installed in an owner between environments.
+        restore = capture = None
+        if not initial and len(ids):
+            restore = self.models.varying()
+            capture = (tuple(dict.fromkeys((*restore[0], *self._episode_models))), *restore[1:])
+            for owner in self._owners:
+                self.models.restore(ids[0], owner.envs[0].physics)
 
         def reset_shard(owner, positions):
             for position in positions:
                 instance = ids[position]
-                env = self._select_owner(owner, self._columns, instance, values)
+                env = self._select_owner(owner, self._columns, instance, None, restore)
                 # make_local performed the first environment's registered initial
                 # reset already. Reuse it without consuming a second RNG draw.
                 if not (initial and instance == 0):
@@ -290,7 +331,7 @@ class WarpResetPool:
                     base._reset_next_step, base._step_count = False, 0
                     with env.physics.reset_context():
                         base.task.initialize_episode(env.physics)
-                models.capture(instance, env.physics)
+                models.capture(instance, env.physics, capture)
                 write_row(columns, position, env, cumulative[position], model_fields)
 
         nominal = self.physics is None or np.array_equal(
@@ -299,7 +340,7 @@ class WarpResetPool:
         task = None if initial or not nominal else self._batch_task()
         shards = [shard for shard in np.array_split(np.arange(len(ids)), len(self._owners)) if len(shard)]
         if task is not None:
-            self._reset_batched(task, ids, seed, values, models, columns, cumulative, model_fields)
+            self._reset_batched(task, ids, seed, models, columns, cumulative, model_fields, restore, capture)
         elif self._pool is None or len(shards) < 2:
             reset_shard(self._owners[0], range(len(ids)))
         else:
