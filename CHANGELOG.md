@@ -50,6 +50,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Fixed
 
 - OpenGL contexts of OGBench environments are released. `env.close()` frees the shared OGBench renderers and stops the Cube and Scene OpenGL worker processes when the last environment closes, and interpreter exit frees any that remain before MuJoCo ends its EGL display. This removes the `EGLError` that `mujoco.Renderer.__del__` raised at exit.
+- Processes that compile the same Numba kernels at the same time no longer damage the Numba cache on disk. Before, two processes could save two signatures of one kernel under one data file. Each later process that loaded the entry then failed with `TypingError: Invalid use of type(CPUDispatcher(...))`. Saves and loads of the cache now hold a file lock, and an entry with the machine code of another signature compiles again.
 
 ## [0.1.0] - 2026-11-13
 

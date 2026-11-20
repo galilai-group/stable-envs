@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from numba import cuda
 
+from ...._core.numba_cache import install as _install_numba_cache
 from .numba_physics import (
     _ORDER,
     FIELDS,
@@ -24,6 +25,9 @@ from .numba_physics import (
     _settle_env,
     _start_env,
 )
+
+# Numba CUDA keeps its own cache classes; lock them before the kernels below save.
+_install_numba_cache()
 
 THREADS_PER_BLOCK = 64
 _TORCH = {np.dtype(np.float64): torch.float64, np.dtype(np.int64): torch.int64, np.dtype(np.bool_): torch.bool}
