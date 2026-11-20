@@ -25,21 +25,31 @@ def _dtype(value):
     return dtype
 
 
-def _host_copies(fields):
-    """Owned CPU tensors of the NumPy ``fields``: one copy per dtype, each field a contiguous block of it."""
+def _packed_copies(fields, device):
+    """Owned tensors on ``device`` of the NumPy ``fields``: one copy per dtype, each field a 16-byte aligned block of it."""
     keys: dict = {}
     for key, value in fields.items():
         keys.setdefault(value.dtype, []).append(key)
     out = {}
-    for names in keys.values():
-        flat = np.concatenate([fields[key].reshape(-1) for key in names])
+    for dtype, names in keys.items():
+        align = max(1, 16 // dtype.itemsize)
+        sizes = [fields[key].size for key in names]
+        pads = [-size % align for size in sizes]
+        flat = np.empty(sum(sizes) + sum(pads), dtype)
         start = 0
-        for key in names:
-            shape = fields[key].shape
-            stop = start + fields[key].size
-            out[key] = torch.from_numpy(flat[start:stop].reshape(shape))
-            start = stop
-    return out
+        for key, size, pad in zip(names, sizes, pads, strict=True):
+            flat[start : start + size] = fields[key].reshape(-1)
+            start += size + pad
+        if device.type == "cpu":
+            start = 0
+            for key, size, pad in zip(names, sizes, pads, strict=True):
+                out[key] = torch.from_numpy(flat[start : start + size].reshape(fields[key].shape))
+                start += size + pad
+        else:
+            pieces = torch.from_numpy(flat).to(device).split([n for pair in zip(sizes, pads) for n in pair])
+            for key, piece in zip(names, pieces[::2], strict=True):
+                out[key] = piece.view(fields[key].shape)
+    return {key: out[key] for key in fields}
 
 
 def _changes_with_step(key):
@@ -163,8 +173,8 @@ class PushTBatchAdapter(PushTReplayAdapter):
         self._state_device = build_tensordict({}, [self.num_envs], self.device).device
         if fields is None:
             fields = super().render_fields()
-        if self.device.type == "cpu" and all(type(value) is np.ndarray for value in fields.values()):
-            self._fixed = _host_copies(fields)
+        if all(type(value) is np.ndarray for value in fields.values()):
+            self._fixed = _packed_copies(fields, self.device)
         else:
             self._fixed = {key: torch.as_tensor(value, device=self.device).clone() for key, value in fields.items()}
         self._fixed["recipe/version"].fill_(3)
