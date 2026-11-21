@@ -13,7 +13,7 @@ with snv.PyFlytRocketLanding(num_envs=8, device="cpu") as env:
 
 ## Install
 
-The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. CUDA rendering needs Triton and nvdiffrast, which isn't on PyPI; [build it from source](../install.md#nvdiffrast).
+The class needs the `rocket` extra, which pins `PyFlyt==0.29.0` and `pybullet==3.2.7` and installs Numba. On CUDA, install the `rocket-gpu` extra in its place. It adds Numba CUDA and the CUDA 13 wheels that hold libNVVM and libdevice, which Numba CUDA needs to compile the CUDA physics. With a torch build for CUDA 12, install `rocket` and `numba-cuda[cu12]`. CUDA rendering needs Triton and nvdiffrast, which isn't on PyPI; [build it from source](../install.md#nvdiffrast).
 
 `snv.import_errors()` reports a failed import of the family under `rocket_landing`, `rocket_render` and `rocket_semantics`.
 
@@ -41,7 +41,7 @@ PyFlyt sets `env_complete` when the rocket lands on the pad at a low speed, and 
 | `"auto"` (default) | `"numba"` on CPU and `"numba_cuda"` on CUDA | CPU or CUDA | as the selected backend | physical values |
 | `"pybullet"` | PyFlyt 0.29.0 and PyBullet 3.2.7, one engine per environment, in worker processes for large batches | CPU | `DELEGATED_CPU` | reset recipe and action history |
 
-`None` means `"auto"`. The backend of `"auto"` is the same at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). With `"numba"` on CUDA, the kernel steps on the host and the outputs move to the device. With `"numba_cuda"`, a step reads the actions once on the host to check them; the physics, the [state](../terms.md#state) and the outputs stay on the device. The leaves of a state are views of one buffer, which a few copies fill, and `env.step` stacks the states of a step sequence with one copy. A reset samples the starts and seeds the noise generators on the host, then settles every environment on the device. The CUDA build can round the last bits differently from the CPU kernel.
+`None` means `"auto"`. If Numba CUDA can't load libNVVM or libdevice, `"auto"` selects `"numba"` on CUDA and gives a `RuntimeWarning`, and `"numba_cuda"` raises a `RuntimeError` that names the `rocket-gpu` extra. The backend of `"auto"` is the same at every batch size ([Physics backends](../performance-tuning.md#physics-backends)). With `"numba"` on CUDA, the kernel steps on the host and the outputs move to the device. With `"numba_cuda"`, a step reads the actions once on the host to check them; the physics, the [state](../terms.md#state) and the outputs stay on the device. The leaves of a state are views of one buffer, which a few copies fill, and `env.step` stacks the states of a step sequence with one copy. A reset samples the starts and seeds the noise generators on the host, then settles every environment on the device. The CUDA build can round the last bits differently from the CPU kernel.
 
 The Numba backend models the rocket as one rigid body, as PyBullet does: all its links are fixed. It applies the PyFlyt body drag, the four lifting surfaces, the gimballed booster with fuel burn, and the thrust noise. In free flight, a step agrees with PyBullet to double-precision rounding. The contacts with the ground and the pad are approximate. In landing rollouts of 300 or more steps, the episode outcome (crash or landing) is the same as the source's, and the episode can end up to 3 steps earlier or later.
 

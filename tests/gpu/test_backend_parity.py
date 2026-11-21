@@ -49,10 +49,10 @@ def test_classic_gym_numpy_and_torch(name):
 @pytest.mark.family("rocket")
 def test_rocket_numba_and_numba_cuda():
     pytest.importorskip("PyFlyt")
-    from stable_envs.envs.rocket.simulation.execution import require_nvvm
+    from stable_envs.envs.rocket.simulation.execution import require_numba_cuda
 
     try:
-        require_nvvm()
+        require_numba_cuda()
     except RuntimeError as e:
         pytest.skip(str(e))
     check_backend_parity("PyFlytRocketLanding", ("numba", "numba_cuda"), reset_atol=1e-9)
