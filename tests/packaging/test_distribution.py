@@ -173,7 +173,7 @@ def test_ci_ok_is_the_one_aggregate_of_every_gating_job() -> None:
     """Branch protection requires only ci-ok, so a new matrix entry never needs a settings change."""
     jobs = _workflow("ci.yml")["jobs"]
     ok = jobs["ci-ok"]
-    assert "always()" in ok["if"] and "pull_request.draft" in ok["if"]
+    assert ok["if"] == "always()"
     assert set(ok["needs"]) == {"plan", "static", "core", "family", "docs", "package", "install"}
     assert "re-actors/alls-green" in str(ok["steps"])
     allowed = {name.strip() for name in ok["steps"][0]["with"]["allowed-skips"].split(",")}

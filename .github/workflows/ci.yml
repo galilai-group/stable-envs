@@ -5,7 +5,7 @@ name: ci
 # family profile runs as duration-balanced shards (ci/families.toml `shards`, ci/durations.json).
 # ci-ok is the single required check. Family profiles with the swm capability install
 # stable-worldmodel at ci/families.toml's [swm] commit (noxfile.py) and fail when its CPU gates
-# skip; GPU parity stays manual (regression.yml). Draft pull requests run nothing.
+# skip; GPU parity stays manual (regression.yml). Draft pull requests run only ci-ok, which fails.
 on:
   pull_request:
     branches: [main]
@@ -220,9 +220,11 @@ jobs:
           .dist-venv/bin/python -m pip install "${artifact[0]}"
           .dist-venv/bin/python scripts/ci/smoke_installed.py
 
-  # The only check branch protection requires. Jobs the plan skipped count as passing.
+  # The only check branch protection requires. Jobs the plan skipped count as passing. ci-ok
+  # always runs: GitHub counts a skipped required check as passing, so a draft gets a failed
+  # ci-ok instead.
   ci-ok:
-    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    if: always()
     needs: [plan, static, core, family, docs, package, install]
     runs-on: ubuntu-latest
     steps:
