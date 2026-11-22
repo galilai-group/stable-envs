@@ -295,6 +295,8 @@ class PushT(Env):
         template = self._simulator.template
         rows = [template.goal_fields({k: v[i] for k, v in anchor.items()}) for i in range(int(state.batch_size[0]))]
         goal = state.clone()
+        if not rows:
+            return goal
         for key in rows[0]:
             set_field(goal, "current/" + key, torch.from_numpy(np.stack([row[key] for row in rows])))
         return goal

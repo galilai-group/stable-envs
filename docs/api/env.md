@@ -34,6 +34,7 @@
 | `step(actions)` | `(B, *A)` or `(B, T, *A)` | a [step result](../terms.md#step-result) with batch size `(B,)`, see [Step outputs](#step-outputs) |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
+| `goal_state(state)` | State with batch size `(N,)` | State of the goal frame with batch size `(N,)`, for `render` |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
 | `get_variation()` | nothing | `(B, variation_dim)` float32 |
 | `set_variation(v)` | a dict of leaf values, or a `(variation_dim,)` or `(B, variation_dim)` row | `(B, variation_dim)` float32 |
@@ -178,6 +179,19 @@ Some classes do not draw compact rows. Classes with `state_dim` 0, such as `Push
 `native_size` is the only `size` that a class draws, or None when the class draws any size. Classic control, navigation and Craftax set it, because their upstream libraries draw each primitive in fixed pixels. Another `size` raises `ValueError`.
 
 ::: stable_envs.env.Env.render
+
+### Goal frames
+
+`render(env.goal_state(state))` draws the goal frame of each batch row: the scene with its bodies at the goal, as the upstream library draws its goal image. `goal_state` returns a new state for `render`. Do not restore it with `set_state`. These classes have it:
+
+| Class | Goal frame |
+|---|---|
+| `PushT`, `PushTDiscrete` | The goal image of the source reset. For each batch row, a CPU source environment repeats the reset from the state, so the bodies, contacts and action marker are those of the source goal image. |
+| `TwoRoom`, `TwoRoomTarget`, `Piecewise` | The agent at the target, as the source's target image. |
+
+The other classes raise `NotImplementedError`.
+
+::: stable_envs.env.Env.goal_state
 
 ::: stable_envs.env.Env.sample_states
 

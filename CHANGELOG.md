@@ -24,6 +24,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
+- `env.goal_state(state)` returns a state of the goal frame for each batch row, which `env.render` draws as the upstream library draws its goal image. `PushT` and `PushTDiscrete` repeat the source reset on the CPU, so the frame is the source's goal image byte for byte. `TwoRoom`, `TwoRoomTarget` and `Piecewise` put the agent at the target. The other classes raise `NotImplementedError`.
 - The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
 - `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.
