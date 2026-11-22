@@ -17,6 +17,7 @@ from tests.helpers.reference.gates.ogbench_maze import (  # noqa: E402
     cell_gate,
     pixel_appearance_gate,
     run_gate,
+    task_gate,
 )
 
 
@@ -37,6 +38,11 @@ def test_ogbench_maze_full_state_semantics():
 def test_every_maze_cell_matches_the_official_env(cell):
     evidence = cell_gate(cell)
     assert len(evidence["cases"]) >= 2
+
+
+@pytest.mark.parametrize("cell", sorted(CELL_CLASSES))
+def test_task_id_resets_match_the_official_env(cell):
+    assert len(task_gate(cell)["cases"]) == 5
 
 
 @pytest.mark.swm

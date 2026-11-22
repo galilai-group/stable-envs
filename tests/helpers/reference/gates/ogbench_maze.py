@@ -88,6 +88,49 @@ def cell_gate(cell, *, batch=2, seeds=(0, 17), steps=50, source="ogbench"):
     return evidence
 
 
+def task_gate(cell, *, batch=2, seed=5, steps=3, source="ogbench"):
+    """The ``task_id`` reset option of one maze cell against the official ogbench env.
+
+    Every evaluation task with a seeded reset, then unseeded resets with and without ``task_id``, so the legacy
+    RNG streams must also agree, and a short rollout. One task per environment equals the same rows of resets
+    that give every environment that task. A refused ``task_id`` changes nothing.
+    """
+    cls = se.registry.REGISTRY[cell]
+    ref = OGBMazeReference(batch, loco=cls.LOCO, maze=cls.MAZE, source=source)
+    cases = []
+    try:
+        with se.make(cell, num_envs=batch, device="cpu") as env:
+            num_tasks = ref.envs[0].env.num_tasks
+            for task in range(1, num_tasks + 1):
+                ref.options = {"task_id": task}
+                got = env.reset(seed=seed + task, options={"task_id": task})
+                compare_state(got, ref.reset(seed=seed + task))
+                assert (get_field(got, "task/id") == task).all()
+                cases.append(dict(task=task, seed=seed + task))
+            ref.options = {"task_id": 2}
+            compare_state(env.reset(options={"task_id": 2}), ref.reset())
+            ref.options = None
+            compare_state(env.reset(), ref.reset())
+            actions = np.random.default_rng(seed).uniform(-1, 1, (steps, batch, cls.action_dim)).astype(np.float32)
+            check_step_matches_reference(env, ref, actions)
+            tasks = [1 + i % num_tasks for i in range(batch)]
+            mixed = env.reset(seed=seed, options={"task_id": tasks})
+            for i, task in enumerate(tasks):
+                compare_state(mixed[i : i + 1], env.reset(seed=seed, options={"task_id": task})[i : i + 1])
+            before = env.get_state()
+            for bad in (0, num_tasks + 1, 1.0, True, [1] * (batch + 1)):
+                try:
+                    env.reset(seed=seed, options={"task_id": bad})
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError(f"task_id={bad!r} was accepted")
+                compare_state(env.get_state(), before)
+    finally:
+        ref.close()
+    return dict(cell=cell, source=source, batch=batch, cases=cases)
+
+
 def run_gate(device="cpu"):
     import stable_worldmodel
 

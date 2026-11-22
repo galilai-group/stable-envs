@@ -1409,6 +1409,7 @@ class MazeSemantics:
     _step_outputs_owned = True
     simulation_backends = ("native", "mjwarp")
     state_solver_caches = ("simulator/warmstart",)
+    extra_reset_options = ("task_id",)
 
     def __init__(self, *args, simulation_backend="auto", **kwargs):
         """Select physics at construction; outputs are on ``device``.
@@ -1502,9 +1503,28 @@ class MazeSemantics:
         return self._schema.spec(self.device)
 
     def reset(self, seed=None, options=None):
+        """Reset every environment; ``options["task_id"]`` starts the OGBench evaluation tasks.
+
+        ``task_id`` is one task in ``1..5`` for every environment, or one per environment. As in OGBench, the start
+        and the goal come from the cells of that task, with the noise that OGBench adds.
+        """
         self._check_open("reset")
+        task_ids = self._task_ids(options)
         self.draw_reset_values(seed, options)
-        return self._simulator.reset(seed)
+        return self._simulator.reset(seed, task_ids=task_ids)
+
+    def _task_ids(self, options):
+        if not options or "task_id" not in options:
+            return None
+        num_tasks = self._simulator.task.num_tasks
+        value = np.asarray(options["task_id"])
+        if (
+            value.dtype.kind not in "iu"
+            or value.shape not in ((), (self.B,))
+            or not ((value >= 1) & (value <= num_tasks)).all()
+        ):
+            raise ValueError(f"task_id must be an int in 1..{num_tasks}, or one such int per environment")
+        return np.broadcast_to(value, (self.B,)).astype(np.int64)
 
     def get_state(self):
         self._check_open("get_state")
