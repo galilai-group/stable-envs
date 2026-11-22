@@ -48,7 +48,7 @@
   {
    "key": "task",
    "leaves": 3,
-   "numel": 57,
+   "numel": 91,
    "dtypes": ["bool", "float64", "int64"]
   },
   {
