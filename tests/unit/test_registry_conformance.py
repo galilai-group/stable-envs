@@ -115,6 +115,20 @@ def test_a_variation_round_trips_through_another_env(name):
         assert_same_state(second.get_variation(), first.get_variation())
 
 
+@pytest.mark.parametrize("name", envs("reset_options"))
+def test_an_unknown_reset_option_raises_and_changes_nothing(name):
+    with _make(name) as env:
+        env.reset(seed=SEED)
+        env.step(_actions(env, steps=1)[0], frames=None)
+        state, variation = env.get_state(), env.get_variation().clone()
+        assert "unknown" not in env.reset_option_keys
+        for options in ({"unknown": 1}, {"variation": [], "unknown": 1}):
+            with pytest.raises(ValueError, match="does not accept the options"):
+                env.reset(seed=SEED + 1, options=options)
+            assert_same_state(env.get_state(), state)
+            assert_same_state(env.get_variation(), variation)
+
+
 @pytest.mark.parametrize("name", envs("batch_render"))
 def test_an_environment_renders_the_same_alone_as_in_a_batch(name):
     with _make(name) as env:

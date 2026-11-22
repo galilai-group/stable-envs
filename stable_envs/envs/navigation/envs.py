@@ -684,6 +684,7 @@ class _HiddenTargetSemantics:
 
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
+    reset_option_keys = ("variation", "variation_values", "state", "target_state")
     STATE = TARGET_STATE
     STATE_FIELD_BOUNDS = {
         "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
@@ -1573,6 +1574,7 @@ class TwoRoomTarget(_TwoRoomBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self._check_reset_options(options)
         self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
@@ -1815,6 +1817,7 @@ class PiecewiseZones(_PiecewiseBase):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self._check_reset_options(options)
         self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         self._set_render_state(np.stack(list(values["agent.position"])))

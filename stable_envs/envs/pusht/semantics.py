@@ -140,6 +140,7 @@ class PushT(Env):
     family = domain = "pusht"
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("numba", "triton", "jax")
+    reset_option_keys = ("variation", "variation_values", "state", "goal_state")
     state_solver_caches = ("current/jax",)
     name = "push-t"
     reference_id = "swm/PushT-v1"
@@ -265,6 +266,7 @@ class PushT(Env):
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self._check_reset_options(options)
         return self._simulator.reset(seed, options)
 
     def get_state(self):

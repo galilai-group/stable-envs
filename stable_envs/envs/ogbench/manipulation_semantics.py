@@ -32,6 +32,7 @@ class _OwnStates:
 class ManipulationSemantics:
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("native", "mjwarp")
+    reset_option_keys = ("variation", "variation_values", "task_id", "task_info")
     state_solver_caches = ("physics/warmstart",)
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
@@ -144,6 +145,7 @@ class ManipulationSemantics:
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self._check_reset_options(options)
         result = self._simulator.reset(seed, options)
         self._sync_style()
         return result
