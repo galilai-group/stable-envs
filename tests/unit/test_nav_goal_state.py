@@ -13,6 +13,7 @@ pytestmark = pytest.mark.unit
 CLASSES = {"TwoRoom": "two_room", "Piecewise": "piecewise"}
 
 
+@pytest.mark.swm
 @pytest.mark.parametrize("name", sorted(CLASSES))
 @pytest.mark.parametrize("seed", [0, 9])
 def test_goal_frames_against_the_source_target_image(name, seed, record_property):
