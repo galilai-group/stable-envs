@@ -644,22 +644,44 @@ class Env:
             return
         check_drawn_fields(state, self._drawn_fields())
 
-    def set_state(self, state: State) -> None:
+    def set_state(self, state: State, *, rows=None) -> None:
         """Restore a full state with ``num_envs`` rows under the current variation.
 
-        The state is copied in, so later changes to ``state`` don't reach the environment.
+        The state is copied in, so later changes to ``state`` don't reach the environment. With ``rows``, only the
+        selected rows of ``state`` are copied in: a selected row then equals that row after ``set_state(state)``,
+        and the other rows keep their state bit for bit, up to the zero padding of ``state_history_leaves``. A
+        selection of no row changes nothing.
 
         Args:
             state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(num_envs,)``.
+            rows: None for every row, or a ``(num_envs,)`` bool mask or a sequence of row indices.
 
         Raises:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
             TypeError: If ``state`` is not a TensorDict, such as compact renderer rows.
-            ValueError: If the batch size is not ``(num_envs,)`` or a field is missing, misshaped or
-                non-finite.
+            ValueError: If the batch size is not ``(num_envs,)``, a field is missing, misshaped or non-finite, or
+                ``rows`` doesn't match ``num_envs``.
         """
         self._check_open("set_state")
+        if rows is not None:
+            where = f"{type(self).__name__}.set_state"
+            mask = _row_mask(self, rows, where)
+            if not bool(mask.all()):
+                if not isinstance(state, TensorDict):
+                    raise TypeError(
+                        f"{where}: expected full State (TensorDict); compact RenderState rows cannot restore dynamics"
+                    )
+                if state.batch_size != torch.Size([self.B]):
+                    raise ValueError(f"{where}: expected State batch [{self.B}], got {list(state.batch_size)}")
+                live = self.get_state()
+                given, kept = set(state.keys(True, True)), set(live.keys(True, True))
+                if given != kept:
+                    names = sorted("/".join((k,) if isinstance(k, str) else k) for k in given ^ kept)
+                    raise ValueError(f"{where}: the State fields differ from the live State: {names}")
+                if not bool(mask.any()):
+                    return
+                state = splice_rows(mask, state, live, self.state_history_leaves)
         self._set_state(state)
 
     def _set_state(self, state: State) -> None:

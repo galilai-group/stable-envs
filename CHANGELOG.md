@@ -25,6 +25,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
+- `Env.set_state(state, rows=rows)` copies only the selected rows of a full state into the environment. A selected row equals that row after `set_state(state)`, and the other rows keep their state bit for bit, up to the zero padding of history leaves.
 - `Env.reset(seed, options, rows=rows)` starts a new episode in some batch rows, `Env.reset` takes one seed for each row, and `Env.step(actions, rows=rows)` steps only some batch rows. The other rows keep their state bit for bit, and the selected rows get the same values as in a reset or step of every row. A list of row seeds needs a class with `row_seeds` (classic control, DM Control, Fetch, PushT, `PyFlytRocketLanding` and Craftax), which seeds each row from its own seed in one reset; other classes raise `NotImplementedError`. The DM Control native backend and MS-Human step only the rows of an `active` mask.
 - The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
