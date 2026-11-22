@@ -118,6 +118,25 @@ def _drawn(key):
     return key in DRAWN_LEAVES
 
 
+def source_info(get, n_steps):
+    """The info of the source step for each batch row: ``get(name)`` returns the ``(N, ...)`` host array of a State field.
+
+    The keys and values are those of diffusion_policy's ``PushTEnv._get_info``.
+    """
+    agent, block = "current/body/agent", "current/body/block"
+    n = get(agent + "/position").shape[0]
+    goal = "owned/variation/goal"
+    return {
+        "pos_agent": get(agent + "/position").reshape(n, 2),
+        "vel_agent": get(agent + "/velocity").reshape(n, 2),
+        "block_pose": np.concatenate([get(block + "/position").reshape(n, 2), get(block + "/angle").reshape(n, 1)], 1),
+        "goal_pose": np.concatenate(
+            [get(goal + "/position/current/value").reshape(n, 2), get(goal + "/angle/current/value").reshape(n, 1)], 1
+        ),
+        "n_contacts": np.ceil(get("current/contacts").reshape(n) / n_steps).astype(np.int64),
+    }
+
+
 #: Shipped CUDA render switch point of PushT and PushTDiscrete: the smallest batch that draws with the Triton
 #: rasterizer; smaller batches draw with the Numba rasterizer on the CPU and move the frames to CUDA in one copy. Both
 #: draw the same bytes as pygame. docs/performance-tuning.md (Renderers) says how the shipped value was measured.
@@ -277,6 +296,24 @@ class PushT(Env):
 
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
+
+    def info(self, state):
+        """Return the info of the source step for each batch row of ``state``.
+
+        The keys are those of diffusion_policy's PushT: ``pos_agent``, ``vel_agent``, ``block_pose`` (position and
+        angle), ``goal_pose`` and ``n_contacts``, the contact points of the step divided by its physics substeps
+        and rounded up.
+        """
+        from ..._core.state_schema import get_field
+
+        self._check_open("info")
+        source = self._simulator.template.env
+        n_steps = int(1 / (source.dt * source.control_hz))
+        values = source_info(lambda name: get_field(state, name).detach().cpu().numpy(), n_steps)
+        n = int(state.batch_size[0])
+        return TensorDict({k: torch.from_numpy(np.array(v, order="C")) for k, v in values.items()}, batch_size=[n]).to(
+            self.device
+        )
 
     def _host_step(self, actions, move):
         """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.

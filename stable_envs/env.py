@@ -617,6 +617,28 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
+    def info(self, state: State) -> TensorDict:
+        """Return the info that the upstream library gives for each batch row of ``state``.
+
+        The keys are the upstream keys, such as ``"proprio/joint_pos"``. An upstream value of shape ``S`` is a
+        ``(N, *S)`` tensor on ``device``. The method reads only ``state``: it does not change the environment.
+
+        Args:
+            state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(N,)``.
+
+        Returns:
+            A TensorDict with batch size ``(N,)``.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class does not compute the upstream info from a state.
+        """
+        self._check_open("info")
+        raise NotImplementedError(
+            f"{type(self).__name__}.info: this class does not compute the upstream info from a state. "
+            "Read state fields with snv.get_field, or the task outputs of step."
+        )
+
     def render(self, x=None, **kwargs) -> torch.Tensor:
         """Draw uint8 RGB frames without advancing the simulation.
 
