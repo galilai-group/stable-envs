@@ -726,6 +726,14 @@ class _HiddenTargetSemantics:
     def _hidden_state(self):
         return {("target", "position"): self._target_position[: self._live_rows]}
 
+    def goal_state(self, state):
+        """Return ``state`` with the agent at the target: the source's target image draws the agent there."""
+        self._check_open("goal_state")
+        goal = state.clone()
+        (target,) = self._fields(goal, ("target/position",))
+        self.STATE.set(goal, "agent/position", target.clone())
+        return goal
+
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
         (target,) = self._fields(state, ("target/position",))
@@ -1570,6 +1578,7 @@ class TwoRoomTarget(_TwoRoomBase):
         ResetLeaf("target.position", (164.0, 112.0)),
     )
     reset_tree_factory = staticmethod(_two_room_reset_tree)
+    goal_state = _HiddenTargetSemantics.goal_state
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")

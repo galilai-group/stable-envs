@@ -278,6 +278,27 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
+    def goal_state(self, state):
+        """Return ``state`` with the scene that the source reset draws as its goal image.
+
+        The source reset puts the agent and the block at the goal state, steps the physics once and draws. For each
+        batch row, a source environment repeats that reset from the reset fields of ``state``, and the bodies,
+        contacts and action marker of the result are the ones at that point. The other fields, such as the
+        variation, stay as they are in ``state``.
+        """
+        from ..._core.state_schema import get_field, set_field
+
+        self._check_open("goal_state")
+        schema = schema_of(state)
+        names = schema.names if schema is not None else ["/".join(key) for key in state.keys(True, True)]
+        anchor = {name: get_field(state, name).detach().cpu().numpy() for name in names if name.startswith("anchor/")}
+        template = self._simulator.template
+        rows = [template.goal_fields({k: v[i] for k, v in anchor.items()}) for i in range(int(state.batch_size[0]))]
+        goal = state.clone()
+        for key in rows[0]:
+            set_field(goal, "current/" + key, torch.from_numpy(np.stack([row[key] for row in rows])))
+        return goal
+
     def _host_step(self, actions, move):
         """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.
 

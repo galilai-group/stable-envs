@@ -7,8 +7,10 @@ from importlib.metadata import version
 import numpy as np
 
 from ...._core.space_nodes import nodes
-from .contacts import ContactSegments
+from .contacts import ContactSegments, capture_contacts
 from .numeric import (
+    body_fields,
+    body_row,
     capture,
     decode_rng,
     decode_seed,
@@ -373,9 +375,22 @@ class PushTReplay:
                         if not node.contains(get_value(state, prefix + "/variation" + path + "/" + label)):
                             raise ValueError("PushT Variation value outside source space")
 
-    def reconstruct_anchor(self, state):
+    def reconstruct_anchor(self, state, on_goal=None):
+        """A new engine reset from the ``anchor/...`` fields of a State row.
+
+        ``on_goal(env)``, when given, runs inside the reset right after the source sets the goal state, which is
+        the scene that the source draws as its goal image.
+        """
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False)
         anchor = {k.removeprefix("anchor/"): v.copy() for k, v in state.items() if k.startswith("anchor/")}
+        if on_goal is not None:
+            set_goal = target.env._set_goal_state
+
+            def _set_goal_state(goal_state):
+                set_goal(goal_state)
+                on_goal(target.env)
+
+            target.env._set_goal_state = _set_goal_state
         try:
             values = {}
             for path, node in nodes(target.env.variation_space):
@@ -403,6 +418,25 @@ class PushTReplay:
         except BaseException:
             target.close()
             raise
+
+    def goal_fields(self, state):
+        """The ``current`` fields of the scene that the source reset draws as its goal image.
+
+        ``state`` holds the ``anchor/...`` fields of a State row. The fields are the bodies, the observation, the
+        contacts and the contact segments right after the reset sets the goal state and steps the space once, and
+        the latest action at the reset, which the action marker draws.
+        """
+        fields = {}
+
+        def on_goal(env):
+            fields.update((k, np.array(v[0])) for k, v in body_fields(np.array([body_row(env)], np.float64)).items())
+            fields["contacts"] = np.array(env.n_contact_points, np.int64)
+            fields["render_segments"], fields["render_segment_count"] = capture_contacts(env.space)
+
+        self.reconstruct_anchor(state, on_goal=on_goal).close()
+        for key in ("latest_present", "latest/value", "latest/type"):
+            fields[key] = np.array(state["anchor/" + key], copy=True)
+        return fields
 
     def reconstruct(self, state):
         self.validate(state)
