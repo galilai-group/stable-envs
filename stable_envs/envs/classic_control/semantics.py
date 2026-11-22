@@ -191,8 +191,7 @@ class ClassicControlSemantics:
             f"{type(self).__name__}.set_sim_state cannot restore lifecycle/RNG; use set_state(full_state)"
         )
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
+    def _reset(self, seed=None, options=None):
         self.draw_reset_values(seed, options)
         state = self._simulator.reset(seed=seed, options=options)
         self._sync_authoritative_state(state)
@@ -202,8 +201,7 @@ class ClassicControlSemantics:
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._simulator.set_state(state)
         self._sync_authoritative_state(state)
         self._adopt_physics_state(state)

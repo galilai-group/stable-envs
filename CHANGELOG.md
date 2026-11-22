@@ -35,6 +35,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
+- `Env.reset(seed, options)` and `Env.set_state(state)` are defined once on the base class. They check that the environment is open, and `reset` checks the option keys. Families implement the private hooks `_reset(seed, options)` and `_set_state(state)`.
 - Craftax draws its frames in the jitted step with one texture gather per pixel, with the same bytes as upstream's renderer. A sequence of actions steps in one jitted `lax.scan`. On CPU, the environments are split over one XLA host device per usable CPU, with at least 32 environments on each device.
 - stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` when it builds an environment that steps in JAX, before JAX starts, and no longer when it imports a JAX backend module. A value that you set is kept. If JAX already started on a GPU without the variable, stable-envs logs one warning with the fix. See [JAX GPU memory](https://galilai-group.github.io/stable-envs/environment-variables/#jax-gpu-memory).
 - CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.

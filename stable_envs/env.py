@@ -604,6 +604,11 @@ class Env:
             ValueError: If the batch size is not ``(num_envs,)`` or a field is missing, misshaped or
                 non-finite.
         """
+        self._check_open("set_state")
+        self._set_state(state)
+
+    def _set_state(self, state: State) -> None:
+        """Restore every row from a full state; a family overrides this hook, not ``set_state``."""
         self._require_state("set_state")
         self._validate_state(state, batch=self.B)
         self._restore_state(state)
@@ -1430,22 +1435,29 @@ class Env:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
 
-    def reset(self, seed: int | None = None) -> TensorDict:
+    def reset(self, seed: int | None = None, options: Mapping | None = None) -> TensorDict:
         """Start a new episode in every environment and return the full state.
-
-        Most families also accept ``options``; see ``draw_reset_values``.
 
         Args:
             seed: Restarts the sampler, so the same seed gives the same state. With None, seeding follows the
                 upstream library.
+            options: Reset options: ``"variation"`` and ``"variation_values"`` (see ``draw_reset_values``), and
+                the keys of ``reset_option_keys`` that the family adds.
 
         Raises:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
+            ValueError: If ``options`` has a key outside ``reset_option_keys``.
         """
+        self._check_open("reset")
+        self._check_reset_options(options)
+        return self._reset(seed, options)
+
+    def _reset(self, seed: int | None = None, options: Mapping | None = None) -> TensorDict:
+        """Start a new episode in every row; a family overrides this hook, not ``reset``."""
         self._require_state("reset")
         self._reseed(seed)
-        self.draw_reset_values(seed)
+        self.draw_reset_values(seed, options)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 

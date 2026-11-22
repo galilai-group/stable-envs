@@ -170,7 +170,7 @@ class CraftaxEnv(Env):
         """An independent snapshot: one ``(num_envs, columns)`` block per dtype, which only it uses."""
         return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._instances))
 
-    def set_state(self, state):
+    def _set_state(self, state):
         """Restore every environment from a state with ``num_envs`` environments; the state is copied."""
         self._check_pending()
         state = self._checked(state, "set_state", self.B)
@@ -185,9 +185,8 @@ class CraftaxEnv(Env):
         self._varied = self._k.varied(values)
         self._adopt_physics_state(state)
 
-    def reset(self, seed=None, options=None):
+    def _reset(self, seed=None, options=None):
         """Reset every environment; environment ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
-        self._check_open("reset")
         self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
