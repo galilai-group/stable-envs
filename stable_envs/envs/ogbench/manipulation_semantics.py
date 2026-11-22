@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from ... import tuning
-from ..._core.state_schema import get_field
+from ..._core.state_schema import get_field, set_field
 from ..._core.style import StyleTensor, rows_are_equal
 from ..._execution.protocol import StepPipeline, host_step, step_pipeline
 from ...env import Env, _split_appearance
@@ -157,6 +157,23 @@ class ManipulationSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
         self._sync_style()
+
+    def goal_state(self, state):
+        """Return ``state`` with the scene where OGBench takes its goal observation and draws its goal image.
+
+        OGBench's task-mode reset puts the cubes at the goal, the arm at a sampled pose, and Scene's buttons, drawer
+        and window at the goal, takes two random steps, and then draws the goal image. The State keeps that
+        scene in ``task/goal/...``, and the result holds it in ``physics/qpos``, ``physics/mocap_pos``,
+        ``physics/mocap_quat`` and Scene's ``scene/cur_button_states``.
+        """
+        self._check_open("goal_state")
+        goal = state.clone()
+        names = [("qpos", "physics/qpos"), ("mocap_pos", "physics/mocap_pos"), ("mocap_quat", "physics/mocap_quat")]
+        if self.CELL == "Scene":
+            names.append(("button_states", "scene/cur_button_states"))
+        for name, target in names:
+            set_field(goal, target, get_field(state, "task/goal/" + name))
+        return goal
 
     def _step(self, actions, *, active=None):
         self._check_open("step")

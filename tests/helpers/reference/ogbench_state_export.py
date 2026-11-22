@@ -67,6 +67,7 @@ def manipulation_row(self, env):
             "output/prev_qpos": env._prev_qpos.copy(),
             "output/prev_qvel": env._prev_qvel.copy(),
             "task/goal_observation": env._cur_goal_ob.copy(),
+            **{f"task/goal/{name}": value.copy() for name, value in env.goal_scene.items()},
             "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
             "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
             "task/success": np.array([env._success], bool),

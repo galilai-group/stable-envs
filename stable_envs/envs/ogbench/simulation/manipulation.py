@@ -120,7 +120,7 @@ def task_payload(env, values):
 
 
 _GROUP_RANK = {"compatibility": 0, "physics": 1, "controller": 2, "output": 3, "lifecycle": 5, "scene": 7}
-_TASK_RANK = {"goal_observation": 4.0, "id": 4.1, "reward_id": 4.2, "success": 4.3, "payload": 6}
+_TASK_RANK = {"goal_observation": 4.0, "goal": 4.05, "id": 4.1, "reward_id": 4.2, "success": 4.3, "payload": 6}
 _LATE_RANK = {"variation": 8, "model": 9}
 
 
@@ -252,6 +252,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
         values = {
             "compatibility/signature": self.signature,
             "task/goal_observation": env._cur_goal_ob.copy(),
+            **{field("task", "goal", name): value.copy() for name, value in env.goal_scene.items()},
             "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
             "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
         }
@@ -356,7 +357,12 @@ class OGBManipulationAdapter(SimulatorAdapter):
                 raise ValueError("Only initialized public checkpoints are supported")
             if at(row, "physics/time")[0] < 0:
                 raise ValueError("Negative simulation time")
-            for quat in [at(row, "physics/qpos")[cube + 3 : cube + 7], at(row, "physics/mocap_quat").reshape(-1, 4)]:
+            for quat in [
+                at(row, "physics/qpos")[cube + 3 : cube + 7],
+                at(row, "physics/mocap_quat").reshape(-1, 4),
+                at(row, "task/goal/qpos")[cube + 3 : cube + 7],
+                at(row, "task/goal/mocap_quat").reshape(-1, 4),
+            ]:
                 if not np.allclose(np.linalg.norm(quat, axis=-1), 1.0, atol=1e-6, rtol=0):
                     raise ValueError("Invalid physics quaternion")
             task_id, reward_id = int(at(row, "task/id")[0]), int(at(row, "task/reward_id")[0])
@@ -389,8 +395,13 @@ class OGBManipulationAdapter(SimulatorAdapter):
                     ):
                         raise ValueError("Invalid model configuration")
             if self.family == "Scene":
-                for name in ("cur_button_states", "prev_button_states", "target_button_states"):
-                    if not np.isin(at(row, field("scene", name)), (0, 1)).all():
+                for name in (
+                    "scene/cur_button_states",
+                    "scene/prev_button_states",
+                    "scene/target_button_states",
+                    "task/goal/button_states",
+                ):
+                    if not np.isin(at(row, name), (0, 1)).all():
                         raise ValueError("Invalid Scene button bit")
                 for name, low, high in [("target_drawer_pos", -0.16, 0.0), ("target_window_pos", 0.0, 0.2)]:
                     if not low <= at(row, field("scene", name))[0] <= high:
@@ -436,6 +447,11 @@ class OGBManipulationAdapter(SimulatorAdapter):
             env.cur_task_info = task_payload(env, self._payload(row))
             env._success = bool(at(row, "task/success")[0])
             env._cur_goal_ob = at(row, "task/goal_observation").copy()
+            env.goal_scene = {
+                name.removeprefix("task/goal/"): at(row, name).copy()
+                for name in self.fields
+                if name.startswith("task/goal/")
+            }
             env._prev_qpos, env._prev_qvel = at(row, "output/prev_qpos").copy(), at(row, "output/prev_qvel").copy()
             if self.family == "Scene":
                 for name in ("cur_button_states", "prev_button_states", "target_button_states"):
