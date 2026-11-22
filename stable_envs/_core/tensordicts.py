@@ -588,3 +588,22 @@ def pack_to_device(leaves, batch, device, batches=(), copies=None) -> TensorDict
         packed[plan.main :] = packed[: plan.main]
     parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
     return plan.build(parts, plan.node(batch, device))
+
+
+def splice_rows(rows: torch.Tensor, fresh: TensorDict, kept: TensorDict) -> TensorDict:
+    """A copy of ``kept`` with the batch ``rows`` (a bool mask) taken from ``fresh``.
+
+    A leaf whose second axis has a different width in the two, such as an action history, is zero-padded to the
+    wider of them.
+    """
+    out = kept.clone()
+    for key in fresh.keys(True, True):
+        new, old = fresh.get(key), kept.get(key)
+        if new.shape != old.shape and new.ndim >= 2:
+            width = max(new.shape[1], old.shape[1])
+            new, old = (
+                torch.cat((v, v.new_zeros(v.shape[0], width - v.shape[1], *v.shape[2:])), 1) for v in (new, old)
+            )
+        mask = rows.to(new.device).view(-1, *[1] * (new.ndim - 1))
+        out.set(key, torch.where(mask, new, old.to(new.device)))
+    return out

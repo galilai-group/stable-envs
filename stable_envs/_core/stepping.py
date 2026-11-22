@@ -7,6 +7,7 @@ keeps at most one transition in flight and renders owned snapshots in the parent
 from __future__ import annotations
 
 import contextlib
+import inspect
 import sys
 import threading
 
@@ -21,6 +22,7 @@ from .tensordicts import (
     new_node,
     node_factory,
     pack_to_device,
+    splice_rows,
     stack_leaves,
     to_device,
 )
@@ -198,27 +200,33 @@ def _native_cpu_step(env) -> bool:
     return getattr(env, "native_step_threads", False)
 
 
-def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True):
+def step(env, actions, *, states=slice(None), frames=slice(-1, None), state=True, rows=None):
+    """``rows`` is None or a ``(num_envs,)`` CPU bool mask of the rows to step."""
     if not torch.is_grad_enabled():
-        return _dispatch(env, actions, states, frames, state)
+        return _dispatch(env, actions, states, frames, state, rows)
     # Switching the thread's grad mode costs less per step than entering the no_grad context manager.
     torch._C._set_grad_enabled(False)
     try:
-        return _dispatch(env, actions, states, frames, state)
+        return _dispatch(env, actions, states, frames, state, rows)
     finally:
         torch._C._set_grad_enabled(True)
 
 
-def _dispatch(env, actions, states, frames, state):
+def _dispatch(env, actions, states, frames, state, rows=None):
     env._check_open("step")
     if type(state) is not bool:
         raise TypeError(f"state must be a bool, got {state!r}")
+    if rows is not None:
+        if not bool(rows.any()):
+            raise ValueError(f"{type(env).__name__}.step: rows selects no row")
+        if bool(rows.all()):
+            rows = None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
-    short = pipeline is None and frames is None
+    short = pipeline is None and frames is None and rows is None
     if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
         out = _host_single_step(env, actions, states, state) if short else None
         if out is None:
-            out = _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state)
+            out = _step(env, actions, states, frames, pipeline, render_threads=None, final_state=state, selected=rows)
         return out
     # Bookkeeping runs in one thread: idle intra-op threads spin on the cores of the workers or of the
     # native pool, and a parallel region waits for every one of its threads.
@@ -226,8 +234,36 @@ def _dispatch(env, actions, states, frames, state):
     with _threads(1):
         out = _host_single_step(env, actions, states, state) if short else None
         if out is None:
-            out = _step(env, actions, states, frames, pipeline, render_threads=threads, final_state=state)
+            out = _step(
+                env, actions, states, frames, pipeline, render_threads=threads, final_state=state, selected=rows
+            )
         return out
+
+
+def _takes_active(env, advance) -> bool:
+    """Whether ``advance`` takes the ``active`` mask that skips finished rows."""
+    known = env.__dict__.get("_advance_takes_active")
+    if known is None or known[0] is not getattr(advance, "__func__", advance):
+        try:
+            takes = "active" in inspect.signature(advance).parameters
+        except (TypeError, ValueError):
+            takes = False
+        known = env.__dict__["_advance_takes_active"] = (getattr(advance, "__func__", advance), takes)
+    return known[1]
+
+
+def _held_advance(env, actions, active):
+    """Step every row, then restore the State of the rows that ``active`` leaves out.
+
+    It serves a family whose step takes no ``active`` mask.
+    """
+    before = env.get_state()
+    result = env._step(actions)
+    after = result.get("state", None)
+    kept = splice_rows(active, env.get_state() if after is None else after, before)
+    env.set_state(kept)
+    result.set("state", env.get_state())
+    return result
 
 
 def _single_step(env, action, sequence, state_indices, final_state, advance):
@@ -481,7 +517,7 @@ def _sequence_hook(env, acts, sequence, state_indices, frame_indices, *, final_s
     return build_tensordict(out, [env.num_envs], env.device)
 
 
-def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True):
+def _step(env, actions, states, frames, pipeline, *, render_threads, final_state=True, selected=None):
     if not env.has_dynamics:
         from .dynamics import no_dynamics
 
@@ -496,7 +532,7 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
     # The final State: returned unless ``state=False``, and the source of an empty ``states`` selection.
     final = final_state or state_indices == ()
-    if pipeline is None:
+    if pipeline is None and selected is None:
         # A family that steps the whole sequence in one call takes it here; the step loop serves the rest.
         fused = _sequence_hook(env, acts, sequence, state_indices, frame_indices, final_state=final_state, final=final)
         if fused is not None:
@@ -507,12 +543,18 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     outputs_owned = getattr(env, "_step_outputs_owned", False)
     shared = tuple(getattr(env, "_shared_outputs", ()))
     # Owned outputs pass through a single step as they are, so shared outputs need no padding copy.
-    if length == 1 and frame_indices is None and pipeline is None and (not shared or outputs_owned):
+    if (
+        length == 1
+        and frame_indices is None
+        and pipeline is None
+        and selected is None
+        and (not shared or outputs_owned)
+    ):
         return _single_step(env, acts[:, 0] if sequence else acts, sequence, state_indices, final_state, advance)
     history, saved_states, saved_frames, validity = [], {}, {}, []
     # Draws the live environments without rebuilding them from the state snapshot.
     render_live = getattr(env, "_render_live", None)
-    all_active = True
+    all_active = selected is None
     result, live_state, live_frame = None, None, None
     # A process pipeline on an accelerator keeps the outputs and this bookkeeping on the host until
     # the end of the step; then the outputs move to the device. So does a family that steps host copies of an
@@ -536,12 +578,14 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
     ):
         slots = {t: k for k, t in enumerate(state_indices)}
     # One action needs one all-true flag column per output; a single allocation serves them all.
-    single = length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
+    single = selected is None and length == 1 and state_indices in (None, (0,)) and frame_indices in (None, (0,))
     flags = None
     if single:
         count = 1 + (state_indices is not None) + (frame_indices is not None)
         flags = _true_flags(env, count, work)
         active = flags[0].view(-1)
+    elif selected is not None:
+        active = selected.to(work)
     else:
         active = torch.ones(env.num_envs, dtype=torch.bool, device=work)
     # Frames drawn from the live environments, here or in pipeline workers, need no state snapshot.
@@ -594,7 +638,10 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 live_state, live_frame = result.get("state", None), None
             elif device_masks or bool(active.any()):
                 # Skip finished environments through the family hook, without stepping and restoring them.
-                result = advance(acts[:, t] if sequence else acts, active=active)
+                if _takes_active(env, advance):
+                    result = advance(acts[:, t] if sequence else acts, active=active)
+                else:
+                    result = _held_advance(env, acts[:, t] if sequence else acts, active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = (t in state_times and t not in slots) or (final and t == length - 1)
             needs_state = needs_state or (t in frame_times and not draws_live)

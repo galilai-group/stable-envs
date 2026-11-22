@@ -30,8 +30,10 @@
 
 | Call | Takes | Returns |
 |---|---|---|
-| `reset(seed)` | an int or None | State, a TensorDict with batch size `(B,)` |
+| `reset(seed, options)` | an int, None or `B` seeds, and a dict or None | State, a TensorDict with batch size `(B,)` |
+| `reset(seed, options, rows=rows)` | the same, and a `(B,)` bool mask or row indices | State with batch size `(B,)` |
 | `step(actions)` | `(B, *A)` or `(B, T, *A)` | a [step result](../terms.md#step-result) with batch size `(B,)`, see [Step outputs](#step-outputs) |
+| `step(actions, rows=rows)` | the same, and a `(B,)` bool mask or row indices | a step result with batch size `(B,)` |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
@@ -73,6 +75,22 @@ A single action counts as a sequence of length one: `frames` is `(B, 1, H, W, 3)
 Each batch row stops at its first termination or truncation and skips the rest of its actions. The transition that ended it is valid, and its later task outputs are zero. Its later selected states and frames repeat the final one with `state_valid` and `frame_valid` set to false. `step` never resets a batch row. The next `step` call steps every batch row again, and a single action after the end behaves as it does in the upstream library.
 
 Returned states and frames own their memory, and later calls leave them unchanged. A few classes return the same task output tensor at every step, such as `info.goal` of `SimplePointMaze`; treat it as read-only. Selecting fewer frames skips rendering, while physics still runs for every action. Calling `get_state()` right after `step()` copies `result["state"]` again. `state=False` (keyword-only, default True) skips building the final state, which lowers the cost of each call for classes with a large state such as PushT; call `get_state()` when you need it. Send a sequence only when you already know every action in it. To branch from a state, use a second environment with `set_state`.
+
+## Some batch rows
+
+`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit. A selected row gets the same values as in a reset or step of every row:
+
+- Row `i` with seed `s` starts the episode that row `i` of `reset(seed=s - i)` starts. An int seed `s` gives row `i` the seed `s + i`. A list of `B` seeds gives one seed to each row, also without `rows`. Entries for rows that `rows` does not select are ignored.
+- A row that `step` selects gets the state and task outputs of the same row in `step(actions)`. A row that it does not select is held like a row that finished: its `valid` entries are false and its task outputs are zero.
+
+```python
+env = snv.TwoRoom(num_envs=4, device="cpu")
+env.reset(seed=0)
+env.step(torch.zeros(4, 2), rows=[0, 2])                     # rows 1 and 3 keep their state
+env.reset(seed=[0, 7, 0, 9], rows=[False, True, False, True])  # new episodes in rows 1 and 3
+```
+
+A reset with per-row seeds or `rows` resets the full batch once for each different value of `s - i` among the selected rows, and copies the selected rows into the State and variation that it keeps. Seeds of the form `s + i` thus cost one full reset, and `k` unrelated seeds cost `k` full resets. A row with seed None takes row `i` of `reset(seed=None)`.
 
 ## Construction
 

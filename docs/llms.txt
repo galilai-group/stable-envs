@@ -73,7 +73,7 @@ Pass `device="cpu"` unless you installed the CUDA extras: `device` defaults to `
 ## API
 
 - [stable_envs](https://galilai-group.github.io/stable-envs/api/): package-level functions: `make`, `list_envs`, `list_families`, `info`, `import_errors`, global settings and `tune`.
-- [Env](https://galilai-group.github.io/stable-envs/api/env/): the `snv.Env` base class: construction and default devices, `reset`, `step` and its `states`/`frames` selectors, `get_state`/`set_state`, specs, variation and `render`.
+- [Env](https://galilai-group.github.io/stable-envs/api/env/): the `snv.Env` base class: construction and default devices, `reset`, `step` and its `states`/`frames` selectors, `reset(rows=)` and `step(rows=)` for some batch rows, `get_state`/`set_state`, specs, variation and `render`.
 - [Specs and spaces](https://galilai-group.github.io/stable-envs/api/specs/): `Spec`, `CompositeSpec` and the variation spaces that describe one batch row.
 - [Tuning](https://galilai-group.github.io/stable-envs/api/tuning/): every tuning setting (chunk sizes, Triton blocks, worker counts, memory budgets) with its type and default, and how a value is chosen.
 - [Environment variables](https://galilai-group.github.io/stable-envs/environment-variables/): every `STABLE_ENVS_*` variable and what it sets.
