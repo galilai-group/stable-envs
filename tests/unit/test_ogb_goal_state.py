@@ -29,7 +29,7 @@ def _record_goals(env):
         last["mocap_quat"] = env._data.mocap_quat.ravel().copy()
         if env.family == "Scene":
             last["button_states"] = np.asarray(env._cur_button_states, np.int64).copy()
-        last["frame"] = np.asarray(env.render())[..., :3].copy()
+        last["frame"] = np.asarray(env.render(camera="front_pixels"))[..., :3].copy()
         return observe()
 
     def initialize_episode():
