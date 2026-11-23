@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ...._core.seeding import row_seed
+from ...._core.seeding import row_seeds
 from ...._core.state_schema import Field, StateSchema
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.process import PER_INSTANCE
@@ -280,8 +280,9 @@ class ClassicControlAdapter(SimulatorAdapter):
 
     def reset(self, seed=None, options: dict | None = None) -> TensorDict:
         self._check_open()
-        for i, env in enumerate(self.envs):
-            env.reset(seed=row_seed(seed, i), options=options)
+        seeds = [None] * len(self.envs) if seed is None else row_seeds(seed, len(self.envs)).tolist()
+        for env, env_seed in zip(self.envs, seeds):
+            env.reset(seed=env_seed, options=options)
         self._static_loaded = False
         return ClassicControlAdapter.get_state(self)
 

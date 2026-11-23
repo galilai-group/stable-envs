@@ -14,9 +14,9 @@ def row_seed(seed, row: int) -> int | None:
     """The seed of batch row ``row``: ``seed + row`` for one int, ``seed[row]`` for a per-row seed."""
     if seed is None:
         return None
-    if per_row(seed):
-        return int(seed[row])
-    return int(seed) + row
+    if isinstance(seed, (int, np.integer)):
+        return int(seed) + row
+    return int(seed[row])
 
 
 def rows_seed(seed, start: int, stop: int):

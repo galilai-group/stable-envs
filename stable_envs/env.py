@@ -15,7 +15,7 @@ from tensordict import TensorDict
 from ._core import dynamics as _dynamics
 from ._core.config import get_config as _get_config
 from ._core.config import log as _log
-from ._core.seeding import per_row, row_seed
+from ._core.seeding import per_row, row_seed, row_seeds
 from ._core.style import StyleTensor
 from ._core.tensordicts import splice_rows
 from .spaces import Dict as VariationDict
@@ -1112,8 +1112,9 @@ class Env:
             seeder = PathSeeder(self.reset_tree_factory(), [leaf.path for leaf in self.reset_leaves])
             self.__dict__["_reset_seeder"] = seeder
         tree = seeder.tree
+        seeds = [None] * self.B if seed is None else row_seeds(seed, self.B).tolist()
         for instance in range(self.B):
-            seeder.seed(row_seed(seed, instance))
+            seeder.seed(seeds[instance])
             instances.append(self._draw_reset_instance(tree, instance, sampled, values))
         for path in instances[0]:
             out[path] = np.stack([row[path] for row in instances])
