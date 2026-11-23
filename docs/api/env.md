@@ -34,6 +34,7 @@
 | `step(actions)` | `(B, *A)` or `(B, T, *A)` | a [step result](../terms.md#step-result) with batch size `(B,)`, see [Step outputs](#step-outputs) |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
+| `goal_render_state(state)` | State with batch size `(N,)` | the goal frame as a RenderState or `(N, state_dim)` compact rows, for `render` |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
 | `get_variation()` | nothing | `(B, variation_dim)` float32 |
 | `set_variation(v)` | a dict of leaf values, or a `(variation_dim,)` or `(B, variation_dim)` row | `(B, variation_dim)` float32 |
@@ -178,6 +179,19 @@ Some classes do not draw compact rows. Classes with `state_dim` 0, such as `Push
 `native_size` is the only `size` that a class draws, or None when the class draws any size. Classic control, navigation and Craftax set it, because their upstream libraries draw each primitive in fixed pixels. Another `size` raises `ValueError`.
 
 ::: stable_envs.env.Env.render
+
+### Goal frames
+
+`render(env.goal_render_state(state))` draws the goal frame of each batch row: the scene with its bodies at the goal, as the upstream library draws its goal image. `goal_render_state` returns a RenderState or compact rows. `render` draws them, and `set_state` refuses them, so a goal frame cannot become the live state. These classes have it:
+
+| Class | Goal frame |
+|---|---|
+| `PushT`, `PushTDiscrete` | The goal image of the source reset. The reset records the drawn scene after it sets the goal state and steps the physics once, and the state keeps it in `anchor/goal_scene/...`, so the bodies, contacts and action marker are those of the source goal image. A RenderState. |
+| `TwoRoom`, `TwoRoomTarget`, `Piecewise` | The agent at the target, as the source's target image. Compact rows, which draw with the current variation. |
+
+The other classes raise `NotImplementedError`.
+
+::: stable_envs.env.Env.goal_render_state
 
 ::: stable_envs.env.Env.sample_states
 

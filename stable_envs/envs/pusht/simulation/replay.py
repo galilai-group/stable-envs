@@ -12,16 +12,41 @@ from .numeric import (
     capture,
     decode_rng,
     decode_seed,
+    drawn_scene,
     encode_rng,
     encode_seed,
     episode_fields,
     get_value,
+    goal_anchor,
     install_rng,
     put_value,
     rng_of,
     rng_view,
 )
 from .task import PushT, PushTDiscrete
+
+
+class _GoalScene:
+    """Records the scene that the source reset draws as its goal image.
+
+    The source reset calls ``_set_state(goal_state)``, which sets the bodies and steps the space once, then
+    ``_set_goal_state(goal_state)``, then draws ``_goal``. The scene at ``_set_goal_state`` is the drawn one.
+    """
+
+    goal_scene: dict | None = None
+
+    def _set_goal_state(self, goal_state):
+        super()._set_goal_state(goal_state)
+        self.goal_scene = drawn_scene(self)
+
+
+class GoalPushT(_GoalScene, PushT):
+    pass
+
+
+class GoalPushTDiscrete(_GoalScene, PushTDiscrete):
+    pass
+
 
 ACTION_DTYPES = (np.dtype("float32"), np.dtype("float64"), np.dtype("int32"), np.dtype("int64"))
 HISTORY_KEYS = {"history/actions", "history/dtypes", "history/valid"}
@@ -122,7 +147,7 @@ class PushTReplay:
             raise ValueError("PushT resolution must be a positive integer")
         if any(type(self.config[k]) is not bool for k in ("render_action", "with_target")):
             raise ValueError("PushT render flags must be bool")
-        self.env = (PushTDiscrete if self.discrete else PushT)(**self.config) if engine is None else engine
+        self.env = (GoalPushTDiscrete if self.discrete else GoalPushT)(**self.config) if engine is None else engine
         self.length = 0
         self._actions = np.zeros((0, 2), np.float64)
         self._codes = np.zeros(0, np.uint8)
@@ -164,6 +189,7 @@ class PushTReplay:
         self.anchor = dict(metadata)
         self.anchor["start"] = np.asarray(start, np.float64).copy()
         put_value(self.anchor, "goal", self.env.goal_state)
+        self.anchor.update(goal_anchor(self.env.goal_scene))
         self.anchor["latest_present"] = np.array(self.env.latest_action is not None, np.bool_)
         put_value(
             self.anchor,
@@ -374,6 +400,7 @@ class PushTReplay:
                             raise ValueError("PushT Variation value outside source space")
 
     def reconstruct_anchor(self, state):
+        """A new engine reset from the ``anchor/...`` fields of a State row."""
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False)
         anchor = {k.removeprefix("anchor/"): v.copy() for k, v in state.items() if k.startswith("anchor/")}
         try:
@@ -403,6 +430,14 @@ class PushTReplay:
         except BaseException:
             target.close()
             raise
+
+    def goal_scene(self, state):
+        """The full ``drawn_scene`` of the goal image of a State row, from the reset that its ``anchor/...`` fields give."""
+        target = self.reconstruct_anchor(state)
+        try:
+            return target.env.goal_scene
+        finally:
+            target.close()
 
     def reconstruct(self, state):
         self.validate(state)

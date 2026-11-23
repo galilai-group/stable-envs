@@ -726,6 +726,18 @@ class _HiddenTargetSemantics:
     def _hidden_state(self):
         return {("target", "position"): self._target_position[: self._live_rows]}
 
+    def goal_render_state(self, state):
+        """Return ``(N, state_dim)`` compact rows with the agent at the target, as the source draws its target image.
+
+        ``render`` draws them with the current variation, and ``set_state`` refuses them.
+        """
+        self._check_open("goal_render_state")
+        if not isinstance(state, TensorDict):
+            raise TypeError(f"{type(self).__name__}.goal_render_state needs a full State")
+        (target,) = self._fields(state, ("target/position",))
+        target = target.to(device=self.device, dtype=torch.float32)
+        return torch.cat([target] * (int(self.state_dim) // 2), dim=1)
+
     def _restore_state(self, state):
         self._set_render_state(self._pack_render_state(state))
         (target,) = self._fields(state, ("target/position",))
@@ -1570,6 +1582,7 @@ class TwoRoomTarget(_TwoRoomBase):
         ResetLeaf("target.position", (164.0, 112.0)),
     )
     reset_tree_factory = staticmethod(_two_room_reset_tree)
+    goal_render_state = _HiddenTargetSemantics.goal_render_state
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")

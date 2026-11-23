@@ -617,6 +617,29 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
+    def goal_render_state(self, state: State):
+        """Return the goal frame of each batch row of ``state`` in a form that ``render`` draws.
+
+        The goal frame is the scene with its bodies at the goal, as the upstream library draws its goal image.
+        The result is a RenderState or compact rows: ``render`` draws it, and ``set_state`` refuses it. The method
+        does not change ``state`` or the environment.
+
+        Args:
+            state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(N,)``.
+
+        Returns:
+            A RenderState with batch size ``(N,)``, or ``(N, state_dim)`` compact rows.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class has no goal configuration.
+            TypeError: If ``state`` is not a full state of the class.
+        """
+        self._check_open("goal_render_state")
+        raise NotImplementedError(
+            f"{type(self).__name__}.goal_render_state: this class has no goal configuration that a state can draw."
+        )
+
     def render(self, x=None, **kwargs) -> torch.Tensor:
         """Draw uint8 RGB frames without advancing the simulation.
 
