@@ -25,7 +25,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
-- The OGBench maze classes accept the `task_id` reset option of OGBench: `reset(seed, options={"task_id": 3})` starts evaluation task 3 in every environment, and a list gives one task per environment. The start, the goal and their noise are those of OGBench.
+- The OGBench maze classes accept the `task_id` reset option of OGBench: `reset(seed, options={"task_id": 3})` starts evaluation task 3 in every environment, and a list gives one task per environment. The start, the goal and their noise are those of OGBench. `OGBCube` and `OGBScene` also accept one `task_id` for each environment.
 - The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
 - `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.
