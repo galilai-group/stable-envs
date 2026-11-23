@@ -654,3 +654,17 @@ def test_lean_transition_matches_upstream_step(family):
     finally:
         a.close()
         b.close()
+
+
+@pytest.mark.parametrize("family", CLASSES)
+def test_task_id_takes_one_task_per_environment(family):
+    with CLASSES[family](num_envs=3, seed=17) as env:
+        tasks = [2, np.int64(5), 1]
+        mixed = env.reset(seed=4, options={"task_id": tasks})
+        for i, task in enumerate(tasks):
+            assert_same_state(mixed[i : i + 1], env.reset(seed=4, options={"task_id": int(task)})[i : i + 1])
+        before = env.get_state()
+        for bad in ([1, 2], [1, True, 2], [1.0, 2, 3], True, 6, np.array([1, 2, 6])):
+            with pytest.raises(ValueError, match="task_id"):
+                env.reset(seed=4, options={"task_id": bad})
+            assert_same_state(env.get_state(), before)

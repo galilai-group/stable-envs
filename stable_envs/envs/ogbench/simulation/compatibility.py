@@ -14,6 +14,7 @@ from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 from ogbench.manipspace.envs.scene_env import SceneEnv
 
 from ....spaces import Box, Dict
+from .tasks import task_ids
 
 MODEL_VALUES = (
     "cube.size",
@@ -366,8 +367,8 @@ class Compatibility:
         if options is not None and not isinstance(options, dict):
             raise TypeError("Reset options must be a dictionary")
         options = copy.deepcopy(options or {})
-        if "task_id" in options and (type(options["task_id"]) is not int or options["task_id"] not in range(1, 6)):
-            raise ValueError("task_id must be an integer in 1..5")
+        if "task_id" in options:
+            options["task_id"] = int(task_ids(options["task_id"], None, self.num_tasks)[0])
         if "task_info" in options:
             self.validate_task(options["task_info"])
         selected = options.get("variation", CUBE_SAMPLES if self.family == "Cube" else ())
@@ -384,16 +385,24 @@ class Compatibility:
         return options
 
     def instance_options(self, options, batch):
-        """Validated options per environment; a ``variation_values`` entry may hold one value per environment."""
+        """Validated options per environment; ``task_id`` and ``variation_values`` entries may be per environment."""
         if options is not None and not isinstance(options, dict):
             raise TypeError("Reset options must be a dictionary")
-        values = (options or {}).get("variation_values")
-        if not isinstance(values, dict):
+        options = options or {}
+        values = options.get("variation_values")
+        tasks = task_ids(options["task_id"], batch, self.num_tasks) if "task_id" in options else None
+        if not isinstance(values, dict) and tasks is None:
             return [self.validate_options(options)] * batch
         instances = []
         for instance in range(batch):
-            per_instance = {key: self._instance_value(key, value, instance, batch) for key, value in values.items()}
-            instances.append(self.validate_options({**options, "variation_values": per_instance}))
+            row = dict(options)
+            if isinstance(values, dict):
+                row["variation_values"] = {
+                    key: self._instance_value(key, value, instance, batch) for key, value in values.items()
+                }
+            if tasks is not None:
+                row["task_id"] = int(tasks[instance])
+            instances.append(self.validate_options(row))
         return instances
 
     def _instance_value(self, key, value, instance, batch):

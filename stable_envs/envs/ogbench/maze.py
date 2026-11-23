@@ -24,6 +24,7 @@ from ...render.primitives import dot3
 from ...spaces import Box, Dict, Discrete
 from .simulation.execution import make_maze_adapter, maze_backend
 from .simulation.maze import BODIES, PHYSICS, group_path, maze_schema
+from .simulation.tasks import task_ids
 
 # Shading totals fitted on point-agent interiors, not baked floor pixels.
 SHADE_AMBIENT, SHADE_DIFFUSE, SHADE_SPECULAR, SHADE_EXPONENT = 0.078438, 1.416189, 0.230554, 45.0
@@ -1516,15 +1517,7 @@ class MazeSemantics:
     def _task_ids(self, options):
         if not options or "task_id" not in options:
             return None
-        num_tasks = self._simulator.task.num_tasks
-        value = np.asarray(options["task_id"])
-        if (
-            value.dtype.kind not in "iu"
-            or value.shape not in ((), (self.B,))
-            or not ((value >= 1) & (value <= num_tasks)).all()
-        ):
-            raise ValueError(f"task_id must be an int in 1..{num_tasks}, or one such int per environment")
-        return np.broadcast_to(value, (self.B,)).astype(np.int64)
+        return task_ids(options["task_id"], self.B, self._simulator.task.num_tasks)
 
     def get_state(self):
         self._check_open("get_state")

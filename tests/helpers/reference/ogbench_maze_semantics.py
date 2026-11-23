@@ -105,7 +105,10 @@ class OGBMazeReference:
         if self.options is None:
             return None
         values = self.options.get("variation_values", {})
-        return {**self.options, "variation_values": {k: np.asarray(v)[instance] for k, v in values.items()}}
+        options = {**self.options, "variation_values": {k: np.asarray(v)[instance] for k, v in values.items()}}
+        if isinstance(options.get("task_id"), (list, tuple)):
+            options["task_id"] = options["task_id"][instance]
+        return options
 
     def get_state(self):
         rows = []

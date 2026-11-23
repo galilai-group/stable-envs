@@ -91,9 +91,9 @@ def cell_gate(cell, *, batch=2, seeds=(0, 17), steps=50, source="ogbench"):
 def task_gate(cell, *, batch=2, seed=5, steps=3, source="ogbench"):
     """The ``task_id`` reset option of one maze cell against the official ogbench env.
 
-    Every evaluation task with a seeded reset, then unseeded resets with and without ``task_id``, so the legacy
-    RNG streams must also agree, and a short rollout. One task per environment equals the same rows of resets
-    that give every environment that task. A refused ``task_id`` changes nothing.
+    Every evaluation task with a seeded reset, then an unseeded reset with ``task_id``, a short rollout and an
+    unseeded reset without it, so the legacy RNG streams must also agree. One task per environment, against the
+    official env given the same task per environment. A refused ``task_id`` changes nothing.
     """
     cls = se.registry.REGISTRY[cell]
     ref = OGBMazeReference(batch, loco=cls.LOCO, maze=cls.MAZE, source=source)
@@ -108,17 +108,19 @@ def task_gate(cell, *, batch=2, seed=5, steps=3, source="ogbench"):
                 assert (get_field(got, "task/id") == task).all()
                 cases.append(dict(task=task, seed=seed + task))
             ref.options = {"task_id": 2}
-            compare_state(env.reset(options={"task_id": 2}), ref.reset())
-            ref.options = None
-            compare_state(env.reset(), ref.reset())
+            compare_state(env.reset(options={"task_id": np.int64(2)}), ref.reset())
             actions = np.random.default_rng(seed).uniform(-1, 1, (steps, batch, cls.action_dim)).astype(np.float32)
             check_step_matches_reference(env, ref, actions)
-            tasks = [1 + i % num_tasks for i in range(batch)]
+            ref.options = None
+            compare_state(env.reset(), ref.reset())
+            tasks = [1 + (3 * i) % num_tasks for i in range(batch)]
+            ref.options = {"task_id": tasks}
             mixed = env.reset(seed=seed, options={"task_id": tasks})
-            for i, task in enumerate(tasks):
-                compare_state(mixed[i : i + 1], env.reset(seed=seed, options={"task_id": task})[i : i + 1])
+            compare_state(mixed, ref.reset(seed=seed))
+            assert get_field(mixed, "task/id")[:, 0].tolist() == tasks
+            check_step_matches_reference(env, ref, actions)
             before = env.get_state()
-            for bad in (0, num_tasks + 1, 1.0, True, [1] * (batch + 1)):
+            for bad in (0, num_tasks + 1, 1.0, True, "1", [1] * (batch + 1), [True] * batch, [1.0] * batch):
                 try:
                     env.reset(seed=seed, options={"task_id": bad})
                 except ValueError:
