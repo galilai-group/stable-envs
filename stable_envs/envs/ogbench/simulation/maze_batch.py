@@ -284,8 +284,12 @@ class MazeReset:
             rb.forward(pending, stage=mujoco.mjtStage.mjSTAGE_POS)
             pending = pending[self._ncon[pending].reshape(-1) > 0]
 
-    def sample(self, ids, rand: MazeRandom, seeded: bool):
-        """Return ``(qpos, qvel, goal_pos, task_id)`` rows for environments ``ids`` and advance their RNGs."""
+    def sample(self, ids, rand: MazeRandom, seeded: bool, task_ids=None):
+        """Return ``(qpos, qvel, goal_pos, task_id)`` rows for environments ``ids`` and advance their RNGs.
+
+        ``task_ids`` (one per environment of ``ids``) are the evaluation tasks, as the source's ``task_id`` option;
+        None draws them.
+        """
         t = self.task
         n = len(ids)
         goal = np.zeros((n, 3))
@@ -295,6 +299,8 @@ class MazeReset:
         mt = rand.mt
         if t.reward_task_id is not None:
             task_id[:] = t.reward_task_id
+        elif task_ids is not None:
+            task_id[:, 0] = task_ids
         else:
             task_id[:, 0] = mt.randint(ids, 1, t.num_tasks + 1)
         ij = np.array(t.tasks)[task_id[:, 0] - 1]
@@ -460,14 +466,14 @@ class _MazeInstances(SimulatorAdapter):
         if self._closed:
             raise RuntimeError(f"{type(self).__name__} is closed")
 
-    def _sample_reset(self, seed):
+    def _sample_reset(self, seed, task_ids=None):
         ids = np.arange(self.num_envs)
         if seed is not None:
             # Check the complete environment range before any environment resets.
             np.random.RandomState(int(seed))
             np.random.RandomState(int(seed) + self.num_envs - 1)
             self._random.seed(ids, seed)
-        sample = self._sampler.sample(ids, self._random, seed is not None)
+        sample = self._sampler.sample(ids, self._random, seed is not None, task_ids)
         self._random.sync(ids)
         return sample
 
@@ -533,9 +539,9 @@ class OGBMazeBatchAdapter(_MazeInstances):
         self._host_groups = None
         self.reset(seed=seed)
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, task_ids=None):
         self._check_open()
-        qpos, qvel, goal, task_id = self._sample_reset(seed)
+        qpos, qvel, goal, task_id = self._sample_reset(seed, task_ids)
         self.sim.reset()
         self.sim.set_physics({"qpos": qpos, "qvel": qvel})
         self._goal[:], self._task_id[:] = goal, task_id
@@ -783,9 +789,9 @@ class OGBMazeWarpAdapter(_MazeInstances):
             self._refill(np.flatnonzero(used))
             self._steps_since_refill = 0
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, task_ids=None):
         self._check_open()
-        qpos, qvel, goal, task_id = self._sample_reset(seed)
+        qpos, qvel, goal, task_id = self._sample_reset(seed, task_ids)
         self.sim.reset()
         self.sim.set_physics({"qpos": qpos, "qvel": qvel})
         self._goal.copy_(torch.from_numpy(goal))
