@@ -28,6 +28,15 @@ def rows_seed(seed, start: int, stop: int):
     return int(seed) + start
 
 
+def row_seed_list(seed, count: int) -> list[int | None]:
+    """The seed of each of ``count`` rows as Python ints, or ``count`` Nones for a None seed."""
+    if seed is None:
+        return [None] * count
+    if isinstance(seed, (int, np.integer)):
+        return list(range(int(seed), int(seed) + count))
+    return np.asarray(seed, np.int64).tolist()
+
+
 def row_seeds(seed, count: int) -> np.ndarray:
     """The ``(count,)`` int64 seeds of every row of a seed that is not None."""
     if per_row(seed):
