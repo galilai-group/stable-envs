@@ -213,6 +213,9 @@ class DelegatedSemantics:
             kwargs["variation"] = variation or None
         return self._render_checked(self._pack_render_state(state), **kwargs)
 
+    #: Every simulation backend seeds row ``i`` from its own seed.
+    row_seeds = True
+
     def _reset(self, seed=None, options=None):
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)

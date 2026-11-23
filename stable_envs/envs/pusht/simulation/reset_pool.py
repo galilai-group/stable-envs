@@ -7,6 +7,7 @@ import multiprocessing as mp
 
 import numpy as np
 
+from ...._core.seeding import rows_seed
 from ...._execution.requests import ProcessRequests, instance_slices
 from ...._execution.shared_memory import allocate_buffers, buffer_views
 from ...._execution.workers import pin_worker, send_failure, send_ready
@@ -161,7 +162,7 @@ class PushTResetPool(ProcessRequests):
         payloads = [
             (
                 sync is not None,
-                None if seed is None else int(seed) + rows.start,
+                rows_seed(seed, rows.start, rows.stop),
                 options[rows],
                 tuple(column[rows] for column in latest),
             )

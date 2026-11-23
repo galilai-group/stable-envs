@@ -49,6 +49,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     #: ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option.
     extra_reset_options = ("randomize_drop", "accelerate_drop", "randoimize_drop")
     execution_mode = "NATIVE_NUMBA"
+    row_seeds = True
     cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
     action_dtype = torch.float64

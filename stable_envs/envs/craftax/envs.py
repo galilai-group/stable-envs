@@ -31,6 +31,7 @@ class CraftaxEnv(Env):
     """Batched Craftax environments over the upstream JAX simulator."""
 
     family = "craftax"
+    row_seeds = True
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
@@ -186,11 +187,11 @@ class CraftaxEnv(Env):
         self._adopt_physics_state(state)
 
     def _reset(self, seed=None, options=None):
-        """Reset every environment; environment ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
+        """Reset every environment; row ``i`` is stable-worldmodel's reset with its own seed (``seed + i`` for one int)."""
         self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
-            self._keys = self._k.seed_keys(int(seed), self._instances)
+            self._keys = self._k.seed_keys(seed, self._instances)
         values = self._instance_values()
         self._varied = self._k.varied(values)
         self._state, self._keys, blocks = self._k.reset(self._keys, values, self._instances, self._varied)

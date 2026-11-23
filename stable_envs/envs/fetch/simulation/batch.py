@@ -9,6 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from ...._core.cpus import cpu_limit
+from ...._core.seeding import row_seed
 from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict
 from ...._execution.protocol import SimulatorAdapter
@@ -350,7 +351,7 @@ class FetchInstances(SimulatorAdapter):
         for instance in range(self.num_envs):
             values = {} if variations is None else variations[instance]
             if seed is not None or self._rngs[instance] is None:
-                self._rngs[instance] = instance_rng(None if seed is None else int(seed) + instance)
+                self._rngs[instance] = instance_rng(row_seed(seed, instance))
             anchor = self._anchor[instance]
             anchor[:] = t.anchor
             if "agent.start_position" in values:

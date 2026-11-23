@@ -78,10 +78,7 @@ Returned states and frames own their memory, and later calls leave them unchange
 
 ## Some batch rows
 
-`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit. A selected row gets the same values as in a reset or step of every row:
-
-- Row `i` with seed `s` starts the episode that row `i` of `reset(seed=s - i)` starts. An int seed `s` gives row `i` the seed `s + i`. A list of `B` seeds gives one seed to each row, also without `rows`. Entries for rows that `rows` does not select are ignored.
-- A row that `step` selects gets the state and task outputs of the same row in `step(actions)`. A row that it does not select is held like a row that finished: its `valid` entries are false and its task outputs are zero.
+`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit. A selection of no row changes nothing: `reset` returns the State, and `step` returns outputs with every row held.
 
 ```python
 env = snv.TwoRoom(num_envs=4, device="cpu")
@@ -90,7 +87,14 @@ env.step(torch.zeros(4, 2), rows=[0, 2])                     # rows 1 and 3 keep
 env.reset(seed=[0, 7, 0, 9], rows=[False, True, False, True])  # new episodes in rows 1 and 3
 ```
 
-A reset with per-row seeds or `rows` resets the full batch once for each different value of `s - i` among the selected rows, and copies the selected rows into the State and variation that it keeps. Seeds of the form `s + i` thus cost one full reset, and `k` unrelated seeds cost `k` full resets. A row with seed None takes row `i` of `reset(seed=None)`.
+`reset` takes None, an int, or a list of `B` seeds, one for each row, also without `rows`. An int seed `s` gives row `i` the seed `s + i`. In a list, the entries for rows that `rows` does not select are ignored, and a row with None continues its random stream, as in `reset(seed=None)`. A list seeds each row in one of two ways:
+
+- A class with `row_seeds` (classic control, DM Control, Fetch, PushT, `PyFlytRocketLanding` and Craftax) seeds row `i` directly with its seed `s_i`, as a reset with the int seed `s_i - i` does. A list of seeds costs one full reset.
+- The other classes seed every row from one batch seed. Row `i` with seed `s` starts the episode that row `i` of `reset(seed=s - i)` starts, so `s` must be at least `i`, and a smaller seed raises `ValueError`. The reset costs one full reset for each different value of `s - i`. Seeds of the form `s + i` thus cost one full reset.
+
+A reset with `rows` resets the full batch and copies the selected rows into the State and variation that it keeps. The rows without a seed reset first. A seeded reset with `rows` also reseeds the random streams of the other rows that the State does not hold, such as a sampler of the next reset.
+
+A row that `step` selects gets the state and task outputs of the same row in `step(actions)`. A row that it does not select is held like a row that finished: its `valid` entries are false and its task outputs are zero. A step with `rows` runs the step loop and not a family's fused sequence step, so a long sequence can cost more than without `rows`.
 
 ## Construction
 

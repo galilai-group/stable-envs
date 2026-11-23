@@ -7,7 +7,6 @@ keeps at most one transition in flight and renders owned snapshots in the parent
 from __future__ import annotations
 
 import contextlib
-import inspect
 import sys
 import threading
 
@@ -22,7 +21,6 @@ from .tensordicts import (
     new_node,
     node_factory,
     pack_to_device,
-    splice_rows,
     stack_leaves,
     to_device,
 )
@@ -216,11 +214,8 @@ def _dispatch(env, actions, states, frames, state, rows=None):
     env._check_open("step")
     if type(state) is not bool:
         raise TypeError(f"state must be a bool, got {state!r}")
-    if rows is not None:
-        if not bool(rows.any()):
-            raise ValueError(f"{type(env).__name__}.step: rows selects no row")
-        if bool(rows.all()):
-            rows = None
+    if rows is not None and bool(rows.all()):
+        rows = None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
     short = pipeline is None and frames is None and rows is None
     if not _host_pipeline(env, pipeline) and not _native_cpu_step(env):
@@ -238,32 +233,6 @@ def _dispatch(env, actions, states, frames, state, rows=None):
                 env, actions, states, frames, pipeline, render_threads=threads, final_state=state, selected=rows
             )
         return out
-
-
-def _takes_active(env, advance) -> bool:
-    """Whether ``advance`` takes the ``active`` mask that skips finished rows."""
-    known = env.__dict__.get("_advance_takes_active")
-    if known is None or known[0] is not getattr(advance, "__func__", advance):
-        try:
-            takes = "active" in inspect.signature(advance).parameters
-        except (TypeError, ValueError):
-            takes = False
-        known = env.__dict__["_advance_takes_active"] = (getattr(advance, "__func__", advance), takes)
-    return known[1]
-
-
-def _held_advance(env, actions, active):
-    """Step every row, then restore the State of the rows that ``active`` leaves out.
-
-    It serves a family whose step takes no ``active`` mask.
-    """
-    before = env.get_state()
-    result = env._step(actions)
-    after = result.get("state", None)
-    kept = splice_rows(active, env.get_state() if after is None else after, before)
-    env.set_state(kept)
-    result.set("state", env.get_state())
-    return result
 
 
 def _single_step(env, action, sequence, state_indices, final_state, advance):
@@ -636,12 +605,10 @@ def _step(env, actions, states, frames, pipeline, *, render_threads, final_state
                 captured = length == 1 and (final or 0 in state_times or (0 in frame_times and not draws_live))
                 result = (env._step if captured else advance)(acts[:, t] if sequence else acts)
                 live_state, live_frame = result.get("state", None), None
-            elif device_masks or bool(active.any()):
-                # Skip finished environments through the family hook, without stepping and restoring them.
-                if _takes_active(env, advance):
-                    result = advance(acts[:, t] if sequence else acts, active=active)
-                else:
-                    result = _held_advance(env, acts[:, t] if sequence else acts, active)
+            elif device_masks or result is None or bool(active.any()):
+                # Skip finished environments through the family hook, without stepping and restoring them. A
+                # selection of no row still runs the first action, to get the task outputs.
+                result = advance(acts[:, t] if sequence else acts, active=active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = (t in state_times and t not in slots) or (final and t == length - 1)
             needs_state = needs_state or (t in frame_times and not draws_live)

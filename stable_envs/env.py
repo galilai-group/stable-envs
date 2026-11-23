@@ -15,6 +15,7 @@ from tensordict import TensorDict
 from ._core import dynamics as _dynamics
 from ._core.config import get_config as _get_config
 from ._core.config import log as _log
+from ._core.seeding import per_row, row_seed
 from ._core.style import StyleTensor
 from ._core.tensordicts import splice_rows
 from .spaces import Dict as VariationDict
@@ -432,6 +433,12 @@ class Env:
     reset_sample_paths: frozenset[str] = frozenset()
     #: Keys ``reset`` accepts in ``options`` beside ``"variation"`` and ``"variation_values"``.
     extra_reset_options: tuple[str, ...] = ()
+    #: Whether ``_reset`` takes one seed for each row, a ``(num_envs,)`` int64 array, and seeds row ``i`` with
+    #: ``seed[i]``; an int seed then gives row ``i`` the seed ``seed + i``.
+    row_seeds: bool = False
+    #: ``/``-joined State key paths whose second axis grows with the episode, such as an action history. A copy of
+    #: some rows zero-pads these leaves to the wider of the two States.
+    state_history_leaves: tuple[str, ...] = ()
     #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
     #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
@@ -1024,27 +1031,36 @@ class Env:
             out[leaf.path] = value
         return out
 
-    def _sample_variation_leaf(self, path: str, seed: int | None) -> np.ndarray:
+    @staticmethod
+    def _variation_entropy(seed, instance: int) -> tuple[int, ...]:
+        # Row ``i`` of a per-row seed ``s`` draws as row ``i`` of the batch seed ``s - i``, which needs ``s >= i``.
+        if not per_row(seed):
+            return (int(seed), instance)
+        own = int(seed[instance])
+        return (own - instance, instance) if own >= instance else (own, instance, 1)
+
+    def _sample_variation_leaf(self, path: str, seed) -> np.ndarray:
         node = self.variation_space
         for part in path.split("."):
             node = node[part]
         rows = []
         for instance in range(self.B):
-            rng = self.rng if seed is None else np.random.default_rng((int(seed), instance))
+            rng = self.rng if seed is None else np.random.default_rng(self._variation_entropy(seed, instance))
             if hasattr(node, "low"):
                 rows.append(node.batch_sample(1, rng).reshape(-1))
             else:
                 rows.append(np.asarray([rng.integers(0, int(node.n))]) + int(getattr(node, "start", 0)))
         return np.stack(rows)
 
-    def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
+    def draw_reset_values(self, seed=None, options: Mapping | None = None) -> dict[str, np.ndarray]:
         """Resolve stable-worldmodel-style reset options into ``{path: (num_envs, ...)}`` arrays.
 
         Every ``reset`` calls this. Leaves the options don't name return to their defaults (the
         registered values, or the last ``set_variation``); named leaves are sampled or set for this episode.
 
         Args:
-            seed: Seed of this reset; each environment derives its own from it and its index.
+            seed: Seed of this reset: None, one int (row ``i`` derives its seed from it and ``i``), or one int
+                for each row.
             options: ``"variation"``, the dotted paths to sample (the family's default reset leaves if
                 absent), and ``"variation_values"``, ``{dotted path: value}`` for the batch or per row.
 
@@ -1076,7 +1092,7 @@ class Env:
             self.__dict__["_reset_seeder"] = seeder
         tree = seeder.tree
         for instance in range(self.B):
-            seeder.seed(None if seed is None else int(seed) + instance)
+            seeder.seed(row_seed(seed, instance))
             instances.append(self._draw_reset_instance(tree, instance, sampled, values))
         for path in instances[0]:
             out[path] = np.stack([row[path] for row in instances])
@@ -1466,19 +1482,25 @@ class Env:
     def reset(self, seed=None, options: Mapping | None = None, *, rows=None) -> TensorDict:
         """Start a new episode in every batch row, or in the rows that ``rows`` selects, and return the full state.
 
-        Row ``i`` with seed ``s`` starts the episode that row ``i`` of ``reset(seed=s - i)`` would start now: an int
-        seed gives row ``i`` the seed ``seed + i``. With ``rows``, the other rows keep their state and variation
-        bit for bit. A partial reset resets the full batch once for each different ``s - i`` among the selected
-        rows and copies the selected rows into the kept State and variation. Seeds of the form ``s + i`` thus cost
-        one full reset, and ``k`` unrelated seeds cost ``k``.
+        An int seed ``s`` gives row ``i`` the seed ``s + i``. With one seed for each row, the rows that have an int
+        seed take it, and the rows with None continue their random streams as ``reset(seed=None)`` does. With
+        ``rows``, the other rows keep their State and variation bit for bit.
+
+        A class with ``row_seeds`` seeds each row from its own seed, so ``reset(seed=[s_0, s_1, ...])`` costs one
+        full reset. Another class seeds every row from one batch seed: row ``i`` with seed ``s`` then starts the
+        episode that row ``i`` of ``reset(seed=s - i)`` starts, which needs ``s >= i``, and the reset costs one full
+        reset for each different ``s - i``. A reset with ``rows`` copies the selected rows of these full resets into
+        the kept State and variation. It also reseeds the random streams of the other rows that the State doesn't
+        hold.
 
         Args:
-            seed: None, an int, or one int or None per row. An int restarts the sampler, so the same seed gives the
-                same state. With None, seeding follows the upstream library.
+            seed: None, an int, or one int or None for each row. An int restarts the sampler, so the same seed gives
+                the same state. With None, seeding follows the upstream library.
             options: Reset options: ``"variation"`` and ``"variation_values"`` (see ``draw_reset_values``), and
                 the keys of ``reset_option_keys`` that the family adds. With ``rows``, they apply to the selected
                 rows.
-            rows: None for every row, or a ``(num_envs,)`` bool mask or a sequence of row indices.
+            rows: None for every row, or a ``(num_envs,)`` bool mask or a sequence of row indices. A selection of
+                no row changes nothing.
 
         Returns:
             The State of every row.
@@ -1486,37 +1508,53 @@ class Env:
         Raises:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
-            ValueError: If ``options`` has a key outside ``reset_option_keys``, or ``rows`` or a per-row ``seed``
-                doesn't match ``num_envs``.
+            ValueError: If ``options`` has a key outside ``reset_option_keys``, ``rows`` or a per-row ``seed``
+                doesn't match ``num_envs``, or a class without ``row_seeds`` gets a seed below its row index.
         """
         self._check_open("reset")
         self._check_reset_options(options)
-        if rows is None and (seed is None or isinstance(seed, (int, np.integer))):
+        if rows is None and not per_row(seed):
             return self._reset(seed, options)
         where = f"{type(self).__name__}.reset"
         mask = torch.ones(self.B, dtype=torch.bool) if rows is None else _row_mask(self, rows, where)
         seeds = _row_seeds(self, seed, where)
-        bases = [None if s is None else s - i for i, s in enumerate(seeds)]
-        picked = dict.fromkeys(bases[i] for i in range(self.B) if mask[i])
-        if not picked:
+        unseeded = mask & torch.tensor([s is None for s in seeds])
+        seeded = mask & ~unseeded
+        # The rows without a seed reset first, so that they continue the streams that no seeded reset replaced.
+        groups = [(unseeded, None)] if bool(unseeded.any()) else []
+        if bool(seeded.any()) and self.row_seeds:
+            groups.append((seeded, np.asarray([0 if s is None else s for s in seeds], np.int64)))
+        elif bool(seeded.any()):
+            low = [i for i in range(self.B) if seeded[i] and seeds[i] < i]
+            if low:
+                raise ValueError(
+                    f"{where}: {type(self).__name__} seeds every row from one batch seed, so row i takes the seed "
+                    f"s - i and needs a seed of at least i; rows {low} have smaller seeds"
+                )
+            bases: dict[int, torch.Tensor] = {}
+            for i in range(self.B):
+                if seeded[i]:
+                    bases.setdefault(seeds[i] - i, torch.zeros(self.B, dtype=torch.bool))[i] = True
+            groups += [(pick, base) for base, pick in bases.items()]
+        if not groups:
             return self.get_state()
-        if len(picked) == 1 and bool(mask.all()):
-            return self._reset(next(iter(picked)), options)
+        if len(groups) == 1 and bool(groups[0][0].all()):
+            return self._reset(groups[0][1], options)
         before = self.get_state()
         state, variation = before, self.get_variation().clone()
-        for n, base in enumerate(picked):
+        for n, (pick, group_seed) in enumerate(groups):
             if n:
                 # A reset can read the State it replaces, such as the last action that PushT draws.
                 self._set_state(before)
-            pick = mask & torch.tensor([b == base for b in bases])
-            state = splice_rows(pick, self._reset(base, options), state)
+            state = splice_rows(pick, self._reset(group_seed, options), state, self.state_history_leaves)
             current = self.get_variation()
             variation = torch.where(pick.to(current.device)[:, None], current, variation.to(current.device))
         if not torch.equal(self.get_variation(), variation):
             self._install_variation(
                 StyleTensor.from_space(self.variation_space, self.B, device=self.device, values=variation)
             )
-            self._variation_is_default = False
+            default = self._default_style.for_batch(self.B, owner=where).values
+            self._variation_is_default = torch.equal(variation.to(default.device), default)
         self._set_state(state)
         return self.get_state()
 
@@ -1544,7 +1582,9 @@ class Env:
             frames: Slice over the steps that selects which frames to render, or None.
             state: Return the final state; False skips building it, and ``get_state()`` builds it on demand.
             rows: None for every row, or a ``(B,)`` bool mask or a sequence of row indices. The actions of the
-                other rows are ignored, their ``valid`` entries are false and their task outputs are zero.
+                other rows are ignored, their ``valid`` entries are false and their task outputs are zero. A
+                selection of no row holds every row. A step with ``rows`` runs the step loop, not a family's fused
+                sequence step, so a long sequence can cost more than without ``rows``.
 
         Returns:
             A TensorDict with batch size ``(B,)``: ``state`` (the final state, unless ``state=False``), the family's task
@@ -1556,7 +1596,7 @@ class Env:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
             ValueError: If ``actions`` has the wrong shape, ``frames`` is set without RGB output, or ``rows`` doesn't
-                match ``B`` or selects no row.
+                match ``B``.
             TypeError: If ``states`` or ``frames`` is neither a slice nor None, or ``state`` is not a bool.
         """
         from ._core.stepping import step

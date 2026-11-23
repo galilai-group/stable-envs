@@ -6,6 +6,7 @@ from importlib.metadata import version
 
 import numpy as np
 
+from ...._core.seeding import per_row
 from ...._core.space_nodes import nodes
 from .contacts import ContactSegments
 from .numeric import (
@@ -37,6 +38,10 @@ def _pymunk_version():
 
 
 def validate_seed(seed):
+    if per_row(seed):
+        if np.asarray(seed).dtype.kind not in "iu" or (np.asarray(seed) < 0).any():
+            raise ValueError("PushT row seeds must be nonnegative integers")
+        return
     if seed is not None and (
         isinstance(seed, (bool, np.bool_)) or not isinstance(seed, (int, np.integer)) or not 0 <= seed < 2**128
     ):

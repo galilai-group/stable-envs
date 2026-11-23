@@ -6,6 +6,7 @@ from functools import partial
 
 import numpy as np
 
+from ...._core.seeding import row_seed
 from ...._execution.process import ProcessAdapter
 from .local import ClassicControlAdapter, validate_classic_state
 
@@ -38,8 +39,8 @@ class AcrobotProcessAdapter(ProcessAdapter):
     def reset(self, seed=None, options=None):
         self._check_idle()
         if seed is not None:
-            seed = int(seed)
-            np.random.SeedSequence(seed)
+            for i in range(self.num_envs):
+                np.random.SeedSequence(row_seed(seed, i))
         return self._reset(seed, [(options,)] * len(self._slices))
 
     def configure(self, values):

@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.seeding import row_seed
 from ...._core.state_schema import Field, StateSchema
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.process import PER_INSTANCE
@@ -277,10 +278,10 @@ class ClassicControlAdapter(SimulatorAdapter):
             base.total_mass = base.masspole + base.masscart
             base.polemass_length = base.masspole * base.length
 
-    def reset(self, seed: int | None = None, options: dict | None = None) -> TensorDict:
+    def reset(self, seed=None, options: dict | None = None) -> TensorDict:
         self._check_open()
         for i, env in enumerate(self.envs):
-            env.reset(seed=None if seed is None else int(seed) + i, options=options)
+            env.reset(seed=row_seed(seed, i), options=options)
         self._static_loaded = False
         return ClassicControlAdapter.get_state(self)
 

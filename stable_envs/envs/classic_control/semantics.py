@@ -30,6 +30,7 @@ class ClassicControlSemantics:
     simulation_backends: tuple[str, ...] = ("gym", "numpy", "torch")
     #: Gymnasium's reset bounds options.
     extra_reset_options = ("low", "high")
+    row_seeds = True
 
     def __init__(self, *args, simulation_backend: str | None = "auto", **kwargs):
         """Select the step backend.

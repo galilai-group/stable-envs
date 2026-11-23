@@ -94,9 +94,9 @@ class MSHumanLocomotion(Env):
         self._validate_state(state, batch=self.B)
         self._simulator.set_state(state)
 
-    def _step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
 
     def _validate_state(self, state, *, batch=None):
         if not isinstance(state, TensorDict):

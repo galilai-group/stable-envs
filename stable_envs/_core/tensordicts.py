@@ -590,16 +590,19 @@ def pack_to_device(leaves, batch, device, batches=(), copies=None) -> TensorDict
     return plan.build(parts, plan.node(batch, device))
 
 
-def splice_rows(rows: torch.Tensor, fresh: TensorDict, kept: TensorDict) -> TensorDict:
+def splice_rows(rows: torch.Tensor, fresh: TensorDict, kept: TensorDict, history=()) -> TensorDict:
     """A copy of ``kept`` with the batch ``rows`` (a bool mask) taken from ``fresh``.
 
-    A leaf whose second axis has a different width in the two, such as an action history, is zero-padded to the
-    wider of them.
+    ``history`` names the ``/``-joined leaves whose second axis grows with the episode, such as an action history;
+    they are zero-padded to the wider of the two. Any other leaf must have the same shape in both.
     """
     out = kept.clone()
     for key in fresh.keys(True, True):
         new, old = fresh.get(key), kept.get(key)
-        if new.shape != old.shape and new.ndim >= 2:
+        if new.shape != old.shape:
+            name = "/".join((key,) if isinstance(key, str) else key)
+            if name not in history or new.ndim < 2 or new.shape[2:] != old.shape[2:]:
+                raise ValueError(f"State field {name} has shape {tuple(new.shape)}, expected {tuple(old.shape)}")
             width = max(new.shape[1], old.shape[1])
             new, old = (
                 torch.cat((v, v.new_zeros(v.shape[0], width - v.shape[1], *v.shape[2:])), 1) for v in (new, old)
