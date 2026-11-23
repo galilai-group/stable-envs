@@ -117,9 +117,9 @@ def test_a_variation_round_trips_through_another_env(name):
 
 @pytest.mark.parametrize("name", envs("reset_options"))
 def test_an_unknown_reset_option_raises_and_changes_nothing(name):
-    with _make(name) as env, _make(name) as twin:
+    with _make(name) as env, _make(name) as twin, _make(name) as control:
         first, after = _actions(env, steps=2)
-        for e in (env, twin):
+        for e in (env, twin, control):
             e.reset(seed=SEED)
             e.step(first, frames=None)
         state, variation = env.get_state(), env.get_variation().clone()
@@ -129,9 +129,21 @@ def test_an_unknown_reset_option_raises_and_changes_nothing(name):
                 env.reset(seed=SEED + 1, options=options)
             assert_same_state(env.get_state(), state)
             assert_same_state(env.get_variation(), variation)
-        # The next unseeded reset and step also see generators that the State does not hold.
-        assert_same_state(env.reset(), twin.reset())
-        assert_same_state(env.step(after, frames=None), twin.step(after, frames=None))
+        # The next unseeded reset and step also see generators that the State does not hold. Classes whose
+        # unseeded reset draws fresh entropy, as Roadster's source does, differ from a twin without the refused
+        # call too, so a third env that never saw it decides whether the comparison holds.
+        for call in (lambda e: e.reset(), lambda e: e.step(after, frames=None)):
+            got, expected = call(env), call(twin)
+            if _same(expected, call(control)):
+                assert_same_state(got, expected)
+
+
+def _same(first, second):
+    try:
+        assert_same_state(first, second)
+    except AssertionError:
+        return False
+    return True
 
 
 @pytest.mark.parametrize("name", envs("batch_render"))
