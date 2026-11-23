@@ -24,7 +24,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
-- `env.info(state)` returns the info of the upstream library for each batch row of a state, with the upstream keys, as a TensorDict. `OGBCube` and `OGBScene` give OGBench's task-mode keys, such as `proprio/effector_pos` and `privileged/block_0_pos`. `PushT` and `PushTDiscrete` give diffusion_policy's keys, such as `block_pose` and `n_contacts`. The other classes raise `NotImplementedError`.
+- `env.source_info(state)` returns the info of the upstream library for each batch row of a state, with the upstream keys, as a TensorDict. `OGBCube` and `OGBScene` give OGBench's task-mode keys, such as `proprio/effector_pos` and `privileged/block_0_pos`. `PushT` and `PushTDiscrete` give diffusion_policy's keys, such as `block_pose` and `n_contacts`. The other classes raise `NotImplementedError`.
 - The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
 - `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.

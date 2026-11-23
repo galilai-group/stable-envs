@@ -1,4 +1,4 @@
-"""``PushT.info`` equals the info of the source step bit for bit."""
+"""``PushT.source_info`` equals the info of the source step bit for bit."""
 
 import os
 
@@ -12,7 +12,6 @@ pytest.importorskip("pygame")
 pytest.importorskip("cv2")
 
 import stable_envs as snv
-from stable_envs.envs.pusht.semantics import source_info
 from stable_envs.envs.pusht.simulation.replay import PushTReplay
 
 pytestmark = pytest.mark.unit
@@ -28,29 +27,33 @@ def _same(got, want):
 
 
 @pytest.mark.parametrize("seed", [0, 7])
-def test_info_of_source_states_equals_source_info(seed):
-    replay = PushTReplay(config={"resolution": 32}, seed=seed)
+def test_source_info_of_stepped_source_states_equals_source_info(seed):
+    """``PushT.source_info`` on States of the source engine, stepped with Pymunk into contact with the block."""
+    replay = PushTReplay(seed=seed)
+    env = snv.PushT(num_envs=1, device="cpu")
     try:
+        schema = snv.schema_of(env.reset(seed=seed))
         source = replay.env
-        n_steps = int(1 / (source.dt * source.control_hz))
         contacts = 0
         for _ in range(60):
             agent, block = np.asarray(source.agent.position), np.asarray(source.block.position)
             action = np.clip((block - agent) / 100, -1, 1).astype(np.float32)
             info = replay.step(action)[4]
-            state = replay.get_state()
-            got = source_info(lambda name: np.asarray(state[name])[None], n_steps)
-            _same({k: v[0] for k, v in got.items()}, info)
+            values = {k: torch.as_tensor(np.asarray(v))[None] for k, v in replay.get_state().items()}
+            values.pop("current/goal_image")
+            got = env.source_info(schema.fold(values, [1]))
+            _same({k: got[k][0].numpy() for k in KEYS}, info)
             contacts += info["n_contacts"]
         assert contacts > 0
     finally:
+        env.close()
         replay.close()
 
 
-def test_env_info_after_reset_equals_the_source_reset_info():
+def test_source_info_after_reset_equals_the_source_reset_info():
     env = snv.PushT(num_envs=3, device="cpu")
     try:
-        info = env.info(env.reset(seed=4))
+        info = env.source_info(env.reset(seed=4))
         assert info.batch_size == torch.Size([3])
         for i, owner in enumerate(env._simulator.envs):
             _same({k: info[k][i].numpy() for k in KEYS}, owner.env._get_info())
@@ -58,14 +61,23 @@ def test_env_info_after_reset_equals_the_source_reset_info():
         env.close()
 
 
-def test_info_of_rows_equals_the_rows_of_info():
+def test_source_info_of_rows_equals_the_rows_of_source_info():
     env = snv.PushT(num_envs=4, device="cpu")
     try:
         env.reset(seed=2)
         state = env.step(torch.full((4, 3, 2), 0.5))["state"]
-        full, rows = env.info(state), torch.tensor([2, 0])
-        part = env.info(state[rows])
+        full, rows = env.source_info(state), torch.tensor([2, 0])
+        part = env.source_info(state[rows])
         for key in KEYS:
             assert torch.equal(part[key], full[key][rows]), key
+    finally:
+        env.close()
+
+
+def test_source_info_refuses_a_state_of_another_class():
+    env = snv.PushT(num_envs=1, device="cpu")
+    try:
+        with pytest.raises(TypeError, match="PushT State"):
+            env.source_info(torch.zeros(1, 3))
     finally:
         env.close()

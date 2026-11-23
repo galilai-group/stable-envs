@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
-import torch
 from tensordict import TensorDict
 
 from ...._core.state_schema import get_field
+from ...._core.tensordicts import host_arrays_tensordict
 
 
 class InfoLayout:
@@ -47,9 +47,10 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
     The State holds the site poses and the gripper pad force that the upstream step left in ``MjData``, so no
     MuJoCo call runs. Yaw angles and the contact norm are computed one row at a time, with the upstream calls.
     """
+    host = state.cpu()
 
     def get(name):
-        return get_field(state, name).detach().cpu().numpy()
+        return get_field(host, name).numpy()
 
     qpos, qvel = get("physics/qpos"), get("physics/qvel")
     site_xpos, site_xmat = get("controller/site_xpos"), get("controller/site_xmat")
@@ -97,7 +98,4 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
             "goal": get("task/goal_observation"),
         }
     )
-    return TensorDict(
-        {key: torch.from_numpy(np.array(value, order="C")) for key, value in info.items()},
-        batch_size=[n],
-    ).to(device)
+    return host_arrays_tensordict(info, n, device)

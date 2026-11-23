@@ -297,23 +297,29 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
-    def info(self, state):
+    def source_info(self, state):
         """Return the info of the source step for each batch row of ``state``.
 
         The keys are those of diffusion_policy's PushT: ``pos_agent``, ``vel_agent``, ``block_pose`` (position and
         angle), ``goal_pose`` and ``n_contacts``, the contact points of the step divided by its physics substeps
-        and rounded up.
+        and rounded up. ``goal_pose`` is the goal position and angle of the State's current variation, which is
+        where the source reads it.
         """
         from ..._core.state_schema import get_field
+        from ..._core.tensordicts import host_arrays_tensordict
 
-        self._check_open("info")
+        self._check_open("source_info")
+        schema = schema_of(state) if isinstance(state, TensorDictBase) else None
+        if schema is None or schema.name != "PushT":
+            raise TypeError(
+                f"{type(self).__name__}.source_info needs a full PushT State from get_state, reset or step"
+            )
+        schema.validate(state, finite=True)
         source = self._simulator.template.env
         n_steps = int(1 / (source.dt * source.control_hz))
-        values = source_info(lambda name: get_field(state, name).detach().cpu().numpy(), n_steps)
-        n = int(state.batch_size[0])
-        return TensorDict({k: torch.from_numpy(np.array(v, order="C")) for k, v in values.items()}, batch_size=[n]).to(
-            self.device
-        )
+        host = state.cpu()
+        values = source_info(lambda name: get_field(host, name).numpy(), n_steps)
+        return host_arrays_tensordict(values, int(state.batch_size[0]), self.device)
 
     def _host_step(self, actions, move):
         """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.

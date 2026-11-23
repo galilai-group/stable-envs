@@ -617,11 +617,12 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
-    def info(self, state: State) -> TensorDict:
-        """Return the info that the upstream library gives for each batch row of ``state``.
+    def source_info(self, state: State) -> TensorDict:
+        """Return the info dict that the upstream library gives for each batch row of ``state``.
 
         The keys are the upstream keys, such as ``"proprio/joint_pos"``. An upstream value of shape ``S`` is a
         ``(N, *S)`` tensor on ``device``. The method reads only ``state``: it does not change the environment.
+        ``snv.info(name)`` is a different function: it returns the registry metadata of a class.
 
         Args:
             state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(N,)``.
@@ -632,10 +633,12 @@ class Env:
         Raises:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the class does not compute the upstream info from a state.
+            TypeError: If ``state`` is not a TensorDict State of the class.
+            ValueError: If a field of ``state`` is missing, misshaped or non-finite.
         """
-        self._check_open("info")
+        self._check_open("source_info")
         raise NotImplementedError(
-            f"{type(self).__name__}.info: this class does not compute the upstream info from a state. "
+            f"{type(self).__name__}.source_info: this class does not compute the upstream info from a state. "
             "Read state fields with snv.get_field, or the task outputs of step."
         )
 

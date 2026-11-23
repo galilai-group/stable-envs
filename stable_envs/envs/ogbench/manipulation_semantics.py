@@ -159,16 +159,18 @@ class ManipulationSemantics:
         self._simulator.set_state(state)
         self._sync_style()
 
-    def info(self, state):
+    def source_info(self, state):
         """Return OGBench's task-mode info for each batch row of ``state``.
 
         The keys are those of OGBench's ``compute_ob_info``, such as ``"proprio/effector_pos"`` and
-        ``"privileged/block_0_pos"``, with ``"success"`` from its step info and ``"goal"``, the goal observation,
-        from its reset info. The ``"privileged/target_*"`` keys of OGBench's data-collection mode are not included.
+        ``"privileged/block_0_pos"``. Two more keys come from other upstream calls: ``"success"``, which upstream
+        returns only from ``step``, and ``"goal"``, the goal observation, which upstream returns only from
+        ``reset``. The ``"privileged/target_*"`` keys of OGBench's data-collection mode are not included.
         """
         from .simulation.info import InfoLayout, manipulation_info
 
-        self._check_open("info")
+        self._check_open("source_info")
+        self._validate_state(state)
         if self._info_layout is None:
             self._info_layout = InfoLayout(self._simulator._meta)
         return manipulation_info(self._info_layout, state, self.device)

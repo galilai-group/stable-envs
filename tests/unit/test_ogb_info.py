@@ -1,4 +1,4 @@
-"""``OGBCube.info`` and ``OGBScene.info`` equal OGBench's ``compute_ob_info`` bit for bit."""
+"""``OGBCube.source_info`` and ``OGBScene.source_info`` equal OGBench's ``compute_ob_info`` bit for bit."""
 
 from __future__ import annotations
 
@@ -35,39 +35,76 @@ def _check(info, envs):
             assert np.array_equal(got, value), key
 
 
+def _toward(env, target, gripper):
+    """A normalized action that moves the pinch site of the OGBench object ``env`` toward ``target``."""
+    delta = target - env._data.site_xpos[env._pinch_site_id]
+    return env.normalize_action(np.array([*delta, 0.0, gripper]))
+
+
+def _script(env, t):
+    """Close the gripper and press it on the table, then, in Scene, push the first button down."""
+    if env.family == "Scene" and t >= 30:
+        top = env._data.site_xpos[env._button_site_ids[0]].copy()
+        return _toward(env, top + np.array([0.0, 0.0, 0.08 if t < 55 else -0.05]), 1.0)
+    low = env._data.site_xpos[env._pinch_site_id].copy()
+    low[2] = 0.0
+    return _toward(env, low, 1.0)
+
+
 @pytest.mark.parametrize("family", FAMILIES)
-def test_info_equals_ogbench_compute_ob_info(family):
-    rng = np.random.default_rng(0)
-    ref = OGBManipulationAdapter(family, 3, seed=5)
-    env = snv.make(f"OGB{family}", num_envs=3, device="cpu")
+def test_source_info_of_the_default_backend_equals_compute_ob_info(family):
+    """``snv.make`` steps on ``mujoco.batch``; OGBench objects with the same seed take the same actions."""
+    ref = OGBManipulationAdapter(family, 2, seed=5)
+    env = snv.make(f"OGB{family}", num_envs=2, device="cpu", seed=5)
     try:
-        _check(env.info(ref.get_state()), ref.envs)
-        for t in range(40):
-            action = np.clip(rng.normal(0, 0.6, (3, 5)), -1, 1)
-            if t % 10 < 4:
-                action[:, 2] = -1.0
-            state = ref.step(action)["state"]
-            if t % 8 == 7:
-                _check(env.info(state), ref.envs)
+        state = env.reset(seed=8)
+        ref.reset(seed=8)
+        _check(env.source_info(state), ref.envs)
+        contact, pressed = 0.0, False
+        for t in range(90):
+            actions = np.stack([_script(e, t) for e in ref.envs]).astype(np.float32)
+            ref.step(actions)
+            state = env.step(torch.from_numpy(actions))["state"]
+            info = env.source_info(state)
+            _check(info, ref.envs)
+            contact = max(contact, float(info["proprio/gripper_contact"].max()))
+            if family == "Scene":
+                pressed |= bool((info["button_states"] != info["prev_button_states"]).any())
+        assert contact > 0.0
+        assert pressed or family == "Cube"
     finally:
         ref.close()
         env.close()
 
 
 @pytest.mark.parametrize("family", FAMILIES)
-def test_info_of_rows_equals_the_rows_of_info(family):
+def test_source_info_of_rows_equals_the_rows_of_source_info(family):
     env = snv.make(f"OGB{family}", num_envs=4, device="cpu")
     try:
         env.reset(seed=1)
         state = env.step(torch.full((4, 5), 0.3))["state"]
-        full = env.info(state)
+        full = env.source_info(state)
         rows = torch.tensor([3, 1])
-        part = env.info(state[rows])
+        part = env.source_info(state[rows])
         assert part.batch_size == torch.Size([2])
         for key in full.keys():
             assert torch.equal(part[key], full[key][rows]), key
         before = snv.get_field(state, "physics/qpos").clone()
         full["qpos"].zero_()
         assert torch.equal(snv.get_field(state, "physics/qpos"), before)
+    finally:
+        env.close()
+
+
+def test_source_info_refuses_a_state_that_is_not_a_full_state():
+    env = snv.make("OGBCube", num_envs=2, device="cpu")
+    try:
+        state = env.reset(seed=0)
+        with pytest.raises(TypeError):
+            env.source_info(snv.get_field(state, "physics/qpos"))
+        broken = state.clone()
+        snv.get_field(broken, "physics/qpos")[0, 0] = float("nan")
+        with pytest.raises(ValueError):
+            env.source_info(broken)
     finally:
         env.close()
