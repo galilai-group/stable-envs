@@ -29,12 +29,11 @@ MODEL_VALUES = (
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
 ARM_START = "agent.ee_start_position"
 
-# set_variation applies these to the running episode. The rest are reset-only, and
-# agent.color waits for the source's own compile rule.
 #: OGBench's data-collection target tasks; the State keeps the index of ``_target_task``.
 TARGET_TASKS = ("cube", "button", "drawer", "window")
-#: ``set_task`` options: the keyword arguments of OGBench's ``set_new_target``.
-SET_TASK_OPTIONS = frozenset({"p_stack"})
+
+# set_variation applies these to the running episode. The rest are reset-only, and
+# agent.color waits for the source's own compile rule.
 IMMEDIATE = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity", "cube.color", "lock_color")
 COMPILED = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity")
 # Every MjModel array a compile derives from COMPILED; tex_data only for the grid texture.
@@ -506,18 +505,22 @@ class Compatibility:
             self._target_button = 0
         return super().reset(seed=seed, options=options)
 
-    def set_task(self, seed, options=None):
-        """Draw a new target as OGBench's data-collection mode does, from ``np_random`` seeded with ``seed``.
+    def set_task(self, seed=None):
+        """Draw a new target as OGBench's data-collection mode does; the episode then scores that target only.
 
-        Gymnasium seeds ``np_random`` as ``np.random.default_rng(seed)`` does. The episode then scores the target
-        only, as OGBench's data-collection mode does.
+        With ``seed`` None the draw comes from the environment's own ``np_random``, as in OGBench. With a seed it
+        comes from a generator that Gymnasium seeds with it, and ``np_random`` does not change.
         """
-        options = dict(options or {})
-        if set(options) - SET_TASK_OPTIONS:
-            raise ValueError(f"Unknown set_task options {sorted(set(options) - SET_TASK_OPTIONS)}; known: p_stack")
         self._mode = "data_collection"
+        if seed is None:
+            self.set_new_target(return_info=False)
+            return
+        kept = self._np_random, self._np_random_seed
         self._np_random, self._np_random_seed = seeding.np_random(int(seed))
-        self.set_new_target(return_info=False, **options)
+        try:
+            self.set_new_target(return_info=False)
+        finally:
+            self._np_random, self._np_random_seed = kept
 
     def initialize_arm(self):
         """OGBench's sampled arm start; a pinned start consumes only the source yaw draw."""

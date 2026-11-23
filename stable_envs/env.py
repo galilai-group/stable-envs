@@ -617,15 +617,17 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
-    def set_task(self, rows, seed, options=None) -> State:
+    def set_task(self, rows, seed=None, options=None) -> State:
         """Give ``rows`` a new task mid-episode, drawn as the upstream library draws it, and return the State.
 
-        Each selected row draws from its own seed, so the result of a row does not depend on the other rows. The
-        other rows do not change.
+        Each selected row draws on its own, so the result of a row does not depend on the other rows. The other
+        rows do not change.
 
         Args:
             rows: A ``(num_envs,)`` bool mask or a sequence of row indices.
-            seed: One integer seed per selected row, in the order of ``rows`` (ascending for a mask).
+            seed: None, or one entry per selected row in the order of ``rows`` (ascending for a mask): None draws
+                from the row's own generator, as the upstream library does, and an integer draws from a generator
+                seeded with it.
             options: Task options of the family, for every selected row.
 
         Raises:

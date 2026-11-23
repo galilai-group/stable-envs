@@ -511,11 +511,6 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         """Write a State, or its ``{group key: array}`` columns, into the live groups and the physics."""
         if not isinstance(state, dict):
             state = {key: state.get(group.path) for key, group in self.schema.groups.items()}
-        mode = self.schema.slices["task/mode"]
-        if bool(torch.as_tensor(state[mode.group])[..., mode.start : mode.stop].any()):
-            raise NotImplementedError(
-                "MuJoCo Warp does not step data-collection targets yet; use simulation_backend='native'"
-            )
         for key, value in state.items():
             self._live[key].copy_(torch.as_tensor(value))
         host = self._host_models(self._live)
@@ -591,6 +586,17 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
 
     def set_task(self, tasks):
         raise NotImplementedError("set_task on MuJoCo Warp is not supported yet; use simulation_backend='native'")
+
+    def validate(self, state, **kwargs):
+        if bool(self.schema.get(state, "task/mode").any()):
+            raise NotImplementedError(
+                "MuJoCo Warp does not step set_task targets yet; use simulation_backend='native'"
+            )
+        return super().validate(state, **kwargs)
+
+    def set_state(self, state):
+        self.validate(state)
+        super().set_state(state)
 
     def configure(self, values):
         self._check_open()

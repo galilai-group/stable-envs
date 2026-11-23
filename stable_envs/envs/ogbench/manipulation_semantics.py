@@ -174,19 +174,20 @@ class ManipulationSemantics:
         self._simulator.set_state(state)
         self._sync_style()
 
-    def set_task(self, rows, seed, options=None):
+    def set_task(self, rows, seed=None, options=None):
         """Give ``rows`` a new target mid-episode, drawn as OGBench's data-collection mode draws it.
 
-        Each selected row runs OGBench's ``set_new_target`` from ``np_random`` seeded with its own seed, as
-        Gymnasium seeds it, so the target is a fresh draw. Cube targets a new cube pose. Scene targets the cube,
+        Each selected row runs OGBench's ``set_new_target``. Cube targets a new cube pose. Scene targets the cube,
         a button, the drawer or the window. From then until the next ``reset``, the row scores that target only,
-        and a Scene cube that leaves the workspace is not put back, as in OGBench's data-collection mode.
-        The other rows do not change.
+        and a Scene cube that leaves the workspace is not put back, as in OGBench's data-collection mode. The
+        other rows do not change.
 
         Args:
             rows: A ``(num_envs,)`` bool mask or a sequence of row indices.
-            seed: One integer seed per selected row, in the order of ``rows`` (ascending for a mask).
-            options: ``{"p_stack": p}``, the keyword of ``set_new_target``, for every selected row.
+            seed: None, or one entry per selected row in the order of ``rows`` (ascending for a mask). A None
+                entry draws from the row's own ``np_random``, as OGBench does. An integer draws from a generator
+                that Gymnasium seeds with it, and leaves the row's ``np_random`` as it is.
+            options: None or ``{}``: OGBench's ``set_new_target`` has no option that one cube reads.
 
         Returns:
             The State after the change.
@@ -196,21 +197,29 @@ class ManipulationSemantics:
             ValueError: If ``rows``, ``seed`` or ``options`` is invalid.
             NotImplementedError: With ``simulation_backend="mjwarp"``.
         """
-        from .simulation.compatibility import SET_TASK_OPTIONS
-
         self._check_open("set_task")
         index = _row_indices(rows, self.B)
-        seeds = [seed] if isinstance(seed, (int, np.integer)) else list(np.asarray(seed).reshape(-1).tolist())
-        if len(seeds) != len(index) or any(type(s) is not int or s < 0 for s in seeds):
-            raise ValueError(f"set_task needs one nonnegative integer seed per selected row ({len(index)})")
-        options = dict(options or {})
-        if set(options) - SET_TASK_OPTIONS:
-            raise ValueError(f"Unknown set_task options {sorted(set(options) - SET_TASK_OPTIONS)}; known: p_stack")
-        if "p_stack" in options and not 0.0 <= float(options["p_stack"]) <= 1.0:
-            raise ValueError("p_stack must be in [0, 1]")
+        if options:
+            raise ValueError(f"{type(self).__name__}.set_task takes no options; got {sorted(options)}")
+        if seed is None:
+            seeds = [None] * len(index)
+        else:
+            if torch.is_tensor(seed):
+                if seed.device.type != "cpu":
+                    raise ValueError(
+                        "set_task seeds must be integers or a CPU tensor, not a tensor on " + str(seed.device)
+                    )
+                seed = seed.tolist()
+            seeds = [seed] if isinstance(seed, (int, np.integer)) else list(seed)
+        if len(seeds) != len(index) or any(
+            s is not None and (isinstance(s, bool) or not isinstance(s, (int, np.integer)) or s < 0) for s in seeds
+        ):
+            raise ValueError(
+                f"set_task needs None or one nonnegative integer seed or None per selected row ({len(index)})"
+            )
         tasks = [None] * self.B
         for i, s in zip(index, seeds):
-            tasks[i] = (s, options)
+            tasks[i] = (None if s is None else int(s),)
         self._rows_installed = False
         self._simulator.set_task(tasks)
         return self.get_state()
@@ -250,7 +259,8 @@ class ManipulationSemantics:
         returns only from ``step``, and ``"goal"``, the goal observation, which upstream returns only from
         ``reset``. When a row of ``state`` has a target from ``set_task``, the result also has the
         ``"privileged/target_*"`` keys of OGBench's data-collection mode, for every row. ``"privileged/target_task"``
-        is an index into ``("cube", "button", "drawer", "window")``, where OGBench gives the name.
+        is an index into ``("cube", "button", "drawer", "window")``, where OGBench gives the name. OGBench's
+        data-collection mode has no goal observation, so ``"goal"`` is NaN in those rows.
         """
         from .simulation.info import InfoLayout, manipulation_info
 

@@ -169,7 +169,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     execution_mode = "DELEGATED_CPU"
     rotation_tolerance = 1e-8
-    process_methods = {"configure": PER_INSTANCE, "set_task": PER_INSTANCE}
+    process_methods = {"configure": PER_INSTANCE}
     process_attributes = ("family", "fields", "schema", "nq")
     action_dim = 5
 
@@ -595,15 +595,6 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._forget_static(self.envs)
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
-
-    def set_task(self, tasks):
-        """Draw new data-collection targets: ``tasks`` holds ``(seed, options)`` or None for each environment."""
-        self._check_open()
-        changed = [env for env, task in zip(self.envs, tasks) if task is not None]
-        for env, task in zip(self.envs, tasks):
-            if task is not None:
-                env.set_task(*task)
-        self._forget_static(changed)
 
     def check_step(self, actions, active):
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)

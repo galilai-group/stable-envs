@@ -331,11 +331,15 @@ class OGBManipulationBatchAdapter:
             self._drawer_goal, self._window_goal = view("scene/target_drawer_pos"), view("scene/target_window_pos")
             self._target_button = view("task/target/button")
 
-    def _sync_envs(self, envs):
-        """Write the batch's environments into their OGBench objects, as ``OGBManipulationAdapter`` restores them."""
+    def _sync_envs(self, envs, rows=None):
+        """Write the batch's environments into their OGBench objects, as ``OGBManipulationAdapter`` restores them.
+
+        ``rows`` selects some environments; the others stay as they are.
+        """
         spec = mujoco.mjtState.mjSTATE_INTEGRATION
         pad = "ur5e/robotiq/right_pad"
-        for i, env in enumerate(envs):
+        for i in range(len(envs)) if rows is None else rows:
+            env = envs[i]
             env._prev_qpos, env._prev_qvel = self._prev_qpos[i].copy(), self._prev_qvel[i].copy()
             env._success = bool(self._success[i, 0])
             if self.family == "Scene":
@@ -351,7 +355,8 @@ class OGBManipulationBatchAdapter:
             env.data.site_xpos[self._pos_sites] = self._site_xpos[i]
             env.data.site_xmat[self._rot_sites] = self._site_xmat[i]
             env.data.body(pad).cfrc_ext[:] = self._gripper_force[i]
-        self._stale = False
+        if rows is None:
+            self._stale = False
 
     def _check_open(self):
         if self._closed:
@@ -427,15 +432,52 @@ class OGBManipulationBatchAdapter:
         self._load(self._instance_state())
 
     def set_task(self, tasks):
-        """Draw data-collection targets on the OGBench objects, from the State the batch advanced, then load it.
+        """Draw data-collection targets for the environments whose entry of ``tasks`` is ``(seed,)``, not None.
 
-        ``tasks`` holds ``(seed, options)`` or None for each environment.
+        Each selected environment's OGBench object takes the State that the batch advanced, draws its target,
+        and gives back its fields. The other environments do not change. With worker processes, an object built
+        in this process from the environment's State draws the target, and the workers take the State at the next
+        reset or configuration.
         """
         self._check_open()
-        self.instances.set_state(self.get_state().cpu())
-        self._dirty = False
-        self.instances.set_task(tasks)
-        self._load(self._instance_state())
+        rows = [i for i, task in enumerate(tasks) if task is not None]
+        if not rows:
+            return
+        values = []
+        if isinstance(self.instances, OGBManipulationAdapter):
+            envs = self.instances.envs
+            self._sync_envs(envs, rows)
+            for i in rows:
+                envs[i].set_task(*tasks[i])
+            self.instances._forget_static([envs[i] for i in rows])
+            values = [self.instances._values(envs[i]) for i in rows]
+        else:
+            meta, current = self.instances._metadata, self._state_values()
+            for i in rows:
+                env = meta._restore({key: value[i].copy() for key, value in current.items()})
+                try:
+                    env.set_task(*tasks[i])
+                    values.append(meta._values(env))
+                finally:
+                    env.close()
+            self._dirty = True
+        self._write_rows(rows, values)
+
+    def _write_rows(self, rows, values):
+        """Write ``{field name: value}`` of each environment in ``rows`` into the live groups, physics and models."""
+        packed = self.schema.pack({name: np.stack([row[name] for row in values]) for name in self.fields})
+        for key, live in self._live.items():
+            live[rows] = packed[key]
+        physics = self.schema.views(packed, self._physics, numpy=True)
+        self.b.state[rows] = np.concatenate(
+            [physics[name].astype(np.float64).reshape(len(rows), -1) for name in self._physics], axis=1
+        )
+        sites = self._expanded.get("site_pos")
+        if self.family == "Scene" and sites is not None:
+            drawer, window = self._models._targets
+            sites[rows, drawer, 1] = self._drawer_goal[rows, 0]
+            sites[rows, window, 0] = self._window_goal[rows, 0]
+        self._collecting = bool(self._mode.any())
 
     def make_variation_space(self):
         return self.instances.make_variation_space()

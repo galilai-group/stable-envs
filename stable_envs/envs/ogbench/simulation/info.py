@@ -42,6 +42,13 @@ def _yaw_of_quaternion(rows):
     return np.array([[lie.SO3(wxyz=row).compute_yaw_radians()] for row in rows])
 
 
+def _task_goal(goal, mode):
+    """The goal observation of task-mode rows; OGBench's data-collection mode has none, so those rows are NaN."""
+    goal = np.array(goal, np.float64)
+    goal[mode == 1] = np.nan
+    return goal
+
+
 def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
     """``compute_ob_info`` of each batch row of ``state``, then ``success`` and the reset's ``goal``.
 
@@ -94,7 +101,8 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
             info[f"privileged/button_{i}_state"] = buttons[:, i]
             info[f"privileged/button_{i}_pos"] = qpos[:, adr : adr + 1]
             info[f"privileged/button_{i}_vel"] = qvel[:, dof : dof + 1]
-        # controller/site_xpos holds the pinch, drawer and window sites, then the two targets; site_xmat the first three.
+        # controller/site_xpos holds the pinch, drawer and window sites, the drawer and window targets, then the
+        # button tops; site_xmat holds the first three.
         for k, name in enumerate(("drawer", "window"), start=1):
             adr, dof = layout.slides[name]
             info[f"privileged/{name}_pos"] = qpos[:, adr : adr + 1]
@@ -127,7 +135,7 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
             "control": get("physics/ctrl"),
             "time": get("physics/time").reshape(n, 1),
             "success": get("task/success").reshape(n),
-            "goal": get("task/goal_observation"),
+            "goal": _task_goal(get("task/goal_observation"), get("task/mode").reshape(n)),
         }
     )
     return host_arrays_tensordict(info, n, device)
