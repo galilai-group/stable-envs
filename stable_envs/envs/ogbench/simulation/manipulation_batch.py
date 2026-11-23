@@ -457,6 +457,7 @@ class OGBManipulationBatchAdapter:
                 env = meta._restore({key: value[i].copy() for key, value in current.items()})
                 try:
                     env.set_task(*tasks[i])
+                    meta._forget_static([env])
                     values.append(meta._values(env))
                 finally:
                     env.close()

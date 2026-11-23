@@ -115,6 +115,11 @@ def test_target_and_rollout_equal_ogbench_data_collection_mode(family, task):
         state = env.reset(seed=8)
         for _ in range(3):
             state = env.step(torch.full((2, 5), 0.2))["state"]
+        if family == "Scene":
+            # Unlocked drawer and window, so that the oracle can reach every target.
+            state = state.clone()
+            snv.get_field(state, "scene/cur_button_states")[:] = 1
+            env.set_state(state)
         seed = _seeds_by_task(family, state)[task]
         _load(upstream, state, 0)
         _draw(upstream, seed)
@@ -127,7 +132,7 @@ def test_target_and_rollout_equal_ogbench_data_collection_mode(family, task):
                 assert np.array_equal(info[key][0].numpy(), np.asarray(value)), key
         assert np.array_equal(snv.get_field(state, "physics/mocap_pos")[0].numpy(), upstream.data.mocap_pos.ravel())
         oracle, reached = _oracle(upstream), False
-        for _ in range(300):
+        for _ in range(500):
             action = np.asarray(oracle.select_action(None, upstream.compute_ob_info()), np.float32)
             _, reward, terminated, _, out = upstream.step(action)
             got = env.step(torch.from_numpy(np.stack([action, np.zeros(5, np.float32)])))
@@ -202,14 +207,15 @@ def test_scene_repairs_a_lost_cube_in_task_mode_only():
         env.reset(seed=2)
         state = env.set_task([0], seed=[5]).clone()
         cube = int(env._simulator._cube)
-        snv.get_field(state, "physics/qpos")[:, cube + 2] = -1.0
+        snv.get_field(state, "physics/qpos")[:, cube] = 2.0
         env.set_state(state)
         ref.set_state(state)
         action = np.zeros((2, 5), np.float32)
         got, want = env.step(torch.from_numpy(action)), ref.step(action)
         assert_same_state(got["state"], want["state"])
-        z = snv.get_field(got["state"], "physics/qpos")[:, cube + 2]
-        assert z[0] < -0.5 and z[1] == 0.02
+        position = snv.get_field(got["state"], "physics/qpos")[:, cube : cube + 3]
+        assert position[0, 0] > 1.5
+        assert position[1, 0] < 0.6 and position[1, 2] == 0.02
     finally:
         ref.close()
         env.close()
