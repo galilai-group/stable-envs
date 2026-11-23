@@ -1,4 +1,4 @@
-"""The OGBench task-mode info of Cube/Scene, computed from State with the arithmetic of ``compute_ob_info``."""
+"""The OGBench info of Cube/Scene, computed from State with the arithmetic of ``compute_ob_info``."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ class InfoLayout:
         self.arm = np.asarray(env._arm_joint_ids)
         self.gripper = int(env._gripper_opening_joint_id)
         self.cubes = [int(model.joint(f"object_joint_{i}").qposadr[0]) for i in range(env._num_cubes)]
+        self.target_mocaps = np.asarray(env._cube_target_mocap_ids)
         self.buttons, self.slides = [], {}
         if self.scene:
             self.buttons = [
@@ -71,6 +72,22 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
         info[f"privileged/block_{i}_pos"] = qpos[:, adr : adr + 3]
         info[f"privileged/block_{i}_quat"] = qpos[:, adr + 3 : adr + 7]
         info[f"privileged/block_{i}_yaw"] = _yaw_of_quaternion(qpos[:, adr + 3 : adr + 7])
+    collecting = bool(get("task/mode").any())
+    if collecting:
+        # The data-collection keys; rows in task mode give the values of their target fields too.
+        rows = np.arange(n)
+        block = get("task/target/block").reshape(n)
+        mocap = layout.target_mocaps[block]
+        target = {
+            "privileged/target_task": get("task/target/task").reshape(n),
+            "privileged/target_block": block,
+            "privileged/target_block_pos": get("physics/mocap_pos").reshape(n, -1, 3)[rows, mocap],
+            "privileged/target_block_yaw": _yaw_of_quaternion(
+                get("physics/mocap_quat").reshape(n, -1, 4)[rows, mocap]
+            ),
+        }
+        if not layout.scene:
+            info.update(target)
     if layout.scene:
         buttons = get("scene/cur_button_states").reshape(n, -1)
         for i, (adr, dof) in enumerate(layout.buttons):
@@ -84,6 +101,21 @@ def manipulation_info(layout: InfoLayout, state, device) -> TensorDict:
             info[f"privileged/{name}_vel"] = qvel[:, dof : dof + 1]
             info[f"privileged/{name}_handle_pos"] = site_xpos[:, k]
             info[f"privileged/{name}_handle_yaw"] = _yaw_of_matrix(site_xmat[:, k])
+        if collecting:
+            button = get("task/target/button").reshape(n)
+            info.update(target)
+            info.update(
+                {
+                    "privileged/target_button": button,
+                    "privileged/target_button_state": get("scene/target_button_states").reshape(n, -1)[rows, button],
+                    # site_xpos rows 3 and 4 are the drawer and window targets, then the button tops.
+                    "privileged/target_button_top_pos": site_xpos[rows, 5 + button],
+                    "privileged/target_drawer_pos": get("scene/target_drawer_pos").reshape(n, 1),
+                    "privileged/target_drawer_handle_pos": site_xpos[:, 3],
+                    "privileged/target_window_pos": get("scene/target_window_pos").reshape(n, 1),
+                    "privileged/target_window_handle_pos": site_xpos[:, 4],
+                }
+            )
         info["prev_button_states"] = get("scene/prev_button_states").reshape(n, -1)
         info["button_states"] = buttons
     info.update(

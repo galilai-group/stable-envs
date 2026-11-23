@@ -57,6 +57,10 @@ class OGBManipulationProcessAdapter(ProcessAdapter):
         # ``variation_values`` reads the shared state.
         self._request("get_state")
 
+    def set_task(self, tasks):
+        self._check_idle()
+        self.call("set_task", tasks)
+
     def make_variation_space(self):
         self._check_open()
         return self._metadata.make_variation_space()

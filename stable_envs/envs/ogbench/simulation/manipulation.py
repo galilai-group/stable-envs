@@ -13,6 +13,7 @@ from ...._execution.process import PER_INSTANCE
 from ...._execution.protocol import SimulatorAdapter
 from .compatibility import (
     MODEL_VALUES,
+    TARGET_TASKS,
     CompatibleCube,
     CompatibleScene,
     InstancePool,
@@ -88,6 +89,7 @@ def site_ids(env):
     rotations = positions.copy()
     if env.family == "Scene":
         positions += [env._drawer_site_id, env._window_site_id, env._drawer_target_site_id, env._window_target_site_id]
+        positions += list(env._button_site_ids)
         rotations += [env._drawer_site_id, env._window_site_id]
     return positions, rotations
 
@@ -106,6 +108,18 @@ def task_values(env, info=None):
     return result
 
 
+def target_values(env):
+    """The State fields of the episode's mode and of its data-collection target."""
+    values = {
+        "task/mode": np.array([env._mode == "data_collection"], np.int64),
+        "task/target/task": np.array([TARGET_TASKS.index(str(env._target_task))], np.int64),
+        "task/target/block": np.array([env._target_block], np.int64),
+    }
+    if env.family == "Scene":
+        values["task/target/button"] = np.array([env._target_button], np.int64)
+    return values
+
+
 def task_payload(env, values):
     # task_name is diagnostic-only; no registered reset/step/output reads it.
     result = {"task_name": "restored_custom"}
@@ -120,7 +134,16 @@ def task_payload(env, values):
 
 
 _GROUP_RANK = {"compatibility": 0, "physics": 1, "controller": 2, "output": 3, "lifecycle": 5, "scene": 7}
-_TASK_RANK = {"goal_observation": 4.0, "goal_scene": 4.05, "id": 4.1, "reward_id": 4.2, "success": 4.3, "payload": 6}
+_TASK_RANK = {
+    "goal_observation": 4.0,
+    "goal_scene": 4.05,
+    "mode": 4.06,
+    "target": 4.07,
+    "id": 4.1,
+    "reward_id": 4.2,
+    "success": 4.3,
+    "payload": 6,
+}
 _LATE_RANK = {"variation": 8, "model": 9}
 
 
@@ -146,7 +169,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     execution_mode = "DELEGATED_CPU"
     rotation_tolerance = 1e-8
-    process_methods = {"configure": PER_INSTANCE}
+    process_methods = {"configure": PER_INSTANCE, "set_task": PER_INSTANCE}
     process_attributes = ("family", "fields", "schema", "nq")
     action_dim = 5
 
@@ -255,6 +278,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
             **{field("task", "goal_scene", name): value.copy() for name, value in env.goal_scene.items()},
             "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
             "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
+            **target_values(env),
         }
         for key, value in task_values(env).items():
             values[field("task", "payload", key)] = value
@@ -365,6 +389,13 @@ class OGBManipulationAdapter(SimulatorAdapter):
             ]:
                 if not np.allclose(np.linalg.norm(quat, axis=-1), 1.0, atol=1e-6, rtol=0):
                     raise ValueError("Invalid physics quaternion")
+            mode, target = int(at(row, "task/mode")[0]), int(at(row, "task/target/task")[0])
+            if mode not in (0, 1) or not 0 <= target < (len(TARGET_TASKS) if self.family == "Scene" else 1):
+                raise ValueError("Invalid task mode or target task")
+            if not 0 <= int(at(row, "task/target/block")[0]) < env._num_cubes:
+                raise ValueError("Invalid target block")
+            if self.family == "Scene" and not 0 <= int(at(row, "task/target/button")[0]) < env._num_buttons:
+                raise ValueError("Invalid target button")
             task_id, reward_id = int(at(row, "task/id")[0]), int(at(row, "task/reward_id")[0])
             if task_id not in (-1, 1, 2, 3, 4, 5) or reward_id not in (-1, 1, 2, 3, 4, 5):
                 raise ValueError("Invalid task ID")
@@ -446,6 +477,11 @@ class OGBManipulationAdapter(SimulatorAdapter):
             env._reward_task_id = None if reward_id == -1 else reward_id
             env.cur_task_info = task_payload(env, self._payload(row))
             env._success = bool(at(row, "task/success")[0])
+            env._mode = "data_collection" if at(row, "task/mode")[0] else "task"
+            env._target_task = TARGET_TASKS[int(at(row, "task/target/task")[0])]
+            env._target_block = int(at(row, "task/target/block")[0])
+            if self.family == "Scene":
+                env._target_button = int(at(row, "task/target/button")[0])
             env._cur_goal_ob = at(row, "task/goal_observation").copy()
             env.goal_scene = {
                 name.removeprefix("task/goal_scene/"): at(row, name).copy()
@@ -559,6 +595,15 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._forget_static(self.envs)
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
+
+    def set_task(self, tasks):
+        """Draw new data-collection targets: ``tasks`` holds ``(seed, options)`` or None for each environment."""
+        self._check_open()
+        changed = [env for env, task in zip(self.envs, tasks) if task is not None]
+        for env, task in zip(self.envs, tasks):
+            if task is not None:
+                env.set_task(*task)
+        self._forget_static(changed)
 
     def check_step(self, actions, active):
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)

@@ -322,11 +322,14 @@ class OGBManipulationBatchAdapter:
         self._gripper_force = view("output/gripper_force")
         self._prev_qpos, self._prev_qvel = view("output/prev_qpos"), view("output/prev_qvel")
         self._success = view("task/success")
+        self._mode = view("task/mode")
+        self._target_task = view("task/target/task")
         self._env_rng = {key: view(field("rng", "environment", key)) for key in PCG_KEYS}
         if self.family == "Scene":
             self._buttons_now, self._buttons_before = view("scene/cur_button_states"), view("scene/prev_button_states")
             self._buttons_goal = view("scene/target_button_states")
             self._drawer_goal, self._window_goal = view("scene/target_drawer_pos"), view("scene/target_window_pos")
+            self._target_button = view("task/target/button")
 
     def _sync_envs(self, envs):
         """Write the batch's environments into their OGBench objects, as ``OGBManipulationAdapter`` restores them."""
@@ -372,6 +375,8 @@ class OGBManipulationBatchAdapter:
         parts = [physics[name].astype(np.float64).reshape(self.num_envs, -1) for name in self._physics]
         self.b.state[:] = np.concatenate(parts, axis=1)
         self._load_models(columns)
+        # True while some environment scores a data-collection target; the step checks it once.
+        self._collecting = bool(self._mode.any())
         success = self._success[:, 0]
         self._outputs = {
             "reward": np.where(success, 1.0, 0.0) if not self._reward_task else np.zeros(self.num_envs),
@@ -419,6 +424,17 @@ class OGBManipulationBatchAdapter:
         self._check_open()
         self.instances.set_state(state)
         self._dirty = False
+        self._load(self._instance_state())
+
+    def set_task(self, tasks):
+        """Draw data-collection targets on the OGBench objects, from the State the batch advanced, then load it.
+
+        ``tasks`` holds ``(seed, options)`` or None for each environment.
+        """
+        self._check_open()
+        self.instances.set_state(self.get_state().cpu())
+        self._dirty = False
+        self.instances.set_task(tasks)
         self._load(self._instance_state())
 
     def make_variation_space(self):
@@ -538,6 +554,12 @@ class OGBManipulationBatchAdapter:
         else:
             parts = cube[:, None]
         success = parts.all(axis=1)
+        if scene and self._collecting:
+            # OGBench's data-collection mode scores the target only: the cube, one button, the drawer or the window.
+            task, button = self._target_task[rows, 0], self._target_button[rows, 0]
+            column = np.where(task == 0, 0, np.where(task == 1, 1 + button, task + parts.shape[1] - 4))
+            target = parts[np.arange(len(parts)), column]
+            success = np.where(self._mode[rows, 0] == 1, target, success)
         self._success[rows, 0] = success
         out = self._outputs
         if self._reward_task:
@@ -556,6 +578,9 @@ class OGBManipulationBatchAdapter:
         """``SceneEnv.post_step``: cube repair, button presses and locks, then ``mj_forward``."""
         cube = self._qpos[ids, self._cube : self._cube + 3]
         unhealthy = ((cube <= self._workspace[0] - 0.2) | (cube >= self._workspace[1] + 0.2)).any(axis=1)
+        if self._collecting:
+            # OGBench repairs a cube only in task mode.
+            unhealthy &= self._mode[ids, 0] == 0
         if unhealthy.any():
             self._repair(ids[unhealthy])
         pressed = (button_pos > -0.02) & (self._qpos[ids][:, self._buttons] <= -0.02)

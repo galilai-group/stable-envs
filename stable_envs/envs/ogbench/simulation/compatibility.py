@@ -8,6 +8,7 @@ from importlib.metadata import version
 import gymnasium as gym
 import mujoco
 import numpy as np
+from gymnasium.utils import seeding
 from ogbench.manipspace import lie, mjcf_utils
 from ogbench.manipspace.envs.cube_env import CubeEnv
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
@@ -30,6 +31,10 @@ ARM_START = "agent.ee_start_position"
 
 # set_variation applies these to the running episode. The rest are reset-only, and
 # agent.color waits for the source's own compile rule.
+#: OGBench's data-collection target tasks; the State keeps the index of ``_target_task``.
+TARGET_TASKS = ("cube", "button", "drawer", "window")
+#: ``set_task`` options: the keyword arguments of OGBench's ``set_new_target``.
+SET_TASK_OPTIONS = frozenset({"p_stack"})
 IMMEDIATE = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity", "cube.color", "lock_color")
 COMPILED = ("cube.size", "floor.color", "camera.angle_delta", "light.intensity")
 # Every MjModel array a compile derives from COMPILED; tex_data only for the grid texture.
@@ -495,7 +500,24 @@ class Compatibility:
             not isinstance(explicit_size, np.ndarray) or explicit_size.dtype == np.float32
         )
         tree.set_value(options.get("variation_values", {}))
+        # Every reset starts a task-mode episode; ``set_task`` moves it to data-collection targets.
+        self._mode, self._target_task, self._target_block = "task", "cube", 0
+        if self.family == "Scene":
+            self._target_button = 0
         return super().reset(seed=seed, options=options)
+
+    def set_task(self, seed, options=None):
+        """Draw a new target as OGBench's data-collection mode does, from ``np_random`` seeded with ``seed``.
+
+        Gymnasium seeds ``np_random`` as ``np.random.default_rng(seed)`` does. The episode then scores the target
+        only, as OGBench's data-collection mode does.
+        """
+        options = dict(options or {})
+        if set(options) - SET_TASK_OPTIONS:
+            raise ValueError(f"Unknown set_task options {sorted(set(options) - SET_TASK_OPTIONS)}; known: p_stack")
+        self._mode = "data_collection"
+        self._np_random, self._np_random_seed = seeding.np_random(int(seed))
+        self.set_new_target(return_info=False, **options)
 
     def initialize_arm(self):
         """OGBench's sampled arm start; a pinned start consumes only the source yaw draw."""

@@ -15,6 +15,7 @@ from stable_envs.envs.ogbench.simulation.manipulation import (
     pcg_encode,
     rngs,
     site_ids,
+    target_values,
     task_values,
 )
 from stable_envs.envs.ogbench.simulation.maze import _uint128_bytes, maze_schema
@@ -70,6 +71,7 @@ def manipulation_row(self, env):
             **{f"task/goal_scene/{name}": value.copy() for name, value in env.goal_scene.items()},
             "task/id": np.array([-1 if env.cur_task_id is None else env.cur_task_id], np.int64),
             "task/reward_id": np.array([-1 if env._reward_task_id is None else env._reward_task_id], np.int64),
+            **target_values(env),
             "task/success": np.array([env._success], bool),
             "lifecycle/reset_next_step": np.array([env._reset_next_step], bool),
         }
