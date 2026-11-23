@@ -188,6 +188,7 @@ Some classes do not draw compact rows. Classes with `state_dim` 0, such as `Push
 |---|---|
 | `PushT`, `PushTDiscrete` | The goal image of the source reset. The reset records the drawn scene after it sets the goal state and steps the physics once, and the state keeps it in `anchor/goal_scene/...`, so the bodies, contacts and action marker are those of the source goal image. A RenderState. |
 | `TwoRoom`, `TwoRoomTarget`, `Piecewise` | The agent at the target, as the source's target image. Compact rows, which draw with the current variation. |
+| `OGBCube`, `OGBScene` | The scene where OGBench's task-mode reset takes its goal observation: the cubes at the goal after two random steps, the arm at its sampled pose, and Scene's buttons, drawer and window at the goal. The state keeps it in `task/goal_scene/...`. A RenderState. OGBench's own Cube goal image draws the body poses of one physics substep earlier, because Cube's step runs no `mj_forward` after its last substep. |
 
 The other classes raise `NotImplementedError`.
 

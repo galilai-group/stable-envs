@@ -158,22 +158,26 @@ class ManipulationSemantics:
         self._simulator.set_state(state)
         self._sync_style()
 
-    def goal_state(self, state):
-        """Return ``state`` with the scene where OGBench takes its goal observation and draws its goal image.
+    def goal_render_state(self, state, *, size=None, supersample=None):
+        """Return a RenderState of the scene where OGBench takes its goal observation and draws its goal image.
 
         OGBench's task-mode reset puts the cubes at the goal, the arm at a sampled pose, and Scene's buttons, drawer
-        and window at the goal, takes two random steps, and then draws the goal image. The State keeps that
-        scene in ``task/goal/...``, and the result holds it in ``physics/qpos``, ``physics/mocap_pos``,
-        ``physics/mocap_quat`` and Scene's ``scene/cur_button_states``.
+        and window at the goal, takes two random steps, and then takes the goal observation. The State keeps that
+        scene in ``task/goal_scene/...``, and the RenderState draws it: ``qpos``, the mocap pose and Scene's button
+        states. ``render`` draws the result, and ``set_state`` refuses it.
+
+        Cube's step runs no ``mj_forward`` after its last substep, so OGBench's own goal image of Cube draws the
+        body poses of the substep before the stored ``qpos``. This frame draws the stored ``qpos``.
         """
-        self._check_open("goal_state")
+        self._check_open("goal_render_state")
+        self._validate_state(state)
         goal = state.clone()
         names = [("qpos", "physics/qpos"), ("mocap_pos", "physics/mocap_pos"), ("mocap_quat", "physics/mocap_quat")]
         if self.CELL == "Scene":
             names.append(("button_states", "scene/cur_button_states"))
         for name, target in names:
-            set_field(goal, target, get_field(state, "task/goal/" + name))
-        return goal
+            set_field(goal, target, get_field(state, "task/goal_scene/" + name))
+        return self.to_render_state(goal, size=size, supersample=supersample)
 
     def _step(self, actions, *, active=None):
         self._check_open("step")
