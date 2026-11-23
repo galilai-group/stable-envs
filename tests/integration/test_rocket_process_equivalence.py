@@ -67,11 +67,12 @@ def test_replay_mismatch_in_one_worker_restores_no_environment():
             adapter.step(bad)
         with pytest.raises(ValueError, match="seed"):
             adapter.reset(-1)
-        with pytest.raises(ValueError, match="Unsupported Rocket reset option"):
-            adapter.reset(3, {"unknown": True})
         assert not adapter._closed and adapter._pending is None
     finally:
         adapter.close()
+    with se.make("PyFlytRocketLanding", num_envs=2, device="cpu") as env:
+        with pytest.raises(ValueError, match="does not accept the options"):
+            env.reset(3, {"unknown": True})
 
 
 def test_public_env_with_workers_matches_local(monkeypatch):

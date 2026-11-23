@@ -89,8 +89,6 @@ def reset_options(seed, options):
     """Check a reset seed and options; return an owned copy of the options."""
     validate_seed(seed)
     options = copy.deepcopy(options or {})
-    if set(options) - {"variation", "variation_values", "state", "goal_state"}:
-        raise ValueError("Unsupported PushT reset option")
     for key in ("state", "goal_state"):
         if key in options:
             value = np.asarray(options[key])

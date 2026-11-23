@@ -117,9 +117,11 @@ def test_a_variation_round_trips_through_another_env(name):
 
 @pytest.mark.parametrize("name", envs("reset_options"))
 def test_an_unknown_reset_option_raises_and_changes_nothing(name):
-    with _make(name) as env:
-        env.reset(seed=SEED)
-        env.step(_actions(env, steps=1)[0], frames=None)
+    with _make(name) as env, _make(name) as twin:
+        first, after = _actions(env, steps=2)
+        for e in (env, twin):
+            e.reset(seed=SEED)
+            e.step(first, frames=None)
         state, variation = env.get_state(), env.get_variation().clone()
         assert "unknown" not in env.reset_option_keys
         for options in ({"unknown": 1}, {"variation": [], "unknown": 1}):
@@ -127,6 +129,9 @@ def test_an_unknown_reset_option_raises_and_changes_nothing(name):
                 env.reset(seed=SEED + 1, options=options)
             assert_same_state(env.get_state(), state)
             assert_same_state(env.get_variation(), variation)
+        # The next unseeded reset and step also see generators that the State does not hold.
+        assert_same_state(env.reset(), twin.reset())
+        assert_same_state(env.step(after, frames=None), twin.step(after, frames=None))
 
 
 @pytest.mark.parametrize("name", envs("batch_render"))

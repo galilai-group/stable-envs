@@ -54,11 +54,12 @@ def test_invalid_last_environment_restores_no_environment():
         assert_atomic_restore(adapter, corrupt, ValueError, lambda a: a.step(np.zeros((4, 2))))
         with pytest.raises(ValueError, match="PushT action must be finite"):
             adapter.step(np.full((4, 2), np.nan))
-        with pytest.raises(ValueError, match="Unsupported PushT reset option"):
-            adapter.reset(3, {"unknown": 1})
         assert not adapter._closed
     finally:
         adapter.close()
+    with se.make("PushT", num_envs=2, device="cpu") as env:
+        with pytest.raises(ValueError, match="does not accept the options"):
+            env.reset(3, {"unknown": 1})
 
 
 def test_public_env_with_workers_matches_local(monkeypatch):

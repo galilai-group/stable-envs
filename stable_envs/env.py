@@ -402,8 +402,8 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per environment when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
-    #: Keys ``reset`` accepts in ``options``; any other key raises ValueError before the reset changes anything.
-    reset_option_keys: tuple[str, ...] = ("variation", "variation_values")
+    #: Keys ``reset`` accepts in ``options`` beside ``"variation"`` and ``"variation_values"``.
+    extra_reset_options: tuple[str, ...] = ()
     #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
     #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
@@ -934,6 +934,11 @@ class Env:
         """Return whether a sampled reset value is acceptable for ``instance``; rejected draws are resampled."""
         del path, value, instance
         return True
+
+    @property
+    def reset_option_keys(self) -> tuple[str, ...]:
+        """Keys ``reset`` accepts in ``options``; any other key raises ValueError before the reset changes anything."""
+        return ("variation", "variation_values", *self.extra_reset_options)
 
     def _check_reset_options(self, options: Mapping | None) -> None:
         unknown = set(options or ()) - set(self.reset_option_keys)

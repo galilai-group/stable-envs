@@ -212,9 +212,6 @@ class RocketReplay:
         ):
             raise ValueError("Rocket seed must be None or a nonnegative int64")
         options = options or {}
-        # ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option, passed through as is.
-        if set(options) - {"variation", "randomize_drop", "accelerate_drop", "randoimize_drop"}:
-            raise ValueError("Unsupported Rocket reset option")
         selection = options.get("variation", [])
         if not isinstance(selection, (list, tuple)) or any(k not in ["all", *self.names] for k in selection):
             raise ValueError("Invalid Rocket Variation selection")

@@ -684,7 +684,7 @@ class _HiddenTargetSemantics:
 
     execution_mode = "NATIVE_TORCH"
     _step_outputs_owned = True
-    reset_option_keys = ("variation", "variation_values", "state", "target_state")
+    extra_reset_options = ("state", "target_state")
     STATE = TARGET_STATE
     STATE_FIELD_BOUNDS = {
         "agent/position": (POS_LO, POS_HI, ("agent_x", "agent_y")),
