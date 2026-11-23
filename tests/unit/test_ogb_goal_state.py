@@ -20,6 +20,8 @@ SCENE = ("qpos", "mocap_pos", "mocap_quat")
 
 
 def _frame(env, data):
+    if env._renderer is None:
+        env._initialize_renderer()
     env._renderer.update_scene(data, camera="front_pixels")
     return np.asarray(env._renderer.render())[..., :3].copy()
 
