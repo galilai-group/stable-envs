@@ -34,6 +34,7 @@
 | `step(actions)` | `(B, *A)` or `(B, T, *A)` | a [step result](../terms.md#step-result) with batch size `(B,)`, see [Step outputs](#step-outputs) |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
+| `source_info(state)` | State with batch size `(N,)` | the upstream info, a TensorDict with batch size `(N,)` |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
 | `get_variation()` | nothing | `(B, variation_dim)` float32 |
 | `set_variation(v)` | a dict of leaf values, or a `(variation_dim,)` or `(B, variation_dim)` row | `(B, variation_dim)` float32 |
@@ -125,6 +126,19 @@ Closing releases only what that environment owns. Rendering contexts that severa
 ::: stable_envs.env.Env.state
 
 ::: stable_envs.env.Env.set_state
+
+### Source info
+
+`source_info(state)` gives the info that the upstream library returns for each batch row of a state, with the upstream keys. It reads only the state, so it also works on a state that you saved or loaded. It is not `snv.info(name)`, which gives the registry metadata of a class. These classes compute it:
+
+| Class | Keys |
+|---|---|
+| `OGBCube`, `OGBScene` | The keys of OGBench's task mode: `proprio/...`, `privileged/...`, `prev_qpos`, `prev_qvel`, `qpos`, `qvel`, `control` and `time`, then `success` and `goal`, the goal observation. Upstream returns `success` only from `step` and `goal` only from `reset`; `source_info` returns both for every state. Scene also has `prev_button_states` and `button_states`. |
+| `PushT`, `PushTDiscrete` | The keys of diffusion_policy's PushT: `pos_agent`, `vel_agent`, `block_pose`, `goal_pose` and `n_contacts`. `goal_pose` comes from the goal leaves of the state's variation, as in the source. |
+
+The other classes raise `NotImplementedError`. Some of them return info in the task outputs of `step`.
+
+::: stable_envs.env.Env.source_info
 
 ## Specs
 

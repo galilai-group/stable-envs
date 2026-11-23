@@ -588,3 +588,10 @@ def pack_to_device(leaves, batch, device, batches=(), copies=None) -> TensorDict
         packed[plan.main :] = packed[: plan.main]
     parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
     return plan.build(parts, plan.node(batch, device))
+
+
+def host_arrays_tensordict(values: dict, batch: int, device) -> TensorDict:
+    """A TensorDict of new C-ordered copies of ``{key: (batch, ...) NumPy array}`` on ``device``."""
+    return TensorDict(
+        {key: torch.from_numpy(np.array(value, order="C")) for key, value in values.items()}, batch_size=[batch]
+    ).to(device)
