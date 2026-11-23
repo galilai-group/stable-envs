@@ -283,7 +283,7 @@ class DeviceClassicAdapter(SimulatorAdapter):
             seed = self._seed
         n = self.num_envs
         if seed is not None:
-            seeds = [row_seed(seed, i) for i in range(n)]
+            seeds = [int(row_seed(seed, i) or 0) for i in range(n)]
             if min(seeds) < 0 or max(seeds) >= 1 << 64:
                 raise ValueError(f"Row seeds must be non-negative integers below 2**64, got {seed}")
             state, inc = pcg.seed(np.asarray(seeds, np.uint64))
