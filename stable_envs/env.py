@@ -640,6 +640,31 @@ class Env:
             f"{type(self).__name__}.goal_render_state: this class has no goal configuration that a state can draw."
         )
 
+    def source_info(self, state: State) -> TensorDict:
+        """Return the info dict that the upstream library gives for each batch row of ``state``.
+
+        The keys are the upstream keys, such as ``"proprio/joint_pos"``. An upstream value of shape ``S`` is a
+        ``(N, *S)`` tensor on ``device``. The method reads only ``state``: it does not change the environment.
+        ``snv.info(name)`` is a different function: it returns the registry metadata of a class.
+
+        Args:
+            state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(N,)``.
+
+        Returns:
+            A TensorDict with batch size ``(N,)``.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class does not compute the upstream info from a state.
+            TypeError: If ``state`` is not a TensorDict State of the class.
+            ValueError: If a field of ``state`` is missing, misshaped or non-finite.
+        """
+        self._check_open("source_info")
+        raise NotImplementedError(
+            f"{type(self).__name__}.source_info: this class does not compute the upstream info from a state. "
+            "Read state fields with snv.get_field, or the task outputs of step."
+        )
+
     def render(self, x=None, **kwargs) -> torch.Tensor:
         """Draw uint8 RGB frames without advancing the simulation.
 

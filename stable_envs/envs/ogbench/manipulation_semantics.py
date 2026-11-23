@@ -45,6 +45,7 @@ class ManipulationSemantics:
     _render_style = None
     _rows_installed = False
     _own_state = None
+    _info_layout = None
 
     def __init__(
         self,
@@ -178,6 +179,22 @@ class ManipulationSemantics:
         for name, target in names:
             set_field(goal, target, get_field(state, "task/goal_scene/" + name))
         return self.to_render_state(goal, size=size, supersample=supersample)
+
+    def source_info(self, state):
+        """Return OGBench's task-mode info for each batch row of ``state``.
+
+        The keys are those of OGBench's ``compute_ob_info``, such as ``"proprio/effector_pos"`` and
+        ``"privileged/block_0_pos"``. Two more keys come from other upstream calls: ``"success"``, which upstream
+        returns only from ``step``, and ``"goal"``, the goal observation, which upstream returns only from
+        ``reset``. The ``"privileged/target_*"`` keys of OGBench's data-collection mode are not included.
+        """
+        from .simulation.info import InfoLayout, manipulation_info
+
+        self._check_open("source_info")
+        self._validate_state(state)
+        if self._info_layout is None:
+            self._info_layout = InfoLayout(self._simulator._meta)
+        return manipulation_info(self._info_layout, state, self.device)
 
     def _step(self, actions, *, active=None):
         self._check_open("step")
