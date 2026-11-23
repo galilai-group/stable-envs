@@ -516,7 +516,25 @@ class Compatibility:
         if not hasattr(self, "_prev_qpos"):
             self._prev_qpos = self.data.qpos.copy()
             self._prev_qvel = self.data.qvel.copy()
-        return super().initialize_episode()
+        self._observed_scene = None
+        result = super().initialize_episode()
+        # In task mode the last observation of initialize_episode is the goal observation, taken where OGBench
+        # draws its goal image.
+        if self._observed_scene is None:
+            raise RuntimeError("OGBench task mode computed no goal observation")
+        self.goal_scene = self._observed_scene
+        return result
+
+    def compute_observation(self):
+        self._observed_scene = self.scene_now()
+        return super().compute_observation()
+
+    def scene_now(self):
+        """``{name: array}`` of the drawn scene: ``qpos``, ``mocap_pos``, ``mocap_quat`` and Scene's ``button_states``."""
+        scene = {name: getattr(self._data, name).ravel().copy() for name in ("qpos", "mocap_pos", "mocap_quat")}
+        if self.family == "Scene":
+            scene["button_states"] = np.asarray(self._cur_button_states, np.int64).copy()
+        return scene
 
     def _cube_colors_from_variation(self):
         color = self.variation_space["cube"]["color"].value[0]
