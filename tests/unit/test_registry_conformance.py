@@ -132,10 +132,11 @@ def test_an_unknown_reset_option_raises_and_changes_nothing(name):
         # The next unseeded reset and step also see generators that the State does not hold. Classes whose
         # unseeded reset draws fresh entropy, as Roadster's source does, differ from a twin without the refused
         # call too, so a third env that never saw it decides whether the comparison holds.
-        for call in (lambda e: e.reset(), lambda e: e.step(after, frames=None)):
+        for what, call in (("reset", lambda e: e.reset()), ("step", lambda e: e.step(after, frames=None))):
             got, expected = call(env), call(twin)
-            if _same(expected, call(control)):
-                assert_same_state(got, expected)
+            if not _same(expected, call(control)):
+                pytest.skip(f"the unseeded {what} does not repeat across two envs, so the twin comparison can't hold")
+            assert_same_state(got, expected)
 
 
 def _same(first, second):
