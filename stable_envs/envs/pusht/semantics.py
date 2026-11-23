@@ -125,8 +125,7 @@ CUDA_RENDER_MIN_ROWS: int | None = 32  # RTX 3090 64, RTX A5000 32
 
 
 #: The State fields whose second axis is the action history, as key paths.
-_HISTORY_NAMES = ("history/actions", "history/dtypes", "history/valid")
-_HISTORY_WIDE = tuple(tuple(name.split("/")) for name in _HISTORY_NAMES)
+_HISTORY_WIDE = tuple(tuple(name.split("/")) for name in ("history/actions", "history/dtypes", "history/valid"))
 
 
 class PushT(Env):
@@ -143,7 +142,6 @@ class PushT(Env):
     simulation_backends: tuple[str, ...] = ("numba", "triton", "jax")
     extra_reset_options = ("state", "goal_state")
     state_solver_caches = ("current/jax",)
-    state_history_leaves = _HISTORY_NAMES
     row_seeds = True
     name = "push-t"
     reference_id = "swm/PushT-v1"
@@ -266,6 +264,12 @@ class PushT(Env):
             discrete_n=16 if self.discrete else None,
             device=self.device,
         )
+
+    @property
+    def state_history_leaves(self) -> tuple[str, ...]:
+        from .simulation.replay import HISTORY_KEYS
+
+        return tuple(sorted(HISTORY_KEYS))
 
     def _reset(self, seed=None, options=None):
         return self._simulator.reset(seed, options)

@@ -78,23 +78,25 @@ Returned states and frames own their memory, and later calls leave them unchange
 
 ## Some batch rows
 
-`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit. A selection of no row changes nothing: `reset` returns the State, and `step` returns outputs with every row held.
+`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit, up to the zero padding of the history leaves (`state_history_leaves`, such as the PushT action history). A selection of no row changes nothing: `reset` returns the State, and `step` returns outputs with every row held.
 
 ```python
-env = snv.TwoRoom(num_envs=4, device="cpu")
+env = snv.CartPole(num_envs=4, device="cpu")
 env.reset(seed=0)
-env.step(torch.zeros(4, 2), rows=[0, 2])                     # rows 1 and 3 keep their state
-env.reset(seed=[0, 7, 0, 9], rows=[False, True, False, True])  # new episodes in rows 1 and 3
+env.step(torch.zeros(4, dtype=torch.int64), rows=[0, 2])     # rows 1 and 3 keep their state
+env.reset(seed=7, rows=[False, True, False, True])            # rows 1 and 3 restart as in reset(seed=7)
+env.reset(seed=[None, 11, None, 12], rows=[1, 3])             # one seed for each row
 ```
 
-`reset` takes None, an int, or a list of `B` seeds, one for each row, also without `rows`. An int seed `s` gives row `i` the seed `s + i`. In a list, the entries for rows that `rows` does not select are ignored, and a row with None continues its random stream, as in `reset(seed=None)`. A list seeds each row in one of two ways:
+`reset` takes None, an int, or a list of `B` seeds, one for each row, also without `rows`:
 
-- A class with `row_seeds` (classic control, DM Control, Fetch, PushT, `PyFlytRocketLanding` and Craftax) seeds row `i` directly with its seed `s_i`, as a reset with the int seed `s_i - i` does. A list of seeds costs one full reset.
-- The other classes seed every row from one batch seed. Row `i` with seed `s` starts the episode that row `i` of `reset(seed=s - i)` starts, so `s` must be at least `i`, and a smaller seed raises `ValueError`. The reset costs one full reset for each different value of `s - i`. Seeds of the form `s + i` thus cost one full reset.
+- An int seed `s` gives row `i` the seed `s + i` on every class, with or without `rows`.
+- A list of seeds needs a class with `row_seeds`: classic control, DM Control, Fetch, PushT, `PyFlytRocketLanding` and Craftax. Another class raises `NotImplementedError`. A row with an int seed starts the episode that this seed starts, in one full reset. A row with None continues its random stream, as in `reset(seed=None)`. Entries for rows that `rows` does not select are ignored. A row seed must be an int in `[0, row_seed_limit)`: `2**32` for DM Control, `2**31` for Craftax and `2**63` for the others.
+- Per-row `variation_values` in `options` have `B` rows, also with `rows`. The rows that `rows` does not select are ignored.
 
-A reset with `rows` resets the full batch and copies the selected rows into the State and variation that it keeps. The rows without a seed reset first. A seeded reset with `rows` also reseeds the random streams of the other rows that the State does not hold, such as a sampler of the next reset.
+A reset with `rows` resets the full batch and copies the selected rows into the State and variation that it keeps; the rows without a seed reset first. A seeded reset with `rows` also reseeds the random streams of the other rows that the State does not hold, such as a sampler of the next reset. If a reset raises, the State and variation stay as they were.
 
-A row that `step` selects gets the state and task outputs of the same row in `step(actions)`. A row that it does not select is held like a row that finished: its `valid` entries are false and its task outputs are zero. A step with `rows` runs the step loop and not a family's fused sequence step, so a long sequence can cost more than without `rows`.
+A row that `step` selects gets the state and task outputs of the same row in `step(actions)`. A row that it does not select is held like a row that finished: its `valid` entries are false and its task outputs are zero. The actions of the other rows must still be valid: the DM Control classes check that every action is finite, and the MuJoCo Warp backend of `MSHumanLocomotion` steps every row and then restores the others, so an action of another row can still cause an error. The DM Control `mjwarp` and `mjx` backends raise `ValueError` for a step with `rows`. A step with `rows` runs the step loop and not a family's fused sequence step, so a long sequence can cost more than without `rows`.
 
 ## Construction
 

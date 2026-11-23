@@ -215,6 +215,8 @@ class DelegatedSemantics:
 
     #: Every simulation backend seeds row ``i`` from its own seed.
     row_seeds = True
+    #: dm_control seeds a ``np.random.RandomState``, which takes seeds below ``2**32``.
+    row_seed_limit = 2**32
 
     def _reset(self, seed=None, options=None):
         self.draw_reset_values(seed, options)

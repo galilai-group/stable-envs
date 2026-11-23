@@ -22,7 +22,7 @@ from tensordict import TensorDict
 
 from ...._core.config import log
 from ...._core.graph_step import GraphStep
-from ...._core.seeding import row_seed
+from ...._core.seeding import per_row
 from ...._core.tensordicts import build_tensordict, to_device
 from ...._execution.protocol import SimulatorAdapter
 from . import pcg
@@ -282,11 +282,14 @@ class DeviceClassicAdapter(SimulatorAdapter):
         if seed is None and self._rng is None:
             seed = self._seed
         n = self.num_envs
+        if per_row(seed):
+            state, inc = pcg.seed(np.asarray(seed, np.uint64))
+        elif seed is not None:
+            seed = int(seed)
+            if seed < 0 or seed + n > 1 << 64:
+                raise ValueError(f"Seed must be a non-negative integer below 2**64 - num_envs, got {seed}")
+            state, inc = pcg.seed(np.arange(n, dtype=np.uint64) + np.uint64(seed))
         if seed is not None:
-            seeds = [int(row_seed(seed, i) or 0) for i in range(n)]
-            if min(seeds) < 0 or max(seeds) >= 1 << 64:
-                raise ValueError(f"Row seeds must be non-negative integers below 2**64, got {seed}")
-            state, inc = pcg.seed(np.asarray(seeds, np.uint64))
             zero = np.zeros(n, np.int64)
             self._rng = (state, inc, zero, zero)
         assert self._rng is not None

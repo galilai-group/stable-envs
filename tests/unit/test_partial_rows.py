@@ -106,79 +106,102 @@ class RowSeeded(Seeded):
 
 
 @pytest.mark.parametrize("cls", [Seeded, RowSeeded])
-def test_reset_with_rows_matches_reset_and_keeps_other_rows(cls):
+def test_int_seed_with_rows_matches_reset_and_keeps_other_rows(cls):
     env, ref = cls(), cls()
     options = {"variation": ["block.color"]}
     before = env.reset(seed=1, options=options)
     color = env.get_variation().clone()
-    seeds = [None, 40, None, 9]
-    state = env.reset(seeds, options, rows=[False, True, False, True])
+    state = env.reset(40, options, rows=[False, True, False, True])
     _rows_equal(state, before, [0, 2])
     _rows_equal(env.get_variation(), color, [0, 2])
-    for i in (1, 3):
-        _rows_equal(state, ref.reset(seed=seeds[i] - i, options=options), [i])
-        _rows_equal(env.get_variation(), ref.get_variation(), [i])
+    _rows_equal(state, ref.reset(seed=40, options=options), [1, 3])
+    _rows_equal(env.get_variation(), ref.get_variation(), [1, 3])
     _rows_equal(env.get_state(), state, slice(None))
-
-
-@pytest.mark.parametrize("cls", [Seeded, RowSeeded])
-def test_reset_with_rows_int_seed_and_every_row_equal_reset(cls):
-    env, ref = cls(), cls()
-    _rows_equal(env.reset([7, 8, 9, 10]), ref.reset(seed=7), slice(None))
-    env.reset(seed=0)
     _rows_equal(env.reset(7, rows=np.ones(4, bool)), ref.reset(seed=7), slice(None))
+    _rows_equal(env.reset(5, rows=torch.tensor([3, 0])), ref.reset(seed=5), [0, 3])
+
+
+def test_per_row_seeds_need_row_seeds():
+    env = Seeded()
     env.reset(seed=0)
-    _rows_equal(env.reset(7, rows=[2]), ref.reset(seed=7), [2])
-    _rows_equal(env.reset([5, 0, 0, 8], rows=torch.tensor([3, 0])), ref.reset(seed=5), [0, 3])
+    held = env.get_state()
+    with pytest.raises(NotImplementedError, match="per-row seeds need row_seeds; pass an int seed"):
+        env.reset([0, 1, 2, 3])
+    with pytest.raises(NotImplementedError, match="per-row seeds need row_seeds"):
+        env.reset([0, 1, 2, 3], rows=[1])
+    _rows_equal(env.get_state(), held, slice(None))
 
 
-@pytest.mark.parametrize("cls", [Seeded, RowSeeded])
-def test_unseeded_rows_continue_the_stream_before_the_seeded_reset(cls):
-    env, ref = cls(), cls()
+def test_row_seeds_match_a_one_row_reset_with_that_seed():
+    env = RowSeeded()
+    options = {"variation": ["block.color"]}
+    env.reset(seed=1, options=options)
+    before, color = env.get_state(), env.get_variation().clone()
+    seeds = [0, 0, None, 1234]
+    state = env.reset(seeds, options, rows=[0, 1, 3])
+    for i in (0, 1, 3):
+        one = RowSeeded(1)
+        _rows_equal(state[i : i + 1], one.reset(seed=seeds[i], options=options), [0])
+        _rows_equal(env.get_variation()[i : i + 1], one.get_variation(), [0])
+    _rows_equal(state, before, [2])
+    _rows_equal(env.get_variation(), color, [2])
+
+
+def test_unseeded_rows_continue_the_stream_before_the_seeded_reset():
+    env, ref = RowSeeded(), RowSeeded()
     env.reset(seed=1)
     ref.reset(seed=1)
     state = env.reset([7, None, 9, None])
     _rows_equal(state, ref.reset(seed=None), [1, 3])
-    ref.reset(seed=1)
-    _rows_equal(state, ref.reset(seed=[7, 0, 9, 0] if cls.row_seeds else 7), [0, 2])
 
 
-def test_row_seeds_take_each_row_seed_directly():
-    env, ref = RowSeeded(), RowSeeded()
-    state = env.reset([0, 0, 0, 0])
-    for i in range(4):
-        _rows_equal(state[i : i + 1].expand(4), ref.reset(seed=0), [0])
-
-
-def test_one_batch_seed_needs_seeds_of_at_least_the_row_index():
-    env = Seeded()
+def test_reset_checks_its_arguments():
+    env = RowSeeded()
     env.reset(seed=0)
     held = env.get_state()
-    with pytest.raises(ValueError, match=r"rows \[2, 3\] have smaller seeds"):
-        env.reset([0, 1, 0, 0])
-    _rows_equal(env.get_state(), held, slice(None))
-
-
-def test_reset_with_rows_checks_its_arguments():
-    env = Seeded()
-    env.reset(seed=0)
     with pytest.raises(ValueError, match="mask needs shape"):
         env.reset(0, rows=np.ones(3, bool))
     with pytest.raises(ValueError, match="row indices"):
         env.reset(0, rows=[4])
     with pytest.raises(ValueError, match="one entry per row"):
         env.reset([1, 2], rows=[0])
-    held = env.get_state()
+    for bad in ([0, -1, 0, 0], [0, 1.5, 0, 0], [0, True, 0, 0], [0, 2**63, 0, 0]):
+        with pytest.raises(ValueError, match="a row seed must be"):
+            env.reset(bad)
+    for bad in (1.0, np.array(3), torch.tensor(3), True):
+        with pytest.raises(ValueError, match="seed must be None, an int"):
+            env.reset(bad)
+    _rows_equal(env.get_state(), held, slice(None))
     _rows_equal(env.reset(3, rows=np.zeros(4, bool)), held, slice(None))
+
+
+def test_a_reset_that_raises_keeps_the_state_and_variation():
+    class Failing(RowSeeded):
+        fail = False
+
+        def _reset(self, seed=None, options=None):
+            out = super()._reset(seed, options)
+            if self.fail and seed is not None:
+                raise RuntimeError("reset failed")
+            return out
+
+    env = Failing()
+    env.reset(seed=1, options={"variation": ["block.color"]})
+    before, color = env.get_state(), env.get_variation().clone()
+    env.fail = True
+    with pytest.raises(RuntimeError, match="reset failed"):
+        env.reset([None, 5, None, 6], rows=[0, 1, 3])
+    _rows_equal(env.get_state(), before, slice(None))
+    _rows_equal(env.get_variation(), color, slice(None))
 
 
 def test_reset_with_rows_keeps_the_default_variation_flag():
     env = Seeded()
     env.reset(seed=0)
-    env.reset([0, 5, 0, 0], rows=[1])
+    env.reset(5, rows=[1])
     assert env._variation_is_default
     env.reset(seed=0, options={"variation": ["block.color"]})
-    env.reset([0, 5, 0, 0], rows=[1])
+    env.reset(5, rows=[1])
     assert not env._variation_is_default
 
 
@@ -226,6 +249,15 @@ FAMILIES = [
     ),
     pytest.param("CartPole", {}, None, marks=pytest.mark.family("classic"), id="CartPole"),
     pytest.param("DMCReacher", {}, _physics_options, marks=pytest.mark.family("dmc"), id="DMCReacher"),
+    pytest.param("FetchReach", {}, None, marks=pytest.mark.family("fetch"), id="FetchReach"),
+    pytest.param("CraftaxClassicSymbolic", {}, None, marks=pytest.mark.family("craftax"), id="Craftax"),
+    pytest.param(
+        "PyFlytRocketLanding",
+        {"simulation_backend": "numba"},
+        None,
+        marks=pytest.mark.family("rocket"),
+        id="PyFlytRocketLanding",
+    ),
 ]
 STEP_FAMILIES = [
     *FAMILIES,
@@ -286,7 +318,7 @@ def test_family_step_rows_matches_full_step(name, kwargs, options, length, devic
 
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name,kwargs,options", FAMILIES)
-def test_family_reset_with_rows_matches_reset(name, kwargs, options, device):
+def test_family_int_seed_with_rows_matches_reset(name, kwargs, options, device):
     rng = np.random.default_rng(1)
     with (
         snv.make(name, num_envs=5, device=device, **kwargs) as env,
@@ -299,19 +331,17 @@ def test_family_reset_with_rows_matches_reset(name, kwargs, options, device):
             env.step(_actions(env, rng), frames=None)
         before, variation = env.get_state(), env.get_variation().clone()
         rows = torch.tensor([False, True, False, True, True])
-        seeds = [None, 41, None, 7, 1000]
-        state = env.reset(seeds, rows=rows, **reset)
+        state = env.reset(41, rows=rows, **reset)
         _rows_equal(state, before, ~rows, history)
         _rows_equal(env.get_variation(), variation, ~rows)
+        ref.set_variation(variation)
+        ref.set_state(before)
+        _rows_equal(state, ref.reset(seed=41, **reset), rows, history)
+        _rows_equal(env.get_variation(), ref.get_variation(), rows)
         actions = [_actions(env, rng) for _ in range(HORIZON)]
         after = _rollout(env, actions)
-        for i in np.flatnonzero(rows.numpy()):
-            ref.set_variation(variation)
-            ref.set_state(before)
-            _rows_equal(state, ref.reset(seed=seeds[i] - i, **reset), [i], history)
-            _rows_equal(env.get_variation(), ref.get_variation(), [i])
-            for got, expected in zip(after, _rollout(ref, actions), strict=True):
-                _rows_equal(got, expected, [i], history)
+        for got, expected in zip(after, _rollout(ref, actions), strict=True):
+            _rows_equal(got, expected, rows, history)
         ref.set_variation(variation)
         ref.set_state(before)
         for got, expected in zip(after, _rollout(ref, actions), strict=True):
@@ -320,22 +350,62 @@ def test_family_reset_with_rows_matches_reset(name, kwargs, options, device):
 
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name,kwargs,options", FAMILIES)
-def test_family_per_row_seeds(name, kwargs, options, device):
-    with (
-        snv.make(name, num_envs=5, device=device, **kwargs) as env,
-        snv.make(name, num_envs=5, device=device, **kwargs) as ref,
-    ):
+def test_family_per_row_seeds_match_a_one_row_reset(name, kwargs, options, device):
+    rng = np.random.default_rng(4)
+    with snv.make(name, num_envs=5, device=device, **kwargs) as env:
+        history = env.state_history_leaves
+        reset = _reset_kwargs(env, options)
+        env.reset(seed=3, **reset)
+        seeds = [7, None, 0, 7, 2**20]
+        if not env.row_seeds:
+            with pytest.raises(NotImplementedError, match="per-row seeds need row_seeds"):
+                env.reset(seeds, **reset)
+            return
+        before = env.get_state()
+        state = env.reset(seeds, rows=[0, 2, 3, 4], **reset)
+        _rows_equal(state, before, [1], history)
+        actions = [_actions(env, rng) for _ in range(20)]
+        after = _rollout(env, actions)
+        for i in (0, 2, 3, 4):
+            with snv.make(name, num_envs=1, device=device, **kwargs) as one:
+                _rows_equal(state[i : i + 1], one.reset(seed=seeds[i], **reset), [0], history)
+                _rows_equal(env.get_variation()[i : i + 1], one.get_variation(), [0])
+                for got, action in zip(after, actions, strict=True):
+                    expected = one.step(action[i : i + 1], states=None, frames=None)["state"]
+                    _rows_equal(got[i : i + 1], expected, [0], history)
+
+
+@pytest.mark.parametrize("name,kwargs,options", [p for p in FAMILIES if p.id == "PushT"])
+def test_a_row_without_a_seed_resets_with_its_own_stream(name, kwargs, options):
+    with snv.make(name, num_envs=5, device="cpu", **kwargs) as env:
         history = env.state_history_leaves
         env.reset(seed=3)
-        ref.reset(seed=3)
-        seeds = [7, None, 0, None, 2]
-        if not env.row_seeds:
-            with pytest.raises(ValueError, match="smaller seeds"):
-                env.reset(seeds)
-            return
-        # A row without a seed takes fresh entropy in some families, so only the seeded rows compare.
-        state = env.reset(seeds)
-        for i in (0, 2, 4):
-            ref.reset(seed=3)
-            again = ref.reset([s if k == i else None for k, s in enumerate(seeds)], rows=[i])
-            _rows_equal(state, again, [i], history)
+        before = env.get_state()
+        state = env.reset([None, 5, None, None, None], rows=[0, 1])
+        _rows_equal(state, before, [2, 3, 4], history)
+        with snv.make(name, num_envs=1, device="cpu", **kwargs) as one:
+            _rows_equal(state[1:2], one.reset(seed=5), [0], history)
+
+
+@pytest.mark.family("navigation")
+def test_frames_after_partial_reset_and_step():
+    rng = np.random.default_rng(5)
+    with (
+        snv.make("TwoRoom", num_envs=4, device="cpu", simulation_backend="numba") as env,
+        snv.make("TwoRoom", num_envs=4, device="cpu", simulation_backend="numba") as ref,
+    ):
+        env.reset(seed=3)
+        before = env.get_state()
+        rows = torch.tensor([True, False, True, False])
+        env.reset(9, rows=rows)
+        ref.set_state(before)
+        ref.reset(seed=9)
+        _rows_equal(env.render(), ref.render(), rows)
+        _rows_equal(env.render(), ref.render(before), ~rows)
+        before = env.get_state()
+        ref.set_state(before)
+        actions = _actions(env, rng)
+        out = env.step(actions, rows=rows, frames=slice(-1, None))
+        full = ref.step(actions, frames=slice(-1, None))
+        _rows_equal(out["frames"][:, -1], full["frames"][:, -1], rows)
+        _rows_equal(out["frames"][:, -1], env.render(before), ~rows)

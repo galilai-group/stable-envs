@@ -32,6 +32,8 @@ class CraftaxEnv(Env):
 
     family = "craftax"
     row_seeds = True
+    #: Row seeds below ``2**31`` give the threefry keys ``[0, seed]`` directly.
+    row_seed_limit = 2**31
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
