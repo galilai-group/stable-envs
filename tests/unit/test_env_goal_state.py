@@ -1,4 +1,4 @@
-"""``Env.goal_state`` of a class without a goal configuration."""
+"""``Env.goal_render_state`` of a class without a goal configuration."""
 
 from __future__ import annotations
 
@@ -20,14 +20,14 @@ class Rows(Env):
         return Dict({})
 
 
-def test_base_goal_state_raises_not_implemented_with_the_class_name():
+def test_base_goal_render_state_raises_not_implemented_with_the_class_name():
     env = Rows(num_envs=2, device="cpu")
-    with pytest.raises(NotImplementedError, match=r"Rows\.goal_state: this class has no goal configuration"):
-        env.goal_state(env._unpack_render_state(torch.zeros(2, 2)))
+    with pytest.raises(NotImplementedError, match=r"Rows\.goal_render_state: this class has no goal configuration"):
+        env.goal_render_state(env._unpack_render_state(torch.zeros(2, 2)))
 
 
-def test_goal_state_of_a_closed_env_raises_runtime_error():
+def test_goal_render_state_of_a_closed_env_raises_runtime_error():
     env = Rows(num_envs=1, device="cpu")
     env.close()
     with pytest.raises(RuntimeError, match="closed"):
-        env.goal_state(None)
+        env.goal_render_state(None)

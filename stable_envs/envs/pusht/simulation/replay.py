@@ -7,23 +7,46 @@ from importlib.metadata import version
 import numpy as np
 
 from ...._core.space_nodes import nodes
-from .contacts import ContactSegments, capture_contacts
+from .contacts import ContactSegments
 from .numeric import (
-    body_fields,
-    body_row,
     capture,
     decode_rng,
     decode_seed,
+    drawn_scene,
     encode_rng,
     encode_seed,
     episode_fields,
     get_value,
+    goal_anchor,
     install_rng,
     put_value,
     rng_of,
     rng_view,
 )
 from .task import PushT, PushTDiscrete
+
+
+class _GoalScene:
+    """Records the scene that the source reset draws as its goal image.
+
+    The source reset calls ``_set_state(goal_state)``, which sets the bodies and steps the space once, then
+    ``_set_goal_state(goal_state)``, then draws ``_goal``. The scene at ``_set_goal_state`` is the drawn one.
+    """
+
+    goal_scene: dict | None = None
+
+    def _set_goal_state(self, goal_state):
+        super()._set_goal_state(goal_state)
+        self.goal_scene = drawn_scene(self)
+
+
+class GoalPushT(_GoalScene, PushT):
+    pass
+
+
+class GoalPushTDiscrete(_GoalScene, PushTDiscrete):
+    pass
+
 
 ACTION_DTYPES = (np.dtype("float32"), np.dtype("float64"), np.dtype("int32"), np.dtype("int64"))
 HISTORY_KEYS = {"history/actions", "history/dtypes", "history/valid"}
@@ -124,7 +147,7 @@ class PushTReplay:
             raise ValueError("PushT resolution must be a positive integer")
         if any(type(self.config[k]) is not bool for k in ("render_action", "with_target")):
             raise ValueError("PushT render flags must be bool")
-        self.env = (PushTDiscrete if self.discrete else PushT)(**self.config) if engine is None else engine
+        self.env = (GoalPushTDiscrete if self.discrete else GoalPushT)(**self.config) if engine is None else engine
         self.length = 0
         self._actions = np.zeros((0, 2), np.float64)
         self._codes = np.zeros(0, np.uint8)
@@ -166,6 +189,7 @@ class PushTReplay:
         self.anchor = dict(metadata)
         self.anchor["start"] = np.asarray(start, np.float64).copy()
         put_value(self.anchor, "goal", self.env.goal_state)
+        self.anchor.update(goal_anchor(self.env.goal_scene))
         self.anchor["latest_present"] = np.array(self.env.latest_action is not None, np.bool_)
         put_value(
             self.anchor,
@@ -375,22 +399,10 @@ class PushTReplay:
                         if not node.contains(get_value(state, prefix + "/variation" + path + "/" + label)):
                             raise ValueError("PushT Variation value outside source space")
 
-    def reconstruct_anchor(self, state, on_goal=None):
-        """A new engine reset from the ``anchor/...`` fields of a State row.
-
-        ``on_goal(env)``, when given, runs inside the reset right after the source sets the goal state, which is
-        the scene that the source draws as its goal image.
-        """
+    def reconstruct_anchor(self, state):
+        """A new engine reset from the ``anchor/...`` fields of a State row."""
         target = type(self)(discrete=self.discrete, config=self.config, initialize=False)
         anchor = {k.removeprefix("anchor/"): v.copy() for k, v in state.items() if k.startswith("anchor/")}
-        if on_goal is not None:
-            set_goal = target.env._set_goal_state
-
-            def _set_goal_state(goal_state):
-                set_goal(goal_state)
-                on_goal(target.env)
-
-            target.env._set_goal_state = _set_goal_state
         try:
             values = {}
             for path, node in nodes(target.env.variation_space):
@@ -419,24 +431,13 @@ class PushTReplay:
             target.close()
             raise
 
-    def goal_fields(self, state):
-        """The ``current`` fields of the scene that the source reset draws as its goal image.
-
-        ``state`` holds the ``anchor/...`` fields of a State row. The fields are the bodies, the observation, the
-        contacts and the contact segments right after the reset sets the goal state and steps the space once, and
-        the latest action at the reset, which the action marker draws.
-        """
-        fields = {}
-
-        def on_goal(env):
-            fields.update((k, np.array(v[0])) for k, v in body_fields(np.array([body_row(env)], np.float64)).items())
-            fields["contacts"] = np.array(env.n_contact_points, np.int64)
-            fields["render_segments"], fields["render_segment_count"] = capture_contacts(env.space)
-
-        self.reconstruct_anchor(state, on_goal=on_goal).close()
-        for key in ("latest_present", "latest/value", "latest/type"):
-            fields[key] = np.array(state["anchor/" + key], copy=True)
-        return fields
+    def goal_scene(self, state):
+        """The full ``drawn_scene`` of the goal image of a State row, from the reset that its ``anchor/...`` fields give."""
+        target = self.reconstruct_anchor(state)
+        try:
+            return target.env.goal_scene
+        finally:
+            target.close()
 
     def reconstruct(self, state):
         self.validate(state)

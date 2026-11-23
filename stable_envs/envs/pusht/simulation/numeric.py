@@ -490,6 +490,33 @@ def geometry_columns(owners, shapes=None):
     }
 
 
+#: Contact segments that the State keeps of the goal scene; a goal scene with more is drawn again from the reset.
+GOAL_SEGMENTS = 16
+#: The body fields that the renderer reads.
+DRAWN_BODY = ("position", "angle", "center_of_gravity")
+
+
+def drawn_scene(env, collector=None):
+    """The fields of the scene now that the renderer reads: both bodies' poses and all contact segments."""
+    from .contacts import capture_contacts
+
+    bodies = body_fields(np.array([body_row(env)], np.float64))
+    result = {
+        f"{name}/{field}": np.array(bodies[f"body/{name}/{field}"][0])
+        for name in ("agent", "block")
+        for field in DRAWN_BODY
+    }
+    result["render_segments"], result["render_segment_count"] = capture_contacts(env.space, collector)
+    return result
+
+
+def goal_anchor(scene):
+    """The ``goal_scene/...`` anchor fields of a ``drawn_scene``: its contact segments cut to ``GOAL_SEGMENTS``."""
+    fields = {"goal_scene/" + key: value for key, value in scene.items() if key != "render_segments"}
+    fields["goal_scene/render_segments"] = scene["render_segments"][:GOAL_SEGMENTS].copy()
+    return fields
+
+
 def capture(env, collector=None, episode=None):
     """Return the ``current`` state fields of ``env`` in export order.
 

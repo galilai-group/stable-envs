@@ -7,7 +7,7 @@ import torch
 from tensordict import TensorDict, TensorDictBase
 
 from ... import tuning
-from ..._core.state_schema import schema_of
+from ..._core.state_schema import get_field, schema_of, set_field
 from ..._execution import host_render
 from ..._execution.backends import BackendPair
 from ..._execution.protocol import StepPipeline, step_pipeline
@@ -278,28 +278,41 @@ class PushT(Env):
     def _step(self, actions, *, active=None):
         return self._simulator.step(actions, active=active)
 
-    def goal_state(self, state):
-        """Return ``state`` with the scene that the source reset draws as its goal image.
+    def goal_render_state(self, state):
+        """Return a RenderState of the source's goal image for each batch row of ``state``.
 
-        The source reset puts the agent and the block at the goal state, steps the physics once and draws. For each
-        batch row, a source environment repeats that reset from the reset fields of ``state``, and the bodies,
-        contacts and action marker of the result are the ones at that point. The other fields, such as the
-        variation, stay as they are in ``state``.
+        The source reset puts the agent and the block at the goal state, steps the physics once and draws its goal
+        image. The reset records that scene, and the State keeps it in ``anchor/goal_scene/...``: the drawn body
+        fields and up to ``GOAL_SEGMENTS`` contact segments. The RenderState holds it in the drawn fields, with the
+        action marker of the reset. A row whose goal scene has more contact segments is drawn again from its reset
+        fields on a CPU source environment. ``render`` draws the result, and ``set_state`` refuses it.
         """
-        from ..._core.state_schema import get_field, set_field
+        from .simulation.numeric import DRAWN_BODY, GOAL_SEGMENTS
 
-        self._check_open("goal_state")
-        schema = schema_of(state)
-        names = schema.names if schema is not None else ["/".join(key) for key in state.keys(True, True)]
-        anchor = {name: get_field(state, name).detach().cpu().numpy() for name in names if name.startswith("anchor/")}
-        template = self._simulator.template
-        rows = [template.goal_fields({k: v[i] for k, v in anchor.items()}) for i in range(int(state.batch_size[0]))]
+        self._check_open("goal_render_state")
+        schema = schema_of(state) if isinstance(state, TensorDictBase) else None
+        if schema is None or schema.name != "PushT":
+            raise TypeError(f"{type(self).__name__}.goal_render_state needs a full PushT State")
         goal = state.clone()
-        if not rows:
-            return goal
-        for key in rows[0]:
-            set_field(goal, "current/" + key, torch.from_numpy(np.stack([row[key] for row in rows])))
-        return goal
+        get = lambda name: get_field(state, name)  # noqa: E731
+        for name in ("agent", "block"):
+            for field in DRAWN_BODY:
+                set_field(goal, f"current/body/{name}/{field}", get(f"anchor/goal_scene/{name}/{field}"))
+        for key in ("latest_present", "latest/value", "latest/type"):
+            set_field(goal, "current/" + key, get("anchor/" + key))
+        count = get("anchor/goal_scene/render_segment_count").clone()
+        segments = torch.zeros_like(get("current/render_segments"))
+        segments[:, :GOAL_SEGMENTS] = get("anchor/goal_scene/render_segments")
+        over = torch.nonzero(count > GOAL_SEGMENTS).reshape(-1).tolist()
+        if over:
+            anchor = {name: get(name).cpu().numpy() for name in schema.names if name.startswith("anchor/")}
+            for i in over:
+                scene = self._simulator.template.goal_scene({k: v[i] for k, v in anchor.items()})
+                segments[i] = torch.from_numpy(scene["render_segments"]).to(segments.device)
+                count[i] = int(scene["render_segment_count"])
+        set_field(goal, "current/render_segments", segments)
+        set_field(goal, "current/render_segment_count", count)
+        return self.to_render_state(goal)
 
     def _host_step(self, actions, move):
         """One step on the Numba host physics: ``move`` builds the result from its host arrays; None elsewhere.
