@@ -16,6 +16,12 @@ pytestmark = pytest.mark.unit
 
 #: Steps that the family tests run after a partial reset or step.
 HORIZON = 50
+DEVICES = [
+    "cpu",
+    pytest.param(
+        "cuda", marks=[pytest.mark.gpu, pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA")]
+    ),
+]
 
 
 def _mask(rows, batch):
@@ -244,13 +250,14 @@ def _rollout(env, actions):
     return [env.step(action, states=None, frames=None)["state"] for action in actions]
 
 
+@pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name,kwargs,options", STEP_FAMILIES)
 @pytest.mark.parametrize("length", [None, 3])
-def test_family_step_rows_matches_full_step(name, kwargs, options, length):
+def test_family_step_rows_matches_full_step(name, kwargs, options, length, device):
     rng = np.random.default_rng(0)
     with (
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as env,
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as ref,
+        snv.make(name, num_envs=5, device=device, **kwargs) as env,
+        snv.make(name, num_envs=5, device=device, **kwargs) as ref,
     ):
         history = env.state_history_leaves
         env.reset(seed=3)
@@ -277,12 +284,13 @@ def test_family_step_rows_matches_full_step(name, kwargs, options, length):
         assert not out["valid"].any()
 
 
+@pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name,kwargs,options", FAMILIES)
-def test_family_reset_with_rows_matches_reset(name, kwargs, options):
+def test_family_reset_with_rows_matches_reset(name, kwargs, options, device):
     rng = np.random.default_rng(1)
     with (
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as env,
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as ref,
+        snv.make(name, num_envs=5, device=device, **kwargs) as env,
+        snv.make(name, num_envs=5, device=device, **kwargs) as ref,
     ):
         history = env.state_history_leaves
         reset = _reset_kwargs(env, options)
@@ -310,11 +318,12 @@ def test_family_reset_with_rows_matches_reset(name, kwargs, options):
             _rows_equal(got, expected, ~rows, history)
 
 
+@pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name,kwargs,options", FAMILIES)
-def test_family_per_row_seeds(name, kwargs, options):
+def test_family_per_row_seeds(name, kwargs, options, device):
     with (
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as env,
-        snv.make(name, num_envs=5, device="cpu", **kwargs) as ref,
+        snv.make(name, num_envs=5, device=device, **kwargs) as env,
+        snv.make(name, num_envs=5, device=device, **kwargs) as ref,
     ):
         history = env.state_history_leaves
         env.reset(seed=3)
