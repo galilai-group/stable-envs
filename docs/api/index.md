@@ -21,6 +21,7 @@ print(snv.get_config())  # {'verbose': 'WARNING', 'default_device': 'auto'}
 | `snv.info(name)` | Read class metadata without building anything. |
 | `snv.import_errors()` | Say why a family didn't register. |
 | `snv.get_field(state, name)`, `snv.set_field(state, name, value)`, `snv.schema_of(state)` | Read or write one named field of a State, also of a folded State, and find the schema of a folded State. |
+| `snv.Fields(state)` | Read the fields of a State as attributes, such as `Fields(state).agent.position`. |
 | `snv.set(...)`, `snv.get_config()` | Change and read the log level and the default device. |
 | `snv.FrameLoader(env, states, batch_size)` | Give the frames of stored states a batch at a time, drawn ahead in large `render` calls. |
 | `snv.tune(env)` | Measure the fastest tuning setting values for an environment's render path. |
@@ -56,6 +57,16 @@ Some families fold their State: the fixed-shape fields go into a few `(N, size)`
 ::: stable_envs.set_field
 
 ::: stable_envs.schema_of
+
+`snv.Fields(state)` reads the same fields as attributes. `Fields(state).agent.position` is the field whose name ends with `agent/position`, for example `current/body/agent/position`, as `snv.get_field` returns it. If more than one field name ends with the chain, `Fields` raises `ValueError` and lists the names; add more parts to the chain. `Fields` reads only the State. It does not write; use `snv.set_field`.
+
+```python
+fields = snv.Fields(env.reset(seed=0))
+fields.agent.position       # (num_envs, 2), the field current/body/agent/position
+fields["target.position"]   # a chain with parts joined by "." or "/"
+```
+
+::: stable_envs.Fields
 
 ## Global settings
 

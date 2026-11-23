@@ -20,6 +20,7 @@ from ._core.cpus import limit_thread_defaults as _limit_thread_defaults  # noqa:
 from ._core.numba_cache import install as _install_numba_cache  # noqa: E402
 from ._core.state_schema import get_field, schema_of, set_field  # noqa: E402,F401
 from .env import Env, State, StepResult, VariationLike  # noqa: E402,F401
+from .fields import Fields  # noqa: E402,F401
 from .frames import FrameLoader  # noqa: E402,F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: E402,F401
 from .registry import make as _make  # noqa: E402
@@ -97,6 +98,7 @@ __all__ = [
     "get_field",
     "set_field",
     "schema_of",
+    "Fields",
     "info",
     "list_envs",
     "list_families",
