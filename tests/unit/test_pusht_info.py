@@ -32,7 +32,8 @@ def test_source_info_of_stepped_source_states_equals_source_info(seed):
     replay = PushTReplay(seed=seed)
     env = snv.PushT(num_envs=1, device="cpu")
     try:
-        schema = snv.schema_of(env.reset(seed=seed))
+        base = env.reset(seed=seed)
+        schema = snv.schema_of(base)
         source = replay.env
         contacts = 0
         for _ in range(60):
@@ -41,6 +42,8 @@ def test_source_info_of_stepped_source_states_equals_source_info(seed):
             info = replay.step(action)[4]
             values = {k: torch.as_tensor(np.asarray(v))[None] for k, v in replay.get_state().items()}
             values.pop("current/goal_image")
+            # The Numba State also keeps a contact cache of the batched solver, which the source has not.
+            values.update({name: snv.get_field(base, name) for name in schema.names if name not in values})
             got = env.source_info(schema.fold(values, [1]))
             _same({k: got[k][0].numpy() for k in KEYS}, info)
             contacts += info["n_contacts"]
