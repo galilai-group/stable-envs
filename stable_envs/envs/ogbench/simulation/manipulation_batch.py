@@ -21,7 +21,18 @@ from .compatibility import (
     compiled_fields,
     compiled_key,
 )
-from .manipulation import FLAGS, PCG_KEYS, OGBManipulationAdapter, field, groups_of, site_ids, state_schema
+from .manipulation import (
+    DYNAMIC_FIELDS,
+    FLAGS,
+    PCG_KEYS,
+    SCENE_DYNAMIC_FIELDS,
+    OGBManipulationAdapter,
+    field,
+    groups_of,
+    site_ids,
+    state_schema,
+    sync_dynamic,
+)
 from .manipulation_control import BatchController
 from .pcg import pcg_decode, pcg_encode
 
@@ -336,27 +347,15 @@ class OGBManipulationBatchAdapter:
 
         ``rows`` selects some environments; the others stay as they are.
         """
-        spec = mujoco.mjtState.mjSTATE_INTEGRATION
-        pad = "ur5e/robotiq/right_pad"
         for i in range(len(envs)) if rows is None else rows:
-            env = envs[i]
-            env._prev_qpos, env._prev_qvel = self._prev_qpos[i].copy(), self._prev_qvel[i].copy()
-            env._success = bool(self._success[i, 0])
-            if self.family == "Scene":
-                env._cur_button_states = self._buttons_now[i].copy()
-                env._prev_button_states = self._buttons_before[i].copy()
-                env._target_button_states = self._buttons_goal[i].copy()
-                env._apply_button_states()
-            env.np_random.bit_generator.state = pcg_decode({key: value[i] for key, value in self._env_rng.items()})
-            for _ in range(2):
-                mujoco.mj_setState(env.model, env.data, self.b.state[i], spec)
-                mujoco.mj_forward(env.model, env.data)
-            mujoco.mj_setState(env.model, env.data, self.b.state[i], spec)
-            env.data.site_xpos[self._pos_sites] = self._site_xpos[i]
-            env.data.site_xmat[self._rot_sites] = self._site_xmat[i]
-            env.data.body(pad).cfrc_ext[:] = self._gripper_force[i]
+            sync_dynamic(envs[i], self._row_values(i), self.b.state[i])
         if rows is None:
             self._stale = False
+
+    def _row_values(self, i):
+        """``{name: value}`` of environment ``i``'s fields that ``sync_dynamic`` reads, as copies."""
+        names = DYNAMIC_FIELDS + (SCENE_DYNAMIC_FIELDS if self.family == "Scene" else ())
+        return {name: self.schema.get(self._live, name)[i].copy() for name in names}
 
     def _check_open(self):
         if self._closed:
@@ -434,35 +433,21 @@ class OGBManipulationBatchAdapter:
     def set_task(self, tasks):
         """Draw data-collection targets for the environments whose entry of ``tasks`` is ``(seed,)``, not None.
 
-        Each selected environment's OGBench object takes the State that the batch advanced, draws its target,
-        and gives back its fields. The other environments do not change. With worker processes, an object built
-        in this process from the environment's State draws the target, and the workers take the State at the next
-        reset or configuration.
+        The OGBench object of each selected environment, in this process or in its worker, takes the step fields
+        that the batch advanced, draws its target and gives back its fields. The other environments do not change.
         """
         self._check_open()
         rows = [i for i, task in enumerate(tasks) if task is not None]
         if not rows:
             return
-        values = []
+        draws = [None] * self.num_envs
+        for i in rows:
+            draws[i] = (self._row_values(i), self.b.state[i].copy(), tasks[i][0])
         if isinstance(self.instances, OGBManipulationAdapter):
-            envs = self.instances.envs
-            self._sync_envs(envs, rows)
-            for i in rows:
-                envs[i].set_task(*tasks[i])
-            self.instances._forget_static([envs[i] for i in rows])
-            values = [self.instances._values(envs[i]) for i in rows]
+            values = self.instances.draw_targets(draws)
         else:
-            meta, current = self.instances._metadata, self._state_values()
-            for i in rows:
-                env = meta._restore({key: value[i].copy() for key, value in current.items()})
-                try:
-                    env.set_task(*tasks[i])
-                    meta._forget_static([env])
-                    values.append(meta._values(env))
-                finally:
-                    env.close()
-            self._dirty = True
-        self._write_rows(rows, values)
+            values = self.instances.call("draw_targets", draws)
+        self._write_rows(rows, [values[i] for i in rows])
 
     def _write_rows(self, rows, values):
         """Write ``{field name: value}`` of each environment in ``rows`` into the live groups, physics and models."""

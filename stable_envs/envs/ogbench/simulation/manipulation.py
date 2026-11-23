@@ -94,6 +94,44 @@ def site_ids(env):
     return positions, rotations
 
 
+#: The State fields besides physics that a step changes, which ``sync_dynamic`` writes into an OGBench object.
+DYNAMIC_FIELDS = (
+    "controller/site_xpos",
+    "controller/site_xmat",
+    "output/gripper_force",
+    "output/prev_qpos",
+    "output/prev_qvel",
+    "task/success",
+    *(field("rng", "environment", key) for key in PCG_KEYS),
+)
+SCENE_DYNAMIC_FIELDS = ("scene/cur_button_states", "scene/prev_button_states", "scene/target_button_states")
+
+
+def sync_dynamic(env, values, integration):
+    """Write the fields a step changes into the OGBench object ``env``, which holds the rest of the row's State.
+
+    ``values`` maps each name of ``DYNAMIC_FIELDS`` (and, for Scene, ``SCENE_DYNAMIC_FIELDS``) to the row's value,
+    and ``integration`` is the row's ``mjSTATE_INTEGRATION`` vector.
+    """
+    spec = mujoco.mjtState.mjSTATE_INTEGRATION
+    env._prev_qpos, env._prev_qvel = values["output/prev_qpos"].copy(), values["output/prev_qvel"].copy()
+    env._success = bool(values["task/success"][0])
+    if env.family == "Scene":
+        env._cur_button_states = values["scene/cur_button_states"].copy()
+        env._prev_button_states = values["scene/prev_button_states"].copy()
+        env._target_button_states = values["scene/target_button_states"].copy()
+        env._apply_button_states()
+    env.np_random.bit_generator.state = pcg_decode({key: values[field("rng", "environment", key)] for key in PCG_KEYS})
+    for _ in range(2):
+        mujoco.mj_setState(env.model, env.data, integration, spec)
+        mujoco.mj_forward(env.model, env.data)
+    mujoco.mj_setState(env.model, env.data, integration, spec)
+    pos, rot = site_ids(env)
+    env.data.site_xpos[pos] = values["controller/site_xpos"].reshape(-1, 3)
+    env.data.site_xmat[rot] = values["controller/site_xmat"].reshape(-1, 9)
+    env.data.body("ur5e/robotiq/right_pad").cfrc_ext[:] = values["output/gripper_force"]
+
+
 def task_values(env, info=None):
     info = env.cur_task_info if info is None else info
     if env.family == "Cube":
@@ -169,7 +207,7 @@ class OGBManipulationAdapter(SimulatorAdapter):
 
     execution_mode = "DELEGATED_CPU"
     rotation_tolerance = 1e-8
-    process_methods = {"configure": PER_INSTANCE}
+    process_methods = {"configure": PER_INSTANCE, "draw_targets": PER_INSTANCE}
     process_attributes = ("family", "fields", "schema", "nq")
     action_dim = 5
 
@@ -595,6 +633,25 @@ class OGBManipulationAdapter(SimulatorAdapter):
         self._forget_static(self.envs)
         for env, value in zip(self.envs, values):
             env.configure_variation(value)
+
+    def draw_targets(self, tasks):
+        """``set_task`` draws on the OGBench objects; ``tasks`` holds None or ``(values, integration, seed)`` per object.
+
+        Each selected object first takes the row's step fields with ``sync_dynamic``; its other fields already are
+        the row's. Returns the new ``{field name: value}`` of each selected object, None for the others.
+        """
+        self._check_open()
+        out = []
+        for env, task in zip(self.envs, tasks):
+            if task is None:
+                out.append(None)
+                continue
+            values, integration, seed = task
+            sync_dynamic(env, values, integration)
+            env.set_task(seed)
+            self._forget_static([env])
+            out.append(self._values(env))
+        return out
 
     def check_step(self, actions, active):
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
