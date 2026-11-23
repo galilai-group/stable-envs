@@ -409,3 +409,54 @@ def test_frames_after_partial_reset_and_step():
         full = ref.step(actions, frames=slice(-1, None))
         _rows_equal(out["frames"][:, -1], full["frames"][:, -1], rows)
         _rows_equal(out["frames"][:, -1], env.render(before), ~rows)
+
+
+def test_set_state_with_rows_copies_only_the_selected_rows():
+    env, other = Seeded(), Seeded()
+    kept, given = env.reset(seed=1), other.reset(seed=2)
+    env.set_state(given, rows=[1, 3])
+    _rows_equal(env.get_state(), given, [1, 3])
+    _rows_equal(env.get_state(), kept, [0, 2])
+    env.set_state(kept, rows=np.zeros(4, bool))
+    _rows_equal(env.get_state(), given, [1, 3])
+    env.set_state(kept, rows=torch.tensor([True, False, False, False]))
+    _rows_equal(env.get_state(), kept, [0, 2])
+    with pytest.raises(ValueError, match="mask needs shape"):
+        env.set_state(given, rows=[True, False])
+    with pytest.raises(ValueError, match="State batch"):
+        env.set_state(given[:2], rows=[0])
+    with pytest.raises(ValueError, match="fields differ"):
+        env.set_state(TensorDict({"other": given["value"]}, [4]), rows=[0])
+    with pytest.raises(TypeError, match=r"Seeded\.set_state: expected full State"):
+        env.set_state(torch.zeros(4, 2), rows=[0])
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("name,kwargs,options", FAMILIES)
+@pytest.mark.parametrize("env_steps,ref_steps", [(20, 45), (45, 20)])
+def test_family_set_state_with_rows_matches_set_state(name, kwargs, options, env_steps, ref_steps, device):
+    rng = np.random.default_rng(2)
+    with (
+        snv.make(name, num_envs=5, device=device, **kwargs) as env,
+        snv.make(name, num_envs=5, device=device, **kwargs) as ref,
+    ):
+        history = env.state_history_leaves
+        env.reset(seed=3)
+        ref.reset(seed=11)
+        for _ in range(env_steps):
+            env.step(_actions(env, rng), frames=None)
+        for _ in range(ref_steps):
+            ref.step(_actions(ref, rng), frames=None)
+        kept, given = env.get_state(), ref.get_state()
+        rows = [0, 3, 4]
+        mask = _mask(rows, 5)
+        env.set_state(given, rows=rows)
+        _rows_equal(env.get_state(), given, mask, history)
+        _rows_equal(env.get_state(), kept, ~mask, history)
+        actions = [_actions(env, rng) for _ in range(HORIZON)]
+        after = _rollout(env, actions)
+        for got, expected in zip(after, _rollout(ref, actions), strict=True):
+            _rows_equal(got, expected, mask, history)
+        ref.set_state(kept)
+        for got, expected in zip(after, _rollout(ref, actions), strict=True):
+            _rows_equal(got, expected, ~mask, history)

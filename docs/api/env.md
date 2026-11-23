@@ -36,6 +36,7 @@
 | `step(actions, rows=rows)` | the same, and a `(B,)` bool mask or row indices | a step result with batch size `(B,)` |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
+| `set_state(state, rows=rows)` | State with batch size `(B,)`, and a `(B,)` bool mask or row indices | None |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
 | `get_variation()` | nothing | `(B, variation_dim)` float32 |
 | `set_variation(v)` | a dict of leaf values, or a `(variation_dim,)` or `(B, variation_dim)` row | `(B, variation_dim)` float32 |
@@ -78,7 +79,7 @@ Returned states and frames own their memory, and later calls leave them unchange
 
 ## Some batch rows
 
-`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit, up to the zero padding of the history leaves (`state_history_leaves`, such as the PushT action history). A selection of no row changes nothing: `reset` returns the State, and `step` returns outputs with every row held.
+`reset(seed, options, rows=rows)` starts a new episode in the rows that `rows` selects. `step(actions, rows=rows)` steps only those rows. `set_state(state, rows=rows)` copies only those rows of a full `B`-row state into the environment: a selected row then equals that row after `set_state(state)`. `rows` is a `(B,)` bool mask or a sequence of row indices. The other rows keep their state, and with `reset` also their variation, bit for bit, up to the zero padding of the history leaves (`state_history_leaves`, such as the PushT action history). A selection of no row changes nothing: `reset` returns the State, and `step` returns outputs with every row held.
 
 ```python
 env = snv.CartPole(num_envs=4, device="cpu")
