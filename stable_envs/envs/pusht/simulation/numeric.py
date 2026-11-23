@@ -506,7 +506,11 @@ def drawn_scene(env, collector=None):
         for name in ("agent", "block")
         for field in DRAWN_BODY
     }
-    result["render_segments"], result["render_segment_count"] = capture_contacts(env.space, collector)
+    if env.n_contact_points:
+        result["render_segments"], result["render_segment_count"] = capture_contacts(env.space, collector)
+    else:
+        # The space draws a collision point for each contact of its last step; the step counted none.
+        result["render_segments"], result["render_segment_count"] = np.zeros((90, 8)), np.array(0, np.int64)
     return result
 
 
