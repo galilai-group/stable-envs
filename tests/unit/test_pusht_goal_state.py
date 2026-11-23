@@ -80,3 +80,29 @@ def test_goal_render_state_is_a_render_state_that_set_state_refuses():
             env.set_state(goal)
     finally:
         env.close()
+
+
+@pytest.mark.parametrize("overlap", [False, True])
+def test_drawn_scene_segments_equal_the_contact_draw(overlap):
+    """``drawn_scene`` skips the contact draw when the last step counted no contact; the draw then has none."""
+    from stable_envs.envs.pusht.simulation.contacts import capture_contacts
+    from stable_envs.envs.pusht.simulation.replay import PushTReplay
+
+    replay = PushTReplay(config={"resolution": 32}, seed=0)
+    try:
+        touching = 0
+        for seed in range(40):
+            options = None
+            if overlap:
+                block = np.random.default_rng(seed).uniform(150, 350, 2)
+                start = np.array([*(block + [0.0, 20.0 + seed]), *block, 0.1 * seed, 0.0, 0.0])
+                options = {"state": start}
+            replay.env.reset(seed=seed, options=options)
+            scene = numeric.drawn_scene(replay.env)
+            segments, count = capture_contacts(replay.env.space)
+            assert int(scene["render_segment_count"]) == int(count)
+            np.testing.assert_array_equal(scene["render_segments"], segments)
+            touching += int(count) > 0
+        assert touching > 0 or not overlap
+    finally:
+        replay.close()
