@@ -36,7 +36,7 @@
   {
    "key": "controller",
    "leaves": 1,
-   "numel": 42,
+   "numel": 48,
    "dtypes": ["float64"]
   },
   {
@@ -48,7 +48,7 @@
   {
    "key": "task",
    "leaves": 3,
-   "numel": 91,
+   "numel": 95,
    "dtypes": ["bool", "float64", "int64"]
   },
   {

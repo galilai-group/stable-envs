@@ -8,6 +8,7 @@ from importlib.metadata import version
 import gymnasium as gym
 import mujoco
 import numpy as np
+from gymnasium.utils import seeding
 from ogbench.manipspace import lie, mjcf_utils
 from ogbench.manipspace.envs.cube_env import CubeEnv
 from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
@@ -27,6 +28,9 @@ MODEL_VALUES = (
 
 CUBE_SAMPLES = ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw")
 ARM_START = "agent.ee_start_position"
+
+#: OGBench's data-collection target tasks; the State keeps the index of ``_target_task``.
+TARGET_TASKS = ("cube", "button", "drawer", "window")
 
 # set_variation applies these to the running episode. The rest are reset-only, and
 # agent.color waits for the source's own compile rule.
@@ -495,7 +499,28 @@ class Compatibility:
             not isinstance(explicit_size, np.ndarray) or explicit_size.dtype == np.float32
         )
         tree.set_value(options.get("variation_values", {}))
+        # Every reset starts a task-mode episode; ``set_task`` moves it to data-collection targets.
+        self._mode, self._target_task, self._target_block = "task", "cube", 0
+        if self.family == "Scene":
+            self._target_button = 0
         return super().reset(seed=seed, options=options)
+
+    def set_task(self, seed=None):
+        """Draw a new target as OGBench's data-collection mode does; the episode then scores that target only.
+
+        With ``seed`` None the draw comes from the environment's own ``np_random``, as in OGBench. With a seed it
+        comes from a generator that Gymnasium seeds with it, and ``np_random`` does not change.
+        """
+        self._mode = "data_collection"
+        if seed is None:
+            self.set_new_target(return_info=False)
+            return
+        kept = self._np_random, self._np_random_seed
+        self._np_random, self._np_random_seed = seeding.np_random(int(seed))
+        try:
+            self.set_new_target(return_info=False)
+        finally:
+            self._np_random, self._np_random_seed = kept
 
     def initialize_arm(self):
         """OGBench's sampled arm start; a pinned start consumes only the source yaw draw."""

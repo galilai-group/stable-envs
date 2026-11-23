@@ -34,7 +34,9 @@
 | `step(actions)` | `(B, *A)` or `(B, T, *A)` | a [step result](../terms.md#step-result) with batch size `(B,)`, see [Step outputs](#step-outputs) |
 | `get_state()`, `state` | nothing | State with batch size `(B,)` |
 | `set_state(state)` | State with batch size `(B,)` | None |
+| `set_task(rows, seed, options)` | a row mask or indices, and None or one seed per row | State with batch size `(B,)` |
 | `goal_render_state(state)` | State with batch size `(N,)` | the goal frame as a RenderState or `(N, state_dim)` compact rows, for `render` |
+| `source_info(state)` | State with batch size `(N,)` | the upstream info, a TensorDict with batch size `(N,)` |
 | `render(x)` | None for the live state, a state with batch size `(N,)`, or `(N, state_dim)` compact rows | `(N, H, W, 3)` uint8 frames |
 | `get_variation()` | nothing | `(B, variation_dim)` float32 |
 | `set_variation(v)` | a dict of leaf values, or a `(variation_dim,)` or `(B, variation_dim)` row | `(B, variation_dim)` float32 |
@@ -126,6 +128,25 @@ Closing releases only what that environment owns. Rendering contexts that severa
 ::: stable_envs.env.Env.state
 
 ::: stable_envs.env.Env.set_state
+
+### Source info
+
+`source_info(state)` gives the info that the upstream library returns for each batch row of a state, with the upstream keys. It reads only the state, so it also works on a state that you saved or loaded. It is not `snv.info(name)`, which gives the registry metadata of a class. These classes compute it:
+
+| Class | Keys |
+|---|---|
+| `OGBCube`, `OGBScene` | The keys of OGBench's task mode: `proprio/...`, `privileged/...`, `prev_qpos`, `prev_qvel`, `qpos`, `qvel`, `control` and `time`, then `success` and `goal`, the goal observation. Upstream returns `success` only from `step` and `goal` only from `reset`; `source_info` returns both for every state. Scene also has `prev_button_states` and `button_states`. After `set_task`, the result also has the `privileged/target_*` keys of OGBench's data-collection mode, for every row, and `goal` is NaN in the changed rows; `privileged/target_task` is an index into `("cube", "button", "drawer", "window")`, where OGBench gives the name. |
+| `PushT`, `PushTDiscrete` | The keys of diffusion_policy's PushT: `pos_agent`, `vel_agent`, `block_pose`, `goal_pose` and `n_contacts`. `goal_pose` comes from the goal leaves of the state's variation, as in the source. |
+
+The other classes raise `NotImplementedError`. Some of them return info in the task outputs of `step`.
+
+::: stable_envs.env.Env.source_info
+
+### Task changes
+
+`set_task(rows, seed, options)` gives the selected rows a new task mid-episode, drawn as the upstream library draws it, and returns the state. The other rows do not change. A `None` seed draws from the row's own generator, as the upstream library does. An integer seed draws from a generator seeded with it, and leaves the row's own generator as it is, so later unseeded resets do not depend on it. `OGBCube` and `OGBScene` run OGBench's data-collection `set_new_target`, with the seed as Gymnasium seeds `np_random`. Cube targets a new cube pose. Scene targets the cube, a button, the drawer or the window. Until the next `reset`, such a row scores its target only, and a Scene cube that leaves the workspace is not put back, as in OGBench's data-collection mode. The state keeps `task/mode` and `task/target/...`, so `set_state` restores the change. OGBench has no goal observation or goal image in this mode, so `source_info` gives a NaN `goal` for these rows and `goal_render_state` refuses them. These classes take no options. With `simulation_backend="mjwarp"`, `set_task` and `set_state` of such a state raise `NotImplementedError`. The other classes raise `NotImplementedError`.
+
+::: stable_envs.env.Env.set_task
 
 ## Specs
 

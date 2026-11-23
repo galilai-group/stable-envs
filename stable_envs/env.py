@@ -617,6 +617,27 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
+    def set_task(self, rows, seed=None, options=None) -> State:
+        """Give ``rows`` a new task mid-episode, drawn as the upstream library draws it, and return the State.
+
+        Each selected row draws on its own, so the result of a row does not depend on the other rows. The other
+        rows do not change.
+
+        Args:
+            rows: A ``(num_envs,)`` bool mask or a sequence of row indices.
+            seed: None, or one entry per selected row in the order of ``rows`` (ascending for a mask): None draws
+                from the row's own generator, as the upstream library does, and an integer draws from a generator
+                seeded with it.
+            options: Task options of the family, for every selected row.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class has no task to change.
+            ValueError: If ``rows``, ``seed`` or ``options`` is invalid.
+        """
+        self._check_open("set_task")
+        raise NotImplementedError(f"{type(self).__name__}.set_task: this class has no task that set_task changes.")
+
     def goal_render_state(self, state: State):
         """Return the goal frame of each batch row of ``state`` in a form that ``render`` draws.
 
@@ -638,6 +659,31 @@ class Env:
         self._check_open("goal_render_state")
         raise NotImplementedError(
             f"{type(self).__name__}.goal_render_state: this class has no goal configuration that a state can draw."
+        )
+
+    def source_info(self, state: State) -> TensorDict:
+        """Return the info dict that the upstream library gives for each batch row of ``state``.
+
+        The keys are the upstream keys, such as ``"proprio/joint_pos"``. An upstream value of shape ``S`` is a
+        ``(N, *S)`` tensor on ``device``. The method reads only ``state``: it does not change the environment.
+        ``snv.info(name)`` is a different function: it returns the registry metadata of a class.
+
+        Args:
+            state: A full state from ``get_state``, ``reset`` or ``step``, with batch size ``(N,)``.
+
+        Returns:
+            A TensorDict with batch size ``(N,)``.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class does not compute the upstream info from a state.
+            TypeError: If ``state`` is not a TensorDict State of the class.
+            ValueError: If a field of ``state`` is missing, misshaped or non-finite.
+        """
+        self._check_open("source_info")
+        raise NotImplementedError(
+            f"{type(self).__name__}.source_info: this class does not compute the upstream info from a state. "
+            "Read state fields with snv.get_field, or the task outputs of step."
         )
 
     def render(self, x=None, **kwargs) -> torch.Tensor:

@@ -29,6 +29,21 @@ class _OwnStates:
         self._pipeline.abort_step()
 
 
+def _row_indices(rows, batch):
+    """The row indices of a ``(batch,)`` bool mask or of a sequence of distinct indices."""
+    value = rows.detach().cpu().numpy() if torch.is_tensor(rows) else np.asarray(rows)
+    if value.dtype == np.bool_:
+        if value.shape != (batch,):
+            raise ValueError(f"A row mask must have shape ({batch},), got {value.shape}")
+        return np.flatnonzero(value).tolist()
+    if value.ndim != 1 or value.dtype.kind not in "iu" and value.size:
+        raise ValueError("rows must be a bool mask or a sequence of integer row indices")
+    index = [int(i) for i in value]
+    if any(not 0 <= i < batch for i in index) or len(set(index)) != len(index):
+        raise ValueError(f"Row indices must be distinct and in [0, {batch})")
+    return index
+
+
 class ManipulationSemantics:
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("native", "mjwarp")
@@ -45,6 +60,7 @@ class ManipulationSemantics:
     _render_style = None
     _rows_installed = False
     _own_state = None
+    _info_layout = None
 
     def __init__(
         self,
@@ -158,6 +174,56 @@ class ManipulationSemantics:
         self._simulator.set_state(state)
         self._sync_style()
 
+    def set_task(self, rows, seed=None, options=None):
+        """Give ``rows`` a new target mid-episode, drawn as OGBench's data-collection mode draws it.
+
+        Each selected row runs OGBench's ``set_new_target``. Cube targets a new cube pose. Scene targets the cube,
+        a button, the drawer or the window. From then until the next ``reset``, the row scores that target only,
+        and a Scene cube that leaves the workspace is not put back, as in OGBench's data-collection mode. The
+        other rows do not change.
+
+        Args:
+            rows: A ``(num_envs,)`` bool mask or a sequence of row indices.
+            seed: None, or one entry per selected row in the order of ``rows`` (ascending for a mask). A None
+                entry draws from the row's own ``np_random``, as OGBench does. An integer draws from a generator
+                that Gymnasium seeds with it, and leaves the row's ``np_random`` as it is.
+            options: None or ``{}``: OGBench's ``set_new_target`` has no option that one cube reads.
+
+        Returns:
+            The State after the change.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            ValueError: If ``rows``, ``seed`` or ``options`` is invalid.
+            NotImplementedError: With ``simulation_backend="mjwarp"``.
+        """
+        self._check_open("set_task")
+        index = _row_indices(rows, self.B)
+        if options:
+            raise ValueError(f"{type(self).__name__}.set_task takes no options; got {sorted(options)}")
+        if seed is None:
+            seeds = [None] * len(index)
+        else:
+            if torch.is_tensor(seed):
+                if seed.device.type != "cpu":
+                    raise ValueError(
+                        "set_task seeds must be integers or a CPU tensor, not a tensor on " + str(seed.device)
+                    )
+                seed = seed.tolist()
+            seeds = [seed] if isinstance(seed, (int, np.integer)) else list(seed)
+        if len(seeds) != len(index) or any(
+            s is not None and (isinstance(s, bool) or not isinstance(s, (int, np.integer)) or s < 0) for s in seeds
+        ):
+            raise ValueError(
+                f"set_task needs None or one nonnegative integer seed or None per selected row ({len(index)})"
+            )
+        tasks = [None] * self.B
+        for i, s in zip(index, seeds):
+            tasks[i] = (None if s is None else int(s),)
+        self._rows_installed = False
+        self._simulator.set_task(tasks)
+        return self.get_state()
+
     def goal_render_state(self, state, *, size=None, supersample=None):
         """Return a RenderState of the scene where OGBench takes its goal observation and draws its goal image.
 
@@ -171,6 +237,12 @@ class ManipulationSemantics:
         """
         self._check_open("goal_render_state")
         self._validate_state(state)
+        changed = torch.nonzero(get_field(state, "task/mode").reshape(-1)).reshape(-1).tolist()
+        if changed:
+            raise ValueError(
+                f"{type(self).__name__}.goal_render_state: rows {changed} have a target from set_task. OGBench's "
+                "data-collection mode draws no goal image, so these rows have no goal frame."
+            )
         goal = state.clone()
         names = [("qpos", "physics/qpos"), ("mocap_pos", "physics/mocap_pos"), ("mocap_quat", "physics/mocap_quat")]
         if self.CELL == "Scene":
@@ -178,6 +250,25 @@ class ManipulationSemantics:
         for name, target in names:
             set_field(goal, target, get_field(state, "task/goal_scene/" + name))
         return self.to_render_state(goal, size=size, supersample=supersample)
+
+    def source_info(self, state):
+        """Return OGBench's info for each batch row of ``state``.
+
+        The keys are those of OGBench's ``compute_ob_info``, such as ``"proprio/effector_pos"`` and
+        ``"privileged/block_0_pos"``. Two more keys come from other upstream calls: ``"success"``, which upstream
+        returns only from ``step``, and ``"goal"``, the goal observation, which upstream returns only from
+        ``reset``. When a row of ``state`` has a target from ``set_task``, the result also has the
+        ``"privileged/target_*"`` keys of OGBench's data-collection mode, for every row. ``"privileged/target_task"``
+        is an index into ``("cube", "button", "drawer", "window")``, where OGBench gives the name. OGBench's
+        data-collection mode has no goal observation, so ``"goal"`` is NaN in those rows.
+        """
+        from .simulation.info import InfoLayout, manipulation_info
+
+        self._check_open("source_info")
+        self._validate_state(state)
+        if self._info_layout is None:
+            self._info_layout = InfoLayout(self._simulator._meta)
+        return manipulation_info(self._info_layout, state, self.device)
 
     def _step(self, actions, *, active=None):
         self._check_open("step")

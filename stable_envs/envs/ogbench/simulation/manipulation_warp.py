@@ -584,6 +584,20 @@ class OGBManipulationWarpAdapter(OGBManipulationBatchAdapter):
         state = self.get_state()
         return {key: self.schema.get(state, key).detach().cpu().numpy() for key in projected_keys(self.family)}
 
+    def set_task(self, tasks):
+        raise NotImplementedError("set_task on MuJoCo Warp is not supported yet; use simulation_backend='native'")
+
+    def validate(self, state, **kwargs):
+        if bool(self.schema.get(state, "task/mode").any()):
+            raise NotImplementedError(
+                "MuJoCo Warp does not step set_task targets yet; use simulation_backend='native'"
+            )
+        return super().validate(state, **kwargs)
+
+    def set_state(self, state):
+        self.validate(state)
+        super().set_state(state)
+
     def configure(self, values):
         self._check_open()
         self._push()
