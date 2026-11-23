@@ -46,6 +46,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     requires_cuda = False
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("numba", "numba_cuda", "pybullet")
+    #: ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option.
+    extra_reset_options = ("randomize_drop", "accelerate_drop", "randoimize_drop")
     execution_mode = "NATIVE_NUMBA"
     cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
@@ -129,6 +131,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         the batch or one per environment.
         """
         self._check_open("reset")
+        self._check_reset_options(options)
         options = dict(options or {})
         values = options.pop("variation_values", None)
         if values is not None:

@@ -28,6 +28,8 @@ class ClassicControlSemantics:
     _step_outputs_owned = True
     #: Physics implementations that ``simulation_backend`` accepts besides ``"auto"``.
     simulation_backends: tuple[str, ...] = ("gym", "numpy", "torch")
+    #: Gymnasium's reset bounds options.
+    extra_reset_options = ("low", "high")
 
     def __init__(self, *args, simulation_backend: str | None = "auto", **kwargs):
         """Select the step backend.

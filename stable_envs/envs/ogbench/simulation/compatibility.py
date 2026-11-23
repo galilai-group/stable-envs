@@ -366,8 +366,6 @@ class Compatibility:
         if options is not None and not isinstance(options, dict):
             raise TypeError("Reset options must be a dictionary")
         options = copy.deepcopy(options or {})
-        if set(options) - {"task_id", "task_info", "variation", "variation_values"}:
-            raise ValueError("Unsupported registered Cube/Scene reset option (including render_goal/state)")
         if "task_id" in options and (type(options["task_id"]) is not int or options["task_id"] not in range(1, 6)):
             raise ValueError("task_id must be an integer in 1..5")
         if "task_info" in options:

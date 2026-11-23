@@ -21,6 +21,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - The classic-control and `MiniWorldMovingBlockWorld` states have one leaf for each dtype, such as `("cartpole", "float64")`, in place of one leaf for each field. `snv.get_field(state, "physics/gravity")` reads a field by name.
 - The `mjwarp_min_envs` argument of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes is removed, with the `MJWARP_MIN_ENVS` and `MAZE_MJWARP_MIN_ENVS` constants. Their default `simulation_backend` is `"auto"`; `"default"` is no longer accepted. The internal `mjbatch.resolve_backend` is replaced by `mjbatch.mujoco_backend`.
 - The state of the OGBench maze classes, the Fetch classes, `MSHumanLocomotion` and the Roadster classes has one tensor for each group of fields instead of one tensor for each field. Read and write a field by name with `stable_envs.get_field(state, name)` and `stable_envs.set_field(state, name, value)`. `state_spec` and `describe()` list the groups.
+- `reset` raises `ValueError` for a key in `options` that the class does not accept, in every family, and the environment does not change. Before, DM Control, MS-Human, Craftax, MiniWorld, Roadster, classic control, navigation and the OGBench mazes ignored such keys. The OGBench mazes do not accept `task_id`. The property `reset_option_keys` lists the keys that a class accepts.
 
 ### Added
 

@@ -201,9 +201,8 @@ class FetchSemantics:
 
     def reset(self, seed=None, options=None):
         self._check_open("reset")
+        self._check_reset_options(options)
         options = options or {}
-        if set(options) - {"variation", "variation_values"}:
-            raise ValueError("Unsupported Fetch reset option")
         sampled = options.get("variation", [])
         explicit = options.get("variation_values", {})
         if (set(sampled) | set(explicit)) - self._reset_keys:

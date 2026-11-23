@@ -503,6 +503,7 @@ class Pendulum(ClassicControlSemantics, _Classic):
     default_size = native_size = 500
     reference_id = "Pendulum-v1"
     CLASSIC_DOMAIN = "pendulum"
+    extra_reset_options = ("x_init", "y_init")
 
     SCALE = 500 / 4.4
     OFF = 250

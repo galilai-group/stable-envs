@@ -140,7 +140,7 @@ Each spec describes one batch row, without the batch axis, using the [spec class
 
 ## Variation
 
-`set_variation` installs a variation that stays until you change it. Every later `reset` restores the values you set for each leaf its options skip. Reset options sample or set leaves for one episode only. `variation_space` is the instance's [`stable_envs.spaces.Dict`](specs.md#spaces) of leaves, and `get_variation()` is the compiled form that rendering and physics read. [Randomize appearance and physics](../tutorials/variation.md) walks through both.
+`set_variation` installs a variation that stays until you change it. Every later `reset` restores the values you set for each leaf its options skip. Reset options sample or set leaves for one episode only. The property `reset_option_keys` lists the keys that `reset` accepts in `options`: `"variation"`, `"variation_values"` and the keys of the class attribute `extra_reset_options`. Another key raises `ValueError`, and the environment does not change. `variation_space` is the instance's [`stable_envs.spaces.Dict`](specs.md#spaces) of leaves, and `get_variation()` is the compiled form that rendering and physics read. [Randomize appearance and physics](../tutorials/variation.md) walks through both.
 
 ::: stable_envs.env.Env.variation_dim
 

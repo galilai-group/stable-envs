@@ -402,6 +402,8 @@ class Env:
     reset_value_paths: frozenset[str] = frozenset()
     #: Variation leaves ``reset`` samples per environment when named in ``options["variation"]``.
     reset_sample_paths: frozenset[str] = frozenset()
+    #: Keys ``reset`` accepts in ``options`` beside ``"variation"`` and ``"variation_values"``.
+    extra_reset_options: tuple[str, ...] = ()
     #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
     #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
@@ -933,7 +935,21 @@ class Env:
         del path, value, instance
         return True
 
+    @property
+    def reset_option_keys(self) -> tuple[str, ...]:
+        """Keys ``reset`` accepts in ``options``; any other key raises ValueError before the reset changes anything."""
+        return ("variation", "variation_values", *self.extra_reset_options)
+
+    def _check_reset_options(self, options: Mapping | None) -> None:
+        unknown = set(options or ()) - set(self.reset_option_keys)
+        if unknown:
+            raise ValueError(
+                f"{type(self).__name__}.reset does not accept the options {sorted(unknown, key=str)}; "
+                f"it accepts {list(self.reset_option_keys)}"
+            )
+
     def _reset_request(self, options: Mapping | None) -> tuple[tuple[str, ...], dict]:
+        self._check_reset_options(options)
         options = dict(options or {})
         default = tuple(leaf.path for leaf in self.reset_leaves if leaf.sampled)
         sampled = options.get("variation", default)
@@ -1003,7 +1019,8 @@ class Env:
             ``{dotted path: (num_envs, ...) array}`` for every reset leaf.
 
         Raises:
-            ValueError: If ``options["variation"]`` is not a list or tuple, or a value has the wrong shape.
+            ValueError: If ``options`` has a key outside ``reset_option_keys``, ``options["variation"]`` is not a
+                list or tuple, or a value has the wrong shape.
             NotImplementedError: If ``options`` names a leaf the family can't set at reset.
         """
         sampled, values = self._reset_request(options)
