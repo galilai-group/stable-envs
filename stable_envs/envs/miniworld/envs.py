@@ -136,12 +136,11 @@ class MiniWorldMovingBlockWorld(Env):
     def _validate_state(self, state, *, batch=None):
         self._simulator.validate(state, batch=batch)
 
-    def reset(self, seed=None, options=None):
+    def _reset(self, seed=None, options=None):
         """Reset every environment; environment ``i`` of ``reset(seed)`` draws from seed ``seed + i``.
 
         ``reset()`` draws each environment's next episode from its own seed.
         """
-        self._check_open("reset")
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
@@ -149,9 +148,8 @@ class MiniWorldMovingBlockWorld(Env):
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
+    def _set_state(self, state):
         """Restore every environment from a state with ``num_envs`` rows; the state is copied."""
-        self._check_open("set_state")
         self._simulator.set_state(state)
 
     def _stack_states(self, values):

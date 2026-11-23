@@ -49,6 +49,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     #: ``randoimize_drop`` is PyFlyt's spelling of its random entry velocity option.
     extra_reset_options = ("randomize_drop", "accelerate_drop", "randoimize_drop")
     execution_mode = "NATIVE_NUMBA"
+    row_seeds = True
     cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
     action_dtype = torch.float64
@@ -124,14 +125,12 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             node[key[-1]] = Spec(shape, dtype=dtype, device=self.device)
         return CompositeSpec(fields, device=self.device)
 
-    def reset(self, seed=None, options=None):
+    def _reset(self, seed=None, options=None):
         """Reset every environment.
 
         ``options["variation_values"]`` sets leaves for this episode only, with one value shared by
         the batch or one per environment.
         """
-        self._check_open("reset")
-        self._check_reset_options(options)
         options = dict(options or {})
         values = options.pop("variation_values", None)
         if values is not None:
@@ -144,8 +143,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         if isinstance(state, TensorDict) and set(state.keys(True, True)) != set(self._simulator.fields):
             raise ValueError(
                 f"The State keys do not match simulation_backend={self.simulation_backend!r}. States of 'numba' and "

@@ -142,6 +142,7 @@ class PushT(Env):
     simulation_backends: tuple[str, ...] = ("numba", "triton", "jax")
     extra_reset_options = ("state", "goal_state")
     state_solver_caches = ("current/jax",)
+    row_seeds = True
     name = "push-t"
     reference_id = "swm/PushT-v1"
     default_size = 224
@@ -264,17 +265,20 @@ class PushT(Env):
             device=self.device,
         )
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
-        self._check_reset_options(options)
+    @property
+    def state_history_leaves(self) -> tuple[str, ...]:
+        from .simulation.replay import HISTORY_KEYS
+
+        return tuple(sorted(HISTORY_KEYS))
+
+    def _reset(self, seed=None, options=None):
         return self._simulator.reset(seed, options)
 
     def get_state(self):
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._simulator.set_state(state)
 
     def _step(self, actions, *, active=None):

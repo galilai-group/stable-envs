@@ -397,13 +397,14 @@ class PushT(Env):
         return torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, 2)
 
     @torch.no_grad()
-    def _step(self, action) -> TensorDict:
-        """Advance absolute agent targets ``(B, 2)`` and return state.
+    def _step(self, action, *, active=None) -> TensorDict:
+        """Advance absolute agent targets ``(B, 2)`` and return state; rows outside ``active`` keep their state.
 
         This approximate solver does not compute reward or termination. The
         source-aligned public PushT classes are defined in ``pusht.semantics``.
         """
         self._check_open("step")
+        held = None if active is None else (self._render_state.clone(), self._agent_v.clone())
         # Require B target rows: copy_ would otherwise broadcast one target across the captured batch.
         target = self._target(action).reshape(self.B, 2)
         replayed = False
@@ -418,6 +419,10 @@ class PushT(Env):
             st, av = self._advance(self._render_state, self._agent_v, target)
             self._render_state.copy_(st)
             self._agent_v.copy_(av)
+        if held is not None:
+            keep = ~torch.as_tensor(active, device=self.device).reshape(-1, 1)
+            self._render_state.copy_(torch.where(keep, held[0], self._render_state))
+            self._agent_v.copy_(torch.where(keep, held[1], self._agent_v))
         return self._step_result(self.state)
 
     def _close(self) -> None:

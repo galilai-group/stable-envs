@@ -25,6 +25,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Added
 
+- `Env.reset(seed, options, rows=rows)` starts a new episode in some batch rows, `Env.reset` takes one seed for each row, and `Env.step(actions, rows=rows)` steps only some batch rows. The other rows keep their state bit for bit, and the selected rows get the same values as in a reset or step of every row. A list of row seeds needs a class with `row_seeds` (classic control, DM Control, Fetch, PushT, `PyFlytRocketLanding` and Craftax), which seeds each row from its own seed in one reset; other classes raise `NotImplementedError`. The DM Control native backend and MS-Human step only the rows of an `active` mask.
 - The `rocket-gpu` extra installs Numba CUDA with the CUDA 13 wheels of libNVVM and libdevice, so that `PyFlytRocketLanding` compiles its CUDA physics without a CUDA toolkit on the host.
 - `benchmarks/speed.py`, `benchmarks/render_mse.py` and `benchmarks/rollout_parity.py` compare stable-envs with stable-worldmodel `21446f1`: speed on the same cores in one run, frame MSE, and state error. The `bench` dependency group installs stable-worldmodel.
 - `benchmarks/online_ladder.py` and `benchmarks/offline_sweep.py` are the scripts that measured the speedup tables of the paper: physics, rendering only, and both, on CPU and GPU, against stable-worldmodel `21446f1`.
@@ -35,6 +36,8 @@ All notable changes to this project are listed here. The format follows [Keep a 
 
 ### Changed
 
+- Classic control, DM Control and Craftax draw a sampled variation leaf of batch row `i` from its row seed `seed + i` alone, with `np.random.default_rng((seed + i, 0x76617269, 0x6174696F))`, in place of `np.random.default_rng((seed, i))`. The values that a seed gives change.
+- `Env.reset(seed, options)` and `Env.set_state(state)` are defined once on the base class. They check that the environment is open, and `reset` checks the option keys. Families implement the private hooks `_reset(seed, options)` and `_set_state(state)`.
 - Craftax draws its frames in the jitted step with one texture gather per pixel, with the same bytes as upstream's renderer. A sequence of actions steps in one jitted `lax.scan`. On CPU, the environments are split over one XLA host device per usable CPU, with at least 32 environments on each device.
 - stable-envs sets `XLA_PYTHON_CLIENT_PREALLOCATE=false` when it builds an environment that steps in JAX, before JAX starts, and no longer when it imports a JAX backend module. A value that you set is kept. If JAX already started on a GPU without the variable, stable-envs logs one warning with the fix. See [JAX GPU memory](https://galilai-group.github.io/stable-envs/environment-variables/#jax-gpu-memory).
 - CartPole and MountainCar have a `"numba"` simulation backend that steps the batch in one compiled call, in place on the state, with Gymnasium's values. `"auto"` uses it on the host at every batch size.

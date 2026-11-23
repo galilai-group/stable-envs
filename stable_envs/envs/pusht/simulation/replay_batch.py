@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.seeding import row_seed
 from ...._core.space_nodes import nodes
 from ...._core.state_schema import get_field
 from ...._core.tensordicts import build_tensordict
@@ -289,7 +290,7 @@ class PushTReplayAdapter(SimulatorAdapter):
         staged = []
         try:
             for instance, env in enumerate(self.envs):
-                staged.append(env.reset_candidate(None if seed is None else int(seed) + instance, instances[instance]))
+                staged.append(env.reset_candidate(row_seed(seed, instance), instances[instance]))
         except BaseException:
             for env in staged:
                 env.close()

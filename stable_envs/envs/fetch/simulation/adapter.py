@@ -9,6 +9,7 @@ from tensordict import TensorDict
 
 from .... import tuning
 from ...._core.cpus import cpu_limit
+from ...._core.seeding import row_seed
 from ...._core.state_schema import Field, StateSchema
 from ...._core.tensordicts import build_tensordict
 from ...._execution.process import BROADCAST, PER_INSTANCE
@@ -245,7 +246,7 @@ class FetchAdapter(SimulatorAdapter):
             u.initial_gripper_xpos[:] = self._anchor[instance]
             if "agent.start_position" in values:
                 u.initial_gripper_xpos[:2] = values["agent.start_position"]
-            e.reset(seed=None if seed is None else int(seed) + instance)
+            e.reset(seed=row_seed(seed, instance))
             changed = False
             if "block.start_position" in values:
                 u.data.qpos[15:17] = values["block.start_position"]

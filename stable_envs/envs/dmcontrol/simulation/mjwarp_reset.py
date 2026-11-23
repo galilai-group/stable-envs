@@ -10,6 +10,7 @@ from functools import cache
 
 import numpy as np
 
+from ...._core.seeding import row_seed
 from ...._core.state_schema import unfold
 from .batch import THREADED_RESETS
 from .factory import BATCH_TASKS, batch_threads, make_local
@@ -287,7 +288,7 @@ class WarpResetPool:
         for instance in instances:
             base = self._select_owner(owner, self._columns, instance, None, restore)._env
             if seed is not None:
-                base.task._random = np.random.RandomState(int(seed) + int(instance))
+                base.task._random = np.random.RandomState(row_seed(seed, int(instance)))
             base._reset_next_step, base._step_count = False, 0
             begun.append(task.begin_reset(base, instance))
             rng.append(base.task.random.get_state())
@@ -327,7 +328,7 @@ class WarpResetPool:
                 if not (initial and instance == 0):
                     base = env._env
                     if seed is not None:
-                        base.task._random = np.random.RandomState(int(seed) + int(instance))
+                        base.task._random = np.random.RandomState(row_seed(seed, int(instance)))
                     base._reset_next_step, base._step_count = False, 0
                     with env.physics.reset_context():
                         base.task.initialize_episode(env.physics)

@@ -18,6 +18,7 @@ import torch
 from craftax.craftax_env import make_craftax_env_from_name
 
 from ..._core.physics import PhysicsLayout
+from ..._core.seeding import row_seeds
 from ..._core.state_schema import Field as SchemaField
 from ..._core.state_schema import StateSchema
 from .params import CLASSIC_PARAMS, CRAFTAX_PARAMS
@@ -390,15 +391,18 @@ class Kernel:
         )
 
     @staticmethod
-    def seed_keys(seed: int, instances: Instances):
-        """The keys ``PRNGKey(seed + i)``; threefry keys of seeds in ``[0, 2**31)`` are ``[0, seed + i]``."""
-        num_envs = instances.count
-        if 0 <= seed and seed + num_envs <= 2**31 and jax.config.jax_default_prng_impl == "threefry2x32":
-            keys = np.zeros((num_envs, 2), np.uint32)
-            keys[:, 1] = np.arange(seed, seed + num_envs, dtype=np.uint32)
+    def seed_keys(seed, instances: Instances):
+        """The keys ``PRNGKey(s_i)`` of the row seeds ``s_i``, which are ``seed + i`` for one int.
+
+        Threefry keys of seeds in ``[0, 2**31)`` are ``[0, s_i]``.
+        """
+        seeds = row_seeds(seed, instances.count)
+        if (seeds >= 0).all() and (seeds < 2**31).all() and jax.config.jax_default_prng_impl == "threefry2x32":
+            keys = np.zeros((len(seeds), 2), np.uint32)
+            keys[:, 1] = seeds.astype(np.uint32)
         else:
             with jax.default_device(instances.device):
-                keys = jnp.stack([jax.random.PRNGKey(seed + i) for i in range(num_envs)])
+                keys = jnp.stack([jax.random.PRNGKey(int(s)) for s in seeds])
         return instances.put(np.asarray(keys))
 
     def leaves(self, blocks) -> dict[tuple[str, ...], torch.Tensor]:

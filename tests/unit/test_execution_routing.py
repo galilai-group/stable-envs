@@ -175,9 +175,10 @@ def test_dmc_snapshot_free_step_preserves_active_mask_contract():
     with se.make("DMCCartpoleBalance", num_envs=3, device="cpu", simulation_backend="native", size=32) as env:
         initial = env.get_state()
         actions = torch.zeros(3, env.action_dim, dtype=torch.float64)
-        with pytest.raises(ValueError, match="partial active masks are unsupported"):
-            env._advance_without_snapshot(actions, active=torch.tensor([True, False, True]))
-        assert_same_state(env.get_state(), initial)
+        partial = env._advance_without_snapshot(actions, active=torch.tensor([True, False, True]))
+        assert "state" not in partial.keys()
+        assert_same_state(env.get_state()[1:2], initial[1:2])
+        env.set_state(initial)
 
         result = env._advance_without_snapshot(actions, active=torch.ones(3, dtype=torch.bool))
         advanced = env.get_state()

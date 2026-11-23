@@ -15,7 +15,9 @@ from tensordict import TensorDict
 from ._core import dynamics as _dynamics
 from ._core.config import get_config as _get_config
 from ._core.config import log as _log
+from ._core.seeding import per_row, row_seed, row_seed_list
 from ._core.style import StyleTensor
+from ._core.tensordicts import splice_rows
 from .spaces import Dict as VariationDict
 from .specs import CompositeSpec, Spec
 
@@ -327,6 +329,51 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
             )
 
 
+def _row_mask(env, rows, where: str) -> torch.Tensor:
+    """The ``(num_envs,)`` CPU bool mask of ``rows``, a bool mask or a sequence of row indices."""
+    if torch.is_tensor(rows):
+        rows = rows.detach().cpu().numpy()
+    rows = np.asarray(rows)
+    if rows.dtype == np.bool_:
+        if rows.shape != (env.B,):
+            raise ValueError(f"{where}: a rows mask needs shape ({env.B},), got {rows.shape}")
+        return torch.from_numpy(rows.copy())
+    if rows.ndim != 1 or (rows.size and not np.issubdtype(rows.dtype, np.integer)):
+        raise ValueError(f"{where}: rows must be a ({env.B},) bool mask or a sequence of row indices")
+    if rows.size and (rows.min() < 0 or rows.max() >= env.B):
+        raise ValueError(f"{where}: row indices must be in [0, {env.B}), got {rows.tolist()}")
+    mask = torch.zeros(env.B, dtype=torch.bool)
+    mask[torch.from_numpy(rows.astype(np.int64))] = True
+    return mask
+
+
+def _row_seeds(env, seed, where: str) -> list[int | None]:
+    """The checked per-row seeds: ``num_envs`` entries, each None or an int in ``[0, env.row_seed_limit)``."""
+    entries = seed.tolist() if isinstance(seed, (np.ndarray, torch.Tensor)) else list(seed)
+    if len(entries) != env.B:
+        raise ValueError(f"{where}: seed needs one entry per row ({env.B}), got {len(entries)}")
+    for entry in entries:
+        if entry is not None and (
+            isinstance(entry, (bool, np.bool_))
+            or not isinstance(entry, (int, np.integer))
+            or not 0 <= entry < env.row_seed_limit
+        ):
+            raise ValueError(f"{where}: a row seed must be None or an int in [0, {env.row_seed_limit}), got {entry!r}")
+    return [None if entry is None else int(entry) for entry in entries]
+
+
+#: Entropy words that tag a sampled variation leaf of a ``row_seeds`` class.
+_VARIATION_TAG = (0x76617269, 0x6174696F)
+
+
+def _check_seed_form(seed, where: str) -> None:
+    """Refuse a seed that is neither None, an int, nor a sequence of per-row seeds."""
+    if isinstance(seed, (bool, np.bool_, float, np.floating)) or (
+        isinstance(seed, (np.ndarray, torch.Tensor)) and seed.ndim != 1
+    ):
+        raise ValueError(f"{where}: seed must be None, an int or one seed for each row, got {seed!r}")
+
+
 @dataclass(frozen=True)
 class ResetLeaf:
     """A state value ``reset`` samples, takes from ``variation_values``, or leaves at ``default``.
@@ -404,6 +451,14 @@ class Env:
     reset_sample_paths: frozenset[str] = frozenset()
     #: Keys ``reset`` accepts in ``options`` beside ``"variation"`` and ``"variation_values"``.
     extra_reset_options: tuple[str, ...] = ()
+    #: Whether ``_reset`` takes one seed for each row, a ``(num_envs,)`` int64 array, and seeds row ``i`` with
+    #: ``seed[i]``; an int seed then gives row ``i`` the seed ``seed + i``.
+    row_seeds: bool = False
+    #: The bound (exclusive) of one row seed of a ``row_seeds`` class.
+    row_seed_limit: int = 2**63
+    #: ``/``-joined State key paths whose second axis grows with the episode, such as an action history. A copy of
+    #: some rows zero-pads these leaves to the wider of the two States.
+    state_history_leaves: tuple[str, ...] = ()
     #: ``{device type: BackendPair("cpu", <device renderer>, min_rows)}`` of a class with a CPU and a GPU renderer, with a
     #: ``"cpu"`` entry: on a device whose two renderers differ, a batch of fewer than ``min_rows`` frames draws with the CPU
     #: renderer and moves to the device in one copy. None draws every batch with the renderer of the device.
@@ -604,6 +659,11 @@ class Env:
             ValueError: If the batch size is not ``(num_envs,)`` or a field is missing, misshaped or
                 non-finite.
         """
+        self._check_open("set_state")
+        self._set_state(state)
+
+    def _set_state(self, state: State) -> None:
+        """Restore every row from a full state; a family overrides this hook, not ``set_state``."""
         self._require_state("set_state")
         self._validate_state(state, batch=self.B)
         self._restore_state(state)
@@ -941,7 +1001,9 @@ class Env:
         return ("variation", "variation_values", *self.extra_reset_options)
 
     def _check_reset_options(self, options: Mapping | None) -> None:
-        unknown = set(options or ()) - set(self.reset_option_keys)
+        if not options:
+            return
+        unknown = set(options) - set(self.reset_option_keys)
         if unknown:
             raise ValueError(
                 f"{type(self).__name__}.reset does not accept the options {sorted(unknown, key=str)}; "
@@ -991,27 +1053,35 @@ class Env:
             out[leaf.path] = value
         return out
 
-    def _sample_variation_leaf(self, path: str, seed: int | None) -> np.ndarray:
+    def _variation_entropy(self, seed, instance: int) -> tuple[int, ...]:
+        if self.row_seeds:
+            # Keyed on the row seed alone. The two tag words make the entropy longer than any seed below 2**64, so
+            # the stream differs from ``np.random.default_rng(row_seed)``, which the simulators use.
+            return (row_seed(seed, instance), *_VARIATION_TAG)
+        return (int(seed), instance)
+
+    def _sample_variation_leaf(self, path: str, seed) -> np.ndarray:
         node = self.variation_space
         for part in path.split("."):
             node = node[part]
         rows = []
         for instance in range(self.B):
-            rng = self.rng if seed is None else np.random.default_rng((int(seed), instance))
+            rng = self.rng if seed is None else np.random.default_rng(self._variation_entropy(seed, instance))
             if hasattr(node, "low"):
                 rows.append(node.batch_sample(1, rng).reshape(-1))
             else:
                 rows.append(np.asarray([rng.integers(0, int(node.n))]) + int(getattr(node, "start", 0)))
         return np.stack(rows)
 
-    def draw_reset_values(self, seed: int | None = None, options: Mapping | None = None) -> dict[str, np.ndarray]:
+    def draw_reset_values(self, seed=None, options: Mapping | None = None) -> dict[str, np.ndarray]:
         """Resolve stable-worldmodel-style reset options into ``{path: (num_envs, ...)}`` arrays.
 
         Every ``reset`` calls this. Leaves the options don't name return to their defaults (the
         registered values, or the last ``set_variation``); named leaves are sampled or set for this episode.
 
         Args:
-            seed: Seed of this reset; each environment derives its own from it and its index.
+            seed: Seed of this reset: None, one int (row ``i`` derives its seed from it and ``i``), or one int
+                for each row.
             options: ``"variation"``, the dotted paths to sample (the family's default reset leaves if
                 absent), and ``"variation_values"``, ``{dotted path: value}`` for the batch or per row.
 
@@ -1042,8 +1112,9 @@ class Env:
             seeder = PathSeeder(self.reset_tree_factory(), [leaf.path for leaf in self.reset_leaves])
             self.__dict__["_reset_seeder"] = seeder
         tree = seeder.tree
+        seeds = row_seed_list(seed, self.B)
         for instance in range(self.B):
-            seeder.seed(None if seed is None else int(seed) + instance)
+            seeder.seed(seeds[instance])
             instances.append(self._draw_reset_instance(tree, instance, sampled, values))
         for path in instances[0]:
             out[path] = np.stack([row[path] for row in instances])
@@ -1430,29 +1501,106 @@ class Env:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
 
-    def reset(self, seed: int | None = None) -> TensorDict:
-        """Start a new episode in every environment and return the full state.
+    def reset(self, seed=None, options: Mapping | None = None, *, rows=None) -> TensorDict:
+        """Start a new episode in every batch row, or in the rows that ``rows`` selects, and return the full state.
 
-        Most families also accept ``options``; see ``draw_reset_values``.
+        An int seed ``s`` gives row ``i`` the seed ``s + i``. A class with ``row_seeds`` also takes one seed for each
+        row: a row with an int seed starts the episode that this seed starts in one full reset, and a row with None
+        continues its random stream, as ``reset(seed=None)`` does.
+
+        With ``rows``, the other rows keep their State and variation bit for bit, up to the zero padding of
+        ``state_history_leaves``. The reset resets the full batch, once for the rows without a seed and once for the
+        others, and copies the selected rows into the kept State and variation. It also reseeds the random streams
+        of the other rows that the State doesn't hold. If a reset raises, the State and variation stay as they were.
 
         Args:
-            seed: Restarts the sampler, so the same seed gives the same state. With None, seeding follows the
-                upstream library.
+            seed: None, an int, or, for a class with ``row_seeds``, one int or None for each row. An int restarts
+                the sampler, so the same seed gives the same state. With None, seeding follows the upstream library.
+            options: Reset options: ``"variation"`` and ``"variation_values"`` (see ``draw_reset_values``), and
+                the keys of ``reset_option_keys`` that the family adds. Per-row ``variation_values`` have one row
+                for each of the ``num_envs`` rows, also with ``rows``; the rows that ``rows`` doesn't select are
+                ignored.
+            rows: None for every row, or a ``(num_envs,)`` bool mask or a sequence of row indices. A selection of
+                no row changes nothing.
+
+        Returns:
+            The State of every row.
 
         Raises:
             RuntimeError: If the environment is closed.
-            NotImplementedError: If the environment has no dynamics.
+            NotImplementedError: If the environment has no dynamics, or gets one seed for each row without
+                ``row_seeds``.
+            ValueError: If ``options`` has a key outside ``reset_option_keys``, or ``seed`` or ``rows`` doesn't
+                have one of the forms above.
         """
+        self._check_open("reset")
+        self._check_reset_options(options)
+        if rows is None and (seed is None or type(seed) is int):
+            return self._reset(seed, options)
+        where = f"{type(self).__name__}.reset"
+        _check_seed_form(seed, where)
+        if per_row(seed) and not self.row_seeds:
+            raise NotImplementedError(f"{where}: per-row seeds need row_seeds; pass an int seed")
+        if rows is None and not per_row(seed):
+            return self._reset(seed, options)
+        mask = torch.ones(self.B, dtype=torch.bool) if rows is None else _row_mask(self, rows, where)
+        if per_row(seed):
+            seeds = _row_seeds(self, seed, where)
+            unseeded = mask & torch.tensor([s is None for s in seeds])
+            seeded = mask & ~unseeded
+            # The rows without a seed reset first, so that they continue the streams that no seeded reset replaced.
+            groups = [(unseeded, None)] if bool(unseeded.any()) else []
+            if bool(seeded.any()):
+                groups.append((seeded, np.asarray([0 if s is None else s for s in seeds], np.int64)))
+        else:
+            groups = [(mask, seed)] if bool(mask.any()) else []
+        if not groups:
+            return self.get_state()
+        if len(groups) == 1 and bool(groups[0][0].all()):
+            return self._reset(groups[0][1], options)
+        before = self.get_state()
+        state, variation = before, self.get_variation().clone()
+        kept_variation, kept_default = variation.clone(), self._variation_is_default
+        try:
+            for n, (pick, group_seed) in enumerate(groups):
+                if n:
+                    # A reset can read the State it replaces, such as the last action that PushT draws.
+                    self._set_state(before)
+                state = splice_rows(pick, self._reset(group_seed, options), state, self.state_history_leaves)
+                current = self.get_variation()
+                variation = torch.where(pick.to(current.device)[:, None], current, variation.to(current.device))
+        except BaseException:
+            self._install_variation(
+                StyleTensor.from_space(self.variation_space, self.B, device=self.device, values=kept_variation)
+            )
+            self._variation_is_default = kept_default
+            self._set_state(before)
+            raise
+        if not torch.equal(self.get_variation(), variation):
+            self._install_variation(
+                StyleTensor.from_space(self.variation_space, self.B, device=self.device, values=variation)
+            )
+            default = self._default_style.for_batch(self.B, owner=where).values
+            self._variation_is_default = torch.equal(variation.to(default.device), default)
+        self._set_state(state)
+        return self.get_state()
+
+    def _reset(self, seed: int | None = None, options: Mapping | None = None) -> TensorDict:
+        """Start a new episode in every row; a family overrides this hook, not ``reset``."""
         self._require_state("reset")
         self._reseed(seed)
-        self.draw_reset_values(seed)
+        self.draw_reset_values(seed, options)
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions, *, states=slice(None), frames=slice(-1, None), state: bool = True) -> TensorDict:
+    def step(
+        self, actions, *, states=slice(None), frames=slice(-1, None), state: bool = True, rows=None
+    ) -> TensorDict:
         """Advance one action or a sequence of actions per environment.
 
         An environment that finishes mid-sequence holds its last state, and its later task outputs are zero.
+        ``rows`` selects the rows to step: the other rows keep their state exactly, as rows that finished do, and
+        the rows it selects step exactly as in a step of every row.
 
         Args:
             actions: ``(B, *action_shape)`` for one step or ``(B, T, *action_shape)`` for ``T`` steps.
@@ -1460,6 +1608,10 @@ class Env:
             states: Slice over the steps that selects which states to return, or None.
             frames: Slice over the steps that selects which frames to render, or None.
             state: Return the final state; False skips building it, and ``get_state()`` builds it on demand.
+            rows: None for every row, or a ``(B,)`` bool mask or a sequence of row indices. The actions of the
+                other rows are ignored, their ``valid`` entries are false and their task outputs are zero. A
+                selection of no row holds every row. A step with ``rows`` runs the step loop, not a family's fused
+                sequence step, so a long sequence can cost more than without ``rows``.
 
         Returns:
             A TensorDict with batch size ``(B,)``: ``state`` (the final state, unless ``state=False``), the family's task
@@ -1470,12 +1622,14 @@ class Env:
         Raises:
             RuntimeError: If the environment is closed.
             NotImplementedError: If the environment has no dynamics.
-            ValueError: If ``actions`` has the wrong shape, or ``frames`` is set without RGB output.
+            ValueError: If ``actions`` has the wrong shape, ``frames`` is set without RGB output, or ``rows`` doesn't
+                match ``B``.
             TypeError: If ``states`` or ``frames`` is neither a slice nor None, or ``state`` is not a bool.
         """
         from ._core.stepping import step
 
-        return step(self, actions, states=states, frames=frames, state=state)
+        mask = None if rows is None else _row_mask(self, rows, f"{type(self).__name__}.step")
+        return step(self, actions, states=states, frames=frames, state=state, rows=mask)
 
     def _step(self, actions) -> TensorDict:
         """Advance one transition per environment without rendering or sequence dispatch."""

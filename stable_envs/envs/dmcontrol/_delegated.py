@@ -213,8 +213,12 @@ class DelegatedSemantics:
             kwargs["variation"] = variation or None
         return self._render_checked(self._pack_render_state(state), **kwargs)
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
+    #: Every simulation backend seeds row ``i`` from its own seed.
+    row_seeds = True
+    #: dm_control seeds a ``np.random.RandomState``, which takes seeds below ``2**32``.
+    row_seed_limit = 2**32
+
+    def _reset(self, seed=None, options=None):
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
@@ -222,8 +226,7 @@ class DelegatedSemantics:
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._simulator.set_state(state)
         self._adopt_physics_state(state)
 

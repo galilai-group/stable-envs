@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.seeding import row_seed
 from ...._core.state_schema import unfold
 from ...._execution.protocol import SimulatorAdapter
 from . import physics as _physics
@@ -75,7 +76,7 @@ class DMCInstances(SimulatorAdapter):
         self._check_open()
         for i, env in enumerate(self.envs):
             if seed is not None:
-                env.task._random = np.random.RandomState(int(seed) + i)
+                env.task._random = np.random.RandomState(row_seed(seed, i))
             env.reset()
         self._cumulative.fill(0)
         return self.get_state()
@@ -107,11 +108,9 @@ class DMCInstances(SimulatorAdapter):
             raise ValueError(f"DMC actions must be finite with shape {(self.num_envs, self.action_dim)}")
         if active is not None:
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
-            if active.shape != (self.num_envs,) or not active.all():
-                raise ValueError(
-                    "Accepted DMC wrappers do not expose terminal environments; partial active masks are unsupported"
-                )
-        return actions, None
+            if active.shape != (self.num_envs,) or active.dtype != np.bool_:
+                raise ValueError(f"DMC active masks must be bool with shape ({self.num_envs},)")
+        return actions, active
 
     def _info(self, env, instance):
         """Return ``(success, info)`` for task outputs beyond reward, or None."""

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ..._core.seeding import row_seed
 from ..._core.state_schema import get_field
 from ..._core.style import StyleTensor
 from ..._core.warp_cuda import require_warp_cuda
@@ -199,9 +200,10 @@ class FetchSemantics:
     def state_spec(self):
         return self._schema.spec(self.device)
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
-        self._check_reset_options(options)
+    #: Every simulation backend seeds row ``i`` from its own seed.
+    row_seeds = True
+
+    def _reset(self, seed=None, options=None):
         options = options or {}
         sampled = options.get("variation", [])
         explicit = options.get("variation_values", {})
@@ -215,7 +217,7 @@ class FetchSemantics:
             v = {}
             if sampled:
                 spaces = _source_sampling_tree(self._has_object)
-                spaces.seed(None if seed is None else int(seed) + instance)
+                spaces.seed(row_seed(seed, instance))
                 for key in sampled:
                     v[key] = _leaf(spaces, key).sample()
             for key, value in explicit.items():
@@ -272,8 +274,7 @@ class FetchSemantics:
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._simulator.set_state(state)
 
     def _step(self, actions, *, active=None):

@@ -106,15 +106,17 @@ class MSHumanBatchAdapter(_MSHumanAdapter):
         self._check_open()
         self.batch.set_physics({k: v.detach().cpu().to(torch.float32) for k, v in self._physics(state).items()})
 
-    def step(self, actions) -> TensorDict:
+    def step(self, actions, *, active=None) -> TensorDict:
         self._check_open()
+        if torch.is_tensor(active):
+            active = active.detach().cpu().numpy()
         if torch.is_tensor(actions):
             # NumPy has no bfloat16.
             actions = (actions.float() if actions.dtype == torch.bfloat16 else actions).detach().cpu().numpy()
         ctrl = np.asarray(actions, np.float32).reshape(self.num_envs, self.action_dim)
         # Clamp as MuJoCo Warp does, NaN to the lower bound: native MuJoCo would instead zero the
         # environment's controls on a NaN, inf or huge value and warn, which raises below.
-        self.batch.step(np.fmin(np.fmax(ctrl, self._ctrl_low), self._ctrl_high))
+        self.batch.step(np.fmin(np.fmax(ctrl, self._ctrl_low), self._ctrl_high), active=active)
         self._sync(write_back=True)
         if (bad := self.batch.unstable_envs()).size:
             raise RuntimeError(f"Physics state is invalid in environments {bad.tolist()}")
@@ -144,7 +146,8 @@ class MSHumanWarpAdapter(_MSHumanAdapter):
         self._check_open()
         self.batch.set_physics(self._physics(state))
 
-    def step(self, actions) -> TensorDict:
+    def step(self, actions, *, active=None) -> TensorDict:
         self._check_open()
-        self.batch.step(torch.as_tensor(actions, device=self.device).reshape(self.num_envs, self.action_dim))
+        ctrl = torch.as_tensor(actions, device=self.device).reshape(self.num_envs, self.action_dim)
+        self.batch.step(ctrl, active=active)
         return TensorDict({"state": self.get_state()}, batch_size=[self.num_envs], device=self.device)

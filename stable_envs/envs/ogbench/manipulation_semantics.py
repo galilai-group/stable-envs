@@ -143,9 +143,7 @@ class ManipulationSemantics:
             raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
         self._simulator.schema.validate(state, finite=True)
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
-        self._check_reset_options(options)
+    def _reset(self, seed=None, options=None):
         result = self._simulator.reset(seed, options)
         self._sync_style()
         return result
@@ -155,8 +153,7 @@ class ManipulationSemantics:
         state = self._own_state = self._simulator.get_state()
         return state
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._simulator.set_state(state)
         self._sync_style()
 

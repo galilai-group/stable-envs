@@ -10,6 +10,7 @@ import math
 import numpy as np
 import torch
 
+from ...._core.seeding import row_seed
 from ...._core.state_layout import StateLayout
 from ...._core.tensordicts import build_tensordict, leaf_tree, to_device
 from ...._execution.protocol import SimulatorAdapter
@@ -164,7 +165,7 @@ class DMCBatchAdapter(SimulatorAdapter):
             env = envs[i]._env
             if seed is not None:
                 # Legacy seeding of the environment's RandomState gives the state of np.random.RandomState(seed + i).
-                env.task.random.seed(int(seed) + int(i))
+                env.task.random.seed(row_seed(seed, int(i)))
             env._reset_next_step, env._step_count = False, 0
             if begin is None:
                 with env.physics.reset_context():
@@ -317,26 +318,32 @@ class DMCBatchAdapter(SimulatorAdapter):
     def _advance(self, actions, active):
         """Advance the environments; the task outputs as ``{key path: array}``."""
         self.instances._check_open()
-        actions, _ = self.instances.check_step(actions, active)
+        actions, active = self.instances.check_step(actions, active)
         ctrl, reward = self._transform(actions), np.zeros(self.num_envs)
         for _ in range(2):
             # While every environment is more than one substep from its limit, no environment resets or reaches it.
             quiet = self._margin > 1
-            reset = self._reset_next
+            reset = self._reset_next if active is None else self._reset_next & active
             resetting = not quiet and reset.any()
             if resetting:
                 reset = reset.copy()
                 ids = np.flatnonzero(reset)
                 self._reset_instances(ids)
                 self._load(ids)
-            self._ctrl[:] = ctrl
-            self.b.step(~reset if resetting else None, self._nsub, stage=self._vel)
+            if active is None:
+                self._ctrl[:] = ctrl
+                stepped = ~reset if resetting else None
+            else:
+                # Rows outside ``active`` keep their controls and physics.
+                self._ctrl[active] = ctrl[active]
+                stepped = active & ~reset if resetting else active
+            self.b.step(stepped, self._nsub, stage=self._vel)
             if (self._warning > self._warnings).any():
                 bad = np.flatnonzero((self._warning > self._warnings).any(axis=1))
                 raise self._error(f"Physics state is invalid in environments {bad.tolist()}")
-            if resetting:
-                reward += np.where(reset, 0.0, self.task.reward())
-                self._count += ~reset
+            if stepped is not None:
+                reward += np.where(stepped, self.task.reward(), 0.0)
+                self._count += stepped
             else:
                 reward += self.task.reward()
                 self._count += 1

@@ -10,6 +10,7 @@ import torch
 from numba import njit
 from tensordict import TensorDict
 
+from ...._core.seeding import row_seed
 from ...._core.space_nodes import nodes
 from ...._execution.process import leaf_tensordict
 from ...._execution.protocol import SimulatorAdapter
@@ -309,9 +310,7 @@ class RocketNumbaAdapter(SimulatorAdapter):
         if values is not None and len(values) != batch:
             raise ValueError("Expected one Rocket Variation row per environment")
         for instance in range(batch):
-            template.check_reset(
-                None if seed is None else seed + instance, options, None if values is None else values[instance]
-            )
+            template.check_reset(row_seed(seed, instance), options, None if values is None else values[instance])
         options = dict(options or {})
         selection = list(options.get("variation", []))
         randomize = options.get("randomize_drop", False)
@@ -328,7 +327,7 @@ class RocketNumbaAdapter(SimulatorAdapter):
             for instance in range(batch):
                 row = {} if values is None else values[instance]
                 if selection:
-                    instance_seed = None if seed is None else seed + instance
+                    instance_seed = row_seed(seed, instance)
                     for path, value in self._sample_variation(instance, instance_seed, selection, row).items():
                         self._set(path, instance, value)
                 else:
@@ -354,8 +353,8 @@ class RocketNumbaAdapter(SimulatorAdapter):
                 generator = self._generator(instance, rows) if rows[instance].any() else np.random.default_rng()
                 self._seed[instance] = -1
             else:
-                generator = np.random.default_rng(seed + instance)
-                self._seed[instance] = seed + instance
+                generator = np.random.default_rng(row_seed(seed, instance))
+                self._seed[instance] = row_seed(seed, instance)
             if randomize or perturb:
                 if randomize:
                     limit = template.env.max_displacement * 0.1

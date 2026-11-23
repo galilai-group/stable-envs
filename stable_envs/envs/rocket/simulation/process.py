@@ -8,6 +8,7 @@ from functools import partial
 
 import torch
 
+from ...._core.seeding import row_seed
 from ...._execution.process import FRAME_DRAW, FRAME_FIELDS, ProcessAdapter, process_worker
 from .adapter import RocketAdapter, check_values, state_columns
 
@@ -92,9 +93,7 @@ class RocketProcessAdapter(ProcessAdapter):
         if values is not None and len(values) != self.num_envs:
             raise ValueError("Expected one Rocket Variation row per environment")
         for instance in range(self.num_envs):
-            template.check_reset(
-                None if seed is None else seed + instance, options, None if values is None else values[instance]
-            )
+            template.check_reset(row_seed(seed, instance), options, None if values is None else values[instance])
         return self._reset(seed, [(options, None if values is None else values[rows]) for rows in self._slices])
 
     def _worker_target(self):

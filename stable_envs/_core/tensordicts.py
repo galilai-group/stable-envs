@@ -588,3 +588,37 @@ def pack_to_device(leaves, batch, device, batches=(), copies=None) -> TensorDict
         packed[plan.main :] = packed[: plan.main]
     parts = plan.host_parts(packed) if cpu else plan.send(packed, device)
     return plan.build(parts, plan.node(batch, device))
+
+
+def splice_rows(rows: torch.Tensor, fresh: TensorDict, kept: TensorDict, history=()) -> TensorDict:
+    """A new State with the batch ``rows`` (a bool mask) of ``fresh`` and the other rows of ``kept``.
+
+    ``history`` names the ``/``-joined leaves whose second axis grows with the episode, such as an action history;
+    they are zero-padded to the wider of the two. The two States must have the same leaves, and every other leaf
+    the same shape.
+    """
+    names = {}
+    for state in (fresh, kept):
+        for key in state.keys(True, True):
+            names.setdefault(key, set()).add(id(state))
+    missing = sorted("/".join((k,) if isinstance(k, str) else k) for k, seen in names.items() if len(seen) != 2)
+    if missing:
+        raise ValueError(f"The States have different fields: {missing}")
+    tree: dict = {}
+    for key in kept.keys(True, True):
+        new, old = fresh.get(key), kept.get(key)
+        path = (key,) if isinstance(key, str) else tuple(key)
+        if new.shape != old.shape:
+            name = "/".join(path)
+            if name not in history or new.ndim < 2 or new.shape[2:] != old.shape[2:]:
+                raise ValueError(f"State field {name} has shape {tuple(new.shape)}, expected {tuple(old.shape)}")
+            width = max(new.shape[1], old.shape[1])
+            new, old = (
+                torch.cat((v, v.new_zeros(v.shape[0], width - v.shape[1], *v.shape[2:])), 1) for v in (new, old)
+            )
+        mask = rows.to(new.device).view(-1, *[1] * (new.ndim - 1))
+        node = tree
+        for part in path[:-1]:
+            node = node.setdefault(part, {})
+        node[path[-1]] = torch.where(mask, new, old.to(new.device))
+    return TensorDict(tree, batch_size=kept.batch_size, device=kept.device)

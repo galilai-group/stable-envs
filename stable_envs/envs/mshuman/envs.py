@@ -82,8 +82,7 @@ class MSHumanLocomotion(Env):
     def make_variation_space(self) -> Dict:
         return Dict({})
 
-    def reset(self, seed: int | None = None, options: dict | None = None):
-        self._check_open("reset")
+    def _reset(self, seed: int | None = None, options: dict | None = None):
         self.draw_reset_values(seed, options)
         return self._simulator.reset(seed)
 
@@ -91,14 +90,13 @@ class MSHumanLocomotion(Env):
         self._check_open("get_state")
         return self._simulator.get_state()
 
-    def set_state(self, state):
-        self._check_open("set_state")
+    def _set_state(self, state):
         self._validate_state(state, batch=self.B)
         self._simulator.set_state(state)
 
-    def _step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
 
     def _validate_state(self, state, *, batch=None):
         if not isinstance(state, TensorDict):

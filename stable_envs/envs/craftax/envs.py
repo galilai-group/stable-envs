@@ -31,6 +31,9 @@ class CraftaxEnv(Env):
     """Batched Craftax environments over the upstream JAX simulator."""
 
     family = "craftax"
+    row_seeds = True
+    #: Row seeds below ``2**31`` give the threefry keys ``[0, seed]`` directly.
+    row_seed_limit = 2**31
     action_dim = 1
     action_dtype = torch.int64
     action_low = 0
@@ -170,7 +173,7 @@ class CraftaxEnv(Env):
         """An independent snapshot: one ``(num_envs, columns)`` block per dtype, which only it uses."""
         return self._snapshot(self._k.export(self._live("get_state"), self._keys, self._instances))
 
-    def set_state(self, state):
+    def _set_state(self, state):
         """Restore every environment from a state with ``num_envs`` environments; the state is copied."""
         self._check_pending()
         state = self._checked(state, "set_state", self.B)
@@ -185,13 +188,12 @@ class CraftaxEnv(Env):
         self._varied = self._k.varied(values)
         self._adopt_physics_state(state)
 
-    def reset(self, seed=None, options=None):
-        """Reset every environment; environment ``i`` of ``reset(seed)`` is stable-worldmodel's reset with ``seed + i``."""
-        self._check_open("reset")
+    def _reset(self, seed=None, options=None):
+        """Reset every environment; row ``i`` is stable-worldmodel's reset with its own seed (``seed + i`` for one int)."""
         self._check_pending()
         self.draw_reset_values(seed, options)
         if seed is not None:
-            self._keys = self._k.seed_keys(int(seed), self._instances)
+            self._keys = self._k.seed_keys(seed, self._instances)
         values = self._instance_values()
         self._varied = self._k.varied(values)
         self._state, self._keys, blocks = self._k.reset(self._keys, values, self._instances, self._varied)

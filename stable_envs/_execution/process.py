@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .._core.seeding import rows_seed
 from .._core.tensordicts import build_tensordict
 from .protocol import SimulatorAdapter
 from .requests import ProcessRequests, instance_slices
@@ -368,9 +369,9 @@ class ProcessAdapter(ProcessRequests, SimulatorAdapter):
         return self._state()
 
     def _reset(self, seed, args=None):
-        """Reset every worker with ``seed + first instance`` and its entry of ``args``."""
+        """Reset every worker with the seed of its rows (``seed + first row`` for one int) and its entry of ``args``."""
         payloads = [
-            (None if seed is None else int(seed) + rows.start, () if args is None else tuple(args[index]))
+            (rows_seed(seed, rows.start, rows.stop), () if args is None else tuple(args[index]))
             for index, rows in enumerate(self._slices)
         ]
         self._static_cache = None

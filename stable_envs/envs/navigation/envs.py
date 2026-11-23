@@ -741,8 +741,7 @@ class _HiddenTargetSemantics:
             return value[instance].copy()
         raise ValueError(f"reset position option must have shape (2,) or ({batch}, 2), got {value.shape}")
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
+    def _reset(self, seed=None, options=None):
         options = dict(options or {})
         values = self.draw_reset_values(seed, options)
         agent_rows, target_rows = list(values["agent.position"]), list(values["target.position"])
@@ -1572,9 +1571,7 @@ class TwoRoomTarget(_TwoRoomBase):
     )
     reset_tree_factory = staticmethod(_two_room_reset_tree)
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
-        self._check_reset_options(options)
+    def _reset(self, seed=None, options=None):
         self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         agent, target = np.stack(list(values["agent.position"])), np.stack(list(values["target.position"]))
@@ -1815,9 +1812,7 @@ class PiecewiseZones(_PiecewiseBase):
         super().__init__(*args, **kwargs)
         self._zones = _zone_map(self.device)
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
-        self._check_reset_options(options)
+    def _reset(self, seed=None, options=None):
         self._reseed(seed)
         values = self.draw_reset_values(seed, dict(options or {}))
         self._set_render_state(np.stack(list(values["agent.position"])))
@@ -2068,8 +2063,7 @@ class SimplePointMaze(_GymReferencePort):
                 return out
         raise RuntimeError("agent.position rejection sampling did not converge")
 
-    def reset(self, seed=None, options=None):
-        self._check_open("reset")
+    def _reset(self, seed=None, options=None):
         values = self.draw_reset_values(seed, options)
         starts, goals = values["agent.position"], values["goal.position"]
         self._set_render_state(np.concatenate([starts, goals], axis=1))

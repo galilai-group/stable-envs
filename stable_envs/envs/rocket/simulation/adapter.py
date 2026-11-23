@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from ...._core.seeding import row_seed
 from ...._execution.process import BROADCAST, PER_INSTANCE, fresh_copy, leaf_tensordict
 from ...._execution.protocol import SimulatorAdapter
 from .actions import validate_actions
@@ -189,7 +190,7 @@ class RocketAdapter(SimulatorAdapter):
         if values is not None and len(values) != self.num_envs:
             raise ValueError("Expected one Rocket Variation row per environment")
         instances = [
-            (None if seed is None else seed + instance, None if values is None else values[instance])
+            (row_seed(seed, instance), None if values is None else values[instance])
             for instance in range(self.num_envs)
         ]
         for env, (instance_seed, row) in zip(self.envs, instances, strict=True):

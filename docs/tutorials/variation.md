@@ -85,7 +85,7 @@ Most classes follow stable-worldmodel's reset rule:
 - Reset sets the leaves in `options["variation_values"]`, with one value for the batch or one per batch row.
 - Every other leaf goes back to the values `set_variation` last installed, physics leaves included, so values from reset options last for that episode only.
 
-With a seed, the draws of each batch row are reproducible: a reset leaf such as a start pose in batch row `i` uses seed `seed + i`, and a sampled variation leaf uses `np.random.default_rng((seed, i))`. The Craftax classes, Miniworld and `MSHumanLocomotion` take only `seed`.
+With a seed, the draws of each batch row are reproducible: a reset leaf such as a start pose in batch row `i` uses seed `seed + i`. A sampled variation leaf uses `np.random.default_rng((seed, i))`. Classic control, DM Control and Craftax key it on the row seed `s = seed + i` alone, through `np.random.default_rng((s, 0x76617269, 0x6174696F))`, so a list of row seeds draws the same values in each row as the int seeds do. PushT, Fetch and `PyFlytRocketLanding` sample as stable-worldmodel does, from a space seeded with the row seed. The Craftax classes, Miniworld and `MSHumanLocomotion` take only `seed`.
 
 ## Classes that keep variation in state
 
