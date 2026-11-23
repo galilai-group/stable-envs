@@ -32,3 +32,9 @@ def test_source_info_of_a_closed_env_raises_runtime_error():
     env.close()
     with pytest.raises(RuntimeError, match="closed"):
         env.source_info(None)
+
+
+def test_base_set_task_raises_not_implemented_with_the_class_name():
+    env = Rows(num_envs=2, device="cpu")
+    with pytest.raises(NotImplementedError, match=r"Rows\.set_task"):
+        env.set_task([0], seed=[1])

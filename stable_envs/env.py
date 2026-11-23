@@ -617,6 +617,25 @@ class Env:
         """Independent full state snapshot, the same as ``get_state()``."""
         return self.get_state()
 
+    def set_task(self, rows, seed, options=None) -> State:
+        """Give ``rows`` a new task mid-episode, drawn as the upstream library draws it, and return the State.
+
+        Each selected row draws from its own seed, so the result of a row does not depend on the other rows. The
+        other rows do not change.
+
+        Args:
+            rows: A ``(num_envs,)`` bool mask or a sequence of row indices.
+            seed: One integer seed per selected row, in the order of ``rows`` (ascending for a mask).
+            options: Task options of the family, for every selected row.
+
+        Raises:
+            RuntimeError: If the environment is closed.
+            NotImplementedError: If the class has no task to change.
+            ValueError: If ``rows``, ``seed`` or ``options`` is invalid.
+        """
+        self._check_open("set_task")
+        raise NotImplementedError(f"{type(self).__name__}.set_task: this class has no task that set_task changes.")
+
     def goal_render_state(self, state: State):
         """Return the goal frame of each batch row of ``state`` in a form that ``render`` draws.
 
