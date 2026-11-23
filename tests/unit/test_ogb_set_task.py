@@ -103,6 +103,7 @@ def test_scene_scores_the_target_only():
         ref.reset(seed=4)
         env.set_task(torch.tensor([True, False]), seed=[seed])
         _collect(ref.envs[0], seed)
+        ref._forget_static(ref.envs)
         succeeded = False
         for t in range(60):
             action = np.stack([_press(e, t, 0) for e in ref.envs]).astype(np.float32)
