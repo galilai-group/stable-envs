@@ -1001,7 +1001,9 @@ class Env:
         return ("variation", "variation_values", *self.extra_reset_options)
 
     def _check_reset_options(self, options: Mapping | None) -> None:
-        unknown = set(options or ()) - set(self.reset_option_keys)
+        if not options:
+            return
+        unknown = set(options) - set(self.reset_option_keys)
         if unknown:
             raise ValueError(
                 f"{type(self).__name__}.reset does not accept the options {sorted(unknown, key=str)}; "
@@ -1532,6 +1534,8 @@ class Env:
         """
         self._check_open("reset")
         self._check_reset_options(options)
+        if rows is None and (seed is None or type(seed) is int):
+            return self._reset(seed, options)
         where = f"{type(self).__name__}.reset"
         _check_seed_form(seed, where)
         if per_row(seed) and not self.row_seeds:
