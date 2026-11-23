@@ -179,3 +179,29 @@ def test_set_task_refuses_bad_arguments():
             env.set_task(torch.tensor([True]), seed=[1])
     finally:
         env.close()
+
+
+@pytest.mark.parametrize("family", FAMILIES)
+def test_set_task_with_worker_processes_equals_in_process(family):
+    from stable_envs.envs.ogbench.simulation.manipulation_batch import OGBManipulationBatchAdapter
+    from stable_envs.envs.ogbench.simulation.manipulation_process import OGBManipulationProcessAdapter
+
+    local = OGBManipulationBatchAdapter(family, 3, seed=17)
+    remote = OGBManipulationBatchAdapter(
+        family, 3, seed=17, instances=OGBManipulationProcessAdapter(family, 3, seed=17, processes=2)
+    )
+    try:
+        local.reset(seed=5)
+        remote.reset(seed=5)
+        action = np.full((3, 5), 0.3, np.float32)
+        local.step(action)
+        remote.step(action)
+        tasks = [(11, {}), None, (13, {"p_stack": 1.0})]
+        local.set_task(tasks)
+        remote.set_task(tasks)
+        assert_same_state(remote.get_state(), local.get_state())
+        for _ in range(5):
+            assert_same_state(remote.step(action)["state"], local.step(action)["state"])
+    finally:
+        local.close()
+        remote.close()
